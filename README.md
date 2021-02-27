@@ -1,2 +1,2 @@
-# game_prototype
-A game prototype
+# Summary
+making a game prototype

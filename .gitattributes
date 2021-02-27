@@ -1,0 +1,10 @@
+# https://git-scm.com/docs/gitattributes
+
+* text=auto
+
+# code
+*.h text diff=cpp
+*.c text diff=cpp
+
+# project
+*.bat text eol=crlf
