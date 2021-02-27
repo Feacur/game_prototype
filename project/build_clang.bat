@@ -61,6 +61,7 @@ if defined unity_build (
 ) else ( rem alternatively, compile a set of translation units
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
 	clang -std=c99 -c "../code/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../code/windows/*.c" %compiler% %warnings%
 	move ".\*.o" ".\temp"
 	lld-link "./temp/*.o" libcmt.lib -out:"game.exe" %linker%
 )

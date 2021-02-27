@@ -63,6 +63,7 @@ if defined unity_build (
 ) else ( rem alternatively, compile a set of translation units
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
 	cl -std:c11 -c "../code/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../code/windows/*.c" %compiler% %warnings%
 	link "./temp/*.obj" -out:"game.exe" %linker%
 )
 
