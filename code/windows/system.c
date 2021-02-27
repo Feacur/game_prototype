@@ -4,12 +4,15 @@
 #include "code/platform_system.h"
 
 #include "internal_system_window.h"
+#include "graphics_library.h"
 
 void platform_system_init(void) {
 	internal_system_window_init();
+	graphics_library_init();
 }
 
 void platform_system_free(void) {
+	graphics_library_free();
 	internal_system_window_free();
 }
 

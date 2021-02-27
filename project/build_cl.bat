@@ -19,7 +19,7 @@ call "vcvarsall.bat" x64
 popd
 
 rem > OPTIONS
-set includes=-I".."
+set includes=-I".." -I"../third_party"
 set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX
 set libs=user32.lib gdi32.lib
 set warnings=-WX -W4
@@ -64,6 +64,8 @@ if defined unity_build (
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
 	cl -std:c11 -c "../code/*.c" %compiler% %warnings%
 	cl -std:c11 -c "../code/windows/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../code/windows/opengl/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../code/opengl/*.c" %compiler% %warnings%
 	link "./temp/*.obj" -out:"game.exe" %linker%
 )
 

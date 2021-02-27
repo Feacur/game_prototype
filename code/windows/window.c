@@ -6,6 +6,8 @@
 
 #include "code/memory.h"
 
+#include "graphics_library.h"
+
 #define KEYBOARD_KEYS_MAX UINT8_MAX + 1
 #define MOUSE_KEYS_MAX 8
 
@@ -29,6 +31,8 @@ struct Window {
 
 		float wheel_x, wheel_y;
 	} mouse;
+
+	struct Graphics * graphics;
 };
 
 #define APPLICATION_CLASS_NAME "game_prototype"
@@ -62,6 +66,8 @@ struct Window * platform_window_init(void) {
 
 	memset(&window->keyboard, 0, sizeof(window->keyboard));
 	memset(&window->mouse, 0, sizeof(window->mouse));
+
+	window->graphics = graphics_init(window);
 
 	return window;
 }
@@ -337,6 +343,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		case WM_DESTROY: {
 			bool should_free = window->handle != NULL;
 			RemovePropA(hwnd, APPLICATION_CLASS_NAME);
+			graphics_free(window->graphics);
 			memset(window, 0, sizeof(*window));
 			if (should_free) { MEMORY_FREE(window); }
 			return 0;

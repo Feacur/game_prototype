@@ -22,7 +22,7 @@ if not defined unity_build (
 )
 
 rem > OPTIONS
-set includes=-I".."
+set includes=-I".." -I"../third_party"
 set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX
 set libs=user32.lib gdi32.lib
 set warnings=-Werror -Weverything -Wno-switch-enum -Wno-float-equal
@@ -62,6 +62,8 @@ if defined unity_build (
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
 	clang -std=c99 -c "../code/*.c" %compiler% %warnings%
 	clang -std=c99 -c "../code/windows/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../code/windows/opengl/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../code/opengl/*.c" %compiler% %warnings%
 	move ".\*.o" ".\temp"
 	lld-link "./temp/*.o" libcmt.lib -out:"game.exe" %linker%
 )

@@ -3,6 +3,8 @@
 #include "platform_system.h"
 #include "platform_window.h"
 
+#include "opengl/functions.h"
+
 int main (int argc, char * argv[]) {
 	(void)argc; (void)argv;
 	platform_system_init();
