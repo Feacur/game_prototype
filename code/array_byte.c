@@ -4,7 +4,7 @@
 
 #define GROWTH_FACTOR 2
 #define GROW_CAPACITY(capacity) \
-	((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR)
+	((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR) \
 
 //
 #include "array_byte.h"

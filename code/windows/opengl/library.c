@@ -340,7 +340,11 @@ static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * forma
 }
 
 static HGLRC create_context_arb(HDC device, HGLRC shared, int version) {
-#define ADD_ATTRIBUTE(key, value) do { attributes[attributes_count++] = key; attributes[attributes_count++] = value; } while (false)
+#define ADD_ATTRIBUTE(key, value) \
+	do { \
+		attributes[attributes_count++] = key; \
+		attributes[attributes_count++] = value; \
+	} while (false) \
 
 	if (!HAS_ARB(WGL_ARB_create_context)) { return NULL; }
 

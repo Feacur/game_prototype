@@ -20,17 +20,18 @@ struct Gpu_Program {
 static void verify_shader(GLuint id, GLenum parameter);
 static void verify_program(GLuint id, GLenum parameter);
 struct Gpu_Program * gpu_program_init(char const * text) {
-#define ADD_SECTION_HEADER(shader_type, version) do {\
+#define ADD_SECTION_HEADER(shader_type, version) \
+	do { \
 		if (strstr(text, #shader_type)) {\
-			if (ogl_version < (version)) { fprintf(stderr, "'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); exit(1); }\
-			static char const header_text[] = "#define " #shader_type "\n";\
-			headers[headers_count++] = (struct Section_Header){\
-				.type = GL_ ## shader_type,\
-				.length = (sizeof(header_text) / sizeof(*header_text)) - 1,\
-				.data = header_text,\
-			};\
-		}\
-	} while (false)\
+			if (ogl_version < (version)) { fprintf(stderr, "'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); exit(1); } \
+			static char const header_text[] = "#define " #shader_type "\n"; \
+			headers[headers_count++] = (struct Section_Header){ \
+				.type = GL_ ## shader_type, \
+				.length = (sizeof(header_text) / sizeof(*header_text)) - 1, \
+				.data = header_text, \
+			}; \
+		} \
+	} while (false) \
 
 	GLint text_length = (GLint)strlen(text);
 
