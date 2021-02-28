@@ -1,3 +1,6 @@
+#include "code/memory.h"
+#include "code/opengl/functions.h"
+
 #include "code/windows/window_to_graphics_library.h"
 
 #include <stdio.h>
@@ -5,12 +8,7 @@
 #include <string.h>
 
 #include <Windows.h>
-
-#include <KHR/khrplatform.h>
-#include <GL/glcorearb.h>
 #include <GL/wgl.h>
-
-#include "code/memory.h"
 
 static struct {
 	HMODULE handle;
@@ -126,7 +124,7 @@ struct Graphics {
 };
 
 static HGLRC create_context_auto(HDC device, HGLRC shared);
-static void load_functions(void);
+static void * rlib_get_function(char const * name);
 struct Graphics * graphics_init(struct Window * window) {
 	struct Graphics * context = MEMORY_ALLOCATE(struct Graphics);
 
@@ -134,7 +132,7 @@ struct Graphics * graphics_init(struct Window * window) {
 	context->handle = create_context_auto(context->private_device, NULL);
 	rlib.dll.MakeCurrent(context->private_device , context->handle);
 
-	load_functions();
+	graphics_load_functions(rlib_get_function);
 
 	return context;
 }
@@ -378,8 +376,8 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, int version) {
 	}
 
 	// error control
-	int const debug_level = 0;
-	if (debug_level == 0 && HAS_ARB(ARB_create_context_no_error)) {
+	int const debug_level = 2;
+	if (debug_level == 0 && HAS_ARB(WGL_ARB_create_context_no_error)) {
 		ADD_ATTRIBUTE(WGL_CONTEXT_OPENGL_NO_ERROR_ARB, true);
 	}
 	else {
@@ -452,7 +450,6 @@ static HGLRC create_context_auto(HDC device, HGLRC shared) {
 }
 
 //
-#include "code/opengl/functions.h"
 
 static void * rlib_get_function(char const * name) {
 	if (name == NULL) { return NULL; }
@@ -464,11 +461,6 @@ static void * rlib_get_function(char const * name) {
 	if (dll_address != NULL) { return (void *)dll_address; }
 
 	return NULL;
-}
-
-static void load_functions(void) {
-	#define XMACRO(type, name) gl ## name = (type)rlib_get_function("gl" # name);
-	#include "code/opengl/xmacro.h"
 }
 
 #undef HAS_ARB
