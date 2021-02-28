@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_BACKEND)
-#define GAME_GRAPHICS_BACKEND
+#if !defined(GAME_GRAPHICS_FUNCTIONS)
+#define GAME_GRAPHICS_FUNCTIONS
 
 #include <KHR/khrplatform.h>
 #include <GL/glcorearb.h>

@@ -1,12 +1,12 @@
+#include "code/memory.h"
+
+#include "graphics_library.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <Windows.h>
-
-#include "code/memory.h"
-
-#include "graphics_library.h"
 
 #define KEYBOARD_KEYS_MAX UINT8_MAX + 1
 #define MOUSE_KEYS_MAX 8
@@ -135,11 +135,11 @@ uint16_t platform_window_get_refresh_rate(struct Window * window, uint16_t defau
 }
 
 //
-#include "internal_system_window.h"
+#include "window_to_system.h"
 
 static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-void internal_system_window_init(void) {
+void window_to_system_init(void) {
 	if (application_module != NULL) { fprintf(stderr, "already init\n"); DEBUG_BREAK(); return; }
 	application_module = GetModuleHandleA(NULL);
 	if (application_module == NULL) { fprintf(stderr, "'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(1); }
@@ -155,15 +155,15 @@ void internal_system_window_init(void) {
 	// https://docs.microsoft.com/en-us/windows/win32/gdi/private-display-device-contexts
 }
 
-void internal_system_window_free(void) {
+void window_to_system_free(void) {
 	if (application_module == NULL) { fprintf(stderr, "already free\n"); DEBUG_BREAK(); return; }
 	UnregisterClassA(APPLICATION_CLASS_NAME, application_module);
 }
 
 //
-#include "internal_window.h"
+#include "window_to_graphics_library.h"
 
-HDC internal_window_get_private_device(struct Window * window) {
+HDC window_to_graphics_library_get_private_device(struct Window * window) {
 	return window->private_context;
 }
 

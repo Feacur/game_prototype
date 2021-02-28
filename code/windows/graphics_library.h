@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_LIBRARY)
-#define GAME_GRAPHICS_LIBRARY
+#if !defined(GAME_PLATFORM_GRAPHICS_LIBRARY)
+#define GAME_PLATFORM_GRAPHICS_LIBRARY
 
 // -- library part
 void graphics_library_init(void);

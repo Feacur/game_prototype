@@ -1,3 +1,5 @@
+#include "code/windows/window_to_graphics_library.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,8 +11,6 @@
 #include <GL/wgl.h>
 
 #include "code/memory.h"
-
-#include "code/windows/internal_window.h"
 
 static struct {
 	HMODULE handle;
@@ -130,7 +130,7 @@ static void load_functions(void);
 struct Graphics * graphics_init(struct Window * window) {
 	struct Graphics * context = MEMORY_ALLOCATE(struct Graphics);
 
-	context->private_device = internal_window_get_private_device(window);
+	context->private_device = window_to_graphics_library_get_private_device(window);
 	context->handle = create_context_auto(context->private_device, NULL);
 	rlib.dll.MakeCurrent(context->private_device , context->handle);
 
