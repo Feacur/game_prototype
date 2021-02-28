@@ -11,6 +11,9 @@
 #include <Windows.h>
 #include <GL/wgl.h>
 
+#define OPENGL_CLASS_NAME "game_prototype"
+// #define OPENGL_CLASS_NAME "opengl_loader"
+
 static struct {
 	HMODULE handle;
 
@@ -44,6 +47,8 @@ void graphics_library_init(void) {
 	rlib.handle = LoadLibraryA("opengl32.dll");
 	if (rlib.handle == NULL) { fprintf(stderr, "'LoadLibrary' failed\n"); DEBUG_BREAK(); exit(1); }
 
+	HMODULE application_module = GetModuleHandle(NULL);
+
 	// fetch basic DLL functions
 	rlib.dll.GetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(rlib.handle, "wglGetProcAddress");
 	rlib.dll.CreateContext  = (PFNWGLCREATECONTEXTPROC) GetProcAddress(rlib.handle, "wglCreateContext");
@@ -51,13 +56,22 @@ void graphics_library_init(void) {
 	rlib.dll.MakeCurrent    = (PFNWGLMAKECURRENTPROC)   GetProcAddress(rlib.handle, "wglMakeCurrent");
 	rlib.dll.ShareLists     = (PFNWGLSHARELISTSPROC)    GetProcAddress(rlib.handle, "wglShareLists");
 
+	// create temporary class
+	// ATOM atom = RegisterClassExA(&(WNDCLASSEXA){
+	// 	.cbSize = sizeof(WNDCLASSEXA),
+	// 	.lpszClassName = OPENGL_CLASS_NAME,
+	// 	.hInstance = application_module,
+	// 	.lpfnWndProc = DefWindowProcA,
+	// });
+	// if (atom == 0) { fprintf(stderr, "'RegisterClassExA' failed\n"); DEBUG_BREAK(); exit(1); }
+
 	// create temporary window
 	HWND hwnd = CreateWindowExA(
 		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
-		"game_prototype", "",
+		OPENGL_CLASS_NAME, "",
 		WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		0, 0, 1, 1,
-		HWND_DESKTOP, NULL, GetModuleHandle(NULL), NULL
+		HWND_DESKTOP, NULL, application_module, NULL
 	);
 	if (hwnd == NULL) { fprintf(stderr, "'CreateWindow' failed\n"); DEBUG_BREAK(); exit(1); }
 
@@ -107,7 +121,9 @@ void graphics_library_init(void) {
 	rlib.dll.MakeCurrent(NULL, NULL);
 	rlib.dll.DeleteContext(rc_handle);
 
+	// ReleaseDC(hwnd, hdc);
 	DestroyWindow(hwnd);
+	// UnregisterClassA(OPENGL_CLASS_NAME, application_module);
 
 	// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/
 	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
@@ -179,7 +195,6 @@ static bool contains_full_word(char const * container, char const * value) {
 	return false;
 }
 
-#define HAS_ARB(name) contains_full_word(rlib.arb.extensions, # name)
 // #define HAS_EXT(name) contains_full_word(rlib.ext.extensions, # name)
 
 static int dictionary_int_int_get_value(int const * keys, int const * vals, int key) {
@@ -190,6 +205,7 @@ static int dictionary_int_int_get_value(int const * keys, int const * vals, int 
 }
 
 static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
+#define HAS_ARB(name) contains_full_word(rlib.arb.extensions, # name)
 #define KEYS_COUNT (sizeof(request_keys) / sizeof(*request_keys))
 #define GET_VALUE(key) dictionary_int_int_get_value(request_keys, request_vals, key)
 
@@ -272,6 +288,7 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_multisample.txt
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_framebuffer_sRGB.txt
 
+#undef HAS_ARB
 #undef KEYS_COUNT
 #undef GET_VALUE
 }
@@ -340,11 +357,13 @@ static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * forma
 }
 
 static HGLRC create_context_arb(HDC device, HGLRC shared, int version) {
+#define HAS_ARB(name) contains_full_word(rlib.arb.extensions, # name)
 #define ADD_ATTRIBUTE(key, value) \
 	do { \
 		attributes[attributes_count++] = key; \
 		attributes[attributes_count++] = value; \
 	} while (false) \
+
 
 	if (!HAS_ARB(WGL_ARB_create_context)) { return NULL; }
 
@@ -418,6 +437,7 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, int version) {
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_create_context_no_error.txt
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_create_context_robustness.txt
 
+#undef HAS_ARB
 #undef ADD_ATTRIBUTE
 }
 
@@ -471,5 +491,4 @@ static void * rlib_get_function(char const * name) {
 	return NULL;
 }
 
-#undef HAS_ARB
-// #undef HAS_EXT
+#undef OPENGL_CLASS_NAME

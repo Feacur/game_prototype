@@ -143,7 +143,7 @@ void window_to_system_init(void) {
 	if (application_module != NULL) { fprintf(stderr, "already init\n"); DEBUG_BREAK(); return; }
 	application_module = GetModuleHandleA(NULL);
 	if (application_module == NULL) { fprintf(stderr, "'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(1); }
-	RegisterClassExA(&(WNDCLASSEXA){
+	ATOM atom = RegisterClassExA(&(WNDCLASSEXA){
 		.cbSize = sizeof(WNDCLASSEXA),
 		.lpszClassName = APPLICATION_CLASS_NAME,
 		.hInstance = application_module,
@@ -151,6 +151,7 @@ void window_to_system_init(void) {
 		.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
 		.hCursor = LoadCursorA(0, IDC_ARROW),
 	});
+	if (atom == 0) { fprintf(stderr, "'RegisterClassExA' failed\n"); DEBUG_BREAK(); exit(1); }
 	// https://docs.microsoft.com/en-us/windows/win32/winmsg/about-window-classes
 	// https://docs.microsoft.com/en-us/windows/win32/gdi/private-display-device-contexts
 }
@@ -352,3 +353,5 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 
 	return DefWindowProcA(hwnd, message, wParam, lParam);
 }
+
+#undef APPLICATION_CLASS_NAME
