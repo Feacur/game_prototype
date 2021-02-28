@@ -2,6 +2,7 @@
 #include "code/opengl/functions.h"
 
 #include "code/windows/window_to_graphics_library.h"
+#include "code/opengl/graphics_to_graphics_library.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,11 +134,14 @@ struct Graphics * graphics_init(struct Window * window) {
 	rlib.dll.MakeCurrent(context->private_device , context->handle);
 
 	graphics_load_functions(rlib_get_function);
+	graphics_to_graphics_library_init();
 
 	return context;
 }
 
 void graphics_free(struct Graphics * context) {
+	graphics_to_graphics_library_free();
+
 	rlib.dll.MakeCurrent(NULL, NULL);
 	rlib.dll.DeleteContext(context->handle);
 

@@ -7,6 +7,12 @@
 			"path": "../code"
 		},
 		{
+			"path": "../third_party"
+		},
+		{
+			"path": "../assets"
+		},
+		{
 			"path": "../project"
 		},
 		{

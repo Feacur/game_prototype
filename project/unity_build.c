@@ -4,4 +4,5 @@
 #include "code/windows/window.c"
 #include "code/windows/opengl/library.c"
 #include "code/opengl/functions.c"
+#include "code/opengl/implementation.c"
 #include "code/main.c"
