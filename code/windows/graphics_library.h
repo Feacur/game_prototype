@@ -12,4 +12,6 @@ struct Graphics;
 struct Graphics * graphics_init(struct Window * window);
 void graphics_free(struct Graphics * context);
 
+void graphics_display(struct Graphics * context);
+
 #endif

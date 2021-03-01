@@ -109,6 +109,10 @@ void platform_window_update(struct Window * window) {
 	window->mouse.wheel_y = 0;
 }
 
+void platform_window_display(struct Window * window) {
+	graphics_display(window->graphics);
+}
+
 bool platform_window_key(struct Window * window, enum Key_Code key) {
 	return window->keyboard.keys[key];
 }

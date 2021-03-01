@@ -98,6 +98,10 @@ void gpu_program_free(struct Gpu_Program * gpu_program) {
 	MEMORY_FREE(gpu_program);
 }
 
+void gpu_program_select(struct Gpu_Program * gpu_program) {
+	glUseProgram(gpu_program->id);
+}
+
 // -- GPU texture part
 struct Gpu_Texture {
 	GLuint id;
@@ -119,19 +123,74 @@ void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 // -- GPU mesh part
 struct Gpu_Mesh {
 	GLuint id;
+	GLuint vertices_buffer_id;
+	GLuint indices_buffer_id;
 };
 
-struct Gpu_Mesh * gpu_mesh_init(void) {
+struct Gpu_Mesh * gpu_mesh_init(float const * vertices, uint32_t vertices_count, uint32_t const * indices, uint32_t indices_count) {
+	GLuint mesh_id;
+	glCreateVertexArrays(1, &mesh_id);
+
+	// allocate buffer: vertices
+	GLuint vertices_buffer_id;
+	glCreateBuffers(1, &vertices_buffer_id);
+	glNamedBufferData(
+		vertices_buffer_id,
+		vertices_count * sizeof(float),
+		NULL, GL_STATIC_DRAW
+	);
+
+	// allocate buffer: indices
+	GLuint indices_buffer_id;
+	glCreateBuffers(1, &indices_buffer_id);
+	glNamedBufferData(
+		indices_buffer_id,
+		indices_count * sizeof(uint32_t),
+		NULL, GL_STATIC_DRAW
+	);
+
+	// chart buffer: vertices
+	GLint position_attribute_length = 3;
+
+	GLsizei all_attributes_size = 0;
+	all_attributes_size += (GLsizei)position_attribute_length * (GLsizei)sizeof(float);
+
+	GLuint buffer_index = 0;
+	GLintptr first_attribute_offset = 0;
+	glVertexArrayVertexBuffer(mesh_id, buffer_index, vertices_buffer_id, first_attribute_offset, all_attributes_size);
+
+	GLuint attribute_index = 0;
+	GLuint attribute_offset = 0;
+	glEnableVertexArrayAttrib(mesh_id, attribute_index);
+	glVertexArrayAttribBinding(mesh_id, attribute_index, buffer_index);
+	glVertexArrayAttribFormat(mesh_id, attribute_index, position_attribute_length, GL_FLOAT, GL_FALSE, attribute_offset);
+	attribute_offset += (GLuint)position_attribute_length * (GLuint)sizeof(float);
+
+	// chart buffer: indices
+	glVertexArrayElementBuffer(mesh_id, indices_buffer_id);
+
+	// load buffer: vertices
+	glNamedBufferSubData(vertices_buffer_id, 0, vertices_count * sizeof(float), vertices);
+
+	// load buffer: indices
+	glNamedBufferSubData(indices_buffer_id, 0, indices_count * sizeof(uint32_t), indices);
+
 	struct Gpu_Mesh * gpu_mesh = MEMORY_ALLOCATE(struct Gpu_Mesh);
-
-	glCreateVertexArrays(1, &gpu_mesh->id);
-
+	gpu_mesh->id = mesh_id;
+	gpu_mesh->vertices_buffer_id = vertices_buffer_id;
+	gpu_mesh->indices_buffer_id = indices_buffer_id;
 	return gpu_mesh;
 }
 
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
+	glDeleteBuffers(1, &gpu_mesh->vertices_buffer_id);
+	glDeleteBuffers(1, &gpu_mesh->indices_buffer_id);
 	glDeleteVertexArrays(1, &gpu_mesh->id);
 	MEMORY_FREE(gpu_mesh);
+}
+
+void gpu_mesh_select(struct Gpu_Mesh * gpu_mesh) {
+	glBindVertexArray(gpu_mesh->id);
 }
 
 //

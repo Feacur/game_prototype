@@ -2,6 +2,7 @@
 #include "platform_system.h"
 #include "platform_window.h"
 
+#include "opengl/functions.h"
 #include "opengl/implementation.h"
 
 #include <stdio.h>
@@ -37,16 +38,27 @@ int main (int argc, char * argv[]) {
 
 	char * gpu_program_text = read_file("assets/test.glsl");
 
+	float vertices[] = {
+		-0.3f, -0.3f, 0.0f,
+		 0.3f, -0.3f, 0.0f,
+		 0.0f,  0.3f, 0.0f,
+	};
+	uint32_t indices[] = {0, 1, 2};
+
 	struct Gpu_Program * gpu_program = gpu_program_init(gpu_program_text);
 	struct Gpu_Texture * gpu_texture = gpu_texture_init();
-	struct Gpu_Mesh * gpu_mesh = gpu_mesh_init();
+	struct Gpu_Mesh * gpu_mesh = gpu_mesh_init(vertices, sizeof(vertices) / sizeof(*vertices), indices, sizeof(indices) / sizeof(*indices));
 
 	free(gpu_program_text);
 
+	gpu_program_select(gpu_program);
+	gpu_mesh_select(gpu_mesh);
+
 	// update
-	while (window != NULL && platform_window_exists(window)) {
+	while (window != NULL) {
 		platform_window_update(window);
 		platform_system_update();
+		if (!platform_window_exists(window)) { break; }
 
 		platform_system_sleep(16);
 
@@ -65,6 +77,10 @@ int main (int argc, char * argv[]) {
 		if (platform_window_mouse_transition(window, MC_RIGHT, false)) {
 			printf("released mouse right\n");
 		}
+
+		glClear(GL_COLOR_BUFFER_BIT);
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(*indices), GL_UNSIGNED_INT, NULL);
+		platform_window_display(window);
 	}
 
 	// cleanup

@@ -135,18 +135,28 @@ void graphics_library_free(void) {
 }
 
 // -- graphics part
+struct Pixel_Format {
+	int id;
+	int version;
+	int double_buffering, swap_method;
+	int r, g, b, a;
+	int depth, stencil;
+	int samples, sample_buffers;
+};
+
 struct Graphics {
 	HGLRC handle;
 	HDC private_device;
+	struct Pixel_Format pixel_format;
 };
 
-static HGLRC create_context_auto(HDC device, HGLRC shared);
+static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format);
 static void * rlib_get_function(char const * name);
 struct Graphics * graphics_init(struct Window * window) {
 	struct Graphics * context = MEMORY_ALLOCATE(struct Graphics);
 
 	context->private_device = window_to_graphics_library_get_private_device(window);
-	context->handle = create_context_auto(context->private_device, NULL);
+	context->handle = create_context_auto(context->private_device, NULL, &context->pixel_format);
 	rlib.dll.MakeCurrent(context->private_device , context->handle);
 
 	graphics_load_functions(rlib_get_function);
@@ -165,16 +175,15 @@ void graphics_free(struct Graphics * context) {
 	MEMORY_FREE(context);
 }
 
-//
+void graphics_display(struct Graphics * context) {
+	if (context->pixel_format.double_buffering) {
+		if (SwapBuffers(context->private_device)) { return; }
+	}
+	glFlush();
+	// glFinish();
+}
 
-struct Pixel_Format {
-	int id;
-	int version;
-	int buffering, swap_method;
-	int r, g, b, a;
-	int depth, stencil;
-	int samples, sample_buffers;
-};
+//
 
 static bool contains_full_word(char const * container, char const * value) {
 	if (container == NULL) { return false; }
@@ -269,7 +278,7 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 
 		formats[formats_count++] = (struct Pixel_Format){
 			.id = pfd_id,
-			.buffering = GET_VALUE(WGL_DOUBLE_BUFFER_ARB),
+			.double_buffering = GET_VALUE(WGL_DOUBLE_BUFFER_ARB),
 			.swap_method = swap_method,
 			.r = GET_VALUE(WGL_RED_BITS_ARB),
 			.g = GET_VALUE(WGL_GREEN_BITS_ARB),
@@ -319,7 +328,7 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 
 		formats[formats_count++] = (struct Pixel_Format){
 			.id = pfd_id,
-			.buffering = (pfd.dwFlags & PFD_DOUBLEBUFFER)  == PFD_DOUBLEBUFFER,
+			.double_buffering = (pfd.dwFlags & PFD_DOUBLEBUFFER)  == PFD_DOUBLEBUFFER,
 			.swap_method = swap_method,
 			.r = pfd.cRedBits,
 			.g = pfd.cGreenBits,
@@ -343,7 +352,7 @@ static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * forma
 		if (format->depth   < hint.depth)   { continue; }
 		if (format->stencil < hint.stencil) { continue; }
 
-		if (format->buffering < hint.buffering) { continue; }
+		if (format->double_buffering < hint.double_buffering) { continue; }
 		if (hint.swap_method != 0) {
 			if (format->swap_method != hint.swap_method) { continue; }
 		}
@@ -447,10 +456,10 @@ static HGLRC create_context_legacy(HDC device, HGLRC shared) {
 	return result;
 }
 
-static HGLRC create_context_auto(HDC device, HGLRC shared) {
+static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format) {
 	struct Pixel_Format hint = (struct Pixel_Format){
 		.version = 46,
-		.buffering = true, .swap_method = 0,
+		.double_buffering = true, .swap_method = 0,
 		.r = 8, .g = 8, .b = 8, .a = 8,
 		.depth = 24, .stencil = 8,
 	};
@@ -474,6 +483,7 @@ static HGLRC create_context_auto(HDC device, HGLRC shared) {
 	if (result == NULL) { result = create_context_legacy(device, shared); }
 	if (result == NULL) { fprintf(stderr, "failed to create context\n"); DEBUG_BREAK(); exit(1); }
 
+	*selected_pixel_format = pixel_format;
 	return result;
 }
 

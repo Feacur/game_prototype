@@ -11,6 +11,7 @@ void platform_window_free(struct Window * window);
 
 bool platform_window_exists(struct Window * window);
 void platform_window_update(struct Window * window);
+void platform_window_display(struct Window * window);
 
 bool platform_window_key(struct Window * window, enum Key_Code key);
 bool platform_window_key_transition(struct Window * window, enum Key_Code key, bool state);
