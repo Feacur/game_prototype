@@ -173,9 +173,9 @@ void window_to_system_free(void) {
 }
 
 //
-#include "window_to_graphics_library.h"
+#include "window_to_glibrary.h"
 
-HDC window_to_graphics_library_get_private_device(struct Window * window) {
+HDC window_to_glibrary_get_private_device(struct Window * window) {
 	return window->private_context;
 }
 

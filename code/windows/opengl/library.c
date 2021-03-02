@@ -2,8 +2,8 @@
 #include "code/opengl/functions.h"
 
 #include "code/windows/system_to_internal.h"
-#include "code/windows/window_to_graphics_library.h"
-#include "code/opengl/graphics_to_graphics_library.h"
+#include "code/windows/window_to_glibrary.h"
+#include "code/opengl/graphics_to_glibrary.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -163,19 +163,19 @@ static void * rlib_get_function(char const * name);
 struct Graphics * graphics_init(struct Window * window) {
 	struct Graphics * context = MEMORY_ALLOCATE(struct Graphics);
 
-	context->private_device = window_to_graphics_library_get_private_device(window);
+	context->private_device = window_to_glibrary_get_private_device(window);
 	context->handle = create_context_auto(context->private_device, NULL, &context->pixel_format);
 	rlib.dll.MakeCurrent(context->private_device , context->handle);
 	context->vsync = 0;
 
 	graphics_load_functions(rlib_get_function);
-	graphics_to_graphics_library_init();
+	graphics_to_glibrary_init();
 
 	return context;
 }
 
 void graphics_free(struct Graphics * context) {
-	graphics_to_graphics_library_free();
+	graphics_to_glibrary_free();
 
 	rlib.dll.MakeCurrent(NULL, NULL);
 	rlib.dll.DeleteContext(context->handle);

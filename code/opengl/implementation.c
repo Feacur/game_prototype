@@ -195,7 +195,7 @@ void gpu_mesh_select(struct Gpu_Mesh * gpu_mesh) {
 }
 
 //
-#include "graphics_to_graphics_library.h"
+#include "graphics_to_glibrary.h"
 
 static void __stdcall opengl_debug_message_callback(
 	GLenum source,
@@ -208,7 +208,7 @@ static void __stdcall opengl_debug_message_callback(
 );
 
 static char * allocate_extensions_string(void);
-void graphics_to_graphics_library_init(void) {
+void graphics_to_glibrary_init(void) {
 	// setup debug
 	if (glDebugMessageCallback != NULL) {
 		glEnable(GL_DEBUG_OUTPUT);
@@ -223,7 +223,7 @@ void graphics_to_graphics_library_init(void) {
 	ogl_extensions = allocate_extensions_string();
 }
 
-void graphics_to_graphics_library_free(void) {
+void graphics_to_glibrary_free(void) {
 	ogl_version = 0;
 	MEMORY_FREE(ogl_extensions);
 }
