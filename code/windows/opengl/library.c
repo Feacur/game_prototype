@@ -36,6 +36,7 @@ static struct {
 		PFNWGLGETEXTENSIONSSTRINGEXTPROC GetExtensionsString;
 		PFNWGLSWAPINTERVALEXTPROC        SwapInterval;
 		char const * extensions;
+		bool has_extension_swap_control;
 	} ext;
 } rlib;
 
@@ -43,6 +44,7 @@ static struct {
 #include "code/windows/graphics_library.h"
 
 // -- library part
+static bool contains_full_word(char const * container, char const * value);
 void graphics_library_init(void) {
 	rlib.handle = LoadLibraryA("opengl32.dll");
 	if (rlib.handle == NULL) { fprintf(stderr, "'LoadLibrary' failed\n"); DEBUG_BREAK(); exit(1); }
@@ -117,6 +119,10 @@ void graphics_library_init(void) {
 	rlib.arb.extensions = rlib.arb.GetExtensionsString(hdc);
 	rlib.ext.extensions = rlib.ext.GetExtensionsString();
 
+#define HAS_EXT(name) contains_full_word(rlib.ext.extensions, "WGL_EXT_" # name)
+	rlib.ext.has_extension_swap_control = HAS_EXT(swap_control);
+#undef HAS_EXT
+
 	//
 	rlib.dll.MakeCurrent(NULL, NULL);
 	rlib.dll.DeleteContext(rc_handle);
@@ -137,7 +143,6 @@ void graphics_library_free(void) {
 // -- graphics part
 struct Pixel_Format {
 	int id;
-	int version;
 	int double_buffering, swap_method;
 	int r, g, b, a;
 	int depth, stencil;
@@ -204,8 +209,6 @@ static bool contains_full_word(char const * container, char const * value) {
 	return false;
 }
 
-// #define HAS_EXT(name) contains_full_word(rlib.ext.extensions, # name)
-
 static int dictionary_int_int_get_value(int const * keys, int const * vals, int key) {
 	for (int i = 0; keys[i]; i++) {
 		if (keys[i] == key) { return vals[i]; }
@@ -214,15 +217,19 @@ static int dictionary_int_int_get_value(int const * keys, int const * vals, int 
 }
 
 static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
-#define HAS_ARB(name) contains_full_word(rlib.arb.extensions, # name)
+#define HAS_ARB(name) contains_full_word(rlib.arb.extensions, "WGL_ARB_" # name)
+#define HAS_EXT(name) contains_full_word(rlib.ext.extensions, "WGL_EXT_" # name)
 #define KEYS_COUNT (sizeof(request_keys) / sizeof(*request_keys))
 #define GET_VALUE(key) dictionary_int_int_get_value(request_keys, request_vals, key)
 
-	if (!HAS_ARB(WGL_ARB_pixel_format)) { return 0; }
+	if (!HAS_ARB(pixel_format)) { return NULL; }
 
 	int const formats_request = WGL_NUMBER_PIXEL_FORMATS_ARB; int formats_capacity;
 	if (!rlib.arb.GetPixelFormatAttribiv(device, 0, 0, 1, &formats_request, &formats_capacity)) { DEBUG_BREAK(); return NULL; }
 	if (formats_capacity == 0) { DEBUG_BREAK(); return NULL; }
+
+	bool has_extension_multisample = HAS_ARB(multisample);
+	bool has_extension_framebuffer_sRGB = HAS_EXT(framebuffer_sRGB);
 
 	int const request_keys[] = {
 		WGL_DRAW_TO_WINDOW_ARB,
@@ -260,12 +267,12 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 		if (GET_VALUE(WGL_ACCELERATION_ARB)   != WGL_FULL_ACCELERATION_ARB) { continue; }
 		if (GET_VALUE(WGL_PIXEL_TYPE_ARB)     != WGL_TYPE_RGBA_ARB)         { continue; }
 
-		if (HAS_ARB(ARB_multisample)) {
+		if (has_extension_multisample) {
 			if (GET_VALUE(WGL_SAMPLES_ARB) == 0)        { continue; }
 			if (GET_VALUE(WGL_SAMPLE_BUFFERS_ARB) == 0) { continue; }
 		}
 
-		if (HAS_ARB(ARB_framebuffer_sRGB)) {
+		if (has_extension_framebuffer_sRGB) {
 			if (!GET_VALUE(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB)) { continue; }
 		}
 
@@ -298,6 +305,7 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_framebuffer_sRGB.txt
 
 #undef HAS_ARB
+#undef HAS_EXT
 #undef KEYS_COUNT
 #undef GET_VALUE
 }
@@ -365,16 +373,22 @@ static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * forma
 	return (struct Pixel_Format){0};
 }
 
-static HGLRC create_context_arb(HDC device, HGLRC shared, int version) {
-#define HAS_ARB(name) contains_full_word(rlib.arb.extensions, # name)
+struct Context_Format {
+	int version;
+	int core;
+	int flush;
+	int debug;
+};
+
+static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format context_format) {
+#define HAS_ARB(name) contains_full_word(rlib.arb.extensions, "WGL_ARB_" # name)
 #define ADD_ATTRIBUTE(key, value) \
 	do { \
 		attributes[attributes_count++] = key; \
 		attributes[attributes_count++] = value; \
 	} while (false) \
 
-
-	if (!HAS_ARB(WGL_ARB_create_context)) { return NULL; }
+	if (!HAS_ARB(create_context)) { return NULL; }
 
 	int attributes_count = 0;
 	int attributes[16];
@@ -383,18 +397,17 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, int version) {
 	int context_profile_mask  = 0;
 
 	// version
-	if (version != 0) {
-		ADD_ATTRIBUTE(WGL_CONTEXT_MAJOR_VERSION_ARB, version / 10);
-		ADD_ATTRIBUTE(WGL_CONTEXT_MINOR_VERSION_ARB, version % 10);
+	if (context_format.version != 0) {
+		ADD_ATTRIBUTE(WGL_CONTEXT_MAJOR_VERSION_ARB, context_format.version / 10);
+		ADD_ATTRIBUTE(WGL_CONTEXT_MINOR_VERSION_ARB, context_format.version % 10);
 	}
 
 	// up to date
-	bool const prefer_up_to_date = true;
-	if (prefer_up_to_date) {
-		if (version >= 30) {
+	if (context_format.core) {
+		if (context_format.version >= 30) {
 			context_flags |= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
 		}
-		if (version >= 32) {
+		if (context_format.version >= 32) {
 			context_profile_mask |= WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
 		}
 	}
@@ -403,22 +416,20 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, int version) {
 	}
 
 	// flush control
-	bool flush_on_release = false;
-	if (HAS_ARB(ARB_context_flush_control)) {
+	if (HAS_ARB(context_flush_control)) {
 		ADD_ATTRIBUTE(
 			WGL_CONTEXT_RELEASE_BEHAVIOR_ARB,
-			flush_on_release ? WGL_CONTEXT_RELEASE_BEHAVIOR_FLUSH_ARB : WGL_CONTEXT_RELEASE_BEHAVIOR_NONE_ARB
+			context_format.flush ? WGL_CONTEXT_RELEASE_BEHAVIOR_FLUSH_ARB : WGL_CONTEXT_RELEASE_BEHAVIOR_NONE_ARB
 		);
 	}
 
 	// error control
-	int const debug_level = 2;
-	if (debug_level == 0 && HAS_ARB(WGL_ARB_create_context_no_error)) {
+	if (context_format.debug == 0 && HAS_ARB(create_context_no_error)) {
 		ADD_ATTRIBUTE(WGL_CONTEXT_OPENGL_NO_ERROR_ARB, true);
 	}
 	else {
 		int const context_robustness_mode = 0;
-		if (context_robustness_mode != 0 && HAS_ARB(ARB_create_context_robustness)) {
+		if (context_robustness_mode != 0 && HAS_ARB(create_context_robustness)) {
 			ADD_ATTRIBUTE(
 				WGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB,
 				context_robustness_mode == 1 ? WGL_NO_RESET_NOTIFICATION_ARB : WGL_LOSE_CONTEXT_ON_RESET_ARB
@@ -426,7 +437,7 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, int version) {
 			context_flags |= WGL_CONTEXT_ROBUST_ACCESS_BIT_ARB;
 		}
 
-		if (debug_level == 2) { context_flags |= WGL_CONTEXT_DEBUG_BIT_ARB; }
+		if (context_format.debug == 2) { context_flags |= WGL_CONTEXT_DEBUG_BIT_ARB; }
 	}
 
 	// flags and masks
@@ -434,7 +445,7 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, int version) {
 		ADD_ATTRIBUTE(WGL_CONTEXT_FLAGS_ARB, context_flags);
 	}
 
-	if (context_profile_mask != 0) {
+	if (HAS_ARB(create_context_profile) && context_profile_mask != 0) {
 		ADD_ATTRIBUTE(WGL_CONTEXT_PROFILE_MASK_ARB, context_profile_mask);
 	}
 
@@ -458,10 +469,13 @@ static HGLRC create_context_legacy(HDC device, HGLRC shared) {
 
 static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format) {
 	struct Pixel_Format hint = (struct Pixel_Format){
-		.version = 46,
 		.double_buffering = true, .swap_method = 0,
 		.r = 8, .g = 8, .b = 8, .a = 8,
 		.depth = 24, .stencil = 8,
+	};
+	struct Context_Format settings = (struct Context_Format){
+		.version = 46, .core = 1,
+		.flush = 0, .debug = 1,
 	};
 
 	struct Pixel_Format * pixel_formats = allocate_pixel_formats_arb(device);
@@ -479,7 +493,7 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 	BOOL pfd_found = SetPixelFormat(device, pixel_format.id, &pfd);
 	if (!pfd_found) { fprintf(stderr, "'SetPixelFormat' failed\n"); DEBUG_BREAK(); exit(1); }
 
-	HGLRC result = create_context_arb(device, shared, hint.version);
+	HGLRC result = create_context_arb(device, shared, settings);
 	if (result == NULL) { result = create_context_legacy(device, shared); }
 	if (result == NULL) { fprintf(stderr, "failed to create context\n"); DEBUG_BREAK(); exit(1); }
 
