@@ -1,6 +1,6 @@
 #include "timer_to_system.h"
 #include "window_to_system.h"
-#include "graphics_library.h"
+#include "glibrary_to_system.h"
 
 #include <Windows.h>
 
@@ -20,11 +20,11 @@ void platform_system_init(void) {
 	if (platform_system.module == NULL) { fprintf(stderr, "'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(1); }
 	timer_to_system_init();
 	window_to_system_init();
-	graphics_library_init();
+	glibrary_to_system_init();
 }
 
 void platform_system_free(void) {
-	graphics_library_free();
+	glibrary_to_system_free();
 	window_to_system_free();
 	timer_to_system_free();
 	memset(&platform_system, 0, sizeof(platform_system));

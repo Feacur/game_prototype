@@ -3,11 +3,6 @@
 
 #include "code/common.h"
 
-// -- library part
-void graphics_library_init(void);
-void graphics_library_free(void);
-
-// -- graphics part
 struct Window;
 struct Graphics;
 

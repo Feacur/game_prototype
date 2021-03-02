@@ -39,11 +39,10 @@ static struct {
 } rlib;
 
 //
-#include "code/windows/graphics_library.h"
+#include "code/windows/glibrary_to_system.h"
 
-// -- library part
 static bool contains_full_word(char const * container, char const * value);
-void graphics_library_init(void) {
+void glibrary_to_system_init(void) {
 // #define OPENGL_CLASS_NAME "temporary_opengl_class"
 #define OPENGL_CLASS_NAME APPLICATION_CLASS_NAME
 
@@ -136,12 +135,14 @@ void graphics_library_init(void) {
 #undef OPENGL_CLASS_NAME
 }
 
-void graphics_library_free(void) {
+void glibrary_to_system_free(void) {
 	FreeLibrary(rlib.handle);
 	memset(&rlib, 0, sizeof(rlib));
 }
 
-// -- graphics part
+//
+#include "code/windows/graphics_library.h"
+
 struct Pixel_Format {
 	int id;
 	int double_buffering, swap_method;
