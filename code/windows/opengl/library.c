@@ -1,6 +1,7 @@
 #include "code/memory.h"
 #include "code/opengl/functions.h"
 
+#include "code/windows/system_to_internal.h"
 #include "code/windows/window_to_graphics_library.h"
 #include "code/opengl/graphics_to_graphics_library.h"
 
@@ -43,13 +44,11 @@ static struct {
 // -- library part
 static bool contains_full_word(char const * container, char const * value);
 void graphics_library_init(void) {
-// #define OPENGL_CLASS_NAME "opengl_class"
-#define OPENGL_CLASS_NAME window_to_graphics_library_get_class()
+// #define OPENGL_CLASS_NAME "temporary_opengl_class"
+#define OPENGL_CLASS_NAME APPLICATION_CLASS_NAME
 
 	rlib.handle = LoadLibraryA("opengl32.dll");
 	if (rlib.handle == NULL) { fprintf(stderr, "'LoadLibrary' failed\n"); DEBUG_BREAK(); exit(1); }
-
-	HMODULE application_module = GetModuleHandle(NULL);
 
 	// fetch basic DLL functions
 	rlib.dll.GetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(rlib.handle, "wglGetProcAddress");
@@ -62,7 +61,7 @@ void graphics_library_init(void) {
 	// ATOM atom = RegisterClassExA(&(WNDCLASSEXA){
 	// 	.cbSize = sizeof(WNDCLASSEXA),
 	// 	.lpszClassName = OPENGL_CLASS_NAME,
-	// 	.hInstance = application_module,
+	// 	.hInstance = system_to_internal_get_module(),
 	// 	.lpfnWndProc = DefWindowProcA,
 	// });
 	// if (atom == 0) { fprintf(stderr, "'RegisterClassExA' failed\n"); DEBUG_BREAK(); exit(1); }
@@ -73,7 +72,7 @@ void graphics_library_init(void) {
 		OPENGL_CLASS_NAME, "",
 		WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		0, 0, 1, 1,
-		HWND_DESKTOP, NULL, application_module, NULL
+		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
 	if (hwnd == NULL) { fprintf(stderr, "'CreateWindow' failed\n"); DEBUG_BREAK(); exit(1); }
 
@@ -129,7 +128,7 @@ void graphics_library_init(void) {
 
 	// ReleaseDC(hwnd, hdc);
 	DestroyWindow(hwnd);
-	// UnregisterClassA(OPENGL_CLASS_NAME, application_module);
+	// UnregisterClassA(OPENGL_CLASS_NAME, system_to_internal_get_module());
 
 	// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/
 	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)

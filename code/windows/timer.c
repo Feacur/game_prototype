@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 static struct {
 	LARGE_INTEGER ticks_per_second;
@@ -34,4 +35,5 @@ void timer_to_system_init(void) {
 }
 
 void timer_to_system_free(void) {
+	memset(&platform_timer, 0, sizeof(platform_timer));
 }

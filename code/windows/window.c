@@ -1,5 +1,6 @@
 #include "code/memory.h"
 
+#include "system_to_internal.h"
 #include "graphics_library.h"
 
 #include <stdio.h>
@@ -35,9 +36,6 @@ struct Window {
 	struct Graphics * graphics;
 };
 
-#define APPLICATION_CLASS_NAME "game_prototype"
-static HMODULE application_module = NULL;
-
 //
 #include "code/platform_window.h"
 
@@ -49,7 +47,7 @@ struct Window * platform_window_init(void) {
 		APPLICATION_CLASS_NAME, "game prototype",
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-		HWND_DESKTOP, NULL, application_module, NULL
+		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
 	if (window->handle == NULL) { fprintf(stderr, "'CreateWindow' failed\n"); DEBUG_BREAK(); exit(1); }
 
@@ -157,13 +155,10 @@ uint32_t platform_window_get_refresh_rate(struct Window * window, uint32_t defau
 static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 void window_to_system_init(void) {
-	if (application_module != NULL) { fprintf(stderr, "already init\n"); DEBUG_BREAK(); return; }
-	application_module = GetModuleHandleA(NULL);
-	if (application_module == NULL) { fprintf(stderr, "'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(1); }
 	ATOM atom = RegisterClassExA(&(WNDCLASSEXA){
 		.cbSize = sizeof(WNDCLASSEXA),
 		.lpszClassName = APPLICATION_CLASS_NAME,
-		.hInstance = application_module,
+		.hInstance = system_to_internal_get_module(),
 		.lpfnWndProc = window_procedure,
 		.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
 		.hCursor = LoadCursorA(0, IDC_ARROW),
@@ -174,16 +169,11 @@ void window_to_system_init(void) {
 }
 
 void window_to_system_free(void) {
-	if (application_module == NULL) { fprintf(stderr, "already free\n"); DEBUG_BREAK(); return; }
-	UnregisterClassA(APPLICATION_CLASS_NAME, application_module);
+	UnregisterClassA(APPLICATION_CLASS_NAME, system_to_internal_get_module());
 }
 
 //
 #include "window_to_graphics_library.h"
-
-char const * window_to_graphics_library_get_class(void) {
-	return APPLICATION_CLASS_NAME;
-}
 
 HDC window_to_graphics_library_get_private_device(struct Window * window) {
 	return window->private_context;
