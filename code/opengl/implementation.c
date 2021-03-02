@@ -19,7 +19,7 @@ struct Gpu_Program {
 
 static void verify_shader(GLuint id, GLenum parameter);
 static void verify_program(GLuint id, GLenum parameter);
-struct Gpu_Program * gpu_program_init(char const * text) {
+struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size) {
 #define ADD_SECTION_HEADER(shader_type, version) \
 	do { \
 		if (strstr(text, #shader_type)) {\
@@ -33,7 +33,7 @@ struct Gpu_Program * gpu_program_init(char const * text) {
 		} \
 	} while (false) \
 
-	GLint text_length = (GLint)strlen(text);
+	if (text_size == 0) { text_size = (uint32_t)strlen(text); }
 
 	// a mandatory version header
 	static GLchar glsl_version[20];
@@ -60,7 +60,7 @@ struct Gpu_Program * gpu_program_init(char const * text) {
 	GLuint shader_ids[4];
 	for (uint32_t i = 0; i < headers_count; i++) {
 		GLchar const * code[]   = {glsl_version,        headers[i].data,   text};
-		GLint          length[] = {glsl_version_length, headers[i].length, text_length};
+		GLint          length[] = {glsl_version_length, headers[i].length, (GLint)text_size};
 
 		GLuint shader_id = glCreateShader(headers[i].type);
 		glShaderSource(shader_id, sizeof(code) / sizeof(*code), code, length);
@@ -107,7 +107,8 @@ struct Gpu_Texture {
 	GLuint id;
 };
 
-struct Gpu_Texture * gpu_texture_init(void) {
+struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t asset_image_size_x, uint32_t asset_image_size_y, uint32_t asset_image_channels) {
+	(void)data; (void)asset_image_size_x; (void)asset_image_size_y; (void)asset_image_channels;
 	struct Gpu_Texture * gpu_texture = MEMORY_ALLOCATE(struct Gpu_Texture);
 
 	glCreateTextures(GL_TEXTURE_2D, 1, &gpu_texture->id);

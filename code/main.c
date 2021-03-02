@@ -1,7 +1,10 @@
 #include "memory.h"
 #include "platform_timer.h"
+#include "platform_file.h"
 #include "platform_system.h"
 #include "platform_window.h"
+
+#include "asset_image.h"
 
 #include "opengl/functions.h"
 #include "opengl/implementation.h"
@@ -9,26 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static char * read_file(char const * path) {
-	FILE * file = fopen(path, "rb");
-	if (file == NULL) { fprintf(stderr, "'fopen' failed\n"); DEBUG_BREAK(); exit(1); }
-
-	fseek(file, 0L, SEEK_END);
-	size_t file_size = (size_t)ftell(file);
-	rewind(file);
-
-	char * buffer = (char *)malloc(file_size + 1);
-	if (buffer == NULL) { fprintf(stderr, "'malloc' failed\n"); DEBUG_BREAK(); exit(1); }
-
-	size_t bytes_read = (size_t)fread(buffer, sizeof(char), file_size, file);
-	if (bytes_read < file_size) { fprintf(stderr, "'fread' failed\n"); DEBUG_BREAK(); exit(1); }
-
-	buffer[bytes_read] = '\0';
-
-	fclose(file);
-	return buffer;
-}
 
 int main (int argc, char * argv[]) {
 	(void)argc; (void)argv;
@@ -38,7 +21,12 @@ int main (int argc, char * argv[]) {
 	struct Window * window = platform_window_init();
 	platform_window_set_vsync(window, 1);
 
-	char * gpu_program_text = read_file("assets/test.glsl");
+	size_t gpu_program_size;
+	uint8_t * gpu_program_text = platform_file_read("assets/test.glsl", &gpu_program_size);
+	gpu_program_text[gpu_program_size] = '\0';
+
+	uint32_t asset_image_size_x, asset_image_size_y, asset_image_channels;
+	uint8_t * asset_image = asset_image_read("assets/test.png", &asset_image_size_x, &asset_image_size_y, &asset_image_channels);
 
 	float vertices[] = {
 		-0.3f, -0.3f, 0.0f,
@@ -47,11 +35,12 @@ int main (int argc, char * argv[]) {
 	};
 	uint32_t indices[] = {0, 1, 2};
 
-	struct Gpu_Program * gpu_program = gpu_program_init(gpu_program_text);
-	struct Gpu_Texture * gpu_texture = gpu_texture_init();
+	struct Gpu_Program * gpu_program = gpu_program_init((char const *)gpu_program_text, (uint32_t)gpu_program_size);
+	struct Gpu_Texture * gpu_texture = gpu_texture_init(asset_image, asset_image_size_x, asset_image_size_y, asset_image_channels);
 	struct Gpu_Mesh * gpu_mesh = gpu_mesh_init(vertices, sizeof(vertices) / sizeof(*vertices), indices, sizeof(indices) / sizeof(*indices));
 
-	free(gpu_program_text);
+	MEMORY_FREE(asset_image);
+	MEMORY_FREE(gpu_program_text);
 
 	gpu_program_select(gpu_program);
 	gpu_mesh_select(gpu_mesh);

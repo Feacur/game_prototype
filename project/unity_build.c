@@ -1,5 +1,7 @@
 #include "code/memory.c"
 #include "code/array_byte.c"
+#include "code/platform_file.c"
+#include "code/asset_image.c"
 #include "code/windows/timer.c"
 #include "code/windows/system.c"
 #include "code/windows/window.c"
