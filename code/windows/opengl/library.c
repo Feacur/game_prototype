@@ -168,7 +168,7 @@ struct Graphics * graphics_init(struct Window * window) {
 	rlib.dll.MakeCurrent(context->private_device , context->handle);
 	context->vsync = 0;
 
-	graphics_load_functions(rlib_get_function);
+	graphics_functions_init(rlib_get_function);
 	graphics_to_glibrary_init();
 
 	return context;
@@ -176,6 +176,7 @@ struct Graphics * graphics_init(struct Window * window) {
 
 void graphics_free(struct Graphics * context) {
 	graphics_to_glibrary_free();
+	graphics_functions_free();
 
 	rlib.dll.MakeCurrent(NULL, NULL);
 	rlib.dll.DeleteContext(context->handle);

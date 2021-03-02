@@ -94,7 +94,9 @@ struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size) {
 }
 
 void gpu_program_free(struct Gpu_Program * gpu_program) {
-	glDeleteProgram(gpu_program->id);
+	if (ogl_version > 0) {
+		glDeleteProgram(gpu_program->id);
+	}
 	MEMORY_FREE(gpu_program);
 }
 
@@ -117,7 +119,9 @@ struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t asset_image
 }
 
 void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
-	glDeleteTextures(1, &gpu_texture->id);
+	if (ogl_version > 0) {
+		glDeleteTextures(1, &gpu_texture->id);
+	}
 	MEMORY_FREE(gpu_texture);
 }
 
@@ -184,9 +188,11 @@ struct Gpu_Mesh * gpu_mesh_init(float const * vertices, uint32_t vertices_count,
 }
 
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
-	glDeleteBuffers(1, &gpu_mesh->vertices_buffer_id);
-	glDeleteBuffers(1, &gpu_mesh->indices_buffer_id);
-	glDeleteVertexArrays(1, &gpu_mesh->id);
+	if (ogl_version > 0) {
+		glDeleteBuffers(1, &gpu_mesh->vertices_buffer_id);
+		glDeleteBuffers(1, &gpu_mesh->indices_buffer_id);
+		glDeleteVertexArrays(1, &gpu_mesh->id);
+	}
 	MEMORY_FREE(gpu_mesh);
 }
 
@@ -224,8 +230,8 @@ void graphics_to_glibrary_init(void) {
 }
 
 void graphics_to_glibrary_free(void) {
-	ogl_version = 0;
 	MEMORY_FREE(ogl_extensions);
+	ogl_extensions = NULL;
 }
 
 //

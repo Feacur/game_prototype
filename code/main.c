@@ -104,6 +104,7 @@ int main (int argc, char * argv[]) {
 	gpu_program_free(gpu_program);
 	gpu_texture_free(gpu_texture);
 	gpu_mesh_free(gpu_mesh);
+
 	if (window != NULL) {
 		platform_window_free(window);
 		window = NULL;
