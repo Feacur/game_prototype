@@ -11,9 +11,6 @@
 #include <Windows.h>
 #include <GL/wgl.h>
 
-#define OPENGL_CLASS_NAME "game_prototype"
-// #define OPENGL_CLASS_NAME "opengl_loader"
-
 static struct {
 	HMODULE handle;
 
@@ -46,6 +43,9 @@ static struct {
 // -- library part
 static bool contains_full_word(char const * container, char const * value);
 void graphics_library_init(void) {
+// #define OPENGL_CLASS_NAME "opengl_class"
+#define OPENGL_CLASS_NAME window_to_graphics_library_get_class()
+
 	rlib.handle = LoadLibraryA("opengl32.dll");
 	if (rlib.handle == NULL) { fprintf(stderr, "'LoadLibrary' failed\n"); DEBUG_BREAK(); exit(1); }
 
@@ -133,6 +133,8 @@ void graphics_library_init(void) {
 
 	// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/
 	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
+
+#undef OPENGL_CLASS_NAME
 }
 
 void graphics_library_free(void) {

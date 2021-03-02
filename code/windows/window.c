@@ -181,6 +181,10 @@ void window_to_system_free(void) {
 //
 #include "window_to_graphics_library.h"
 
+char const * window_to_graphics_library_get_class(void) {
+	return APPLICATION_CLASS_NAME;
+}
+
 HDC window_to_graphics_library_get_private_device(struct Window * window) {
 	return window->private_context;
 }
