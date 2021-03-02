@@ -153,6 +153,7 @@ struct Graphics {
 	HGLRC handle;
 	HDC private_device;
 	struct Pixel_Format pixel_format;
+	int32_t vsync;
 };
 
 static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format);
@@ -163,6 +164,7 @@ struct Graphics * graphics_init(struct Window * window) {
 	context->private_device = window_to_graphics_library_get_private_device(window);
 	context->handle = create_context_auto(context->private_device, NULL, &context->pixel_format);
 	rlib.dll.MakeCurrent(context->private_device , context->handle);
+	context->vsync = 0;
 
 	graphics_load_functions(rlib_get_function);
 	graphics_to_graphics_library_init();
@@ -180,6 +182,20 @@ void graphics_free(struct Graphics * context) {
 	MEMORY_FREE(context);
 }
 
+int32_t graphics_get_vsync(struct Graphics * context) {
+	return context->vsync;
+}
+
+void graphics_set_vsync(struct Graphics * context, int32_t value) {
+	if (!context->pixel_format.double_buffering) { return; }
+	if (rlib.ext.has_extension_swap_control) {
+		if (rlib.ext.SwapInterval((int)value)) {
+			context->vsync = value;
+			return;
+		}
+	}
+}
+
 void graphics_display(struct Graphics * context) {
 	if (context->pixel_format.double_buffering) {
 		if (SwapBuffers(context->private_device)) { return; }
@@ -187,6 +203,11 @@ void graphics_display(struct Graphics * context) {
 	glFlush();
 	// glFinish();
 }
+
+// void graphics_size(struct Graphics * context, int32_t size_x, int32_t size_y) {
+// 	(void)context;
+// 	glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
+// }
 
 //
 

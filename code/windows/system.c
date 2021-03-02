@@ -1,3 +1,4 @@
+#include "timer_to_system.h"
 #include "window_to_system.h"
 #include "graphics_library.h"
 
@@ -7,6 +8,7 @@
 #include "code/platform_system.h"
 
 void platform_system_init(void) {
+	timer_to_system_init();
 	window_to_system_init();
 	graphics_library_init();
 }
@@ -14,6 +16,7 @@ void platform_system_init(void) {
 void platform_system_free(void) {
 	graphics_library_free();
 	window_to_system_free();
+	timer_to_system_free();
 }
 
 void platform_system_update(void) {

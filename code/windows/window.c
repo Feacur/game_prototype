@@ -109,6 +109,14 @@ void platform_window_update(struct Window * window) {
 	window->mouse.wheel_y = 0;
 }
 
+int32_t platform_window_get_vsync(struct Window * window) {
+	return graphics_get_vsync(window->graphics);
+}
+
+void platform_window_set_vsync(struct Window * window, int32_t value) {
+	graphics_set_vsync(window->graphics, value);
+}
+
 void platform_window_display(struct Window * window) {
 	graphics_display(window->graphics);
 }
@@ -133,9 +141,14 @@ bool platform_window_mouse_transition(struct Window * window, enum Mouse_Code ke
 	return (now != was) && (now == state);
 }
 
-uint16_t platform_window_get_refresh_rate(struct Window * window, uint16_t default_value) {
+void platform_window_get_size(struct Window * window, int32_t * size_x, int32_t * size_y) {
+	*size_x = window->size_x;
+	*size_y = window->size_y;
+}
+
+uint32_t platform_window_get_refresh_rate(struct Window * window, uint32_t default_value) {
 	int value = GetDeviceCaps(window->private_context, VREFRESH);
-	return value > 1 ? (uint16_t)value : default_value;
+	return value > 1 ? (uint32_t)value : default_value;
 }
 
 //
@@ -266,7 +279,7 @@ static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam,
 	window->mouse.display_y = display_height - (screen.y + 1);
 
 	window->mouse.window_x = client.x;
-	window->mouse.window_y = window->size_y - (client.y + 1);
+	window->mouse.window_y = (int32_t)window->size_y - (client.y + 1);
 
 	window->mouse.delta_x += window->mouse.display_x - prev_display_x;
 	window->mouse.delta_y += window->mouse.display_y - prev_display_y;
@@ -328,6 +341,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		case WM_SIZE: {
 			window->size_x = (int32_t)LOWORD(lParam);
 			window->size_y = (int32_t)HIWORD(lParam);
+			// graphics_size(window->graphics, window->size_x, window->size_y);
 			return 0;
 		}
 
