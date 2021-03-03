@@ -38,6 +38,8 @@ uint8_t * asset_image_read(char const * path, uint32_t * out_size_x, uint32_t * 
 	int size_x, size_y, channels;
 	uint8_t * image_bytes = (uint8_t *)stbi_load_from_memory(file_bytes, (int)file_size, &size_x, &size_y, &channels, 0);
 
+	MEMORY_FREE(file_bytes);
+
 	*out_size_x = (uint32_t)size_x;
 	*out_size_y = (uint32_t)size_y;
 	*out_channels = (uint32_t)channels;
