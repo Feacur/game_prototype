@@ -29,11 +29,12 @@ int main (int argc, char * argv[]) {
 	uint8_t * asset_image = asset_image_read("assets/test.png", &asset_image_size_x, &asset_image_size_y, &asset_image_channels);
 
 	float vertices[] = {
-		-0.3f, -0.3f, 0.0f,
-		 0.3f, -0.3f, 0.0f,
-		 0.0f,  0.3f, 0.0f,
+		-0.5f, -0.5f, 0.0f,
+		 0.5f, -0.5f, 0.0f,
+		-0.5f,  0.5f, 0.0f,
+		 0.5f,  0.5f, 0.0f,
 	};
-	uint32_t indices[] = {0, 1, 2};
+	uint32_t indices[] = {0, 1, 2, 3, 2, 1};
 
 	struct Gpu_Program * gpu_program = gpu_program_init((char const *)gpu_program_text, (uint32_t)gpu_program_size);
 	struct Gpu_Texture * gpu_texture = gpu_texture_init(asset_image, asset_image_size_x, asset_image_size_y, asset_image_channels);
@@ -43,8 +44,12 @@ int main (int argc, char * argv[]) {
 	MEMORY_FREE(gpu_program_text);
 
 	gpu_program_select(gpu_program);
+	gpu_texture_select(gpu_texture, 0);
 	gpu_mesh_select(gpu_mesh);
 
+	uint32_t uniform_location = gpu_program_get_uniform_location(gpu_program, "u_Texture");
+	gpu_program_set_uniform_unit(gpu_program, uniform_location, 0);
+	
 	uint64_t frame_start_ticks = platform_timer_get_ticks();
 	uint64_t const timer_ticks_per_second = platform_timer_get_ticks_per_second();
 

@@ -104,17 +104,43 @@ void gpu_program_select(struct Gpu_Program * gpu_program) {
 	glUseProgram(gpu_program->id);
 }
 
+uint32_t gpu_program_get_uniform_location(struct Gpu_Program * gpu_program, char const * name) {
+	GLint location = glGetUniformLocation(gpu_program->id, name);
+	return (uint32_t)location;
+}
+
+void gpu_program_set_uniform_unit(struct Gpu_Program * gpu_program, uint32_t location, uint32_t value) {
+	GLint data = (GLint)value;
+	glProgramUniform1iv(gpu_program->id, (GLint)location, 1, &data);
+}
+
 // -- GPU texture part
 struct Gpu_Texture {
 	GLuint id;
 };
 
-struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t asset_image_size_x, uint32_t asset_image_size_y, uint32_t asset_image_channels) {
-	(void)data; (void)asset_image_size_x; (void)asset_image_size_y; (void)asset_image_channels;
+struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t size_x, uint32_t size_y, uint32_t channels) {
+	(void)channels;
+
+	GLuint texture_id;
+	glCreateTextures(GL_TEXTURE_2D, 1, &texture_id);
+
+	// allocate buffer
+	GLsizei levels = 1;
+	glTextureStorage2D(texture_id, levels, GL_RGB8, (GLsizei)size_x, (GLsizei)size_y);
+
+	// chart buffer
+	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(texture_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	// load buffer
+	GLint level = 0;
+	glTextureSubImage2D(texture_id, level, 0, 0, (GLsizei)size_x, (GLsizei)size_y, GL_RGB, GL_UNSIGNED_BYTE, data);
+
 	struct Gpu_Texture * gpu_texture = MEMORY_ALLOCATE(struct Gpu_Texture);
-
-	glCreateTextures(GL_TEXTURE_2D, 1, &gpu_texture->id);
-
+	gpu_texture->id = texture_id;
 	return gpu_texture;
 }
 
@@ -123,6 +149,10 @@ void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 		glDeleteTextures(1, &gpu_texture->id);
 	}
 	MEMORY_FREE(gpu_texture);
+}
+
+void gpu_texture_select(struct Gpu_Texture * gpu_texture, uint32_t unit) {
+	glBindTextureUnit(unit, gpu_texture->id);
 }
 
 // -- GPU mesh part

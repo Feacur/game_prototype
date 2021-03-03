@@ -9,11 +9,16 @@ void gpu_program_free(struct Gpu_Program * gpu_program);
 
 void gpu_program_select(struct Gpu_Program * gpu_program);
 
+uint32_t gpu_program_get_uniform_location(struct Gpu_Program * gpu_program, char const * name);
+void gpu_program_set_uniform_unit(struct Gpu_Program * gpu_program, uint32_t location, uint32_t value);
+
 // -- GPU texture part
 struct Gpu_Texture;
 
-struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t asset_image_size_x, uint32_t asset_image_size_y, uint32_t asset_image_channels);
+struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t size_x, uint32_t size_y, uint32_t channels);
 void gpu_texture_free(struct Gpu_Texture * gpu_texture);
+
+void gpu_texture_select(struct Gpu_Texture * gpu_texture, uint32_t unit);
 
 // -- GPU mesh part
 struct Gpu_Mesh;
