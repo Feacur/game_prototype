@@ -50,6 +50,7 @@ static uint32_t glibrary_add_uniform(char const * name, size_t name_length) {
 struct Gpu_Program_Field {
 	uint32_t id;
 	GLint location;
+	GLenum type;
 };
 
 struct Gpu_Program {
@@ -126,25 +127,33 @@ struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size) {
 		glDeleteShader(shader_ids[i]);
 	}
 
-	//
-	struct Gpu_Program * gpu_program = MEMORY_ALLOCATE(struct Gpu_Program);
-	gpu_program->uniforms_count = 0;
-
+	// introspect the program
 	GLint uniforms_count;
-	glGetProgramiv(program_id, GL_ACTIVE_UNIFORMS, &uniforms_count);
-	for (GLint i = 0; i < uniforms_count; i++) {
-		GLchar name[32]; GLsizei name_length;
-		GLint size; GLenum type;
-		glGetActiveUniform(program_id, (GLuint)i, sizeof(name), &name_length, &size, &type, name);
+	glGetProgramInterfaceiv(program_id, GL_UNIFORM, GL_ACTIVE_RESOURCES, &uniforms_count);
 
-		gpu_program->uniforms[gpu_program->uniforms_count++] = (struct Gpu_Program_Field){
+	struct Gpu_Program_Field uniforms[10];
+	for (GLint i = 0; i < uniforms_count; i++) {
+		GLenum const props[] = {GL_TYPE, GL_NAME_LENGTH, GL_LOCATION};
+		GLint params[sizeof(props) / sizeof(*props)];
+		glGetProgramResourceiv(program_id, GL_UNIFORM, (GLuint)i, sizeof(props) / sizeof(*props), props, sizeof(params) / sizeof(*params), NULL, params);
+
+		GLchar name[32]; GLsizei name_length; // name_length == props[1] - 1
+		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, sizeof(name), &name_length, name);
+
+		uniforms[i] = (struct Gpu_Program_Field){
 			.id = glibrary_add_uniform(name, (size_t)name_length),
-			.location = glGetUniformLocation(program_id, name),
+			.location = params[2],
+			.type = (GLenum)params[0]
 		};
 	}
 
+	//
+	struct Gpu_Program * gpu_program = MEMORY_ALLOCATE(struct Gpu_Program);
 	gpu_program->id = program_id;
+	memcpy(gpu_program->uniforms, uniforms, sizeof(*uniforms) * (size_t)uniforms_count);
+	gpu_program->uniforms_count = (uint32_t)uniforms_count;
 	return gpu_program;
+	// https://www.khronos.org/opengl/wiki/Program_Introspection
 
 #undef ADD_HEADER
 }
