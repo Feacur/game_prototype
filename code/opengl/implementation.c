@@ -12,9 +12,50 @@ static char * ogl_extensions = NULL;
 //
 #include "implementation.h"
 
+// -- graphics library part
+static struct {
+	char * uniforms[100];
+	size_t lengths[100];
+	uint32_t uniforms_count;
+} glibrary;
+
+uint32_t glibrary_get_uniform_id(char const * name) {
+	size_t name_length = strlen(name);
+	for (uint32_t i = 0; i < glibrary.uniforms_count; i++) {
+		if (name_length != glibrary.lengths[i]) { continue; }
+		if (strncmp(name, glibrary.uniforms[i], name_length) == 0) { return i; }
+	}
+	return UINT32_MAX;
+}
+
+static uint32_t glibrary_add_uniform(char const * name, size_t name_length) {
+	if (name_length == 0) { name_length = strlen(name); }
+	for (uint32_t i = 0; i < glibrary.uniforms_count; i++) {
+		if (name_length != glibrary.lengths[i]) { continue; }
+		if (strncmp(name, glibrary.uniforms[i], name_length) == 0) { return i; }
+	}
+
+	char * copy = MEMORY_ALLOCATE_ARRAY(char, name_length + 1);
+	strncpy(copy, name, name_length);
+	copy[name_length] = '\0';
+
+	glibrary.uniforms[glibrary.uniforms_count] = copy;
+	glibrary.lengths[glibrary.uniforms_count] = name_length;
+	glibrary.uniforms_count++;
+
+	return glibrary.uniforms_count - 1;
+}
+
 // -- GPU program part
+struct Gpu_Program_Field {
+	uint32_t id;
+	GLint location;
+};
+
 struct Gpu_Program {
 	GLuint id;
+	struct Gpu_Program_Field uniforms[10];
+	uint32_t uniforms_count;
 };
 
 static void verify_shader(GLuint id, GLenum parameter);
@@ -87,6 +128,21 @@ struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size) {
 
 	//
 	struct Gpu_Program * gpu_program = MEMORY_ALLOCATE(struct Gpu_Program);
+	gpu_program->uniforms_count = 0;
+
+	GLint uniforms_count;
+	glGetProgramiv(program_id, GL_ACTIVE_UNIFORMS, &uniforms_count);
+	for (GLint i = 0; i < uniforms_count; i++) {
+		GLchar name[32]; GLsizei name_length;
+		GLint size; GLenum type;
+		glGetActiveUniform(program_id, (GLuint)i, sizeof(name), &name_length, &size, &type, name);
+
+		gpu_program->uniforms[gpu_program->uniforms_count++] = (struct Gpu_Program_Field){
+			.id = glibrary_add_uniform(name, (size_t)name_length),
+			.location = glGetUniformLocation(program_id, name),
+		};
+	}
+
 	gpu_program->id = program_id;
 	return gpu_program;
 
@@ -104,14 +160,17 @@ void gpu_program_select(struct Gpu_Program * gpu_program) {
 	glUseProgram(gpu_program->id);
 }
 
-uint32_t gpu_program_get_uniform_location(struct Gpu_Program * gpu_program, char const * name) {
-	GLint location = glGetUniformLocation(gpu_program->id, name);
-	return (uint32_t)location;
-}
+void gpu_program_set_uniform_unit(struct Gpu_Program * gpu_program, uint32_t uniform_id, uint32_t value) {
+	GLint location = -2; // -1 for silent mode
+	for (uint32_t i = 0; i < gpu_program->uniforms_count; i++) {
+		if (gpu_program->uniforms[i].id == uniform_id) {
+			location = gpu_program->uniforms[i].location;
+			break;
+		}
+	}
 
-void gpu_program_set_uniform_unit(struct Gpu_Program * gpu_program, uint32_t location, uint32_t value) {
 	GLint data = (GLint)value;
-	glProgramUniform1iv(gpu_program->id, (GLint)location, 1, &data);
+	glProgramUniform1iv(gpu_program->id, location, 1, &data);
 }
 
 // -- GPU texture part
@@ -257,9 +316,18 @@ void graphics_to_glibrary_init(void) {
 
 	// fetch extensions
 	ogl_extensions = allocate_extensions_string();
+
+	//
+	memset(&glibrary, 0, sizeof(glibrary));
 }
 
 void graphics_to_glibrary_free(void) {
+	for (uint32_t i = 0; i < glibrary.uniforms_count; i++) {
+		MEMORY_FREE(glibrary.uniforms[i]);
+	}
+	memset(&glibrary, 0, sizeof(glibrary));
+
+	//
 	MEMORY_FREE(ogl_extensions);
 	ogl_extensions = NULL;
 }

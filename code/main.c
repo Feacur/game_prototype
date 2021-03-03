@@ -47,8 +47,8 @@ int main (int argc, char * argv[]) {
 	gpu_texture_select(gpu_texture, 0);
 	gpu_mesh_select(gpu_mesh);
 
-	uint32_t uniform_location = gpu_program_get_uniform_location(gpu_program, "u_Texture");
-	gpu_program_set_uniform_unit(gpu_program, uniform_location, 0);
+	uint32_t uniform_id = glibrary_get_uniform_id("u_Texture");
+	gpu_program_set_uniform_unit(gpu_program, uniform_id, 0);
 	
 	uint64_t frame_start_ticks = platform_timer_get_ticks();
 	uint64_t const timer_ticks_per_second = platform_timer_get_ticks_per_second();

@@ -1,6 +1,9 @@
 #if !defined(GAME_GRAPHICS_IMPLEMENTATION)
 #define GAME_GRAPHICS_IMPLEMENTATION
 
+// -- graphics library part
+uint32_t glibrary_get_uniform_id(char const * name);
+
 // -- GPU program part
 struct Gpu_Program;
 
@@ -9,7 +12,6 @@ void gpu_program_free(struct Gpu_Program * gpu_program);
 
 void gpu_program_select(struct Gpu_Program * gpu_program);
 
-uint32_t gpu_program_get_uniform_location(struct Gpu_Program * gpu_program, char const * name);
 void gpu_program_set_uniform_unit(struct Gpu_Program * gpu_program, uint32_t location, uint32_t value);
 
 // -- GPU texture part
