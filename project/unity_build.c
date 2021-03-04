@@ -1,5 +1,8 @@
 #include "code/memory.c"
 #include "code/array_byte.c"
+#include "code/array_float.c"
+#include "code/array_u32.c"
+#include "code/array_s32.c"
 #include "code/platform_file.c"
 #include "code/asset_image.c"
 #include "code/windows/timer.c"
