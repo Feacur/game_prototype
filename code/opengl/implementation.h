@@ -25,7 +25,11 @@ struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t size_x, uin
 void gpu_texture_free(struct Gpu_Texture * gpu_texture);
 
 // -- GPU mesh part
-struct Gpu_Mesh * gpu_mesh_init(float const * vertices, uint32_t vertices_count, uint32_t const * indices, uint32_t indices_count);
+struct Gpu_Mesh * gpu_mesh_init(
+	float const * vertices, uint32_t vertices_count,
+	uint32_t const * attributes, uint32_t attributes_count,
+	uint32_t const * indices, uint32_t indices_count
+);
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh);
 
 void gpu_mesh_select(struct Gpu_Mesh * gpu_mesh);

@@ -269,7 +269,11 @@ void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 }
 
 // -- GPU mesh part
-struct Gpu_Mesh * gpu_mesh_init(float const * vertices, uint32_t vertices_count, uint32_t const * indices, uint32_t indices_count) {
+struct Gpu_Mesh * gpu_mesh_init(
+	float const * vertices, uint32_t vertices_count,
+	uint32_t const * attributes, uint32_t attributes_count,
+	uint32_t const * indices, uint32_t indices_count
+) {
 	GLuint mesh_id;
 	glCreateVertexArrays(1, &mesh_id);
 
@@ -292,21 +296,22 @@ struct Gpu_Mesh * gpu_mesh_init(float const * vertices, uint32_t vertices_count,
 	);
 
 	// chart buffer: vertices
-	GLint position_attribute_length = 3;
-
 	GLsizei all_attributes_size = 0;
-	all_attributes_size += (GLsizei)position_attribute_length * (GLsizei)sizeof(float);
+	for (uint32_t i = 0; i < attributes_count; i++) {
+		all_attributes_size += (GLsizei)attributes[i] * (GLsizei)sizeof(float);
+	}
 
 	GLuint buffer_index = 0;
 	GLintptr first_attribute_offset = 0;
 	glVertexArrayVertexBuffer(mesh_id, buffer_index, vertices_buffer_id, first_attribute_offset, all_attributes_size);
 
-	GLuint attribute_index = 0;
 	GLuint attribute_offset = 0;
-	glEnableVertexArrayAttrib(mesh_id, attribute_index);
-	glVertexArrayAttribBinding(mesh_id, attribute_index, buffer_index);
-	glVertexArrayAttribFormat(mesh_id, attribute_index, position_attribute_length, GL_FLOAT, GL_FALSE, attribute_offset);
-	attribute_offset += (GLuint)position_attribute_length * (GLuint)sizeof(float);
+	for (uint32_t i = 0; i < attributes_count; i++) {
+		glEnableVertexArrayAttrib(mesh_id, (GLuint)i);
+		glVertexArrayAttribBinding(mesh_id, (GLuint)i, buffer_index);
+		glVertexArrayAttribFormat(mesh_id, (GLuint)i, (GLint)attributes[i], GL_FLOAT, GL_FALSE, attribute_offset);
+		attribute_offset += (GLuint)attributes[i] * (GLuint)sizeof(float);
+	}
 
 	// chart buffer: indices
 	glVertexArrayElementBuffer(mesh_id, indices_buffer_id);

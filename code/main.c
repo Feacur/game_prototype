@@ -29,16 +29,21 @@ int main (int argc, char * argv[]) {
 	uint8_t * asset_image = asset_image_read("assets/test.png", &asset_image_size_x, &asset_image_size_y, &asset_image_channels);
 
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		 0.5f, -0.5f, 0.0f,
-		-0.5f,  0.5f, 0.0f,
-		 0.5f,  0.5f, 0.0f,
+		/*position*/ -0.5f, -0.5f, 0.0f, /*texture*/ 0.0f, 0.0f,
+		/*position*/  0.5f, -0.5f, 0.0f, /*texture*/ 1.0f, 0.0f,
+		/*position*/ -0.5f,  0.5f, 0.0f, /*texture*/ 0.0f, 1.0f,
+		/*position*/  0.5f,  0.5f, 0.0f, /*texture*/ 1.0f, 1.0f,
 	};
+	uint32_t attributes[] = {3, 2};
 	uint32_t indices[] = {0, 1, 2, 3, 2, 1};
 
 	struct Gpu_Program * gpu_program = gpu_program_init((char const *)gpu_program_text, (uint32_t)gpu_program_size);
 	struct Gpu_Texture * gpu_texture = gpu_texture_init(asset_image, asset_image_size_x, asset_image_size_y, asset_image_channels);
-	struct Gpu_Mesh * gpu_mesh = gpu_mesh_init(vertices, sizeof(vertices) / sizeof(*vertices), indices, sizeof(indices) / sizeof(*indices));
+	struct Gpu_Mesh * gpu_mesh = gpu_mesh_init(
+		vertices, sizeof(vertices) / sizeof(*vertices),
+		attributes, sizeof(attributes) / sizeof(*attributes),
+		indices, sizeof(indices) / sizeof(*indices)
+	);
 
 	MEMORY_FREE(asset_image);
 	MEMORY_FREE(gpu_program_text);
