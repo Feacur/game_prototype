@@ -168,22 +168,29 @@ struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size) {
 	// introspect the program
 	GLint uniforms_count;
 	glGetProgramInterfaceiv(program_id, GL_UNIFORM, GL_ACTIVE_RESOURCES, &uniforms_count);
+	
+	GLint uniform_name_buffer_length; // includes zero-terminator
+	glGetProgramInterfaceiv(program_id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
+	GLchar * uniform_name_buffer = MEMORY_ALLOCATE_ARRAY(GLchar, uniform_name_buffer_length);
 
 	struct Gpu_Program_Field uniforms[10];
 	for (GLint i = 0; i < uniforms_count; i++) {
-		GLenum const props[] = {GL_TYPE, GL_NAME_LENGTH, GL_LOCATION};
+		// GL_NAME_LENGTH // includes zero-terminator
+		GLenum const props[] = {GL_TYPE, GL_LOCATION};
 		GLint params[sizeof(props) / sizeof(*props)];
 		glGetProgramResourceiv(program_id, GL_UNIFORM, (GLuint)i, sizeof(props) / sizeof(*props), props, sizeof(params) / sizeof(*params), NULL, params);
 
-		GLchar name[32]; GLsizei name_length; // name_length == props[1] - 1
-		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, sizeof(name), &name_length, name);
+		GLsizei name_length;
+		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
 
 		uniforms[i] = (struct Gpu_Program_Field){
-			.id = glibrary_add_uniform(name, (size_t)name_length),
-			.location = params[2],
+			.id = glibrary_add_uniform(uniform_name_buffer, (size_t)name_length),
+			.location = params[1],
 			.type = (GLenum)params[0]
 		};
 	}
+
+	MEMORY_FREE(uniform_name_buffer);
 
 	//
 	struct Gpu_Program * gpu_program = MEMORY_ALLOCATE(struct Gpu_Program);
