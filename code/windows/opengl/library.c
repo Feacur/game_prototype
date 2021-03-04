@@ -399,9 +399,12 @@ static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * forma
 
 struct Context_Format {
 	int version;
-	int core;
+	int profile;
+	int deprecate;
 	int flush;
+	int no_error;
 	int debug;
+	int robust;
 };
 
 static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format context_format) {
@@ -426,42 +429,43 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format 
 		ADD_ATTRIBUTE(WGL_CONTEXT_MINOR_VERSION_ARB, context_format.version % 10);
 	}
 
-	// up to date
-	if (context_format.core) {
-		if (context_format.version >= 30) {
-			context_flags |= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
-		}
-		if (context_format.version >= 32) {
-			context_profile_mask |= WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+	// profile
+	if (context_format.version >= 32) {
+		switch (context_format.profile) {
+			case 1: context_profile_mask |= WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB; break;
+			case 2: context_profile_mask |= WGL_CONTEXT_CORE_PROFILE_BIT_ARB; break;
 		}
 	}
-	else {
-		context_profile_mask |= WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+
+	// deprecation
+	if (context_format.deprecate != 0 && context_format.version >= 30) {
+		context_flags |= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
 	}
 
 	// flush control
 	if (HAS_ARB(context_flush_control)) {
-		ADD_ATTRIBUTE(
-			WGL_CONTEXT_RELEASE_BEHAVIOR_ARB,
-			context_format.flush ? WGL_CONTEXT_RELEASE_BEHAVIOR_FLUSH_ARB : WGL_CONTEXT_RELEASE_BEHAVIOR_NONE_ARB
-		);
+		switch (context_format.flush) {
+			case 1: ADD_ATTRIBUTE(WGL_CONTEXT_RELEASE_BEHAVIOR_ARB, WGL_CONTEXT_RELEASE_BEHAVIOR_NONE_ARB); break;
+			case 2: ADD_ATTRIBUTE(WGL_CONTEXT_RELEASE_BEHAVIOR_ARB, WGL_CONTEXT_RELEASE_BEHAVIOR_FLUSH_ARB); break;
+		}
 	}
 
 	// error control
-	if (context_format.debug == 0 && HAS_ARB(create_context_no_error)) {
+	if (context_format.no_error != 0 && HAS_ARB(create_context_no_error)) {
 		ADD_ATTRIBUTE(WGL_CONTEXT_OPENGL_NO_ERROR_ARB, true);
 	}
 	else {
-		int const context_robustness_mode = 0;
-		if (context_robustness_mode != 0 && HAS_ARB(create_context_robustness)) {
-			ADD_ATTRIBUTE(
-				WGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB,
-				context_robustness_mode == 1 ? WGL_NO_RESET_NOTIFICATION_ARB : WGL_LOSE_CONTEXT_ON_RESET_ARB
-			);
-			context_flags |= WGL_CONTEXT_ROBUST_ACCESS_BIT_ARB;
+		if (context_format.debug != 0) {
+			context_flags |= WGL_CONTEXT_DEBUG_BIT_ARB;
 		}
 
-		if (context_format.debug == 2) { context_flags |= WGL_CONTEXT_DEBUG_BIT_ARB; }
+		if (context_format.robust != 0 && HAS_ARB(create_context_robustness)) {
+			context_flags |= WGL_CONTEXT_ROBUST_ACCESS_BIT_ARB;
+			switch (context_format.robust) {
+				case 1: ADD_ATTRIBUTE(WGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB, WGL_NO_RESET_NOTIFICATION_ARB); break;
+				case 2: ADD_ATTRIBUTE(WGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB, WGL_LOSE_CONTEXT_ON_RESET_ARB); break;
+			}
+		}
 	}
 
 	// flags and masks
@@ -469,13 +473,14 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format 
 		ADD_ATTRIBUTE(WGL_CONTEXT_FLAGS_ARB, context_flags);
 	}
 
-	if (HAS_ARB(create_context_profile) && context_profile_mask != 0) {
+	if (context_profile_mask != 0 && HAS_ARB(create_context_profile)) {
 		ADD_ATTRIBUTE(WGL_CONTEXT_PROFILE_MASK_ARB, context_profile_mask);
 	}
 
 	//
 	ADD_ATTRIBUTE(0, 0);
 	return rlib.arb.CreateContextAttribs(device, shared, attributes);
+	// https://www.khronos.org/opengl/wiki/OpenGL_Context
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
 	// https://www.khronos.org/registry/OpenGL/extensions/KHR/KHR_context_flush_control.txt
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_create_context_no_error.txt
@@ -498,8 +503,8 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 		.depth = 24, .stencil = 8,
 	};
 	struct Context_Format settings = (struct Context_Format){
-		.version = 46, .core = 1,
-		.flush = 0, .debug = 1,
+		.version = 46, .profile = 2, .deprecate = 1,
+		.flush = 0, .no_error = 0, .debug = 0, .robust = 0,
 	};
 
 	struct Pixel_Format * pixel_formats = allocate_pixel_formats_arb(device);
