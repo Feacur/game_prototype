@@ -43,12 +43,12 @@ int main (int argc, char * argv[]) {
 	MEMORY_FREE(asset_image);
 	MEMORY_FREE(gpu_program_text);
 
+	gpu_unit_init(gpu_texture);
 	gpu_program_select(gpu_program);
-	gpu_texture_select(gpu_texture, 0);
 	gpu_mesh_select(gpu_mesh);
 
 	uint32_t uniform_id = glibrary_get_uniform_id("u_Texture");
-	gpu_program_set_uniform_unit(gpu_program, uniform_id, 0);
+	gpu_program_set_texture(gpu_program, uniform_id, gpu_texture);
 	
 	uint64_t frame_start_ticks = platform_timer_get_ticks();
 	uint64_t const timer_ticks_per_second = platform_timer_get_ticks_per_second();
@@ -106,6 +106,7 @@ int main (int argc, char * argv[]) {
 	}
 
 	// cleanup
+	gpu_unit_free(gpu_texture);
 	gpu_program_free(gpu_program);
 	gpu_texture_free(gpu_texture);
 	gpu_mesh_free(gpu_mesh);
