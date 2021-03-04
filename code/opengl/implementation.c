@@ -12,11 +12,35 @@ static char * ogl_extensions = NULL;
 //
 #include "implementation.h"
 
-// -- graphics library part
+// -- GPU types part
+struct Gpu_Program_Field {
+	uint32_t id;
+	GLint location;
+	GLenum type;
+};
+
+struct Gpu_Program {
+	GLuint id;
+	struct Gpu_Program_Field uniforms[10];
+	uint32_t uniforms_count;
+};
+
+struct Gpu_Texture {
+	GLuint id;
+};
+
+struct Gpu_Mesh {
+	GLuint id;
+	GLuint vertices_buffer_id;
+	GLuint indices_buffer_id;
+	GLsizei indices_count;
+};
+
 struct Gpu_Unit {
 	struct Gpu_Texture * gpu_texture;
 };
 
+// -- graphics library part
 static struct {
 	char * uniforms[100];
 	size_t lengths[100];
@@ -35,6 +59,16 @@ uint32_t glibrary_get_uniform_id(char const * name) {
 		if (strncmp(name, glibrary.uniforms[i], name_length) == 0) { return i; }
 	}
 	return UINT32_MAX;
+}
+
+void glibrary_clear(void) {
+	glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh) {
+	gpu_program_select(gpu_program);
+	gpu_mesh_select(gpu_mesh);
+	glDrawElements(GL_TRIANGLES, gpu_mesh->indices_count, GL_UNSIGNED_INT, NULL);
 }
 
 static uint32_t glibrary_add_uniform(char const * name, size_t name_length) {
@@ -61,29 +95,6 @@ static uint32_t glibrary_find_unit(struct Gpu_Texture * gpu_texture) {
 	}
 	return UINT32_MAX;
 }
-
-// -- GPU types part
-struct Gpu_Program_Field {
-	uint32_t id;
-	GLint location;
-	GLenum type;
-};
-
-struct Gpu_Program {
-	GLuint id;
-	struct Gpu_Program_Field uniforms[10];
-	uint32_t uniforms_count;
-};
-
-struct Gpu_Texture {
-	GLuint id;
-};
-
-struct Gpu_Mesh {
-	GLuint id;
-	GLuint vertices_buffer_id;
-	GLuint indices_buffer_id;
-};
 
 // -- GPU program part
 static void verify_shader(GLuint id, GLenum parameter);
@@ -187,12 +198,15 @@ struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size) {
 
 void gpu_program_free(struct Gpu_Program * gpu_program) {
 	if (ogl_version > 0) {
+		if (glibrary.active_program == gpu_program) { glibrary.active_program = NULL; }
 		glDeleteProgram(gpu_program->id);
 	}
 	MEMORY_FREE(gpu_program);
 }
 
 void gpu_program_select(struct Gpu_Program * gpu_program) {
+	if (glibrary.active_program == gpu_program) { return; }
+	glibrary.active_program = gpu_program;
 	glUseProgram(gpu_program->id);
 }
 
@@ -243,6 +257,12 @@ struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t size_x, uin
 
 void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 	if (ogl_version > 0) {
+		for (uint32_t i = 0; i < sizeof(glibrary.units) / sizeof(*glibrary.units); i++) {
+			if (glibrary.units[i].gpu_texture == gpu_texture) {
+				glibrary.units[i].gpu_texture = NULL;
+				// glBindTextureUnit((GLuint)i, 0);
+			}
+		}
 		glDeleteTextures(1, &gpu_texture->id);
 	}
 	MEMORY_FREE(gpu_texture);
@@ -301,11 +321,13 @@ struct Gpu_Mesh * gpu_mesh_init(float const * vertices, uint32_t vertices_count,
 	gpu_mesh->id = mesh_id;
 	gpu_mesh->vertices_buffer_id = vertices_buffer_id;
 	gpu_mesh->indices_buffer_id = indices_buffer_id;
+	gpu_mesh->indices_count = (GLsizei)indices_count;
 	return gpu_mesh;
 }
 
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
 	if (ogl_version > 0) {
+		if (glibrary.active_mesh == gpu_mesh) { glibrary.active_mesh = NULL; }
 		glDeleteBuffers(1, &gpu_mesh->vertices_buffer_id);
 		glDeleteBuffers(1, &gpu_mesh->indices_buffer_id);
 		glDeleteVertexArrays(1, &gpu_mesh->id);
@@ -314,6 +336,8 @@ void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
 }
 
 void gpu_mesh_select(struct Gpu_Mesh * gpu_mesh) {
+	if (glibrary.active_mesh == gpu_mesh) { return; }
+	glibrary.active_mesh = gpu_mesh;
 	glBindVertexArray(gpu_mesh->id);
 }
 
@@ -337,7 +361,9 @@ void gpu_unit_free(struct Gpu_Texture * gpu_texture) {
 		uint32_t unit = glibrary_find_unit(gpu_texture);
 		if (unit == UINT32_MAX) { fprintf(stderr, "'glibrary_find_unit' failed\n"); DEBUG_BREAK(); exit(1); }
 
-		glibrary.units[unit] = (struct Gpu_Unit){0};
+		glibrary.units[unit] = (struct Gpu_Unit){
+			.gpu_texture = NULL,
+		};
 
 		glBindTextureUnit((GLuint)unit, 0);
 	}

@@ -100,8 +100,8 @@ int main (int argc, char * argv[]) {
 		}
 
 		// draw
-		glClear(GL_COLOR_BUFFER_BIT);
-		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(*indices), GL_UNSIGNED_INT, NULL);
+		glibrary_clear();
+		glibrary_draw(gpu_program, gpu_mesh);
 		platform_window_display(window);
 	}
 

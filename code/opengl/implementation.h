@@ -3,13 +3,15 @@
 
 #include "code/common.h"
 
-// -- graphics library part
-uint32_t glibrary_get_uniform_id(char const * name);
-
 // -- GPU types part
 struct Gpu_Program;
 struct Gpu_Texture;
 struct Gpu_Mesh;
+
+// -- graphics library part
+uint32_t glibrary_get_uniform_id(char const * name);
+void glibrary_clear(void);
+void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh);
 
 // -- GPU program part
 struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size);
