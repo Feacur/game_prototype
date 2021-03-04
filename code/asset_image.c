@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "array_byte.h"
 #include "asset_image.h"
 
 #include "platform_file.h"
@@ -31,17 +32,24 @@
 	#pragma clang diagnostic pop
 #endif
 
-uint8_t * asset_image_read(char const * path, uint32_t * out_size_x, uint32_t * out_size_y, uint32_t * out_channels) {
-	size_t file_size;
-	uint8_t * file_bytes = platform_file_read(path, &file_size);
+void asset_image_init(struct Asset_Image * asset_image, char const * path) {
+	struct Array_Byte file;
+	platform_file_init(&file, path);
 
 	int size_x, size_y, channels;
-	uint8_t * image_bytes = (uint8_t *)stbi_load_from_memory(file_bytes, (int)file_size, &size_x, &size_y, &channels, 0);
+	uint8_t * image_bytes = (uint8_t *)stbi_load_from_memory(file.data, (int)file.count, &size_x, &size_y, &channels, 0);
 
-	MEMORY_FREE(file_bytes);
+	array_byte_free(&file);
 
-	*out_size_x = (uint32_t)size_x;
-	*out_size_y = (uint32_t)size_y;
-	*out_channels = (uint32_t)channels;
-	return image_bytes;
+	*asset_image = (struct Asset_Image){
+		.size_x = (uint32_t)size_x,
+		.size_y = (uint32_t)size_y,
+		.channels = (uint32_t)channels,
+		.data = image_bytes,
+	};
+}
+
+void asset_image_free(struct Asset_Image * asset_image) {
+	MEMORY_FREE(asset_image->data);
+	memset(&asset_image, 0, sizeof(asset_image));
 }

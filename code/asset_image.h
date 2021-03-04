@@ -3,6 +3,12 @@
 
 #include "common.h"
 
-uint8_t * asset_image_read(char const * path, uint32_t * out_size_x, uint32_t * out_size_y, uint32_t * out_channels);
+struct Asset_Image {
+	uint32_t size_x, size_y, channels;
+	uint8_t * data;
+};
+
+void asset_image_init(struct Asset_Image * asset_image, char const * path);
+void asset_image_free(struct Asset_Image * asset_image);
 
 #endif

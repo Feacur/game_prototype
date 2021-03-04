@@ -1,10 +1,12 @@
 #include "memory.h"
 #include "platform_file.h"
 
+#include "code/array_byte.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
-uint8_t * platform_file_read(char const * path, size_t * out_size) {
+void platform_file_init(struct Array_Byte * buffer, char const * path) {
 	FILE * file = fopen(path, "rb");
 	if (file == NULL) { fprintf(stderr, "'fopen' failed\n"); DEBUG_BREAK(); exit(1); }
 
@@ -12,14 +14,17 @@ uint8_t * platform_file_read(char const * path, size_t * out_size) {
 	size_t file_size = (size_t)ftell(file);
 	rewind(file);
 
-	uint8_t * buffer = MEMORY_ALLOCATE_ARRAY(uint8_t, file_size + 1);
-	if (buffer == NULL) { fprintf(stderr, "'malloc' failed\n"); DEBUG_BREAK(); exit(1); }
+	uint8_t * data = MEMORY_ALLOCATE_ARRAY(uint8_t, file_size + 1);
+	if (data == NULL) { fprintf(stderr, "'malloc' failed\n"); DEBUG_BREAK(); exit(1); }
 
-	size_t bytes_read = (size_t)fread(buffer, sizeof(uint8_t), file_size, file);
+	size_t bytes_read = (size_t)fread(data, sizeof(uint8_t), file_size, file);
 	if (bytes_read < file_size) { fprintf(stderr, "'fread' failed\n"); DEBUG_BREAK(); exit(1); }
 
 	fclose(file);
 
-	*out_size = file_size;
-	return buffer;
+	*buffer = (struct Array_Byte){
+		.capacity = (uint32_t)(file_size + 1),
+		.count = (uint32_t)file_size,
+		.data = data,
+	};
 }

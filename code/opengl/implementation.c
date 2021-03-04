@@ -1,5 +1,6 @@
 #include "code/memory.h"
 #include "code/array_byte.h"
+#include "code/asset_image.h"
 
 #include "functions.h"
 
@@ -99,10 +100,10 @@ static uint32_t glibrary_find_unit(struct Gpu_Texture * gpu_texture) {
 // -- GPU program part
 static void verify_shader(GLuint id, GLenum parameter);
 static void verify_program(GLuint id, GLenum parameter);
-struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size) {
+struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 #define ADD_SECTION_HEADER(shader_type, version) \
 	do { \
-		if (strstr(text, #shader_type)) {\
+		if (strstr((char const *)asset->data, #shader_type)) {\
 			if (ogl_version < (version)) { fprintf(stderr, "'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); exit(1); } \
 			static char const header_text[] = "#define " #shader_type "\n"; \
 			headers[headers_count++] = (struct Section_Header){ \
@@ -113,7 +114,7 @@ struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size) {
 		} \
 	} while (false) \
 
-	if (text_size == 0) { text_size = (uint32_t)strlen(text); }
+	// array_byte_write(asset, '\0');
 
 	// a mandatory version header
 	static GLchar glsl_version[20];
@@ -139,8 +140,8 @@ struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size) {
 	// compile shader objects
 	GLuint shader_ids[4];
 	for (uint32_t i = 0; i < headers_count; i++) {
-		GLchar const * code[]   = {glsl_version,        headers[i].data,   text};
-		GLint          length[] = {glsl_version_length, headers[i].length, (GLint)text_size};
+		GLchar const * code[]   = {glsl_version,        headers[i].data,   (GLchar *)asset->data};
+		GLint          length[] = {glsl_version_length, headers[i].length, (GLint)asset->count};
 
 		GLuint shader_id = glCreateShader(headers[i].type);
 		glShaderSource(shader_id, sizeof(code) / sizeof(*code), code, length);
@@ -237,15 +238,13 @@ void gpu_program_set_texture(struct Gpu_Program * gpu_program, uint32_t uniform_
 }
 
 // -- GPU texture part
-struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t size_x, uint32_t size_y, uint32_t channels) {
-	(void)channels;
-
+struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
 	GLuint texture_id;
 	glCreateTextures(GL_TEXTURE_2D, 1, &texture_id);
 
 	// allocate buffer
 	GLsizei levels = 1;
-	glTextureStorage2D(texture_id, levels, GL_RGB8, (GLsizei)size_x, (GLsizei)size_y);
+	glTextureStorage2D(texture_id, levels, GL_RGB8, (GLsizei)asset->size_x, (GLsizei)asset->size_y);
 
 	// chart buffer
 	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -255,7 +254,7 @@ struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t size_x, uin
 
 	// load buffer
 	GLint level = 0;
-	glTextureSubImage2D(texture_id, level, 0, 0, (GLsizei)size_x, (GLsizei)size_y, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTextureSubImage2D(texture_id, level, 0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y, GL_RGB, GL_UNSIGNED_BYTE, asset->data);
 
 	struct Gpu_Texture * gpu_texture = MEMORY_ALLOCATE(struct Gpu_Texture);
 	gpu_texture->id = texture_id;

@@ -3,6 +3,9 @@
 
 #include "code/common.h"
 
+struct Array_Byte;
+struct Asset_Image;
+
 // -- GPU types part
 struct Gpu_Program;
 struct Gpu_Texture;
@@ -14,14 +17,14 @@ void glibrary_clear(void);
 void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh);
 
 // -- GPU program part
-struct Gpu_Program * gpu_program_init(char const * text, uint32_t text_size);
+struct Gpu_Program * gpu_program_init(struct Array_Byte * asset);
 void gpu_program_free(struct Gpu_Program * gpu_program);
 
 void gpu_program_select(struct Gpu_Program * gpu_program);
 void gpu_program_set_texture(struct Gpu_Program * gpu_program, uint32_t uniform_id, struct Gpu_Texture * gpu_texture);
 
 // -- GPU texture part
-struct Gpu_Texture * gpu_texture_init(uint8_t const * data, uint32_t size_x, uint32_t size_y, uint32_t channels);
+struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset);
 void gpu_texture_free(struct Gpu_Texture * gpu_texture);
 
 // -- GPU mesh part

@@ -3,6 +3,8 @@
 
 #include "common.h"
 
-uint8_t * platform_file_read(char const * path, size_t * out_size);
+struct Array_Byte;
+
+void platform_file_init(struct Array_Byte * buffer, char const * path);
 
 #endif
