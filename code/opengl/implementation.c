@@ -1,4 +1,5 @@
 #include "code/memory.h"
+#include "code/strings.h"
 #include "code/array_byte.h"
 #include "code/asset_mesh.h"
 #include "code/asset_image.h"
@@ -42,11 +43,9 @@ struct Gpu_Unit {
 
 // -- graphics library part
 static struct {
-	char * uniforms[100];
-	size_t lengths[100];
-	uint32_t uniforms_count;
-
 	char * extensions;
+
+	struct Strings * uniforms;
 
 	struct Gpu_Program * active_program;
 	struct Gpu_Mesh * active_mesh;
@@ -54,13 +53,8 @@ static struct {
 	struct Gpu_Unit units[100];
 } glibrary;
 
-uint32_t glibrary_get_uniform_id(char const * name) {
-	size_t name_length = strlen(name);
-	for (uint32_t i = 1; i < glibrary.uniforms_count; i++) {
-		if (name_length != glibrary.lengths[i]) { continue; }
-		if (strncmp(name, glibrary.uniforms[i], name_length) == 0) { return i; }
-	}
-	return 0;
+uint32_t glibrary_find_uniform(char const * name) {
+	return strings_find(glibrary.uniforms, name, (uint32_t)strlen(name));
 }
 
 void glibrary_clear(void) {
@@ -71,23 +65,6 @@ void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh)
 	gpu_program_select(gpu_program);
 	gpu_mesh_select(gpu_mesh);
 	glDrawElements(GL_TRIANGLES, gpu_mesh->indices_count, GL_UNSIGNED_INT, NULL);
-}
-
-static uint32_t glibrary_add_uniform(char const * name, size_t name_length) {
-	for (uint32_t i = 1; i < glibrary.uniforms_count; i++) {
-		if (name_length != glibrary.lengths[i]) { continue; }
-		if (strncmp(name, glibrary.uniforms[i], name_length) == 0) { return i; }
-	}
-
-	char * copy = MEMORY_ALLOCATE_ARRAY(char, name_length + 1);
-	memcpy(copy, name, name_length);
-	copy[name_length] = '\0';
-
-	glibrary.uniforms[glibrary.uniforms_count] = copy;
-	glibrary.lengths[glibrary.uniforms_count] = name_length;
-	glibrary.uniforms_count++;
-
-	return glibrary.uniforms_count - 1;
 }
 
 static uint32_t glibrary_find_unit(struct Gpu_Texture * gpu_texture) {
@@ -185,7 +162,7 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
 
 		uniforms[i] = (struct Gpu_Program_Field){
-			.id = glibrary_add_uniform(uniform_name_buffer, (size_t)name_length),
+			.id = strings_add(glibrary.uniforms, uniform_name_buffer, (uint32_t)name_length),
 			.location = params[1],
 			.type = (GLenum)params[0]
 		};
@@ -414,14 +391,13 @@ void graphics_to_glibrary_init(void) {
 	//
 	memset(&glibrary, 0, sizeof(glibrary));
 	glibrary.extensions = allocate_extensions_string();
-	glibrary_add_uniform("", 0);
+
+	glibrary.uniforms = strings_init();
+	strings_add(glibrary.uniforms, "", 0);
 }
 
 void graphics_to_glibrary_free(void) {
-	for (uint32_t i = 0; i < glibrary.uniforms_count; i++) {
-		MEMORY_FREE(glibrary.uniforms[i]);
-	}
-
+	strings_free(glibrary.uniforms);
 	MEMORY_FREE(glibrary.extensions);
 	memset(&glibrary, 0, sizeof(glibrary));
 }

@@ -59,14 +59,14 @@ int main (int argc, char * argv[]) {
 	struct Gpu_Texture * gpu_texture = gpu_texture_init(&asset_image);
 	struct Gpu_Mesh * gpu_mesh = gpu_mesh_init(&asset_mesh);
 
-	array_byte_free(&asset_shader);
+	platform_file_free(&asset_shader);
 	asset_image_free(&asset_image);
 
 	gpu_unit_init(gpu_texture);
 	gpu_program_select(gpu_program);
 	gpu_mesh_select(gpu_mesh);
 
-	uint32_t uniform_id = glibrary_get_uniform_id("u_Texture");
+	uint32_t uniform_id = glibrary_find_uniform("u_Texture");
 	gpu_program_set_texture(gpu_program, uniform_id, gpu_texture);
 	
 	uint64_t frame_start_ticks = platform_timer_get_ticks();

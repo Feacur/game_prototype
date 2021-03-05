@@ -13,7 +13,7 @@ struct Gpu_Texture;
 struct Gpu_Mesh;
 
 // -- graphics library part
-uint32_t glibrary_get_uniform_id(char const * name);
+uint32_t glibrary_find_uniform(char const * name);
 void glibrary_clear(void);
 void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh);
 

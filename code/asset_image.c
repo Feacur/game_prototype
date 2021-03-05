@@ -1,6 +1,5 @@
 #include "memory.h"
 #include "array_byte.h"
-#include "asset_image.h"
 
 #include "platform_file.h"
 
@@ -31,6 +30,9 @@
 #if defined(__clang__)
 	#pragma clang diagnostic pop
 #endif
+
+//
+#include "asset_image.h"
 
 void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 	struct Array_Byte file;

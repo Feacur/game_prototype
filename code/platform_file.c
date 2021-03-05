@@ -1,10 +1,11 @@
 #include "memory.h"
-#include "platform_file.h"
-
 #include "code/array_byte.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+
+//
+#include "platform_file.h"
 
 void platform_file_init(struct Array_Byte * buffer, char const * path) {
 	FILE * file = fopen(path, "rb");
@@ -27,4 +28,8 @@ void platform_file_init(struct Array_Byte * buffer, char const * path) {
 		.count = (uint32_t)file_size,
 		.data = data,
 	};
+}
+
+void platform_file_free(struct Array_Byte * buffer) {
+	array_byte_free(buffer);
 }

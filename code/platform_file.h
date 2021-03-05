@@ -6,5 +6,6 @@
 struct Array_Byte;
 
 void platform_file_init(struct Array_Byte * buffer, char const * path);
+void platform_file_free(struct Array_Byte * buffer);
 
 #endif
