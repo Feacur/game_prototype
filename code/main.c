@@ -5,6 +5,7 @@
 #include "platform_window.h"
 
 #include "array_byte.h"
+#include "asset_mesh.h"
 #include "asset_image.h"
 
 #include "opengl/functions.h"
@@ -13,6 +14,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static void asset_mesh_init_1(struct Asset_Mesh * asset_mesh) {
+#define CONSTRUCT(type, array) (type){ .data = array, .count = sizeof(array) / sizeof(*array) }
+
+	static float vertices[] = {
+		/*position*/ -0.5f, -0.5f, 0.0f, /*texcoord*/ 0.0f, 0.0f,
+		/*position*/  0.5f, -0.5f, 0.0f, /*texcoord*/ 1.0f, 0.0f,
+		/*position*/ -0.5f,  0.5f, 0.0f, /*texcoord*/ 0.0f, 1.0f,
+		/*position*/  0.5f,  0.5f, 0.0f, /*texcoord*/ 1.0f, 1.0f,
+	};
+	static uint32_t sizes[] = {3, 2};
+	static uint32_t locations[] = {0, 1};
+	static uint32_t indices[] = {0, 1, 2, 3, 2, 1};
+
+	*asset_mesh = (struct Asset_Mesh){
+		.vertices = CONSTRUCT(struct Array_Float, vertices),
+		.sizes = CONSTRUCT(struct Array_U32, sizes),
+		.locations = CONSTRUCT(struct Array_U32, locations),
+		.indices = CONSTRUCT(struct Array_U32, indices),
+	};
+
+#undef CONSTRUCT
+}
 
 int main (int argc, char * argv[]) {
 	(void)argc; (void)argv;
@@ -28,22 +52,12 @@ int main (int argc, char * argv[]) {
 	struct Asset_Image asset_image;
 	asset_image_init(&asset_image, "assets/test.png");
 
-	float vertices[] = {
-		/*position*/ -0.5f, -0.5f, 0.0f, /*texture*/ 0.0f, 0.0f,
-		/*position*/  0.5f, -0.5f, 0.0f, /*texture*/ 1.0f, 0.0f,
-		/*position*/ -0.5f,  0.5f, 0.0f, /*texture*/ 0.0f, 1.0f,
-		/*position*/  0.5f,  0.5f, 0.0f, /*texture*/ 1.0f, 1.0f,
-	};
-	uint32_t attributes[] = {3, 2};
-	uint32_t indices[] = {0, 1, 2, 3, 2, 1};
+	struct Asset_Mesh asset_mesh;
+	asset_mesh_init_1(&asset_mesh);
 
 	struct Gpu_Program * gpu_program = gpu_program_init(&asset_shader);
 	struct Gpu_Texture * gpu_texture = gpu_texture_init(&asset_image);
-	struct Gpu_Mesh * gpu_mesh = gpu_mesh_init(
-		vertices, sizeof(vertices) / sizeof(*vertices),
-		attributes, sizeof(attributes) / sizeof(*attributes),
-		indices, sizeof(indices) / sizeof(*indices)
-	);
+	struct Gpu_Mesh * gpu_mesh = gpu_mesh_init(&asset_mesh);
 
 	array_byte_free(&asset_shader);
 	asset_image_free(&asset_image);

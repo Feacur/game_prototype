@@ -1,5 +1,6 @@
 #include "code/memory.h"
 #include "code/array_byte.h"
+#include "code/asset_mesh.h"
 #include "code/asset_image.h"
 
 #include "functions.h"
@@ -194,9 +195,11 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 
 	//
 	struct Gpu_Program * gpu_program = MEMORY_ALLOCATE(struct Gpu_Program);
-	gpu_program->id = program_id;
+	*gpu_program = (struct Gpu_Program){
+		.id = program_id,
+		.uniforms_count = (uint32_t)uniforms_count,
+	};
 	memcpy(gpu_program->uniforms, uniforms, sizeof(*uniforms) * (size_t)uniforms_count);
-	gpu_program->uniforms_count = (uint32_t)uniforms_count;
 	return gpu_program;
 	// https://www.khronos.org/opengl/wiki/Program_Introspection
 
@@ -255,8 +258,11 @@ struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
 	GLint level = 0;
 	glTextureSubImage2D(texture_id, level, 0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y, GL_RGB, GL_UNSIGNED_BYTE, asset->data);
 
+	//
 	struct Gpu_Texture * gpu_texture = MEMORY_ALLOCATE(struct Gpu_Texture);
-	gpu_texture->id = texture_id;
+	*gpu_texture = (struct Gpu_Texture){
+		.id = texture_id,
+	};
 	return gpu_texture;
 }
 
@@ -274,11 +280,7 @@ void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 }
 
 // -- GPU mesh part
-struct Gpu_Mesh * gpu_mesh_init(
-	float const * vertices, uint32_t vertices_count,
-	uint32_t const * attributes, uint32_t attributes_count,
-	uint32_t const * indices, uint32_t indices_count
-) {
+struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 	GLuint mesh_id;
 	glCreateVertexArrays(1, &mesh_id);
 
@@ -287,7 +289,7 @@ struct Gpu_Mesh * gpu_mesh_init(
 	glCreateBuffers(1, &vertices_buffer_id);
 	glNamedBufferData(
 		vertices_buffer_id,
-		vertices_count * sizeof(float),
+		asset->vertices.count * sizeof(*asset->vertices.data),
 		NULL, GL_STATIC_DRAW
 	);
 
@@ -296,42 +298,47 @@ struct Gpu_Mesh * gpu_mesh_init(
 	glCreateBuffers(1, &indices_buffer_id);
 	glNamedBufferData(
 		indices_buffer_id,
-		indices_count * sizeof(uint32_t),
+		asset->indices.count * sizeof(*asset->indices.data),
 		NULL, GL_STATIC_DRAW
 	);
 
 	// chart buffer: vertices
 	GLsizei all_attributes_size = 0;
-	for (uint32_t i = 0; i < attributes_count; i++) {
-		all_attributes_size += (GLsizei)attributes[i] * (GLsizei)sizeof(float);
+	for (uint32_t i = 0; i < asset->sizes.count; i++) {
+		all_attributes_size += (GLsizei)asset->sizes.data[i] * (GLsizei)sizeof(*asset->vertices.data);
 	}
 
 	GLuint buffer_index = 0;
-	GLintptr first_attribute_offset = 0;
-	glVertexArrayVertexBuffer(mesh_id, buffer_index, vertices_buffer_id, first_attribute_offset, all_attributes_size);
+	GLintptr buffer_start = 0;
+	glVertexArrayVertexBuffer(mesh_id, buffer_index, vertices_buffer_id, buffer_start, all_attributes_size);
 
 	GLuint attribute_offset = 0;
-	for (uint32_t i = 0; i < attributes_count; i++) {
-		glEnableVertexArrayAttrib(mesh_id, (GLuint)i);
-		glVertexArrayAttribBinding(mesh_id, (GLuint)i, buffer_index);
-		glVertexArrayAttribFormat(mesh_id, (GLuint)i, (GLint)attributes[i], GL_FLOAT, GL_FALSE, attribute_offset);
-		attribute_offset += (GLuint)attributes[i] * (GLuint)sizeof(float);
+	for (uint32_t i = 0; i < asset->locations.count; i++) {
+		GLuint location = (GLuint)asset->locations.data[i];
+		uint32_t size = asset->sizes.data[i];
+		glEnableVertexArrayAttrib(mesh_id, location);
+		glVertexArrayAttribBinding(mesh_id, location, buffer_index);
+		glVertexArrayAttribFormat(mesh_id, location, (GLint)size, GL_FLOAT, GL_FALSE, attribute_offset);
+		attribute_offset += size * (GLuint)sizeof(*asset->vertices.data);
 	}
 
 	// chart buffer: indices
 	glVertexArrayElementBuffer(mesh_id, indices_buffer_id);
 
 	// load buffer: vertices
-	glNamedBufferSubData(vertices_buffer_id, 0, vertices_count * sizeof(float), vertices);
+	glNamedBufferSubData(vertices_buffer_id, 0, asset->vertices.count * sizeof(*asset->vertices.data), asset->vertices.data);
 
 	// load buffer: indices
-	glNamedBufferSubData(indices_buffer_id, 0, indices_count * sizeof(uint32_t), indices);
+	glNamedBufferSubData(indices_buffer_id, 0, asset->indices.count * sizeof(*asset->indices.data), asset->indices.data);
 
+	//
 	struct Gpu_Mesh * gpu_mesh = MEMORY_ALLOCATE(struct Gpu_Mesh);
-	gpu_mesh->id = mesh_id;
-	gpu_mesh->vertices_buffer_id = vertices_buffer_id;
-	gpu_mesh->indices_buffer_id = indices_buffer_id;
-	gpu_mesh->indices_count = (GLsizei)indices_count;
+	*gpu_mesh = (struct Gpu_Mesh){
+		.id = mesh_id,
+		.vertices_buffer_id = vertices_buffer_id,
+		.indices_buffer_id = indices_buffer_id,
+		.indices_count = (GLsizei)asset->indices.count,
+	};
 	return gpu_mesh;
 }
 
