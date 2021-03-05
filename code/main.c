@@ -55,6 +55,9 @@ int main (int argc, char * argv[]) {
 	struct Asset_Mesh asset_mesh;
 	asset_mesh_init_1(&asset_mesh);
 
+	struct Asset_Mesh asset_mesh_2;
+	asset_mesh_init(&asset_mesh_2, "assets/test.obj");
+
 	struct Gpu_Program * gpu_program = gpu_program_init(&asset_shader);
 	struct Gpu_Texture * gpu_texture = gpu_texture_init(&asset_image);
 	struct Gpu_Mesh * gpu_mesh = gpu_mesh_init(&asset_mesh);

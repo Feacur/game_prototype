@@ -10,4 +10,7 @@ struct Asset_Mesh {
 	struct Array_U32 indices;
 };
 
+void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path);
+void asset_mesh_free(struct Asset_Mesh * asset_mesh);
+
 #endif

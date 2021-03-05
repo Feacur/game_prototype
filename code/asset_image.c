@@ -3,6 +3,8 @@
 
 #include "platform_file.h"
 
+#include <string.h>
+
 // better to compile third-parties as separate units
 #if defined(__clang__)
 	#pragma clang diagnostic push
