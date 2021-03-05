@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static char * ogl_extensions = NULL;
-
 //
 #include "implementation.h"
 
@@ -47,6 +45,8 @@ static struct {
 	size_t lengths[100];
 	uint32_t uniforms_count;
 
+	char * extensions;
+
 	struct Gpu_Program * active_program;
 	struct Gpu_Mesh * active_mesh;
 
@@ -55,11 +55,11 @@ static struct {
 
 uint32_t glibrary_get_uniform_id(char const * name) {
 	size_t name_length = strlen(name);
-	for (uint32_t i = 0; i < glibrary.uniforms_count; i++) {
+	for (uint32_t i = 1; i < glibrary.uniforms_count; i++) {
 		if (name_length != glibrary.lengths[i]) { continue; }
 		if (strncmp(name, glibrary.uniforms[i], name_length) == 0) { return i; }
 	}
-	return UINT32_MAX;
+	return 0;
 }
 
 void glibrary_clear(void) {
@@ -73,14 +73,13 @@ void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh)
 }
 
 static uint32_t glibrary_add_uniform(char const * name, size_t name_length) {
-	if (name_length == 0) { name_length = strlen(name); }
-	for (uint32_t i = 0; i < glibrary.uniforms_count; i++) {
+	for (uint32_t i = 1; i < glibrary.uniforms_count; i++) {
 		if (name_length != glibrary.lengths[i]) { continue; }
 		if (strncmp(name, glibrary.uniforms[i], name_length) == 0) { return i; }
 	}
 
 	char * copy = MEMORY_ALLOCATE_ARRAY(char, name_length + 1);
-	strncpy(copy, name, name_length);
+	memcpy(copy, name, name_length);
 	copy[name_length] = '\0';
 
 	glibrary.uniforms[glibrary.uniforms_count] = copy;
@@ -405,11 +404,10 @@ void graphics_to_glibrary_init(void) {
 		}
 	}
 
-	// fetch extensions
-	ogl_extensions = allocate_extensions_string();
-
 	//
 	memset(&glibrary, 0, sizeof(glibrary));
+	glibrary.extensions = allocate_extensions_string();
+	glibrary_add_uniform("", 0);
 }
 
 void graphics_to_glibrary_free(void) {
@@ -417,12 +415,8 @@ void graphics_to_glibrary_free(void) {
 		MEMORY_FREE(glibrary.uniforms[i]);
 	}
 
-	//
+	MEMORY_FREE(glibrary.extensions);
 	memset(&glibrary, 0, sizeof(glibrary));
-
-	//
-	MEMORY_FREE(ogl_extensions);
-	ogl_extensions = NULL;
 }
 
 //
