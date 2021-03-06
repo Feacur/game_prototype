@@ -4,6 +4,7 @@
 #include "code/array_u32.c"
 #include "code/array_s32.c"
 #include "code/strings.c"
+#include "code/scanner_mesh_obj.c"
 #include "code/asset_mesh_obj.c"
 #include "code/asset_mesh.c"
 #include "code/asset_image.c"
