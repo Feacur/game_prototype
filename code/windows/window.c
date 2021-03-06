@@ -129,6 +129,21 @@ bool platform_window_key_transition(struct Window * window, enum Key_Code key, b
 	return (now != was) && (now == state);
 }
 
+void platform_window_mouse_position_window(struct Window * window, int32_t * x, int32_t * y) {
+	*x = window->mouse.window_x;
+	*y = window->mouse.window_y;
+}
+
+void platform_window_mouse_position_display(struct Window * window, int32_t * x, int32_t * y) {
+	*x = window->mouse.display_x;
+	*y = window->mouse.display_y;
+}
+
+void platform_window_mouse_delta(struct Window * window, int32_t * x, int32_t * y) {
+	*x = window->mouse.delta_x;
+	*y = window->mouse.delta_y;
+}
+
 bool platform_window_mouse(struct Window * window, enum Mouse_Code key) {
 	return window->mouse.keys[key];
 }
