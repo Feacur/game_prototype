@@ -11,8 +11,18 @@ static bool is_digit(char c) {
 }
 
 static char const * skip_line(char const * text) {
-	while (*text != '\0' && *text != '\n') { text++; }
-	return text;
+	for (;;) {
+		switch (*text) {
+			case '\0':
+				return text;
+
+			case '\n':
+				text++;
+				return text;
+
+			default: text++;
+		}
+	}
 }
 
 static char const * skip_whitespace(char const * text) {
@@ -21,14 +31,8 @@ static char const * skip_whitespace(char const * text) {
 			case ' ':
 			case '\t':
 			case '\r':
-			case '\n':
 				text++;
 				break;
-
-			case '#': {
-					text = skip_line(text);
-				break;
-			}
 
 			default: return text;
 		}
@@ -103,17 +107,35 @@ static char const * parse_float(char const * text, float * result) {
 	return text;
 }
 
+static char const * parse_s32(char const * text, int32_t * result) {
+	bool sign = true;
+	int32_t value = 0;
+
+	text = skip_whitespace(text);
+
+	if (*text == '-') { text++; sign = false; }
+	while (is_digit(*text)) {
+		value = value * 10 + (int32_t)(*text - '0');
+		text++;
+	}
+
+	*result = value * (2 * sign - 1);
+	return text;
+}
+
 void asset_mesh_obj_init(struct Asset_Mesh_Obj * obj, char const * text) {
 	char const * cur;
+
+	struct Array_S32 scratch_s32;
+	array_s32_init(&scratch_s32);
+	array_s32_resize(&scratch_s32, 4);
 
 	uint32_t position_lines = 0;
 	uint32_t texcoord_lines = 0;
 	uint32_t normal_lines = 0;
 	uint32_t face_lines = 0;
 
-	cur = text;
-	while (*cur) {
-		cur = skip_whitespace(cur);
+	for (cur = skip_whitespace(text); *cur != '\0'; cur = skip_whitespace(cur)) {
 		switch (*cur) {
 			case 'v': {
 				cur++;
@@ -137,12 +159,11 @@ void asset_mesh_obj_init(struct Asset_Mesh_Obj * obj, char const * text) {
 	array_float_resize(&obj->positions, position_lines * 3);
 	array_float_resize(&obj->texcoords, texcoord_lines * 2);
 	array_float_resize(&obj->normals, normal_lines * 3);
-	array_s32_resize(&obj->faces, face_lines * 4);
+	array_s32_resize(&obj->faces, face_lines * 3 * 4);
 
 	//
 	cur = text;
-	while (*cur) {
-		cur = skip_whitespace(cur);
+	for (cur = skip_whitespace(text); *cur != '\0'; cur = skip_whitespace(cur)) {
 		switch (*cur) {
 			case 'v': {
 				cur++;
@@ -174,11 +195,41 @@ void asset_mesh_obj_init(struct Asset_Mesh_Obj * obj, char const * text) {
 				break;
 			}
 			case 'f': {
+				cur++;
+				scratch_s32.count = 0;
+				for (cur = skip_whitespace(cur); *cur != '\0' && *cur != '\n'; cur = skip_whitespace(cur)) {
+					int32_t face[3] = {0};
+
+					// face format: position
+					cur = parse_s32(cur, face + 0);
+					if (*cur != '/') { array_s32_write_many(&scratch_s32, face, 3); continue; }
+
+					// face format: position//normal
+					cur++;
+					if (*cur == '/') {
+						cur++;
+						cur = parse_s32(cur, face + 2);
+						array_s32_write_many(&scratch_s32, face, 3); continue;
+					}
+
+					// face format: position/texcoord
+					cur = parse_s32(cur, face + 1);
+					if (*cur != '/') { array_s32_write_many(&scratch_s32, face, 3); continue; }
+
+					// face format: position/texcoord/normal
+					cur++;
+					cur = parse_s32(cur, face + 2);
+					array_s32_write_many(&scratch_s32, face, 3); continue;
+				}
+
+				array_s32_write_many(&obj->faces, scratch_s32.data, scratch_s32.count);
 				break;
 			}
 		}
 		cur = skip_line(cur);
 	}
+
+	array_s32_free(&scratch_s32);
 }
 
 void asset_mesh_obj_free(struct Asset_Mesh_Obj * obj) {
