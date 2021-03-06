@@ -24,12 +24,29 @@ void asset_mesh_obj_free(struct Asset_Mesh_Obj * obj) {
 //
 #include "asset_mesh_obj_scanner.h"
 
+static void asset_mesh_obj_error_at(struct Mesh_Obj_Token * token, char const * message) {
+	DEBUG_BREAK();
+	// if (parser->panic_mode) { return; }
+	// parser->panic_mode = true;
+
+	fprintf(stderr, "[line %d] error", token->line + 1);
+
+	switch (token->type) {
+		case MESH_OBJ_TOKEN_ERROR: break;
+		case MESH_OBJ_TOKEN_EOF: fprintf(stderr, " at the end of file"); break;
+		case MESH_OBJ_TOKEN_NEW_LINE: fprintf(stderr, " at the end of line"); break;
+		default: fprintf(stderr, " at '%.*s'", token->length, token->start); break;
+	}
+
+	fprintf(stderr, ": %s\n", message);
+	// parser->had_error = true;
+}
 
 static void asset_mesh_obj_advance(struct Mesh_Obj_Scanner * scanner, struct Mesh_Obj_Token * token) {
 	for (;;) {
 		*token = asset_mesh_obj_scanner_next(scanner);
-		if (token->type != MESH_OBJ_TOKEN_NONE) { break; }
-		fprintf(stderr, "scan failed\n"); DEBUG_BREAK();
+		if (token->type != MESH_OBJ_TOKEN_ERROR) { break; }
+		asset_mesh_obj_error_at(token, "scan error");
 	}
 }
 
@@ -45,8 +62,8 @@ static bool asset_mesh_obj_consume_float(struct Mesh_Obj_Scanner * scanner, stru
 		ADVANCE();
 		return true;
 	}
-	
-	fprintf(stderr, "expected a number\n"); DEBUG_BREAK();
+
+	asset_mesh_obj_error_at(token, "expected a number");
 	return false;
 
 #undef ADVANCE
@@ -63,8 +80,8 @@ static bool asset_mesh_obj_consume_s32(struct Mesh_Obj_Scanner * scanner, struct
 		ADVANCE();
 		return true;
 	}
-	
-	fprintf(stderr, "expected a number\n"); DEBUG_BREAK();
+
+	asset_mesh_obj_error_at(token, "expected a number");
 	return false;
 
 #undef ADVANCE
@@ -73,14 +90,19 @@ static bool asset_mesh_obj_consume_s32(struct Mesh_Obj_Scanner * scanner, struct
 static void asset_mesh_obj_do_vertex(struct Mesh_Obj_Scanner * scanner, struct Mesh_Obj_Token * token, struct Array_Float * buffer, uint32_t limit) {
 #define ADVANCE() asset_mesh_obj_advance(scanner, token)
 
+	uint32_t entries = 0;
 	while (token->type != MESH_OBJ_TOKEN_EOF && token->type != MESH_OBJ_TOKEN_NEW_LINE) {
+		if (entries >= limit) { asset_mesh_obj_error_at(token, "expected less elements"); }
+
 		float value;
 		if (asset_mesh_obj_consume_float(scanner, token, &value)) {
-			if (limit == 0) { continue; } limit--;
+			if (entries >= limit) { continue; } entries++;
 			array_float_write(buffer, value);
 		}
 		else { ADVANCE(); }
 	}
+
+	if (entries < limit) { asset_mesh_obj_error_at(token, "expected more elements"); }
 
 #undef ADVANCE
 }
@@ -182,8 +204,15 @@ inline static void asset_mesh_obj_init_internal(struct Asset_Mesh_Obj * obj, cha
 	asset_mesh_obj_scanner_init(&scanner, text); ADVANCE();
 	while (token.type != MESH_OBJ_TOKEN_EOF) {
 		switch (token.type) {
-			default: break;
+			// silent
+			case MESH_OBJ_TOKEN_NEW_LINE: break;
 
+			// errors
+			case MESH_OBJ_TOKEN_IDENTIFIER: asset_mesh_obj_error_at(&token, "unknown identifier"); break;
+			case MESH_OBJ_TOKEN_ERROR: asset_mesh_obj_error_at(&token, "scan error"); break;
+			default: asset_mesh_obj_error_at(&token, "unhandled input"); break;
+
+			// valid
 			case MESH_OBJ_TOKEN_POSITION: { ADVANCE();
 				asset_mesh_obj_do_vertex(&scanner, &token, &obj->positions, 3);
 				break;

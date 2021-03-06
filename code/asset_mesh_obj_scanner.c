@@ -50,6 +50,12 @@ static struct Mesh_Obj_Token asset_mesh_obj_scanner_make_token(struct Mesh_Obj_S
 	};
 }
 
+static struct Mesh_Obj_Token asset_mesh_obj_scanner_make_new_line_token(struct Mesh_Obj_Scanner * scanner) {
+	struct Mesh_Obj_Token token = asset_mesh_obj_scanner_make_token(scanner, MESH_OBJ_TOKEN_NEW_LINE);
+	token.line--;
+	return token;
+}
+
 static struct Mesh_Obj_Token asset_mesh_obj_scanner_make_number_token(struct Mesh_Obj_Scanner * scanner) {
 	if (PEEK() == '-') { ADVANCE(); }
 	while (is_digit(PEEK())) { ADVANCE(); }
@@ -123,7 +129,7 @@ inline static struct Mesh_Obj_Token asset_mesh_obj_scanner_next_internal(struct 
 		case '/': ADVANCE();
 			return asset_mesh_obj_scanner_make_token(scanner, MESH_OBJ_TOKEN_SLASH);
 		case '\n': ADVANCE(); scanner->line++;
-			return asset_mesh_obj_scanner_make_token(scanner, MESH_OBJ_TOKEN_NEW_LINE);
+			return asset_mesh_obj_scanner_make_new_line_token(scanner);
 	}
 
 	return asset_mesh_obj_scanner_make_error_token(scanner, "unexpected character");
