@@ -25,7 +25,7 @@ void platform_window_mouse_delta(struct Window * window, int32_t * x, int32_t * 
 bool platform_window_mouse(struct Window * window, enum Mouse_Code key);
 bool platform_window_mouse_transition(struct Window * window, enum Mouse_Code key, bool state);
 
-void platform_window_get_size(struct Window * window, int32_t * size_x, int32_t * size_y);
+void platform_window_get_size(struct Window * window, uint32_t * size_x, uint32_t * size_y);
 uint32_t platform_window_get_refresh_rate(struct Window * window, uint32_t default_value);
 
 #endif

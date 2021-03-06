@@ -13,6 +13,6 @@ int32_t graphics_get_vsync(struct Graphics * context);
 void graphics_set_vsync(struct Graphics * context, int32_t value);
 void graphics_display(struct Graphics * context);
 
-// void graphics_size(struct Graphics * context, int32_t size_x, int32_t size_y);
+// void graphics_size(struct Graphics * context, uint32_t size_x, uint32_t size_y);
 
 #endif

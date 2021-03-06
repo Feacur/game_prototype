@@ -45,6 +45,8 @@ struct Gpu_Unit {
 static struct {
 	char * extensions;
 
+	uint32_t viewport_x, viewport_y;
+
 	struct Strings * uniforms;
 
 	struct Gpu_Program * active_program;
@@ -59,6 +61,14 @@ uint32_t glibrary_find_uniform(char const * name) {
 
 void glibrary_clear(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void glibrary_viewport(uint32_t size_x, uint32_t size_y) {
+	if (glibrary.viewport_x != size_x || glibrary.viewport_y != size_y) {
+		glibrary.viewport_x = size_x;
+		glibrary.viewport_y = size_y;
+		glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
+	}
 }
 
 void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh) {

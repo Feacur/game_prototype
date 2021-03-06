@@ -15,7 +15,7 @@
 struct Window {
 	HWND handle;
 	HDC private_context;
-	int32_t size_x, size_y;
+	uint32_t size_x, size_y;
 
 	struct {
 		uint8_t keys[KEYBOARD_KEYS_MAX];
@@ -59,8 +59,8 @@ struct Window * platform_window_init(void) {
 
 	RECT rect;
 	GetClientRect(window->handle, &rect);
-	window->size_x = (int32_t)(rect.right - rect.left);
-	window->size_y = (int32_t)(rect.bottom - rect.top);
+	window->size_x = (uint32_t)(rect.right - rect.left);
+	window->size_y = (uint32_t)(rect.bottom - rect.top);
 
 	memset(&window->keyboard, 0, sizeof(window->keyboard));
 	memset(&window->mouse, 0, sizeof(window->mouse));
@@ -154,7 +154,7 @@ bool platform_window_mouse_transition(struct Window * window, enum Mouse_Code ke
 	return (now != was) && (now == state);
 }
 
-void platform_window_get_size(struct Window * window, int32_t * size_x, int32_t * size_y) {
+void platform_window_get_size(struct Window * window, uint32_t * size_x, uint32_t * size_y) {
 	*size_x = window->size_x;
 	*size_y = window->size_y;
 }
@@ -348,8 +348,8 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			return handle_message_input_mouse(window, wParam, lParam, false, 1, 0);
 
 		case WM_SIZE: {
-			window->size_x = (int32_t)LOWORD(lParam);
-			window->size_y = (int32_t)HIWORD(lParam);
+			window->size_x = (uint32_t)LOWORD(lParam);
+			window->size_y = (uint32_t)HIWORD(lParam);
 			// graphics_size(window->graphics, window->size_x, window->size_y);
 			return 0;
 		}

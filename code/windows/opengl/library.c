@@ -207,7 +207,7 @@ void graphics_display(struct Graphics * context) {
 	// glFinish();
 }
 
-// void graphics_size(struct Graphics * context, int32_t size_x, int32_t size_y) {
+// void graphics_size(struct Graphics * context, uint32_t size_x, uint32_t size_y) {
 // 	(void)context;
 // 	glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
 // }
