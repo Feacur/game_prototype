@@ -54,7 +54,7 @@ static struct {
 } glibrary;
 
 uint32_t glibrary_find_uniform(char const * name) {
-	return strings_find(glibrary.uniforms, name, (uint32_t)strlen(name));
+	return strings_find(glibrary.uniforms, (uint32_t)strlen(name), name);
 }
 
 void glibrary_clear(void) {
@@ -162,7 +162,7 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
 
 		uniforms[i] = (struct Gpu_Program_Field){
-			.id = strings_add(glibrary.uniforms, uniform_name_buffer, (uint32_t)name_length),
+			.id = strings_add(glibrary.uniforms, (uint32_t)name_length, uniform_name_buffer),
 			.location = params[1],
 			.type = (GLenum)params[0]
 		};
@@ -393,7 +393,7 @@ void graphics_to_glibrary_init(void) {
 	glibrary.extensions = allocate_extensions_string();
 
 	glibrary.uniforms = strings_init();
-	strings_add(glibrary.uniforms, "", 0);
+	strings_add(glibrary.uniforms, 0, "");
 }
 
 void graphics_to_glibrary_free(void) {
@@ -414,7 +414,7 @@ static char * allocate_extensions_string(void) {
 	array_byte_resize(&string, (uint32_t)(extensions_count * 26));
 	for(GLint i = 0; i < extensions_count; i++) {
 		GLubyte const * value = glGetStringi(GL_EXTENSIONS, (GLuint)i);
-		array_byte_write_many(&string, value, (uint32_t)strlen((char const *)value));
+		array_byte_write_many(&string, (uint32_t)strlen((char const *)value), value);
 		array_byte_write(&string, ' ');
 	}
 	array_byte_write(&string, '\0');

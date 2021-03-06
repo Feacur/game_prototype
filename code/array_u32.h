@@ -13,6 +13,6 @@ void array_u32_free(struct Array_U32 * array);
 
 void array_u32_resize(struct Array_U32 * array, uint32_t size);
 void array_u32_write(struct Array_U32 * array, uint32_t value);
-void array_u32_write_many(struct Array_U32 * array, uint32_t const * value, uint32_t count);
+void array_u32_write_many(struct Array_U32 * array, uint32_t count, uint32_t const * value);
 
 #endif

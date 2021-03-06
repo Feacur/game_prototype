@@ -39,7 +39,7 @@ void array_float_write(struct Array_Float * array, float value) {
 	array->count++;
 }
 
-void array_float_write_many(struct Array_Float * array, float const * value, uint32_t count) {
+void array_float_write_many(struct Array_Float * array, uint32_t count, float const * value) {
 	if (array->count + count > array->capacity) {
 		while (array->count + count > array->capacity) {
 			array->capacity = GROW_CAPACITY(array->capacity);
@@ -47,6 +47,6 @@ void array_float_write_many(struct Array_Float * array, float const * value, uin
 		array->data = MEMORY_REALLOCATE_ARRAY(array->data, array->capacity);
 	}
 
-	memcpy(array->data + array->count, value, count);
+	memcpy(array->data + array->count, value, count * sizeof(*value));
 	array->count += count;
 }

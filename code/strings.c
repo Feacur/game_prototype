@@ -29,7 +29,7 @@ void strings_free(struct Strings * strings) {
 	MEMORY_FREE(strings);
 }
 
-uint32_t strings_find(struct Strings * strings, char const * value, uint32_t length) {
+uint32_t strings_find(struct Strings * strings, uint32_t length, char const * value) {
 	uint32_t offset = 0;
 	for (uint32_t i = 0; i < strings->lengths.count; i++) {
 		if (length == strings->lengths.data[i]) {
@@ -40,7 +40,7 @@ uint32_t strings_find(struct Strings * strings, char const * value, uint32_t len
 	return 0;
 }
 
-uint32_t strings_add(struct Strings * strings, char const * value, uint32_t length) {
+uint32_t strings_add(struct Strings * strings, uint32_t length, char const * value) {
 	uint32_t offset = 0;
 	for (uint32_t i = 0; i < strings->lengths.count; i++) {
 		if (length == strings->lengths.data[i]) {
@@ -51,7 +51,7 @@ uint32_t strings_add(struct Strings * strings, char const * value, uint32_t leng
 
 	array_u32_write(&strings->offsets, offset);
 	array_u32_write(&strings->lengths, length);
-	array_byte_write_many(&strings->buffer, (uint8_t const *)value, length);
+	array_byte_write_many(&strings->buffer, length, (uint8_t const *)value);
 	array_byte_write(&strings->buffer, '\0');
 
 	return strings->lengths.count - 1;

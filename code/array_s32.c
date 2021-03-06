@@ -39,7 +39,7 @@ void array_s32_write(struct Array_S32 * array, int32_t value) {
 	array->count++;
 }
 
-void array_s32_write_many(struct Array_S32 * array, int32_t const * value, uint32_t count) {
+void array_s32_write_many(struct Array_S32 * array, uint32_t count, int32_t const * value) {
 	if (array->count + count > array->capacity) {
 		while (array->count + count > array->capacity) {
 			array->capacity = GROW_CAPACITY(array->capacity);
@@ -47,6 +47,6 @@ void array_s32_write_many(struct Array_S32 * array, int32_t const * value, uint3
 		array->data = MEMORY_REALLOCATE_ARRAY(array->data, array->capacity);
 	}
 
-	memcpy(array->data + array->count, value, count);
+	memcpy(array->data + array->count, value, count * sizeof(*value));
 	array->count += count;
 }
