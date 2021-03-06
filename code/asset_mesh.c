@@ -23,6 +23,32 @@ void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
 	array_u32_init(&asset_mesh->sizes);
 	array_u32_init(&asset_mesh->locations);
 	array_u32_init(&asset_mesh->indices);
+
+	if (obj.positions.count > 0) { array_u32_write(&asset_mesh->sizes, 3); }
+	if (obj.texcoords.count > 0) { array_u32_write(&asset_mesh->sizes, 2); }
+	if (obj.normals.count > 0) { array_u32_write(&asset_mesh->sizes, 3); }
+
+	if (obj.positions.count > 0) { array_u32_write(&asset_mesh->locations, 0); }
+	if (obj.texcoords.count > 0) { array_u32_write(&asset_mesh->locations, 1); }
+	if (obj.normals.count > 0) { array_u32_write(&asset_mesh->locations, 2); }
+
+	uint32_t indices_count = obj.triangles.count / 3;
+	for (uint32_t i = 0, vertex_id = 0; i < indices_count; i++) {
+		uint32_t const vertex_index[] = {
+			obj.triangles.data[i * 3 + 0],
+			obj.triangles.data[i * 3 + 1],
+			obj.triangles.data[i * 3 + 2],
+		};
+
+		if (obj.positions.count > 0) { array_float_write_many(&asset_mesh->vertices, 3, obj.positions.data + vertex_index[0] * 3); }
+		if (obj.texcoords.count > 0) { array_float_write_many(&asset_mesh->vertices, 2, obj.texcoords.data + vertex_index[1] * 2); }
+		if (obj.normals.count > 0) { array_float_write_many(&asset_mesh->vertices, 3, obj.normals.data + vertex_index[2] * 3); }
+
+		array_u32_write(&asset_mesh->indices, vertex_id);
+		vertex_id++;
+	}
+
+	asset_mesh_obj_free(&obj);
 }
 
 void asset_mesh_free(struct Asset_Mesh * asset_mesh) {

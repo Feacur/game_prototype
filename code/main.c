@@ -15,29 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void asset_mesh_init_1(struct Asset_Mesh * asset_mesh) {
-#define CONSTRUCT(type, array) (type){ .data = array, .count = sizeof(array) / sizeof(*array) }
-
-	static float vertices[] = {
-		/*position*/ -0.5f, -0.5f, 0.0f, /*texcoord*/ 0.0f, 0.0f,
-		/*position*/  0.5f, -0.5f, 0.0f, /*texcoord*/ 1.0f, 0.0f,
-		/*position*/ -0.5f,  0.5f, 0.0f, /*texcoord*/ 0.0f, 1.0f,
-		/*position*/  0.5f,  0.5f, 0.0f, /*texcoord*/ 1.0f, 1.0f,
-	};
-	static uint32_t sizes[] = {3, 2};
-	static uint32_t locations[] = {0, 1};
-	static uint32_t indices[] = {0, 1, 2, 3, 2, 1};
-
-	*asset_mesh = (struct Asset_Mesh){
-		.vertices = CONSTRUCT(struct Array_Float, vertices),
-		.sizes = CONSTRUCT(struct Array_U32, sizes),
-		.locations = CONSTRUCT(struct Array_U32, locations),
-		.indices = CONSTRUCT(struct Array_U32, indices),
-	};
-
-#undef CONSTRUCT
-}
-
 int main (int argc, char * argv[]) {
 	(void)argc; (void)argv;
 
@@ -53,10 +30,7 @@ int main (int argc, char * argv[]) {
 	asset_image_init(&asset_image, "assets/test.png");
 
 	struct Asset_Mesh asset_mesh;
-	asset_mesh_init_1(&asset_mesh);
-
-	struct Asset_Mesh asset_mesh_2;
-	asset_mesh_init(&asset_mesh_2, "assets/test.obj");
+	asset_mesh_init(&asset_mesh, "assets/test.obj");
 
 	struct Gpu_Program * gpu_program = gpu_program_init(&asset_shader);
 	struct Gpu_Texture * gpu_texture = gpu_texture_init(&asset_image);
@@ -64,6 +38,7 @@ int main (int argc, char * argv[]) {
 
 	platform_file_free(&asset_shader);
 	asset_image_free(&asset_image);
+	asset_mesh_free(&asset_mesh);
 
 	gpu_unit_init(gpu_texture);
 	gpu_program_select(gpu_program);
@@ -141,3 +116,28 @@ int main (int argc, char * argv[]) {
 	platform_system_free();
 	return 0;
 }
+
+//
+
+// static void asset_mesh_init_1(struct Asset_Mesh * asset_mesh) {
+// #define CONSTRUCT(type, array) (type){ .data = array, .count = sizeof(array) / sizeof(*array) }
+// 
+// 	static float vertices[] = {
+// 		/*position*/ -0.5f, -0.5f, 0.0f, /*texcoord*/ 0.0f, 0.0f,
+// 		/*position*/  0.5f, -0.5f, 0.0f, /*texcoord*/ 1.0f, 0.0f,
+// 		/*position*/ -0.5f,  0.5f, 0.0f, /*texcoord*/ 0.0f, 1.0f,
+// 		/*position*/  0.5f,  0.5f, 0.0f, /*texcoord*/ 1.0f, 1.0f,
+// 	};
+// 	static uint32_t sizes[] = {3, 2};
+// 	static uint32_t locations[] = {0, 1};
+// 	static uint32_t indices[] = {0, 1, 2, 3, 2, 1};
+// 
+// 	*asset_mesh = (struct Asset_Mesh){
+// 		.vertices = CONSTRUCT(struct Array_Float, vertices),
+// 		.sizes = CONSTRUCT(struct Array_U32, sizes),
+// 		.locations = CONSTRUCT(struct Array_U32, locations),
+// 		.indices = CONSTRUCT(struct Array_U32, indices),
+// 	};
+// 
+// #undef CONSTRUCT
+// }
