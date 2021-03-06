@@ -35,50 +35,15 @@ static char const * skip_whitespace(char const * text) {
 	}
 }
 
-static char const * make_float(char const * text, float * result) {
-	bool sign = true;
-	uint32_t mantissa = 0;
-	int32_t exponent_10 = 0;
-	// result = sign * mantissa * 10^exponent_10
-	// result = sign * mantissa * 5^exponent_10 * 2^exponent_10
+static float make_float(bool sign, uint32_t mantissa, int32_t exponent_10) {
+	// result = (2 * sign - 1) * mantissa * 10^exponent_10
+	// result = (2 * sign - 1) * mantissa * 5^exponent_10 * 2^exponent_10
+	if (mantissa == 0) { return 0; }
+	if (exponent_10 == 0) { return (float)mantissa * (sign * 2 - 1); }
 
-	text = skip_whitespace(text);
-
-	if (*text == '-') { text++; sign = false; }
-	while (is_digit(*text)) {
-		mantissa = mantissa * 10 + (uint32_t)(*text - '0');
-		text++;
-	}
-
-	if (*text == '.') {
-		text++;
-		while (is_digit(*text)) {
-			mantissa = mantissa * 10 + (uint32_t)(*text - '0');
-			exponent_10--;
-			text++;
-		}
-	}
-
-	if (*text == 'e' || *text == 'E') {
-		bool exp_sign = true;
-		uint32_t exp_value = 0;
-
-		text++;
-		if (*text == '-') { text++; exp_sign = false; }
-		while (is_digit(*text)) {
-			exp_value = exp_value * 10 + (uint32_t)(*text - '0');
-			text++;
-		}
-
-		exponent_10 += exp_value * (exp_sign * 2 - 1);
-	}
-
-	if (mantissa == 0) { *result = 0; return text; }
-	if (exponent_10 == 0) { *result = (float)mantissa * (sign * 2 - 1); return text; }
-
-	// > mantissa_x * 2^exponent_2 == mantissa * 10^exponent_10
+	// > mantissa_2 * 2^exponent_2 == mantissa * 10^exponent_10
 	// > [start with] exponent_2 == exponent_10
-	// > [calculate]  mantissa_x == mantissa * 5^exponent_10
+	// > [calculate]  mantissa_2 == mantissa * 5^exponent_10
 	// > preserve significance by transferring powers of 2 from mantissa to exponent_2
 	int32_t exponent_2 = exponent_10;
 
@@ -95,7 +60,46 @@ static char const * make_float(char const * text, float * result) {
 	}
 
 	// ldexp(a, b) == a * 2^b
-	*result = ldexpf((float)mantissa, exponent_2) * (sign * 2 - 1);
+	return ldexpf((float)mantissa, exponent_2) * (sign * 2 - 1);
+}
+
+static char const * parse_float(char const * text, float * result) {
+	bool sign = true;
+	uint32_t mantissa = 0;
+	int32_t exponent = 0;
+
+	text = skip_whitespace(text);
+
+	if (*text == '-') { text++; sign = false; }
+	while (is_digit(*text)) {
+		mantissa = mantissa * 10 + (uint32_t)(*text - '0');
+		text++;
+	}
+
+	if (*text == '.') {
+		text++;
+		while (is_digit(*text)) {
+			mantissa = mantissa * 10 + (uint32_t)(*text - '0');
+			exponent--;
+			text++;
+		}
+	}
+
+	if (*text == 'e' || *text == 'E') {
+		bool exp_sign = true;
+		uint32_t exp_value = 0;
+
+		text++;
+		if (*text == '-') { text++; exp_sign = false; }
+		while (is_digit(*text)) {
+			exp_value = exp_value * 10 + (uint32_t)(*text - '0');
+			text++;
+		}
+
+		exponent += exp_value * (exp_sign * 2 - 1);
+	}
+
+	*result = make_float(sign, mantissa, exponent);
 	return text;
 }
 
@@ -145,24 +149,24 @@ void asset_mesh_obj_init(struct Asset_Mesh_Obj * obj, char const * text) {
 				switch (*cur) {
 					case ' ': {
 						float position[3];
-						cur = make_float(cur, position + 0);
-						cur = make_float(cur, position + 1);
-						cur = make_float(cur, position + 2);
+						cur = parse_float(cur, position + 0);
+						cur = parse_float(cur, position + 1);
+						cur = parse_float(cur, position + 2);
 						array_float_write_many(&obj->positions, position, 3);
 						break;
 					}
 					case 't': {
 						float texcoord[2];
-						cur = make_float(cur, texcoord + 0);
-						cur = make_float(cur, texcoord + 1);
+						cur = parse_float(cur, texcoord + 0);
+						cur = parse_float(cur, texcoord + 1);
 						array_float_write_many(&obj->texcoords, texcoord, 2);
 						break;
 					}
 					case 'n': {
 						float normal[3];
-						cur = make_float(cur, normal + 0);
-						cur = make_float(cur, normal + 1);
-						cur = make_float(cur, normal + 2);
+						cur = parse_float(cur, normal + 0);
+						cur = parse_float(cur, normal + 1);
+						cur = parse_float(cur, normal + 2);
 						array_float_write_many(&obj->normals, normal, 3);
 						break;
 					}
