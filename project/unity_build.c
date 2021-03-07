@@ -1,3 +1,4 @@
+#include "code/maths.c"
 #include "code/memory.c"
 #include "code/parsing.c"
 #include "code/array_byte.c"
