@@ -40,6 +40,9 @@ void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 	struct Array_Byte file;
 	platform_file_init(&file, path);
 
+	// @todo: check if it's opengl-specific?
+	stbi_set_flip_vertically_on_load(1);
+
 	int size_x, size_y, channels;
 	uint8_t * image_bytes = (uint8_t *)stbi_load_from_memory(file.data, (int)file.count, &size_x, &size_y, &channels, 0);
 

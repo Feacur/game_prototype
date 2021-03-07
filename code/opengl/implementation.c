@@ -5,10 +5,21 @@
 #include "code/asset_image.h"
 
 #include "functions.h"
+#include "types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static GLenum gpu_data_type(enum Data_Type value);
+
+static GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture);
+static GLint gpu_mag_filter_mode(enum Filter_Mode value);
+static GLint gpu_wrap_mode(enum Wrap_Mode value, bool mirror);
+
+static GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, uint32_t channels);
+static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels);
+static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type);
 
 //
 #include "implementation.h"
@@ -74,7 +85,12 @@ void glibrary_viewport(uint32_t size_x, uint32_t size_y) {
 void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh) {
 	gpu_program_select(gpu_program);
 	gpu_mesh_select(gpu_mesh);
-	glDrawElements(GL_TRIANGLES, gpu_mesh->indices_count, GL_UNSIGNED_INT, NULL);
+	glDrawElements(
+		GL_TRIANGLES,
+		gpu_mesh->indices_count,
+		gpu_data_type(DATA_TYPE_U32),
+		NULL
+	);
 }
 
 static uint32_t glibrary_find_unit(struct Gpu_Texture * gpu_texture) {
@@ -233,17 +249,27 @@ struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
 
 	// allocate buffer
 	GLsizei levels = 1;
-	glTextureStorage2D(texture_id, levels, GL_RGB8, (GLsizei)asset->size_x, (GLsizei)asset->size_y);
+	glTextureStorage2D(
+		texture_id, levels,
+		gpu_sized_internal_format(TEXTURE_TYPE_COLOR, DATA_TYPE_U8, asset->channels),
+		(GLsizei)asset->size_x, (GLsizei)asset->size_y
+	);
 
 	// chart buffer
-	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri(texture_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(FILTER_MODE_NONE, FILTER_MODE_POINT));
+	glTextureParameteri(texture_id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(FILTER_MODE_POINT));
+	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(WRAP_MODE_REPEAT, false));
+	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(WRAP_MODE_REPEAT, false));
 
 	// load buffer
 	GLint level = 0;
-	glTextureSubImage2D(texture_id, level, 0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y, GL_RGB, GL_UNSIGNED_BYTE, asset->data);
+	glTextureSubImage2D(
+		texture_id, level,
+		0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y,
+		gpu_pixel_data_format(TEXTURE_TYPE_COLOR, asset->channels),
+		gpu_pixel_data_type(TEXTURE_TYPE_COLOR, DATA_TYPE_U8),
+		asset->data
+	);
 
 	//
 	struct Gpu_Texture * gpu_texture = MEMORY_ALLOCATE(struct Gpu_Texture);
@@ -541,4 +567,182 @@ static void __stdcall opengl_debug_message_callback(
 	);
 
 	DEBUG_BREAK();
+}
+
+//
+static GLenum gpu_data_type(enum Data_Type value) {
+	switch (value) {
+		default: break;
+
+		case DATA_TYPE_UNIT: return GL_INT;
+
+		case DATA_TYPE_U8:  return GL_UNSIGNED_BYTE;
+		case DATA_TYPE_U16: return GL_UNSIGNED_SHORT;
+		case DATA_TYPE_U32: return GL_UNSIGNED_INT;
+
+		case DATA_TYPE_S8:  return GL_BYTE;
+		case DATA_TYPE_S16: return GL_SHORT;
+		case DATA_TYPE_S32: return GL_INT;
+
+		case DATA_TYPE_R32: return GL_FLOAT;
+		case DATA_TYPE_R64: return GL_DOUBLE;
+
+		case DATA_TYPE_VEC2: return GL_FLOAT;
+		case DATA_TYPE_VEC3: return GL_FLOAT;
+		case DATA_TYPE_VEC4: return GL_FLOAT;
+
+		case DATA_TYPE_MAT2: return GL_FLOAT;
+		case DATA_TYPE_MAT3: return GL_FLOAT;
+		case DATA_TYPE_MAT4: return GL_FLOAT;
+	}
+	fprintf(stderr, "unknown data type\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture) {
+	switch (mipmap) {
+		case FILTER_MODE_NONE: switch (texture) {
+			case FILTER_MODE_NONE:  return GL_NEAREST;
+			case FILTER_MODE_POINT: return GL_NEAREST;
+			case FILTER_MODE_LERP:  return GL_LINEAR;
+		} break;
+
+		case FILTER_MODE_POINT: switch (texture) {
+			case FILTER_MODE_NONE:  return GL_NEAREST_MIPMAP_NEAREST;
+			case FILTER_MODE_POINT: return GL_NEAREST_MIPMAP_NEAREST;
+			case FILTER_MODE_LERP:  return GL_LINEAR_MIPMAP_NEAREST;
+		} break;
+
+		case FILTER_MODE_LERP: switch (texture) {
+			case FILTER_MODE_NONE:  return GL_NEAREST_MIPMAP_LINEAR;
+			case FILTER_MODE_POINT: return GL_NEAREST_MIPMAP_LINEAR;
+			case FILTER_MODE_LERP:  return GL_LINEAR_MIPMAP_LINEAR;
+		} break;
+	}
+	fprintf(stderr, "unknown min filter mode\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLint gpu_mag_filter_mode(enum Filter_Mode value) {
+	switch (value) {
+		case FILTER_MODE_NONE:  return GL_NEAREST;
+		case FILTER_MODE_POINT: return GL_NEAREST;
+		case FILTER_MODE_LERP:  return GL_LINEAR;
+	}
+	fprintf(stderr, "unknown mag filter mode\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLint gpu_wrap_mode(enum Wrap_Mode value, bool mirror) {
+	switch (value) {
+		case WRAP_MODE_REPEAT: return mirror ? GL_MIRRORED_REPEAT : GL_REPEAT;
+		case WRAP_MODE_CLAMP:  return mirror ? GL_MIRROR_CLAMP_TO_EDGE : GL_CLAMP_TO_EDGE;
+	}
+	fprintf(stderr, "unknown wrap mode\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, uint32_t channels) {
+	switch (texture_type) {
+		case TEXTURE_TYPE_COLOR: switch (data_type) {
+			default: break;
+
+			case DATA_TYPE_U8: switch (channels) {
+				case 1: return GL_R8;
+				case 2: return GL_RG8;
+				case 3: return GL_RGB8;
+				case 4: return GL_RGBA8;
+			} break;
+
+			case DATA_TYPE_U16: switch (channels) {
+				case 1: return GL_R16;
+				case 2: return GL_RG16;
+				case 3: return GL_RGB16;
+				case 4: return GL_RGBA16;
+			} break;
+
+			case DATA_TYPE_U32: switch (channels) {
+				case 1: return GL_R32UI;
+				case 2: return GL_RG32UI;
+				case 3: return GL_RGB32UI;
+				case 4: return GL_RGBA32UI;
+			} break;
+
+			case DATA_TYPE_R32: switch (channels) {
+				case 1: return GL_R32F;
+				case 2: return GL_RG32F;
+				case 3: return GL_RGB32F;
+				case 4: return GL_RGBA32F;
+			} break;
+		} break;
+
+		case TEXTURE_TYPE_DEPTH: switch (data_type) {
+			default: break;
+			case DATA_TYPE_U16: return GL_DEPTH_COMPONENT16;
+			case DATA_TYPE_U32: return GL_DEPTH_COMPONENT24;
+			case DATA_TYPE_R32: return GL_DEPTH_COMPONENT32F;
+		} break;
+
+		case TEXTURE_TYPE_STENCIL: switch (data_type) {
+			default: break;
+			case DATA_TYPE_U8: return GL_STENCIL_INDEX8;
+		} break;
+
+		case TEXTURE_TYPE_DSTENCIL: switch (data_type) {
+			default: break;
+			case DATA_TYPE_U32: return GL_DEPTH24_STENCIL8;
+			case DATA_TYPE_R32: return GL_DEPTH32F_STENCIL8;
+		} break;
+	}
+	fprintf(stderr, "unknown sized internal format\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels) {
+	switch (texture_type) {
+		case TEXTURE_TYPE_COLOR: switch (channels) {
+			case 1: return GL_RED;
+			case 2: return GL_RG;
+			case 3: return GL_RGB;
+			case 4: return GL_RGBA;
+		} break;
+
+		case TEXTURE_TYPE_DEPTH:    return GL_DEPTH_COMPONENT;
+		case TEXTURE_TYPE_STENCIL:  return GL_STENCIL_INDEX;
+		case TEXTURE_TYPE_DSTENCIL: return GL_DEPTH_STENCIL;
+	}
+	fprintf(stderr, "unknown pixel data format\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type) {
+	switch (texture_type) {
+		case TEXTURE_TYPE_COLOR: switch (data_type) {
+			default: break;
+			case DATA_TYPE_U8:  return GL_UNSIGNED_BYTE;
+			case DATA_TYPE_U16: return GL_UNSIGNED_SHORT;
+			case DATA_TYPE_U32: return GL_UNSIGNED_INT;
+			case DATA_TYPE_R32: return GL_FLOAT;
+		} break;
+
+		case TEXTURE_TYPE_DEPTH: switch (data_type) {
+			default: break;
+			case DATA_TYPE_U16: return GL_UNSIGNED_SHORT;
+			case DATA_TYPE_U32: return GL_UNSIGNED_INT;
+			case DATA_TYPE_R32: return GL_FLOAT;
+		} break;
+
+		case TEXTURE_TYPE_STENCIL: switch (data_type) {
+			default: break;
+			case DATA_TYPE_U8: return GL_UNSIGNED_BYTE;
+		} break;
+
+		case TEXTURE_TYPE_DSTENCIL: switch (data_type) {
+			default: break;
+			case DATA_TYPE_U32: return GL_UNSIGNED_INT_24_8;
+			case DATA_TYPE_R32: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
+		} break;
+	}
+	fprintf(stderr, "unknown pixel data type\n"); DEBUG_BREAK();
+	return GL_NONE;
 }
