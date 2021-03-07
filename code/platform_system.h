@@ -6,7 +6,9 @@
 void platform_system_init(void);
 void platform_system_free(void);
 
+bool platform_window_is_running(void);
 void platform_system_update(void);
+
 void platform_system_sleep(uint32_t millis);
 
 #endif

@@ -51,7 +51,7 @@ int main (int argc, char * argv[]) {
 	uint64_t const timer_ticks_per_second = platform_timer_get_ticks_per_second();
 
 	// update
-	while (window != NULL) {
+	while (window != NULL && platform_window_is_running()) {
 		// track time
 		if (platform_window_get_vsync(window) == 0) {
 			uint32_t const maximum_refresh_rate = 72;
