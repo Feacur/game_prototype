@@ -88,13 +88,13 @@ int main (int argc, char * argv[]) {
 		}
 
 		if (platform_window_mouse_transition(window, MC_LEFT, true)) {
-			int32_t pos_x, pos_y;
+			uint32_t pos_x, pos_y;
 			platform_window_mouse_position_window(window, &pos_x, &pos_y);
 			printf("pressed mouse left at %d %d\n", pos_x, pos_y);
 		}
 
 		if (platform_window_mouse_transition(window, MC_RIGHT, false)) {
-			int32_t pos_x, pos_y;
+			uint32_t pos_x, pos_y;
 			platform_window_mouse_position_display(window, &pos_x, &pos_y);
 			printf("released mouse right at %d %d\n", pos_x, pos_y);
 		}

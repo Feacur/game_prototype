@@ -3,6 +3,7 @@
 
 #include "vectors.h"
 
+uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator);
 uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator);
 
 float lerp(float v1, float v2, float t);

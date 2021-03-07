@@ -82,8 +82,8 @@ enum Key_Code {
 
 enum Mouse_Code {
 	MC_LEFT,
-	MC_MIDDLE,
 	MC_RIGHT,
+	MC_MIDDLE,
 	MC_X1,
 	MC_X2,
 };

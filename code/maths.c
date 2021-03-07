@@ -3,6 +3,12 @@
 //
 #include "maths.h"
 
+uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator) {
+	uint32_t a = value / denominator;
+	uint32_t b = value % denominator;
+	return a * numerator + b * numerator / denominator;
+}
+
 uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator) {
 	uint64_t a = value / denominator;
 	uint64_t b = value % denominator;
