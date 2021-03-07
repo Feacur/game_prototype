@@ -20,6 +20,17 @@ static GLint gpu_wrap_mode(enum Wrap_Mode value, bool mirror);
 static GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, uint32_t channels);
 static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels);
 static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type);
+static GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index);
+
+static GLenum gpu_mesh_usage_pattern(enum Mesh_Frequency frequency, enum Mesh_Access access);
+
+static GLenum gpu_comparison_type(enum Comparison_Type value);
+static GLenum gpu_cull_mode(enum Cull_Mode value);
+static GLenum gpu_front_face(enum Winding_Order value);
+static GLenum gpu_stencil_op(enum Stencil_Op value);
+
+static GLenum gpu_blend_func(enum Blend_Func value);
+static GLenum gpu_blend_factor(enum Blend_Factor value);
 
 //
 #include "implementation.h"
@@ -303,7 +314,7 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 	glNamedBufferData(
 		vertices_buffer_id,
 		asset->vertices.count * sizeof(*asset->vertices.data),
-		NULL, GL_STATIC_DRAW
+		NULL, gpu_mesh_usage_pattern(MESH_FREQUENCY_STATIC, MESH_ACCESS_DRAW)
 	);
 
 	// allocate buffer: indices
@@ -312,7 +323,7 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 	glNamedBufferData(
 		indices_buffer_id,
 		asset->indices.count * sizeof(*asset->indices.data),
-		NULL, GL_STATIC_DRAW
+		NULL, gpu_mesh_usage_pattern(MESH_FREQUENCY_STATIC, MESH_ACCESS_DRAW)
 	);
 
 	// chart buffer: vertices
@@ -436,6 +447,14 @@ void graphics_to_glibrary_free(void) {
 	strings_free(glibrary.uniforms);
 	MEMORY_FREE(glibrary.extensions);
 	memset(&glibrary, 0, sizeof(glibrary));
+
+	(void)gpu_attachment_point;
+	(void)gpu_comparison_type;
+	(void)gpu_cull_mode;
+	(void)gpu_front_face;
+	(void)gpu_stencil_op;
+	(void)gpu_blend_func;
+	(void)gpu_blend_factor;
 }
 
 //
@@ -744,5 +763,131 @@ static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type
 		} break;
 	}
 	fprintf(stderr, "unknown pixel data type\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index) {
+	switch (texture_type) {
+		case TEXTURE_TYPE_COLOR:    return GL_COLOR_ATTACHMENT0 + index;
+		case TEXTURE_TYPE_DEPTH:    return GL_DEPTH_ATTACHMENT;
+		case TEXTURE_TYPE_STENCIL:  return GL_STENCIL_ATTACHMENT;
+		case TEXTURE_TYPE_DSTENCIL: return GL_DEPTH_STENCIL_ATTACHMENT;
+	}
+	fprintf(stderr, "unknown attachment point\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_mesh_usage_pattern(enum Mesh_Frequency frequency, enum Mesh_Access access) {
+	switch (frequency) {
+		case MESH_FREQUENCY_STATIC: switch (access) {
+			case MESH_ACCESS_DRAW: return GL_STATIC_DRAW;
+			case MESH_ACCESS_READ: return GL_STATIC_READ;
+			case MESH_ACCESS_COPY: return GL_STATIC_COPY;
+		} break;
+
+		case MESH_FREQUENCY_DYNAMIC: switch (access) {
+			case MESH_ACCESS_DRAW: return GL_DYNAMIC_DRAW;
+			case MESH_ACCESS_READ: return GL_DYNAMIC_READ;
+			case MESH_ACCESS_COPY: return GL_DYNAMIC_COPY;
+		} break;
+
+		case MESH_FREQUENCY_STREAM: switch (access) {
+			case MESH_ACCESS_DRAW: return GL_STREAM_DRAW;
+			case MESH_ACCESS_READ: return GL_STREAM_READ;
+			case MESH_ACCESS_COPY: return GL_STREAM_COPY;
+		} break;
+	}
+	fprintf(stderr, "unknown mesh usage\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_comparison_type(enum Comparison_Type value) {
+	switch (value) {
+		case COMPARISON_TYPE_FALSE:      return GL_NEVER;
+		case COMPARISON_TYPE_TRUE:       return GL_ALWAYS;
+		case COMPARISON_TYPE_LESS:       return GL_LESS;
+		case COMPARISON_TYPE_EQUAL:      return GL_EQUAL;
+		case COMPARISON_TYPE_MORE:       return GL_GREATER;
+		case COMPARISON_TYPE_NOT_EQUAL:  return GL_NOTEQUAL;
+		case COMPARISON_TYPE_LESS_EQUAL: return GL_LEQUAL;
+		case COMPARISON_TYPE_MORE_EQUAL: return GL_GEQUAL;
+	}
+	fprintf(stderr, "unknown comparison data type\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_cull_mode(enum Cull_Mode value) {
+	switch (value) {
+		case CULL_MODE_BACK:  return GL_BACK;
+		case CULL_MODE_FRONT: return GL_FRONT;
+		case CULL_MODE_BOTH:  return GL_FRONT_AND_BACK;
+	}
+	fprintf(stderr, "unknown cull mode\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_front_face(enum Winding_Order value) {
+	switch (value) {
+		case WINDING_ORDER_NEGATIVE: return GL_CCW;
+		case WINDING_ORDER_POSITIVE:  return GL_CW;
+	}
+	fprintf(stderr, "unknown winding order\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_stencil_op(enum Stencil_Op value) {
+	switch (value) {
+		case STENCIL_OP_ZERO:      return GL_ZERO;
+		case STENCIL_OP_KEEP:      return GL_KEEP;
+		case STENCIL_OP_REPLACE:   return GL_REPLACE;
+		case STENCIL_OP_INVERT:    return GL_INVERT;
+		case STENCIL_OP_INCR:      return GL_INCR;
+		case STENCIL_OP_DECR:      return GL_DECR;
+		case STENCIL_OP_INCR_WRAP: return GL_INCR_WRAP;
+		case STENCIL_OP_DECR_WRAP: return GL_DECR_WRAP;
+	}
+	fprintf(stderr, "unknown stencil operation\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_blend_func(enum Blend_Func value) {
+	switch (value) {
+		default: break;
+		case BLEND_FUNC_ADD:         return GL_FUNC_ADD;
+		case BLEND_FUNC_SUB:         return GL_FUNC_SUBTRACT;
+		case BLEND_FUNC_MIN:         return GL_MIN;
+		case BLEND_FUNC_MAX:         return GL_MAX;
+		case BLEND_FUNC_REVERSE_SUB: return GL_FUNC_REVERSE_SUBTRACT;
+	}
+	fprintf(stderr, "unknown blend func\n"); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum gpu_blend_factor(enum Blend_Factor value) {
+	switch (value) {
+		case BLEND_FACTOR_ZERO:                  return GL_ZERO;
+		case BLEND_FACTOR_ONE:                   return GL_ONE;
+
+		case BLEND_FACTOR_SRC_COLOR:             return GL_SRC_COLOR;
+		case BLEND_FACTOR_SRC_ALPHA:             return GL_SRC_ALPHA;
+		case BLEND_FACTOR_ONE_MINUS_SRC_COLOR:   return GL_ONE_MINUS_SRC_COLOR;
+		case BLEND_FACTOR_ONE_MINUS_SRC_ALPHA:   return GL_ONE_MINUS_SRC_ALPHA;
+
+		case BLEND_FACTOR_DST_COLOR:             return GL_DST_COLOR;
+		case BLEND_FACTOR_DST_ALPHA:             return GL_DST_ALPHA;
+		case BLEND_FACTOR_ONE_MINUS_DST_COLOR:   return GL_ONE_MINUS_DST_COLOR;
+		case BLEND_FACTOR_ONE_MINUS_DST_ALPHA:   return GL_ONE_MINUS_DST_ALPHA;
+
+		case BLEND_FACTOR_CONST_COLOR:           return GL_CONSTANT_COLOR;
+		case BLEND_FACTOR_CONST_ALPHA:           return GL_CONSTANT_ALPHA;
+		case BLEND_FACTOR_ONE_MINUS_CONST_COLOR: return GL_ONE_MINUS_CONSTANT_COLOR;
+		case BLEND_FACTOR_ONE_MINUS_CONST_ALPHA: return GL_ONE_MINUS_CONSTANT_ALPHA;
+
+		case BLEND_FACTOR_SRC1_COLOR:            return GL_SRC1_COLOR;
+		case BLEND_FACTOR_SRC1_ALPHA:            return GL_SRC1_ALPHA;
+		case BLEND_FACTOR_ONE_MINUS_SRC1_COLOR:  return GL_ONE_MINUS_SRC1_COLOR;
+		case BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA:  return GL_ONE_MINUS_SRC1_ALPHA;
+	}
+	fprintf(stderr, "unknown blend factor\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
