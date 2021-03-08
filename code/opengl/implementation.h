@@ -15,7 +15,7 @@ struct Gpu_Mesh;
 // -- graphics library part
 uint32_t glibrary_find_uniform(char const * name);
 void glibrary_clear(void);
-void glibrary_viewport(uint32_t size_x, uint32_t size_y);
+void glibrary_viewport(uint32_t x, uint32_t y, uint32_t size_x, uint32_t size_y);
 void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh);
 
 // -- GPU program part

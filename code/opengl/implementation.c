@@ -24,12 +24,12 @@ static GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t inde
 
 static GLenum gpu_mesh_usage_pattern(enum Mesh_Frequency frequency, enum Mesh_Access access);
 
-static GLenum gpu_comparison_type(enum Comparison_Type value);
+static GLenum gpu_comparison_op(enum Comparison_Op value);
 static GLenum gpu_cull_mode(enum Cull_Mode value);
-static GLenum gpu_front_face(enum Winding_Order value);
+static GLenum gpu_winding_order(enum Winding_Order value);
 static GLenum gpu_stencil_op(enum Stencil_Op value);
 
-static GLenum gpu_blend_func(enum Blend_Func value);
+static GLenum gpu_blend_op(enum Blend_Op value);
 static GLenum gpu_blend_factor(enum Blend_Factor value);
 
 //
@@ -67,8 +67,6 @@ struct Gpu_Unit {
 static struct {
 	char * extensions;
 
-	uint32_t viewport_x, viewport_y;
-
 	struct Strings * uniforms;
 
 	struct Gpu_Program * active_program;
@@ -82,14 +80,150 @@ uint32_t glibrary_find_uniform(char const * name) {
 }
 
 void glibrary_clear(void) {
-	glClear(GL_COLOR_BUFFER_BIT);
+	uint32_t framebuffer_id = 0;
+	enum Texture_Type clear_target = TEXTURE_TYPE_COLOR;
+	uint32_t clear_rgba = 0;
+	float clear_depth = 0;
+	// uint32_t clear_stencil = 0;
+
+	GLbitfield clear_mask = 0;
+	if (clear_target & TEXTURE_TYPE_COLOR) { clear_mask |= GL_COLOR_BUFFER_BIT; }
+	if (clear_target & TEXTURE_TYPE_DEPTH) { clear_mask |= GL_DEPTH_BUFFER_BIT; }
+	if (clear_target & TEXTURE_TYPE_STENCIL) { clear_mask |= GL_STENCIL_BUFFER_BIT; }
+
+	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)framebuffer_id);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glClearColor(
+		((clear_rgba >> 24) & 0xff) / 255.0f,
+		((clear_rgba >> 16) & 0xff) / 255.0f,
+		((clear_rgba >>  8) & 0xff) / 255.0f,
+		((clear_rgba >>  0) & 0xff) / 255.0f
+	);
+	glClearDepthf(clear_depth);
+	// glClearStencil((GLint)clear_stencil);
+	glClear(clear_mask);
 }
 
-void glibrary_viewport(uint32_t size_x, uint32_t size_y) {
-	if (glibrary.viewport_x != size_x || glibrary.viewport_y != size_y) {
-		glibrary.viewport_x = size_x;
-		glibrary.viewport_y = size_y;
-		glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
+void glibrary_viewport(uint32_t x, uint32_t y, uint32_t size_x, uint32_t size_y) {
+	glViewport((GLsizei)x, (GLsizei)y, (GLsizei)size_x, (GLsizei)size_y);
+}
+
+static void glibrary_blending(void) {
+	enum Color_Channel color_mask = COLOR_CHANNEL_NONE;
+
+	uint32_t blend_rgba = 0;
+
+	enum Blend_Op rgb_op = BLEND_OP_NONE;
+	enum Blend_Factor rgb_src = BLEND_FACTOR_ONE;
+	enum Blend_Factor rgb_dst = BLEND_FACTOR_ZERO;
+
+	enum Blend_Op alpha_op = BLEND_OP_NONE;
+	enum Blend_Factor alpha_src = BLEND_FACTOR_ONE;
+	enum Blend_Factor alpha_dst = BLEND_FACTOR_ZERO;
+
+	//
+	glColorMask(
+		color_mask & COLOR_CHANNEL_RED,
+		color_mask & COLOR_CHANNEL_GREEN,
+		color_mask & COLOR_CHANNEL_BLUE,
+		color_mask & COLOR_CHANNEL_ALPHA
+	);
+
+	glBlendColor(
+		((blend_rgba >> 24) & 0xff) / 255.0f,
+		((blend_rgba >> 16) & 0xff) / 255.0f,
+		((blend_rgba >>  8) & 0xff) / 255.0f,
+		((blend_rgba >>  0) & 0xff) / 255.0f
+	);
+
+	//
+	bool const blend_rgb = (rgb_op != BLEND_OP_NONE)
+	              && ((rgb_src != BLEND_FACTOR_ONE) || (rgb_dst != BLEND_FACTOR_ZERO))
+	              && (color_mask & ~COLOR_CHANNEL_ALPHA);
+
+	bool const blend_alpha = (alpha_op != BLEND_OP_NONE)
+	                && ((alpha_src != BLEND_FACTOR_ONE) || (alpha_dst != BLEND_FACTOR_ZERO))
+	                && (color_mask & COLOR_CHANNEL_ALPHA);
+
+	if (!(blend_rgb || blend_alpha)) {
+		glDisable(GL_BLEND);
+	}
+	else {
+		glEnable(GL_BLEND);
+
+		glBlendEquationSeparate(
+			gpu_blend_op(blend_rgb ? rgb_op : BLEND_OP_ADD),
+			gpu_blend_op(blend_alpha ? alpha_op : BLEND_OP_ADD)
+		);
+
+		glBlendFuncSeparate(
+			gpu_blend_factor(blend_rgb ? rgb_src : BLEND_FACTOR_ONE),
+			gpu_blend_factor(blend_rgb ? rgb_dst : BLEND_FACTOR_ZERO),
+			gpu_blend_factor(blend_alpha ? alpha_src : BLEND_FACTOR_ONE),
+			gpu_blend_factor(blend_alpha ? alpha_dst : BLEND_FACTOR_ZERO)
+		);
+	}
+}
+
+static void glibrary_depth_test(void) {
+	enum Comparison_Op comparison_op = COMPARISON_OP_NONE;
+	bool write_mask = true;
+
+	//
+	if (comparison_op == COMPARISON_OP_NONE) {
+		glDisable(GL_DEPTH_TEST);
+	}
+	else {
+		glEnable(GL_DEPTH_TEST);
+
+		glDepthMask(write_mask ? GL_TRUE : GL_FALSE);
+
+		glDepthFunc(gpu_comparison_op(comparison_op));
+	}
+}
+
+// static void glibrary_stencil_test(void) {
+// 	enum Comparison_Op comparison_op = COMPARISON_OP_NONE;
+// 	uint32_t comparison_ref = 0;
+// 	uint32_t comparison_mask = 0;
+// 	enum Stencil_Op fail_fail = STENCIL_OP_ZERO;
+// 	enum Stencil_Op succ_fail = STENCIL_OP_ZERO;
+// 	enum Stencil_Op succ_succ = STENCIL_OP_ZERO;
+// 	uint32_t write_mask = 0;
+// 
+// 	//
+// 	if (comparison_op == COMPARISON_OP_NONE) {
+// 		glDisable(GL_STENCIL_TEST);
+// 	}
+// 	else {
+// 		glEnable(GL_STENCIL_TEST);
+// 
+// 		glStencilMask((GLuint)write_mask);
+// 
+// 		glStencilFunc(gpu_comparison_op(comparison_op), (GLint)comparison_ref, (GLuint)comparison_mask);
+// 
+// 		glStencilOp(
+// 			gpu_stencil_op(fail_fail),
+// 			gpu_stencil_op(succ_fail),
+// 			gpu_stencil_op(succ_succ)
+// 		);
+// 	}
+// }
+
+static void glibrary_culling(void) {
+	enum Cull_Mode mode = CULL_MODE_NONE;
+	enum Winding_Order order = WINDING_ORDER_POSITIVE;
+
+	//
+	glFrontFace(gpu_winding_order(order));
+
+	if (mode == CULL_MODE_NONE) {
+		glDisable(GL_CULL_FACE);
+	}
+	else {
+		glEnable(GL_CULL_FACE);
+
+		glCullFace(gpu_cull_mode(mode));
 	}
 }
 
@@ -449,12 +583,17 @@ void graphics_to_glibrary_free(void) {
 	memset(&glibrary, 0, sizeof(glibrary));
 
 	(void)gpu_attachment_point;
-	(void)gpu_comparison_type;
+	(void)gpu_comparison_op;
 	(void)gpu_cull_mode;
-	(void)gpu_front_face;
+	(void)gpu_winding_order;
 	(void)gpu_stencil_op;
-	(void)gpu_blend_func;
+	(void)gpu_blend_op;
 	(void)gpu_blend_factor;
+
+	(void)glibrary_blending;
+	(void)glibrary_depth_test;
+	// (void)glibrary_stencil_test;
+	(void)glibrary_culling;
 }
 
 //
@@ -592,6 +731,7 @@ static void __stdcall opengl_debug_message_callback(
 static GLenum gpu_data_type(enum Data_Type value) {
 	switch (value) {
 		default: break;
+		case DATA_TYPE_NONE: break;
 
 		case DATA_TYPE_UNIT: return GL_INT;
 
@@ -663,6 +803,8 @@ static GLint gpu_wrap_mode(enum Wrap_Mode value, bool mirror) {
 
 static GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, uint32_t channels) {
 	switch (texture_type) {
+		case TEXTURE_TYPE_NONE: break;
+
 		case TEXTURE_TYPE_COLOR: switch (data_type) {
 			default: break;
 
@@ -719,6 +861,8 @@ static GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Dat
 
 static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels) {
 	switch (texture_type) {
+		case TEXTURE_TYPE_NONE: break;
+
 		case TEXTURE_TYPE_COLOR: switch (channels) {
 			case 1: return GL_RED;
 			case 2: return GL_RG;
@@ -736,6 +880,8 @@ static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t cha
 
 static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type) {
 	switch (texture_type) {
+		case TEXTURE_TYPE_NONE: break;
+
 		case TEXTURE_TYPE_COLOR: switch (data_type) {
 			default: break;
 			case DATA_TYPE_U8:  return GL_UNSIGNED_BYTE;
@@ -768,6 +914,8 @@ static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type
 
 static GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index) {
 	switch (texture_type) {
+		case TEXTURE_TYPE_NONE: break;
+
 		case TEXTURE_TYPE_COLOR:    return GL_COLOR_ATTACHMENT0 + index;
 		case TEXTURE_TYPE_DEPTH:    return GL_DEPTH_ATTACHMENT;
 		case TEXTURE_TYPE_STENCIL:  return GL_STENCIL_ATTACHMENT;
@@ -801,23 +949,25 @@ static GLenum gpu_mesh_usage_pattern(enum Mesh_Frequency frequency, enum Mesh_Ac
 	return GL_NONE;
 }
 
-static GLenum gpu_comparison_type(enum Comparison_Type value) {
+static GLenum gpu_comparison_op(enum Comparison_Op value) {
 	switch (value) {
-		case COMPARISON_TYPE_FALSE:      return GL_NEVER;
-		case COMPARISON_TYPE_TRUE:       return GL_ALWAYS;
-		case COMPARISON_TYPE_LESS:       return GL_LESS;
-		case COMPARISON_TYPE_EQUAL:      return GL_EQUAL;
-		case COMPARISON_TYPE_MORE:       return GL_GREATER;
-		case COMPARISON_TYPE_NOT_EQUAL:  return GL_NOTEQUAL;
-		case COMPARISON_TYPE_LESS_EQUAL: return GL_LEQUAL;
-		case COMPARISON_TYPE_MORE_EQUAL: return GL_GEQUAL;
+		case COMPARISON_OP_NONE:       break;
+		case COMPARISON_OP_FALSE:      return GL_NEVER;
+		case COMPARISON_OP_TRUE:       return GL_ALWAYS;
+		case COMPARISON_OP_LESS:       return GL_LESS;
+		case COMPARISON_OP_EQUAL:      return GL_EQUAL;
+		case COMPARISON_OP_MORE:       return GL_GREATER;
+		case COMPARISON_OP_NOT_EQUAL:  return GL_NOTEQUAL;
+		case COMPARISON_OP_LESS_EQUAL: return GL_LEQUAL;
+		case COMPARISON_OP_MORE_EQUAL: return GL_GEQUAL;
 	}
-	fprintf(stderr, "unknown comparison data type\n"); DEBUG_BREAK();
+	fprintf(stderr, "unknown comparison operation\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
 static GLenum gpu_cull_mode(enum Cull_Mode value) {
 	switch (value) {
+		case CULL_MODE_NONE:  break;
 		case CULL_MODE_BACK:  return GL_BACK;
 		case CULL_MODE_FRONT: return GL_FRONT;
 		case CULL_MODE_BOTH:  return GL_FRONT_AND_BACK;
@@ -826,7 +976,7 @@ static GLenum gpu_cull_mode(enum Cull_Mode value) {
 	return GL_NONE;
 }
 
-static GLenum gpu_front_face(enum Winding_Order value) {
+static GLenum gpu_winding_order(enum Winding_Order value) {
 	switch (value) {
 		case WINDING_ORDER_NEGATIVE: return GL_CCW;
 		case WINDING_ORDER_POSITIVE:  return GL_CW;
@@ -850,16 +1000,16 @@ static GLenum gpu_stencil_op(enum Stencil_Op value) {
 	return GL_NONE;
 }
 
-static GLenum gpu_blend_func(enum Blend_Func value) {
+static GLenum gpu_blend_op(enum Blend_Op value) {
 	switch (value) {
-		default: break;
-		case BLEND_FUNC_ADD:         return GL_FUNC_ADD;
-		case BLEND_FUNC_SUB:         return GL_FUNC_SUBTRACT;
-		case BLEND_FUNC_MIN:         return GL_MIN;
-		case BLEND_FUNC_MAX:         return GL_MAX;
-		case BLEND_FUNC_REVERSE_SUB: return GL_FUNC_REVERSE_SUBTRACT;
+		case BLEND_OP_NONE:        break;
+		case BLEND_OP_ADD:         return GL_FUNC_ADD;
+		case BLEND_OP_SUB:         return GL_FUNC_SUBTRACT;
+		case BLEND_OP_MIN:         return GL_MIN;
+		case BLEND_OP_MAX:         return GL_MAX;
+		case BLEND_OP_REVERSE_SUB: return GL_FUNC_REVERSE_SUBTRACT;
 	}
-	fprintf(stderr, "unknown blend func\n"); DEBUG_BREAK();
+	fprintf(stderr, "unknown blend operation\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
