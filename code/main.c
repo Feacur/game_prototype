@@ -4,6 +4,8 @@
 #include "platform_system.h"
 #include "platform_window.h"
 
+#include "vectors.h"
+
 #include "array_byte.h"
 #include "asset_mesh.h"
 #include "asset_image.h"
@@ -40,12 +42,11 @@ int main (int argc, char * argv[]) {
 	asset_image_free(&asset_image);
 	asset_mesh_free(&asset_mesh);
 
-	gpu_unit_init(gpu_texture);
-	gpu_program_select(gpu_program);
-	gpu_mesh_select(gpu_mesh);
+	uint32_t color_uniform_id = glibrary_find_uniform("u_Color");
+	gpu_program_set_uniform(gpu_program, color_uniform_id, &(struct vec4){0.2f, 0.6f, 1, 1});
 
-	uint32_t uniform_id = glibrary_find_uniform("u_Texture");
-	gpu_program_set_texture(gpu_program, uniform_id, gpu_texture);
+	uint32_t texture_uniform_id = glibrary_find_uniform("u_Texture");
+	gpu_program_set_uniform(gpu_program, texture_uniform_id, gpu_texture);
 	
 	uint64_t frame_start_ticks = platform_timer_get_ticks();
 	uint64_t const timer_ticks_per_second = platform_timer_get_ticks_per_second();

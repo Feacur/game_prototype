@@ -23,7 +23,7 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset);
 void gpu_program_free(struct Gpu_Program * gpu_program);
 
 void gpu_program_select(struct Gpu_Program * gpu_program);
-void gpu_program_set_texture(struct Gpu_Program * gpu_program, uint32_t uniform_id, struct Gpu_Texture * gpu_texture);
+void gpu_program_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_id, void * data);
 
 // -- GPU texture part
 struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset);
@@ -36,7 +36,7 @@ void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh);
 void gpu_mesh_select(struct Gpu_Mesh * gpu_mesh);
 
 // -- GPU unit part
-void gpu_unit_init(struct Gpu_Texture * gpu_texture);
-void gpu_unit_free(struct Gpu_Texture * gpu_texture);
+uint32_t gpu_unit_init(struct Gpu_Texture * gpu_texture);
+void     gpu_unit_free(struct Gpu_Texture * gpu_texture);
 
 #endif
