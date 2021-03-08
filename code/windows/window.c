@@ -21,6 +21,7 @@ struct Window {
 	struct {
 		uint8_t keys[KEYBOARD_KEYS_MAX];
 		uint8_t prev[KEYBOARD_KEYS_MAX];
+		// bool caps_lock, num_lock;
 	} keyboard;
 
 	struct {
@@ -66,6 +67,12 @@ struct Window * platform_window_init(void) {
 
 	memset(&window->keyboard, 0, sizeof(window->keyboard));
 	memset(&window->mouse, 0, sizeof(window->mouse));
+
+	// uint8_t keys[256];
+	// if (GetKeyboardState(keys)) {
+	// 	window->keyboard.caps_lock = keys[VK_CAPITAL] & 0x01;
+	// 	window->keyboard.num_lock = keys[VK_NUMLOCK] & 0x01;
+	// }
 
 	window->graphics = graphics_init(window);
 
@@ -250,6 +257,19 @@ static LRESULT handle_input_keyboard_virtual(struct Window * window, uint8_t key
 		case VK_DIVIDE:   window->keyboard.keys[KC_NUM_DIV]  = is_down; break;
 		case VK_DECIMAL:  window->keyboard.keys[KC_NUM_DEC]  = is_down; break;
 	}
+
+	// switch (key) {
+	// 	// non-ASCII, common
+	// 	case VK_CAPITAL: {
+	// 		window->keyboard.caps_lock = GetKeyState(key) & 0x0001;
+	// 		break;
+	// 	}
+	// 	// non-ASCII, numeric
+	// 	case VK_NUMLOCK: {
+	// 		window->keyboard.num_lock = GetKeyState(key) & 0x0001;
+	// 		break;
+	// 	}
+	// }
 
 	return 0;
 }
