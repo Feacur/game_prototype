@@ -10,6 +10,7 @@
 #include "code/asset_mesh_obj.c"
 #include "code/asset_mesh.c"
 #include "code/asset_image.c"
+#include "code/asset_font.c"
 #include "code/platform_file.c"
 #include "code/windows/timer.c"
 #include "code/windows/system.c"

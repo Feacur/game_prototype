@@ -26,6 +26,7 @@
 #define STBI_REALLOC(pointer, size) MEMORY_REALLOCATE_SIZE(pointer, size)
 #define STBI_FREE(pointer)          MEMORY_FREE(pointer)
 
+#define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
@@ -58,5 +59,5 @@ void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 
 void asset_image_free(struct Asset_Image * asset_image) {
 	MEMORY_FREE(asset_image->data);
-	memset(&asset_image, 0, sizeof(asset_image));
+	memset(asset_image, 0, sizeof(*asset_image));
 }

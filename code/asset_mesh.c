@@ -40,6 +40,10 @@ void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
 			obj.triangles.data[i * 3 + 2],
 		};
 
+		// @todo: reuse matching vertices instead of copying them
+		//        naive linear search would be quadrativally slow,
+		//        so a hashset it is
+
 		if (obj.positions.count > 0) { array_float_write_many(&asset_mesh->vertices, 3, obj.positions.data + vertex_index[0] * 3); }
 		if (obj.texcoords.count > 0) { array_float_write_many(&asset_mesh->vertices, 2, obj.texcoords.data + vertex_index[1] * 2); }
 		if (obj.normals.count > 0) { array_float_write_many(&asset_mesh->vertices, 3, obj.normals.data + vertex_index[2] * 3); }

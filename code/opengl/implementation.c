@@ -407,6 +407,7 @@ void gpu_program_free(struct Gpu_Program * gpu_program) {
 		if (glibrary.active_program == gpu_program) { glibrary.active_program = NULL; }
 		glDeleteProgram(gpu_program->id);
 	}
+	memset(gpu_program, 0, sizeof(*gpu_program));
 	MEMORY_FREE(gpu_program);
 }
 
@@ -521,6 +522,7 @@ void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 		}
 		glDeleteTextures(1, &gpu_texture->id);
 	}
+	memset(gpu_texture, 0, sizeof(*gpu_texture));
 	MEMORY_FREE(gpu_texture);
 }
 
@@ -600,6 +602,7 @@ void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
 		glDeleteBuffers(1, &gpu_mesh->indices_buffer_id);
 		glDeleteVertexArrays(1, &gpu_mesh->id);
 	}
+	memset(gpu_mesh, 0, sizeof(*gpu_mesh));
 	MEMORY_FREE(gpu_mesh);
 }
 
