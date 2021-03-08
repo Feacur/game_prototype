@@ -35,8 +35,4 @@ void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh);
 
 void gpu_mesh_select(struct Gpu_Mesh * gpu_mesh);
 
-// -- GPU unit part
-uint32_t gpu_unit_init(struct Gpu_Texture * gpu_texture);
-void     gpu_unit_free(struct Gpu_Texture * gpu_texture);
-
 #endif

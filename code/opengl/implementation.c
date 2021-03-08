@@ -41,6 +41,7 @@ static GLenum gpu_blend_factor(enum Blend_Factor value);
 struct Gpu_Program_Field {
 	uint32_t id;
 	enum Data_Type type;
+	GLsizei array_size;
 	GLint location;
 };
 
@@ -240,12 +241,47 @@ void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh)
 	);
 }
 
-static uint32_t glibrary_find_unit(struct Gpu_Texture * gpu_texture) {
+static uint32_t glibrary_unit_find(struct Gpu_Texture * gpu_texture) {
 	for (uint32_t i = 0; i < sizeof(glibrary.units) / sizeof(*glibrary.units); i++) {
 		if (glibrary.units[i].gpu_texture == gpu_texture) { return i; }
 	}
 	return UINT32_MAX;
 }
+
+static uint32_t glibrary_unit_init(struct Gpu_Texture * gpu_texture) {
+	uint32_t unit = glibrary_unit_find(gpu_texture);
+	if (unit != UINT32_MAX) { return unit; }
+
+	unit = glibrary_unit_find(NULL);
+	if (unit == UINT32_MAX) {
+		fprintf(stderr, "'glibrary_unit_find' failed\n"); DEBUG_BREAK();
+		return unit;
+	}
+
+	glibrary.units[unit] = (struct Gpu_Unit){
+		.gpu_texture = gpu_texture,
+	};
+
+	glBindTextureUnit((GLuint)unit, gpu_texture->id);
+
+	return unit;
+}
+
+// static void glibrary_unit_free(struct Gpu_Texture * gpu_texture) {
+// 	if (ogl_version > 0) {
+// 		uint32_t unit = glibrary_unit_find(gpu_texture);
+// 		if (unit == UINT32_MAX) {
+// 			fprintf(stderr, "'glibrary_unit_find' failed\n"); DEBUG_BREAK();
+// 			return;
+// 		}
+// 
+// 		glibrary.units[unit] = (struct Gpu_Unit){
+// 			.gpu_texture = NULL,
+// 		};
+// 
+// 		glBindTextureUnit((GLuint)unit, 0);
+// 	}
+// }
 
 // -- GPU program part
 static void verify_shader(GLuint id, GLenum parameter);
@@ -327,7 +363,7 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 	struct Gpu_Program_Field uniforms[10];
 	for (GLint i = 0; i < uniforms_count; i++) {
 		// GL_NAME_LENGTH // includes zero-terminator
-		GLenum const props[] = {GL_TYPE, GL_LOCATION};
+		GLenum const props[] = {GL_TYPE, GL_ARRAY_SIZE, GL_LOCATION};
 		GLint params[sizeof(props) / sizeof(*props)];
 		glGetProgramResourceiv(program_id, GL_UNIFORM, (GLuint)i, sizeof(props) / sizeof(*props), props, sizeof(params) / sizeof(*params), NULL, params);
 
@@ -336,10 +372,16 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 		GLsizei name_length;
 		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
 
+		if (params[1] > 1) {
+			// array names end with `[0]`
+			name_length -= 3;
+		}
+
 		uniforms[i] = (struct Gpu_Program_Field){
 			.id = strings_add(glibrary.uniforms, (uint32_t)name_length, uniform_name_buffer),
 			.type = interpret_gl_type(params[0]),
-			.location = params[1],
+			.array_size = (GLsizei)params[1],
+			.location = params[2],
 		};
 	}
 
@@ -392,37 +434,41 @@ void gpu_program_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_
 		case DATA_TYPE_NONE: break;
 
 		case DATA_TYPE_UNIT: {
-			uint32_t unit = glibrary_find_unit((struct Gpu_Texture *)data);
-			if (unit == UINT32_MAX) {
-				unit = gpu_unit_init((struct Gpu_Texture *)data);
-			}
+			struct Gpu_Texture * gpu_textures = (struct Gpu_Texture *)data;
+			for (GLsizei i = 0; i < field->array_size; i++) {
+				uint32_t unit = glibrary_unit_find(gpu_textures + i);
+				if (unit == UINT32_MAX) {
+					unit = glibrary_unit_init(gpu_textures + i);
+					if (unit == UINT32_MAX) {
+						fprintf(stderr, "'glibrary_unit_find' failed\n"); DEBUG_BREAK();
+						continue;
+					}
+				}
 
-			if (unit != UINT32_MAX) {
 				GLint uniform_data = (GLint)unit;
 				glProgramUniform1iv(gpu_program->id, location, 1, &uniform_data);
 			}
-			else { fprintf(stderr, "'glibrary_find_unit' failed\n"); DEBUG_BREAK(); }
 			break;
 		}
 
-		case DATA_TYPE_U32:   glProgramUniform1uiv(gpu_program->id, location, 1, data); break;
-		case DATA_TYPE_UVEC2: glProgramUniform2uiv(gpu_program->id, location, 1, data); break;
-		case DATA_TYPE_UVEC3: glProgramUniform3uiv(gpu_program->id, location, 1, data); break;
-		case DATA_TYPE_UVEC4: glProgramUniform4uiv(gpu_program->id, location, 1, data); break;
+		case DATA_TYPE_U32:   glProgramUniform1uiv(gpu_program->id, location, field->array_size, data); break;
+		case DATA_TYPE_UVEC2: glProgramUniform2uiv(gpu_program->id, location, field->array_size, data); break;
+		case DATA_TYPE_UVEC3: glProgramUniform3uiv(gpu_program->id, location, field->array_size, data); break;
+		case DATA_TYPE_UVEC4: glProgramUniform4uiv(gpu_program->id, location, field->array_size, data); break;
 
-		case DATA_TYPE_S32:   glProgramUniform1iv(gpu_program->id, location, 1, data); break;
-		case DATA_TYPE_SVEC2: glProgramUniform2iv(gpu_program->id, location, 1, data); break;
-		case DATA_TYPE_SVEC3: glProgramUniform3iv(gpu_program->id, location, 1, data); break;
-		case DATA_TYPE_SVEC4: glProgramUniform4iv(gpu_program->id, location, 1, data); break;
+		case DATA_TYPE_S32:   glProgramUniform1iv(gpu_program->id, location, field->array_size, data); break;
+		case DATA_TYPE_SVEC2: glProgramUniform2iv(gpu_program->id, location, field->array_size, data); break;
+		case DATA_TYPE_SVEC3: glProgramUniform3iv(gpu_program->id, location, field->array_size, data); break;
+		case DATA_TYPE_SVEC4: glProgramUniform4iv(gpu_program->id, location, field->array_size, data); break;
 
-		case DATA_TYPE_R32:  glProgramUniform1fv(gpu_program->id, location, 1, data); break;
-		case DATA_TYPE_VEC2: glProgramUniform2fv(gpu_program->id, location, 1, data); break;
-		case DATA_TYPE_VEC3: glProgramUniform3fv(gpu_program->id, location, 1, data); break;
-		case DATA_TYPE_VEC4: glProgramUniform4fv(gpu_program->id, location, 1, data); break;
+		case DATA_TYPE_R32:  glProgramUniform1fv(gpu_program->id, location, field->array_size, data); break;
+		case DATA_TYPE_VEC2: glProgramUniform2fv(gpu_program->id, location, field->array_size, data); break;
+		case DATA_TYPE_VEC3: glProgramUniform3fv(gpu_program->id, location, field->array_size, data); break;
+		case DATA_TYPE_VEC4: glProgramUniform4fv(gpu_program->id, location, field->array_size, data); break;
 
-		case DATA_TYPE_MAT2: glProgramUniformMatrix2fv(gpu_program->id, location, 1, GL_FALSE, data); break;
-		case DATA_TYPE_MAT3: glProgramUniformMatrix3fv(gpu_program->id, location, 1, GL_FALSE, data); break;
-		case DATA_TYPE_MAT4: glProgramUniformMatrix4fv(gpu_program->id, location, 1, GL_FALSE, data); break;
+		case DATA_TYPE_MAT2: glProgramUniformMatrix2fv(gpu_program->id, location, field->array_size, GL_FALSE, data); break;
+		case DATA_TYPE_MAT3: glProgramUniformMatrix3fv(gpu_program->id, location, field->array_size, GL_FALSE, data); break;
+		case DATA_TYPE_MAT4: glProgramUniformMatrix4fv(gpu_program->id, location, field->array_size, GL_FALSE, data); break;
 	}
 }
 
@@ -559,42 +605,6 @@ void gpu_mesh_select(struct Gpu_Mesh * gpu_mesh) {
 	if (glibrary.active_mesh == gpu_mesh) { return; }
 	glibrary.active_mesh = gpu_mesh;
 	glBindVertexArray(gpu_mesh->id);
-}
-
-// -- GPU unit part
-uint32_t gpu_unit_init(struct Gpu_Texture * gpu_texture) {
-	uint32_t unit = glibrary_find_unit(gpu_texture);
-	if (unit != UINT32_MAX) { return unit; }
-
-	unit = glibrary_find_unit(NULL);
-	if (unit == UINT32_MAX) {
-		fprintf(stderr, "'glibrary_find_unit' failed\n"); DEBUG_BREAK();
-		return unit;
-	}
-
-	glibrary.units[unit] = (struct Gpu_Unit){
-		.gpu_texture = gpu_texture,
-	};
-
-	glBindTextureUnit((GLuint)unit, gpu_texture->id);
-
-	return unit;
-}
-
-void gpu_unit_free(struct Gpu_Texture * gpu_texture) {
-	if (ogl_version > 0) {
-		uint32_t unit = glibrary_find_unit(gpu_texture);
-		if (unit == UINT32_MAX) {
-			fprintf(stderr, "'glibrary_find_unit' failed\n"); DEBUG_BREAK();
-			return;
-		}
-
-		glibrary.units[unit] = (struct Gpu_Unit){
-			.gpu_texture = NULL,
-		};
-
-		glBindTextureUnit((GLuint)unit, 0);
-	}
 }
 
 //

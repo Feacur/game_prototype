@@ -107,7 +107,6 @@ int main (int argc, char * argv[]) {
 	}
 
 	// cleanup
-	gpu_unit_free(gpu_texture);
 	gpu_program_free(gpu_program);
 	gpu_texture_free(gpu_texture);
 	gpu_mesh_free(gpu_mesh);
