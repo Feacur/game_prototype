@@ -72,7 +72,7 @@ int main (int argc, char * argv[]) {
 
 		uint32_t size_x, size_y;
 		platform_window_get_size(window, &size_x, &size_y);
-		glibrary_viewport(size_x, size_y);
+		glibrary_viewport(0, 0, size_x, size_y);
 
 		// process input
 		double delta_time_double = (double)elapsed / (double)timer_ticks_per_second;
