@@ -26,22 +26,25 @@ struct Transform {
 };
 
 static struct {
+	uint32_t color;
+	uint32_t texture;
+	uint32_t camera;
+	uint32_t transform;
+} uniforms;
+
+static struct {
 	struct Gpu_Program * gpu_program;
 	struct Gpu_Texture * gpu_texture;
 	struct Gpu_Mesh * gpu_mesh;
+} content;
 
-	struct {
-		uint32_t color;
-		uint32_t texture;
-		uint32_t camera;
-		uint32_t transform;
-	} uniforms;
-
+static struct {
 	struct Transform camera;
 	struct Transform object;
-} game_state;
+} state;
 
 static void game_init(void) {
+	// setup GL
 	glEnable(GL_DEPTH_TEST);
 	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 	glDepthRangef(0, 1);
@@ -51,23 +54,13 @@ static void game_init(void) {
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 
-	/*
-	> forward Z
-		glEnable(GL_DEPTH_TEST);
-		glDepthRangef(0, 1);
-		glDepthFunc(GL_LESS);
-		glClearDepthf(1);
+	// init uniforms ids
+	uniforms.color = glibrary_add_uniform("u_Color");
+	uniforms.texture = glibrary_add_uniform("u_Texture");
+	uniforms.camera = glibrary_add_uniform("u_Camera");
+	uniforms.transform = glibrary_add_uniform("u_Transform");
 
-	> reverse Z
-		glEnable(GL_DEPTH_TEST);
-		glDepthRangef(1, 0);
-		glDepthFunc(GL_GREATER);
-		glClearDepthf(0);
-		+
-		glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-	*/
-
-	//
+	// load content
 	struct Array_Byte asset_shader;
 	platform_file_init(&asset_shader, "assets/test.glsl");
 
@@ -77,28 +70,22 @@ static void game_init(void) {
 	struct Asset_Mesh asset_mesh;
 	asset_mesh_init(&asset_mesh, "assets/cube.obj");
 
-	game_state.gpu_program = gpu_program_init(&asset_shader);
-	game_state.gpu_texture = gpu_texture_init(&asset_image);
-	game_state.gpu_mesh = gpu_mesh_init(&asset_mesh);
+	content.gpu_program = gpu_program_init(&asset_shader);
+	content.gpu_texture = gpu_texture_init(&asset_image);
+	content.gpu_mesh = gpu_mesh_init(&asset_mesh);
 
 	platform_file_free(&asset_shader);
 	asset_image_free(&asset_image);
 	asset_mesh_free(&asset_mesh);
 
-	//
-	game_state.uniforms.color = glibrary_find_uniform("u_Color");
-	game_state.uniforms.texture = glibrary_find_uniform("u_Texture");
-	game_state.uniforms.camera = glibrary_find_uniform("u_Camera");
-	game_state.uniforms.transform = glibrary_find_uniform("u_Transform");
-
-	//
-	game_state.camera = (struct Transform){
+	// init state
+	state.camera = (struct Transform){
 		.position = (struct vec3){0, 3, -5},
 		.scale = (struct vec3){1, 1, 1},
 		.rotation = quat_set_radians((struct vec3){MATHS_TAU / 16, 0, 0}),
 	};
 
-	game_state.object = (struct Transform){
+	state.object = (struct Transform){
 		.position = (struct vec3){0, 0, 0},
 		.scale = (struct vec3){1, 1, 1},
 		.rotation = (struct vec4){0, 0, 0, 1},
@@ -106,11 +93,13 @@ static void game_init(void) {
 }
 
 static void game_free(void) {
-	gpu_program_free(game_state.gpu_program);
-	gpu_texture_free(game_state.gpu_texture);
-	gpu_mesh_free(game_state.gpu_mesh);
+	gpu_program_free(content.gpu_program);
+	gpu_texture_free(content.gpu_texture);
+	gpu_mesh_free(content.gpu_mesh);
 
-	memset(&game_state, 0, sizeof(game_state));
+	memset(&uniforms, 0, sizeof(uniforms));
+	memset(&content, 0, sizeof(content));
+	memset(&state, 0, sizeof(state));
 }
 
 static void game_fixed_update(struct Window * window, uint64_t elapsed, uint64_t per_second) {
@@ -141,7 +130,7 @@ static void game_update(struct Window * window, uint64_t elapsed, uint64_t per_s
 		printf("released mouse right at %d %d\n", pos_x, pos_y);
 	}
 
-	game_state.object.rotation = quat_mul(game_state.object.rotation, quat_set_radians(
+	state.object.rotation = quat_mul(state.object.rotation, quat_set_radians(
 		(struct vec3){0 * delta_time, 1 * delta_time, 0 * delta_time}
 	));
 }
@@ -151,22 +140,22 @@ static void game_render(struct Window * window) {
 	platform_window_get_size(window, &size_x, &size_y);
 	glibrary_viewport(0, 0, size_x, size_y);
 
-	gpu_program_set_uniform(game_state.gpu_program, game_state.uniforms.color, &(struct vec4){0.2f, 0.6f, 1, 1});
-	gpu_program_set_uniform(game_state.gpu_program, game_state.uniforms.texture, &game_state.gpu_texture);
+	gpu_program_set_uniform(content.gpu_program, uniforms.color, &(struct vec4){0.2f, 0.6f, 1, 1});
+	gpu_program_set_uniform(content.gpu_program, uniforms.texture, &content.gpu_texture);
 
-	struct mat4 matrix_camera = mat4_mul_mat(
+	struct mat4 const matrix_camera = mat4_mul_mat(
 		mat4_set_projection((struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 1000.0f, 0),
-		mat4_set_inverse_transformation(game_state.camera.position, game_state.camera.scale, game_state.camera.rotation)
+		mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
 	);
 
-	struct mat4 matrix_object = mat4_set_transformation(game_state.object.position, game_state.object.scale, game_state.object.rotation);
+	struct mat4 const matrix_object = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation);
 
-	gpu_program_set_uniform(game_state.gpu_program, game_state.uniforms.camera, &matrix_camera.x.x);
-	gpu_program_set_uniform(game_state.gpu_program, game_state.uniforms.transform, &matrix_object.x.x);
+	gpu_program_set_uniform(content.gpu_program, uniforms.camera, &matrix_camera.x.x);
+	gpu_program_set_uniform(content.gpu_program, uniforms.transform, &matrix_object.x.x);
 
 	// draw
 	glibrary_clear();
-	glibrary_draw(game_state.gpu_program, game_state.gpu_mesh);
+	glibrary_draw(content.gpu_program, content.gpu_mesh);
 }
 
 int main (int argc, char * argv[]) {
@@ -189,25 +178,43 @@ int main (int argc, char * argv[]) {
 
 //
 
-// static void asset_mesh_init_1(struct Asset_Mesh * asset_mesh) {
-// #define CONSTRUCT(type, array) (type){ .data = array, .count = sizeof(array) / sizeof(*array) }
-// 
-// 	static float vertices[] = {
-// 		/*position*/ -0.5f, -0.5f, 0.0f, /*texcoord*/ 0.0f, 0.0f,
-// 		/*position*/  0.5f, -0.5f, 0.0f, /*texcoord*/ 1.0f, 0.0f,
-// 		/*position*/ -0.5f,  0.5f, 0.0f, /*texcoord*/ 0.0f, 1.0f,
-// 		/*position*/  0.5f,  0.5f, 0.0f, /*texcoord*/ 1.0f, 1.0f,
-// 	};
-// 	static uint32_t sizes[] = {3, 2};
-// 	static uint32_t locations[] = {0, 1};
-// 	static uint32_t indices[] = {0, 1, 2, 3, 2, 1};
-// 
-// 	*asset_mesh = (struct Asset_Mesh){
-// 		.vertices = CONSTRUCT(struct Array_Float, vertices),
-// 		.sizes = CONSTRUCT(struct Array_U32, sizes),
-// 		.locations = CONSTRUCT(struct Array_U32, locations),
-// 		.indices = CONSTRUCT(struct Array_U32, indices),
-// 	};
-// 
-// #undef CONSTRUCT
-// }
+/*
+static void asset_mesh_init_1(struct Asset_Mesh * asset_mesh) {
+#define CONSTRUCT(type, array) (type){ .data = array, .count = sizeof(array) / sizeof(*array) }
+
+	static float vertices[] = {
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+		-0.5f,  0.5f, 0.0f, 0.0f, 1.0f,
+		 0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
+	};
+	static uint32_t sizes[] = {3, 2};
+	static uint32_t locations[] = {0, 1};
+	static uint32_t indices[] = {0, 1, 2, 3, 2, 1};
+
+	*asset_mesh = (struct Asset_Mesh){
+		.vertices = CONSTRUCT(struct Array_Float, vertices),
+		.sizes = CONSTRUCT(struct Array_U32, sizes),
+		.locations = CONSTRUCT(struct Array_U32, locations),
+		.indices = CONSTRUCT(struct Array_U32, indices),
+	};
+
+#undef CONSTRUCT
+}
+*/
+
+/*
+> forward Z
+	glEnable(GL_DEPTH_TEST);
+	glDepthRangef(0, 1);
+	glDepthFunc(GL_LESS);
+	glClearDepthf(1);
+
+> reverse Z
+	glEnable(GL_DEPTH_TEST);
+	glDepthRangef(1, 0);
+	glDepthFunc(GL_GREATER);
+	glClearDepthf(0);
+	+
+	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+*/

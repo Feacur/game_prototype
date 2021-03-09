@@ -13,7 +13,9 @@ struct Gpu_Texture;
 struct Gpu_Mesh;
 
 // -- graphics library part
+uint32_t glibrary_add_uniform(char const * name);
 uint32_t glibrary_find_uniform(char const * name);
+
 void glibrary_clear(void);
 void glibrary_viewport(uint32_t x, uint32_t y, uint32_t size_x, uint32_t size_y);
 void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh);
@@ -23,7 +25,7 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset);
 void gpu_program_free(struct Gpu_Program * gpu_program);
 
 void gpu_program_select(struct Gpu_Program * gpu_program);
-void gpu_program_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_id, void * data);
+void gpu_program_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_id, void const * data);
 
 // -- GPU texture part
 struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset);
