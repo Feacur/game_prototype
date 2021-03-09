@@ -62,10 +62,13 @@ if defined unity_build (
 	cl -std:c11 "../project/unity_build.c" -Fe"game.exe" %compiler% %warnings% %linker%
 ) else ( rem alternatively, compile a set of translation units
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
-	cl -std:c11 -c "../code/*.c" %compiler% %warnings%
-	cl -std:c11 -c "../code/windows/*.c" %compiler% %warnings%
-	cl -std:c11 -c "../code/windows/opengl/*.c" %compiler% %warnings%
-	cl -std:c11 -c "../code/opengl/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../framework/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../framework/containers/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../framework/assets/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../framework/windows/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../framework/windows/opengl/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../framework/opengl/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../prototype/*.c" %compiler% %warnings%
 	link "./temp/*.obj" -out:"game.exe" %linker%
 )
 

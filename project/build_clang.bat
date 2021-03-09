@@ -60,10 +60,13 @@ if defined unity_build (
 	clang -std=c99 "../project/unity_build.c" -o"game.exe" %compiler% %warnings% %linker%
 ) else ( rem alternatively, compile a set of translation units
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
-	clang -std=c99 -c "../code/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../code/windows/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../code/windows/opengl/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../code/opengl/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../framework/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../framework/containers/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../framework/assets/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../framework/windows/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../framework/windows/opengl/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../framework/opengl/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../prototype/*.c" %compiler% %warnings%
 	move ".\*.o" ".\temp"
 	lld-link "./temp/*.o" libcmt.lib -out:"game.exe" %linker%
 )

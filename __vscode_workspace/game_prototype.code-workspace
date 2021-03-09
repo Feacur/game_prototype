@@ -4,7 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "../code"
+			"path": "../framework"
+		},
+		{
+			"path": "../prototype"
 		},
 		{
 			"path": "../third_party"
