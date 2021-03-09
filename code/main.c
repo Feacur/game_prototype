@@ -26,12 +26,29 @@ int main (int argc, char * argv[]) {
 	platform_window_set_vsync(window, 1);
 
 	glEnable(GL_DEPTH_TEST);
+	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 	glDepthRangef(0, 1);
 	glDepthFunc(GL_LESS);
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
+
+	/*
+	> forward Z
+		glEnable(GL_DEPTH_TEST);
+		glDepthRangef(0, 1);
+		glDepthFunc(GL_LESS);
+		glClearDepthf(1);
+
+	> reverse Z
+		glEnable(GL_DEPTH_TEST);
+		glDepthRangef(1, 0);
+		glDepthFunc(GL_GREATER);
+		glClearDepthf(0);
+		+
+		glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+	*/
 
 	struct Array_Byte asset_shader;
 	platform_file_init(&asset_shader, "assets/test.glsl");
