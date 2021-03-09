@@ -374,7 +374,7 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 
 		if (params[1] > 1) {
 			// simple arrays have names ending with a `[0]`
-			if (memcmp(uniform_name_buffer + name_length - 4, "[0]", 3)) {
+			if (memcmp(uniform_name_buffer + name_length - 3, "[0]", 3) == 0) {
 				name_length -= 3;
 			}
 		}
