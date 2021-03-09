@@ -26,80 +26,78 @@ static struct {
 
 	struct {
 		uint64_t frame_start, per_second, elapsed;
+		uint64_t fixed_accumulator;
 	} ticks;
-} game_application;
+} app;
 
 static uint32_t get_target_refresh_rate(void) {
-	return game_application.config->target_refresh_rate == 0
-		? platform_window_get_refresh_rate(game_application.window, 60)
-		: game_application.config->target_refresh_rate;
+	return app.config->target_refresh_rate == 0
+		? platform_window_get_refresh_rate(app.window, 60)
+		: app.config->target_refresh_rate;
 }
 
 static void application_init(void) {
 	platform_system_init();
 
-	game_application.window = platform_window_init();
-	platform_window_set_vsync(game_application.window, game_application.config->vsync);
+	app.window = platform_window_init();
+	platform_window_set_vsync(app.window, app.config->vsync);
 
-	game_application.ticks.frame_start = platform_timer_get_ticks();
-	game_application.ticks.per_second = platform_timer_get_ticks_per_second();
+	app.ticks.frame_start = platform_timer_get_ticks();
+	app.ticks.per_second = platform_timer_get_ticks_per_second();
 
-	if (game_application.config->vsync != 0) {
+	if (app.config->vsync != 0) {
 		uint32_t const target_refresh_rate = get_target_refresh_rate();
-		uint32_t const vsync_factor = (game_application.config->vsync > 0) ? (uint32_t)game_application.config->vsync : 1;
-		game_application.ticks.elapsed = game_application.ticks.per_second * vsync_factor / target_refresh_rate;
+		uint32_t const vsync_factor = (app.config->vsync > 0) ? (uint32_t)app.config->vsync : 1;
+		app.ticks.elapsed = app.ticks.per_second * vsync_factor / target_refresh_rate;
 	}
 
-	game_application.config->callbacks.init();
+	app.config->callbacks.init();
 }
 
 static void application_free(void) {
-	game_application.config->callbacks.free();
+	app.config->callbacks.free();
 
-	if (game_application.window != NULL) {
-		platform_window_free(game_application.window);
+	if (app.window != NULL) {
+		platform_window_free(app.window);
 	}
 	platform_system_free();
 
-	memset(&game_application, 0, sizeof(game_application));
+	memset(&app, 0, sizeof(app));
 }
 
 static void application_update(void) {
-	if (platform_window_get_vsync(game_application.window) == 0) {
+	if (platform_window_get_vsync(app.window) == 0) {
 		uint32_t const target_refresh_rate = get_target_refresh_rate();
-		uint64_t const frame_end_ticks = game_application.ticks.frame_start + game_application.ticks.per_second / target_refresh_rate;
+		uint64_t const frame_end_ticks = app.ticks.frame_start + app.ticks.per_second / target_refresh_rate;
 		while (platform_timer_get_ticks() < frame_end_ticks) {
 			platform_system_sleep(0);
 		}
 	}
 
-	game_application.ticks.elapsed = platform_timer_get_ticks() - game_application.ticks.frame_start;
-	game_application.ticks.frame_start = platform_timer_get_ticks();
+	app.ticks.elapsed = platform_timer_get_ticks() - app.ticks.frame_start;
+	app.ticks.frame_start = platform_timer_get_ticks();
 
-	game_application.config->callbacks.update(
-		game_application.window,
-		game_application.ticks.elapsed,
-		game_application.ticks.per_second
+	app.config->callbacks.update(
+		app.window,
+		app.ticks.elapsed,
+		app.ticks.per_second
 	);
-}
 
-static void application_render(void) {
-	game_application.config->callbacks.render(game_application.window);
-	platform_window_display(game_application.window);
+	app.config->callbacks.render(app.window);
+	platform_window_display(app.window);
 }
 
 void application_run(struct Application_Config * config) {
-	game_application.config = config;
+	app.config = config;
 
 	application_init();
 
-	while (game_application.window != NULL && platform_window_is_running()) {
-		platform_window_update(game_application.window);
+	while (app.window != NULL && platform_window_is_running()) {
+		platform_window_update(app.window);
 		platform_system_update();
 
-		if (platform_window_exists(game_application.window)) {
+		if (platform_window_exists(app.window)) {
 			application_update();
-			application_render();
 		}
 		else { break; }
 	}
