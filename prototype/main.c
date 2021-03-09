@@ -13,18 +13,35 @@
 #include "framework/opengl/functions.h"
 #include "framework/opengl/implementation.h"
 
+#include "application.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int main (int argc, char * argv[]) {
-	(void)argc; (void)argv;
+struct Transform {
+	struct vec3 position;
+	struct vec3 scale;
+	struct vec4 rotation;
+};
 
-	// start up
-	platform_system_init();
-	struct Window * window = platform_window_init();
-	platform_window_set_vsync(window, 1);
+static struct {
+	struct Gpu_Program * gpu_program;
+	struct Gpu_Texture * gpu_texture;
+	struct Gpu_Mesh * gpu_mesh;
 
+	struct {
+		uint32_t color;
+		uint32_t texture;
+		uint32_t camera;
+		uint32_t transform;
+	} uniforms;
+
+	struct Transform camera;
+	struct Transform object;
+} game_state;
+
+static void game_init(void) {
 	glEnable(GL_DEPTH_TEST);
 	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 	glDepthRangef(0, 1);
@@ -50,6 +67,7 @@ int main (int argc, char * argv[]) {
 		glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 	*/
 
+	//
 	struct Array_Byte asset_shader;
 	platform_file_init(&asset_shader, "assets/test.glsl");
 
@@ -59,113 +77,105 @@ int main (int argc, char * argv[]) {
 	struct Asset_Mesh asset_mesh;
 	asset_mesh_init(&asset_mesh, "assets/cube.obj");
 
-	struct Gpu_Program * gpu_program = gpu_program_init(&asset_shader);
-	struct Gpu_Texture * gpu_texture = gpu_texture_init(&asset_image);
-	struct Gpu_Mesh * gpu_mesh = gpu_mesh_init(&asset_mesh);
+	game_state.gpu_program = gpu_program_init(&asset_shader);
+	game_state.gpu_texture = gpu_texture_init(&asset_image);
+	game_state.gpu_mesh = gpu_mesh_init(&asset_mesh);
 
 	platform_file_free(&asset_shader);
 	asset_image_free(&asset_image);
 	asset_mesh_free(&asset_mesh);
 
-	uint32_t color_uniform_id = glibrary_find_uniform("u_Color");
-	uint32_t texture_uniform_id = glibrary_find_uniform("u_Texture");
-	uint32_t camera_uniform_id = glibrary_find_uniform("u_Camera");
-	uint32_t transform_uniform_id = glibrary_find_uniform("u_Transform");
-
-	gpu_program_set_uniform(gpu_program, color_uniform_id, &(struct vec4){0.2f, 0.6f, 1, 1});
-	gpu_program_set_uniform(gpu_program, texture_uniform_id, &gpu_texture);
-
-	struct vec3 object_position = (struct vec3){0, 0, 0};
-	struct vec3 object_scale = (struct vec3){1, 1, 1};
-	struct vec4 object_rotation = (struct vec4){0, 0, 0, 1};
-
-	struct vec3 camera_position = (struct vec3){0, 3, -5};
-	struct vec3 camera_scale = (struct vec3){1, 1, 1};
-	struct vec4 camera_rotation = quat_set_radians((struct vec3){MATHS_TAU / 16, 0, 0});
+	//
+	game_state.uniforms.color = glibrary_find_uniform("u_Color");
+	game_state.uniforms.texture = glibrary_find_uniform("u_Texture");
+	game_state.uniforms.camera = glibrary_find_uniform("u_Camera");
+	game_state.uniforms.transform = glibrary_find_uniform("u_Transform");
 
 	//
-	uint64_t frame_start_ticks = platform_timer_get_ticks();
-	uint64_t const timer_ticks_per_second = platform_timer_get_ticks_per_second();
+	game_state.camera = (struct Transform){
+		.position = (struct vec3){0, 3, -5},
+		.scale = (struct vec3){1, 1, 1},
+		.rotation = quat_set_radians((struct vec3){MATHS_TAU / 16, 0, 0}),
+	};
 
-	// update
-	while (window != NULL && platform_window_is_running()) {
-		// track time
-		if (platform_window_get_vsync(window) == 0) {
-			uint32_t const maximum_refresh_rate = 72;
-			uint32_t target_refresh_rate = platform_window_get_refresh_rate(window, maximum_refresh_rate);
-			if (target_refresh_rate > maximum_refresh_rate) { target_refresh_rate = maximum_refresh_rate; }
-			uint64_t frame_end_ticks = frame_start_ticks + timer_ticks_per_second / target_refresh_rate;
-			while (platform_timer_get_ticks() < frame_end_ticks) {
-				platform_system_sleep(0);
-			}
-		}
-		uint64_t elapsed = platform_timer_get_ticks() - frame_start_ticks;
-		frame_start_ticks = platform_timer_get_ticks();
+	game_state.object = (struct Transform){
+		.position = (struct vec3){0, 0, 0},
+		.scale = (struct vec3){1, 1, 1},
+		.rotation = (struct vec4){0, 0, 0, 1},
+	};
+}
 
-		float delta_time = (float)((double)elapsed / (double)timer_ticks_per_second);
+static void game_free(void) {
+	gpu_program_free(game_state.gpu_program);
+	gpu_texture_free(game_state.gpu_texture);
+	gpu_mesh_free(game_state.gpu_mesh);
 
-		// update platform
-		platform_window_update(window);
-		platform_system_update();
-		if (!platform_window_exists(window)) { break; }
+	memset(&game_state, 0, sizeof(game_state));
+}
 
-		uint32_t size_x, size_y;
-		platform_window_get_size(window, &size_x, &size_y);
-		glibrary_viewport(0, 0, size_x, size_y);
+static void game_update(struct Window * window, uint64_t elapsed, uint64_t per_second) {
+	float const delta_time = (float)((double)elapsed / (double)per_second);
 
-		// process input
-		if (platform_window_key_transition(window, KC_A, true)) {
-			printf("pressed A\n");
-		}
-
-		if (platform_window_key_transition(window, KC_W, false)) {
-			printf("released W\n");
-		}
-
-		if (platform_window_mouse_transition(window, MC_LEFT, true)) {
-			uint32_t pos_x, pos_y;
-			platform_window_mouse_position_window(window, &pos_x, &pos_y);
-			printf("pressed mouse left at %d %d\n", pos_x, pos_y);
-		}
-
-		if (platform_window_mouse_transition(window, MC_RIGHT, false)) {
-			uint32_t pos_x, pos_y;
-			platform_window_mouse_position_display(window, &pos_x, &pos_y);
-			printf("released mouse right at %d %d\n", pos_x, pos_y);
-		}
-
-		object_rotation = quat_mul(object_rotation, quat_set_radians(
-			(struct vec3){0 * delta_time, 1 * delta_time, 0 * delta_time}
-		));
-
-		//
-		struct mat4 matrix_camera = mat4_mul_mat(
-			mat4_set_projection((struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 1000.0f, 0),
-			mat4_set_inverse_transformation(camera_position, camera_scale, camera_rotation)
-		);
-
-		struct mat4 matrix_object = mat4_set_transformation(object_position, object_scale, object_rotation);
-
-		gpu_program_set_uniform(gpu_program, camera_uniform_id, &matrix_camera.x.x);
-		gpu_program_set_uniform(gpu_program, transform_uniform_id, &matrix_object.x.x);
-
-		// draw
-		glibrary_clear();
-		glibrary_draw(gpu_program, gpu_mesh);
-		platform_window_display(window);
+	if (platform_window_key_transition(window, KC_A, true)) {
+		printf("pressed A\n");
 	}
 
-	// cleanup
-	gpu_program_free(gpu_program);
-	gpu_texture_free(gpu_texture);
-	gpu_mesh_free(gpu_mesh);
-
-	if (window != NULL) {
-		platform_window_free(window);
-		window = NULL;
+	if (platform_window_key_transition(window, KC_W, false)) {
+		printf("released W\n");
 	}
 
-	platform_system_free();
+	if (platform_window_mouse_transition(window, MC_LEFT, true)) {
+		uint32_t pos_x, pos_y;
+		platform_window_mouse_position_window(window, &pos_x, &pos_y);
+		printf("pressed mouse left at %d %d\n", pos_x, pos_y);
+	}
+
+	if (platform_window_mouse_transition(window, MC_RIGHT, false)) {
+		uint32_t pos_x, pos_y;
+		platform_window_mouse_position_display(window, &pos_x, &pos_y);
+		printf("released mouse right at %d %d\n", pos_x, pos_y);
+	}
+
+	game_state.object.rotation = quat_mul(game_state.object.rotation, quat_set_radians(
+		(struct vec3){0 * delta_time, 1 * delta_time, 0 * delta_time}
+	));
+}
+
+static void game_render(struct Window * window) {
+	uint32_t size_x, size_y;
+	platform_window_get_size(window, &size_x, &size_y);
+	glibrary_viewport(0, 0, size_x, size_y);
+
+	gpu_program_set_uniform(game_state.gpu_program, game_state.uniforms.color, &(struct vec4){0.2f, 0.6f, 1, 1});
+	gpu_program_set_uniform(game_state.gpu_program, game_state.uniforms.texture, &game_state.gpu_texture);
+
+	struct mat4 matrix_camera = mat4_mul_mat(
+		mat4_set_projection((struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 1000.0f, 0),
+		mat4_set_inverse_transformation(game_state.camera.position, game_state.camera.scale, game_state.camera.rotation)
+	);
+
+	struct mat4 matrix_object = mat4_set_transformation(game_state.object.position, game_state.object.scale, game_state.object.rotation);
+
+	gpu_program_set_uniform(game_state.gpu_program, game_state.uniforms.camera, &matrix_camera.x.x);
+	gpu_program_set_uniform(game_state.gpu_program, game_state.uniforms.transform, &matrix_object.x.x);
+
+	// draw
+	glibrary_clear();
+	glibrary_draw(game_state.gpu_program, game_state.gpu_mesh);
+}
+
+int main (int argc, char * argv[]) {
+	(void)argc; (void)argv;
+	application_run(&(struct Application_Config){
+		.callbacks = {
+			.init = game_init,
+			.free = game_free,
+			.update = game_update,
+			.render = game_render,
+		},
+		.vsync = 1,
+		.maximum_refresh_rate = 72,
+	});
 	return 0;
 }
 
