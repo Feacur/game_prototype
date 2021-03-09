@@ -46,7 +46,7 @@ int main (int argc, char * argv[]) {
 	gpu_program_set_uniform(gpu_program, color_uniform_id, &(struct vec4){0.2f, 0.6f, 1, 1});
 
 	uint32_t texture_uniform_id = glibrary_find_uniform("u_Texture");
-	gpu_program_set_uniform(gpu_program, texture_uniform_id, gpu_texture);
+	gpu_program_set_uniform(gpu_program, texture_uniform_id, &gpu_texture);
 	
 	uint64_t frame_start_ticks = platform_timer_get_ticks();
 	uint64_t const timer_ticks_per_second = platform_timer_get_ticks_per_second();

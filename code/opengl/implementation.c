@@ -434,14 +434,13 @@ void gpu_program_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_
 	GLint location = field->location; /* -2 for signaling; -1 for silent */
 	switch (field->type) {
 		default: break;
-		case DATA_TYPE_NONE: break;
 
 		case DATA_TYPE_UNIT: {
-			struct Gpu_Texture * gpu_textures = (struct Gpu_Texture *)data;
+			struct Gpu_Texture ** gpu_textures = (struct Gpu_Texture **)data;
 			for (GLsizei i = 0; i < field->array_size; i++) {
-				uint32_t unit = glibrary_unit_find(gpu_textures + i);
+				uint32_t unit = glibrary_unit_find(gpu_textures[i]);
 				if (unit == UINT32_MAX) {
-					unit = glibrary_unit_init(gpu_textures + i);
+					unit = glibrary_unit_init(gpu_textures[i]);
 					if (unit == UINT32_MAX) {
 						fprintf(stderr, "'glibrary_unit_find' failed\n"); DEBUG_BREAK();
 						continue;
@@ -800,21 +799,28 @@ static void __stdcall opengl_debug_message_callback(
 static GLenum gpu_data_type(enum Data_Type value) {
 	switch (value) {
 		default: break;
-		case DATA_TYPE_NONE: break;
 
 		case DATA_TYPE_UNIT: return GL_SAMPLER_2D;
 
 		case DATA_TYPE_U8:  return GL_UNSIGNED_BYTE;
 		case DATA_TYPE_U16: return GL_UNSIGNED_SHORT;
-		case DATA_TYPE_U32: return GL_UNSIGNED_INT;
 
 		case DATA_TYPE_S8:  return GL_BYTE;
 		case DATA_TYPE_S16: return GL_SHORT;
-		case DATA_TYPE_S32: return GL_INT;
 
-		case DATA_TYPE_R32: return GL_FLOAT;
 		case DATA_TYPE_R64: return GL_DOUBLE;
 
+		case DATA_TYPE_U32:   return GL_UNSIGNED_INT;
+		case DATA_TYPE_UVEC2: return GL_UNSIGNED_INT_VEC2;
+		case DATA_TYPE_UVEC3: return GL_UNSIGNED_INT_VEC3;
+		case DATA_TYPE_UVEC4: return GL_UNSIGNED_INT_VEC4;
+
+		case DATA_TYPE_S32:   return GL_INT;
+		case DATA_TYPE_SVEC2: return GL_INT_VEC2;
+		case DATA_TYPE_SVEC3: return GL_INT_VEC3;
+		case DATA_TYPE_SVEC4: return GL_INT_VEC4;
+
+		case DATA_TYPE_R32:  return GL_FLOAT;
 		case DATA_TYPE_VEC2: return GL_FLOAT_VEC2;
 		case DATA_TYPE_VEC3: return GL_FLOAT_VEC3;
 		case DATA_TYPE_VEC4: return GL_FLOAT_VEC4;
@@ -830,21 +836,28 @@ static GLenum gpu_data_type(enum Data_Type value) {
 static GLenum gpu_data_type_size(enum Data_Type value) {
 	switch (value) {
 		default: break;
-		case DATA_TYPE_NONE: break;
 
-		case DATA_TYPE_UNIT: return sizeof(int32_t);
+		case DATA_TYPE_UNIT: return sizeof(struct Gpu_Texture *);
 
 		case DATA_TYPE_U8:  return sizeof(uint8_t);
 		case DATA_TYPE_U16: return sizeof(uint16_t);
-		case DATA_TYPE_U32: return sizeof(uint32_t);
 
 		case DATA_TYPE_S8:  return sizeof(int8_t);
 		case DATA_TYPE_S16: return sizeof(int16_t);
-		case DATA_TYPE_S32: return sizeof(int32_t);
 
-		case DATA_TYPE_R32: return sizeof(float);
 		case DATA_TYPE_R64: return sizeof(double);
 
+		case DATA_TYPE_U32:   return sizeof(uint32_t);
+		case DATA_TYPE_UVEC2: return sizeof(uint32_t) * 2;
+		case DATA_TYPE_UVEC3: return sizeof(uint32_t) * 3;
+		case DATA_TYPE_UVEC4: return sizeof(uint32_t) * 4;
+
+		case DATA_TYPE_S32:   return sizeof(int32_t);
+		case DATA_TYPE_SVEC2: return sizeof(int32_t) * 2;
+		case DATA_TYPE_SVEC3: return sizeof(int32_t) * 3;
+		case DATA_TYPE_SVEC4: return sizeof(int32_t) * 4;
+
+		case DATA_TYPE_R32:  return sizeof(float);
 		case DATA_TYPE_VEC2: return sizeof(float) * 2;
 		case DATA_TYPE_VEC3: return sizeof(float) * 3;
 		case DATA_TYPE_VEC4: return sizeof(float) * 4;
@@ -859,21 +872,34 @@ static GLenum gpu_data_type_size(enum Data_Type value) {
 
 static enum Data_Type interpret_gl_type(GLint value) {
 	switch (value) {
-		case GL_SAMPLER_2D:     return DATA_TYPE_UNIT;
-		case GL_UNSIGNED_BYTE:  return DATA_TYPE_U8;
-		case GL_UNSIGNED_SHORT: return DATA_TYPE_U16;
-		case GL_UNSIGNED_INT:   return DATA_TYPE_U32;
-		case GL_BYTE:           return DATA_TYPE_S8;
-		case GL_SHORT:          return DATA_TYPE_S16;
-		case GL_INT:            return DATA_TYPE_S32;
-		case GL_FLOAT:          return DATA_TYPE_R32;
-		case GL_DOUBLE:         return DATA_TYPE_R64;
-		case GL_FLOAT_VEC2:     return DATA_TYPE_VEC2;
-		case GL_FLOAT_VEC3:     return DATA_TYPE_VEC3;
-		case GL_FLOAT_VEC4:     return DATA_TYPE_VEC4;
-		case GL_FLOAT_MAT2:     return DATA_TYPE_MAT2;
-		case GL_FLOAT_MAT3:     return DATA_TYPE_MAT3;
-		case GL_FLOAT_MAT4:     return DATA_TYPE_MAT4;
+		case GL_SAMPLER_2D:        return DATA_TYPE_UNIT;
+
+		case GL_UNSIGNED_BYTE:     return DATA_TYPE_U8;
+		case GL_UNSIGNED_SHORT:    return DATA_TYPE_U16;
+
+		case GL_BYTE:              return DATA_TYPE_S8;
+		case GL_SHORT:             return DATA_TYPE_S16;
+
+		case GL_DOUBLE:            return DATA_TYPE_R64;
+
+		case GL_UNSIGNED_INT:      return DATA_TYPE_U32;
+		case GL_UNSIGNED_INT_VEC2: return DATA_TYPE_UVEC2;
+		case GL_UNSIGNED_INT_VEC3: return DATA_TYPE_UVEC3;
+		case GL_UNSIGNED_INT_VEC4: return DATA_TYPE_UVEC4;
+
+		case GL_INT:               return DATA_TYPE_S32;
+		case GL_INT_VEC2:          return DATA_TYPE_SVEC2;
+		case GL_INT_VEC3:          return DATA_TYPE_SVEC3;
+		case GL_INT_VEC4:          return DATA_TYPE_SVEC4;
+
+		case GL_FLOAT:             return DATA_TYPE_R32;
+		case GL_FLOAT_VEC2:        return DATA_TYPE_VEC2;
+		case GL_FLOAT_VEC3:        return DATA_TYPE_VEC3;
+		case GL_FLOAT_VEC4:        return DATA_TYPE_VEC4;
+
+		case GL_FLOAT_MAT2:        return DATA_TYPE_MAT2;
+		case GL_FLOAT_MAT3:        return DATA_TYPE_MAT3;
+		case GL_FLOAT_MAT4:        return DATA_TYPE_MAT4;
 	}
 	fprintf(stderr, "unknown GL type\n"); DEBUG_BREAK();
 	return DATA_TYPE_NONE;
