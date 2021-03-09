@@ -174,7 +174,7 @@ int main (int argc, char * argv[]) {
 			.render = game_render,
 		},
 		.vsync = 1,
-		.maximum_refresh_rate = 72,
+		.target_refresh_rate = 72,
 	});
 	return 0;
 }

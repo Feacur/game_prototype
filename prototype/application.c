@@ -29,6 +29,12 @@ static struct {
 	} ticks;
 } game_application;
 
+static uint32_t get_target_refresh_rate(void) {
+	return game_application.config->target_refresh_rate == 0
+		? platform_window_get_refresh_rate(game_application.window, 60)
+		: game_application.config->target_refresh_rate;
+}
+
 static void application_init(void) {
 	platform_system_init();
 
@@ -39,13 +45,9 @@ static void application_init(void) {
 	game_application.ticks.per_second = platform_timer_get_ticks_per_second();
 
 	if (game_application.config->vsync != 0) {
-		uint32_t target_refresh_rate = platform_window_get_refresh_rate(game_application.window, game_application.config->maximum_refresh_rate);
-		if (game_application.config->vsync > 0) {
-			game_application.ticks.elapsed = game_application.ticks.per_second * (uint32_t)game_application.config->vsync / target_refresh_rate;
-		}
-		else {
-			game_application.ticks.elapsed = game_application.ticks.per_second / target_refresh_rate;
-		}
+		uint32_t const target_refresh_rate = get_target_refresh_rate();
+		uint32_t const vsync_factor = (game_application.config->vsync > 0) ? (uint32_t)game_application.config->vsync : 1;
+		game_application.ticks.elapsed = game_application.ticks.per_second * vsync_factor / target_refresh_rate;
 	}
 
 	game_application.config->callbacks.init();
@@ -64,10 +66,8 @@ static void application_free(void) {
 
 static void application_update(void) {
 	if (platform_window_get_vsync(game_application.window) == 0) {
-		uint32_t target_refresh_rate = platform_window_get_refresh_rate(game_application.window, game_application.config->maximum_refresh_rate);
-		if (target_refresh_rate > game_application.config->maximum_refresh_rate) { target_refresh_rate = game_application.config->maximum_refresh_rate; }
-
-		uint64_t frame_end_ticks = game_application.ticks.frame_start + game_application.ticks.per_second / target_refresh_rate;
+		uint32_t const target_refresh_rate = get_target_refresh_rate();
+		uint64_t const frame_end_ticks = game_application.ticks.frame_start + game_application.ticks.per_second / target_refresh_rate;
 		while (platform_timer_get_ticks() < frame_end_ticks) {
 			platform_system_sleep(0);
 		}

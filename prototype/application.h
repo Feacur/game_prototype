@@ -14,7 +14,7 @@ struct Application_Config {
 	} callbacks;
 
 	int32_t vsync;
-	uint32_t maximum_refresh_rate;
+	uint32_t target_refresh_rate;
 };
 
 void application_run(struct Application_Config * config);
