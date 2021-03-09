@@ -3,6 +3,9 @@
 
 #include "vectors.h"
 
+#define MATHS_PI 3.14159265359f
+#define MATHS_TAU 6.28318530718f
+
 uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator);
 uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator);
 
@@ -45,6 +48,7 @@ void        quat_get_axes(struct vec4 q, struct vec3 * x, struct vec3 * y, struc
 
 // -- matrices
 struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
+struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
 struct mat4 mat4_set_projection(struct vec2 scale_xy, float ncp, float fcp, float ortho);
 
 struct mat4 mat4_inverse_transformation(struct mat4 m);

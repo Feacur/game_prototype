@@ -4,7 +4,7 @@
 #include "platform_system.h"
 #include "platform_window.h"
 
-#include "vectors.h"
+#include "maths.h"
 
 #include "array_byte.h"
 #include "asset_mesh.h"
@@ -25,6 +25,14 @@ int main (int argc, char * argv[]) {
 	struct Window * window = platform_window_init();
 	platform_window_set_vsync(window, 1);
 
+	glEnable(GL_DEPTH_TEST);
+	glDepthRangef(0, 1);
+	glDepthFunc(GL_LESS);
+
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+
 	struct Array_Byte asset_shader;
 	platform_file_init(&asset_shader, "assets/test.glsl");
 
@@ -32,7 +40,7 @@ int main (int argc, char * argv[]) {
 	asset_image_init(&asset_image, "assets/test.png");
 
 	struct Asset_Mesh asset_mesh;
-	asset_mesh_init(&asset_mesh, "assets/test.obj");
+	asset_mesh_init(&asset_mesh, "assets/cube.obj");
 
 	struct Gpu_Program * gpu_program = gpu_program_init(&asset_shader);
 	struct Gpu_Texture * gpu_texture = gpu_texture_init(&asset_image);
@@ -43,11 +51,22 @@ int main (int argc, char * argv[]) {
 	asset_mesh_free(&asset_mesh);
 
 	uint32_t color_uniform_id = glibrary_find_uniform("u_Color");
-	gpu_program_set_uniform(gpu_program, color_uniform_id, &(struct vec4){0.2f, 0.6f, 1, 1});
-
 	uint32_t texture_uniform_id = glibrary_find_uniform("u_Texture");
+	uint32_t camera_uniform_id = glibrary_find_uniform("u_Camera");
+	uint32_t transform_uniform_id = glibrary_find_uniform("u_Transform");
+
+	gpu_program_set_uniform(gpu_program, color_uniform_id, &(struct vec4){0.2f, 0.6f, 1, 1});
 	gpu_program_set_uniform(gpu_program, texture_uniform_id, &gpu_texture);
-	
+
+	struct vec3 object_position = (struct vec3){0, 0, 0};
+	struct vec3 object_scale = (struct vec3){1, 1, 1};
+	struct vec4 object_rotation = (struct vec4){0, 0, 0, 1};
+
+	struct vec3 camera_position = (struct vec3){0, 3, -5};
+	struct vec3 camera_scale = (struct vec3){1, 1, 1};
+	struct vec4 camera_rotation = quat_set_radians((struct vec3){MATHS_TAU / 16, 0, 0});
+
+	//
 	uint64_t frame_start_ticks = platform_timer_get_ticks();
 	uint64_t const timer_ticks_per_second = platform_timer_get_ticks_per_second();
 
@@ -66,6 +85,8 @@ int main (int argc, char * argv[]) {
 		uint64_t elapsed = platform_timer_get_ticks() - frame_start_ticks;
 		frame_start_ticks = platform_timer_get_ticks();
 
+		float delta_time = (float)((double)elapsed / (double)timer_ticks_per_second);
+
 		// update platform
 		platform_window_update(window);
 		platform_system_update();
@@ -76,10 +97,6 @@ int main (int argc, char * argv[]) {
 		glibrary_viewport(0, 0, size_x, size_y);
 
 		// process input
-		double delta_time_double = (double)elapsed / (double)timer_ticks_per_second;
-		(void)delta_time_double;
-		// printf("%f\n", delta_time_double);
-
 		if (platform_window_key_transition(window, KC_A, true)) {
 			printf("pressed A\n");
 		}
@@ -99,6 +116,21 @@ int main (int argc, char * argv[]) {
 			platform_window_mouse_position_display(window, &pos_x, &pos_y);
 			printf("released mouse right at %d %d\n", pos_x, pos_y);
 		}
+
+		object_rotation = quat_mul(object_rotation, quat_set_radians(
+			(struct vec3){0 * delta_time, 1 * delta_time, 0 * delta_time}
+		));
+
+		//
+		struct mat4 matrix_camera = mat4_mul_mat(
+			mat4_set_projection((struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 1000.0f, 0),
+			mat4_set_inverse_transformation(camera_position, camera_scale, camera_rotation)
+		);
+
+		struct mat4 matrix_object = mat4_set_transformation(object_position, object_scale, object_rotation);
+
+		gpu_program_set_uniform(gpu_program, camera_uniform_id, &matrix_camera.x.x);
+		gpu_program_set_uniform(gpu_program, transform_uniform_id, &matrix_object.x.x);
 
 		// draw
 		glibrary_clear();

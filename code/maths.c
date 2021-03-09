@@ -196,6 +196,25 @@ struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, str
 	};
 }
 
+struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation) {
+	struct vec3 axis_x, axis_y, axis_z;
+	quat_get_axes(rotation, &axis_x, &axis_y, &axis_z);
+	axis_x = (struct vec3){axis_x.x * scale.x, axis_x.y * scale.x, axis_x.z * scale.x};
+	axis_y = (struct vec3){axis_y.x * scale.y, axis_y.y * scale.y, axis_y.z * scale.y};
+	axis_z = (struct vec3){axis_z.x * scale.z, axis_z.y * scale.z, axis_z.z * scale.z};
+	return (struct mat4){
+		{axis_x.x, axis_y.x, axis_z.x, 0},
+		{axis_x.y, axis_y.y, axis_z.y, 0},
+		{axis_x.z, axis_y.z, axis_z.z, 0},
+		{
+			-vec3_dot(position, axis_x),
+			-vec3_dot(position, axis_y),
+			-vec3_dot(position, axis_z),
+			1
+		},
+	};
+}
+
 struct mat4 mat4_set_projection(struct vec2 scale_xy, float ncp, float fcp, float ortho) {
 	float const NSNCP = 0; // float const NSFCP = 1;
 	float const reverse_depth = 1 / (fcp - ncp);

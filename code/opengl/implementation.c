@@ -84,9 +84,8 @@ uint32_t glibrary_find_uniform(char const * name) {
 
 void glibrary_clear(void) {
 	uint32_t framebuffer_id = 0;
-	enum Texture_Type clear_target = TEXTURE_TYPE_COLOR;
-	uint32_t clear_rgba = 0;
-	float clear_depth = 0;
+	enum Texture_Type clear_target = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH;
+	float clear_depth = 1;
 	// uint32_t clear_stencil = 0;
 
 	GLbitfield clear_mask = 0;
@@ -96,12 +95,8 @@ void glibrary_clear(void) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)framebuffer_id);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	glClearColor(
-		((clear_rgba >> 24) & 0xff) / 255.0f,
-		((clear_rgba >> 16) & 0xff) / 255.0f,
-		((clear_rgba >>  8) & 0xff) / 255.0f,
-		((clear_rgba >>  0) & 0xff) / 255.0f
-	);
+	glClearColor(0.2f, 0.2f, 0.2f, 1);
+	glDepthMask(GL_TRUE);
 	glClearDepthf(clear_depth);
 	// glClearStencil((GLint)clear_stencil);
 	glClear(clear_mask);
@@ -951,6 +946,9 @@ static GLint gpu_wrap_mode(enum Wrap_Mode value, bool mirror) {
 static GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, uint32_t channels) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
+		case TEXTURE_TYPE_INTERNAL_0: break;
+		case TEXTURE_TYPE_INTERNAL_1: break;
+		case TEXTURE_TYPE_INTERNAL_2: break;
 
 		case TEXTURE_TYPE_COLOR: switch (data_type) {
 			default: break;
@@ -1009,6 +1007,9 @@ static GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Dat
 static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
+		case TEXTURE_TYPE_INTERNAL_0: break;
+		case TEXTURE_TYPE_INTERNAL_1: break;
+		case TEXTURE_TYPE_INTERNAL_2: break;
 
 		case TEXTURE_TYPE_COLOR: switch (channels) {
 			case 1: return GL_RED;
@@ -1028,6 +1029,9 @@ static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t cha
 static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
+		case TEXTURE_TYPE_INTERNAL_0: break;
+		case TEXTURE_TYPE_INTERNAL_1: break;
+		case TEXTURE_TYPE_INTERNAL_2: break;
 
 		case TEXTURE_TYPE_COLOR: switch (data_type) {
 			default: break;
@@ -1062,6 +1066,9 @@ static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type
 static GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
+		case TEXTURE_TYPE_INTERNAL_0: break;
+		case TEXTURE_TYPE_INTERNAL_1: break;
+		case TEXTURE_TYPE_INTERNAL_2: break;
 
 		case TEXTURE_TYPE_COLOR:    return GL_COLOR_ATTACHMENT0 + index;
 		case TEXTURE_TYPE_DEPTH:    return GL_DEPTH_ATTACHMENT;

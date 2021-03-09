@@ -1,0 +1,28 @@
+# o quad
+
+# N-shaped strip
+v -0.5 -0.5 -0.5
+v -0.5  0.5 -0.5
+v  0.5 -0.5 -0.5
+v  0.5  0.5 -0.5
+
+v  0.5 -0.5  0.5
+v  0.5  0.5  0.5
+v -0.5 -0.5  0.5
+v -0.5  0.5  0.5
+
+# N-shaped strip
+vt 0.0 0.0
+vt 0.0 1.0
+vt 1.0 0.0
+vt 1.0 1.0
+
+# U-shaped order, side faces
+f 2/2 1/1 3/3 4/4
+f 4/2 3/1 5/3 6/4
+f 6/2 5/1 7/3 8/4
+f 8/2 7/1 1/3 2/4
+
+# U-shaped order, bottom and top faces
+f 1/1 7/2 5/4 3/3
+f 8/2 2/1 4/3 6/4
