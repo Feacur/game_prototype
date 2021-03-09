@@ -113,6 +113,11 @@ static void game_free(void) {
 	memset(&game_state, 0, sizeof(game_state));
 }
 
+static void game_fixed_update(struct Window * window, uint64_t elapsed, uint64_t per_second) {
+	float const delta_time = (float)((double)elapsed / (double)per_second);
+	(void)window; (void)delta_time;
+}
+
 static void game_update(struct Window * window, uint64_t elapsed, uint64_t per_second) {
 	float const delta_time = (float)((double)elapsed / (double)per_second);
 
@@ -170,11 +175,14 @@ int main (int argc, char * argv[]) {
 		.callbacks = {
 			.init = game_init,
 			.free = game_free,
+			.fixed_update = game_fixed_update,
 			.update = game_update,
 			.render = game_render,
 		},
 		.vsync = 1,
 		.target_refresh_rate = 72,
+		.fixed_refresh_rate = 50,
+		.slow_frames_factor = 5,
 	});
 	return 0;
 }
