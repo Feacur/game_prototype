@@ -52,6 +52,7 @@ set warnings=%warnings% -wd5105
 
 rem > COMPILE AND LINK
 set timeStart=%time%
+set timeLink=%timeStart%
 cd ..
 if not exist bin mkdir bin
 cd bin
@@ -68,7 +69,9 @@ if defined unity_build (
 	cl -std:c11 -c "../framework/windows/*.c" %compiler% %warnings%
 	cl -std:c11 -c "../framework/windows/opengl/*.c" %compiler% %warnings%
 	cl -std:c11 -c "../framework/opengl/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../application/*.c" %compiler% %warnings%
 	cl -std:c11 -c "../prototype/*.c" %compiler% %warnings%
+	set timeLink=%time%
 	link "./temp/*.obj" -out:"game.exe" %linker%
 )
 
@@ -77,4 +80,5 @@ set timeStop=%time%
 
 rem > REPORT
 echo start: %timeStart%
+echo link:  %timeLink%
 echo stop:  %timeStop%

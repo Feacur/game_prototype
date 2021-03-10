@@ -28,5 +28,5 @@
 	#endif
 #endif
 
-#include "prototype/application.c"
+#include "application/application.c"
 #include "prototype/main.c"

@@ -49,6 +49,7 @@ set warnings=%warnings% -Wno-reserved-id-macro -Wno-nonportable-system-include-p
 
 rem > COMPILE AND LINK
 set timeStart=%time%
+set timeLink=%timeStart%
 cd ..
 if not exist bin mkdir bin
 cd bin
@@ -66,7 +67,9 @@ if defined unity_build (
 	clang -std=c99 -c "../framework/windows/*.c" %compiler% %warnings%
 	clang -std=c99 -c "../framework/windows/opengl/*.c" %compiler% %warnings%
 	clang -std=c99 -c "../framework/opengl/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../application/*.c" %compiler% %warnings%
 	clang -std=c99 -c "../prototype/*.c" %compiler% %warnings%
+	set timeLink=%time%
 	move ".\*.o" ".\temp"
 	lld-link "./temp/*.o" libcmt.lib -out:"game.exe" %linker%
 )
@@ -76,4 +79,5 @@ set timeStop=%time%
 
 rem > REPORT
 echo start: %timeStart%
+echo link:  %timeLink%
 echo stop:  %timeStop%

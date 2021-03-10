@@ -13,7 +13,7 @@
 #include "framework/opengl/functions.h"
 #include "framework/opengl/implementation.h"
 
-#include "application.h"
+#include "application/application.h"
 
 #include <stdio.h>
 #include <stdlib.h>
