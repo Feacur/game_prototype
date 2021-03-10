@@ -462,6 +462,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		case WM_DESTROY: {
 			bool should_free = window->handle != NULL;
 			RemovePropA(hwnd, APPLICATION_CLASS_NAME);
+			input_to_platform_reset();
 			graphics_free(window->graphics);
 			if (raw_input_window == window) {
 				platform_window_toggle_raw_input(window, false);
