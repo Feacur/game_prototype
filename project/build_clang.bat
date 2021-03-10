@@ -58,23 +58,24 @@ if not exist temp mkdir temp
 
 if defined unity_build (
 	echo %compiler% %warnings% %linker%
-	clang -std=c99 "../project/unity_build.c" -o"game.exe" %compiler% %warnings% %linker%
+	clang -std=c99 %compiler% %warnings% "../project/unity_build.c" -o"game.exe" %linker%
 ) else ( rem alternatively, compile a set of translation units
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
-	clang -std=c99 -c "../framework/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../framework/containers/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../framework/assets/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../framework/windows/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../framework/windows/opengl/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../framework/opengl/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../application/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../prototype/*.c" %compiler% %warnings%
+	clang -std=c99 -c %compiler% %warnings% "../framework/*.c"
+	clang -std=c99 -c %compiler% %warnings% "../framework/containers/*.c"
+	clang -std=c99 -c %compiler% %warnings% "../framework/assets/*.c"
+	clang -std=c99 -c %compiler% %warnings% "../framework/windows/*.c"
+	clang -std=c99 -c %compiler% %warnings% "../framework/windows/opengl/*.c"
+	clang -std=c99 -c %compiler% %warnings% "../framework/opengl/*.c"
+	clang -std=c99 -c %compiler% %warnings% "../application/*.c"
+	clang -std=c99 -c %compiler% %warnings% "../prototype/*.c"
 	set timeLink=%time%
+	rem alternatively, `cd temp`, build, link, `cd ..`
+	rem but that seems awkward; `move` is quite fast anyways, unlike `lld-link` itself
 	move ".\*.o" ".\temp"
 	lld-link "./temp/*.o" libcmt.lib -out:"game.exe" %linker%
 )
 
-cd ../project
 set timeStop=%time%
 
 rem > REPORT

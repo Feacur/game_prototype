@@ -548,5 +548,3 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 
 	return DefWindowProcA(hwnd, message, wParam, lParam);
 }
-
-#undef APPLICATION_CLASS_NAME
