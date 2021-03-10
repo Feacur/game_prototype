@@ -2,7 +2,6 @@
 #include "framework/platform_timer.h"
 #include "framework/platform_file.h"
 #include "framework/platform_system.h"
-#include "framework/platform_window.h"
 
 #include "framework/maths.h"
 
@@ -14,6 +13,7 @@
 #include "framework/opengl/implementation.h"
 
 #include "application/application.h"
+#include "application/input.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,32 +102,18 @@ static void game_free(void) {
 	memset(&state, 0, sizeof(state));
 }
 
-static void game_fixed_update(struct Window * window, uint64_t elapsed, uint64_t per_second) {
+static void game_fixed_update(uint64_t elapsed, uint64_t per_second) {
 	float const delta_time = (float)((double)elapsed / (double)per_second);
-	(void)window; (void)delta_time;
+	(void)delta_time;
 }
 
-static void game_update(struct Window * window, uint64_t elapsed, uint64_t per_second) {
+static void game_update(uint64_t elapsed, uint64_t per_second) {
 	float const delta_time = (float)((double)elapsed / (double)per_second);
 
-	if (platform_window_key_transition(window, KC_A, true)) {
-		printf("pressed A\n");
-	}
-
-	if (platform_window_key_transition(window, KC_W, false)) {
-		printf("released W\n");
-	}
-
-	if (platform_window_mouse_transition(window, MC_LEFT, true)) {
-		uint32_t pos_x, pos_y;
-		platform_window_mouse_position_window(window, &pos_x, &pos_y);
-		printf("pressed mouse left at %d %d\n", pos_x, pos_y);
-	}
-
-	if (platform_window_mouse_transition(window, MC_RIGHT, false)) {
-		uint32_t pos_x, pos_y;
-		platform_window_mouse_position_display(window, &pos_x, &pos_y);
-		printf("released mouse right at %d %d\n", pos_x, pos_y);
+	if (input_mouse(MC_LEFT)) {
+		int32_t x, y;
+		input_mouse_delta(&x, &y);
+		printf("delta: %d %d\n", x, y);
 	}
 
 	state.object.rotation = quat_mul(state.object.rotation, quat_set_radians(
@@ -135,9 +121,7 @@ static void game_update(struct Window * window, uint64_t elapsed, uint64_t per_s
 	));
 }
 
-static void game_render(struct Window * window) {
-	uint32_t size_x, size_y;
-	platform_window_get_size(window, &size_x, &size_y);
+static void game_render(uint32_t size_x, uint32_t size_y) {
 	glibrary_viewport(0, 0, size_x, size_y);
 
 	gpu_program_set_uniform(content.gpu_program, uniforms.color, &(struct vec4){0.2f, 0.6f, 1, 1});

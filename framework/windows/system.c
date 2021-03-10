@@ -1,4 +1,5 @@
 #include "framework/common.h"
+#include "framework/application/input_to_platform.h"
 
 #include "timer_to_system.h"
 #include "window_to_system.h"
@@ -52,6 +53,7 @@ bool platform_window_is_running(void) {
 
 void platform_system_update(void) {
 	MSG message;
+	input_to_platform_before_update();
 	while (PeekMessageA(&message, NULL, 0, 0, PM_REMOVE)) {
 		if (message.message == WM_QUIT) {
 			platform_system.should_close = true;
@@ -61,6 +63,7 @@ void platform_system_update(void) {
 		TranslateMessage(&message);
 		DispatchMessageA(&message);
 	}
+	input_to_platform_after_update();
 }
 
 void platform_system_sleep(uint32_t millis) {

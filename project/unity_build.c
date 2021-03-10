@@ -29,4 +29,5 @@
 #endif
 
 #include "application/application.c"
+#include "application/input.c"
 #include "prototype/main.c"

@@ -1,17 +1,7 @@
-#include "framework/memory.h"
 #include "framework/platform_timer.h"
 #include "framework/platform_file.h"
 #include "framework/platform_system.h"
 #include "framework/platform_window.h"
-
-#include "framework/maths.h"
-
-#include "framework/containers/array_byte.h"
-#include "framework/assets/asset_mesh.h"
-#include "framework/assets/asset_image.h"
-
-#include "framework/opengl/functions.h"
-#include "framework/opengl/implementation.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,7 +66,6 @@ static bool application_update(void) {
 	if (!platform_window_is_running()) { return false; }
 
 	// reset per-frame data / poll platform events
-	platform_window_update(app.window);
 	platform_system_update();
 
 	// window might be closed by platform
@@ -108,7 +97,6 @@ static bool application_update(void) {
 		while (app.ticks.fixed_accumulator > fixed_ticks) {
 			app.ticks.fixed_accumulator -= fixed_ticks;
 			app.config->callbacks.fixed_update(
-				app.window,
 				fixed_ticks,
 				app.ticks.per_second
 			);
@@ -117,14 +105,15 @@ static bool application_update(void) {
 
 	if (app.config->callbacks.update != NULL) {
 		app.config->callbacks.update(
-			app.window,
 			frame_ticks,
 			app.ticks.per_second
 		);
 	}
 
 	if (app.config->callbacks.render != NULL) {
-		app.config->callbacks.render(app.window);
+		uint32_t size_x, size_y;
+		platform_window_get_size(app.window, &size_x, &size_y);
+		app.config->callbacks.render(size_x, size_y);
 	}
 
 	// swap buffers / display buffer / might vsync

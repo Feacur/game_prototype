@@ -3,15 +3,13 @@
 
 #include "framework/common.h"
 
-struct Window;
-
 struct Application_Config {
 	struct {
 		void (* init)(void);
 		void (* free)(void);
-		void (* fixed_update)(struct Window * window, uint64_t elapsed, uint64_t per_second);
-		void (* update)(struct Window * window, uint64_t elapsed, uint64_t per_second);
-		void (* render)(struct Window * window);
+		void (* fixed_update)(uint64_t elapsed, uint64_t per_second);
+		void (* update)(uint64_t elapsed, uint64_t per_second);
+		void (* render)(uint32_t size_x, uint32_t size_y);
 	} callbacks;
 
 	int32_t vsync;
