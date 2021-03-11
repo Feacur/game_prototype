@@ -1,6 +1,7 @@
 #include "framework/maths.c"
 #include "framework/memory.c"
 #include "framework/platform_file.c"
+#include "framework/input.c"
 
 #include "framework/containers/array_byte.c"
 #include "framework/containers/array_float.c"
@@ -29,5 +30,4 @@
 #endif
 
 #include "application/application.c"
-#include "application/input.c"
 #include "prototype/main.c"

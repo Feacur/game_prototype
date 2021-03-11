@@ -1,5 +1,5 @@
 #include "framework/common.h"
-#include "framework/application/input_to_platform.h"
+#include "framework/internal/input_to_platform.h"
 
 #include "timer_to_system.h"
 #include "window_to_system.h"

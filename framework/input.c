@@ -72,7 +72,7 @@ bool input_mouse_transition(enum Mouse_Code key, bool state) {
 }
 
 //
-#include "framework/application/input_to_platform.h"
+#include "framework/internal/input_to_platform.h"
 
 void input_to_platform_reset(void) {
 	memset(&input_state, 0, sizeof(input_state));

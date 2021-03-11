@@ -1,5 +1,5 @@
 #include "framework/memory.h"
-#include "framework/application/input_to_platform.h"
+#include "framework/internal/input_to_platform.h"
 
 #include "system_to_internal.h"
 #include "graphics_library.h"

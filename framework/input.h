@@ -1,8 +1,8 @@
-#if !defined(GAME_APPLICATION_INPUT)
-#define GAME_APPLICATION_INPUT
+#if !defined(GAME_FRAMEWORK_INPUT)
+#define GAME_FRAMEWORK_INPUT
 
-#include "framework/common.h"
-#include "framework/input_keys.h"
+#include "common.h"
+#include "input_keys.h"
 
 void input_reset_delta(void);
 void input_update(void);

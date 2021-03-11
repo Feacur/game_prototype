@@ -2,7 +2,6 @@
 #define GAME_PLATFORM_WINDOW
 
 #include "common.h"
-#include "input_keys.h"
 
 struct Window;
 

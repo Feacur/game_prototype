@@ -4,6 +4,7 @@
 #include "framework/platform_system.h"
 
 #include "framework/maths.h"
+#include "framework/input.h"
 
 #include "framework/containers/array_byte.h"
 #include "framework/assets/asset_mesh.h"
@@ -13,7 +14,6 @@
 #include "framework/opengl/implementation.h"
 
 #include "application/application.h"
-#include "application/input.h"
 
 #include <stdio.h>
 #include <stdlib.h>
