@@ -58,8 +58,8 @@ struct Window * platform_window_init(void) {
 
 	window->graphics = graphics_init(window);
 
-	// platform_window_toggle_raw_input(window, true);
-	(void)platform_window_toggle_raw_input;
+	platform_window_toggle_raw_input(window, true);
+	// (void)platform_window_toggle_raw_input;
 
 	return window;
 }
@@ -132,7 +132,7 @@ HDC window_to_glibrary_get_private_device(struct Window * window) {
 }
 
 //
-static enum Key_Code translate_virtual_key_to_application(uint8_t key) {
+static enum Key_Code translate_virtual_key_to_application(uint8_t scan, uint8_t key, bool is_extended) {
 	if ('A'        <= key && key <= 'Z')        { return 'a'     + key - 'A'; }
 	if ('0'        <= key && key <= '9')        { return '0'     + key - '0'; }
 	if (VK_NUMPAD0 <= key && key <= VK_NUMPAD9) { return KC_NUM0 + key - VK_NUMPAD0; }
@@ -142,9 +142,9 @@ static enum Key_Code translate_virtual_key_to_application(uint8_t key) {
 		// ASCII, control characters
 		case VK_BACK:   return '\b';
 		case VK_TAB:    return '\t';
-		case VK_RETURN: return '\r';
+		case VK_RETURN: return is_extended ? KC_NUM_ENTER : '\r';
 		case VK_ESCAPE: return 0x1b;
-		case VK_DELETE: return 0x7f;
+		case VK_DELETE: return is_extended ? 0x7f : KC_NUM_DEC;
 		// ASCII, printable characters
 		case VK_SPACE:      return ' ';
 		case VK_OEM_COMMA:  return ',';
@@ -159,26 +159,32 @@ static enum Key_Code translate_virtual_key_to_application(uint8_t key) {
 		case VK_OEM_MINUS:  return '-';
 		case VK_OEM_PLUS:   return '=';
 		// non-ASCII, common
-		case VK_CAPITAL:  return KC_CAPS;
-		case VK_SHIFT:    return KC_SHIFT;
+		case VK_CAPITAL:  return KC_CAPS_LOCK;
+		case VK_SHIFT: switch ((uint8_t)MapVirtualKeyA(scan, MAPVK_VSC_TO_VK_EX)) {
+			// default: return KC_SHIFT;
+			case VK_LSHIFT: return KC_LSHIFT;
+			case VK_RSHIFT: return KC_RSHIFT;
+		} break;
 		case VK_LSHIFT:   return KC_LSHIFT;
 		case VK_RSHIFT:   return KC_RSHIFT;
-		case VK_CONTROL:  return KC_CTRL;
+		case VK_CONTROL:  return is_extended ? KC_RCTRL : KC_LCTRL; // KC_CTRL
 		case VK_LCONTROL: return KC_LCTRL;
 		case VK_RCONTROL: return KC_RCTRL;
-		case VK_MENU:     return KC_ALT;
+		case VK_MENU:     return is_extended ? KC_RALT : KC_LALT; // KC_ALT
 		case VK_LMENU:    return KC_LALT;
 		case VK_RMENU:    return KC_RALT;
-		case VK_LEFT:     return KC_ARROW_LEFT;
-		case VK_RIGHT:    return KC_ARROW_RIGHT;
-		case VK_DOWN:     return KC_ARROW_DOWN;
-		case VK_UP:       return KC_ARROW_UP;
-		case VK_INSERT:   return KC_INSERT;
+		case VK_LEFT:     return is_extended ? KC_ARROW_LEFT : KC_NUM4;
+		case VK_RIGHT:    return is_extended ? KC_ARROW_RIGHT : KC_NUM6;
+		case VK_DOWN:     return is_extended ? KC_ARROW_DOWN : KC_NUM2;
+		case VK_UP:       return is_extended ? KC_ARROW_UP : KC_NUM8;
+		case VK_INSERT:   return is_extended ? KC_INSERT : KC_NUM0;
 		case VK_SNAPSHOT: return KC_PSCREEN;
-		case VK_PRIOR:    return KC_PAGE_UP;
-		case VK_NEXT:     return KC_PAGE_DOWN;
-		case VK_HOME:     return KC_HOME;
-		case VK_END:      return KC_END;
+		case VK_PRIOR:    return is_extended ? KC_PAGE_UP : KC_NUM9;
+		case VK_NEXT:     return is_extended ? KC_PAGE_DOWN : KC_NUM3;
+		case VK_HOME:     return is_extended ? KC_HOME : KC_NUM7;
+		case VK_END:      return is_extended ? KC_END : KC_NUM1;
+		case VK_CLEAR:    return is_extended ? KC_CLEAR : KC_NUM5;
+		case VK_PAUSE:    return KC_PAUSE;
 		// non-ASCII, numeric
 		case VK_NUMLOCK:  return KC_NUM_LOCK;
 		case VK_ADD:      return KC_NUM_ADD;
@@ -186,6 +192,16 @@ static enum Key_Code translate_virtual_key_to_application(uint8_t key) {
 		case VK_MULTIPLY: return KC_NUM_MUL;
 		case VK_DIVIDE:   return KC_NUM_DIV;
 		case VK_DECIMAL:  return KC_NUM_DEC;
+		case VK_NUMPAD0:  return KC_NUM0;
+		case VK_NUMPAD1:  return KC_NUM1;
+		case VK_NUMPAD2:  return KC_NUM2;
+		case VK_NUMPAD3:  return KC_NUM3;
+		case VK_NUMPAD4:  return KC_NUM4;
+		case VK_NUMPAD5:  return KC_NUM5;
+		case VK_NUMPAD6:  return KC_NUM6;
+		case VK_NUMPAD7:  return KC_NUM7;
+		case VK_NUMPAD8:  return KC_NUM8;
+		case VK_NUMPAD9:  return KC_NUM9;
 	}
 
 	return KC_ERROR;
@@ -235,14 +251,24 @@ static void platform_window_toggle_raw_input(struct Window * window, bool state)
 
 static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data) {
 	if (raw_input_window != window) { return; }
-	// bool is_e0 = (data->Flags & RI_KEY_E0) == RI_KEY_E0;
-	// bool is_e1 = (data->Flags & RI_KEY_E1) == RI_KEY_E1;
+
+	if ((data->Flags & RI_KEY_E1) == RI_KEY_E1) {
+		data->MakeCode = (data->VKey == VK_PAUSE)
+			? 0x45
+			: (USHORT)MapVirtualKeyA(data->VKey, MAPVK_VK_TO_VSC);
+	}
+
 	input_to_platform_on_key_down(
-		translate_virtual_key_to_application((uint8_t)data->VKey),
+		translate_virtual_key_to_application(
+			(uint8_t)data->MakeCode,
+			(uint8_t)data->VKey,
+			(data->Flags & RI_KEY_E0) == RI_KEY_E0
+		),
 		(data->Flags & RI_KEY_BREAK) != RI_KEY_BREAK
 	);
 
 	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawkeyboard
+	// https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
 }
 
 static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
@@ -281,13 +307,13 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 	}
 
 	//
-	// static USHORT const keys_down[MOUSE_KEYS_MAX] = {
-	// 	RI_MOUSE_LEFT_BUTTON_DOWN,
-	// 	RI_MOUSE_RIGHT_BUTTON_DOWN,
-	// 	RI_MOUSE_MIDDLE_BUTTON_DOWN,
-	// 	RI_MOUSE_BUTTON_4_DOWN,
-	// 	RI_MOUSE_BUTTON_5_DOWN,
-	// };
+	static USHORT const keys_down[] = {
+		RI_MOUSE_LEFT_BUTTON_DOWN,
+		RI_MOUSE_RIGHT_BUTTON_DOWN,
+		RI_MOUSE_MIDDLE_BUTTON_DOWN,
+		RI_MOUSE_BUTTON_4_DOWN,
+		RI_MOUSE_BUTTON_5_DOWN,
+	};
 
 	static USHORT const keys_up[] = {
 		RI_MOUSE_LEFT_BUTTON_UP,
@@ -297,9 +323,13 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 		RI_MOUSE_BUTTON_5_UP,
 	};
 
-	for (uint8_t i = 0; i < sizeof(keys_up) / sizeof(*keys_up); i++) {
-		// bool is_down = (data->usButtonFlags & keys_down[i]) == keys_down[i];
-		input_to_platform_on_mouse_down(i, (data->usButtonFlags & keys_up[i]) != keys_up[i]);
+	for (uint8_t i = 0; i < sizeof(keys_down) / sizeof(*keys_down); i++) {
+		if ((data->usButtonFlags & keys_down[i]) == keys_down[i]) {
+			input_to_platform_on_mouse_down(i, true);
+		}
+		if ((data->usButtonFlags & keys_up[i]) == keys_up[i]) {
+			input_to_platform_on_mouse_down(i, false);
+		}
 	}
 
 	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawmouse
@@ -346,17 +376,18 @@ static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wPar
 	// DWORD repeat_count = LOWORD(lParam);
 	DWORD flags = HIWORD(lParam);
 
-	switch (wParam) {
-		case VK_SHIFT:   wParam = MapVirtualKeyA(LOBYTE(flags), MAPVK_VSC_TO_VK_EX); break;
-		case VK_CONTROL: wParam = ((flags & KF_EXTENDED) == KF_EXTENDED) ? VK_RCONTROL : VK_LCONTROL; break;
-		case VK_MENU:    wParam = ((flags & KF_EXTENDED) == KF_EXTENDED) ? VK_RMENU : VK_LMENU; break;
-	}
-
 	// bool alt_down = (flags & KF_ALTDOWN) == KF_ALTDOWN;
 	// bool was_down = (flags & KF_REPEAT) == KF_REPEAT;
 
+	DWORD aaa = (flags & KF_UP); (void)aaa;
+	bool bbb = aaa == KF_UP; (void)bbb;
+
 	input_to_platform_on_key_down(
-		translate_virtual_key_to_application((uint8_t)wParam),
+		translate_virtual_key_to_application(
+			(uint8_t)LOBYTE(flags),
+			(uint8_t)wParam,
+			(flags & KF_EXTENDED) == KF_EXTENDED
+		),
 		(flags & KF_UP) != KF_UP
 	);
 
