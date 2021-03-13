@@ -46,8 +46,6 @@ struct Window * platform_window_init(void) {
 	window->size_x = (uint32_t)(rect.right - rect.left);
 	window->size_y = (uint32_t)(rect.bottom - rect.top);
 
-	input_to_platform_reset();
-
 /*
 	uint8_t keys[256];
 	if (GetKeyboardState(keys)) {
@@ -251,24 +249,33 @@ static void platform_window_toggle_raw_input(struct Window * window, bool state)
 
 static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data) {
 	if (raw_input_window != window) { return; }
+	if (data->VKey == 0xff) { return; }
+
+	uint8_t scan = (uint8_t)data->MakeCode;
+	uint8_t key = (uint8_t)data->VKey;
+	bool is_extended = (data->Flags & RI_KEY_E0) == RI_KEY_E0;
 
 	if ((data->Flags & RI_KEY_E1) == RI_KEY_E1) {
-		data->MakeCode = (data->VKey == VK_PAUSE)
+		scan = (key == VK_PAUSE)
 			? 0x45
-			: (USHORT)MapVirtualKeyA(data->VKey, MAPVK_VK_TO_VSC);
+			: (uint8_t)MapVirtualKeyA(key, MAPVK_VK_TO_VSC);
 	}
 
+	if (key == VK_NUMLOCK) { is_extended = true; }
+
 	input_to_platform_on_key_down(
-		translate_virtual_key_to_application(
-			(uint8_t)data->MakeCode,
-			(uint8_t)data->VKey,
-			(data->Flags & RI_KEY_E0) == RI_KEY_E0
-		),
+		translate_virtual_key_to_application(scan, key, is_extended),
 		(data->Flags & RI_KEY_BREAK) != RI_KEY_BREAK
 	);
 
 	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawkeyboard
 	// https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
+
+/*
+	char key_name[32];
+	GetKeyNameTextA((LONG)((scan << 16) | (is_extended << 24)), key_name, sizeof(key_name));
+	printf("%s\n", key_name);
+*/
 }
 
 static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
@@ -372,27 +379,29 @@ static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, L
 
 static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wParam, LPARAM lParam) {
 	if (raw_input_window == window) { return 0; }
+	if (wParam == 0xff) { DEBUG_BREAK(); return 0; }
 
-	// DWORD repeat_count = LOWORD(lParam);
-	DWORD flags = HIWORD(lParam);
+	WORD flags = HIWORD(lParam);
 
-	// bool alt_down = (flags & KF_ALTDOWN) == KF_ALTDOWN;
-	// bool was_down = (flags & KF_REPEAT) == KF_REPEAT;
-
-	DWORD aaa = (flags & KF_UP); (void)aaa;
-	bool bbb = aaa == KF_UP; (void)bbb;
+	uint8_t scan = (uint8_t)LOBYTE(flags);
+	uint8_t key = (uint8_t)wParam;
+	bool is_extended = (flags & KF_EXTENDED) == KF_EXTENDED;
 
 	input_to_platform_on_key_down(
-		translate_virtual_key_to_application(
-			(uint8_t)LOBYTE(flags),
-			(uint8_t)wParam,
-			(flags & KF_EXTENDED) == KF_EXTENDED
-		),
+		translate_virtual_key_to_application(scan, key, is_extended),
 		(flags & KF_UP) != KF_UP
 	);
 
 	return 0;
 	// https://docs.microsoft.com/en-us/windows/win32/inputdev/keyboard-input
+
+/*
+	// officially, VK_SNAPSHOT gets only WM_KEYUP
+
+	// DWORD repeat_count = LOWORD(lParam);
+	// bool alt_down = (flags & KF_ALTDOWN) == KF_ALTDOWN;
+	// bool was_down = (flags & KF_REPEAT) == KF_REPEAT;
+*/
 }
 
 static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam, LPARAM lParam, bool client_space, float wheel_mask_x, float wheel_mask_y) {

@@ -38,9 +38,11 @@ void platform_system_init(void) {
 	timer_to_system_init();
 	window_to_system_init();
 	glibrary_to_system_init();
+	input_to_platform_reset();
 }
 
 void platform_system_free(void) {
+	input_to_platform_reset();
 	glibrary_to_system_free();
 	window_to_system_free();
 	timer_to_system_free();
