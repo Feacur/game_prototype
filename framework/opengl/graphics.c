@@ -35,6 +35,7 @@ static GLenum gpu_blend_op(enum Blend_Op value);
 static GLenum gpu_blend_factor(enum Blend_Factor value);
 
 #define MAX_UNIFORMS 32
+#define MAX_UNITS_PER_MATERIAL 64
 
 struct Gpu_Program {
 	GLuint id;
@@ -66,7 +67,8 @@ static struct Graphics_State {
 	struct Gpu_Program const * active_program;
 	struct Gpu_Mesh const * active_mesh;
 
-	struct Gpu_Unit units[100];
+	uint32_t units_capacity;
+	struct Gpu_Unit * units;
 } graphics_state;
 
 //
@@ -246,7 +248,7 @@ struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
 
 void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 	if (ogl_version > 0) {
-		for (uint32_t i = 0; i < sizeof(graphics_state.units) / sizeof(*graphics_state.units); i++) {
+		for (uint32_t i = 1; i < graphics_state.units_capacity; i++) {
 			if (graphics_state.units[i].gpu_texture == gpu_texture) {
 				graphics_state.units[i].gpu_texture = NULL;
 				// glBindTextureUnit((GLuint)i, 0);
@@ -493,18 +495,19 @@ static void graphics_culling(void) {
 }
 
 static uint32_t graphics_unit_find(struct Gpu_Texture * gpu_texture) {
-	for (uint32_t i = 0; i < sizeof(graphics_state.units) / sizeof(*graphics_state.units); i++) {
+	// @note: 0 value is considered empty
+	for (uint32_t i = 1; i < graphics_state.units_capacity; i++) {
 		if (graphics_state.units[i].gpu_texture == gpu_texture) { return i; }
 	}
-	return UINT32_MAX;
+	return 0;
 }
 
 static uint32_t graphics_unit_init(struct Gpu_Texture * gpu_texture) {
 	uint32_t unit = graphics_unit_find(gpu_texture);
-	if (unit != UINT32_MAX) { return unit; }
+	if (unit != 0) { return unit; }
 
 	unit = graphics_unit_find(NULL);
-	if (unit == UINT32_MAX) {
+	if (unit == 0) {
 		fprintf(stderr, "'graphics_unit_find' failed\n"); DEBUG_BREAK();
 		return unit;
 	}
@@ -521,7 +524,7 @@ static uint32_t graphics_unit_init(struct Gpu_Texture * gpu_texture) {
 // static void graphics_unit_free(struct Gpu_Texture * gpu_texture) {
 // 	if (ogl_version > 0) {
 // 		uint32_t unit = graphics_unit_find(gpu_texture);
-// 		if (unit == UINT32_MAX) {
+// 		if (unit == 0) {
 // 			fprintf(stderr, "'graphics_unit_find' failed\n"); DEBUG_BREAK();
 // 			return;
 // 		}
@@ -554,20 +557,21 @@ static void graphics_set_uniform(struct Gpu_Program * gpu_program, uint32_t unif
 		default: break;
 
 		case DATA_TYPE_UNIT: {
+			GLint units[MAX_UNITS_PER_MATERIAL];
+			uint32_t units_count = 0;
+
 			struct Gpu_Texture * const * gpu_textures = (struct Gpu_Texture * const *)data;
 			for (uint32_t i = 0; i < field->array_size; i++) {
 				uint32_t unit = graphics_unit_find(gpu_textures[i]);
-				if (unit == UINT32_MAX) {
+				if (unit == 0) {
 					unit = graphics_unit_init(gpu_textures[i]);
-					if (unit == UINT32_MAX) {
+					if (unit == 0) {
 						fprintf(stderr, "failed to find a vacant texture/sampler unit\n"); DEBUG_BREAK();
-						continue;
 					}
 				}
-
-				GLint uniform_data = (GLint)unit;
-				glProgramUniform1iv(gpu_program->id, location, 1, &uniform_data);
+				units[units_count++] = (GLint)unit;
 			}
+			glProgramUniform1iv(gpu_program->id, location, (GLsizei)field->array_size, units);
 			break;
 		}
 
@@ -671,13 +675,22 @@ void graphics_to_glibrary_init(void) {
 	memset(&graphics_state, 0, sizeof(graphics_state));
 	graphics_state.extensions = allocate_extensions_string();
 
+	//
 	graphics_state.uniforms = strings_init();
 	strings_add(graphics_state.uniforms, 0, "");
+
+	//
+	GLint max_units;
+	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_units);
+	graphics_state.units_capacity = (uint32_t)max_units;
+	graphics_state.units = MEMORY_ALLOCATE_ARRAY(struct Gpu_Unit, max_units);
+	memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
 }
 
 void graphics_to_glibrary_free(void) {
 	strings_free(graphics_state.uniforms);
 	MEMORY_FREE(graphics_state.extensions);
+	MEMORY_FREE(graphics_state.units);
 	memset(&graphics_state, 0, sizeof(graphics_state));
 
 	(void)gpu_attachment_point;
