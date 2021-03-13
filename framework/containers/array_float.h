@@ -14,5 +14,6 @@ void array_float_free(struct Array_Float * array);
 void array_float_resize(struct Array_Float * array, uint32_t size);
 void array_float_write(struct Array_Float * array, float value);
 void array_float_write_many(struct Array_Float * array, uint32_t count, float const * value);
+void array_float_write_many_zeroes(struct Array_Float * array, uint32_t count);
 
 #endif

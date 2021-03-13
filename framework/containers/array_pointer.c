@@ -7,29 +7,29 @@
 	((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR) \
 
 //
-#include "array_s32.h"
+#include "array_pointer.h"
 
-void array_s32_init(struct Array_S32 * array) {
-	*array = (struct Array_S32){
+void array_pointer_init(struct Array_Pointer * array) {
+	*array = (struct Array_Pointer){
 		.capacity = 0,
 		.count = 0,
 		.data = 0,
 	};
 }
 
-void array_s32_free(struct Array_S32 * array) {
+void array_pointer_free(struct Array_Pointer * array) {
 	if (array->capacity == 0 && array->data != NULL) { return; }
 	MEMORY_FREE(array->data);
-	array_s32_init(array);
+	array_pointer_init(array);
 }
 
-void array_s32_resize(struct Array_S32 * array, uint32_t size) {
+void array_pointer_resize(struct Array_Pointer * array, uint32_t size) {
 	array->data = MEMORY_REALLOCATE_ARRAY(array->data, size);
 	array->capacity = size;
 	array->count = (size >= array->count) ? array->count : size;
 }
 
-void array_s32_write(struct Array_S32 * array, int32_t value) {
+void array_pointer_write(struct Array_Pointer * array, void * value) {
 	if (array->count + 1 > array->capacity) {
 		array->capacity = GROW_CAPACITY(array->capacity);
 		array->data = MEMORY_REALLOCATE_ARRAY(array->data, array->capacity);
@@ -39,7 +39,7 @@ void array_s32_write(struct Array_S32 * array, int32_t value) {
 	array->count++;
 }
 
-void array_s32_write_many(struct Array_S32 * array, uint32_t count, int32_t const * value) {
+void array_pointer_write_many(struct Array_Pointer * array, uint32_t count, void ** value) {
 	if (array->count + count > array->capacity) {
 		while (array->count + count > array->capacity) {
 			array->capacity = GROW_CAPACITY(array->capacity);
@@ -51,7 +51,7 @@ void array_s32_write_many(struct Array_S32 * array, uint32_t count, int32_t cons
 	array->count += count;
 }
 
-void array_s32_write_many_zeroes(struct Array_S32 * array, uint32_t count) {
+void array_pointer_write_many_zeroes(struct Array_Pointer * array, uint32_t count) {
 	if (array->count + count > array->capacity) {
 		while (array->count + count > array->capacity) {
 			array->capacity = GROW_CAPACITY(array->capacity);

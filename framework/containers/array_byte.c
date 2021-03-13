@@ -50,3 +50,15 @@ void array_byte_write_many(struct Array_Byte * array, uint32_t count, uint8_t co
 	memcpy(array->data + array->count, value, count * sizeof(*value));
 	array->count += count;
 }
+
+void array_byte_write_many_zeroes(struct Array_Byte * array, uint32_t count) {
+	if (array->count + count > array->capacity) {
+		while (array->count + count > array->capacity) {
+			array->capacity = GROW_CAPACITY(array->capacity);
+		}
+		array->data = MEMORY_REALLOCATE_ARRAY(array->data, array->capacity);
+	}
+
+	memset(array->data + array->count, 0, count * sizeof(*array->data));
+	array->count += count;
+}

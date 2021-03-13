@@ -14,5 +14,6 @@ void array_byte_free(struct Array_Byte * array);
 void array_byte_resize(struct Array_Byte * array, uint32_t size);
 void array_byte_write(struct Array_Byte * array, uint8_t value);
 void array_byte_write_many(struct Array_Byte * array, uint32_t count, uint8_t const * value);
+void array_byte_write_many_zeroes(struct Array_Byte * array, uint32_t count);
 
 #endif
