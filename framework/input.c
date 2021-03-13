@@ -23,12 +23,10 @@ struct Mouse_State {
 	float wheel_x, wheel_y;
 };
 
-struct Input_State {
+static struct Input_State {
 	struct Keyboard_State keyboard, keyboard_prev;
 	struct Mouse_State mouse, mouse_prev;
-};
-
-static struct Input_State input_state;
+} input_state;
 
 bool input_key(enum Key_Code key) {
 	return input_state.keyboard.keys[key];

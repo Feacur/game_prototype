@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static struct {
+static struct Platform_System {
 	HMODULE module;
 	bool should_close;
 } platform_system;

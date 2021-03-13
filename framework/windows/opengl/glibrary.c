@@ -12,7 +12,7 @@
 #include <Windows.h>
 #include <GL/wgl.h>
 
-static struct {
+static struct GLibrary {
 	HMODULE handle;
 
 	struct {

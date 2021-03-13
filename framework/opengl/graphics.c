@@ -58,7 +58,7 @@ struct Gpu_Unit {
 	struct Gpu_Texture * gpu_texture;
 };
 
-static struct {
+static struct Graphics_State {
 	char * extensions;
 
 	struct Strings * uniforms;

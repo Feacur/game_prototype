@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static struct {
+static struct Platform_Timer {
 	LARGE_INTEGER ticks_per_second;
 } platform_timer;
 

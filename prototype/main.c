@@ -27,20 +27,20 @@ struct Transform {
 	struct vec4 rotation;
 };
 
-static struct {
+static struct Game_Uniforms {
 	uint32_t color;
 	uint32_t texture;
 	uint32_t camera;
 	uint32_t transform;
 } uniforms;
 
-static struct {
+static struct Game_Content {
 	struct Gpu_Program * gpu_program;
 	struct Gpu_Texture * gpu_texture;
 	struct Gpu_Mesh * gpu_mesh;
 } content;
 
-static struct {
+static struct Game_State {
 	struct Transform camera;
 	struct Transform object;
 } state;
