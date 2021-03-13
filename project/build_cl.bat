@@ -66,6 +66,7 @@ if defined unity_build (
 	cl -std:c11 -c %compiler% %warnings% "../framework/*.c"
 	cl -std:c11 -c %compiler% %warnings% "../framework/containers/*.c"
 	cl -std:c11 -c %compiler% %warnings% "../framework/assets/*.c"
+	cl -std:c11 -c %compiler% %warnings% "../framework/graphics/*.c"
 	cl -std:c11 -c %compiler% %warnings% "../framework/windows/*.c"
 	cl -std:c11 -c %compiler% %warnings% "../framework/windows/opengl/*.c"
 	cl -std:c11 -c %compiler% %warnings% "../framework/opengl/*.c"

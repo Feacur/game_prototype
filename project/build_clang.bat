@@ -64,6 +64,7 @@ if defined unity_build (
 	clang -std=c99 -c %compiler% %warnings% "../framework/*.c"
 	clang -std=c99 -c %compiler% %warnings% "../framework/containers/*.c"
 	clang -std=c99 -c %compiler% %warnings% "../framework/assets/*.c"
+	clang -std=c99 -c %compiler% %warnings% "../framework/graphics/*.c"
 	clang -std=c99 -c %compiler% %warnings% "../framework/windows/*.c"
 	clang -std=c99 -c %compiler% %warnings% "../framework/windows/opengl/*.c"
 	clang -std=c99 -c %compiler% %warnings% "../framework/opengl/*.c"

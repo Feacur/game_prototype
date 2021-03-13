@@ -5,16 +5,17 @@
 
 #include "framework/maths.h"
 #include "framework/input.h"
-#include "framework/graphics_types.h"
-#include "framework/gpu_objects.h"
-#include "framework/material.h"
+
+#include "framework/graphics/types.h"
+#include "framework/graphics/gpu_objects.h"
+#include "framework/graphics/material.h"
+#include "framework/graphics/graphics.h"
 
 #include "framework/containers/array_byte.h"
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"
 
 #include "framework/opengl/functions.h"
-#include "framework/opengl/graphics.h"
 
 #include "application/application.h"
 

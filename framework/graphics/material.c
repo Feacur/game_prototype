@@ -1,5 +1,5 @@
-#include "framework/graphics_types.h"
-#include "framework/gpu_objects.h"
+#include "framework/graphics/types.h"
+#include "framework/graphics/gpu_objects.h"
 
 #include <stdio.h>
 #include <stdlib.h>

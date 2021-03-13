@@ -3,7 +3,7 @@
 #include <string.h>
 
 //
-#include "graphics_types.h"
+#include "types.h"
 
 enum Data_Type data_type_get_element_type(enum Data_Type value) {
 	switch (value) {

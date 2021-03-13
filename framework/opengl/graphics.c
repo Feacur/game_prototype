@@ -1,10 +1,13 @@
 #include "framework/memory.h"
+
 #include "framework/containers/strings.h"
 #include "framework/containers/array_byte.h"
+
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"
-#include "framework/graphics_types.h"
-#include "framework/material.h"
+
+#include "framework/graphics/types.h"
+#include "framework/graphics/material.h"
 
 #include "functions.h"
 
@@ -72,7 +75,7 @@ static struct Graphics_State {
 } graphics_state;
 
 //
-#include "framework/gpu_objects.h"
+#include "framework/graphics/gpu_objects.h"
 
 // -- GPU program part
 static void verify_shader(GLuint id, GLenum parameter);
@@ -341,7 +344,7 @@ void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
 }
 
 //
-#include "graphics.h"
+#include "framework/graphics/graphics.h"
 
 uint32_t graphics_add_uniform(char const * name) {
 	return strings_add(graphics_state.uniforms, (uint32_t)strlen(name), name);

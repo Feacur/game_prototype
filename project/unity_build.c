@@ -2,8 +2,9 @@
 #include "framework/memory.c"
 #include "framework/platform_file.c"
 #include "framework/input.c"
-#include "framework/graphics_types.c"
-#include "framework/material.c"
+
+#include "framework/graphics/types.c"
+#include "framework/graphics/material.c"
 
 #include "framework/containers/array_byte.c"
 #include "framework/containers/array_float.c"

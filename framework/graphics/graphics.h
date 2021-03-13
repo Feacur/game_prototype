@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_IMPLEMENTATION)
-#define GAME_GRAPHICS_IMPLEMENTATION
+#if !defined(GAME_FRAMEWORK_GRAPHICS)
+#define GAME_FRAMEWORK_GRAPHICS
 
 #include "framework/common.h"
 
