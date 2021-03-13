@@ -345,22 +345,23 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 		PIXELFORMATDESCRIPTOR pfd;
 		if (!DescribePixelFormat(device, pfd_id, sizeof(pfd), &pfd)) { DEBUG_BREAK(); continue; }
 
-		if ((pfd.dwFlags & PFD_DRAW_TO_WINDOW)      != PFD_DRAW_TO_WINDOW)      { continue; }
-		if ((pfd.dwFlags & PFD_SUPPORT_GDI)         == PFD_SUPPORT_GDI)         { continue; }
-		if ((pfd.dwFlags & PFD_SUPPORT_OPENGL)      != PFD_SUPPORT_OPENGL)      { continue; }
-		if ((pfd.dwFlags & PFD_GENERIC_FORMAT)      != PFD_GENERIC_FORMAT)      { continue; }
-		if ((pfd.dwFlags & PFD_GENERIC_ACCELERATED) == PFD_GENERIC_ACCELERATED) { continue; }
+		if (!(pfd.dwFlags & PFD_DRAW_TO_WINDOW)) { continue; }
+		if (!(pfd.dwFlags & PFD_SUPPORT_OPENGL)) { continue; }
+		if (!(pfd.dwFlags & PFD_GENERIC_FORMAT)) { continue; }
+
+		if ((pfd.dwFlags & PFD_SUPPORT_GDI))         { continue; }
+		if ((pfd.dwFlags & PFD_GENERIC_ACCELERATED)) { continue; }
 
 		if (pfd.iPixelType != PFD_TYPE_RGBA) { continue; }
 
 		int swap_method = 0;
 		if (false) {}
-		else if ((pfd.dwFlags & PFD_SWAP_COPY)     == PFD_SWAP_COPY)     { swap_method = 1; }
-		else if ((pfd.dwFlags & PFD_SWAP_EXCHANGE) == PFD_SWAP_EXCHANGE) { swap_method = 2; }
+		else if ((pfd.dwFlags & PFD_SWAP_COPY))     { swap_method = 1; }
+		else if ((pfd.dwFlags & PFD_SWAP_EXCHANGE)) { swap_method = 2; }
 
 		formats[formats_count++] = (struct Pixel_Format){
 			.id = pfd_id,
-			.double_buffering = (pfd.dwFlags & PFD_DOUBLEBUFFER)  == PFD_DOUBLEBUFFER,
+			.double_buffering = (pfd.dwFlags & PFD_DOUBLEBUFFER),
 			.swap_method = swap_method,
 			.r = pfd.cRedBits,
 			.g = pfd.cGreenBits,

@@ -253,9 +253,9 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 
 	uint8_t scan = (uint8_t)data->MakeCode;
 	uint8_t key = (uint8_t)data->VKey;
-	bool is_extended = (data->Flags & RI_KEY_E0) == RI_KEY_E0;
+	bool is_extended = (data->Flags & RI_KEY_E0);
 
-	if ((data->Flags & RI_KEY_E1) == RI_KEY_E1) {
+	if ((data->Flags & RI_KEY_E1)) {
 		scan = (key == VK_PAUSE)
 			? 0x45
 			: (uint8_t)MapVirtualKeyA(key, MAPVK_VK_TO_VSC);
@@ -265,7 +265,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 
 	input_to_platform_on_key_down(
 		translate_virtual_key_to_application(scan, key, is_extended),
-		(data->Flags & RI_KEY_BREAK) != RI_KEY_BREAK
+		!(data->Flags & RI_KEY_BREAK)
 	);
 
 	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawkeyboard
@@ -281,12 +281,12 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 	if (raw_input_window != window) { return; }
 
-	bool const is_virtual_desktop = (data->usFlags & MOUSE_VIRTUAL_DESKTOP) == MOUSE_VIRTUAL_DESKTOP;
+	bool const is_virtual_desktop = (data->usFlags & MOUSE_VIRTUAL_DESKTOP);
 	int const display_height = GetSystemMetrics(is_virtual_desktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
 	int const display_width  = GetSystemMetrics(is_virtual_desktop ? SM_CXVIRTUALSCREEN : SM_CXSCREEN);
 
 	POINT screen;
-	if ((data->usFlags & MOUSE_MOVE_ABSOLUTE) == MOUSE_MOVE_ABSOLUTE) {
+	if ((data->usFlags & MOUSE_MOVE_ABSOLUTE)) {
 		screen = (POINT){
 			.x = data->lLastX * display_width  / UINT16_MAX,
 			.y = data->lLastY * display_height / UINT16_MAX,
@@ -305,11 +305,11 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 	input_to_platform_on_mouse_move_window((uint32_t)client.x, window->size_y - (uint32_t)client.y - 1);
 
 	//
-	if ((data->usButtonFlags & RI_MOUSE_HWHEEL) == RI_MOUSE_HWHEEL) {
+	if ((data->usButtonFlags & RI_MOUSE_HWHEEL)) {
 		input_to_platform_on_mouse_wheel((float)(short)data->usButtonData / WHEEL_DELTA, 0);
 	}
 
-	if ((data->usButtonFlags & RI_MOUSE_WHEEL) == RI_MOUSE_WHEEL) {
+	if ((data->usButtonFlags & RI_MOUSE_WHEEL)) {
 		input_to_platform_on_mouse_wheel(0, (float)(short)data->usButtonData / WHEEL_DELTA);
 	}
 
@@ -331,10 +331,10 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 	};
 
 	for (uint8_t i = 0; i < sizeof(keys_down) / sizeof(*keys_down); i++) {
-		if ((data->usButtonFlags & keys_down[i]) == keys_down[i]) {
+		if ((data->usButtonFlags & keys_down[i])) {
 			input_to_platform_on_mouse_down(i, true);
 		}
-		if ((data->usButtonFlags & keys_up[i]) == keys_up[i]) {
+		if ((data->usButtonFlags & keys_up[i])) {
 			input_to_platform_on_mouse_down(i, false);
 		}
 	}
@@ -385,11 +385,11 @@ static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wPar
 
 	uint8_t scan = (uint8_t)LOBYTE(flags);
 	uint8_t key = (uint8_t)wParam;
-	bool is_extended = (flags & KF_EXTENDED) == KF_EXTENDED;
+	bool is_extended = (flags & KF_EXTENDED);
 
 	input_to_platform_on_key_down(
 		translate_virtual_key_to_application(scan, key, is_extended),
-		(flags & KF_UP) != KF_UP
+		!(flags & KF_UP)
 	);
 
 	return 0;
@@ -399,8 +399,8 @@ static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wPar
 	// officially, VK_SNAPSHOT gets only WM_KEYUP
 
 	// DWORD repeat_count = LOWORD(lParam);
-	// bool alt_down = (flags & KF_ALTDOWN) == KF_ALTDOWN;
-	// bool was_down = (flags & KF_REPEAT) == KF_REPEAT;
+	// bool alt_down = (flags & KF_ALTDOWN);
+	// bool was_down = (flags & KF_REPEAT);
 */
 }
 
@@ -441,7 +441,7 @@ static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam,
 	};
 
 	for (uint8_t i = 0; i < sizeof(key_masks) / sizeof(*key_masks); i++) {
-		input_to_platform_on_mouse_down(i, (wParam & key_masks[i]) == key_masks[i]);
+		input_to_platform_on_mouse_down(i, (wParam & key_masks[i]));
 	}
 
 	return 0;
