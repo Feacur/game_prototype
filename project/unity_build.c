@@ -7,6 +7,7 @@
 #include "framework/containers/array_float.c"
 #include "framework/containers/array_u32.c"
 #include "framework/containers/array_s32.c"
+#include "framework/containers/array_pointer.c"
 #include "framework/containers/strings.c"
 
 #include "framework/assets/parsing.c"
@@ -23,9 +24,9 @@
 	#include "framework/windows/window.c"
 
 	#if defined(GAME_GRAPHICS_IS_OPENGL)
-		#include "framework/windows/opengl/library.c"
+		#include "framework/windows/opengl/glibrary.c"
 		#include "framework/opengl/functions.c"
-		#include "framework/opengl/implementation.c"
+		#include "framework/opengl/graphics.c"
 	#endif
 #endif
 

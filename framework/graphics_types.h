@@ -1,6 +1,8 @@
 #if !defined(GAME_GRAPHICS_TYPES)
 #define GAME_GRAPHICS_TYPES
 
+#include "framework/common.h"
+
 enum Data_Type {
 	DATA_TYPE_NONE,
 	DATA_TYPE_UNIT,
@@ -145,6 +147,12 @@ enum Color_Channel {
 	COLOR_CHANNEL_GREEN = (1 << 1),
 	COLOR_CHANNEL_BLUE  = (1 << 2),
 	COLOR_CHANNEL_ALPHA = (1 << 3),
+};
+
+struct Gpu_Program_Field {
+	uint32_t id;
+	enum Data_Type type;
+	uint32_t array_size;
 };
 
 #endif

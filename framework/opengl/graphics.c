@@ -5,7 +5,7 @@
 #include "framework/assets/asset_image.h"
 
 #include "functions.h"
-#include "types.h"
+#include "framework/graphics_types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,20 +34,12 @@ static GLenum gpu_stencil_op(enum Stencil_Op value);
 static GLenum gpu_blend_op(enum Blend_Op value);
 static GLenum gpu_blend_factor(enum Blend_Factor value);
 
-//
-#include "implementation.h"
-
-// -- GPU types part
-struct Gpu_Program_Field {
-	uint32_t id;
-	enum Data_Type type;
-	GLsizei array_size;
-	GLint location;
-};
+#define MAX_UNIFORMS 32
 
 struct Gpu_Program {
 	GLuint id;
-	struct Gpu_Program_Field uniforms[10];
+	struct Gpu_Program_Field uniforms[MAX_UNIFORMS];
+	GLint uniform_locations[MAX_UNIFORMS];
 	uint32_t uniforms_count;
 };
 
@@ -66,7 +58,6 @@ struct Gpu_Unit {
 	struct Gpu_Texture * gpu_texture;
 };
 
-// -- graphics library part
 static struct {
 	char * extensions;
 
@@ -76,211 +67,10 @@ static struct {
 	struct Gpu_Mesh * active_mesh;
 
 	struct Gpu_Unit units[100];
-} glibrary;
+} graphics_state;
 
-uint32_t glibrary_add_uniform(char const * name) {
-	return strings_add(glibrary.uniforms, (uint32_t)strlen(name), name);
-}
-
-uint32_t glibrary_find_uniform(char const * name) {
-	return strings_find(glibrary.uniforms, (uint32_t)strlen(name), name);
-}
-
-void glibrary_clear(void) {
-	uint32_t framebuffer_id = 0;
-	enum Texture_Type clear_target = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH;
-	float clear_depth = 1;
-	// uint32_t clear_stencil = 0;
-
-	GLbitfield clear_mask = 0;
-	if (clear_target & TEXTURE_TYPE_COLOR) { clear_mask |= GL_COLOR_BUFFER_BIT; }
-	if (clear_target & TEXTURE_TYPE_DEPTH) { clear_mask |= GL_DEPTH_BUFFER_BIT; }
-	if (clear_target & TEXTURE_TYPE_STENCIL) { clear_mask |= GL_STENCIL_BUFFER_BIT; }
-
-	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)framebuffer_id);
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	glClearColor(0.2f, 0.2f, 0.2f, 1);
-	glDepthMask(GL_TRUE);
-	glClearDepthf(clear_depth);
-	// glClearStencil((GLint)clear_stencil);
-	glClear(clear_mask);
-}
-
-void glibrary_viewport(uint32_t x, uint32_t y, uint32_t size_x, uint32_t size_y) {
-	glViewport((GLsizei)x, (GLsizei)y, (GLsizei)size_x, (GLsizei)size_y);
-}
-
-static void glibrary_blending(void) {
-	enum Color_Channel color_mask = COLOR_CHANNEL_NONE;
-
-	uint32_t blend_rgba = 0;
-
-	enum Blend_Op rgb_op = BLEND_OP_NONE;
-	enum Blend_Factor rgb_src = BLEND_FACTOR_ONE;
-	enum Blend_Factor rgb_dst = BLEND_FACTOR_ZERO;
-
-	enum Blend_Op alpha_op = BLEND_OP_NONE;
-	enum Blend_Factor alpha_src = BLEND_FACTOR_ONE;
-	enum Blend_Factor alpha_dst = BLEND_FACTOR_ZERO;
-
-	//
-	glColorMask(
-		color_mask & COLOR_CHANNEL_RED,
-		color_mask & COLOR_CHANNEL_GREEN,
-		color_mask & COLOR_CHANNEL_BLUE,
-		color_mask & COLOR_CHANNEL_ALPHA
-	);
-
-	glBlendColor(
-		((blend_rgba >> 24) & 0xff) / 255.0f,
-		((blend_rgba >> 16) & 0xff) / 255.0f,
-		((blend_rgba >>  8) & 0xff) / 255.0f,
-		((blend_rgba >>  0) & 0xff) / 255.0f
-	);
-
-	//
-	bool const blend_rgb = (rgb_op != BLEND_OP_NONE)
-	              && ((rgb_src != BLEND_FACTOR_ONE) || (rgb_dst != BLEND_FACTOR_ZERO))
-	              && (color_mask & ~COLOR_CHANNEL_ALPHA);
-
-	bool const blend_alpha = (alpha_op != BLEND_OP_NONE)
-	                && ((alpha_src != BLEND_FACTOR_ONE) || (alpha_dst != BLEND_FACTOR_ZERO))
-	                && (color_mask & COLOR_CHANNEL_ALPHA);
-
-	if (!(blend_rgb || blend_alpha)) {
-		glDisable(GL_BLEND);
-	}
-	else {
-		glEnable(GL_BLEND);
-
-		glBlendEquationSeparate(
-			gpu_blend_op(blend_rgb ? rgb_op : BLEND_OP_ADD),
-			gpu_blend_op(blend_alpha ? alpha_op : BLEND_OP_ADD)
-		);
-
-		glBlendFuncSeparate(
-			gpu_blend_factor(blend_rgb ? rgb_src : BLEND_FACTOR_ONE),
-			gpu_blend_factor(blend_rgb ? rgb_dst : BLEND_FACTOR_ZERO),
-			gpu_blend_factor(blend_alpha ? alpha_src : BLEND_FACTOR_ONE),
-			gpu_blend_factor(blend_alpha ? alpha_dst : BLEND_FACTOR_ZERO)
-		);
-	}
-}
-
-static void glibrary_depth_test(void) {
-	enum Comparison_Op comparison_op = COMPARISON_OP_NONE;
-	bool write_mask = true;
-
-	//
-	if (comparison_op == COMPARISON_OP_NONE) {
-		glDisable(GL_DEPTH_TEST);
-	}
-	else {
-		glEnable(GL_DEPTH_TEST);
-
-		glDepthMask(write_mask ? GL_TRUE : GL_FALSE);
-
-		glDepthFunc(gpu_comparison_op(comparison_op));
-	}
-}
-
-// static void glibrary_stencil_test(void) {
-// 	enum Comparison_Op comparison_op = COMPARISON_OP_NONE;
-// 	uint32_t comparison_ref = 0;
-// 	uint32_t comparison_mask = 0;
-// 	enum Stencil_Op fail_fail = STENCIL_OP_ZERO;
-// 	enum Stencil_Op succ_fail = STENCIL_OP_ZERO;
-// 	enum Stencil_Op succ_succ = STENCIL_OP_ZERO;
-// 	uint32_t write_mask = 0;
-// 
-// 	//
-// 	if (comparison_op == COMPARISON_OP_NONE) {
-// 		glDisable(GL_STENCIL_TEST);
-// 	}
-// 	else {
-// 		glEnable(GL_STENCIL_TEST);
-// 
-// 		glStencilMask((GLuint)write_mask);
-// 
-// 		glStencilFunc(gpu_comparison_op(comparison_op), (GLint)comparison_ref, (GLuint)comparison_mask);
-// 
-// 		glStencilOp(
-// 			gpu_stencil_op(fail_fail),
-// 			gpu_stencil_op(succ_fail),
-// 			gpu_stencil_op(succ_succ)
-// 		);
-// 	}
-// }
-
-static void glibrary_culling(void) {
-	enum Cull_Mode mode = CULL_MODE_NONE;
-	enum Winding_Order order = WINDING_ORDER_POSITIVE;
-
-	//
-	glFrontFace(gpu_winding_order(order));
-
-	if (mode == CULL_MODE_NONE) {
-		glDisable(GL_CULL_FACE);
-	}
-	else {
-		glEnable(GL_CULL_FACE);
-
-		glCullFace(gpu_cull_mode(mode));
-	}
-}
-
-void glibrary_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh) {
-	gpu_program_select(gpu_program);
-	gpu_mesh_select(gpu_mesh);
-	glDrawElements(
-		GL_TRIANGLES,
-		gpu_mesh->indices_count,
-		gpu_data_type(DATA_TYPE_U32),
-		NULL
-	);
-}
-
-static uint32_t glibrary_unit_find(struct Gpu_Texture * gpu_texture) {
-	for (uint32_t i = 0; i < sizeof(glibrary.units) / sizeof(*glibrary.units); i++) {
-		if (glibrary.units[i].gpu_texture == gpu_texture) { return i; }
-	}
-	return UINT32_MAX;
-}
-
-static uint32_t glibrary_unit_init(struct Gpu_Texture * gpu_texture) {
-	uint32_t unit = glibrary_unit_find(gpu_texture);
-	if (unit != UINT32_MAX) { return unit; }
-
-	unit = glibrary_unit_find(NULL);
-	if (unit == UINT32_MAX) {
-		fprintf(stderr, "'glibrary_unit_find' failed\n"); DEBUG_BREAK();
-		return unit;
-	}
-
-	glibrary.units[unit] = (struct Gpu_Unit){
-		.gpu_texture = gpu_texture,
-	};
-
-	glBindTextureUnit((GLuint)unit, gpu_texture->id);
-
-	return unit;
-}
-
-// static void glibrary_unit_free(struct Gpu_Texture * gpu_texture) {
-// 	if (ogl_version > 0) {
-// 		uint32_t unit = glibrary_unit_find(gpu_texture);
-// 		if (unit == UINT32_MAX) {
-// 			fprintf(stderr, "'glibrary_unit_find' failed\n"); DEBUG_BREAK();
-// 			return;
-// 		}
-// 
-// 		glibrary.units[unit] = (struct Gpu_Unit){
-// 			.gpu_texture = NULL,
-// 		};
-// 
-// 		glBindTextureUnit((GLuint)unit, 0);
-// 	}
-// }
+//
+#include "framework/gpu_objects.h"
 
 // -- GPU program part
 static void verify_shader(GLuint id, GLenum parameter);
@@ -359,7 +149,8 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 	glGetProgramInterfaceiv(program_id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
 	GLchar * uniform_name_buffer = MEMORY_ALLOCATE_ARRAY(GLchar, uniform_name_buffer_length);
 
-	struct Gpu_Program_Field uniforms[10];
+	struct Gpu_Program_Field uniforms[MAX_UNIFORMS];
+	GLint uniform_locations[MAX_UNIFORMS];
 	for (GLint i = 0; i < uniforms_count; i++) {
 		// GL_NAME_LENGTH // includes zero-terminator
 		GLenum const props[] = {GL_TYPE, GL_ARRAY_SIZE, GL_LOCATION};
@@ -379,11 +170,11 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 		}
 
 		uniforms[i] = (struct Gpu_Program_Field){
-			.id = strings_add(glibrary.uniforms, (uint32_t)name_length, uniform_name_buffer),
+			.id = strings_add(graphics_state.uniforms, (uint32_t)name_length, uniform_name_buffer),
 			.type = interpret_gl_type(params[0]),
-			.array_size = (GLsizei)params[1],
-			.location = params[2],
+			.array_size = (uint32_t)params[1],
 		};
+		uniform_locations[i] = params[2];
 	}
 
 	MEMORY_FREE(uniform_name_buffer);
@@ -395,6 +186,7 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 		.uniforms_count = (uint32_t)uniforms_count,
 	};
 	memcpy(gpu_program->uniforms, uniforms, sizeof(*uniforms) * (size_t)uniforms_count);
+	memcpy(gpu_program->uniform_locations, uniform_locations, sizeof(*uniform_locations) * (size_t)uniforms_count);
 	return gpu_program;
 	// https://www.khronos.org/opengl/wiki/Program_Introspection
 
@@ -403,73 +195,11 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 
 void gpu_program_free(struct Gpu_Program * gpu_program) {
 	if (ogl_version > 0) {
-		if (glibrary.active_program == gpu_program) { glibrary.active_program = NULL; }
+		if (graphics_state.active_program == gpu_program) { graphics_state.active_program = NULL; }
 		glDeleteProgram(gpu_program->id);
 	}
 	memset(gpu_program, 0, sizeof(*gpu_program));
 	MEMORY_FREE(gpu_program);
-}
-
-void gpu_program_select(struct Gpu_Program * gpu_program) {
-	if (glibrary.active_program == gpu_program) { return; }
-	glibrary.active_program = gpu_program;
-	glUseProgram(gpu_program->id);
-}
-
-static struct Gpu_Program_Field const * gpu_program_find_uniform_field(struct Gpu_Program const * gpu_program, uint32_t uniform_id) {
-	for (uint32_t i = 0; i < gpu_program->uniforms_count; i++) {
-		if (gpu_program->uniforms[i].id == uniform_id) {
-			return gpu_program->uniforms + i;
-		}
-	}
-	fprintf(stderr, "'gpu_program_find_uniform_field' failed\n"); DEBUG_BREAK();
-	return NULL;
-}
-
-void gpu_program_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_id, void const * data) {
-	struct Gpu_Program_Field const * field = gpu_program_find_uniform_field(gpu_program, uniform_id);
-	if (field == NULL) { return; }
-
-	switch (field->type) {
-		default: break;
-
-		case DATA_TYPE_UNIT: {
-			struct Gpu_Texture * const * gpu_textures = (struct Gpu_Texture * const *)data;
-			for (GLsizei i = 0; i < field->array_size; i++) {
-				uint32_t unit = glibrary_unit_find(gpu_textures[i]);
-				if (unit == UINT32_MAX) {
-					unit = glibrary_unit_init(gpu_textures[i]);
-					if (unit == UINT32_MAX) {
-						fprintf(stderr, "'glibrary_unit_find' failed\n"); DEBUG_BREAK();
-						continue;
-					}
-				}
-
-				GLint uniform_data = (GLint)unit;
-				glProgramUniform1iv(gpu_program->id, field->location, 1, &uniform_data);
-			}
-			break;
-		}
-
-		case DATA_TYPE_U32:   glProgramUniform1uiv(gpu_program->id, field->location, field->array_size, data); break;
-		case DATA_TYPE_UVEC2: glProgramUniform2uiv(gpu_program->id, field->location, field->array_size, data); break;
-		case DATA_TYPE_UVEC3: glProgramUniform3uiv(gpu_program->id, field->location, field->array_size, data); break;
-		case DATA_TYPE_UVEC4: glProgramUniform4uiv(gpu_program->id, field->location, field->array_size, data); break;
-
-		case DATA_TYPE_S32:   glProgramUniform1iv(gpu_program->id, field->location, field->array_size, data); break;
-		case DATA_TYPE_SVEC2: glProgramUniform2iv(gpu_program->id, field->location, field->array_size, data); break;
-		case DATA_TYPE_SVEC3: glProgramUniform3iv(gpu_program->id, field->location, field->array_size, data); break;
-		case DATA_TYPE_SVEC4: glProgramUniform4iv(gpu_program->id, field->location, field->array_size, data); break;
-
-		case DATA_TYPE_R32:  glProgramUniform1fv(gpu_program->id, field->location, field->array_size, data); break;
-		case DATA_TYPE_VEC2: glProgramUniform2fv(gpu_program->id, field->location, field->array_size, data); break;
-		case DATA_TYPE_VEC3: glProgramUniform3fv(gpu_program->id, field->location, field->array_size, data); break;
-		case DATA_TYPE_VEC4: glProgramUniform4fv(gpu_program->id, field->location, field->array_size, data); break;
-
-		case DATA_TYPE_MAT2: glProgramUniformMatrix2fv(gpu_program->id, field->location, field->array_size, GL_FALSE, data); break;
-		case DATA_TYPE_MAT3: glProgramUniformMatrix3fv(gpu_program->id, field->location, field->array_size, GL_FALSE, data); break;
-		case DATA_TYPE_MAT4: glProgramUniformMatrix4fv(gpu_program->id, field->location, field->array_size, GL_FALSE, data); break;
-	}
 }
 
 // -- GPU texture part
@@ -511,9 +241,9 @@ struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
 
 void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 	if (ogl_version > 0) {
-		for (uint32_t i = 0; i < sizeof(glibrary.units) / sizeof(*glibrary.units); i++) {
-			if (glibrary.units[i].gpu_texture == gpu_texture) {
-				glibrary.units[i].gpu_texture = NULL;
+		for (uint32_t i = 0; i < sizeof(graphics_state.units) / sizeof(*graphics_state.units); i++) {
+			if (graphics_state.units[i].gpu_texture == gpu_texture) {
+				graphics_state.units[i].gpu_texture = NULL;
 				// glBindTextureUnit((GLuint)i, 0);
 			}
 		}
@@ -594,7 +324,7 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
 	if (ogl_version > 0) {
-		if (glibrary.active_mesh == gpu_mesh) { glibrary.active_mesh = NULL; }
+		if (graphics_state.active_mesh == gpu_mesh) { graphics_state.active_mesh = NULL; }
 		glDeleteBuffers(1, &gpu_mesh->vertices_buffer_id);
 		glDeleteBuffers(1, &gpu_mesh->indices_buffer_id);
 		glDeleteVertexArrays(1, &gpu_mesh->id);
@@ -603,9 +333,280 @@ void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
 	MEMORY_FREE(gpu_mesh);
 }
 
-void gpu_mesh_select(struct Gpu_Mesh * gpu_mesh) {
-	if (glibrary.active_mesh == gpu_mesh) { return; }
-	glibrary.active_mesh = gpu_mesh;
+//
+#include "graphics.h"
+
+uint32_t graphics_add_uniform(char const * name) {
+	return strings_add(graphics_state.uniforms, (uint32_t)strlen(name), name);
+}
+
+uint32_t graphics_find_uniform(char const * name) {
+	return strings_find(graphics_state.uniforms, (uint32_t)strlen(name), name);
+}
+
+void graphics_clear(void) {
+	uint32_t framebuffer_id = 0;
+	enum Texture_Type clear_target = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH;
+	float clear_depth = 1;
+	// uint32_t clear_stencil = 0;
+
+	GLbitfield clear_mask = 0;
+	if (clear_target & TEXTURE_TYPE_COLOR) { clear_mask |= GL_COLOR_BUFFER_BIT; }
+	if (clear_target & TEXTURE_TYPE_DEPTH) { clear_mask |= GL_DEPTH_BUFFER_BIT; }
+	if (clear_target & TEXTURE_TYPE_STENCIL) { clear_mask |= GL_STENCIL_BUFFER_BIT; }
+
+	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)framebuffer_id);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glClearColor(0.2f, 0.2f, 0.2f, 1);
+	glDepthMask(GL_TRUE);
+	glClearDepthf(clear_depth);
+	// glClearStencil((GLint)clear_stencil);
+	glClear(clear_mask);
+}
+
+void graphics_viewport(uint32_t x, uint32_t y, uint32_t size_x, uint32_t size_y) {
+	glViewport((GLsizei)x, (GLsizei)y, (GLsizei)size_x, (GLsizei)size_y);
+}
+
+static void graphics_blending(void) {
+	enum Color_Channel color_mask = COLOR_CHANNEL_NONE;
+
+	uint32_t blend_rgba = 0;
+
+	enum Blend_Op rgb_op = BLEND_OP_NONE;
+	enum Blend_Factor rgb_src = BLEND_FACTOR_ONE;
+	enum Blend_Factor rgb_dst = BLEND_FACTOR_ZERO;
+
+	enum Blend_Op alpha_op = BLEND_OP_NONE;
+	enum Blend_Factor alpha_src = BLEND_FACTOR_ONE;
+	enum Blend_Factor alpha_dst = BLEND_FACTOR_ZERO;
+
+	//
+	glColorMask(
+		color_mask & COLOR_CHANNEL_RED,
+		color_mask & COLOR_CHANNEL_GREEN,
+		color_mask & COLOR_CHANNEL_BLUE,
+		color_mask & COLOR_CHANNEL_ALPHA
+	);
+
+	glBlendColor(
+		((blend_rgba >> 24) & 0xff) / 255.0f,
+		((blend_rgba >> 16) & 0xff) / 255.0f,
+		((blend_rgba >>  8) & 0xff) / 255.0f,
+		((blend_rgba >>  0) & 0xff) / 255.0f
+	);
+
+	//
+	bool const blend_rgb = (rgb_op != BLEND_OP_NONE)
+	              && ((rgb_src != BLEND_FACTOR_ONE) || (rgb_dst != BLEND_FACTOR_ZERO))
+	              && (color_mask & ~COLOR_CHANNEL_ALPHA);
+
+	bool const blend_alpha = (alpha_op != BLEND_OP_NONE)
+	                && ((alpha_src != BLEND_FACTOR_ONE) || (alpha_dst != BLEND_FACTOR_ZERO))
+	                && (color_mask & COLOR_CHANNEL_ALPHA);
+
+	if (!(blend_rgb || blend_alpha)) {
+		glDisable(GL_BLEND);
+	}
+	else {
+		glEnable(GL_BLEND);
+
+		glBlendEquationSeparate(
+			gpu_blend_op(blend_rgb ? rgb_op : BLEND_OP_ADD),
+			gpu_blend_op(blend_alpha ? alpha_op : BLEND_OP_ADD)
+		);
+
+		glBlendFuncSeparate(
+			gpu_blend_factor(blend_rgb ? rgb_src : BLEND_FACTOR_ONE),
+			gpu_blend_factor(blend_rgb ? rgb_dst : BLEND_FACTOR_ZERO),
+			gpu_blend_factor(blend_alpha ? alpha_src : BLEND_FACTOR_ONE),
+			gpu_blend_factor(blend_alpha ? alpha_dst : BLEND_FACTOR_ZERO)
+		);
+	}
+}
+
+static void graphics_depth_test(void) {
+	enum Comparison_Op comparison_op = COMPARISON_OP_NONE;
+	bool write_mask = true;
+
+	//
+	if (comparison_op == COMPARISON_OP_NONE) {
+		glDisable(GL_DEPTH_TEST);
+	}
+	else {
+		glEnable(GL_DEPTH_TEST);
+
+		glDepthMask(write_mask ? GL_TRUE : GL_FALSE);
+
+		glDepthFunc(gpu_comparison_op(comparison_op));
+	}
+}
+
+// static void graphics_stencil_test(void) {
+// 	enum Comparison_Op comparison_op = COMPARISON_OP_NONE;
+// 	uint32_t comparison_ref = 0;
+// 	uint32_t comparison_mask = 0;
+// 	enum Stencil_Op fail_fail = STENCIL_OP_ZERO;
+// 	enum Stencil_Op succ_fail = STENCIL_OP_ZERO;
+// 	enum Stencil_Op succ_succ = STENCIL_OP_ZERO;
+// 	uint32_t write_mask = 0;
+// 
+// 	//
+// 	if (comparison_op == COMPARISON_OP_NONE) {
+// 		glDisable(GL_STENCIL_TEST);
+// 	}
+// 	else {
+// 		glEnable(GL_STENCIL_TEST);
+// 
+// 		glStencilMask((GLuint)write_mask);
+// 
+// 		glStencilFunc(gpu_comparison_op(comparison_op), (GLint)comparison_ref, (GLuint)comparison_mask);
+// 
+// 		glStencilOp(
+// 			gpu_stencil_op(fail_fail),
+// 			gpu_stencil_op(succ_fail),
+// 			gpu_stencil_op(succ_succ)
+// 		);
+// 	}
+// }
+
+static void graphics_culling(void) {
+	enum Cull_Mode mode = CULL_MODE_NONE;
+	enum Winding_Order order = WINDING_ORDER_POSITIVE;
+
+	//
+	glFrontFace(gpu_winding_order(order));
+
+	if (mode == CULL_MODE_NONE) {
+		glDisable(GL_CULL_FACE);
+	}
+	else {
+		glEnable(GL_CULL_FACE);
+
+		glCullFace(gpu_cull_mode(mode));
+	}
+}
+
+void graphics_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh) {
+	graphics_select_program(gpu_program);
+	graphics_select_mesh(gpu_mesh);
+	glDrawElements(
+		GL_TRIANGLES,
+		gpu_mesh->indices_count,
+		gpu_data_type(DATA_TYPE_U32),
+		NULL
+	);
+}
+
+static uint32_t graphics_unit_find(struct Gpu_Texture * gpu_texture) {
+	for (uint32_t i = 0; i < sizeof(graphics_state.units) / sizeof(*graphics_state.units); i++) {
+		if (graphics_state.units[i].gpu_texture == gpu_texture) { return i; }
+	}
+	return UINT32_MAX;
+}
+
+static uint32_t graphics_unit_init(struct Gpu_Texture * gpu_texture) {
+	uint32_t unit = graphics_unit_find(gpu_texture);
+	if (unit != UINT32_MAX) { return unit; }
+
+	unit = graphics_unit_find(NULL);
+	if (unit == UINT32_MAX) {
+		fprintf(stderr, "'graphics_unit_find' failed\n"); DEBUG_BREAK();
+		return unit;
+	}
+
+	graphics_state.units[unit] = (struct Gpu_Unit){
+		.gpu_texture = gpu_texture,
+	};
+
+	glBindTextureUnit((GLuint)unit, gpu_texture->id);
+
+	return unit;
+}
+
+// static void graphics_unit_free(struct Gpu_Texture * gpu_texture) {
+// 	if (ogl_version > 0) {
+// 		uint32_t unit = graphics_unit_find(gpu_texture);
+// 		if (unit == UINT32_MAX) {
+// 			fprintf(stderr, "'graphics_unit_find' failed\n"); DEBUG_BREAK();
+// 			return;
+// 		}
+// 
+// 		graphics_state.units[unit] = (struct Gpu_Unit){
+// 			.gpu_texture = NULL,
+// 		};
+// 
+// 		glBindTextureUnit((GLuint)unit, 0);
+// 	}
+// }
+
+void graphics_select_program(struct Gpu_Program * gpu_program) {
+	if (graphics_state.active_program == gpu_program) { return; }
+	graphics_state.active_program = gpu_program;
+	glUseProgram(gpu_program->id);
+}
+
+static uint32_t gpu_program_find_uniform_field(struct Gpu_Program const * gpu_program, uint32_t uniform_id) {
+	for (uint32_t i = 0; i < gpu_program->uniforms_count; i++) {
+		if (gpu_program->uniforms[i].id == uniform_id) {
+			return i;
+		}
+	}
+	fprintf(stderr, "'gpu_program_find_uniform_field' failed\n"); DEBUG_BREAK();
+	return MAX_UNIFORMS;
+}
+
+void graphics_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_id, void const * data) {
+	uint32_t field_i = gpu_program_find_uniform_field(gpu_program, uniform_id);
+	if (field_i == MAX_UNIFORMS) { return; }
+
+	struct Gpu_Program_Field const * field = gpu_program->uniforms + field_i;
+	GLint location = gpu_program->uniform_locations[field_i];
+	switch (field->type) {
+		default: break;
+
+		case DATA_TYPE_UNIT: {
+			struct Gpu_Texture * const * gpu_textures = (struct Gpu_Texture * const *)data;
+			for (uint32_t i = 0; i < field->array_size; i++) {
+				uint32_t unit = graphics_unit_find(gpu_textures[i]);
+				if (unit == UINT32_MAX) {
+					unit = graphics_unit_init(gpu_textures[i]);
+					if (unit == UINT32_MAX) {
+						fprintf(stderr, "'graphics_unit_find' failed\n"); DEBUG_BREAK();
+						continue;
+					}
+				}
+
+				GLint uniform_data = (GLint)unit;
+				glProgramUniform1iv(gpu_program->id, location, 1, &uniform_data);
+			}
+			break;
+		}
+
+		case DATA_TYPE_U32:   glProgramUniform1uiv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_UVEC2: glProgramUniform2uiv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_UVEC3: glProgramUniform3uiv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_UVEC4: glProgramUniform4uiv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+
+		case DATA_TYPE_S32:   glProgramUniform1iv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_SVEC2: glProgramUniform2iv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_SVEC3: glProgramUniform3iv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_SVEC4: glProgramUniform4iv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+
+		case DATA_TYPE_R32:  glProgramUniform1fv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_VEC2: glProgramUniform2fv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_VEC3: glProgramUniform3fv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_VEC4: glProgramUniform4fv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+
+		case DATA_TYPE_MAT2: glProgramUniformMatrix2fv(gpu_program->id, location, (GLsizei)field->array_size, GL_FALSE, data); break;
+		case DATA_TYPE_MAT3: glProgramUniformMatrix3fv(gpu_program->id, location, (GLsizei)field->array_size, GL_FALSE, data); break;
+		case DATA_TYPE_MAT4: glProgramUniformMatrix4fv(gpu_program->id, location, (GLsizei)field->array_size, GL_FALSE, data); break;
+	}
+}
+
+void graphics_select_mesh(struct Gpu_Mesh * gpu_mesh) {
+	if (graphics_state.active_mesh == gpu_mesh) { return; }
+	graphics_state.active_mesh = gpu_mesh;
 	glBindVertexArray(gpu_mesh->id);
 }
 
@@ -635,17 +636,17 @@ void graphics_to_glibrary_init(void) {
 	}
 
 	//
-	memset(&glibrary, 0, sizeof(glibrary));
-	glibrary.extensions = allocate_extensions_string();
+	memset(&graphics_state, 0, sizeof(graphics_state));
+	graphics_state.extensions = allocate_extensions_string();
 
-	glibrary.uniforms = strings_init();
-	strings_add(glibrary.uniforms, 0, "");
+	graphics_state.uniforms = strings_init();
+	strings_add(graphics_state.uniforms, 0, "");
 }
 
 void graphics_to_glibrary_free(void) {
-	strings_free(glibrary.uniforms);
-	MEMORY_FREE(glibrary.extensions);
-	memset(&glibrary, 0, sizeof(glibrary));
+	strings_free(graphics_state.uniforms);
+	MEMORY_FREE(graphics_state.extensions);
+	memset(&graphics_state, 0, sizeof(graphics_state));
 
 	(void)gpu_data_type_size;
 	(void)gpu_attachment_point;
@@ -656,10 +657,10 @@ void graphics_to_glibrary_free(void) {
 	(void)gpu_blend_op;
 	(void)gpu_blend_factor;
 
-	(void)glibrary_blending;
-	(void)glibrary_depth_test;
-	// (void)glibrary_stencil_test;
-	(void)glibrary_culling;
+	(void)graphics_blending;
+	(void)graphics_depth_test;
+	// (void)graphics_stencil_test;
+	(void)graphics_culling;
 }
 
 //

@@ -87,8 +87,8 @@ static bool application_update(void) {
 	app.ticks.frame_start = platform_timer_get_ticks();
 
 	// limit elapsed time in case of stutters or debug steps
-	if (app.config->slow_frames_factor > 0 && frame_ticks > target_ticks * app.config->slow_frames_factor) {
-		frame_ticks = target_ticks * app.config->slow_frames_factor;
+	if (app.config->slow_frames_limit > 0 && frame_ticks > target_ticks * app.config->slow_frames_limit) {
+		frame_ticks = target_ticks * app.config->slow_frames_limit;
 	}
 
 	// fixed update / update / render

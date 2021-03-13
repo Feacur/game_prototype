@@ -14,7 +14,7 @@ struct Application_Config {
 
 	int32_t vsync;
 	uint32_t target_refresh_rate, fixed_refresh_rate;
-	uint32_t slow_frames_factor;
+	uint32_t slow_frames_limit;
 };
 
 void application_run(struct Application_Config * config);

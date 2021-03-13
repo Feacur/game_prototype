@@ -5,13 +5,15 @@
 
 #include "framework/maths.h"
 #include "framework/input.h"
+#include "framework/graphics_types.h"
+#include "framework/gpu_objects.h"
 
 #include "framework/containers/array_byte.h"
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"
 
 #include "framework/opengl/functions.h"
-#include "framework/opengl/implementation.h"
+#include "framework/opengl/graphics.h"
 
 #include "application/application.h"
 
@@ -55,10 +57,10 @@ static void game_init(void) {
 	glFrontFace(GL_CCW);
 
 	// init uniforms ids
-	uniforms.color = glibrary_add_uniform("u_Color");
-	uniforms.texture = glibrary_add_uniform("u_Texture");
-	uniforms.camera = glibrary_add_uniform("u_Camera");
-	uniforms.transform = glibrary_add_uniform("u_Transform");
+	uniforms.color = graphics_add_uniform("u_Color");
+	uniforms.texture = graphics_add_uniform("u_Texture");
+	uniforms.camera = graphics_add_uniform("u_Camera");
+	uniforms.transform = graphics_add_uniform("u_Transform");
 
 	// load content
 	struct Array_Byte asset_shader;
@@ -122,24 +124,23 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 }
 
 static void game_render(uint32_t size_x, uint32_t size_y) {
-	glibrary_viewport(0, 0, size_x, size_y);
+	graphics_viewport(0, 0, size_x, size_y);
+	graphics_clear();
 
-	gpu_program_set_uniform(content.gpu_program, uniforms.color, &(struct vec4){0.2f, 0.6f, 1, 1});
-	gpu_program_set_uniform(content.gpu_program, uniforms.texture, &content.gpu_texture);
-
+	//
 	struct mat4 const matrix_camera = mat4_mul_mat(
 		mat4_set_projection((struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 1000.0f, 0),
 		mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
 	);
-
 	struct mat4 const matrix_object = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation);
 
-	gpu_program_set_uniform(content.gpu_program, uniforms.camera, &matrix_camera.x.x);
-	gpu_program_set_uniform(content.gpu_program, uniforms.transform, &matrix_object.x.x);
+	graphics_set_uniform(content.gpu_program, uniforms.color, &(struct vec4){0.2f, 0.6f, 1, 1});
+	graphics_set_uniform(content.gpu_program, uniforms.texture, &content.gpu_texture);
 
-	// draw
-	glibrary_clear();
-	glibrary_draw(content.gpu_program, content.gpu_mesh);
+	graphics_set_uniform(content.gpu_program, uniforms.camera, &matrix_camera.x.x);
+	graphics_set_uniform(content.gpu_program, uniforms.transform, &matrix_object.x.x);
+
+	graphics_draw(content.gpu_program, content.gpu_mesh);
 }
 
 int main (int argc, char * argv[]) {
@@ -155,7 +156,7 @@ int main (int argc, char * argv[]) {
 		.vsync = 1,
 		.target_refresh_rate = 72,
 		.fixed_refresh_rate = 50,
-		.slow_frames_factor = 5,
+		.slow_frames_limit = 5,
 	});
 	return 0;
 }

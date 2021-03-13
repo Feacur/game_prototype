@@ -5,7 +5,7 @@
 
 uint32_t ogl_version = 0;
 
-void graphics_functions_init(void * (* get)(char const * name)) {
+void glibrary_functions_init(void * (* get)(char const * name)) {
 	#define XMACRO_INIT() \
 		do { \
 			GLint version_major; \
@@ -32,7 +32,7 @@ void graphics_functions_init(void * (* get)(char const * name)) {
 	#include "xmacro.h"
 }
 
-void graphics_functions_free(void) {
+void glibrary_functions_free(void) {
 	#define XMACRO(type, name) gl ## name = NULL;
 	#include "xmacro.h"
 

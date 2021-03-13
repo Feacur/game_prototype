@@ -2,7 +2,7 @@
 #include "framework/internal/input_to_platform.h"
 
 #include "system_to_internal.h"
-#include "graphics_library.h"
+#include "ginstance.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +16,7 @@ struct Window {
 	HDC private_context;
 	uint32_t size_x, size_y;
 
-	struct Graphics * graphics;
+	struct GInstance * ginstance;
 };
 
 //
@@ -54,7 +54,7 @@ struct Window * platform_window_init(void) {
 	}
 */
 
-	window->graphics = graphics_init(window);
+	window->ginstance = ginstance_init(window);
 
 	platform_window_toggle_raw_input(window, true);
 	// (void)platform_window_toggle_raw_input;
@@ -78,15 +78,15 @@ bool platform_window_exists(struct Window * window) {
 }
 
 int32_t platform_window_get_vsync(struct Window * window) {
-	return graphics_get_vsync(window->graphics);
+	return ginstance_get_vsync(window->ginstance);
 }
 
 void platform_window_set_vsync(struct Window * window, int32_t value) {
-	graphics_set_vsync(window->graphics, value);
+	ginstance_set_vsync(window->ginstance, value);
 }
 
 void platform_window_display(struct Window * window) {
-	graphics_display(window->graphics);
+	ginstance_display(window->ginstance);
 }
 
 void platform_window_get_size(struct Window * window, uint32_t * size_x, uint32_t * size_y) {
@@ -482,7 +482,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		case WM_SIZE: {
 			window->size_x = (uint32_t)LOWORD(lParam);
 			window->size_y = (uint32_t)HIWORD(lParam);
-			// graphics_size(window->graphics, window->size_x, window->size_y);
+			// ginstance_size(window->graphics, window->size_x, window->size_y);
 			return 0;
 		}
 
@@ -503,7 +503,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			bool should_free = window->handle != NULL;
 			RemovePropA(hwnd, APPLICATION_CLASS_NAME);
 			input_to_platform_reset();
-			graphics_free(window->graphics);
+			if (window->ginstance != NULL) { ginstance_free(window->ginstance); }
 			if (raw_input_window == window) {
 				platform_window_toggle_raw_input(window, false);
 			}
