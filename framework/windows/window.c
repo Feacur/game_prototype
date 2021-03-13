@@ -263,7 +263,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 
 	if (key == VK_NUMLOCK) { is_extended = true; }
 
-	input_to_platform_on_key_down(
+	input_to_platform_on_key(
 		translate_virtual_key_to_application(scan, key, is_extended),
 		!(data->Flags & RI_KEY_BREAK)
 	);
@@ -332,10 +332,10 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 
 	for (uint8_t i = 0; i < sizeof(keys_down) / sizeof(*keys_down); i++) {
 		if ((data->usButtonFlags & keys_down[i])) {
-			input_to_platform_on_mouse_down(i, true);
+			input_to_platform_on_mouse(i, true);
 		}
 		if ((data->usButtonFlags & keys_up[i])) {
-			input_to_platform_on_mouse_down(i, false);
+			input_to_platform_on_mouse(i, false);
 		}
 	}
 
@@ -387,7 +387,7 @@ static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wPar
 	uint8_t key = (uint8_t)wParam;
 	bool is_extended = (flags & KF_EXTENDED);
 
-	input_to_platform_on_key_down(
+	input_to_platform_on_key(
 		translate_virtual_key_to_application(scan, key, is_extended),
 		!(flags & KF_UP)
 	);
@@ -441,7 +441,7 @@ static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam,
 	};
 
 	for (uint8_t i = 0; i < sizeof(key_masks) / sizeof(*key_masks); i++) {
-		input_to_platform_on_mouse_down(i, (wParam & key_masks[i]));
+		input_to_platform_on_mouse(i, (wParam & key_masks[i]));
 	}
 
 	return 0;

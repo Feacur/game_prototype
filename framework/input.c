@@ -107,7 +107,7 @@ void input_to_platform_after_update(void) {
 	}
 }
 
-void input_to_platform_on_key_down(enum Key_Code key, bool is_down) {
+void input_to_platform_on_key(enum Key_Code key, bool is_down) {
 	input_state.keyboard.keys[key] = is_down;
 }
 
@@ -131,6 +131,6 @@ void input_to_platform_on_mouse_wheel(float x, float y) {
 	input_state.mouse.wheel_y += y;
 }
 
-void input_to_platform_on_mouse_down(enum Mouse_Code key, bool is_down) {
+void input_to_platform_on_mouse(enum Mouse_Code key, bool is_down) {
 	input_state.mouse.keys[key] = is_down;
 }
