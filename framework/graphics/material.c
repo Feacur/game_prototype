@@ -15,6 +15,10 @@ void material_init(struct Material * material, struct Gpu_Program * gpu_program)
 	array_s32_init(&material->values_s32);
 	array_float_init(&material->values_float);
 
+	memset(&material->blend_mode, 0, sizeof(material->blend_mode));
+	material->blend_mode.mask = COLOR_CHANNEL_FULL;
+	material->blend_mode.constant = 0xffffffff;
+
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
 	gpu_program_get_uniforms(gpu_program, &uniforms_count, &uniforms);

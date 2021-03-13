@@ -15,8 +15,6 @@
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"
 
-#include "framework/opengl/functions.h"
-
 #include "application/application.h"
 
 #include <stdio.h>
@@ -49,16 +47,6 @@ static struct Game_State {
 } state;
 
 static void game_init(void) {
-	// setup GL
-	glEnable(GL_DEPTH_TEST);
-	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-	glDepthRangef(0, 1);
-	glDepthFunc(GL_LESS);
-
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);
-
 	// init uniforms ids
 	uniforms.color = graphics_add_uniform("u_Color");
 	uniforms.texture = graphics_add_uniform("u_Texture");
@@ -190,20 +178,4 @@ static void asset_mesh_init_1(struct Asset_Mesh * asset_mesh) {
 
 #undef CONSTRUCT
 }
-*/
-
-/*
-> forward Z
-	glEnable(GL_DEPTH_TEST);
-	glDepthRangef(0, 1);
-	glDepthFunc(GL_LESS);
-	glClearDepthf(1);
-
-> reverse Z
-	glEnable(GL_DEPTH_TEST);
-	glDepthRangef(1, 0);
-	glDepthFunc(GL_GREATER);
-	glClearDepthf(0);
-	+
-	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 */

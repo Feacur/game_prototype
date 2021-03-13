@@ -53,6 +53,7 @@ enum Texture_Type {
 	TEXTURE_TYPE_COLOR    = (1 << 0),
 	TEXTURE_TYPE_DEPTH    = (1 << 1),
 	TEXTURE_TYPE_STENCIL  = (1 << 2),
+	// shorthands
 	TEXTURE_TYPE_DSTENCIL = TEXTURE_TYPE_DEPTH | TEXTURE_TYPE_STENCIL,
 	// make compiler content
 	TEXTURE_TYPE_INTERNAL_0 = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
@@ -147,12 +148,26 @@ enum Color_Channel {
 	COLOR_CHANNEL_GREEN = (1 << 1),
 	COLOR_CHANNEL_BLUE  = (1 << 2),
 	COLOR_CHANNEL_ALPHA = (1 << 3),
+	// shorthands
+	COLOR_CHANNEL_RGB = COLOR_CHANNEL_RED | COLOR_CHANNEL_GREEN | COLOR_CHANNEL_BLUE,
+	COLOR_CHANNEL_FULL = COLOR_CHANNEL_RED | COLOR_CHANNEL_GREEN | COLOR_CHANNEL_BLUE | COLOR_CHANNEL_ALPHA,
 };
 
 struct Gpu_Program_Field {
 	uint32_t id;
 	enum Data_Type type;
 	uint32_t array_size;
+};
+
+struct Blend_Func {
+	enum Blend_Op op;
+	enum Blend_Factor src, dst;
+};
+
+struct Blend_Mode {
+	struct Blend_Func rgb, a;
+	enum Color_Channel mask;
+	uint32_t constant;
 };
 
 enum Data_Type data_type_get_element_type(enum Data_Type value);

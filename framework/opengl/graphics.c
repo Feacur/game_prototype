@@ -15,6 +15,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+// #define REVERSE_Z
+
 static GLenum gpu_data_type(enum Data_Type value);
 static enum Data_Type interpret_gl_type(GLint value);
 
@@ -354,6 +356,10 @@ uint32_t graphics_find_uniform(char const * name) {
 	return strings_find(graphics_state.uniforms, (uint32_t)strlen(name), name);
 }
 
+void graphics_viewport(uint32_t x, uint32_t y, uint32_t size_x, uint32_t size_y) {
+	glViewport((GLsizei)x, (GLsizei)y, (GLsizei)size_x, (GLsizei)size_y);
+}
+
 void graphics_clear(void) {
 	uint32_t framebuffer_id = 0;
 	enum Texture_Type clear_target = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH;
@@ -372,84 +378,6 @@ void graphics_clear(void) {
 	glClearDepthf(clear_depth);
 	// glClearStencil((GLint)clear_stencil);
 	glClear(clear_mask);
-}
-
-void graphics_viewport(uint32_t x, uint32_t y, uint32_t size_x, uint32_t size_y) {
-	glViewport((GLsizei)x, (GLsizei)y, (GLsizei)size_x, (GLsizei)size_y);
-}
-
-static void graphics_blending(void) {
-	enum Color_Channel color_mask = COLOR_CHANNEL_NONE;
-
-	uint32_t blend_rgba = 0;
-
-	enum Blend_Op rgb_op = BLEND_OP_NONE;
-	enum Blend_Factor rgb_src = BLEND_FACTOR_ONE;
-	enum Blend_Factor rgb_dst = BLEND_FACTOR_ZERO;
-
-	enum Blend_Op alpha_op = BLEND_OP_NONE;
-	enum Blend_Factor alpha_src = BLEND_FACTOR_ONE;
-	enum Blend_Factor alpha_dst = BLEND_FACTOR_ZERO;
-
-	//
-	glColorMask(
-		color_mask & COLOR_CHANNEL_RED,
-		color_mask & COLOR_CHANNEL_GREEN,
-		color_mask & COLOR_CHANNEL_BLUE,
-		color_mask & COLOR_CHANNEL_ALPHA
-	);
-
-	glBlendColor(
-		((blend_rgba >> 24) & 0xff) / 255.0f,
-		((blend_rgba >> 16) & 0xff) / 255.0f,
-		((blend_rgba >>  8) & 0xff) / 255.0f,
-		((blend_rgba >>  0) & 0xff) / 255.0f
-	);
-
-	//
-	bool const blend_rgb = (rgb_op != BLEND_OP_NONE)
-	              && ((rgb_src != BLEND_FACTOR_ONE) || (rgb_dst != BLEND_FACTOR_ZERO))
-	              && (color_mask & ~COLOR_CHANNEL_ALPHA);
-
-	bool const blend_alpha = (alpha_op != BLEND_OP_NONE)
-	                && ((alpha_src != BLEND_FACTOR_ONE) || (alpha_dst != BLEND_FACTOR_ZERO))
-	                && (color_mask & COLOR_CHANNEL_ALPHA);
-
-	if (!(blend_rgb || blend_alpha)) {
-		glDisable(GL_BLEND);
-	}
-	else {
-		glEnable(GL_BLEND);
-
-		glBlendEquationSeparate(
-			gpu_blend_op(blend_rgb ? rgb_op : BLEND_OP_ADD),
-			gpu_blend_op(blend_alpha ? alpha_op : BLEND_OP_ADD)
-		);
-
-		glBlendFuncSeparate(
-			gpu_blend_factor(blend_rgb ? rgb_src : BLEND_FACTOR_ONE),
-			gpu_blend_factor(blend_rgb ? rgb_dst : BLEND_FACTOR_ZERO),
-			gpu_blend_factor(blend_alpha ? alpha_src : BLEND_FACTOR_ONE),
-			gpu_blend_factor(blend_alpha ? alpha_dst : BLEND_FACTOR_ZERO)
-		);
-	}
-}
-
-static void graphics_depth_test(void) {
-	enum Comparison_Op comparison_op = COMPARISON_OP_NONE;
-	bool write_mask = true;
-
-	//
-	if (comparison_op == COMPARISON_OP_NONE) {
-		glDisable(GL_DEPTH_TEST);
-	}
-	else {
-		glEnable(GL_DEPTH_TEST);
-
-		glDepthMask(write_mask ? GL_TRUE : GL_FALSE);
-
-		glDepthFunc(gpu_comparison_op(comparison_op));
-	}
 }
 
 // static void graphics_stencil_test(void) {
@@ -479,23 +407,6 @@ static void graphics_depth_test(void) {
 // 		);
 // 	}
 // }
-
-static void graphics_culling(void) {
-	enum Cull_Mode mode = CULL_MODE_NONE;
-	enum Winding_Order order = WINDING_ORDER_POSITIVE;
-
-	//
-	glFrontFace(gpu_winding_order(order));
-
-	if (mode == CULL_MODE_NONE) {
-		glDisable(GL_CULL_FACE);
-	}
-	else {
-		glEnable(GL_CULL_FACE);
-
-		glCullFace(gpu_cull_mode(mode));
-	}
-}
 
 static uint32_t graphics_unit_find(struct Gpu_Texture * gpu_texture) {
 	// @note: 0 value is considered empty
@@ -552,7 +463,7 @@ static void graphics_select_mesh(struct Gpu_Mesh const * gpu_mesh) {
 	glBindVertexArray(gpu_mesh->id);
 }
 
-static void graphics_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_index, void const * data) {
+static void graphics_upload_single_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_index, void const * data) {
 	struct Gpu_Program_Field const * field = gpu_program->uniforms + uniform_index;
 	GLint const location = gpu_program->uniform_locations[uniform_index];
 
@@ -610,25 +521,25 @@ static void graphics_upload_uniforms(struct Material const * material) {
 			default: fprintf(stderr, "unknown data type\n"); DEBUG_BREAK(); break;
 
 			case DATA_TYPE_UNIT: {
-				graphics_set_uniform(material->program, i, material->textures.data + unit_offset);
+				graphics_upload_single_uniform(material->program, i, material->textures.data + unit_offset);
 				unit_offset += elements_count;
 				break;
 			}
 
 			case DATA_TYPE_U32: {
-				graphics_set_uniform(material->program, i, material->values_u32.data + u32_offset);
+				graphics_upload_single_uniform(material->program, i, material->values_u32.data + u32_offset);
 				u32_offset += elements_count;
 				break;
 			}
 
 			case DATA_TYPE_S32: {
-				graphics_set_uniform(material->program, i, material->values_s32.data + s32_offset);
+				graphics_upload_single_uniform(material->program, i, material->values_s32.data + s32_offset);
 				s32_offset += elements_count;
 				break;
 			}
 
 			case DATA_TYPE_R32: {
-				graphics_set_uniform(material->program, i, material->values_float.data + float_offset);
+				graphics_upload_single_uniform(material->program, i, material->values_float.data + float_offset);
 				float_offset += elements_count;
 				break;
 			}
@@ -636,7 +547,56 @@ static void graphics_upload_uniforms(struct Material const * material) {
 	}
 }
 
+static bool graphics_should_blend(struct Blend_Func const * func) {
+	return (func != NULL)
+		&& (func->op != BLEND_OP_NONE)
+		&& (
+			(func->src != BLEND_FACTOR_ONE) ||
+			(func->dst != BLEND_FACTOR_ZERO)
+		);
+}
+
+static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
+	glColorMask(
+		mode->mask & COLOR_CHANNEL_RED,
+		mode->mask & COLOR_CHANNEL_GREEN,
+		mode->mask & COLOR_CHANNEL_BLUE,
+		mode->mask & COLOR_CHANNEL_ALPHA
+	);
+
+	glBlendColor(
+		((mode->constant >> 24) & 0xff) / 255.0f,
+		((mode->constant >> 16) & 0xff) / 255.0f,
+		((mode->constant >> 8) & 0xff) / 255.0f,
+		((mode->constant >> 0) & 0xff) / 255.0f
+	);
+
+	//
+	bool const would_blend_rgb = graphics_should_blend(&mode->rgb);
+	bool const would_blend_a = graphics_should_blend(&mode->a);
+	if (!(would_blend_rgb || would_blend_a)) {
+		glDisable(GL_BLEND);
+	}
+	else {
+		glEnable(GL_BLEND);
+
+		glBlendEquationSeparate(
+			gpu_blend_op(would_blend_rgb ? mode->rgb.op : BLEND_OP_ADD),
+			gpu_blend_op(would_blend_a ? mode->a.op : BLEND_OP_ADD)
+		);
+
+		glBlendFuncSeparate(
+			gpu_blend_factor(would_blend_rgb ? mode->rgb.src : BLEND_FACTOR_ONE),
+			gpu_blend_factor(would_blend_rgb ? mode->rgb.dst : BLEND_FACTOR_ZERO),
+			gpu_blend_factor(would_blend_a ? mode->a.src : BLEND_FACTOR_ONE),
+			gpu_blend_factor(would_blend_a ? mode->a.dst : BLEND_FACTOR_ZERO)
+		);
+	}
+}
+
 void graphics_draw(struct Material const * material, struct Gpu_Mesh const * gpu_mesh) {
+	graphics_set_blend_mode(&material->blend_mode);
+
 	graphics_select_program(material->program);
 	graphics_upload_uniforms(material);
 
@@ -688,6 +648,24 @@ void graphics_to_glibrary_init(void) {
 	graphics_state.units_capacity = (uint32_t)max_units;
 	graphics_state.units = MEMORY_ALLOCATE_ARRAY(struct Gpu_Unit, max_units);
 	memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
+
+	//
+	glEnable(GL_DEPTH_TEST);
+#if defined(REVERSE_Z)
+	glDepthRangef(1, 0);
+	glClearDepthf(0);
+	glDepthFunc(gpu_comparison_op(COMPARISON_OP_MORE));
+	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+#else
+	glDepthRangef(0, 1);
+	glClearDepthf(1);
+	glDepthFunc(gpu_comparison_op(COMPARISON_OP_LESS));
+#endif
+
+	//
+	glEnable(GL_CULL_FACE);
+	glCullFace(gpu_cull_mode(CULL_MODE_BACK));
+	glFrontFace(gpu_winding_order(WINDING_ORDER_POSITIVE));
 }
 
 void graphics_to_glibrary_free(void) {
@@ -697,17 +675,8 @@ void graphics_to_glibrary_free(void) {
 	memset(&graphics_state, 0, sizeof(graphics_state));
 
 	(void)gpu_attachment_point;
-	(void)gpu_comparison_op;
-	(void)gpu_cull_mode;
-	(void)gpu_winding_order;
 	(void)gpu_stencil_op;
-	(void)gpu_blend_op;
-	(void)gpu_blend_factor;
-
-	(void)graphics_blending;
-	(void)graphics_depth_test;
 	// (void)graphics_stencil_test;
-	(void)graphics_culling;
 }
 
 //
@@ -1144,8 +1113,8 @@ static GLenum gpu_cull_mode(enum Cull_Mode value) {
 
 static GLenum gpu_winding_order(enum Winding_Order value) {
 	switch (value) {
-		case WINDING_ORDER_NEGATIVE: return GL_CCW;
-		case WINDING_ORDER_POSITIVE:  return GL_CW;
+		case WINDING_ORDER_POSITIVE: return GL_CCW;
+		case WINDING_ORDER_NEGATIVE: return GL_CW;
 	}
 	fprintf(stderr, "unknown winding order\n"); DEBUG_BREAK();
 	return GL_NONE;

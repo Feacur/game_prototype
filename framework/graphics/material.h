@@ -1,6 +1,8 @@
 #if !defined(GAME_FRAMEWORK_GRAPHICS_MATERIAL)
 #define GAME_FRAMEWORK_GRAPHICS_MATERIAL
 
+#include "types.h"
+
 #include "framework/containers/array_pointer.h"
 #include "framework/containers/array_u32.h"
 #include "framework/containers/array_s32.h"
@@ -9,6 +11,9 @@
 struct Gpu_Program;
 struct Gpu_Texture;
 
+struct Blend_Mode;
+struct Depth_Mode;
+
 struct Material {
 	struct Gpu_Program * program;
 
@@ -16,6 +21,8 @@ struct Material {
 	struct Array_U32 values_u32;
 	struct Array_S32 values_s32;
 	struct Array_Float values_float;
+
+	struct Blend_Mode blend_mode;
 };
 
 void material_init(struct Material * material, struct Gpu_Program * gpu_program);
