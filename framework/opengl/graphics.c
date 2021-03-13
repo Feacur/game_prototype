@@ -3,16 +3,16 @@
 #include "framework/containers/array_byte.h"
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"
+#include "framework/graphics_types.h"
+#include "framework/material.h"
 
 #include "functions.h"
-#include "framework/graphics_types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 static GLenum gpu_data_type(enum Data_Type value);
-static GLenum gpu_data_type_size(enum Data_Type value);
 static enum Data_Type interpret_gl_type(GLint value);
 
 static GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture);
@@ -63,8 +63,8 @@ static struct Graphics_State {
 
 	struct Strings * uniforms;
 
-	struct Gpu_Program * active_program;
-	struct Gpu_Mesh * active_mesh;
+	struct Gpu_Program const * active_program;
+	struct Gpu_Mesh const * active_mesh;
 
 	struct Gpu_Unit units[100];
 } graphics_state;
@@ -202,6 +202,11 @@ void gpu_program_free(struct Gpu_Program * gpu_program) {
 	MEMORY_FREE(gpu_program);
 }
 
+void gpu_program_get_uniforms(struct Gpu_Program * gpu_program, uint32_t * count, struct Gpu_Program_Field const ** values) {
+	*count = gpu_program->uniforms_count;
+	*values = gpu_program->uniforms;
+}
+
 // -- GPU texture part
 struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
 	GLuint texture_id;
@@ -261,7 +266,7 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 	// allocate buffer: vertices
 	GLuint vertices_buffer_id;
 	glCreateBuffers(1, &vertices_buffer_id);
-	// gpu_data_type_size(DATA_TYPE_R32);
+	// data_type_get_size(DATA_TYPE_R32);
 	glNamedBufferData(
 		vertices_buffer_id,
 		asset->vertices.count * sizeof(*asset->vertices.data),
@@ -271,7 +276,7 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 	// allocate buffer: indices
 	GLuint indices_buffer_id;
 	glCreateBuffers(1, &indices_buffer_id);
-	// gpu_data_type_size(DATA_TYPE_U32);
+	// data_type_get_size(DATA_TYPE_U32);
 	glNamedBufferData(
 		indices_buffer_id,
 		asset->indices.count * sizeof(*asset->indices.data),
@@ -281,7 +286,7 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 	// chart buffer: vertices
 	GLsizei all_attributes_size = 0;
 	for (uint32_t i = 0; i < asset->sizes.count; i++) {
-		// gpu_data_type_size(DATA_TYPE_R32);
+		// data_type_get_size(DATA_TYPE_R32);
 		all_attributes_size += (GLsizei)asset->sizes.data[i] * (GLsizei)sizeof(*asset->vertices.data);
 	}
 
@@ -296,7 +301,7 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 		glEnableVertexArrayAttrib(mesh_id, location);
 		glVertexArrayAttribBinding(mesh_id, location, buffer_index);
 		glVertexArrayAttribFormat(mesh_id, location, (GLint)size, GL_FLOAT, GL_FALSE, attribute_offset);
-		// gpu_data_type_size(DATA_TYPE_R32);
+		// data_type_get_size(DATA_TYPE_R32);
 		attribute_offset += size * (GLuint)sizeof(*asset->vertices.data);
 	}
 
@@ -304,11 +309,11 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 	glVertexArrayElementBuffer(mesh_id, indices_buffer_id);
 
 	// load buffer: vertices
-	// gpu_data_type_size(DATA_TYPE_R32);
+	// data_type_get_size(DATA_TYPE_R32);
 	glNamedBufferSubData(vertices_buffer_id, 0, asset->vertices.count * sizeof(*asset->vertices.data), asset->vertices.data);
 
 	// load buffer: indices
-	// gpu_data_type_size(DATA_TYPE_U32);
+	// data_type_get_size(DATA_TYPE_U32);
 	glNamedBufferSubData(indices_buffer_id, 0, asset->indices.count * sizeof(*asset->indices.data), asset->indices.data);
 
 	//
@@ -487,17 +492,6 @@ static void graphics_culling(void) {
 	}
 }
 
-void graphics_draw(struct Gpu_Program * gpu_program, struct Gpu_Mesh * gpu_mesh) {
-	graphics_select_program(gpu_program);
-	graphics_select_mesh(gpu_mesh);
-	glDrawElements(
-		GL_TRIANGLES,
-		gpu_mesh->indices_count,
-		gpu_data_type(DATA_TYPE_U32),
-		NULL
-	);
-}
-
 static uint32_t graphics_unit_find(struct Gpu_Texture * gpu_texture) {
 	for (uint32_t i = 0; i < sizeof(graphics_state.units) / sizeof(*graphics_state.units); i++) {
 		if (graphics_state.units[i].gpu_texture == gpu_texture) { return i; }
@@ -540,28 +534,22 @@ static uint32_t graphics_unit_init(struct Gpu_Texture * gpu_texture) {
 // 	}
 // }
 
-void graphics_select_program(struct Gpu_Program * gpu_program) {
+static void graphics_select_program(struct Gpu_Program const * gpu_program) {
 	if (graphics_state.active_program == gpu_program) { return; }
 	graphics_state.active_program = gpu_program;
 	glUseProgram(gpu_program->id);
 }
 
-static uint32_t gpu_program_find_uniform_field(struct Gpu_Program const * gpu_program, uint32_t uniform_id) {
-	for (uint32_t i = 0; i < gpu_program->uniforms_count; i++) {
-		if (gpu_program->uniforms[i].id == uniform_id) {
-			return i;
-		}
-	}
-	fprintf(stderr, "'gpu_program_find_uniform_field' failed\n"); DEBUG_BREAK();
-	return MAX_UNIFORMS;
+static void graphics_select_mesh(struct Gpu_Mesh const * gpu_mesh) {
+	if (graphics_state.active_mesh == gpu_mesh) { return; }
+	graphics_state.active_mesh = gpu_mesh;
+	glBindVertexArray(gpu_mesh->id);
 }
 
-void graphics_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_id, void const * data) {
-	uint32_t field_i = gpu_program_find_uniform_field(gpu_program, uniform_id);
-	if (field_i == MAX_UNIFORMS) { return; }
+static void graphics_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_index, void const * data) {
+	struct Gpu_Program_Field const * field = gpu_program->uniforms + uniform_index;
+	GLint const location = gpu_program->uniform_locations[uniform_index];
 
-	struct Gpu_Program_Field const * field = gpu_program->uniforms + field_i;
-	GLint location = gpu_program->uniform_locations[field_i];
 	switch (field->type) {
 		default: break;
 
@@ -572,7 +560,7 @@ void graphics_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_id,
 				if (unit == UINT32_MAX) {
 					unit = graphics_unit_init(gpu_textures[i]);
 					if (unit == UINT32_MAX) {
-						fprintf(stderr, "'graphics_unit_find' failed\n"); DEBUG_BREAK();
+						fprintf(stderr, "failed to find a vacant texture/sampler unit\n"); DEBUG_BREAK();
 						continue;
 					}
 				}
@@ -604,10 +592,54 @@ void graphics_set_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_id,
 	}
 }
 
-void graphics_select_mesh(struct Gpu_Mesh * gpu_mesh) {
-	if (graphics_state.active_mesh == gpu_mesh) { return; }
-	graphics_state.active_mesh = gpu_mesh;
-	glBindVertexArray(gpu_mesh->id);
+static void graphics_upload_uniforms(struct Material const * material) {
+	uint32_t const uniforms_count = material->program->uniforms_count;
+	struct Gpu_Program_Field const * uniforms = material->program->uniforms;
+
+	uint32_t unit_offset = 0, u32_offset = 0, s32_offset = 0, float_offset = 0;
+	for (uint32_t i = 0; i < uniforms_count; i++) {
+		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
+		switch (data_type_get_element_type(uniforms[i].type)) {
+			default: fprintf(stderr, "unknown data type\n"); DEBUG_BREAK(); break;
+
+			case DATA_TYPE_UNIT: {
+				graphics_set_uniform(material->program, i, material->textures.data + unit_offset);
+				unit_offset += elements_count;
+				break;
+			}
+
+			case DATA_TYPE_U32: {
+				graphics_set_uniform(material->program, i, material->values_u32.data + u32_offset);
+				u32_offset += elements_count;
+				break;
+			}
+
+			case DATA_TYPE_S32: {
+				graphics_set_uniform(material->program, i, material->values_s32.data + s32_offset);
+				s32_offset += elements_count;
+				break;
+			}
+
+			case DATA_TYPE_R32: {
+				graphics_set_uniform(material->program, i, material->values_float.data + float_offset);
+				float_offset += elements_count;
+				break;
+			}
+		}
+	}
+}
+
+void graphics_draw(struct Material const * material, struct Gpu_Mesh const * gpu_mesh) {
+	graphics_select_program(material->program);
+	graphics_upload_uniforms(material);
+
+	graphics_select_mesh(gpu_mesh);
+	glDrawElements(
+		GL_TRIANGLES,
+		gpu_mesh->indices_count,
+		gpu_data_type(DATA_TYPE_U32),
+		NULL
+	);
 }
 
 //
@@ -648,7 +680,6 @@ void graphics_to_glibrary_free(void) {
 	MEMORY_FREE(graphics_state.extensions);
 	memset(&graphics_state, 0, sizeof(graphics_state));
 
-	(void)gpu_data_type_size;
 	(void)gpu_attachment_point;
 	(void)gpu_comparison_op;
 	(void)gpu_cull_mode;
@@ -823,50 +854,12 @@ static GLenum gpu_data_type(enum Data_Type value) {
 		case DATA_TYPE_VEC2: return GL_FLOAT_VEC2;
 		case DATA_TYPE_VEC3: return GL_FLOAT_VEC3;
 		case DATA_TYPE_VEC4: return GL_FLOAT_VEC4;
-
 		case DATA_TYPE_MAT2: return GL_FLOAT_MAT2;
 		case DATA_TYPE_MAT3: return GL_FLOAT_MAT3;
 		case DATA_TYPE_MAT4: return GL_FLOAT_MAT4;
 	}
 	fprintf(stderr, "unknown data type\n"); DEBUG_BREAK();
 	return GL_NONE;
-}
-
-static GLenum gpu_data_type_size(enum Data_Type value) {
-	switch (value) {
-		default: break;
-
-		case DATA_TYPE_UNIT: return sizeof(struct Gpu_Texture *);
-
-		case DATA_TYPE_U8:  return sizeof(uint8_t);
-		case DATA_TYPE_U16: return sizeof(uint16_t);
-
-		case DATA_TYPE_S8:  return sizeof(int8_t);
-		case DATA_TYPE_S16: return sizeof(int16_t);
-
-		case DATA_TYPE_R64: return sizeof(double);
-
-		case DATA_TYPE_U32:   return sizeof(uint32_t);
-		case DATA_TYPE_UVEC2: return sizeof(uint32_t) * 2;
-		case DATA_TYPE_UVEC3: return sizeof(uint32_t) * 3;
-		case DATA_TYPE_UVEC4: return sizeof(uint32_t) * 4;
-
-		case DATA_TYPE_S32:   return sizeof(int32_t);
-		case DATA_TYPE_SVEC2: return sizeof(int32_t) * 2;
-		case DATA_TYPE_SVEC3: return sizeof(int32_t) * 3;
-		case DATA_TYPE_SVEC4: return sizeof(int32_t) * 4;
-
-		case DATA_TYPE_R32:  return sizeof(float);
-		case DATA_TYPE_VEC2: return sizeof(float) * 2;
-		case DATA_TYPE_VEC3: return sizeof(float) * 3;
-		case DATA_TYPE_VEC4: return sizeof(float) * 4;
-
-		case DATA_TYPE_MAT2: return sizeof(float) * 2 * 2;
-		case DATA_TYPE_MAT3: return sizeof(float) * 3 * 3;
-		case DATA_TYPE_MAT4: return sizeof(float) * 4 * 4;
-	}
-	fprintf(stderr, "unknown data type\n"); DEBUG_BREAK();
-	return 0;
 }
 
 static enum Data_Type interpret_gl_type(GLint value) {
@@ -895,7 +888,6 @@ static enum Data_Type interpret_gl_type(GLint value) {
 		case GL_FLOAT_VEC2:        return DATA_TYPE_VEC2;
 		case GL_FLOAT_VEC3:        return DATA_TYPE_VEC3;
 		case GL_FLOAT_VEC4:        return DATA_TYPE_VEC4;
-
 		case GL_FLOAT_MAT2:        return DATA_TYPE_MAT2;
 		case GL_FLOAT_MAT3:        return DATA_TYPE_MAT3;
 		case GL_FLOAT_MAT4:        return DATA_TYPE_MAT4;

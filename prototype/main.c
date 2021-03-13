@@ -7,6 +7,7 @@
 #include "framework/input.h"
 #include "framework/graphics_types.h"
 #include "framework/gpu_objects.h"
+#include "framework/material.h"
 
 #include "framework/containers/array_byte.h"
 #include "framework/assets/asset_mesh.h"
@@ -43,6 +44,7 @@ static struct Game_Content {
 static struct Game_State {
 	struct Transform camera;
 	struct Transform object;
+	struct Material material;
 } state;
 
 static void game_init(void) {
@@ -92,6 +94,10 @@ static void game_init(void) {
 		.scale = (struct vec3){1, 1, 1},
 		.rotation = (struct vec4){0, 0, 0, 1},
 	};
+
+	material_init(&state.material, content.gpu_program);
+	material_set_texture(&state.material, uniforms.texture, 1, &content.gpu_texture);
+	material_set_float(&state.material, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 }
 
 static void game_free(void) {
@@ -134,13 +140,10 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	);
 	struct mat4 const matrix_object = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation);
 
-	graphics_set_uniform(content.gpu_program, uniforms.color, &(struct vec4){0.2f, 0.6f, 1, 1});
-	graphics_set_uniform(content.gpu_program, uniforms.texture, &content.gpu_texture);
+	material_set_float(&state.material, uniforms.camera, 4*4, &matrix_camera.x.x);
+	material_set_float(&state.material, uniforms.transform, 4*4, &matrix_object.x.x);
 
-	graphics_set_uniform(content.gpu_program, uniforms.camera, &matrix_camera.x.x);
-	graphics_set_uniform(content.gpu_program, uniforms.transform, &matrix_object.x.x);
-
-	graphics_draw(content.gpu_program, content.gpu_mesh);
+	graphics_draw(&state.material, content.gpu_mesh);
 }
 
 int main (int argc, char * argv[]) {

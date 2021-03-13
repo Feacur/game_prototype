@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_TYPES)
-#define GAME_GRAPHICS_TYPES
+#if !defined(GAME_FRAMEWORK_GRAPHICS_TYPES)
+#define GAME_FRAMEWORK_GRAPHICS_TYPES
 
 #include "framework/common.h"
 
@@ -154,5 +154,9 @@ struct Gpu_Program_Field {
 	enum Data_Type type;
 	uint32_t array_size;
 };
+
+enum Data_Type data_type_get_element_type(enum Data_Type value);
+uint32_t data_type_get_count(enum Data_Type value);
+size_t data_type_get_size(enum Data_Type value);
 
 #endif

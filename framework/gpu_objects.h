@@ -1,5 +1,5 @@
-#if !defined(GAME_GPU_OBJECTS)
-#define GAME_GPU_OBJECTS
+#if !defined(GAME_FRAMEWORK_GPU_OBJECTS)
+#define GAME_FRAMEWORK_GPU_OBJECTS
 
 #include "framework/common.h"
 
@@ -7,10 +7,13 @@ struct Array_Byte;
 struct Asset_Mesh;
 struct Asset_Image;
 
+
 // -- GPU program part
 struct Gpu_Program;
+struct Gpu_Program_Field;
 struct Gpu_Program * gpu_program_init(struct Array_Byte * asset);
 void gpu_program_free(struct Gpu_Program * gpu_program);
+void gpu_program_get_uniforms(struct Gpu_Program * gpu_program, uint32_t * count, struct Gpu_Program_Field const ** values);
 
 // -- GPU texture part
 struct Gpu_Texture;
