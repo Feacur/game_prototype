@@ -8,16 +8,12 @@
 //
 #include "material.h"
 
-void material_init(struct Material * material, struct Gpu_Program * gpu_program) {
+void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_program) {
 	material->program = gpu_program;
 	array_pointer_init(&material->textures);
 	array_u32_init(&material->values_u32);
 	array_s32_init(&material->values_s32);
 	array_float_init(&material->values_float);
-
-	memset(&material->blend_mode, 0, sizeof(material->blend_mode));
-	material->blend_mode.mask = COLOR_CHANNEL_FULL;
-	material->blend_mode.constant = 0xffffffff;
 
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
@@ -47,7 +43,7 @@ void material_init(struct Material * material, struct Gpu_Program * gpu_program)
 	array_float_write_many_zeroes(&material->values_float, float_count);
 }
 
-void material_free(struct Material * material) {
+void gfx_material_free(struct Gfx_Material * material) {
 	material->program = NULL;
 	array_pointer_free(&material->textures);
 	array_u32_free(&material->values_u32);
@@ -55,7 +51,7 @@ void material_free(struct Material * material) {
 	array_float_free(&material->values_float);
 }
 
-void material_set_texture(struct Material * material, uint32_t uniform_id, uint32_t count, struct Gpu_Texture ** value) {
+void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Gpu_Texture ** value) {
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
 	gpu_program_get_uniforms(material->program, &uniforms_count, &uniforms);
@@ -74,7 +70,7 @@ void material_set_texture(struct Material * material, uint32_t uniform_id, uint3
 	}
 }
 
-void material_set_u32(struct Material * material, uint32_t uniform_id, uint32_t count, uint32_t const * value) {
+void gfx_material_set_u32(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, uint32_t const * value) {
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
 	gpu_program_get_uniforms(material->program, &uniforms_count, &uniforms);
@@ -93,7 +89,7 @@ void material_set_u32(struct Material * material, uint32_t uniform_id, uint32_t 
 	}
 }
 
-void material_set_s32(struct Material * material, uint32_t uniform_id, uint32_t count, int32_t const * value) {
+void gfx_material_set_s32(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, int32_t const * value) {
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
 	gpu_program_get_uniforms(material->program, &uniforms_count, &uniforms);
@@ -112,7 +108,7 @@ void material_set_s32(struct Material * material, uint32_t uniform_id, uint32_t 
 	}
 }
 
-void material_set_float(struct Material * material, uint32_t uniform_id, uint32_t count, float const * value) {
+void gfx_material_set_float(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, float const * value) {
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
 	gpu_program_get_uniforms(material->program, &uniforms_count, &uniforms);

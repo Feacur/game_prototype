@@ -8,6 +8,7 @@
 
 #include "framework/graphics/types.h"
 #include "framework/graphics/material.h"
+#include "framework/graphics/pass.h"
 
 #include "functions.h"
 
@@ -510,7 +511,7 @@ static void graphics_upload_single_uniform(struct Gpu_Program * gpu_program, uin
 	}
 }
 
-static void graphics_upload_uniforms(struct Material const * material) {
+static void graphics_upload_uniforms(struct Gfx_Material const * material) {
 	uint32_t const uniforms_count = material->program->uniforms_count;
 	struct Gpu_Program_Field const * uniforms = material->program->uniforms;
 
@@ -594,16 +595,18 @@ static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 	}
 }
 
-void graphics_draw(struct Material const * material, struct Gpu_Mesh const * gpu_mesh) {
-	graphics_set_blend_mode(&material->blend_mode);
+void graphics_draw(struct Render_Pass const * pass) {
+	graphics_set_blend_mode(&pass->blend_mode);
 
-	graphics_select_program(material->program);
-	graphics_upload_uniforms(material);
+	gfx_material_set_float(pass->material, pass->camera_id, 4*4, &pass->camera.x.x);
+	gfx_material_set_float(pass->material, pass->transform_id, 4*4, &pass->transform.x.x);
+	graphics_select_program(pass->material->program);
+	graphics_upload_uniforms(pass->material);
 
-	graphics_select_mesh(gpu_mesh);
+	graphics_select_mesh(pass->mesh);
 	glDrawElements(
 		GL_TRIANGLES,
-		gpu_mesh->indices_count,
+		pass->mesh->indices_count,
 		gpu_data_type(DATA_TYPE_U32),
 		NULL
 	);

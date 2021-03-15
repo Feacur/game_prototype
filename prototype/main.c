@@ -9,6 +9,7 @@
 #include "framework/graphics/types.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/material.h"
+#include "framework/graphics/pass.h"
 #include "framework/graphics/graphics.h"
 
 #include "framework/containers/array_byte.h"
@@ -43,7 +44,7 @@ static struct Game_Content {
 static struct Game_State {
 	struct Transform camera;
 	struct Transform object;
-	struct Material material;
+	struct Gfx_Material material;
 } state;
 
 static void game_init(void) {
@@ -84,9 +85,9 @@ static void game_init(void) {
 		.rotation = (struct vec4){0, 0, 0, 1},
 	};
 
-	material_init(&state.material, content.gpu_program);
-	material_set_texture(&state.material, uniforms.texture, 1, &content.gpu_texture);
-	material_set_float(&state.material, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
+	gfx_material_init(&state.material, content.gpu_program);
+	gfx_material_set_texture(&state.material, uniforms.texture, 1, &content.gpu_texture);
+	gfx_material_set_float(&state.material, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 }
 
 static void game_free(void) {
@@ -122,17 +123,26 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	graphics_viewport(0, 0, size_x, size_y);
 	graphics_clear();
 
-	//
-	struct mat4 const matrix_camera = mat4_mul_mat(
-		mat4_set_projection((struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 1000.0f, 0),
-		mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
-	);
-	struct mat4 const matrix_object = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation);
-
-	material_set_float(&state.material, uniforms.camera, 4*4, &matrix_camera.x.x);
-	material_set_float(&state.material, uniforms.transform, 4*4, &matrix_object.x.x);
-
-	graphics_draw(&state.material, content.gpu_mesh);
+	graphics_draw(&(struct Render_Pass){
+		.material = &state.material,
+		.mesh = content.gpu_mesh,
+		.blend_mode = {
+			.rgb = (struct Blend_Func){
+				.op = BLEND_OP_ADD,
+				.src = BLEND_FACTOR_ONE,
+				.dst = BLEND_FACTOR_ZERO,
+			},
+			.mask = COLOR_CHANNEL_FULL,
+			.constant = 0xffffffff,
+		},
+		.camera_id = uniforms.camera,
+		.transform_id = uniforms.transform,
+		.camera = mat4_mul_mat(
+			mat4_set_projection((struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 1000.0f, 0),
+			mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
+		),
+		.transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation),
+	});
 }
 
 int main (int argc, char * argv[]) {
