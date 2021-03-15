@@ -45,7 +45,7 @@ if defined unity_build (
 	set linker=-Wl,%linker: =,%
 )
 
-set warnings=%warnings% -Wno-reserved-id-macro -Wno-nonportable-system-include-path
+set warnings=%warnings% -Wno-reserved-id-macro -Wno-nonportable-system-include-path -Wno-assign-enum
 
 rem > COMPILE AND LINK
 set timeStart=%time%

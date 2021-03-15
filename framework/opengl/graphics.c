@@ -558,10 +558,10 @@ static bool graphics_should_blend(struct Blend_Func const * func) {
 
 static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 	glColorMask(
-		mode->mask & COLOR_CHANNEL_RED,
-		mode->mask & COLOR_CHANNEL_GREEN,
-		mode->mask & COLOR_CHANNEL_BLUE,
-		mode->mask & COLOR_CHANNEL_ALPHA
+		COLOR_CHANNEL_RED == (mode->mask & COLOR_CHANNEL_RED),
+		COLOR_CHANNEL_GREEN == (mode->mask & COLOR_CHANNEL_GREEN),
+		COLOR_CHANNEL_BLUE == (mode->mask & COLOR_CHANNEL_BLUE),
+		COLOR_CHANNEL_ALPHA == (mode->mask & COLOR_CHANNEL_ALPHA)
 	);
 
 	glBlendColor(
@@ -927,9 +927,6 @@ static GLint gpu_wrap_mode(enum Wrap_Mode value, bool mirror) {
 static GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, uint32_t channels) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
-		case TEXTURE_TYPE_INTERNAL_0: break;
-		case TEXTURE_TYPE_INTERNAL_1: break;
-		case TEXTURE_TYPE_INTERNAL_2: break;
 
 		case TEXTURE_TYPE_COLOR: switch (data_type) {
 			default: break;
@@ -988,9 +985,6 @@ static GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Dat
 static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
-		case TEXTURE_TYPE_INTERNAL_0: break;
-		case TEXTURE_TYPE_INTERNAL_1: break;
-		case TEXTURE_TYPE_INTERNAL_2: break;
 
 		case TEXTURE_TYPE_COLOR: switch (channels) {
 			case 1: return GL_RED;
@@ -1010,9 +1004,6 @@ static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t cha
 static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
-		case TEXTURE_TYPE_INTERNAL_0: break;
-		case TEXTURE_TYPE_INTERNAL_1: break;
-		case TEXTURE_TYPE_INTERNAL_2: break;
 
 		case TEXTURE_TYPE_COLOR: switch (data_type) {
 			default: break;
@@ -1047,9 +1038,6 @@ static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type
 static GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
-		case TEXTURE_TYPE_INTERNAL_0: break;
-		case TEXTURE_TYPE_INTERNAL_1: break;
-		case TEXTURE_TYPE_INTERNAL_2: break;
 
 		case TEXTURE_TYPE_COLOR:    return GL_COLOR_ATTACHMENT0 + index;
 		case TEXTURE_TYPE_DEPTH:    return GL_DEPTH_ATTACHMENT;
