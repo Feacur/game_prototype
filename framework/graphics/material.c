@@ -67,6 +67,8 @@ void material_set_texture(struct Material * material, uint32_t uniform_id, uint3
 		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
 		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
 
+		if (count != elements_count) { DEBUG_BREAK(); break; }
+
 		memcpy(material->textures.data + offset, value, count * sizeof(*value));
 		break;
 	}
@@ -83,6 +85,8 @@ void material_set_u32(struct Material * material, uint32_t uniform_id, uint32_t 
 
 		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
 		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
+
+		if (count != elements_count) { DEBUG_BREAK(); break; }
 
 		memcpy(material->values_u32.data + offset, value, count * sizeof(*value));
 		break;
@@ -101,6 +105,8 @@ void material_set_s32(struct Material * material, uint32_t uniform_id, uint32_t 
 		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
 		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
 
+		if (count != elements_count) { DEBUG_BREAK(); break; }
+
 		memcpy(material->values_s32.data + offset, value, count * sizeof(*value));
 		break;
 	}
@@ -117,6 +123,8 @@ void material_set_float(struct Material * material, uint32_t uniform_id, uint32_
 
 		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
 		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
+
+		if (count != elements_count) { DEBUG_BREAK(); break; }
 
 		memcpy(material->values_float.data + offset, value, count * sizeof(*value));
 		break;
