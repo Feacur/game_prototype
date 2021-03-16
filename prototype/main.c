@@ -37,6 +37,7 @@ static struct Game_Uniforms {
 
 static struct Game_Content {
 	struct Gpu_Program * gpu_program;
+	struct Gpu_Program * gpu_program_target;
 	struct Gpu_Texture * gpu_texture;
 	struct Gpu_Mesh * gpu_mesh;
 	struct Gpu_Mesh * target_mesh;
@@ -63,6 +64,9 @@ static void game_init(void) {
 	// load content
 	struct Array_Byte asset_shader;
 	platform_file_init(&asset_shader, "assets/test.glsl");
+	
+	struct Array_Byte asset_shader_target;
+	platform_file_init(&asset_shader_target, "assets/target.glsl");
 
 	struct Asset_Image asset_image;
 	asset_image_init(&asset_image, "assets/test.png");
@@ -74,11 +78,13 @@ static void game_init(void) {
 	asset_mesh_init__target_quad(&asset_target_quad);
 
 	content.gpu_program = gpu_program_init(&asset_shader);
+	content.gpu_program_target = gpu_program_init(&asset_shader_target);
 	content.gpu_texture = gpu_texture_init(&asset_image);
 	content.gpu_mesh = gpu_mesh_init(&asset_mesh);
 	content.target_mesh = gpu_mesh_init(&asset_target_quad);
 
 	platform_file_free(&asset_shader);
+	platform_file_free(&asset_shader_target);
 	asset_image_free(&asset_image);
 	asset_mesh_free(&asset_mesh);
 
@@ -100,28 +106,30 @@ static void game_init(void) {
 	gfx_material_set_float(&state.material, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 
 	state.gpu_target = gpu_target_init(
-		640, 360,
+		320, 180,
 		(struct Texture_Parameters[]){
 			[0] = {
 				.texture_type = TEXTURE_TYPE_COLOR,
 				.data_type = DATA_TYPE_U8,
 				.channels = 4,
+				.readable = true,
 			},
 			[1] = {
 				.texture_type = TEXTURE_TYPE_DEPTH,
 				.data_type = DATA_TYPE_U32,
+				// .readable = true,
 			},
 		},
 		2
 	);
-	struct Gpu_Texture * target_texture = gpu_target_get_texture(state.gpu_target, TEXTURE_TYPE_COLOR);
-	gfx_material_init(&state.target_material, content.gpu_program);
+	struct Gpu_Texture * target_texture = gpu_target_get_texture(state.gpu_target, TEXTURE_TYPE_COLOR, 0);
+	gfx_material_init(&state.target_material, content.gpu_program_target);
 	gfx_material_set_texture(&state.target_material, uniforms.texture, 1, &target_texture);
-	gfx_material_set_float(&state.target_material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
 }
 
 static void game_free(void) {
 	gpu_program_free(content.gpu_program);
+	gpu_program_free(content.gpu_program_target);
 	gpu_texture_free(content.gpu_texture);
 	gpu_mesh_free(content.gpu_mesh);
 	gpu_mesh_free(content.target_mesh);

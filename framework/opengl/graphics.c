@@ -42,7 +42,7 @@ static GLenum gpu_blend_factor(enum Blend_Factor value);
 
 #define MAX_UNIFORMS 32
 #define MAX_UNITS_PER_MATERIAL 64
-#define MAX_TARGET_TEXTURES 32
+#define MAX_TARGET_ATTACHMENTS 4
 
 struct Gpu_Program {
 	GLuint id;
@@ -61,8 +61,10 @@ struct Gpu_Texture {
 struct Gpu_Target {
 	GLuint id;
 	uint32_t size_x, size_y;
-	struct Gpu_Texture * textures[MAX_TARGET_TEXTURES];
+	struct Gpu_Texture * textures[MAX_TARGET_ATTACHMENTS];
 	uint32_t textures_count;
+	GLuint buffers[MAX_TARGET_ATTACHMENTS];
+	uint32_t buffers_count;
 };
 
 struct Gpu_Mesh {
@@ -306,26 +308,52 @@ struct Gpu_Target * gpu_target_init(
 	GLuint target_id;
 	glCreateFramebuffers(1, &target_id);
 
-	struct Gpu_Texture * textures[32];
+	struct Gpu_Texture * textures[MAX_TARGET_ATTACHMENTS];
 	uint32_t textures_count = 0;
+
+	GLuint buffers[MAX_TARGET_ATTACHMENTS];
+	uint32_t buffers_count = 0;
 
 	// allocate buffers
 	for (uint32_t i = 0; i < count; i++) {
-		textures[textures_count++] = gpu_texture_allocate(size_x, size_y, parameters + i, &(struct Texture_Settings){
-			.wrap_x = WRAP_MODE_CLAMP,
-			.wrap_y = WRAP_MODE_CLAMP,
-		});
+		if (!parameters[i].readable) {
+			GLuint buffer_id;
+			glCreateRenderbuffers(1, &buffer_id);
+			glNamedRenderbufferStorage(
+				buffer_id,
+				gpu_sized_internal_format(parameters[i].texture_type, parameters[i].data_type, parameters[i].channels),
+				(GLsizei)size_x, (GLsizei)size_y
+			);
+			buffers[buffers_count++] = buffer_id;
+		}
+		else {
+			textures[textures_count++] = gpu_texture_allocate(size_x, size_y, parameters + i, &(struct Texture_Settings){
+				.wrap_x = WRAP_MODE_CLAMP,
+				.wrap_y = WRAP_MODE_CLAMP,
+			});
+		}
 	}
 
 	// chart buffers
-	GLint const level = 0;
-	for (uint32_t i = 0, color_index = 0; i < textures_count; i++) {
-		glNamedFramebufferTexture(
-			target_id,
-			gpu_attachment_point(parameters[i].texture_type, color_index),
-			textures[i]->id,
-			level
-		);
+	for (uint32_t i = 0, texture_index = 0, color_index = 0, buffer_index = 0; i < count; i++) {
+		if (!parameters[i].readable) {
+			glNamedFramebufferRenderbuffer(
+				target_id,
+				gpu_attachment_point(parameters[i].texture_type, color_index),
+				GL_RENDERBUFFER,
+				buffers[buffer_index++]
+			);
+		}
+		else {
+			GLint const level = 0;
+			glNamedFramebufferTexture(
+				target_id,
+				gpu_attachment_point(parameters[i].texture_type, color_index),
+				textures[texture_index++]->id,
+				level
+			);
+		}
+
 		if (parameters[i].texture_type == TEXTURE_TYPE_COLOR) { color_index++; }
 	}
 
@@ -336,18 +364,23 @@ struct Gpu_Target * gpu_target_init(
 		.size_x = size_x,
 		.size_y = size_y,
 		.textures_count = textures_count,
+		.buffers_count = buffers_count,
 	};
 	memcpy(gpu_target->textures, textures, textures_count * sizeof(*textures));
+	memcpy(gpu_target->buffers, buffers, buffers_count * sizeof(*buffers));
 	return gpu_target;
 }
 
 void gpu_target_free(struct Gpu_Target * gpu_target) {
 	if (ogl_version > 0) {
 		if (graphics_state.active_target == gpu_target) { graphics_state.active_target = NULL; }
+		for (uint32_t i = 0; i < gpu_target->textures_count; i++) {
+			gpu_texture_free(gpu_target->textures[i]);
+		}
+		for (uint32_t i = 0; i < gpu_target->buffers_count; i++) {
+			glDeleteRenderbuffers(1, gpu_target->buffers + i);
+		}
 		glDeleteFramebuffers(1, &gpu_target->id);
-	}
-	for (uint32_t i = 0; i < gpu_target->textures_count; i++) {
-		gpu_texture_free(gpu_target->textures[i]);
 	}
 	memset(gpu_target, 0, sizeof(*gpu_target));
 	MEMORY_FREE(gpu_target);
@@ -358,12 +391,14 @@ void gpu_target_get_size(struct Gpu_Target * gpu_target, uint32_t * x, uint32_t 
 	*y = gpu_target->size_y;
 }
 
-struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum Texture_Type type) {
-	for (uint32_t i = 0; i < gpu_target->textures_count; i++) {
+struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum Texture_Type type, uint32_t index) {
+	for (uint32_t i = 0, color_index = 0; i < gpu_target->textures_count; i++) {
 		if (gpu_target->textures[i]->parameters.texture_type == type) {
+			if (type == TEXTURE_TYPE_COLOR && color_index != index) { color_index++; continue; }
 			return gpu_target->textures[i];
 		}
 	}
+	fprintf(stderr, "failed to find the attached texture\n"); DEBUG_BREAK();
 	return NULL;
 }
 

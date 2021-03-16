@@ -33,7 +33,7 @@ struct Gpu_Target * gpu_target_init(
 void gpu_target_free(struct Gpu_Target * gpu_target);
 
 void gpu_target_get_size(struct Gpu_Target * gpu_target, uint32_t * x, uint32_t * y);
-struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum Texture_Type type);
+struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum Texture_Type type, uint32_t index);
 
 // -- GPU mesh part
 struct Gpu_Mesh;

@@ -57,6 +57,7 @@ void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 			.texture_type = TEXTURE_TYPE_COLOR,
 			.data_type = DATA_TYPE_U8,
 			.channels = (uint32_t)channels,
+			.readable = true,
 		},
 		.settings = {
 			.wrap_x = WRAP_MODE_CLAMP,
