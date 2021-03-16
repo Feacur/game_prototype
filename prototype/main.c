@@ -121,7 +121,7 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 
 static void game_render(uint32_t size_x, uint32_t size_y) {
 	graphics_viewport(0, 0, size_x, size_y);
-	graphics_clear();
+	graphics_clear(0, TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH, 0x303030ff);
 
 	graphics_draw(&(struct Render_Pass){
 		.material = &state.material,
@@ -133,7 +133,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 				.dst = BLEND_FACTOR_ZERO,
 			},
 			.mask = COLOR_CHANNEL_FULL,
-			.constant = 0xffffffff,
+			.rgba = 0xffffffff,
 		},
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,

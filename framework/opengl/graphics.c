@@ -361,23 +361,24 @@ void graphics_viewport(uint32_t x, uint32_t y, uint32_t size_x, uint32_t size_y)
 	glViewport((GLsizei)x, (GLsizei)y, (GLsizei)size_x, (GLsizei)size_y);
 }
 
-void graphics_clear(void) {
-	uint32_t framebuffer_id = 0;
-	enum Texture_Type clear_target = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH;
-	float clear_depth = 1;
-	// uint32_t clear_stencil = 0;
-
+void graphics_clear(uint32_t framebuffer, enum Texture_Type mask, uint32_t rgba) {
 	GLbitfield clear_mask = 0;
-	if (clear_target & TEXTURE_TYPE_COLOR) { clear_mask |= GL_COLOR_BUFFER_BIT; }
-	if (clear_target & TEXTURE_TYPE_DEPTH) { clear_mask |= GL_DEPTH_BUFFER_BIT; }
-	if (clear_target & TEXTURE_TYPE_STENCIL) { clear_mask |= GL_STENCIL_BUFFER_BIT; }
+	if (mask & TEXTURE_TYPE_COLOR) { clear_mask |= GL_COLOR_BUFFER_BIT; }
+	if (mask & TEXTURE_TYPE_DEPTH) { clear_mask |= GL_DEPTH_BUFFER_BIT; }
+	if (mask & TEXTURE_TYPE_STENCIL) { clear_mask |= GL_STENCIL_BUFFER_BIT; }
 
-	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)framebuffer_id);
+	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)framebuffer);
+
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	glClearColor(0.2f, 0.2f, 0.2f, 1);
 	glDepthMask(GL_TRUE);
-	glClearDepthf(clear_depth);
-	// glClearStencil((GLint)clear_stencil);
+	
+	glClearColor(
+		((rgba >> 24) & 0xff) / 255.0f,
+		((rgba >> 16) & 0xff) / 255.0f,
+		((rgba >> 8) & 0xff) / 255.0f,
+		((rgba >> 0) & 0xff) / 255.0f
+	);
+
 	glClear(clear_mask);
 }
 
@@ -566,10 +567,10 @@ static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 	);
 
 	glBlendColor(
-		((mode->constant >> 24) & 0xff) / 255.0f,
-		((mode->constant >> 16) & 0xff) / 255.0f,
-		((mode->constant >> 8) & 0xff) / 255.0f,
-		((mode->constant >> 0) & 0xff) / 255.0f
+		((mode->rgba >> 24) & 0xff) / 255.0f,
+		((mode->rgba >> 16) & 0xff) / 255.0f,
+		((mode->rgba >> 8) & 0xff) / 255.0f,
+		((mode->rgba >> 0) & 0xff) / 255.0f
 	);
 
 	//

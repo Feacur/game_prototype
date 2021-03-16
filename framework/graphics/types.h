@@ -163,7 +163,7 @@ struct Blend_Func {
 struct Blend_Mode {
 	struct Blend_Func rgb, a;
 	enum Color_Channel mask;
-	uint32_t constant;
+	uint32_t rgba;
 };
 
 enum Data_Type data_type_get_element_type(enum Data_Type value);
