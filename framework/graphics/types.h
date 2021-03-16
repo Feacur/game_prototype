@@ -44,8 +44,8 @@ enum Filter_Mode {
 };
 
 enum Wrap_Mode {
-	WRAP_MODE_REPEAT,
 	WRAP_MODE_CLAMP,
+	WRAP_MODE_REPEAT,
 };
 
 enum Texture_Type {
@@ -164,6 +164,18 @@ struct Blend_Mode {
 	struct Blend_Func rgb, a;
 	enum Color_Channel mask;
 	uint32_t rgba;
+};
+
+struct Texture_Parameters {
+	enum Texture_Type texture_type;
+	enum Data_Type data_type;
+	uint32_t channels;
+};
+
+struct Texture_Settings {
+	enum Filter_Mode mipmap, minification, magnification;
+	enum Wrap_Mode wrap_x, wrap_y;
+	bool mirror_wrap_x, mirror_wrap_y;
 };
 
 enum Data_Type data_type_get_element_type(enum Data_Type value);

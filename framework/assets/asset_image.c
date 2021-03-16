@@ -52,8 +52,16 @@ void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 	*asset_image = (struct Asset_Image){
 		.size_x = (uint32_t)size_x,
 		.size_y = (uint32_t)size_y,
-		.channels = (uint32_t)channels,
 		.data = image_bytes,
+		.parameters = {
+			.texture_type = TEXTURE_TYPE_COLOR,
+			.data_type = DATA_TYPE_U8,
+			.channels = (uint32_t)channels,
+		},
+		.settings = {
+			.wrap_x = WRAP_MODE_CLAMP,
+			.wrap_y = WRAP_MODE_CLAMP,
+		},
 	};
 }
 

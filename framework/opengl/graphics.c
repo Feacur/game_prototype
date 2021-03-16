@@ -42,6 +42,7 @@ static GLenum gpu_blend_factor(enum Blend_Factor value);
 
 #define MAX_UNIFORMS 32
 #define MAX_UNITS_PER_MATERIAL 64
+#define MAX_TARGET_TEXTURES 32
 
 struct Gpu_Program {
 	GLuint id;
@@ -52,6 +53,16 @@ struct Gpu_Program {
 
 struct Gpu_Texture {
 	GLuint id;
+	uint32_t size_x, size_y;
+	struct Texture_Parameters parameters;
+	struct Texture_Settings settings;
+};
+
+struct Gpu_Target {
+	GLuint id;
+	uint32_t size_x, size_y;
+	struct Gpu_Texture * textures[MAX_TARGET_TEXTURES];
+	uint32_t textures_count;
 };
 
 struct Gpu_Mesh {
@@ -71,6 +82,7 @@ static struct Graphics_State {
 	struct Strings * uniforms;
 
 	struct Gpu_Program const * active_program;
+	struct Gpu_Target const * active_target;
 	struct Gpu_Mesh const * active_mesh;
 
 	uint32_t units_capacity;
@@ -216,7 +228,11 @@ void gpu_program_get_uniforms(struct Gpu_Program * gpu_program, uint32_t * count
 }
 
 // -- GPU texture part
-struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
+static struct Gpu_Texture * gpu_texture_allocate(
+	uint32_t size_x, uint32_t size_y,
+	struct Texture_Parameters const * parameters,
+	struct Texture_Settings const * settings
+) {
 	GLuint texture_id;
 	glCreateTextures(GL_TEXTURE_2D, 1, &texture_id);
 
@@ -224,31 +240,42 @@ struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
 	GLsizei levels = 1;
 	glTextureStorage2D(
 		texture_id, levels,
-		gpu_sized_internal_format(TEXTURE_TYPE_COLOR, DATA_TYPE_U8, asset->channels),
-		(GLsizei)asset->size_x, (GLsizei)asset->size_y
+		gpu_sized_internal_format(parameters->texture_type, parameters->data_type, parameters->channels),
+		(GLsizei)size_x, (GLsizei)size_y
 	);
 
 	// chart buffer
-	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(FILTER_MODE_NONE, FILTER_MODE_POINT));
-	glTextureParameteri(texture_id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(FILTER_MODE_POINT));
-	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(WRAP_MODE_REPEAT, false));
-	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(WRAP_MODE_REPEAT, false));
-
-	// load buffer
-	GLint level = 0;
-	glTextureSubImage2D(
-		texture_id, level,
-		0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y,
-		gpu_pixel_data_format(TEXTURE_TYPE_COLOR, asset->channels),
-		gpu_pixel_data_type(TEXTURE_TYPE_COLOR, DATA_TYPE_U8),
-		asset->data
-	);
+	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(settings->mipmap, settings->minification));
+	glTextureParameteri(texture_id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(settings->magnification));
+	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(settings->wrap_x, settings->mirror_wrap_x));
+	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings->wrap_y, settings->mirror_wrap_y));
 
 	//
 	struct Gpu_Texture * gpu_texture = MEMORY_ALLOCATE(struct Gpu_Texture);
 	*gpu_texture = (struct Gpu_Texture){
 		.id = texture_id,
+		.size_x = size_x,
+		.size_y = size_y,
+		.parameters = *parameters,
+		.settings = *settings,
 	};
+	return gpu_texture;
+}
+
+struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
+	struct Gpu_Texture * gpu_texture = gpu_texture_allocate(
+		asset->size_x, asset->size_y, &asset->parameters, &asset->settings
+	);
+
+	GLint const level = 0;
+	glTextureSubImage2D(
+		gpu_texture->id, level,
+		0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y,
+		gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.channels),
+		gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
+		asset->data
+	);
+
 	return gpu_texture;
 }
 
@@ -264,6 +291,80 @@ void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 	}
 	memset(gpu_texture, 0, sizeof(*gpu_texture));
 	MEMORY_FREE(gpu_texture);
+}
+
+void gpu_texture_get_size(struct Gpu_Texture * gpu_texture, uint32_t * x, uint32_t * y) {
+	*x = gpu_texture->size_x;
+	*y = gpu_texture->size_y;
+}
+
+// -- GPU target part
+struct Gpu_Target * gpu_target_init(
+	uint32_t size_x, uint32_t size_y,
+	struct Texture_Parameters const * parameters, uint32_t count
+) {
+	GLuint target_id;
+	glCreateFramebuffers(1, &target_id);
+
+	struct Gpu_Texture * textures[32];
+	uint32_t textures_count = 0;
+
+	// allocate buffers
+	for (uint32_t i = 0; i < count; i++) {
+		textures[textures_count++] = gpu_texture_allocate(size_x, size_y, parameters + i, &(struct Texture_Settings){
+			.wrap_x = WRAP_MODE_CLAMP,
+			.wrap_y = WRAP_MODE_CLAMP,
+		});
+	}
+
+	// chart buffers
+	GLint const level = 0;
+	for (uint32_t i = 0, color_index = 0; i < textures_count; i++) {
+		glNamedFramebufferTexture(
+			target_id,
+			gpu_attachment_point(parameters[i].texture_type, color_index),
+			textures[i]->id,
+			level
+		);
+		if (parameters[i].texture_type == TEXTURE_TYPE_COLOR) { color_index++; }
+	}
+
+	//
+	struct Gpu_Target * gpu_target = MEMORY_ALLOCATE(struct Gpu_Target);
+	*gpu_target = (struct Gpu_Target){
+		.id = target_id,
+		.size_x = size_x,
+		.size_y = size_y,
+		.textures_count = textures_count,
+	};
+	memcpy(gpu_target->textures, textures, textures_count * sizeof(*textures));
+	return gpu_target;
+}
+
+void gpu_target_free(struct Gpu_Target * gpu_target) {
+	if (ogl_version > 0) {
+		if (graphics_state.active_target == gpu_target) { graphics_state.active_target = NULL; }
+		glDeleteFramebuffers(1, &gpu_target->id);
+	}
+	for (uint32_t i = 0; i < gpu_target->textures_count; i++) {
+		gpu_texture_free(gpu_target->textures[i]);
+	}
+	memset(gpu_target, 0, sizeof(*gpu_target));
+	MEMORY_FREE(gpu_target);
+}
+
+void gpu_target_get_size(struct Gpu_Target * gpu_target, uint32_t * x, uint32_t * y) {
+	*x = gpu_target->size_x;
+	*y = gpu_target->size_y;
+}
+
+struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum Texture_Type type) {
+	for (uint32_t i = 0; i < gpu_target->textures_count; i++) {
+		if (gpu_target->textures[i]->parameters.texture_type == type) {
+			return gpu_target->textures[i];
+		}
+	}
+	return NULL;
 }
 
 // -- GPU mesh part
@@ -361,13 +462,11 @@ void graphics_viewport(uint32_t x, uint32_t y, uint32_t size_x, uint32_t size_y)
 	glViewport((GLsizei)x, (GLsizei)y, (GLsizei)size_x, (GLsizei)size_y);
 }
 
-void graphics_clear(uint32_t framebuffer, enum Texture_Type mask, uint32_t rgba) {
-	GLbitfield clear_mask = 0;
-	if (mask & TEXTURE_TYPE_COLOR) { clear_mask |= GL_COLOR_BUFFER_BIT; }
-	if (mask & TEXTURE_TYPE_DEPTH) { clear_mask |= GL_DEPTH_BUFFER_BIT; }
-	if (mask & TEXTURE_TYPE_STENCIL) { clear_mask |= GL_STENCIL_BUFFER_BIT; }
-
-	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)framebuffer);
+void graphics_clear(struct Gpu_Target * target, enum Texture_Type mask, uint32_t rgba) {
+	GLbitfield clear_bitfield = 0;
+	if (mask & TEXTURE_TYPE_COLOR) { clear_bitfield |= GL_COLOR_BUFFER_BIT; }
+	if (mask & TEXTURE_TYPE_DEPTH) { clear_bitfield |= GL_DEPTH_BUFFER_BIT; }
+	if (mask & TEXTURE_TYPE_STENCIL) { clear_bitfield |= GL_STENCIL_BUFFER_BIT; }
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glDepthMask(GL_TRUE);
@@ -379,7 +478,8 @@ void graphics_clear(uint32_t framebuffer, enum Texture_Type mask, uint32_t rgba)
 		((rgba >> 0) & 0xff) / 255.0f
 	);
 
-	glClear(clear_mask);
+	glBindFramebuffer(GL_FRAMEBUFFER, (target != NULL) ? target->id : 0);
+	glClear(clear_bitfield);
 }
 
 // static void graphics_stencil_test(void) {
@@ -597,6 +697,8 @@ static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 }
 
 void graphics_draw(struct Render_Pass const * pass) {
+	glBindFramebuffer(GL_FRAMEBUFFER, (pass->target != NULL) ? pass->target->id : 0);
+
 	graphics_set_blend_mode(&pass->blend_mode);
 
 	gfx_material_set_float(pass->material, pass->camera_id, 4*4, &pass->camera.x.x);

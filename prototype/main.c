@@ -39,13 +39,19 @@ static struct Game_Content {
 	struct Gpu_Program * gpu_program;
 	struct Gpu_Texture * gpu_texture;
 	struct Gpu_Mesh * gpu_mesh;
+	struct Gpu_Mesh * target_mesh;
 } content;
 
 static struct Game_State {
 	struct Transform camera;
 	struct Transform object;
 	struct Gfx_Material material;
+	//
+	struct Gpu_Target * gpu_target;
+	struct Gfx_Material target_material;
 } state;
+
+static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh);
 
 static void game_init(void) {
 	// init uniforms ids
@@ -64,9 +70,13 @@ static void game_init(void) {
 	struct Asset_Mesh asset_mesh;
 	asset_mesh_init(&asset_mesh, "assets/cube.obj");
 
+	struct Asset_Mesh asset_target_quad;
+	asset_mesh_init__target_quad(&asset_target_quad);
+
 	content.gpu_program = gpu_program_init(&asset_shader);
 	content.gpu_texture = gpu_texture_init(&asset_image);
 	content.gpu_mesh = gpu_mesh_init(&asset_mesh);
+	content.target_mesh = gpu_mesh_init(&asset_target_quad);
 
 	platform_file_free(&asset_shader);
 	asset_image_free(&asset_image);
@@ -88,12 +98,34 @@ static void game_init(void) {
 	gfx_material_init(&state.material, content.gpu_program);
 	gfx_material_set_texture(&state.material, uniforms.texture, 1, &content.gpu_texture);
 	gfx_material_set_float(&state.material, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
+
+	state.gpu_target = gpu_target_init(
+		640, 360,
+		(struct Texture_Parameters[]){
+			[0] = {
+				.texture_type = TEXTURE_TYPE_COLOR,
+				.data_type = DATA_TYPE_U8,
+				.channels = 4,
+			},
+			[1] = {
+				.texture_type = TEXTURE_TYPE_DEPTH,
+				.data_type = DATA_TYPE_U32,
+			},
+		},
+		2
+	);
+	struct Gpu_Texture * target_texture = gpu_target_get_texture(state.gpu_target, TEXTURE_TYPE_COLOR);
+	gfx_material_init(&state.target_material, content.gpu_program);
+	gfx_material_set_texture(&state.target_material, uniforms.texture, 1, &target_texture);
+	gfx_material_set_float(&state.target_material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
 }
 
 static void game_free(void) {
 	gpu_program_free(content.gpu_program);
 	gpu_texture_free(content.gpu_texture);
 	gpu_mesh_free(content.gpu_mesh);
+	gpu_mesh_free(content.target_mesh);
+	gpu_target_free(state.gpu_target);
 
 	memset(&uniforms, 0, sizeof(uniforms));
 	memset(&content, 0, sizeof(content));
@@ -120,11 +152,22 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 }
 
 static void game_render(uint32_t size_x, uint32_t size_y) {
-	graphics_viewport(0, 0, size_x, size_y);
-	graphics_clear(0, TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH, 0x303030ff);
+	struct mat4 const mat4_identity = (struct mat4){
+		.x = (struct vec4){1,0,0,0},
+		.y = (struct vec4){0,1,0,0},
+		.z = (struct vec4){0,0,1,0},
+		.w = (struct vec4){0,0,0,1},
+	};
 
+	uint32_t target_size_x, target_size_y;
+	gpu_target_get_size(state.gpu_target, &target_size_x, &target_size_y);
+
+	//
+	graphics_viewport(0, 0, target_size_x, target_size_y);
+	graphics_clear(state.gpu_target, TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH, 0x303030ff);
 	graphics_draw(&(struct Render_Pass){
 		.material = &state.material,
+		.target = state.gpu_target,
 		.mesh = content.gpu_mesh,
 		.blend_mode = {
 			.rgb = (struct Blend_Func){
@@ -142,6 +185,21 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 			mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
 		),
 		.transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation),
+	});
+
+	//
+	graphics_viewport(0, 0, size_x, size_y);
+	graphics_clear(NULL, TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH, 0);
+	graphics_draw(&(struct Render_Pass){
+		.material = &state.target_material,
+		.mesh = content.target_mesh,
+		.blend_mode = {
+			.mask = COLOR_CHANNEL_FULL,
+		},
+		.camera_id = uniforms.camera,
+		.transform_id = uniforms.transform,
+		.camera = mat4_identity,
+		.transform = mat4_identity,
 	});
 }
 
@@ -165,19 +223,18 @@ int main (int argc, char * argv[]) {
 
 //
 
-/*
-static void asset_mesh_init_1(struct Asset_Mesh * asset_mesh) {
+static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
 #define CONSTRUCT(type, array) (type){ .data = array, .count = sizeof(array) / sizeof(*array) }
 
 	static float vertices[] = {
-		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-		 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-		-0.5f,  0.5f, 0.0f, 0.0f, 1.0f,
-		 0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
+		-1, -1, 0, 0, 0,
+		-1,  1, 0, 0, 1,
+		 1, -1, 0, 1, 0,
+		 1,  1, 0, 1, 1,
 	};
 	static uint32_t sizes[] = {3, 2};
 	static uint32_t locations[] = {0, 1};
-	static uint32_t indices[] = {0, 1, 2, 3, 2, 1};
+	static uint32_t indices[] = {1, 0, 2, 1, 2, 3};
 
 	*asset_mesh = (struct Asset_Mesh){
 		.vertices = CONSTRUCT(struct Array_Float, vertices),
@@ -188,4 +245,3 @@ static void asset_mesh_init_1(struct Asset_Mesh * asset_mesh) {
 
 #undef CONSTRUCT
 }
-*/
