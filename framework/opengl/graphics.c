@@ -494,30 +494,6 @@ uint32_t graphics_find_uniform(char const * name) {
 	return strings_find(graphics_state.uniforms, (uint32_t)strlen(name), name);
 }
 
-void graphics_viewport(uint32_t x, uint32_t y, uint32_t size_x, uint32_t size_y) {
-	glViewport((GLsizei)x, (GLsizei)y, (GLsizei)size_x, (GLsizei)size_y);
-}
-
-void graphics_clear(struct Gpu_Target * target, enum Texture_Type mask, uint32_t rgba) {
-	GLbitfield clear_bitfield = 0;
-	if (mask & TEXTURE_TYPE_COLOR) { clear_bitfield |= GL_COLOR_BUFFER_BIT; }
-	if (mask & TEXTURE_TYPE_DEPTH) { clear_bitfield |= GL_DEPTH_BUFFER_BIT; }
-	if (mask & TEXTURE_TYPE_STENCIL) { clear_bitfield |= GL_STENCIL_BUFFER_BIT; }
-
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	glDepthMask(GL_TRUE);
-	
-	glClearColor(
-		((rgba >> 24) & 0xff) / 255.0f,
-		((rgba >> 16) & 0xff) / 255.0f,
-		((rgba >> 8) & 0xff) / 255.0f,
-		((rgba >> 0) & 0xff) / 255.0f
-	);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, (target != NULL) ? target->id : 0);
-	glClear(clear_bitfield);
-}
-
 // static void graphics_stencil_test(void) {
 // 	enum Comparison_Op comparison_op = COMPARISON_OP_NONE;
 // 	uint32_t comparison_ref = 0;
@@ -592,13 +568,19 @@ static uint32_t graphics_unit_init(struct Gpu_Texture * gpu_texture) {
 static void graphics_select_program(struct Gpu_Program const * gpu_program) {
 	if (graphics_state.active_program == gpu_program) { return; }
 	graphics_state.active_program = gpu_program;
-	glUseProgram(gpu_program->id);
+	glUseProgram((gpu_program != NULL) ? gpu_program->id : 0);
+}
+
+static void graphics_select_target(struct Gpu_Target const * gpu_target) {
+	if (graphics_state.active_target == gpu_target) { return; }
+	graphics_state.active_target = gpu_target;
+	glBindFramebuffer(GL_FRAMEBUFFER, (gpu_target != NULL) ? gpu_target->id : 0);
 }
 
 static void graphics_select_mesh(struct Gpu_Mesh const * gpu_mesh) {
 	if (graphics_state.active_mesh == gpu_mesh) { return; }
 	graphics_state.active_mesh = gpu_mesh;
-	glBindVertexArray(gpu_mesh->id);
+	glBindVertexArray((gpu_mesh != NULL) ? gpu_mesh->id : 0);
 }
 
 static void graphics_upload_single_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_index, void const * data) {
@@ -732,17 +714,49 @@ static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 	}
 }
 
+static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
+	if (mask == TEXTURE_TYPE_NONE) { return; }
+
+	GLbitfield clear_bitfield = 0;
+	if (mask & TEXTURE_TYPE_COLOR) { clear_bitfield |= GL_COLOR_BUFFER_BIT; }
+	if (mask & TEXTURE_TYPE_DEPTH) { clear_bitfield |= GL_DEPTH_BUFFER_BIT; }
+	if (mask & TEXTURE_TYPE_STENCIL) { clear_bitfield |= GL_STENCIL_BUFFER_BIT; }
+
+	// glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	// glDepthMask(GL_TRUE);
+	
+	glClearColor(
+		((rgba >> 24) & 0xff) / 255.0f,
+		((rgba >> 16) & 0xff) / 255.0f,
+		((rgba >> 8) & 0xff) / 255.0f,
+		((rgba >> 0) & 0xff) / 255.0f
+	);
+
+	glClear(clear_bitfield);
+}
+
 void graphics_draw(struct Render_Pass const * pass) {
-	glBindFramebuffer(GL_FRAMEBUFFER, (pass->target != NULL) ? pass->target->id : 0);
+	if (pass->target == NULL && pass->blend_mode.mask == COLOR_CHANNEL_NONE) {
+		return;
+	}
+
+	uint32_t size_x = pass->size_x, size_y = pass->size_y;
+	if (pass->target != NULL) {
+		gpu_target_get_size(pass->target, &size_x, &size_y);
+	}
+
+	graphics_select_target(pass->target);
+	graphics_clear(pass->clear_mask, pass->clear_rgba);
+
+	graphics_select_program(pass->material->program);
+	gfx_material_set_float(pass->material, pass->camera_id, 4*4, &pass->camera.x.x);
+	gfx_material_set_float(pass->material, pass->transform_id, 4*4, &pass->transform.x.x);
+	graphics_upload_uniforms(pass->material);
 
 	graphics_set_blend_mode(&pass->blend_mode);
 
-	gfx_material_set_float(pass->material, pass->camera_id, 4*4, &pass->camera.x.x);
-	gfx_material_set_float(pass->material, pass->transform_id, 4*4, &pass->transform.x.x);
-	graphics_select_program(pass->material->program);
-	graphics_upload_uniforms(pass->material);
-
 	graphics_select_mesh(pass->mesh);
+	glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
 	glDrawElements(
 		GL_TRIANGLES,
 		pass->mesh->indices_count,

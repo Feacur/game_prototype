@@ -159,32 +159,24 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 }
 
 static void game_render(uint32_t size_x, uint32_t size_y) {
-	struct mat4 const mat4_identity = (struct mat4){
-		.x = (struct vec4){1,0,0,0},
-		.y = (struct vec4){0,1,0,0},
-		.z = (struct vec4){0,0,1,0},
-		.w = (struct vec4){0,0,0,1},
+	struct mat4 const mat4_identity = {
+		{1,0,0,0},
+		{0,1,0,0},
+		{0,0,1,0},
+		{0,0,0,1},
 	};
 
-	uint32_t target_size_x, target_size_y;
-	gpu_target_get_size(state.gpu_target, &target_size_x, &target_size_y);
-
 	//
-	graphics_viewport(0, 0, target_size_x, target_size_y);
-	graphics_clear(state.gpu_target, TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH, 0x303030ff);
 	graphics_draw(&(struct Render_Pass){
-		.material = &state.material,
 		.target = state.gpu_target,
+		//
+		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
+		.clear_rgba = 0x303030ff,
+		//
+		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.material = &state.material,
 		.mesh = content.gpu_mesh,
-		.blend_mode = {
-			.rgb = (struct Blend_Func){
-				.op = BLEND_OP_ADD,
-				.src = BLEND_FACTOR_ONE,
-				.dst = BLEND_FACTOR_ZERO,
-			},
-			.mask = COLOR_CHANNEL_FULL,
-			.rgba = 0xffffffff,
-		},
+		//
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,
 		.camera = mat4_mul_mat(
@@ -195,14 +187,16 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	});
 
 	//
-	graphics_viewport(0, 0, size_x, size_y);
-	graphics_clear(NULL, TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH, 0);
 	graphics_draw(&(struct Render_Pass){
+		.size_x = size_x, .size_y = size_y,
+		//
+		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
+		.clear_rgba = 0x303030ff,
+		//
+		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
 		.material = &state.target_material,
 		.mesh = content.target_mesh,
-		.blend_mode = {
-			.mask = COLOR_CHANNEL_FULL,
-		},
+		//
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,
 		.camera = mat4_identity,
@@ -231,7 +225,7 @@ int main (int argc, char * argv[]) {
 //
 
 static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
-#define CONSTRUCT(type, array) (type){ .data = array, .count = sizeof(array) / sizeof(*array) }
+#define CONSTRUCT(type, array) (type){.data = array, .count = sizeof(array) / sizeof(*array)}
 
 	static float vertices[] = {
 		-1, -1, 0, 0, 0,
