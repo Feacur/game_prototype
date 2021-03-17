@@ -112,14 +112,13 @@ static void game_init(void) {
 				.texture_type = TEXTURE_TYPE_COLOR,
 				.data_type = DATA_TYPE_U8,
 				.channels = 4,
-				.readable = true,
 			},
 			[1] = {
 				.texture_type = TEXTURE_TYPE_DEPTH,
 				.data_type = DATA_TYPE_U32,
-				// .readable = true,
 			},
 		},
+		(bool[]){true, false}, // readable color texture, 
 		2
 	);
 	struct Gpu_Texture * target_texture = gpu_target_get_texture(state.gpu_target, TEXTURE_TYPE_COLOR, 0);

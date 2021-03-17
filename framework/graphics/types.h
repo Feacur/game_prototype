@@ -170,7 +170,6 @@ struct Texture_Parameters {
 	enum Texture_Type texture_type;
 	enum Data_Type data_type;
 	uint32_t channels;
-	bool readable;
 };
 
 struct Texture_Settings {

@@ -303,7 +303,9 @@ void gpu_texture_get_size(struct Gpu_Texture * gpu_texture, uint32_t * x, uint32
 // -- GPU target part
 struct Gpu_Target * gpu_target_init(
 	uint32_t size_x, uint32_t size_y,
-	struct Texture_Parameters const * parameters, uint32_t count
+	struct Texture_Parameters const * parameters,
+	bool const * readable,
+	uint32_t count
 ) {
 	GLuint target_id;
 	glCreateFramebuffers(1, &target_id);
@@ -316,7 +318,7 @@ struct Gpu_Target * gpu_target_init(
 
 	// allocate buffers
 	for (uint32_t i = 0; i < count; i++) {
-		if (!parameters[i].readable) {
+		if (!readable[i]) {
 			GLuint buffer_id;
 			glCreateRenderbuffers(1, &buffer_id);
 			glNamedRenderbufferStorage(
@@ -336,7 +338,7 @@ struct Gpu_Target * gpu_target_init(
 
 	// chart buffers
 	for (uint32_t i = 0, texture_index = 0, color_index = 0, buffer_index = 0; i < count; i++) {
-		if (!parameters[i].readable) {
+		if (!readable[i]) {
 			glNamedFramebufferRenderbuffer(
 				target_id,
 				gpu_attachment_point(parameters[i].texture_type, color_index),
