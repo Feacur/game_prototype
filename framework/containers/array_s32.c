@@ -18,7 +18,7 @@ void array_s32_init(struct Array_S32 * array) {
 }
 
 void array_s32_free(struct Array_S32 * array) {
-	if (array->capacity == 0 && array->data != NULL) { return; }
+	if (array->capacity == 0) { return; }
 	MEMORY_FREE(array->data);
 	array_s32_init(array);
 }

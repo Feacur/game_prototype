@@ -18,7 +18,7 @@ void array_pointer_init(struct Array_Pointer * array) {
 }
 
 void array_pointer_free(struct Array_Pointer * array) {
-	if (array->capacity == 0 && array->data != NULL) { return; }
+	if (array->capacity == 0) { return; }
 	MEMORY_FREE(array->data);
 	array_pointer_init(array);
 }

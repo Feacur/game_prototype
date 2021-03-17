@@ -18,7 +18,7 @@ void array_byte_init(struct Array_Byte * array) {
 }
 
 void array_byte_free(struct Array_Byte * array) {
-	if (array->capacity == 0 && array->data != NULL) { return; }
+	if (array->capacity == 0) { return; }
 	MEMORY_FREE(array->data);
 	array_byte_init(array);
 }

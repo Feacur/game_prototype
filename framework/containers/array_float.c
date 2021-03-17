@@ -18,7 +18,7 @@ void array_float_init(struct Array_Float * array) {
 }
 
 void array_float_free(struct Array_Float * array) {
-	if (array->capacity == 0 && array->data != NULL) { return; }
+	if (array->capacity == 0) { return; }
 	MEMORY_FREE(array->data);
 	array_float_init(array);
 }

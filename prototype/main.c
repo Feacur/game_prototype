@@ -225,8 +225,6 @@ int main (int argc, char * argv[]) {
 //
 
 static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
-#define CONSTRUCT(type, array) (type){.data = array, .count = sizeof(array) / sizeof(*array)}
-
 	static float vertices[] = {
 		-1, -1, 0, 0, 0,
 		-1,  1, 0, 0, 1,
@@ -237,12 +235,38 @@ static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
 	static uint32_t locations[] = {0, 1};
 	static uint32_t indices[] = {1, 0, 2, 1, 2, 3};
 
-	*asset_mesh = (struct Asset_Mesh){
-		.vertices = CONSTRUCT(struct Array_Float, vertices),
-		.sizes = CONSTRUCT(struct Array_U32, sizes),
-		.locations = CONSTRUCT(struct Array_U32, locations),
-		.indices = CONSTRUCT(struct Array_U32, indices),
+	//
+	static struct Array_Byte buffers[] = {
+		[0] = {
+			.data = (uint8_t *)vertices,
+			.count = sizeof(vertices),
+		},
+		[1] = {
+			.data = (uint8_t *)indices,
+			.count = sizeof(indices),
+		},
 	};
 
-#undef CONSTRUCT
+	static struct Mesh_Settings settings[] = {
+		[0] = {
+			.type = DATA_TYPE_R32,
+			.frequency = MESH_FREQUENCY_STATIC,
+			.access = MESH_ACCESS_DRAW,
+			.count = sizeof(locations) / sizeof(*locations),
+		},
+		[1] = {
+			.type = DATA_TYPE_U32,
+			.frequency = MESH_FREQUENCY_STATIC,
+			.access = MESH_ACCESS_DRAW,
+			.is_index = true,
+		},
+	};
+	memcpy(settings[0].sizes, sizes, sizeof(sizes));
+	memcpy(settings[0].locations, locations, sizeof(locations));
+
+	*asset_mesh = (struct Asset_Mesh){
+		.count = 2,
+		.buffers = buffers,
+		.settings = settings,
+	};
 }

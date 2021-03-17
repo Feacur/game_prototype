@@ -42,6 +42,7 @@ static GLenum gpu_blend_factor(enum Blend_Factor value);
 #define MAX_UNIFORMS 32
 #define MAX_UNITS_PER_MATERIAL 64
 #define MAX_TARGET_ATTACHMENTS 4
+#define MAX_MESH_BUFFERS 2
 
 struct Gpu_Program {
 	GLuint id;
@@ -68,9 +69,11 @@ struct Gpu_Target {
 
 struct Gpu_Mesh {
 	GLuint id;
-	GLuint vertices_buffer_id;
-	GLuint indices_buffer_id;
-	GLsizei indices_count;
+	uint32_t count;
+	GLuint buffer_ids[MAX_MESH_BUFFERS];
+	struct Mesh_Settings settings[MAX_MESH_BUFFERS];
+	uint32_t lengths[MAX_MESH_BUFFERS];
+	uint32_t elements_index;
 };
 
 struct Gpu_Unit {
@@ -404,79 +407,118 @@ struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum
 }
 
 // -- GPU mesh part
-struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
+static struct Gpu_Mesh * gpu_mesh_allocate(
+	uint32_t buffers_count,
+	uint32_t * byte_lengths,
+	struct Mesh_Settings const * settings_set
+) {
+	if (buffers_count > MAX_MESH_BUFFERS) {
+		fprintf(stderr, "too many buffers\n"); DEBUG_BREAK();
+		buffers_count = MAX_MESH_BUFFERS;
+	}
+
 	GLuint mesh_id;
 	glCreateVertexArrays(1, &mesh_id);
 
-	// allocate buffer: vertices
-	GLuint vertices_buffer_id;
-	glCreateBuffers(1, &vertices_buffer_id);
-	// data_type_get_size(DATA_TYPE_R32);
-	glNamedBufferData(
-		vertices_buffer_id,
-		asset->vertices.count * sizeof(*asset->vertices.data),
-		NULL, gpu_mesh_usage_pattern(MESH_FREQUENCY_STATIC, MESH_ACCESS_DRAW)
-	);
+	GLuint buffer_ids[MAX_MESH_BUFFERS];
+	uint32_t lengths[MAX_MESH_BUFFERS];
 
-	// allocate buffer: indices
-	GLuint indices_buffer_id;
-	glCreateBuffers(1, &indices_buffer_id);
-	// data_type_get_size(DATA_TYPE_U32);
-	glNamedBufferData(
-		indices_buffer_id,
-		asset->indices.count * sizeof(*asset->indices.data),
-		NULL, gpu_mesh_usage_pattern(MESH_FREQUENCY_STATIC, MESH_ACCESS_DRAW)
-	);
+	// allocate buffers
+	for (uint32_t i = 0; i < buffers_count; i++) {
+		struct Mesh_Settings const * settings = settings_set + i;
 
-	// chart buffer: vertices
-	GLsizei all_attributes_size = 0;
-	for (uint32_t i = 0; i < asset->sizes.count; i++) {
-		// data_type_get_size(DATA_TYPE_R32);
-		all_attributes_size += (GLsizei)asset->sizes.data[i] * (GLsizei)sizeof(*asset->vertices.data);
+		glCreateBuffers(1, buffer_ids + i);
+		glNamedBufferData(
+			buffer_ids[i],
+			(GLsizeiptr)byte_lengths[i], NULL,
+			gpu_mesh_usage_pattern(settings->frequency, settings->access)
+		);
+
+		lengths[i] = byte_lengths[i] / data_type_get_size(settings->type);
 	}
 
-	GLuint buffer_index = 0;
-	GLintptr buffer_start = 0;
-	glVertexArrayVertexBuffer(mesh_id, buffer_index, vertices_buffer_id, buffer_start, all_attributes_size);
+	// chart buffers
+	uint32_t elements_index = UINT32_MAX;
+	for (uint32_t i = 0; i < buffers_count; i++) {
+		struct Mesh_Settings const * settings = settings_set + i;
 
-	GLuint attribute_offset = 0;
-	for (uint32_t i = 0; i < asset->locations.count; i++) {
-		GLuint location = (GLuint)asset->locations.data[i];
-		uint32_t size = asset->sizes.data[i];
-		glEnableVertexArrayAttrib(mesh_id, location);
-		glVertexArrayAttribBinding(mesh_id, location, buffer_index);
-		glVertexArrayAttribFormat(mesh_id, location, (GLint)size, GL_FLOAT, GL_FALSE, attribute_offset);
-		// data_type_get_size(DATA_TYPE_R32);
-		attribute_offset += size * (GLuint)sizeof(*asset->vertices.data);
+		// element buffer
+		if (settings->is_index) {
+			elements_index = i;
+			glVertexArrayElementBuffer(mesh_id, buffer_ids[i]);
+			continue;
+		}
+
+		// vertex buffer
+		uint32_t all_attributes_size = 0;
+		for (uint32_t atti = 0; atti < settings->count; atti++) {
+			all_attributes_size += settings->sizes[atti] * data_type_get_size(settings->type);
+		}
+
+		GLuint buffer_index = 0;
+		GLintptr buffer_start = 0;
+		glVertexArrayVertexBuffer(mesh_id, buffer_index, buffer_ids[i], buffer_start, (GLsizei)all_attributes_size);
+
+		uint32_t attribute_offset = 0;
+		for (uint32_t atti = 0; atti < settings->count; atti++) {
+			GLuint location = (GLuint)settings->locations[atti];
+			uint32_t size = settings->sizes[atti];
+			glEnableVertexArrayAttrib(mesh_id, location);
+			glVertexArrayAttribBinding(mesh_id, location, buffer_index);
+			glVertexArrayAttribFormat(
+				mesh_id, location,
+				(GLint)size, gpu_data_type(settings->type),
+				GL_FALSE, (GLuint)attribute_offset
+			);
+			attribute_offset += size * data_type_get_size(settings->type);
+		}
 	}
-
-	// chart buffer: indices
-	glVertexArrayElementBuffer(mesh_id, indices_buffer_id);
-
-	// load buffer: vertices
-	// data_type_get_size(DATA_TYPE_R32);
-	glNamedBufferSubData(vertices_buffer_id, 0, asset->vertices.count * sizeof(*asset->vertices.data), asset->vertices.data);
-
-	// load buffer: indices
-	// data_type_get_size(DATA_TYPE_U32);
-	glNamedBufferSubData(indices_buffer_id, 0, asset->indices.count * sizeof(*asset->indices.data), asset->indices.data);
 
 	//
+	if (elements_index == UINT32_MAX) {
+		fprintf(stderr, "not element buffer\n"); DEBUG_BREAK();
+	}
+
 	struct Gpu_Mesh * gpu_mesh = MEMORY_ALLOCATE(struct Gpu_Mesh);
 	*gpu_mesh = (struct Gpu_Mesh){
 		.id = mesh_id,
-		.vertices_buffer_id = vertices_buffer_id,
-		.indices_buffer_id = indices_buffer_id,
-		.indices_count = (GLsizei)asset->indices.count,
+		.count = buffers_count,
+		.elements_index = elements_index,
 	};
+	memcpy(gpu_mesh->buffer_ids, buffer_ids, buffers_count * sizeof(*buffer_ids));
+	memcpy(gpu_mesh->settings, settings_set, buffers_count * sizeof(*settings_set));
+	memcpy(gpu_mesh->lengths, lengths, buffers_count * sizeof(*lengths));
+	return gpu_mesh;
+}
+
+struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
+	uint32_t byte_lengths[MAX_MESH_BUFFERS];
+	for (uint32_t i = 0; i < asset->count; i++) {
+		byte_lengths[i] = asset->buffers[i].count;
+	}
+
+	struct Gpu_Mesh * gpu_mesh = gpu_mesh_allocate(
+		asset->count, byte_lengths, asset->settings
+	);
+
+	for (uint32_t i = 0; i < gpu_mesh->count; i++) {
+		struct Array_Byte const * buffer = asset->buffers + i;
+		if (buffer->count == 0) { continue; }
+		if (buffer->data == NULL) { continue; }
+		glNamedBufferSubData(
+			gpu_mesh->buffer_ids[i], 0,
+			(GLsizeiptr)buffer->count,
+			buffer->data
+		);
+	}
+
 	return gpu_mesh;
 }
 
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
 	if (ogl_version > 0) {
 		if (graphics_state.active_mesh == gpu_mesh) { graphics_state.active_mesh = NULL; }
-		glDeleteBuffers(1, &gpu_mesh->vertices_buffer_id);
-		glDeleteBuffers(1, &gpu_mesh->indices_buffer_id);
+		glDeleteBuffers((GLsizei)gpu_mesh->count, gpu_mesh->buffer_ids);
 		glDeleteVertexArrays(1, &gpu_mesh->id);
 	}
 	memset(gpu_mesh, 0, sizeof(*gpu_mesh));
@@ -736,9 +778,8 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 }
 
 void graphics_draw(struct Render_Pass const * pass) {
-	if (pass->target == NULL && pass->blend_mode.mask == COLOR_CHANNEL_NONE) {
-		return;
-	}
+	if (pass->target == NULL && pass->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
+	if (pass->mesh->elements_index == UINT32_MAX) { return; }
 
 	uint32_t size_x = pass->size_x, size_y = pass->size_y;
 	if (pass->target != NULL) {
@@ -759,8 +800,8 @@ void graphics_draw(struct Render_Pass const * pass) {
 	glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
 	glDrawElements(
 		GL_TRIANGLES,
-		pass->mesh->indices_count,
-		gpu_data_type(DATA_TYPE_U32),
+		(GLsizei)pass->mesh->lengths[pass->mesh->elements_index],
+		gpu_data_type(pass->mesh->settings[pass->mesh->elements_index].type),
 		NULL
 	);
 }
@@ -831,9 +872,7 @@ void graphics_to_glibrary_free(void) {
 	MEMORY_FREE(graphics_state.units);
 	memset(&graphics_state, 0, sizeof(graphics_state));
 
-	(void)gpu_attachment_point;
 	(void)gpu_stencil_op;
-	// (void)graphics_stencil_test;
 }
 
 //
