@@ -12,6 +12,31 @@ float convert_bits_u32_r32(uint32_t value) {
 	return data.value_r32;
 }
 
+uint32_t convert_bits_r32_u32(float value) {
+	union {
+		uint32_t value_u32;
+		float value_r32;
+	} data;
+	data.value_r32 = value;
+	return data.value_u32;
+}
+
+uint32_t hash_bytes_fnv1(uint8_t const * value, uint32_t length) {
+	uint32_t hash = 0x811c9dc5;
+	for (uint32_t i = 0; i < length; i++) {
+		hash ^= value[i];
+		hash *= 0x01000193;
+	}
+	return hash;
+}
+
+uint32_t hash_u32_xorshift(uint32_t value) {
+	value ^= value << 13;
+	value ^= value >> 17;
+	value ^= value << 15;
+	return value;
+}
+
 uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator) {
 	uint32_t a = value / denominator;
 	uint32_t b = value % denominator;

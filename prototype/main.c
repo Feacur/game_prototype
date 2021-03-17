@@ -180,7 +180,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,
 		.camera = mat4_mul_mat(
-			mat4_set_projection((struct vec2){1, (float)size_x / (float)size_y}, 0.1f, FLOAT_INFINITY, 0),
+			mat4_set_projection((struct vec2){1, (float)size_x / (float)size_y}, 0.1f, FLOAT_POS_INFINITY, 0),
 			mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
 		),
 		.transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation),
