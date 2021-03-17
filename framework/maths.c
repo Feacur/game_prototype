@@ -225,14 +225,14 @@ struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 sc
 }
 
 struct mat4 mat4_set_projection(struct vec2 scale_xy, float ncp, float fcp, float ortho) {
-	float const NSNCP = 0; // float const NSFCP = 1;
+	float const NS_NCP = 0, NS_FCP = 1;
 	float const reverse_depth = 1 / (fcp - ncp);
 
-	float const persp_scale_z  = isinf(fcp) ? 1                   : (reverse_depth * (fcp - NSNCP * ncp));
-	float const persp_offset_z = isinf(fcp) ? ((NSNCP - 1) * ncp) : (reverse_depth * (NSNCP - 1) * ncp * fcp);
+	float const persp_scale_z  = isinf(fcp) ? 1                         : (reverse_depth * (NS_FCP * fcp - NS_NCP * ncp));
+	float const persp_offset_z = isinf(fcp) ? ((NS_NCP - NS_FCP) * ncp) : (reverse_depth * (NS_NCP - NS_FCP) * ncp * fcp);
 
-	float const ortho_scale_z  = isinf(fcp) ? 0 : (reverse_depth * (1 - NSNCP));
-	float const ortho_offset_z = isinf(fcp) ? 0 : (reverse_depth * (fcp * NSNCP - ncp));
+	float const ortho_scale_z  = isinf(fcp) ? 0      : (reverse_depth * (NS_FCP - NS_NCP));
+	float const ortho_offset_z = isinf(fcp) ? NS_NCP : (reverse_depth * (NS_NCP * fcp - NS_FCP * ncp));
 
 	float const scale_z  = lerp(persp_scale_z, ortho_scale_z, ortho);
 	float const offset_z = lerp(persp_offset_z, ortho_offset_z, ortho);
@@ -253,8 +253,8 @@ struct mat4 mat4_set_projection(struct vec2 scale_xy, float ncp, float fcp, floa
 * ortho: [0 .. 1], where 0 is perspective mode, 1 is orthographic mode
 
 > settings
-* NSNCP: normalized-space near clipping plane
-* NSFCP: normalized-space far clipping plane
+* NS_NCP: normalized-space near clipping plane
+* NS_FCP: normalized-space far clipping plane
 
 > logic
 * XYZ: world space vector
@@ -262,11 +262,11 @@ struct mat4 mat4_set_projection(struct vec2 scale_xy, float ncp, float fcp, floa
 --- orthograhic
     XYZ' = (offset + scale * XYZ) / 1
     XY scale: from [-scale_xy .. scale_xy] to [-1 .. 1]
-    Z  scale: from [ncp .. fcp]            to [NNCP .. 1]
+    Z  scale: from [ncp .. fcp]            to [NS_NCP .. NS_FCP]
 --- perspective
     XYZ' = (offset + scale * XYZ) / Z
     XY scale; from [-scale_xy .. scale_xy] to [-1 .. 1]
-    Z  scale; from [ncp .. fcp]            to [NNCP .. 1]
+    Z  scale; from [ncp .. fcp]            to [NS_NCP .. NS_FCP]
 */
 }
 
