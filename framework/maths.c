@@ -3,6 +3,15 @@
 //
 #include "maths.h"
 
+float convert_bits_u32_r32(uint32_t value) {
+	union {
+		uint32_t value_u32;
+		float value_r32;
+	} data;
+	data.value_u32 = value;
+	return data.value_r32;
+}
+
 uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator) {
 	uint32_t a = value / denominator;
 	uint32_t b = value % denominator;

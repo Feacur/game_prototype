@@ -16,8 +16,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// #define REVERSE_Z
-
 static GLenum gpu_data_type(enum Data_Type value);
 static enum Data_Type interpret_gl_type(GLint value);
 
@@ -40,6 +38,7 @@ static GLenum gpu_stencil_op(enum Stencil_Op value);
 static GLenum gpu_blend_op(enum Blend_Op value);
 static GLenum gpu_blend_factor(enum Blend_Factor value);
 
+#define REVERSE_Z
 #define MAX_UNIFORMS 32
 #define MAX_UNITS_PER_MATERIAL 64
 #define MAX_TARGET_ATTACHMENTS 4
@@ -794,6 +793,7 @@ void graphics_to_glibrary_init(void) {
 
 	//
 	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
 #if defined(REVERSE_Z)
 	glDepthRangef(1, 0);
 	glClearDepthf(0);

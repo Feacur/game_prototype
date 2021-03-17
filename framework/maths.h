@@ -5,6 +5,12 @@
 
 #define MATHS_PI 3.14159265359f
 #define MATHS_TAU 6.28318530718f
+#define FLOAT_INFINITY convert_bits_u32_r32(0x7f800000)
+#define FLOAT_NEGATIVE_INFINITY convert_bits_u32_r32(0xff800000)
+#define FLOAT_MAX convert_bits_u32_r32(0x7f7fffff)
+#define FLOAT_MIN convert_bits_u32_r32(0xff7fffff)
+
+float convert_bits_u32_r32(uint32_t value);
 
 uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator);
 uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator);
