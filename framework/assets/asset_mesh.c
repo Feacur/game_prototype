@@ -92,6 +92,9 @@ void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
 	};
 	memcpy(asset_mesh->settings[0].sizes, sizes.data, sizes.count * sizeof(uint32_t));
 	memcpy(asset_mesh->settings[0].locations, locations.data, locations.count * sizeof(uint32_t));
+	
+	array_u32_free(&sizes);
+	array_u32_free(&locations);
 }
 
 void asset_mesh_free(struct Asset_Mesh * asset_mesh) {
