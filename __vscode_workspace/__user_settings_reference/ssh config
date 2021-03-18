@@ -1,0 +1,11 @@
+# proper file path and name: ~/.ssh/config
+# "~" is "%userprofile%"
+
+# generate your SSH key with something like
+# ssh-keygen -t rsa -b 4096 -C "email@domain.tld"
+
+# GitHub
+Host github.com
+    HostName github.com
+    PreferredAuthentications publickey
+    IdentityFile ~/.ssh/ssh_key_file

@@ -1,0 +1,10 @@
+// %appdata%/Code/User
+{
+	"workbench.startupEditor": "newUntitledFile",
+	"editor.renderWhitespace": "all",
+	"workbench.sideBar.location": "right",
+	"editor.minimap.enabled": false,
+	"editor.scrollBeyondLastColumn": 0,
+	"editor.scrollBeyondLastLine": false,
+	"terminal.integrated.shell.windows": "C:\\WINDOWS\\System32\\cmd.exe",
+}

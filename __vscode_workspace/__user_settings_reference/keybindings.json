@@ -1,0 +1,43 @@
+// %appdata%/Code/User
+[
+	{
+		"key": "ctrl+up",
+		"command": "editorScroll",
+		"when": "editorTextFocus",
+		"args": {
+			"to": "up",
+			"by": "line",
+			"revealCursor": true,
+		}
+	},
+	{
+		"key": "ctrl+down",
+		"command": "editorScroll",
+		"when": "editorTextFocus",
+		"args": {
+			"to": "down",
+			"by": "line",
+			"revealCursor": true,
+		}
+	},
+	{
+		"key": "alt+pageup",
+		"command": "editorScroll",
+		"when": "editorTextFocus",
+		"args": {
+			"to": "up",
+			"by": "page",
+			"revealCursor": true,
+		}
+	},
+	{
+		"key": "alt+pagedown",
+		"command": "editorScroll",
+		"when": "editorTextFocus",
+		"args": {
+			"to": "down",
+			"by": "page",
+			"revealCursor": true,
+		}
+	},
+]
