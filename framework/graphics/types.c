@@ -68,7 +68,7 @@ uint32_t data_type_get_count(enum Data_Type value) {
 	return 0;
 }
 
-size_t data_type_get_size(enum Data_Type value) {
+uint32_t data_type_get_size(enum Data_Type value) {
 	switch (value) {
 		case DATA_TYPE_NONE: break;
 
