@@ -1,11 +1,10 @@
 {
 	"version": "2.0.0",
 	"presentation": {
-		"reveal": "never",
-		"panel": "shared",
-		"showReuseMessage": false,
+		"reveal": "always",
+		"revealProblems": "never",
+		"panel": "dedicated",
 		"clear": true,
-		"revealProblems": "onProblem",
 	},
 	"type": "shell",
 	"options": {"cwd": "../project"},

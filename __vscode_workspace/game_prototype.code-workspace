@@ -31,7 +31,7 @@
 		"editor.insertSpaces": false,
 		"editor.detectIndentation": false,
 		// extensions: ms-vscode.cpptools
-		"C_Cpp.autoAddFileAssociations": false,
+		"C_Cpp.default.cStandard": "c99",
 		"C_Cpp.default.compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
 		"C_Cpp.default.intelliSenseMode": "clang-x64",
 		// "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.24.28314/bin/Hostx64/x64/cl.exe",
@@ -43,8 +43,15 @@
 		"C_Cpp.default.defines": [
 			"GAME_TARGET_DEBUG",
 		],
+		"C_Cpp.formatting": "Disabled",
+		"C_Cpp.autoAddFileAssociations": false,
+		"C_Cpp.preferredPathSeparator": "Forward Slash",
+		"C_Cpp.errorSquiggles": "Disabled",
+		"C_Cpp.intelliSenseEngine": "Default",
+		"C_Cpp.intelliSenseEngineFallback": "Enabled",
 		"C_Cpp.intelliSenseCachePath": "${workspaceFolder:__vscode_workspace}/../bin",
-		// "C_Cpp.intelliSenseCacheSize": 0,
+		"C_Cpp.intelliSenseCacheSize": 0,
+		"C_Cpp.intelliSenseMemoryLimit": 256,
 	},
 	"extensions": {
 		"recommendations": [

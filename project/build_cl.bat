@@ -1,5 +1,6 @@
 @echo off
-chcp 65001
+set timeHeader=%time%
+chcp 65001 >nul
 
 set debug=dummy
 rem set unity_build=dummy
@@ -15,7 +16,7 @@ rem possible `lld-link` instead `link`
 
 set VSLANG=1033
 pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
-call "vcvarsall.bat" x64
+call "vcvarsall.bat" x64 >nul
 popd
 
 rem > OPTIONS
@@ -51,8 +52,8 @@ if defined unity_build (
 set warnings=%warnings% -wd5105
 
 rem > COMPILE AND LINK
-set timeStart=%time%
-set timeLink=%timeStart%
+set timeCompile=%time%
+set timeLink=%time%
 cd ..
 if not exist bin mkdir bin
 cd bin
@@ -79,6 +80,7 @@ if defined unity_build (
 set timeStop=%time%
 
 rem > REPORT
-echo start: %timeStart%
-echo link:  %timeLink%
-echo stop:  %timeStop%
+echo header:  %timeHeader%
+echo compile: %timeCompile%
+echo link:    %timeLink%
+echo stop:    %timeStop%

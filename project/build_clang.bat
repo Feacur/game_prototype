@@ -1,5 +1,6 @@
 @echo off
-chcp 65001
+set timeHeader=%time%
+chcp 65001 >nul
 
 set debug=dummy
 rem set unity_build=dummy
@@ -17,7 +18,7 @@ set "PATH=%PATH%;C:/Program Files/LLVM/bin"
 if not defined unity_build (
 	set VSLANG=1033
 	pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
-	call "vcvarsall.bat" x64
+	call "vcvarsall.bat" x64 >nul
 	popd
 )
 
@@ -48,8 +49,8 @@ if defined unity_build (
 set warnings=%warnings% -Wno-reserved-id-macro -Wno-nonportable-system-include-path -Wno-assign-enum
 
 rem > COMPILE AND LINK
-set timeStart=%time%
-set timeLink=%timeStart%
+set timeCompile=%time%
+set timeLink=%time%
 cd ..
 if not exist bin mkdir bin
 cd bin
@@ -73,13 +74,14 @@ if defined unity_build (
 	set timeLink=%time%
 	rem alternatively, `cd temp`, build, link, `cd ..`
 	rem but that seems awkward; `move` is quite fast anyways, unlike `lld-link` itself
-	move ".\*.o" ".\temp"
+	move ".\*.o" ".\temp" >nul
 	lld-link "./temp/*.o" libcmt.lib -out:"game.exe" %linker%
 )
 
 set timeStop=%time%
 
 rem > REPORT
-echo start: %timeStart%
-echo link:  %timeLink%
-echo stop:  %timeStop%
+echo header:  %timeHeader%
+echo compile: %timeCompile%
+echo link:    %timeLink%
+echo stop:    %timeStop%

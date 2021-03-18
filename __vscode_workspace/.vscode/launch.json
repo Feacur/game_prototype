@@ -2,16 +2,6 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Launch MSVC",
-			"type": "cppvsdbg",
-			"request": "launch",
-			"program": "bin/game.exe",
-			"args": [],
-			"cwd": "${workspaceFolder}/..",
-			"stopAtEntry": false,
-			"console": "integratedTerminal",
-		},
-		{
 			"name": "Launch LLDB",
 			"type": "lldb",
 			"request": "launch",
@@ -19,6 +9,16 @@
 			"args": [],
 			"cwd": "${workspaceFolder}/..",
 			"stopOnEntry": false,
+			"console": "integratedTerminal",
+		},
+		{
+			"name": "Launch MSVC",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "bin/game.exe",
+			"args": [],
+			"cwd": "${workspaceFolder}/..",
+			"stopAtEntry": false,
 			"console": "integratedTerminal",
 		},
 	]
