@@ -9,12 +9,13 @@
 #define FLOAT_NEG_INFINITY convert_bits_u32_r32(0xff800000)
 #define FLOAT_MAX convert_bits_u32_r32(0x7f7fffff)
 #define FLOAT_MIN convert_bits_u32_r32(0xff7fffff)
+#define FLOAT_ALMSOST_1 convert_bits_u32_r32(0x3f7fffff)
 
 float convert_bits_u32_r32(uint32_t value);
 uint32_t convert_bits_r32_u32(float value);
 
-#define U32_TO_R32_12(value) convert_bits_u32_r32((value >> 9) | 0x3f800000)
-#define U32_TO_R32_24(value) convert_bits_u32_r32((value >> 9) | 0x40000000)
+#define U32_TO_R32_12(value) convert_bits_u32_r32(0x3f800000 | (value >> 9))
+#define U32_TO_R32_24(value) convert_bits_u32_r32(0x40000000 | (value >> 9))
 
 uint32_t hash_bytes_fnv1(uint8_t const * value, uint32_t length);
 uint32_t hash_u32_xorshift(uint32_t value);

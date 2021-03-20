@@ -745,10 +745,10 @@ static bool graphics_should_blend(struct Blend_Func const * func) {
 
 static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 	glColorMask(
-		COLOR_CHANNEL_RED == (mode->mask & COLOR_CHANNEL_RED),
-		COLOR_CHANNEL_GREEN == (mode->mask & COLOR_CHANNEL_GREEN),
-		COLOR_CHANNEL_BLUE == (mode->mask & COLOR_CHANNEL_BLUE),
-		COLOR_CHANNEL_ALPHA == (mode->mask & COLOR_CHANNEL_ALPHA)
+		(mode->mask & COLOR_CHANNEL_RED),
+		(mode->mask & COLOR_CHANNEL_GREEN),
+		(mode->mask & COLOR_CHANNEL_BLUE),
+		(mode->mask & COLOR_CHANNEL_ALPHA)
 	);
 
 	glBlendColor(
@@ -781,6 +781,16 @@ static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 	}
 }
 
+static void graphics_set_depth_mode(bool enabled, bool mask) {
+	glDepthMask((enabled && mask) ? GL_TRUE : GL_FALSE);
+	if (enabled) {
+		glEnable(GL_DEPTH_TEST);
+	}
+	else {
+		glDisable(GL_DEPTH_TEST);
+	}
+}
+
 static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 	if (mask == TEXTURE_TYPE_NONE) { return; }
 
@@ -789,9 +799,6 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 	if (mask & TEXTURE_TYPE_DEPTH) { clear_bitfield |= GL_DEPTH_BUFFER_BIT; }
 	if (mask & TEXTURE_TYPE_STENCIL) { clear_bitfield |= GL_STENCIL_BUFFER_BIT; }
 
-	// glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	// glDepthMask(GL_TRUE);
-	
 	glClearColor(
 		((rgba >> 24) & 0xff) / 255.0f,
 		((rgba >> 16) & 0xff) / 255.0f,
@@ -806,6 +813,8 @@ void graphics_draw(struct Render_Pass const * pass) {
 	if (pass->target == NULL && pass->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
 
 	graphics_set_blend_mode(&pass->blend_mode);
+	graphics_set_depth_mode(pass->depth_enabled, pass->depth_mask);
+
 	graphics_select_target(pass->target);
 	graphics_clear(pass->clear_mask, pass->clear_rgba);
 
@@ -878,8 +887,6 @@ void graphics_to_glibrary_init(void) {
 	memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
 
 	//
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
 #if defined(REVERSE_Z)
 	glDepthRangef(1, 0);
 	glClearDepthf(0);

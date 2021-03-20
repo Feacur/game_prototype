@@ -284,8 +284,8 @@ struct mat4 mat4_set_projection(struct vec2 offset_xy, struct vec2 scale_xy, flo
 * NS_FCP: normalized-space far clipping plane
 
 > logic
-* XYZ: world space vector
-* XYZ': normalized space vector
+* XYZ: world-space vector
+* XYZ': normalized-space vector
 --- orthograhic
     XYZ' = (offset + scale * XYZ) / 1
     XY scale: from [-scale_xy .. scale_xy] to [-1 .. 1]

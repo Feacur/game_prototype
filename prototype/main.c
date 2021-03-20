@@ -55,6 +55,13 @@ static struct Game_State {
 	struct Gpu_Target * gpu_target;
 } state;
 
+static struct mat4 const mat4_identity = {
+	{1,0,0,0},
+	{0,1,0,0},
+	{0,0,1,0},
+	{0,0,0,1},
+};
+
 static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh);
 
 static void game_init(void) {
@@ -168,43 +175,10 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 }
 
 static void game_render(uint32_t size_x, uint32_t size_y) {
-	struct mat4 const mat4_identity = {
-		{1,0,0,0},
-		{0,1,0,0},
-		{0,0,1,0},
-		{0,0,0,1},
-	};
-
-	// clear target
-	graphics_draw(&(struct Render_Pass){
-		.target = state.gpu_target,
-		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-		//
-		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
-		.clear_rgba = 0x303030ff,
-	});
-
-	// draw 3d
-	graphics_draw(&(struct Render_Pass){
-		.target = state.gpu_target,
-		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-		//
-		.material = &state.material,
-		.mesh = content.gpu_mesh,
-		//
-		.camera_id = uniforms.camera,
-		.transform_id = uniforms.transform,
-		.camera = mat4_mul_mat(
-			mat4_set_projection((struct vec2){0, 0}, (struct vec2){1, (float)size_x / (float)size_y}, 0.1f, FLOAT_POS_INFINITY, 0),
-			mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
-		),
-		.transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation),
-	});
-
-	// draw 2d
 	uint32_t target_size_x, target_size_y;
 	gpu_target_get_size(state.gpu_target, &target_size_x, &target_size_y);
 
+	// draw into the batch mesh
 	batch_mesh_clear(state.batch);
 	batch_mesh_add(
 		state.batch,
@@ -219,36 +193,91 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	struct Asset_Mesh * batch_mesh = batch_mesh_get_mesh(state.batch);
 	gpu_mesh_update(state.gpu_mesh_batch, batch_mesh);
 
+	// target: clear
 	graphics_draw(&(struct Render_Pass){
 		.target = state.gpu_target,
 		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.depth_enabled = true, .depth_mask = true,
+		//
+		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
+		.clear_rgba = 0x303030ff,
+	});
+
+	// target: draw HUD
+	graphics_draw(&(struct Render_Pass){
+		.target = state.gpu_target,
+		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.depth_enabled = true, .depth_mask = true,
 		//
 		.material = &state.material,
 		.mesh = state.gpu_mesh_batch,
-		//
+		// draw at the nearest point, map to target buffer coords
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,
 		.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)target_size_x, 2 / (float)target_size_y}, 0, 1, 1),
 		.transform = mat4_identity,
 	});
 
-	// display target
+	// target: draw 3d
+	graphics_draw(&(struct Render_Pass){
+		.target = state.gpu_target,
+		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.depth_enabled = true, .depth_mask = true,
+		//
+		.material = &state.material,
+		.mesh = content.gpu_mesh,
+		// draw transformed, map to camera coords
+		.camera_id = uniforms.camera,
+		.transform_id = uniforms.transform,
+		.camera = mat4_mul_mat(
+			mat4_set_projection((struct vec2){0, 0}, (struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 10, 0),
+			mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
+		),
+		.transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation),
+	});
+
+	// screen buffer: clear
 	graphics_draw(&(struct Render_Pass){
 		.size_x = size_x, .size_y = size_y,
 		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.depth_enabled = true, .depth_mask = true,
 		//
 		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
 		.clear_rgba = 0x303030ff,
+	});
+
+	// screen buffer: draw HUD
+	graphics_draw(&(struct Render_Pass){
+		.size_x = size_x, .size_y = size_y,
+		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.depth_enabled = true, .depth_mask = true,
+		//
+		.material = &state.material,
+		.mesh = state.gpu_mesh_batch,
+		// draw at the nearest point, map to screen buffer coords
+		.camera_id = uniforms.camera,
+		.transform_id = uniforms.transform,
+		.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1),
+		.transform = mat4_identity,
+	});
+
+	// screen buffer: draw target
+	graphics_draw(&(struct Render_Pass){
+		.size_x = size_x, .size_y = size_y,
+		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.depth_enabled = true,
 		//
 		.material = &state.target_material,
 		.mesh = content.target_mesh,
-		//
+		// draw at the farthest point, map to normalized device coords
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,
 		.camera = mat4_identity,
-		.transform = mat4_identity,
+		.transform = mat4_set_transformation((struct vec3){0, 0, FLOAT_ALMSOST_1}, (struct vec3){1, 1, 1}, (struct vec4){0, 0, 0, 1}),
 	});
 }
+
+//
 
 int main (int argc, char * argv[]) {
 	(void)argc; (void)argv;

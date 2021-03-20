@@ -13,6 +13,7 @@ struct Render_Pass {
 	uint32_t size_x, size_y;
 	struct Gpu_Target * target;
 	struct Blend_Mode blend_mode;
+	bool depth_enabled; bool depth_mask;
 	//
 	enum Texture_Type clear_mask;
 	uint32_t clear_rgba;
