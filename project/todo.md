@@ -1,9 +1,9 @@
 # framework
 ```
-[ ] text rendering
-    [ ] GPU mesh data streaming
+[o] text rendering
+    [x] GPU mesh data streaming
     [ ] GPU texture data streaming, probably, too?
-    [ ] 2d batch renderer
+    [x] 2d batch renderer
     [ ] asset loader: *.ttf
 [ ] graphics
     [ ] elaborate the idea of render passes
