@@ -105,7 +105,7 @@ static void game_init(void) {
 	content.target_mesh = gpu_mesh_init(&target_quad);
 	content.asset_font = asset_font_init("assets/OpenSans-Regular.ttf");
 
-	float font_scale = asset_font_get_scale(content.asset_font, 64);
+	float font_scale = asset_font_get_scale(content.asset_font, 32);
 	uint32_t glyph_id = asset_font_get_glyph_id(content.asset_font, (uint32_t)'h');
 
 	struct Glyph_Params glyph_params;
@@ -113,7 +113,7 @@ static void game_init(void) {
 
 	struct Array_Byte font_buffer;
 	array_byte_init(&font_buffer);
-	array_byte_resize(&font_buffer, 64 * 64);
+	array_byte_resize(&font_buffer, 256 * 256);
 
 	if (!glyph_params.is_empty) {
 		uint32_t const font_size_x = (uint32_t)(((float)glyph_params.bmp_size_x) * font_scale);
@@ -121,7 +121,7 @@ static void game_init(void) {
 		if (font_buffer.capacity > font_size_x * font_size_y) {
 			asset_font_fill_buffer(
 				content.asset_font,
-				&font_buffer, 64,
+				&font_buffer, 256,
 				glyph_id,
 				font_size_x, font_size_y, font_scale
 			);
@@ -129,8 +129,8 @@ static void game_init(void) {
 	}
 
 	struct Asset_Image font_image = (struct Asset_Image){
-		.size_x = 64,
-		.size_y = 64,
+		.size_x = 256,
+		.size_y = 256,
 		.data = font_buffer.data,
 		.parameters = {
 			.texture_type = TEXTURE_TYPE_COLOR,
@@ -246,9 +246,9 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		state.batch,
 		(3 + 2) * 4, (float[]){
 			 0,  0, 0, 0, 1,
-			 0, 64, 0, 0, 0,
-			64,  0, 0, 1, 1,
-			64, 64, 0, 1, 0,
+			 0, 256, 0, 0, 0,
+			256,  0, 0, 1, 1,
+			256, 256, 0, 1, 0,
 		},
 		3 * 2, (uint32_t[]){1, 0, 2, 1, 2, 3}
 	);
@@ -267,26 +267,26 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	});
 
 	// target: draw HUD
-	graphics_draw(&(struct Render_Pass){
-		.target = state.gpu_target,
-		.blend_mode = {
-			.rgb = {
-				.op = BLEND_OP_ADD,
-				.src = BLEND_FACTOR_SRC_ALPHA,
-				.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-			},
-			.mask = COLOR_CHANNEL_FULL
-		},
-		.depth_enabled = true, .depth_mask = true,
-		//
-		.material = &state.font_material,
-		.mesh = state.gpu_mesh_batch,
-		// draw at the nearest point, map to target buffer coords
-		.camera_id = uniforms.camera,
-		.transform_id = uniforms.transform,
-		.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)target_size_x, 2 / (float)target_size_y}, 0, 1, 1),
-		.transform = mat4_identity,
-	});
+	// graphics_draw(&(struct Render_Pass){
+	// 	.target = state.gpu_target,
+	// 	.blend_mode = {
+	// 		.rgb = {
+	// 			.op = BLEND_OP_ADD,
+	// 			.src = BLEND_FACTOR_SRC_ALPHA,
+	// 			.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	// 		},
+	// 		.mask = COLOR_CHANNEL_FULL
+	// 	},
+	// 	.depth_enabled = true, .depth_mask = true,
+	// 	//
+	// 	.material = &state.font_material,
+	// 	.mesh = state.gpu_mesh_batch,
+	// 	// draw at the nearest point, map to target buffer coords
+	// 	.camera_id = uniforms.camera,
+	// 	.transform_id = uniforms.transform,
+	// 	.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)target_size_x, 2 / (float)target_size_y}, 0, 1, 1),
+	// 	.transform = mat4_identity,
+	// });
 
 	// target: draw 3d
 	graphics_draw(&(struct Render_Pass){
@@ -317,19 +317,26 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	});
 
 	// screen buffer: draw HUD
-	// graphics_draw(&(struct Render_Pass){
-	// 	.size_x = size_x, .size_y = size_y,
-	// 	.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-	// 	.depth_enabled = true, .depth_mask = true,
-	// 	//
-	// 	.material = &state.material,
-	// 	.mesh = state.gpu_mesh_batch,
-	// 	// draw at the nearest point, map to screen buffer coords
-	// 	.camera_id = uniforms.camera,
-	// 	.transform_id = uniforms.transform,
-	// 	.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1),
-	// 	.transform = mat4_identity,
-	// });
+	graphics_draw(&(struct Render_Pass){
+		.size_x = size_x, .size_y = size_y,
+		.blend_mode = {
+			.rgb = {
+				.op = BLEND_OP_ADD,
+				.src = BLEND_FACTOR_SRC_ALPHA,
+				.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+			},
+			.mask = COLOR_CHANNEL_FULL
+		},
+		.depth_enabled = true, .depth_mask = true,
+		//
+		.material = &state.font_material,
+		.mesh = state.gpu_mesh_batch,
+		// draw at the nearest point, map to screen buffer coords
+		.camera_id = uniforms.camera,
+		.transform_id = uniforms.transform,
+		.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1),
+		.transform = mat4_identity,
+	});
 
 	// screen buffer: draw target
 	graphics_draw(&(struct Render_Pass){
