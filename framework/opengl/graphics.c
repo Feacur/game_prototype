@@ -242,7 +242,7 @@ static struct Gpu_Texture * gpu_texture_allocate(
 	glCreateTextures(GL_TEXTURE_2D, 1, &texture_id);
 
 	// allocate buffer
-	GLsizei levels = 1;
+	GLsizei const levels = 1;
 	glTextureStorage2D(
 		texture_id, levels,
 		gpu_sized_internal_format(parameters->texture_type, parameters->data_type, parameters->channels),

@@ -15,6 +15,7 @@
 #include "framework/containers/array_byte.h"
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"
+#include "framework/assets/asset_font.h"
 
 #include "application/application.h"
 
@@ -33,23 +34,28 @@ struct Transform {
 static struct Game_Uniforms {
 	uint32_t color;
 	uint32_t texture;
+	uint32_t font;
 	uint32_t camera;
 	uint32_t transform;
 } uniforms;
 
 static struct Game_Content {
 	struct Gpu_Program * gpu_program;
+	struct Gpu_Program * gpu_program_font;
 	struct Gpu_Program * gpu_program_target;
 	struct Gpu_Texture * gpu_texture;
 	struct Gpu_Mesh * gpu_mesh;
 	struct Gpu_Mesh * target_mesh;
+	struct Asset_Font * asset_font;
 } content;
 
 static struct Game_State {
 	struct Transform camera;
 	struct Transform object;
 	struct Gfx_Material material;
+	struct Gfx_Material font_material;
 	struct Gfx_Material target_material;
+	struct Gpu_Texture * gpu_texture_font;
 	struct Batch_Mesh * batch;
 	struct Gpu_Mesh * gpu_mesh_batch;
 	struct Gpu_Target * gpu_target;
@@ -68,12 +74,16 @@ static void game_init(void) {
 	// init uniforms ids
 	uniforms.color = graphics_add_uniform("u_Color");
 	uniforms.texture = graphics_add_uniform("u_Texture");
+	uniforms.font = graphics_add_uniform("u_Font");
 	uniforms.camera = graphics_add_uniform("u_Camera");
 	uniforms.transform = graphics_add_uniform("u_Transform");
 
 	// load content
 	struct Array_Byte asset_shader;
 	platform_file_init(&asset_shader, "assets/test.glsl");
+
+	struct Array_Byte asset_shader_font;
+	platform_file_init(&asset_shader_font, "assets/font.glsl");
 	
 	struct Array_Byte asset_shader_target;
 	platform_file_init(&asset_shader_target, "assets/target.glsl");
@@ -88,12 +98,57 @@ static void game_init(void) {
 	asset_mesh_init__target_quad(&target_quad);
 
 	content.gpu_program = gpu_program_init(&asset_shader);
+	content.gpu_program_font = gpu_program_init(&asset_shader_font);
 	content.gpu_program_target = gpu_program_init(&asset_shader_target);
 	content.gpu_texture = gpu_texture_init(&asset_image);
 	content.gpu_mesh = gpu_mesh_init(&asset_mesh);
 	content.target_mesh = gpu_mesh_init(&target_quad);
+	content.asset_font = asset_font_init("assets/OpenSans-Regular.ttf");
+
+	float font_scale = asset_font_get_scale(content.asset_font, 64);
+	uint32_t glyph_id = asset_font_get_glyph_id(content.asset_font, (uint32_t)'h');
+
+	struct Glyph_Params glyph_params;
+	asset_font_get_glyph_parameters(content.asset_font, &glyph_params, glyph_id);
+
+	struct Array_Byte font_buffer;
+	array_byte_init(&font_buffer);
+	array_byte_resize(&font_buffer, 64 * 64);
+
+	if (!glyph_params.is_empty) {
+		uint32_t const font_size_x = (uint32_t)(((float)glyph_params.bmp_size_x) * font_scale);
+		uint32_t const font_size_y = (uint32_t)(((float)glyph_params.bmp_size_y) * font_scale);
+		if (font_buffer.capacity > font_size_x * font_size_y) {
+			asset_font_fill_buffer(
+				content.asset_font,
+				&font_buffer, 64,
+				glyph_id,
+				font_size_x, font_size_y, font_scale
+			);
+		}
+	}
+
+	struct Asset_Image font_image = (struct Asset_Image){
+		.size_x = 64,
+		.size_y = 64,
+		.data = font_buffer.data,
+		.parameters = {
+			.texture_type = TEXTURE_TYPE_COLOR,
+			.data_type = DATA_TYPE_U8,
+			.channels = 1,
+		},
+	};
+
+	state.gpu_texture_font = gpu_texture_init(&font_image);
+
+	array_byte_free(&font_buffer);
+
+	gfx_material_init(&state.font_material, content.gpu_program_font);
+	gfx_material_set_texture(&state.font_material, uniforms.font, 1, &state.gpu_texture_font);
+	gfx_material_set_float(&state.font_material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
 
 	platform_file_free(&asset_shader);
+	platform_file_free(&asset_shader_font);
 	platform_file_free(&asset_shader_target);
 	asset_image_free(&asset_image);
 	asset_mesh_free(&asset_mesh);
@@ -141,14 +196,21 @@ static void game_init(void) {
 
 static void game_free(void) {
 	gpu_program_free(content.gpu_program);
+	gpu_program_free(content.gpu_program_font);
 	gpu_program_free(content.gpu_program_target);
 	gpu_texture_free(content.gpu_texture);
 	gpu_mesh_free(content.gpu_mesh);
 	gpu_mesh_free(content.target_mesh);
+	asset_font_free(content.asset_font);
 
 	batch_mesh_free(state.batch);
 	gpu_mesh_free(state.gpu_mesh_batch);
 	gpu_target_free(state.gpu_target);
+	gpu_texture_free(state.gpu_texture_font);
+
+	gfx_material_free(&state.material);
+	gfx_material_free(&state.font_material);
+	gfx_material_free(&state.target_material);
 
 	memset(&uniforms, 0, sizeof(uniforms));
 	memset(&content, 0, sizeof(content));
@@ -182,12 +244,13 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	batch_mesh_clear(state.batch);
 	batch_mesh_add(
 		state.batch,
-		(3 + 2) * 3, (float[]){
-			 0,  0, 0, 0, 0,
-			 0, 90, 0, 0, 1,
-			90,  0, 0, 1, 0,
+		(3 + 2) * 4, (float[]){
+			 0,  0, 0, 0, 1,
+			 0, 64, 0, 0, 0,
+			64,  0, 0, 1, 1,
+			64, 64, 0, 1, 0,
 		},
-		3, (uint32_t[]){1, 0, 2}
+		3 * 2, (uint32_t[]){1, 0, 2, 1, 2, 3}
 	);
 
 	struct Asset_Mesh * batch_mesh = batch_mesh_get_mesh(state.batch);
@@ -206,10 +269,17 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	// target: draw HUD
 	graphics_draw(&(struct Render_Pass){
 		.target = state.gpu_target,
-		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.blend_mode = {
+			.rgb = {
+				.op = BLEND_OP_ADD,
+				.src = BLEND_FACTOR_SRC_ALPHA,
+				.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+			},
+			.mask = COLOR_CHANNEL_FULL
+		},
 		.depth_enabled = true, .depth_mask = true,
 		//
-		.material = &state.material,
+		.material = &state.font_material,
 		.mesh = state.gpu_mesh_batch,
 		// draw at the nearest point, map to target buffer coords
 		.camera_id = uniforms.camera,
@@ -247,19 +317,19 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	});
 
 	// screen buffer: draw HUD
-	graphics_draw(&(struct Render_Pass){
-		.size_x = size_x, .size_y = size_y,
-		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-		.depth_enabled = true, .depth_mask = true,
-		//
-		.material = &state.material,
-		.mesh = state.gpu_mesh_batch,
-		// draw at the nearest point, map to screen buffer coords
-		.camera_id = uniforms.camera,
-		.transform_id = uniforms.transform,
-		.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1),
-		.transform = mat4_identity,
-	});
+	// graphics_draw(&(struct Render_Pass){
+	// 	.size_x = size_x, .size_y = size_y,
+	// 	.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+	// 	.depth_enabled = true, .depth_mask = true,
+	// 	//
+	// 	.material = &state.material,
+	// 	.mesh = state.gpu_mesh_batch,
+	// 	// draw at the nearest point, map to screen buffer coords
+	// 	.camera_id = uniforms.camera,
+	// 	.transform_id = uniforms.transform,
+	// 	.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1),
+	// 	.transform = mat4_identity,
+	// });
 
 	// screen buffer: draw target
 	graphics_draw(&(struct Render_Pass){

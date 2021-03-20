@@ -4,7 +4,7 @@
 	"editor.renderWhitespace": "all",
 	"workbench.sideBar.location": "right",
 	"editor.minimap.enabled": false,
-	"editor.scrollBeyondLastColumn": 0,
-	"editor.scrollBeyondLastLine": false,
+	"editor.scrollBeyondLastColumn": 5,
+	"editor.scrollBeyondLastLine": true,
 	"terminal.integrated.shell.windows": "C:\\WINDOWS\\System32\\cmd.exe",
 }

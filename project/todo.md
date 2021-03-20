@@ -4,7 +4,7 @@
     [x] GPU mesh data streaming
     [ ] GPU texture data streaming, probably, too?
     [x] 2d batch renderer
-    [ ] asset loader: *.ttf
+    [x] asset loader: *.ttf
 [ ] graphics
     [ ] elaborate the idea of render passes
     [ ] GPU scissor test
