@@ -32,9 +32,9 @@
 			},
 		},
 		{
-			"label": "Build CL",
+			"label": "Build MSVC",
 			"group": "build",
-			"command": "build_cl.bat",
+			"command": "build_msvc.bat",
 			"problemMatcher": {
 				"owner": "c",
 				"fileLocation": ["autoDetect", "${workspaceFolder}"],

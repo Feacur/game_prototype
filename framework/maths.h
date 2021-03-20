@@ -1,7 +1,7 @@
 #if !defined(GAME_FRAMEWORK_MATHS)
 #define GAME_FRAMEWORK_MATHS
 
-#include "vectors.h"
+#include "vector_types.h"
 
 #define MATHS_PI 3.14159265359f
 #define MATHS_TAU 6.28318530718f

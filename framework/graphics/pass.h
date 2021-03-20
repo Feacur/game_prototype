@@ -1,7 +1,7 @@
 #if !defined(GAME_FRAMEWORK_GRAPHICS_PASS)
 #define GAME_FRAMEWORK_GRAPHICS_PASS
 
-#include "framework/vectors.h"
+#include "framework/vector_types.h"
 
 #include "types.h"
 
