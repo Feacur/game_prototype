@@ -9,4 +9,11 @@ void batch_mesh_free(struct Batch_Mesh * batch);
 
 struct Asset_Mesh * batch_mesh_get_mesh(struct Batch_Mesh * batch);
 
+void batch_mesh_clear(struct Batch_Mesh * batch);
+void batch_mesh_add(
+	struct Batch_Mesh * batch,
+	uint32_t vertices_count, float * vertices,
+	uint32_t indices_count, uint32_t * indices
+);
+
 #endif

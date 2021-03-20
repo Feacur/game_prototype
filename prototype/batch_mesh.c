@@ -19,9 +19,11 @@ struct Batch_Mesh * batch_mesh_init(uint32_t attributes_count, uint32_t const * 
 	struct Batch_Mesh * batch = MEMORY_ALLOCATE(struct Batch_Mesh);
 
 	uint32_t const buffers_count = 2;
-	batch->mesh.count = buffers_count;
-	batch->mesh.buffers = MEMORY_ALLOCATE_ARRAY(struct Array_Byte, buffers_count);
-	batch->mesh.settings = MEMORY_ALLOCATE_ARRAY(struct Mesh_Settings, buffers_count);
+	batch->mesh = (struct Asset_Mesh){
+		.count = buffers_count,
+		.buffers = MEMORY_ALLOCATE_ARRAY(struct Array_Byte, buffers_count),
+		.settings = MEMORY_ALLOCATE_ARRAY(struct Mesh_Settings, buffers_count),
+	};
 
 	batch->mesh.settings[0] = (struct Mesh_Settings){
 		.type = DATA_TYPE_R32,
@@ -39,9 +41,6 @@ struct Batch_Mesh * batch_mesh_init(uint32_t attributes_count, uint32_t const * 
 
 	array_float_init(&batch->vertices);
 	array_u32_init(&batch->indices);
-
-	array_float_resize(&batch->vertices, 1024);
-	array_u32_resize(&batch->indices, 256);
 
 	return batch;
 }
@@ -62,4 +61,18 @@ struct Asset_Mesh * batch_mesh_get_mesh(struct Batch_Mesh * batch) {
 	};
 
 	return &batch->mesh;
+}
+
+void batch_mesh_clear(struct Batch_Mesh * batch) {
+	batch->vertices.count = 0;
+	batch->indices.count = 0;
+}
+
+void batch_mesh_add(
+	struct Batch_Mesh * batch,
+	uint32_t vertices_count, float * vertices,
+	uint32_t indices_count, uint32_t * indices
+) {
+	array_float_write_many(&batch->vertices, vertices_count, vertices);
+	array_u32_write_many(&batch->indices, indices_count, indices);
 }

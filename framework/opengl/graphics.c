@@ -804,6 +804,14 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 
 void graphics_draw(struct Render_Pass const * pass) {
 	if (pass->target == NULL && pass->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
+
+	graphics_set_blend_mode(&pass->blend_mode);
+	graphics_select_target(pass->target);
+	graphics_clear(pass->clear_mask, pass->clear_rgba);
+
+	if (pass->mesh == NULL) { return; }
+	if (pass->material == NULL) { return; }
+	if (pass->material->program == NULL) { return; }
 	if (pass->mesh->elements_index == UINT32_MAX) { return; }
 
 	uint32_t const elements_count = pass->mesh->counts[pass->mesh->elements_index];
@@ -814,24 +822,17 @@ void graphics_draw(struct Render_Pass const * pass) {
 		gpu_target_get_size(pass->target, &size_x, &size_y);
 	}
 
-	graphics_select_target(pass->target);
-	graphics_clear(pass->clear_mask, pass->clear_rgba);
-
 	graphics_select_program(pass->material->program);
 	gfx_material_set_float(pass->material, pass->camera_id, 4*4, &pass->camera.x.x);
 	gfx_material_set_float(pass->material, pass->transform_id, 4*4, &pass->transform.x.x);
 	graphics_upload_uniforms(pass->material);
-
-	graphics_set_blend_mode(&pass->blend_mode);
-
-	struct Mesh_Settings const * elements_settings = pass->mesh->settings + pass->mesh->elements_index;
 
 	graphics_select_mesh(pass->mesh);
 	glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
 	glDrawElements(
 		GL_TRIANGLES,
 		(GLsizei)elements_count,
-		gpu_data_type(elements_settings->type),
+		gpu_data_type(pass->mesh->settings[pass->mesh->elements_index].type),
 		NULL
 	);
 }

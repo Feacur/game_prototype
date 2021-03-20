@@ -49,7 +49,9 @@ uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator) {
 	return a * numerator + b * numerator / denominator;
 }
 
-float lerp(float v1, float v2, float t) { return v1*(1 - t) + v2*t; }
+float lerp(float v1, float v2, float t) { return v1 + (v2 - v1)*t; }
+float lerp_stable(float v1, float v2, float t) { return v1*(1 - t) + v2*t; }
+float inverse_lerp(float v1, float v2, float value) { return (value - v1) / (v2 - v1); }
 
 float min_r32(float v1, float v2) { return (v1 < v2) ? v1 : v2; }
 float max_r32(float v1, float v2) { return (v1 > v2) ? v1 : v2; }
@@ -249,7 +251,7 @@ struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 sc
 	};
 }
 
-struct mat4 mat4_set_projection(struct vec2 scale_xy, float ncp, float fcp, float ortho) {
+struct mat4 mat4_set_projection(struct vec2 offset_xy, struct vec2 scale_xy, float ncp, float fcp, float ortho) {
 	float const NS_NCP = 0, NS_FCP = 1;
 	float const reverse_depth = 1 / (fcp - ncp);
 
@@ -265,10 +267,10 @@ struct mat4 mat4_set_projection(struct vec2 scale_xy, float ncp, float fcp, floa
 	float const ww = ortho;
 
 	return (struct mat4){
-		{scale_xy.x, 0,          0,        0},
-		{0,          scale_xy.y, 0,        0},
-		{0,          0,          scale_z,  zw},
-		{0,          0,          offset_z, ww},
+		{scale_xy.x,  0,           0,         0},
+		{0,           scale_xy.y,  0,         0},
+		{0,           0,           scale_z,  zw},
+		{offset_xy.x, offset_xy.y, offset_z, ww},
 	};
 
 /*

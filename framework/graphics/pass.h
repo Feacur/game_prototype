@@ -12,11 +12,11 @@ struct Gpu_Mesh;
 struct Render_Pass {
 	uint32_t size_x, size_y;
 	struct Gpu_Target * target;
+	struct Blend_Mode blend_mode;
 	//
 	enum Texture_Type clear_mask;
 	uint32_t clear_rgba;
 	//
-	struct Blend_Mode blend_mode;
 	struct Gfx_Material * material;
 	struct Gpu_Mesh * mesh;
 	//
