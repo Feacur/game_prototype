@@ -18,6 +18,8 @@
 
 #include "application/application.h"
 
+#include "batch_mesh.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,9 +49,10 @@ static struct Game_State {
 	struct Transform camera;
 	struct Transform object;
 	struct Gfx_Material material;
-	//
-	struct Gpu_Target * gpu_target;
 	struct Gfx_Material target_material;
+	struct Batch_Mesh * batch;
+	struct Gpu_Mesh * gpu_mesh_batch;
+	struct Gpu_Target * gpu_target;
 } state;
 
 static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh);
@@ -74,14 +77,14 @@ static void game_init(void) {
 	struct Asset_Mesh asset_mesh;
 	asset_mesh_init(&asset_mesh, "assets/cube.obj");
 
-	struct Asset_Mesh asset_target_quad;
-	asset_mesh_init__target_quad(&asset_target_quad);
+	struct Asset_Mesh target_quad;
+	asset_mesh_init__target_quad(&target_quad);
 
 	content.gpu_program = gpu_program_init(&asset_shader);
 	content.gpu_program_target = gpu_program_init(&asset_shader_target);
 	content.gpu_texture = gpu_texture_init(&asset_image);
 	content.gpu_mesh = gpu_mesh_init(&asset_mesh);
-	content.target_mesh = gpu_mesh_init(&asset_target_quad);
+	content.target_mesh = gpu_mesh_init(&target_quad);
 
 	platform_file_free(&asset_shader);
 	platform_file_free(&asset_shader_target);
@@ -101,6 +104,9 @@ static void game_init(void) {
 		.rotation = (struct vec4){0, 0, 0, 1},
 	};
 
+	state.batch = batch_mesh_init(2, (uint32_t[]){3, 2}, (uint32_t[]){0, 1});
+	state.gpu_mesh_batch = gpu_mesh_init(batch_mesh_get_mesh(state.batch));
+
 	gfx_material_init(&state.material, content.gpu_program);
 	gfx_material_set_texture(&state.material, uniforms.texture, 1, &content.gpu_texture);
 	gfx_material_set_float(&state.material, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
@@ -118,7 +124,7 @@ static void game_init(void) {
 				.data_type = DATA_TYPE_R32,
 			},
 		},
-		(bool[]){true, false}, // readable color texture, 
+		(bool[]){true, false}, // readable color texture
 		2
 	);
 	struct Gpu_Texture * target_texture = gpu_target_get_texture(state.gpu_target, TEXTURE_TYPE_COLOR, 0);
@@ -132,6 +138,9 @@ static void game_free(void) {
 	gpu_texture_free(content.gpu_texture);
 	gpu_mesh_free(content.gpu_mesh);
 	gpu_mesh_free(content.target_mesh);
+
+	batch_mesh_free(state.batch);
+	gpu_mesh_free(state.gpu_mesh_batch);
 	gpu_target_free(state.gpu_target);
 
 	memset(&uniforms, 0, sizeof(uniforms));
@@ -165,6 +174,26 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		{0,0,1,0},
 		{0,0,0,1},
 	};
+
+	//
+	struct Asset_Mesh * batch_mesh = batch_mesh_get_mesh(state.batch);
+	gpu_mesh_update(state.gpu_mesh_batch, batch_mesh);
+
+	graphics_draw(&(struct Render_Pass){
+		.target = state.gpu_target,
+		//
+		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
+		.clear_rgba = 0x303030ff,
+		//
+		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.material = &state.material,
+		.mesh = state.gpu_mesh_batch,
+		//
+		.camera_id = uniforms.camera,
+		.transform_id = uniforms.transform,
+		.camera = mat4_set_projection((struct vec2){1, (float)size_x / (float)size_y}, 0, 1, 1),
+		.transform = mat4_identity,
+	});
 
 	//
 	graphics_draw(&(struct Render_Pass){
@@ -231,8 +260,8 @@ static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
 		 1, -1, 0, 1, 0,
 		 1,  1, 0, 1, 1,
 	};
-	static uint32_t sizes[] = {3, 2};
-	static uint32_t locations[] = {0, 1};
+	uint32_t const sizes[] = {3, 2};
+	uint32_t const locations[] = {0, 1};
 	static uint32_t indices[] = {1, 0, 2, 1, 2, 3};
 
 	//

@@ -37,7 +37,14 @@ struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum
 
 // -- GPU mesh part
 struct Gpu_Mesh;
+struct Gpu_Mesh * gpu_mesh_allocate(
+	uint32_t buffers_count,
+	uint32_t * byte_lengths,
+	struct Mesh_Settings const * settings_set
+);
 struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset);
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh);
+
+void gpu_mesh_update(struct Gpu_Mesh * gpu_mesh, struct Asset_Mesh * asset);
 
 #endif

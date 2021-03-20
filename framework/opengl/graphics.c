@@ -69,10 +69,11 @@ struct Gpu_Target {
 
 struct Gpu_Mesh {
 	GLuint id;
-	uint32_t count;
+	uint32_t buffers_count;
 	GLuint buffer_ids[MAX_MESH_BUFFERS];
 	struct Mesh_Settings settings[MAX_MESH_BUFFERS];
-	uint32_t lengths[MAX_MESH_BUFFERS];
+	uint32_t capacities[MAX_MESH_BUFFERS];
+	uint32_t counts[MAX_MESH_BUFFERS];
 	uint32_t elements_index;
 };
 
@@ -407,7 +408,7 @@ struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum
 }
 
 // -- GPU mesh part
-static struct Gpu_Mesh * gpu_mesh_allocate(
+struct Gpu_Mesh * gpu_mesh_allocate(
 	uint32_t buffers_count,
 	uint32_t * byte_lengths,
 	struct Mesh_Settings const * settings_set
@@ -421,7 +422,7 @@ static struct Gpu_Mesh * gpu_mesh_allocate(
 	glCreateVertexArrays(1, &mesh_id);
 
 	GLuint buffer_ids[MAX_MESH_BUFFERS];
-	uint32_t lengths[MAX_MESH_BUFFERS];
+	uint32_t capacities[MAX_MESH_BUFFERS];
 
 	// allocate buffers
 	for (uint32_t i = 0; i < buffers_count; i++) {
@@ -434,7 +435,7 @@ static struct Gpu_Mesh * gpu_mesh_allocate(
 			gpu_mesh_usage_pattern(settings->frequency, settings->access)
 		);
 
-		lengths[i] = byte_lengths[i] / data_type_get_size(settings->type);
+		capacities[i] = byte_lengths[i] / data_type_get_size(settings->type);
 	}
 
 	// chart buffers
@@ -482,12 +483,13 @@ static struct Gpu_Mesh * gpu_mesh_allocate(
 	struct Gpu_Mesh * gpu_mesh = MEMORY_ALLOCATE(struct Gpu_Mesh);
 	*gpu_mesh = (struct Gpu_Mesh){
 		.id = mesh_id,
-		.count = buffers_count,
+		.buffers_count = buffers_count,
 		.elements_index = elements_index,
 	};
 	memcpy(gpu_mesh->buffer_ids, buffer_ids, buffers_count * sizeof(*buffer_ids));
 	memcpy(gpu_mesh->settings, settings_set, buffers_count * sizeof(*settings_set));
-	memcpy(gpu_mesh->lengths, lengths, buffers_count * sizeof(*lengths));
+	memcpy(gpu_mesh->capacities, capacities, buffers_count * sizeof(*capacities));
+	memset(gpu_mesh->counts, 0, buffers_count * sizeof(*capacities));
 	return gpu_mesh;
 }
 
@@ -501,16 +503,7 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 		asset->count, byte_lengths, asset->settings
 	);
 
-	for (uint32_t i = 0; i < gpu_mesh->count; i++) {
-		struct Array_Byte const * buffer = asset->buffers + i;
-		if (buffer->count == 0) { continue; }
-		if (buffer->data == NULL) { continue; }
-		glNamedBufferSubData(
-			gpu_mesh->buffer_ids[i], 0,
-			(GLsizeiptr)buffer->count,
-			buffer->data
-		);
-	}
+	gpu_mesh_update(gpu_mesh, asset);
 
 	return gpu_mesh;
 }
@@ -518,11 +511,43 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
 	if (ogl_version > 0) {
 		if (graphics_state.active_mesh == gpu_mesh) { graphics_state.active_mesh = NULL; }
-		glDeleteBuffers((GLsizei)gpu_mesh->count, gpu_mesh->buffer_ids);
+		glDeleteBuffers((GLsizei)gpu_mesh->buffers_count, gpu_mesh->buffer_ids);
 		glDeleteVertexArrays(1, &gpu_mesh->id);
 	}
 	memset(gpu_mesh, 0, sizeof(*gpu_mesh));
 	MEMORY_FREE(gpu_mesh);
+}
+
+void gpu_mesh_update(struct Gpu_Mesh * gpu_mesh, struct Asset_Mesh * asset) {
+	for (uint32_t i = 0; i < gpu_mesh->buffers_count; i++) {
+		struct Array_Byte const * buffer = asset->buffers + i;
+
+		gpu_mesh->counts[i] = 0;
+
+		if (buffer->count == 0) { continue; }
+		if (buffer->data == NULL) { continue; }
+
+		struct Mesh_Settings const * settings = asset->settings + i;
+		uint32_t const data_type_size = data_type_get_size(settings->type);
+
+		gpu_mesh->counts[i] = buffer->count / data_type_size;
+
+		if (gpu_mesh->capacities[i] * data_type_size >= buffer->count) {
+			glNamedBufferSubData(
+				gpu_mesh->buffer_ids[i], 0,
+				(GLsizeiptr)buffer->count,
+				buffer->data
+			);
+		}
+		else {
+			gpu_mesh->capacities[i] = gpu_mesh->counts[i];
+			glNamedBufferData(
+				gpu_mesh->buffer_ids[i],
+				(GLsizeiptr)buffer->count, buffer->data,
+				gpu_mesh_usage_pattern(settings->frequency, settings->access)
+			);
+		}
+	}
 }
 
 //
@@ -781,6 +806,9 @@ void graphics_draw(struct Render_Pass const * pass) {
 	if (pass->target == NULL && pass->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
 	if (pass->mesh->elements_index == UINT32_MAX) { return; }
 
+	uint32_t const elements_count = pass->mesh->counts[pass->mesh->elements_index];
+	if (elements_count == 0) { return; }
+
 	uint32_t size_x = pass->size_x, size_y = pass->size_y;
 	if (pass->target != NULL) {
 		gpu_target_get_size(pass->target, &size_x, &size_y);
@@ -796,12 +824,14 @@ void graphics_draw(struct Render_Pass const * pass) {
 
 	graphics_set_blend_mode(&pass->blend_mode);
 
+	struct Mesh_Settings const * elements_settings = pass->mesh->settings + pass->mesh->elements_index;
+
 	graphics_select_mesh(pass->mesh);
 	glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
 	glDrawElements(
 		GL_TRIANGLES,
-		(GLsizei)pass->mesh->lengths[pass->mesh->elements_index],
-		gpu_data_type(pass->mesh->settings[pass->mesh->elements_index].type),
+		(GLsizei)elements_count,
+		gpu_data_type(elements_settings->type),
 		NULL
 	);
 }

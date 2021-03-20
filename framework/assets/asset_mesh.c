@@ -9,6 +9,22 @@
 //
 #include "asset_mesh.h"
 
+static void asset_mesh_obj_unpack(
+	struct Asset_Mesh_Obj const * obj,
+	struct Array_Float * vertices,
+	struct Array_U32 * sizes,
+	struct Array_U32 * locations,
+	struct Array_U32 * indices
+);
+
+static void asset_mesh_fill(
+	struct Array_Float const * vertices,
+	struct Array_U32 const * sizes,
+	struct Array_U32 const * locations,
+	struct Array_U32 const * indices,
+	struct Asset_Mesh * asset_mesh
+);
+
 void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
 	struct Array_Byte file;
 	platform_file_init(&file, path);
@@ -20,79 +36,27 @@ void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
 	array_byte_free(&file);
 
 	//
-
 	struct Array_Float vertices;
 	struct Array_U32 sizes, locations;
 	struct Array_U32 indices;
 
-	array_float_init(&vertices);
-	array_u32_init(&sizes);
-	array_u32_init(&locations);
-	array_u32_init(&indices);
-
-	if (obj.positions.count > 0) { array_u32_write(&sizes, 3); }
-	if (obj.texcoords.count > 0) { array_u32_write(&sizes, 2); }
-	if (obj.normals.count > 0) { array_u32_write(&sizes, 3); }
-
-	if (obj.positions.count > 0) { array_u32_write(&locations, 0); }
-	if (obj.texcoords.count > 0) { array_u32_write(&locations, 1); }
-	if (obj.normals.count > 0) { array_u32_write(&locations, 2); }
-
-	uint32_t indices_count = obj.triangles.count / 3;
-	for (uint32_t i = 0, vertex_id = 0; i < indices_count; i++) {
-		uint32_t const vertex_index[] = {
-			obj.triangles.data[i * 3 + 0],
-			obj.triangles.data[i * 3 + 1],
-			obj.triangles.data[i * 3 + 2],
-		};
-
-		// @todo: reuse matching vertices instead of copying them
-		//        naive linear search would be quadrativally slow,
-		//        so a hashset it is
-
-		if (obj.positions.count > 0) { array_float_write_many(&vertices, 3, obj.positions.data + vertex_index[0] * 3); }
-		if (obj.texcoords.count > 0) { array_float_write_many(&vertices, 2, obj.texcoords.data + vertex_index[1] * 2); }
-		if (obj.normals.count > 0) { array_float_write_many(&vertices, 3, obj.normals.data + vertex_index[2] * 3); }
-
-		array_u32_write(&indices, vertex_id);
-		vertex_id++;
-	}
+	asset_mesh_obj_unpack(
+		&obj,
+		&vertices,
+		&sizes, &locations,
+		&indices
+	);
 
 	asset_mesh_obj_free(&obj);
 
 	//
-	uint32_t const count = 2;
-	asset_mesh->capacity = count;
-	asset_mesh->count = count;
-	asset_mesh->buffers = MEMORY_ALLOCATE_ARRAY(struct Array_Byte, count);
-	asset_mesh->settings = MEMORY_ALLOCATE_ARRAY(struct Mesh_Settings, count);
+	asset_mesh_fill(
+		&vertices,
+		&sizes, &locations,
+		&indices,
+		asset_mesh
+	);
 
-	asset_mesh->buffers[0] = (struct Array_Byte){
-		.data = (uint8_t *)vertices.data,
-		.count = vertices.count * sizeof(float),
-		.capacity = vertices.capacity * sizeof(float),
-	};
-	asset_mesh->buffers[1] = (struct Array_Byte){
-		.data = (uint8_t *)indices.data,
-		.count = indices.count * sizeof(uint32_t),
-		.capacity = indices.capacity * sizeof(uint32_t),
-	};
-
-	asset_mesh->settings[0] = (struct Mesh_Settings){
-		.type = DATA_TYPE_R32,
-		.frequency = MESH_FREQUENCY_STATIC,
-		.access = MESH_ACCESS_DRAW,
-		.count = locations.count,
-	};
-	asset_mesh->settings[1] = (struct Mesh_Settings){
-		.type = DATA_TYPE_U32,
-		.frequency = MESH_FREQUENCY_STATIC,
-		.access = MESH_ACCESS_DRAW,
-		.is_index = true,
-	};
-	memcpy(asset_mesh->settings[0].sizes, sizes.data, sizes.count * sizeof(uint32_t));
-	memcpy(asset_mesh->settings[0].locations, locations.data, locations.count * sizeof(uint32_t));
-	
 	array_u32_free(&sizes);
 	array_u32_free(&locations);
 }
@@ -106,4 +70,90 @@ void asset_mesh_free(struct Asset_Mesh * asset_mesh) {
 		MEMORY_FREE(asset_mesh->settings);
 	}
 	memset(asset_mesh, 0, sizeof(*asset_mesh));
+}
+
+//
+
+static void asset_mesh_obj_unpack(
+	struct Asset_Mesh_Obj const * obj,
+	struct Array_Float * vertices,
+	struct Array_U32 * sizes,
+	struct Array_U32 * locations,
+	struct Array_U32 * indices
+) {
+	array_float_init(vertices);
+	array_u32_init(sizes);
+	array_u32_init(locations);
+	array_u32_init(indices);
+
+	if (obj->positions.count > 0) { array_u32_write(sizes, 3); }
+	if (obj->texcoords.count > 0) { array_u32_write(sizes, 2); }
+	if (obj->normals.count > 0) { array_u32_write(sizes, 3); }
+
+	if (obj->positions.count > 0) { array_u32_write(locations, 0); }
+	if (obj->texcoords.count > 0) { array_u32_write(locations, 1); }
+	if (obj->normals.count > 0) { array_u32_write(locations, 2); }
+
+	uint32_t indices_count = obj->triangles.count / 3;
+	for (uint32_t i = 0, vertex_id = 0; i < indices_count; i++) {
+		uint32_t const vertex_index[] = {
+			obj->triangles.data[i * 3 + 0],
+			obj->triangles.data[i * 3 + 1],
+			obj->triangles.data[i * 3 + 2],
+		};
+
+		// @todo: reuse matching vertices instead of copying them
+		//        naive linear search would be quadrativally slow,
+		//        so a hashset it is
+
+		if (obj->positions.count > 0) { array_float_write_many(vertices, 3, obj->positions.data + vertex_index[0] * 3); }
+		if (obj->texcoords.count > 0) { array_float_write_many(vertices, 2, obj->texcoords.data + vertex_index[1] * 2); }
+		if (obj->normals.count > 0) { array_float_write_many(vertices, 3, obj->normals.data + vertex_index[2] * 3); }
+
+		array_u32_write(indices, vertex_id);
+		vertex_id++;
+	}
+}
+
+static void asset_mesh_fill(
+	struct Array_Float const * vertices,
+	struct Array_U32 const * sizes,
+	struct Array_U32 const * locations,
+	struct Array_U32 const * indices,
+	struct Asset_Mesh * asset_mesh
+) {
+	if (vertices->count == 0) { return; }
+	if (indices->count == 0) { return; }
+
+	uint32_t const count = 2;
+	asset_mesh->capacity = count;
+	asset_mesh->count = count;
+	asset_mesh->buffers = MEMORY_ALLOCATE_ARRAY(struct Array_Byte, count);
+	asset_mesh->settings = MEMORY_ALLOCATE_ARRAY(struct Mesh_Settings, count);
+
+	asset_mesh->buffers[0] = (struct Array_Byte){
+		.data = (uint8_t *)vertices->data,
+		.count = vertices->count * sizeof(float),
+		.capacity = vertices->capacity * sizeof(float),
+	};
+	asset_mesh->buffers[1] = (struct Array_Byte){
+		.data = (uint8_t *)indices->data,
+		.count = indices->count * sizeof(uint32_t),
+		.capacity = indices->capacity * sizeof(uint32_t),
+	};
+
+	asset_mesh->settings[0] = (struct Mesh_Settings){
+		.type = DATA_TYPE_R32,
+		.frequency = MESH_FREQUENCY_STATIC,
+		.access = MESH_ACCESS_DRAW,
+		.count = locations->count,
+	};
+	asset_mesh->settings[1] = (struct Mesh_Settings){
+		.type = DATA_TYPE_U32,
+		.frequency = MESH_FREQUENCY_STATIC,
+		.access = MESH_ACCESS_DRAW,
+		.is_index = true,
+	};
+	memcpy(asset_mesh->settings[0].sizes, sizes->data, sizes->count * sizeof(uint32_t));
+	memcpy(asset_mesh->settings[0].locations, locations->data, locations->count * sizeof(uint32_t));
 }
