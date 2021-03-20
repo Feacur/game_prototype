@@ -15,7 +15,7 @@ struct Batch_Mesh {
 //
 #include "batch_mesh.h"
 
-struct Batch_Mesh * batch_mesh_init(uint32_t attributes_count, uint32_t const * sizes, uint32_t const * locations) {
+struct Batch_Mesh * batch_mesh_init(uint32_t attributes_count, uint32_t const * attributes) {
 	struct Batch_Mesh * batch = MEMORY_ALLOCATE(struct Batch_Mesh);
 
 	uint32_t const buffers_count = 2;
@@ -27,7 +27,7 @@ struct Batch_Mesh * batch_mesh_init(uint32_t attributes_count, uint32_t const * 
 		.type = DATA_TYPE_R32,
 		.frequency = MESH_FREQUENCY_STREAM,
 		.access = MESH_ACCESS_DRAW,
-		.count = attributes_count,
+		.attributes_count = attributes_count,
 	};
 	batch->mesh.settings[1] = (struct Mesh_Settings){
 		.type = DATA_TYPE_U32,
@@ -35,8 +35,7 @@ struct Batch_Mesh * batch_mesh_init(uint32_t attributes_count, uint32_t const * 
 		.access = MESH_ACCESS_DRAW,
 		.is_index = true,
 	};
-	memcpy(batch->mesh.settings[0].sizes, sizes, attributes_count * sizeof(uint32_t));
-	memcpy(batch->mesh.settings[0].locations, locations, attributes_count * sizeof(uint32_t));
+	memcpy(batch->mesh.settings[0].attributes, attributes, attributes_count * 2 * sizeof(uint32_t));
 
 	array_float_init(&batch->vertices);
 	array_u32_init(&batch->indices);

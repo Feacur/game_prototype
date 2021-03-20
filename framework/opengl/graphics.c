@@ -452,8 +452,8 @@ struct Gpu_Mesh * gpu_mesh_allocate(
 
 		// vertex buffer
 		uint32_t all_attributes_size = 0;
-		for (uint32_t atti = 0; atti < settings->count; atti++) {
-			all_attributes_size += settings->sizes[atti] * data_type_get_size(settings->type);
+		for (uint32_t atti = 0; atti < settings->attributes_count; atti++) {
+			all_attributes_size += settings->attributes[atti * 2 + 1] * data_type_get_size(settings->type);
 		}
 
 		GLuint buffer_index = 0;
@@ -461,9 +461,9 @@ struct Gpu_Mesh * gpu_mesh_allocate(
 		glVertexArrayVertexBuffer(mesh_id, buffer_index, buffer_ids[i], buffer_start, (GLsizei)all_attributes_size);
 
 		uint32_t attribute_offset = 0;
-		for (uint32_t atti = 0; atti < settings->count; atti++) {
-			GLuint location = (GLuint)settings->locations[atti];
-			uint32_t size = settings->sizes[atti];
+		for (uint32_t atti = 0; atti < settings->attributes_count; atti++) {
+			GLuint location = (GLuint)settings->attributes[atti * 2];
+			uint32_t size = settings->attributes[atti * 2 + 1];
 			glEnableVertexArrayAttrib(mesh_id, location);
 			glVertexArrayAttribBinding(mesh_id, location, buffer_index);
 			glVertexArrayAttribFormat(

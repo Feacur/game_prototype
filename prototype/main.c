@@ -104,7 +104,7 @@ static void game_init(void) {
 		.rotation = (struct vec4){0, 0, 0, 1},
 	};
 
-	state.batch = batch_mesh_init(2, (uint32_t[]){3, 2}, (uint32_t[]){0, 1});
+	state.batch = batch_mesh_init(2, (uint32_t[]){0, 3, 1, 2});
 	state.gpu_mesh_batch = gpu_mesh_init(batch_mesh_get_mesh(state.batch));
 
 	gfx_material_init(&state.material, content.gpu_program);
@@ -260,8 +260,6 @@ static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
 		 1, -1, 0, 1, 0,
 		 1,  1, 0, 1, 1,
 	};
-	uint32_t const sizes[] = {3, 2};
-	uint32_t const locations[] = {0, 1};
 	static uint32_t indices[] = {1, 0, 2, 1, 2, 3};
 
 	//
@@ -281,7 +279,9 @@ static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
 			.type = DATA_TYPE_R32,
 			.frequency = MESH_FREQUENCY_STATIC,
 			.access = MESH_ACCESS_DRAW,
-			.count = sizeof(locations) / sizeof(*locations),
+			.attributes_count = 2,
+			.attributes[0] = 0, .attributes[1] = 3,
+			.attributes[2] = 1, .attributes[3] = 2,
 		},
 		[1] = {
 			.type = DATA_TYPE_U32,
@@ -290,8 +290,6 @@ static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
 			.is_index = true,
 		},
 	};
-	memcpy(settings[0].sizes, sizes, sizeof(sizes));
-	memcpy(settings[0].locations, locations, sizeof(locations));
 
 	*asset_mesh = (struct Asset_Mesh){
 		.count = 2,

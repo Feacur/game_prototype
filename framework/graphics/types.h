@@ -178,14 +178,14 @@ struct Texture_Settings {
 	bool mirror_wrap_x, mirror_wrap_y;
 };
 
-#define MAX_MESH_LOCATIONS 3
+#define MAX_MESH_ATTRIBUTES (2 * 3)
 
 struct Mesh_Settings {
 	enum Data_Type type;
 	enum Mesh_Frequency frequency;
 	enum Mesh_Access access;
-	uint32_t sizes[MAX_MESH_LOCATIONS], locations[MAX_MESH_LOCATIONS];
-	uint32_t count;
+	uint32_t attributes_count;
+	uint32_t attributes[MAX_MESH_ATTRIBUTES];
 	bool is_index;
 };
 
