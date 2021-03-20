@@ -22,10 +22,10 @@ in vec2 v_TexCoord;
 
 uniform sampler2D u_Texture;
 
-layout(location = 0) out vec4 color;
+layout(location = 0) out vec4 out_color;
 
 void main()
 {
-	color = texture(u_Texture, v_TexCoord);
+	out_color = texture(u_Texture, v_TexCoord);
 }
 #endif
