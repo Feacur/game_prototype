@@ -1,11 +1,8 @@
 #if !defined(GAME_FRAMEWORK_GRAPHICS)
 #define GAME_FRAMEWORK_GRAPHICS
 
-#include "framework/common.h"
+#include "pass.h"
 
-#include "types.h"
-
-struct Gpu_Target;
 struct Render_Pass;
 
 uint32_t graphics_add_uniform(char const * name);

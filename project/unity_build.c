@@ -34,5 +34,6 @@
 #endif
 
 #include "application/application.c"
-#include "prototype/gfx_batch.c"
+#include "prototype/batch_mesh.c"
+#include "prototype/font_image.c"
 #include "prototype/main.c"

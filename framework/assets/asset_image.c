@@ -50,6 +50,7 @@ void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 	array_byte_free(&file);
 
 	*asset_image = (struct Asset_Image){
+		.capacity = (uint32_t)(size_x * size_y),
 		.size_x = (uint32_t)size_x,
 		.size_y = (uint32_t)size_y,
 		.data = image_bytes,
@@ -66,6 +67,8 @@ void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 }
 
 void asset_image_free(struct Asset_Image * asset_image) {
-	MEMORY_FREE(asset_image->data);
+	if (asset_image->capacity > 0) {
+		MEMORY_FREE(asset_image->data);
+	}
 	memset(asset_image, 0, sizeof(*asset_image));
 }

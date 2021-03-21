@@ -20,6 +20,7 @@
 #include "application/application.h"
 
 #include "batch_mesh.h"
+#include "font_image.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,13 +41,17 @@ static struct Game_Uniforms {
 } uniforms;
 
 static struct Game_Content {
-	struct Gpu_Program * gpu_program_test;
-	struct Gpu_Program * gpu_program_font;
-	struct Gpu_Program * gpu_program_target;
-	struct Gpu_Texture * gpu_texture_test;
-	struct Gpu_Mesh * gpu_mesh_cube;
+	struct {
+		struct Asset_Font * font;
+	} assets;
 	//
-	struct Asset_Font * asset_font;
+	struct {
+		struct Gpu_Program * program_test;
+		struct Gpu_Program * program_font;
+		struct Gpu_Program * program_target;
+		struct Gpu_Texture * texture_test;
+		struct Gpu_Mesh * mesh_cube;
+	} gpu;
 	//
 	struct {
 		struct Gfx_Material test;
@@ -55,9 +60,8 @@ static struct Game_Content {
 	} materials;
 } content;
 
-
 static struct Game_Font {
-	struct Asset_Image buffer;
+	struct Font_Image * buffer;
 	struct Gpu_Texture * gpu_texture;
 } font;
 
@@ -95,6 +99,8 @@ static void game_init(void) {
 
 	// load content
 	{
+		content.assets.font = asset_font_init("assets/OpenSans-Regular.ttf");
+
 		struct Array_Byte asset_shader_test;
 		platform_file_init(&asset_shader_test, "assets/test.glsl");
 
@@ -110,11 +116,11 @@ static void game_init(void) {
 		struct Asset_Mesh asset_mesh_cube;
 		asset_mesh_init(&asset_mesh_cube, "assets/cube.obj");
 
-		content.gpu_program_test = gpu_program_init(&asset_shader_test);
-		content.gpu_program_font = gpu_program_init(&asset_shader_font);
-		content.gpu_program_target = gpu_program_init(&asset_shader_target);
-		content.gpu_texture_test = gpu_texture_init(&asset_image_test);
-		content.gpu_mesh_cube = gpu_mesh_init(&asset_mesh_cube);
+		content.gpu.program_test = gpu_program_init(&asset_shader_test);
+		content.gpu.program_font = gpu_program_init(&asset_shader_font);
+		content.gpu.program_target = gpu_program_init(&asset_shader_target);
+		content.gpu.texture_test = gpu_texture_init(&asset_image_test);
+		content.gpu.mesh_cube = gpu_mesh_init(&asset_mesh_cube);
 
 		platform_file_free(&asset_shader_test);
 		platform_file_free(&asset_shader_font);
@@ -122,11 +128,9 @@ static void game_init(void) {
 		asset_image_free(&asset_image_test);
 		asset_mesh_free(&asset_mesh_cube);
 
-		content.asset_font = asset_font_init("assets/OpenSans-Regular.ttf");
-
-		gfx_material_init(&content.materials.test, content.gpu_program_test);
-		gfx_material_init(&content.materials.font, content.gpu_program_font);
-		gfx_material_init(&content.materials.target, content.gpu_program_target);
+		gfx_material_init(&content.materials.test, content.gpu.program_test);
+		gfx_material_init(&content.materials.font, content.gpu.program_font);
+		gfx_material_init(&content.materials.target, content.gpu.program_target);
 	}
 
 	// init target
@@ -154,47 +158,20 @@ static void game_init(void) {
 
 	// init font
 	{
-		font.buffer = (struct Asset_Image){
-			.size_x = 256,
-			.size_y = 256,
-			.data = MEMORY_ALLOCATE_ARRAY(uint8_t, 256 * 256),
-			.parameters = {
-				.texture_type = TEXTURE_TYPE_COLOR,
-				.data_type = DATA_TYPE_U8,
-				.channels = 1,
-			},
-		};
-
-		float font_scale = asset_font_get_scale(content.asset_font, 32);
-
-		struct Glyph_Params glyph_params;
-		uint32_t glyph_id = asset_font_get_glyph_id(content.asset_font, (uint32_t)'h');
-		asset_font_get_glyph_parameters(content.asset_font, &glyph_params, glyph_id);
-		if (!glyph_params.is_empty) {
-			uint32_t const font_size_x = (uint32_t)(((float)glyph_params.bmp_size_x) * font_scale);
-			uint32_t const font_size_y = (uint32_t)(((float)glyph_params.bmp_size_y) * font_scale);
-			if (font.buffer.size_x > font_size_x && font.buffer.size_y > font_size_y) {
-				asset_font_fill_buffer(
-					content.asset_font,
-					font.buffer.data, 256,
-					glyph_id,
-					font_size_x, font_size_y, font_scale
-				);
-			}
-		}
-
-		font.gpu_texture = gpu_texture_init(&font.buffer);
+		font.buffer = font_image_init(content.assets.font, 256, 256);
+		font_image_build(font.buffer);
+		font.gpu_texture = gpu_texture_init(font_image_get_asset(font.buffer));
 	}
 
 	// init batch mesh
 	{
 		batch.buffer = batch_mesh_init(2, (uint32_t[]){0, 3, 1, 2});
-		batch.gpu_mesh = gpu_mesh_init(batch_mesh_get_mesh(batch.buffer));
+		batch.gpu_mesh = gpu_mesh_init(batch_mesh_get_asset(batch.buffer));
 	}
 
 	// fill materials
 	{
-		gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &content.gpu_texture_test);
+		gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &content.gpu.texture_test);
 		gfx_material_set_float(&content.materials.test, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 
 		gfx_material_set_texture(&content.materials.font, uniforms.font, 1, &font.gpu_texture);
@@ -221,18 +198,18 @@ static void game_init(void) {
 }
 
 static void game_free(void) {
-	gpu_program_free(content.gpu_program_test);
-	gpu_program_free(content.gpu_program_font);
-	gpu_program_free(content.gpu_program_target);
-	gpu_texture_free(content.gpu_texture_test);
-	gpu_mesh_free(content.gpu_mesh_cube);
-	asset_font_free(content.asset_font);
+	gpu_program_free(content.gpu.program_test);
+	gpu_program_free(content.gpu.program_font);
+	gpu_program_free(content.gpu.program_target);
+	gpu_texture_free(content.gpu.texture_test);
+	gpu_mesh_free(content.gpu.mesh_cube);
+	asset_font_free(content.assets.font);
 	gfx_material_free(&content.materials.test);
 	gfx_material_free(&content.materials.font);
 	gfx_material_free(&content.materials.target);
 
+	font_image_free(font.buffer);
 	gpu_texture_free(font.gpu_texture);
-	asset_image_free(&font.buffer);
 
 	gpu_mesh_free(target.gpu_mesh);
 	gpu_target_free(target.gpu_target);
@@ -273,18 +250,9 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	// draw into the batch mesh
 	batch_mesh_clear(batch.buffer);
-	batch_mesh_add(
-		batch.buffer,
-		(3 + 2) * 4, (float[]){
-			 0,  0, 0, 0, 1,
-			 0, 256, 0, 0, 0,
-			256,  0, 0, 1, 1,
-			256, 256, 0, 1, 0,
-		},
-		3 * 2, (uint32_t[]){1, 0, 2, 1, 2, 3}
-	);
+	batch_mesh_add_quad(batch.buffer, (float[4]){0, 0, 256, 256}, (float[4]){0, 0, 1, 1});
 
-	struct Asset_Mesh * batch_mesh = batch_mesh_get_mesh(batch.buffer);
+	struct Asset_Mesh * batch_mesh = batch_mesh_get_asset(batch.buffer);
 	gpu_mesh_update(batch.gpu_mesh, batch_mesh);
 
 	// target: clear
@@ -326,7 +294,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.depth_enabled = true, .depth_mask = true,
 		//
 		.material = &content.materials.test,
-		.mesh = content.gpu_mesh_cube,
+		.mesh = content.gpu.mesh_cube,
 		// draw transformed, map to camera coords
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,

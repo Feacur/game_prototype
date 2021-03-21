@@ -10,7 +10,7 @@ struct Gpu_Program;
 struct Gpu_Texture;
 
 struct Gfx_Material {
-	struct Gpu_Program * program;
+	struct Gpu_Program * program; // weak reference
 
 	struct Array_Pointer textures;
 	struct Array_U32 values_u32;

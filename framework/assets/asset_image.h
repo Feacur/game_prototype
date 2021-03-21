@@ -5,7 +5,7 @@
 #include "framework/graphics/types.h"
 
 struct Asset_Image {
-	uint32_t size_x, size_y;
+	uint32_t capacity, size_x, size_y;
 	uint8_t * data;
 	struct Texture_Parameters parameters;
 	struct Texture_Settings settings;
