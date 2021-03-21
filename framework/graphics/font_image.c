@@ -109,38 +109,39 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 			}
 
 			//
-			uint32_t const bmp_size_x = (uint32_t)(params->rect[2] - params->rect[0]);
-			uint32_t const bmp_size_y = (uint32_t)(params->rect[3] - params->rect[1]);
+			uint32_t const size_x = (uint32_t)(params->rect[2] - params->rect[0]);
+			uint32_t const size_y = (uint32_t)(params->rect[3] - params->rect[1]);
 
-			if (font_image->buffer.size_x < bmp_size_x) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
-			if (font_image->buffer.size_y < bmp_size_y) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
+			if (font_image->buffer.size_x < size_x) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
+			if (font_image->buffer.size_y < size_y) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
 
-			symbol->glyph.uv[0] = (float)(offset_x)              / (float)font_image->buffer.size_x;
-			symbol->glyph.uv[1] = (float)(offset_y)              / (float)font_image->buffer.size_y;
-			symbol->glyph.uv[2] = (float)(offset_x + bmp_size_x) / (float)font_image->buffer.size_x;
-			symbol->glyph.uv[3] = (float)(offset_y + bmp_size_y) / (float)font_image->buffer.size_y;
+			symbol->glyph.uv[0] = (float)(offset_x)          / (float)font_image->buffer.size_x;
+			symbol->glyph.uv[1] = (float)(offset_y)          / (float)font_image->buffer.size_y;
+			symbol->glyph.uv[2] = (float)(offset_x + size_x) / (float)font_image->buffer.size_x;
+			symbol->glyph.uv[3] = (float)(offset_y + size_y) / (float)font_image->buffer.size_y;
 
 			//
-			if (scratch_buffer.capacity < bmp_size_x * bmp_size_y) {
-				array_byte_resize(&scratch_buffer, bmp_size_x * bmp_size_y);
+			if (scratch_buffer.capacity < size_x * size_y) {
+				array_byte_resize(&scratch_buffer, size_x * size_y);
 			}
 
+			// @todo: receive an `invert_y` flag?
 			asset_font_fill_buffer(
 				font_image->asset_font,
-				scratch_buffer.data, bmp_size_x,
-				symbol->glyph.id, bmp_size_x, bmp_size_y, font_image->scale
+				scratch_buffer.data, size_x,
+				symbol->glyph.id, size_x, size_y, font_image->scale
 			);
 
-			for (uint32_t y = 0; y < bmp_size_y; y++) {
+			for (uint32_t y = 0; y < size_y; y++) {
 				memcpy(
 					font_image->buffer.data + ((offset_y + y) * font_image->buffer.size_x + offset_x),
-					scratch_buffer.data + ((bmp_size_y - y - 1) * bmp_size_x),
-					bmp_size_x * sizeof(*scratch_buffer.data)
+					scratch_buffer.data + ((size_y - y - 1) * size_x),
+					size_x * sizeof(*scratch_buffer.data)
 				);
 			}
 
 			//
-			offset_x += bmp_size_x + padding;
+			offset_x += size_x + padding;
 			if (offset_x > font_image->buffer.size_x - font_image->size) {
 				offset_x = padding;
 				offset_y += font_image->size + padding;
