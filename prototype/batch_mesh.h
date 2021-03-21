@@ -20,7 +20,7 @@ void batch_mesh_add(
 
 void batch_mesh_add_quad(
 	struct Batch_Mesh * batch_mesh,
-	float * rect, float * uv
+	float const * rect, float const * uv
 );
 
 #endif

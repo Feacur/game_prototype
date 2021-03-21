@@ -258,26 +258,34 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	char const * ascii_text = "Hello, Game!\nDoing fine?\nIs text rendering all right?\nGood!";
 	uint32_t previous_glyph_id = 0;
 	for (char const * ascii_char = ascii_text; *ascii_char != '\0'; ascii_char++) {
-		if (*ascii_char == '\r') { /*offset_x = text_x;*/ continue; }
+		if (*ascii_char == '\r') {
+			previous_glyph_id = 0;
+			// offset_x = text_x;
+			continue;
+		}
 
 		if (*ascii_char == '\n') {
+			previous_glyph_id = 0;
 			offset_x = text_x;
 			offset_y -= font_image_get_height(font.buffer) + font_image_get_gap(font.buffer);
 			continue;
 		}
 
-		struct Font_Glyph_Data data;
+		struct Font_Glyph data;
 		font_image_get_data(font.buffer, (uint32_t)*ascii_char, &data);
-		if (data.id == 0) { continue; }
+		if (data.id != 0) {
+			offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font.buffer, previous_glyph_id, data.id) : 0;
+			float const rect[] = {
+				((float)data.params->rect[0]) + offset_x,
+				((float)data.params->rect[1]) + offset_y,
+				((float)data.params->rect[2]) + offset_x,
+				((float)data.params->rect[3]) + offset_y,
+			};
+			offset_x += (float)data.params->full_size_x;
 
-		offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font.buffer, previous_glyph_id, data.id) : 0;
-		data.rect[0] += offset_x;
-		data.rect[1] += offset_y;
-		data.rect[2] += offset_x;
-		data.rect[3] += offset_y;
+			batch_mesh_add_quad(batch.buffer, rect, data.uv);
+		}
 
-		batch_mesh_add_quad(batch.buffer, data.rect, data.uv);
-		offset_x += data.size_x;
 		previous_glyph_id = data.id;
 	}
 

@@ -6,11 +6,12 @@
 struct Font_Image;
 struct Asset_Image;
 struct Asset_Font;
+struct Glyph_Params;
 
-struct Font_Glyph_Data {
+struct Font_Glyph { // do not cache, it's merely a transient proxy
 	uint32_t id;
-	float size_x;
-	float rect[4], uv[4];
+	struct Glyph_Params const * params;
+	float const * uv;
 };
 
 struct Font_Image * font_image_init(struct Asset_Font * asset_font, uint32_t size, uint32_t size_x, uint32_t size_y);
@@ -20,7 +21,7 @@ void font_image_clear(struct Font_Image * font_image);
 struct Asset_Image * font_image_get_asset(struct Font_Image * font_image);
 
 void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint_ranges);
-void font_image_get_data(struct Font_Image * font_image, uint32_t codepoint, struct Font_Glyph_Data * data);
+void font_image_get_data(struct Font_Image * font_image, uint32_t codepoint, struct Font_Glyph * data);
 
 float font_image_get_height(struct Font_Image * font_image);
 float font_image_get_gap(struct Font_Image * font_image);
