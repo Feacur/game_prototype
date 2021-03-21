@@ -4,6 +4,7 @@
 #include "framework/platform_file.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -41,7 +42,9 @@ struct Asset_Font * asset_font_init(char const * path) {
 	struct Asset_Font * asset_font = MEMORY_ALLOCATE(struct Asset_Font);
 
 	platform_file_init(&asset_font->file, path);
-	stbtt_InitFont(&asset_font->font, asset_font->file.data, stbtt_GetFontOffsetForIndex(asset_font->file.data, 0));
+	if (!stbtt_InitFont(&asset_font->font, asset_font->file.data, stbtt_GetFontOffsetForIndex(asset_font->file.data, 0))) {
+		fprintf(stderr, "'stbtt_InitFont' failed\n"); DEBUG_BREAK();
+	}
 
 	stbtt_GetFontVMetrics(&asset_font->font, &asset_font->ascent, &asset_font->descent, &asset_font->line_gap);
 
@@ -84,12 +87,12 @@ void asset_font_get_glyph_parameters(struct Asset_Font * asset_font, struct Glyp
 
 void asset_font_fill_buffer(
 	struct Asset_Font * asset_font,
-	struct Array_Byte * buffer, uint32_t stride,
+	uint8_t * buffer, uint32_t stride,
 	uint32_t id,
 	uint32_t size_x, uint32_t size_y, float scale
 ) {
 	stbtt_MakeGlyphBitmap(
-		&asset_font->font, buffer->data,
+		&asset_font->font, buffer,
 		(int)size_x, (int)size_y, (int)stride,
 		scale, scale,
 		(int)id

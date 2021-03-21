@@ -4,7 +4,6 @@
 #include "framework/common.h"
 
 struct Asset_Font;
-struct Array_Byte;
 
 struct Glyph_Params {
 	uint32_t bmp_size_x, bmp_size_y;
@@ -23,7 +22,7 @@ uint32_t asset_font_get_kerning(struct Asset_Font * asset_font, uint32_t id1, ui
 void asset_font_get_glyph_parameters(struct Asset_Font * asset_font, struct Glyph_Params * params, uint32_t id);
 void asset_font_fill_buffer(
 	struct Asset_Font * asset_font,
-	struct Array_Byte * buffer, uint32_t stride,
+	uint8_t * buffer, uint32_t stride,
 	uint32_t id,
 	uint32_t size_x, uint32_t size_y, float scale
 );
