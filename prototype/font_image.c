@@ -140,7 +140,17 @@ void font_image_get_data(struct Font_Image * font_image, uint32_t codepoint, str
 	}
 }
 
+float font_image_get_height(struct Font_Image * font_image) {
+	int32_t value = asset_font_get_height(font_image->asset_font);
+	return ((float)value) * font_image->scale;
+}
+
+float font_image_get_gap(struct Font_Image * font_image) {
+	int32_t value = asset_font_get_gap(font_image->asset_font);
+	return ((float)value) * font_image->scale;
+}
+
 float font_image_get_kerning(struct Font_Image * font_image, uint32_t id1, uint32_t id2) {
-	int32_t kerning = asset_font_get_kerning(font_image->asset_font, id1, id2);
-	return ((float)kerning) * font_image->scale;
+	int32_t value = asset_font_get_kerning(font_image->asset_font, id1, id2);
+	return ((float)value) * font_image->scale;
 }
