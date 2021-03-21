@@ -281,7 +281,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		previous_glyph_id = data.id;
 	}
 
-	// batch_mesh_add_quad(batch.buffer, (float[]){0,100,256,356}, (float[]){0,0,1,1});
+	batch_mesh_add_quad(batch.buffer, (float[]){0,(float)(size_y-256),256,(float)size_y}, (float[]){0,0,1,1});
 
 	struct Asset_Mesh * batch_mesh = batch_mesh_get_asset(batch.buffer);
 	gpu_mesh_update(batch.gpu_mesh, batch_mesh);
