@@ -98,7 +98,8 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 		struct Array_Byte scratch_buffer;
 		array_byte_init(&scratch_buffer);
 
-		uint32_t offset_x = 0, offset_y = 0;
+		uint32_t const padding = 1;
+		uint32_t offset_x = padding, offset_y = padding;
 		for (struct Font_Symbol * symbol = symbols; symbol->glyph.id != 0; symbol++) {
 			struct Glyph_Params const * params = &symbol->glyph.params;
 			if (params->is_empty) { continue; }
@@ -139,10 +140,10 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 			}
 
 			//
-			offset_x += bmp_size_x + 1;
+			offset_x += bmp_size_x + padding;
 			if (offset_x > font_image->buffer.size_x - font_image->size) {
-				offset_x = 0;
-				offset_y += font_image->size + 1;
+				offset_x = padding;
+				offset_y += font_image->size + padding;
 			}
 		}
 
