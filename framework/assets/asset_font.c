@@ -79,12 +79,17 @@ void asset_font_get_glyph_parameters(struct Asset_Font * asset_font, struct Glyp
 	int rect[4];
 	stbtt_GetGlyphBitmapBox(&asset_font->font, (int)glyph_id, scale, scale, rect + 0, rect + 1, rect + 2, rect + 3);
 
-	params->bmp_size_x = (uint32_t)(rect[2] - rect[0]);
-	params->bmp_size_y = (uint32_t)(rect[3] - rect[1]);
-	params->offset_x = (int32_t)(((float)left_side_bearing) * scale);
-	params->offset_y = (int32_t)rect[1];
-	params->size_x = (uint32_t)(((float)advance_width) * scale);
-	params->is_empty = stbtt_IsGlyphEmpty(&asset_font->font, (int)glyph_id);
+	int const size_x = rect[2] - rect[0];
+	int const size_y = rect[3] - rect[1];
+
+	*params = (struct Glyph_Params){
+		.bmp_size_x = (uint32_t)size_x,
+		.bmp_size_y = (uint32_t)size_y,
+		.offset_x = (int32_t)(((float)left_side_bearing) * scale),
+		.offset_y = (int32_t)rect[1],
+		.size_x = (uint32_t)(((float)advance_width) * scale),
+		.is_empty = (size_x > 0) && (size_y > 0) && stbtt_IsGlyphEmpty(&asset_font->font, (int)glyph_id),
+	};
 }
 
 void asset_font_fill_buffer(

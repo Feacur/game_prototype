@@ -160,7 +160,7 @@ static void game_init(void) {
 
 	// init font
 	{
-		font.buffer = font_image_init(content.assets.font, 256, 256);
+		font.buffer = font_image_init(content.assets.font, 32, 256, 256);
 		font_image_build(font.buffer, (uint32_t[]){0x20, 0x7e, 0});
 		font.gpu_texture = gpu_texture_init(font_image_get_asset(font.buffer));
 	}
@@ -253,16 +253,26 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	// draw into the batch mesh
 	batch_mesh_clear(batch.buffer);
 
-	float offset_x = 0;
-	uint32_t const codepoints[] = {'H', 'e', 'l', 'l', 'o', '!', 0};
-	for (uint32_t const * codepoint = codepoints; *codepoint != 0; codepoint++) {
+	float offset_x = 50, offset_y = 200;
+	char const * ascii_text = "Hello, Game!\nDoing fine?\nIs text rendering all right?\nGood!";
+	uint32_t previous_glyph_id = 0;
+	for (char const * ascii_char = ascii_text; *ascii_char != '\0'; ascii_char++) {
 		struct Font_Glyph_Data data;
-		font_image_get_data(font.buffer, *codepoint, &data);
-		data.rect[0] += offset_x;
-		data.rect[2] += offset_x;
+		font_image_get_data(font.buffer, (uint32_t)*ascii_char, &data);
+		if (data.id == 0) { continue; }
+
+		float const kerning = (previous_glyph_id != 0) ? font_image_get_kerning(font.buffer, previous_glyph_id, data.id) : 0;
+		data.rect[0] += offset_x + kerning;
+		data.rect[1] += offset_y;
+		data.rect[2] += offset_x + kerning;
+		data.rect[3] += offset_y;
+
 		batch_mesh_add_quad(batch.buffer, data.rect, data.uv);
 		offset_x += data.size_x;
+		previous_glyph_id = data.id;
 	}
+
+	// batch_mesh_add_quad(batch.buffer, (float[]){0,100,256,356}, (float[]){0,0,1,1});
 
 	struct Asset_Mesh * batch_mesh = batch_mesh_get_asset(batch.buffer);
 	gpu_mesh_update(batch.gpu_mesh, batch_mesh);
@@ -327,6 +337,21 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.clear_rgba = 0x303030ff,
 	});
 
+	// screen buffer: draw target
+	graphics_draw(&(struct Render_Pass){
+		.size_x = size_x, .size_y = size_y,
+		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		//
+		.material = &content.materials.target,
+		.mesh = target.gpu_mesh,
+		// draw at the farthest point, map to normalized device coords
+		.camera_id = uniforms.camera,
+		.transform_id = uniforms.transform,
+		.camera = mat4_identity,
+		.transform = mat4_identity,
+		// .transform = mat4_set_transformation((struct vec3){0, 0, FLOAT_ALMSOST_1}, (struct vec3){1, 1, 1}, (struct vec4){0, 0, 0, 1}),
+	});
+
 	// screen buffer: draw HUD
 	graphics_draw(&(struct Render_Pass){
 		.size_x = size_x, .size_y = size_y,
@@ -347,21 +372,6 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.transform_id = uniforms.transform,
 		.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1),
 		.transform = mat4_identity,
-	});
-
-	// screen buffer: draw target
-	graphics_draw(&(struct Render_Pass){
-		.size_x = size_x, .size_y = size_y,
-		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-		.depth_enabled = true,
-		//
-		.material = &content.materials.target,
-		.mesh = target.gpu_mesh,
-		// draw at the farthest point, map to normalized device coords
-		.camera_id = uniforms.camera,
-		.transform_id = uniforms.transform,
-		.camera = mat4_identity,
-		.transform = mat4_set_transformation((struct vec3){0, 0, FLOAT_ALMSOST_1}, (struct vec3){1, 1, 1}, (struct vec4){0, 0, 0, 1}),
 	});
 }
 
