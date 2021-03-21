@@ -5,6 +5,8 @@
 
 #include "framework/graphics/types.c"
 #include "framework/graphics/material.c"
+#include "framework/graphics/batch_mesh.c"
+#include "framework/graphics/font_image.c"
 
 #include "framework/containers/array_byte.c"
 #include "framework/containers/array_float.c"
@@ -35,6 +37,4 @@
 #endif
 
 #include "application/application.c"
-#include "prototype/batch_mesh.c"
-#include "prototype/font_image.c"
 #include "prototype/main.c"

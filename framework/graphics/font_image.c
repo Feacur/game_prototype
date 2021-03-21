@@ -100,46 +100,49 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 
 		uint32_t offset_x = 0, offset_y = 0;
 		for (struct Font_Symbol * symbol = symbols; symbol->glyph.id != 0; symbol++) {
+			struct Glyph_Params const * params = &symbol->glyph.params;
+			if (params->is_empty) { continue; }
+
 			if (font_image->buffer.size_y < offset_y + font_image->size) {
 				fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break;
 			}
 
 			//
-			struct Glyph_Params const * params = &symbol->glyph.params;
-			if (params->is_empty) { continue; }
+			uint32_t const bmp_size_x = (uint32_t)(params->rect[2] - params->rect[0]);
+			uint32_t const bmp_size_y = (uint32_t)(params->rect[3] - params->rect[1]);
 
-			if (font_image->buffer.size_x < params->bmp_size_x) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
-			if (font_image->buffer.size_y < params->bmp_size_y) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
+			if (font_image->buffer.size_x < bmp_size_x) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
+			if (font_image->buffer.size_y < bmp_size_y) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
 
-			symbol->glyph.uv[0] = (float)(offset_x)                      / (float)font_image->buffer.size_x;
-			symbol->glyph.uv[1] = (float)(offset_y)                      / (float)font_image->buffer.size_y;
-			symbol->glyph.uv[2] = (float)(offset_x + params->bmp_size_x) / (float)font_image->buffer.size_x;
-			symbol->glyph.uv[3] = (float)(offset_y + params->bmp_size_y) / (float)font_image->buffer.size_y;
+			symbol->glyph.uv[0] = (float)(offset_x)              / (float)font_image->buffer.size_x;
+			symbol->glyph.uv[1] = (float)(offset_y)              / (float)font_image->buffer.size_y;
+			symbol->glyph.uv[2] = (float)(offset_x + bmp_size_x) / (float)font_image->buffer.size_x;
+			symbol->glyph.uv[3] = (float)(offset_y + bmp_size_y) / (float)font_image->buffer.size_y;
 
 			//
-			if (scratch_buffer.capacity < params->bmp_size_x * params->bmp_size_y) {
-				array_byte_resize(&scratch_buffer, params->bmp_size_x * params->bmp_size_y);
+			if (scratch_buffer.capacity < bmp_size_x * bmp_size_y) {
+				array_byte_resize(&scratch_buffer, bmp_size_x * bmp_size_y);
 			}
 
 			asset_font_fill_buffer(
 				font_image->asset_font,
-				scratch_buffer.data, params->bmp_size_x,
-				symbol->glyph.id, params->bmp_size_x, params->bmp_size_y, font_image->scale
+				scratch_buffer.data, bmp_size_x,
+				symbol->glyph.id, bmp_size_x, bmp_size_y, font_image->scale
 			);
 
-			for (uint32_t y = 0; y < params->bmp_size_y; y++) {
+			for (uint32_t y = 0; y < bmp_size_y; y++) {
 				memcpy(
 					font_image->buffer.data + ((offset_y + y) * font_image->buffer.size_x + offset_x),
-					scratch_buffer.data + ((params->bmp_size_y - y - 1) * params->bmp_size_x),
-					params->bmp_size_x * sizeof(*scratch_buffer.data)
+					scratch_buffer.data + ((bmp_size_y - y - 1) * bmp_size_x),
+					bmp_size_x * sizeof(*scratch_buffer.data)
 				);
 			}
 
 			//
-			offset_x += params->bmp_size_x;
+			offset_x += bmp_size_x + 1;
 			if (offset_x > font_image->buffer.size_x - font_image->size) {
 				offset_x = 0;
-				offset_y += font_image->size;
+				offset_y += font_image->size + 1;
 			}
 		}
 

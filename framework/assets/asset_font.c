@@ -71,23 +71,24 @@ void asset_font_get_glyph_parameters(struct Asset_Font * asset_font, struct Glyp
 	int advance_width, left_side_bearing;
 	stbtt_GetGlyphHMetrics(&asset_font->font, (int)glyph_id, &advance_width, &left_side_bearing);
 
-	int rect[4];
-	stbtt_GetGlyphBitmapBox(&asset_font->font, (int)glyph_id, scale, scale, rect + 0, rect + 1, rect + 2, rect + 3);
+	int rect[4]; // left, bottom, right, top
+	if (!stbtt_GetGlyphBox(&asset_font->font, (int)glyph_id, rect + 0, rect + 1, rect + 2, rect + 3)) {
+		*params = (struct Glyph_Params){
+			.full_size_x = ((float)advance_width) * scale,
+			.is_empty = true,
+		};
+		return;
+	}
 
 	int const size_x = rect[2] - rect[0];
 	int const size_y = rect[3] - rect[1];
 
-	int32_t const offset_x = (int32_t)(((float)left_side_bearing) * scale);
-	int32_t const offset_y = rect[1];
-
 	*params = (struct Glyph_Params){
-		.bmp_size_x = (uint32_t)size_x,
-		.bmp_size_y = (uint32_t)size_y,
-		.rect[0] =  (offset_x),
-		.rect[1] = -(offset_y + (int32_t)size_y),
-		.rect[2] =  (offset_x + (int32_t)size_x),
-		.rect[3] = -(offset_y),
-		.full_size_x = (uint32_t)(((float)advance_width) * scale),
+		.rect[0] = (int32_t)floorf(((float)rect[0]) * scale),
+		.rect[1] = (int32_t)floorf(((float)rect[1]) * scale),
+		.rect[2] = (int32_t)ceilf (((float)rect[2]) * scale),
+		.rect[3] = (int32_t)ceilf (((float)rect[3]) * scale),
+		.full_size_x = ((float)advance_width) * scale,
 		.is_empty = (size_x > 0) && (size_y > 0) && stbtt_IsGlyphEmpty(&asset_font->font, (int)glyph_id),
 	};
 }

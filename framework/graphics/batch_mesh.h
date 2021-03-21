@@ -1,5 +1,5 @@
-#if !defined(GAME_BATCH_MESH)
-#define GAME_BATCH_MESH
+#if !defined(GAME_FRAMEWORK_BATCH_MESH)
+#define GAME_FRAMEWORK_BATCH_MESH
 
 #include "framework/common.h"
 

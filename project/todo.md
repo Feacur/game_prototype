@@ -1,13 +1,11 @@
 # framework
 ```
 [o] text rendering
-    [x] GPU mesh data streaming
     [ ] GPU texture data streaming, probably, too?
-    [x] 2d batch renderer
-    [x] asset loader: *.ttf
-    [x] font glyphs packer
-    [x] hashtable for glyphs
+    [ ] UTF-8 decoding
+    [ ] improve font glyphs packer (probably make it a sprite/rect packer)
 [ ] graphics
+    [ ] API to correctly batch-update meshes/textures and create a render pass (or whatever)
     [ ] elaborate the idea of render passes
     [ ] GPU scissor test
     [ ] support older OpenGL versions (pre direct state access, which is 4.5)

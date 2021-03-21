@@ -1,3 +1,14 @@
+# 2021, march 21
+```
+ - framework
+[x] text rendering
+    [x] GPU mesh data streaming
+    [x] 2d batch renderer (quite universal, actually, but needs testing)
+    [x] asset loader: *.ttf
+    [x] simplistic font glyphs packer
+    [x] hashtable for glyphs (turned out to be quite generic)
+```
+
 # 2021, march 19
 ```
 --- a mind dump of the current state ---

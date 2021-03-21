@@ -11,6 +11,8 @@
 #include "framework/graphics/material.h"
 #include "framework/graphics/pass.h"
 #include "framework/graphics/graphics.h"
+#include "framework/graphics/batch_mesh.h"
+#include "framework/graphics/font_image.h"
 
 #include "framework/containers/array_byte.h"
 #include "framework/containers/hash_table.h"
@@ -20,9 +22,6 @@
 #include "framework/assets/asset_font.h"
 
 #include "application/application.h"
-
-#include "batch_mesh.h"
-#include "font_image.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -291,13 +290,13 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, (uint32_t)*ascii_char);
 		if (glyph != NULL && glyph->id != 0) {
 			offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font->buffer, previous_glyph_id, glyph->id) : 0;
-			float const rect[] = {
+			float const rect[] = { // left, bottom, top, right
 				((float)glyph->params.rect[0]) + offset_x,
 				((float)glyph->params.rect[1]) + offset_y,
 				((float)glyph->params.rect[2]) + offset_x,
 				((float)glyph->params.rect[3]) + offset_y,
 			};
-			offset_x += (float)glyph->params.full_size_x;
+			offset_x += glyph->params.full_size_x;
 
 			batch_mesh_add_quad(batch.buffer, rect, glyph->uv);
 		}

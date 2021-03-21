@@ -6,9 +6,8 @@
 struct Asset_Font;
 
 struct Glyph_Params {
-	uint32_t bmp_size_x, bmp_size_y;
-	int32_t rect[4];
-	uint32_t full_size_x;
+	int32_t rect[4]; // left, bottom, right, top
+	float full_size_x;
 	bool is_empty;
 };
 

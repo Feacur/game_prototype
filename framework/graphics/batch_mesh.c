@@ -88,7 +88,7 @@ void batch_mesh_add(
 
 void batch_mesh_add_quad(
 	struct Batch_Mesh * batch_mesh,
-	float const * rect, float const * uv
+	float const * rect, float const * uv // left, bottom, right, top
 ) {
 	batch_mesh_add(
 		batch_mesh,
