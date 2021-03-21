@@ -9,6 +9,7 @@
 #include <string.h>
 
 struct Glyph {
+	uint32_t id;
 	struct Glyph_Params params;
 	float rect[4], uv[4];
 };
@@ -64,66 +65,93 @@ struct Asset_Image * font_image_get_asset(struct Font_Image * font_image) {
 }
 
 void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint_ranges) {
-	font_image_clear(font_image);
+	uint32_t codepoints_count = 0;
+	for (uint32_t const *range = codepoint_ranges; *range != 0; range += 2) {
+		codepoints_count += 1 + (range[1] - range[0]);
+	}
 
-	struct Array_Byte scratch_buffer;
-	array_byte_init(&scratch_buffer);
+	uint32_t glyphs_count = 0;
+	struct Glyph * glyphs = MEMORY_ALLOCATE_ARRAY(struct Glyph, codepoints_count);
 
-	uint32_t offset_x = 0, offset_y = 0;
+	// collect glyphs
 	for (uint32_t const *range = codepoint_ranges; *range != 0; range += 2) {
 		for (uint32_t codepoint = *range, codepoint_to = range[1]; codepoint <= codepoint_to; codepoint++) {
-			if (font_image->buffer.size_y < offset_y + font_image->size) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
-
 			uint32_t const glyph_id = asset_font_get_glyph_id(font_image->asset_font, codepoint);
 			char asd = (char)codepoint; (void)asd;
 
 			struct Glyph_Params glyph_params;
 			asset_font_get_glyph_parameters(font_image->asset_font, &glyph_params, glyph_id, font_image->scale);
 
-			hash_table_set(font_image->table, glyph_id, &(struct Glyph){
+			glyphs[glyphs_count++] = (struct Glyph){
+				.id = glyph_id,
 				.params = glyph_params,
 				.rect[0] =  (float)(glyph_params.offset_x),
 				.rect[1] = -(float)(glyph_params.offset_y + (int32_t)glyph_params.bmp_size_y),
 				.rect[2] =  (float)(glyph_params.offset_x + (int32_t)glyph_params.bmp_size_x),
 				.rect[3] = -(float)(glyph_params.offset_y),
-				.uv[0] = (float)(offset_x)                           / (float)font_image->buffer.size_x,
-				.uv[1] = (float)(offset_y)                           / (float)font_image->buffer.size_y,
-				.uv[2] = (float)(offset_x + glyph_params.bmp_size_x) / (float)font_image->buffer.size_x,
-				.uv[3] = (float)(offset_y + glyph_params.bmp_size_y) / (float)font_image->buffer.size_y,
-			});
+			};
+		}
+	}
 
-			if (glyph_params.is_empty) { continue; }
+	// pack glyphs into the atlas
+	font_image_clear(font_image);
 
-			if (font_image->buffer.size_x < glyph_params.bmp_size_x) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); continue; }
-			if (font_image->buffer.size_y < glyph_params.bmp_size_y) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); continue; }
+	struct Array_Byte scratch_buffer;
+	array_byte_init(&scratch_buffer);
 
-			if (scratch_buffer.capacity < glyph_params.bmp_size_x * glyph_params.bmp_size_y) {
-				array_byte_resize(&scratch_buffer, glyph_params.bmp_size_x * glyph_params.bmp_size_y);
-			}
+	uint32_t offset_x = 0, offset_y = 0;
+	for (uint32_t i = 0; i < glyphs_count; i++) {
+		if (font_image->buffer.size_y < offset_y + font_image->size) {
+			fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break;
+		}
 
-			asset_font_fill_buffer(
-				font_image->asset_font,
-				scratch_buffer.data, glyph_params.bmp_size_x,
-				glyph_id, glyph_params.bmp_size_x, glyph_params.bmp_size_y, font_image->scale
+		//
+		struct Glyph_Params const * params = &glyphs[i].params;
+		if (params->is_empty) { continue; }
+
+		if (font_image->buffer.size_x < params->bmp_size_x) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
+		if (font_image->buffer.size_y < params->bmp_size_y) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
+
+		glyphs[i].uv[0] = (float)(offset_x)                      / (float)font_image->buffer.size_x;
+		glyphs[i].uv[1] = (float)(offset_y)                      / (float)font_image->buffer.size_y;
+		glyphs[i].uv[2] = (float)(offset_x + params->bmp_size_x) / (float)font_image->buffer.size_x;
+		glyphs[i].uv[3] = (float)(offset_y + params->bmp_size_y) / (float)font_image->buffer.size_y;
+
+		//
+		if (scratch_buffer.capacity < params->bmp_size_x * params->bmp_size_y) {
+			array_byte_resize(&scratch_buffer, params->bmp_size_x * params->bmp_size_y);
+		}
+
+		asset_font_fill_buffer(
+			font_image->asset_font,
+			scratch_buffer.data, params->bmp_size_x,
+			glyphs[i].id, params->bmp_size_x, params->bmp_size_y, font_image->scale
+		);
+
+		for (uint32_t y = 0; y < params->bmp_size_y; y++) {
+			memcpy(
+				font_image->buffer.data + ((offset_y + y) * font_image->buffer.size_x + offset_x),
+				scratch_buffer.data + ((params->bmp_size_y - y - 1) * params->bmp_size_x),
+				params->bmp_size_x * sizeof(*scratch_buffer.data)
 			);
+		}
 
-			for (uint32_t y = 0; y < glyph_params.bmp_size_y; y++) {
-				memcpy(
-					font_image->buffer.data + ((offset_y + y) * font_image->buffer.size_x + offset_x),
-					scratch_buffer.data + ((glyph_params.bmp_size_y - y - 1) * glyph_params.bmp_size_x),
-					glyph_params.bmp_size_x * sizeof(*scratch_buffer.data)
-				);
-			}
-
-			offset_x += glyph_params.bmp_size_x;
-			if (offset_x > font_image->buffer.size_x - font_image->size) {
-				offset_x = 0;
-				offset_y += font_image->size;
-			}
+		//
+		offset_x += params->bmp_size_x;
+		if (offset_x > font_image->buffer.size_x - font_image->size) {
+			offset_x = 0;
+			offset_y += font_image->size;
 		}
 	}
 
 	array_byte_free(&scratch_buffer);
+
+	// track glyphs
+	for (uint32_t i = 0; i < glyphs_count; i++) {
+		hash_table_set(font_image->table, glyphs[i].id, glyphs + i);
+	}
+
+	MEMORY_FREE(glyphs);
 }
 
 void font_image_get_data(struct Font_Image * font_image, uint32_t codepoint, struct Font_Glyph_Data * data) {
