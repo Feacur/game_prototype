@@ -10,6 +10,7 @@ struct Batch_Mesh {
 	struct Asset_Mesh mesh;
 	struct Array_Float vertices;
 	struct Array_U32 indices;
+	uint32_t index_offset;
 };
 
 //
@@ -42,6 +43,7 @@ struct Batch_Mesh * batch_mesh_init(uint32_t attributes_count, uint32_t const * 
 
 	array_float_init(&batch_mesh->vertices);
 	array_u32_init(&batch_mesh->indices);
+	batch_mesh->index_offset = 0;
 
 	return batch_mesh;
 }
@@ -60,6 +62,7 @@ void batch_mesh_free(struct Batch_Mesh * batch_mesh) {
 void batch_mesh_clear(struct Batch_Mesh * batch_mesh) {
 	batch_mesh->vertices.count = 0;
 	batch_mesh->indices.count = 0;
+	batch_mesh->index_offset = 0;
 }
 
 struct Asset_Mesh * batch_mesh_get_asset(struct Batch_Mesh * batch_mesh) {
@@ -95,6 +98,10 @@ void batch_mesh_add_quad(
 			rect[2], rect[1], 0, uv[2], uv[1],
 			rect[2], rect[3], 0, uv[2], uv[3],
 		},
-		3 * 2, (uint32_t[]){1, 0, 2, 1, 2, 3}
+		3 * 2, (uint32_t[]){
+			batch_mesh->index_offset + 1, batch_mesh->index_offset + 0, batch_mesh->index_offset + 2,
+			batch_mesh->index_offset + 1, batch_mesh->index_offset + 2, batch_mesh->index_offset + 3
+		}
 	);
+	batch_mesh->index_offset += 4;
 }

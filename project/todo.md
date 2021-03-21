@@ -5,6 +5,8 @@
     [ ] GPU texture data streaming, probably, too?
     [x] 2d batch renderer
     [x] asset loader: *.ttf
+    [x] font glyphs packer
+    [x] hashtable for glyphs
 [ ] graphics
     [ ] elaborate the idea of render passes
     [ ] GPU scissor test

@@ -13,6 +13,8 @@
 #include "framework/graphics/graphics.h"
 
 #include "framework/containers/array_byte.h"
+#include "framework/containers/hash_table.h"
+
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"
 #include "framework/assets/asset_font.h"
@@ -250,7 +252,17 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	// draw into the batch mesh
 	batch_mesh_clear(batch.buffer);
-	batch_mesh_add_quad(batch.buffer, (float[4]){0, 0, 256, 256}, (float[4]){0, 0, 1, 1});
+
+	float offset_x = 0;
+	uint32_t const codepoints[] = {'H', 'e', 'l', 'l', 'o', '!', 0};
+	for (uint32_t const * codepoint = codepoints; *codepoint != 0; codepoint++) {
+		struct Font_Glyph_Data data;
+		font_image_get_data(font.buffer, *codepoint, &data);
+		data.rect[0] += offset_x;
+		data.rect[2] += offset_x;
+		batch_mesh_add_quad(batch.buffer, data.rect, data.uv);
+		offset_x += data.size_x;
+	}
 
 	struct Asset_Mesh * batch_mesh = batch_mesh_get_asset(batch.buffer);
 	gpu_mesh_update(batch.gpu_mesh, batch_mesh);

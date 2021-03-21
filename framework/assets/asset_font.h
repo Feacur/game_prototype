@@ -18,7 +18,7 @@ void asset_font_free(struct Asset_Font * asset_font);
 float asset_font_get_scale(struct Asset_Font * asset_font, float pixels_size);
 
 uint32_t asset_font_get_glyph_id(struct Asset_Font * asset_font, uint32_t codepoint);
-uint32_t asset_font_get_kerning(struct Asset_Font * asset_font, uint32_t glyph_id1, uint32_t glyph_id2);
+int32_t asset_font_get_kerning(struct Asset_Font * asset_font, uint32_t glyph_id1, uint32_t glyph_id2);
 void asset_font_get_glyph_parameters(struct Asset_Font * asset_font, struct Glyph_Params * params, uint32_t glyph_id, float scale);
 void asset_font_fill_buffer(
 	struct Asset_Font * asset_font,

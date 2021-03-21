@@ -2,10 +2,6 @@
 
 #include <string.h>
 
-#define GROWTH_FACTOR 2
-#define GROW_CAPACITY(capacity) \
-	((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR) \
-
 //
 #include "array_float.h"
 

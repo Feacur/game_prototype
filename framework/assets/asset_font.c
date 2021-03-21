@@ -67,9 +67,9 @@ uint32_t asset_font_get_glyph_id(struct Asset_Font * asset_font, uint32_t codepo
 	return (uint32_t)stbtt_FindGlyphIndex(&asset_font->font, (int)codepoint);
 }
 
-uint32_t asset_font_get_kerning(struct Asset_Font * asset_font, uint32_t glyph_id1, uint32_t glyph_id2) {
+int32_t asset_font_get_kerning(struct Asset_Font * asset_font, uint32_t glyph_id1, uint32_t glyph_id2) {
 	int kerning = stbtt_GetGlyphKernAdvance(&asset_font->font, (int)glyph_id1, (int)glyph_id2);
-	return (uint32_t)kerning;
+	return (int32_t)kerning;
 }
 
 void asset_font_get_glyph_parameters(struct Asset_Font * asset_font, struct Glyph_Params * params, uint32_t glyph_id, float scale) {

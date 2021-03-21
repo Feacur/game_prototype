@@ -5,6 +5,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define GROWTH_FACTOR 2
+#define GROW_CAPACITY(capacity) \
+	((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR) \
+
+#define INDEX_EMPTY UINT32_MAX
+
 // -- FLEXIBLE_ARRAY
 #if __STDC_VERSION__ >= 199901L
 	#if defined(__clang__)

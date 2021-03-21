@@ -439,7 +439,7 @@ struct Gpu_Mesh * gpu_mesh_allocate(
 	}
 
 	// chart buffers
-	uint32_t elements_index = UINT32_MAX;
+	uint32_t elements_index = INDEX_EMPTY;
 	for (uint32_t i = 0; i < buffers_count; i++) {
 		struct Mesh_Settings const * settings = settings_set + i;
 
@@ -476,7 +476,7 @@ struct Gpu_Mesh * gpu_mesh_allocate(
 	}
 
 	//
-	if (elements_index == UINT32_MAX) {
+	if (elements_index == INDEX_EMPTY) {
 		fprintf(stderr, "not element buffer\n"); DEBUG_BREAK();
 	}
 
@@ -821,7 +821,7 @@ void graphics_draw(struct Render_Pass const * pass) {
 	if (pass->mesh == NULL) { return; }
 	if (pass->material == NULL) { return; }
 	if (pass->material->program == NULL) { return; }
-	if (pass->mesh->elements_index == UINT32_MAX) { return; }
+	if (pass->mesh->elements_index == INDEX_EMPTY) { return; }
 
 	uint32_t const elements_count = pass->mesh->counts[pass->mesh->elements_index];
 	if (elements_count == 0) { return; }
