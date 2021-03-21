@@ -8,12 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 
-struct Glyph {
-	uint32_t id;
-	struct Glyph_Params params;
-	float uv[4];
-};
-
 struct Font_Image {
 	struct Asset_Image buffer;
 	struct Asset_Font * asset_font; // weak reference
@@ -24,6 +18,11 @@ struct Font_Image {
 
 //
 #include "font_image.h"
+
+struct Font_Symbol {
+	struct Font_Glyph glyph;
+	uint32_t codepoint;
+};
 
 struct Font_Image * font_image_init(struct Asset_Font * asset_font, uint32_t size, uint32_t size_x, uint32_t size_y) {
 	struct Font_Image * font_image = MEMORY_ALLOCATE(struct Font_Image);
@@ -39,7 +38,7 @@ struct Font_Image * font_image_init(struct Asset_Font * asset_font, uint32_t siz
 		},
 	};
 
-	font_image->table = hash_table_init(sizeof(struct Glyph));
+	font_image->table = hash_table_init(sizeof(struct Font_Glyph));
 	font_image->size = size;
 	font_image->scale = asset_font_get_scale(asset_font, (float)size);
 
@@ -70,9 +69,9 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 		codepoints_count += 1 + (range[1] - range[0]);
 	}
 
-	uint32_t glyphs_count = 0;
-	struct Glyph * glyphs = MEMORY_ALLOCATE_ARRAY(struct Glyph, codepoints_count + 1);
-	glyphs[codepoints_count].id = 0;
+	uint32_t symbols_count = 0;
+	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(struct Font_Symbol, codepoints_count + 1);
+	symbols[codepoints_count].glyph.id = 0;
 
 	// collect glyphs
 	for (uint32_t const *range = codepoint_ranges; *range != 0; range += 2) {
@@ -82,9 +81,12 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 			struct Glyph_Params glyph_params;
 			asset_font_get_glyph_parameters(font_image->asset_font, &glyph_params, glyph_id, font_image->scale);
 
-			glyphs[glyphs_count++] = (struct Glyph){
-				.id = glyph_id,
-				.params = glyph_params,
+			symbols[symbols_count++] = (struct Font_Symbol){
+				.glyph = {
+					.params = glyph_params,
+					.id = glyph_id,
+				},
+				.codepoint = codepoint,
 			};
 		}
 	}
@@ -97,22 +99,22 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 		array_byte_init(&scratch_buffer);
 
 		uint32_t offset_x = 0, offset_y = 0;
-		for (struct Glyph * glyph = glyphs; glyph->id != 0; glyph++) {
+		for (struct Font_Symbol * symbol = symbols; symbol->glyph.id != 0; symbol++) {
 			if (font_image->buffer.size_y < offset_y + font_image->size) {
 				fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break;
 			}
 
 			//
-			struct Glyph_Params const * params = &glyph->params;
+			struct Glyph_Params const * params = &symbol->glyph.params;
 			if (params->is_empty) { continue; }
 
 			if (font_image->buffer.size_x < params->bmp_size_x) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
 			if (font_image->buffer.size_y < params->bmp_size_y) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
 
-			glyph->uv[0] = (float)(offset_x)                      / (float)font_image->buffer.size_x;
-			glyph->uv[1] = (float)(offset_y)                      / (float)font_image->buffer.size_y;
-			glyph->uv[2] = (float)(offset_x + params->bmp_size_x) / (float)font_image->buffer.size_x;
-			glyph->uv[3] = (float)(offset_y + params->bmp_size_y) / (float)font_image->buffer.size_y;
+			symbol->glyph.uv[0] = (float)(offset_x)                      / (float)font_image->buffer.size_x;
+			symbol->glyph.uv[1] = (float)(offset_y)                      / (float)font_image->buffer.size_y;
+			symbol->glyph.uv[2] = (float)(offset_x + params->bmp_size_x) / (float)font_image->buffer.size_x;
+			symbol->glyph.uv[3] = (float)(offset_y + params->bmp_size_y) / (float)font_image->buffer.size_y;
 
 			//
 			if (scratch_buffer.capacity < params->bmp_size_x * params->bmp_size_y) {
@@ -122,7 +124,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 			asset_font_fill_buffer(
 				font_image->asset_font,
 				scratch_buffer.data, params->bmp_size_x,
-				glyph->id, params->bmp_size_x, params->bmp_size_y, font_image->scale
+				symbol->glyph.id, params->bmp_size_x, params->bmp_size_y, font_image->scale
 			);
 
 			for (uint32_t y = 0; y < params->bmp_size_y; y++) {
@@ -146,25 +148,19 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 
 	// track glyphs
 	{
-		struct Glyph const * glyph = glyphs;
+		struct Font_Symbol const * symbol = symbols;
 		for (uint32_t const * range = codepoint_ranges; *range != 0; range += 2) {
 			for (uint32_t codepoint = *range, codepoint_to = range[1]; codepoint <= codepoint_to; codepoint++) {
-				hash_table_set(font_image->table, codepoint, glyph++);
+				hash_table_set(font_image->table, codepoint, symbol++); // treat symbol as glyph
 			}
 		}
 	}
 
-	MEMORY_FREE(glyphs);
+	MEMORY_FREE(symbols);
 }
 
-void font_image_get_data(struct Font_Image * font_image, uint32_t codepoint, struct Font_Glyph * data) {
-	struct Glyph const * glyph = hash_table_get(font_image->table, codepoint);
-	if (glyph == NULL) { data->id = 0; return; }
-	*data = (struct Font_Glyph){
-		.id = glyph->id,
-		.params = &glyph->params,
-		.uv = glyph->uv,
-	};
+struct Font_Glyph const * font_image_get_glyph(struct Font_Image * const font_image, uint32_t codepoint) {
+	return hash_table_get(font_image->table, codepoint);
 }
 
 float font_image_get_height(struct Font_Image * font_image) {

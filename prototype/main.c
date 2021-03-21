@@ -255,7 +255,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	float const text_x = 50, text_y = 200;
 	float offset_x = text_x, offset_y = text_y;
-	char const * ascii_text = "Hello, Game!\nDoing fine?\nIs text rendering all right?\nGood!";
+	char const * ascii_text = "Hello, Game!\nDoing fine?\nIs text rendering doin' all right?\nGood!";
 	uint32_t previous_glyph_id = 0;
 	for (char const * ascii_char = ascii_text; *ascii_char != '\0'; ascii_char++) {
 		if (*ascii_char == '\r') {
@@ -271,22 +271,21 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 			continue;
 		}
 
-		struct Font_Glyph data;
-		font_image_get_data(font.buffer, (uint32_t)*ascii_char, &data);
-		if (data.id != 0) {
-			offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font.buffer, previous_glyph_id, data.id) : 0;
+		struct Font_Glyph const * glyph = font_image_get_glyph(font.buffer, (uint32_t)*ascii_char);
+		if (glyph != NULL && glyph->id != 0) {
+			offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font.buffer, previous_glyph_id, glyph->id) : 0;
 			float const rect[] = {
-				((float)data.params->rect[0]) + offset_x,
-				((float)data.params->rect[1]) + offset_y,
-				((float)data.params->rect[2]) + offset_x,
-				((float)data.params->rect[3]) + offset_y,
+				((float)glyph->params.rect[0]) + offset_x,
+				((float)glyph->params.rect[1]) + offset_y,
+				((float)glyph->params.rect[2]) + offset_x,
+				((float)glyph->params.rect[3]) + offset_y,
 			};
-			offset_x += (float)data.params->full_size_x;
+			offset_x += (float)glyph->params.full_size_x;
 
-			batch_mesh_add_quad(batch.buffer, rect, data.uv);
+			batch_mesh_add_quad(batch.buffer, rect, glyph->uv);
 		}
 
-		previous_glyph_id = data.id;
+		previous_glyph_id = glyph->id;
 	}
 
 	batch_mesh_add_quad(batch.buffer, (float[]){0,(float)(size_y-256),256,(float)size_y}, (float[]){0,0,1,1});
