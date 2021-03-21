@@ -159,7 +159,7 @@ static void game_init(void) {
 	// init font
 	{
 		font.buffer = font_image_init(content.assets.font, 256, 256);
-		font_image_build(font.buffer);
+		font_image_build(font.buffer, (uint32_t[]){0x20, 0x7e, 0});
 		font.gpu_texture = gpu_texture_init(font_image_get_asset(font.buffer));
 	}
 

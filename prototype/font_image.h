@@ -13,6 +13,6 @@ void font_image_free(struct Font_Image * font_image);
 void font_image_clear(struct Font_Image * font_image);
 struct Asset_Image * font_image_get_asset(struct Font_Image * font_image);
 
-void font_image_build(struct Font_Image * font_image);
+void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint_ranges);
 
 #endif

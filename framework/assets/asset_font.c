@@ -58,7 +58,9 @@ void asset_font_free(struct Asset_Font * asset_font) {
 }
 
 float asset_font_get_scale(struct Asset_Font * asset_font, float pixels_size) {
-	return stbtt_ScaleForMappingEmToPixels(&asset_font->font, pixels_size);
+	return (pixels_size > 0)
+		? stbtt_ScaleForPixelHeight(&asset_font->font, pixels_size)
+		: stbtt_ScaleForMappingEmToPixels(&asset_font->font, -pixels_size);
 }
 
 uint32_t asset_font_get_glyph_id(struct Asset_Font * asset_font, uint32_t codepoint) {
@@ -70,26 +72,25 @@ uint32_t asset_font_get_kerning(struct Asset_Font * asset_font, uint32_t glyph_i
 	return (uint32_t)kerning;
 }
 
-void asset_font_get_glyph_parameters(struct Asset_Font * asset_font, struct Glyph_Params * params, uint32_t glyph_id) {
+void asset_font_get_glyph_parameters(struct Asset_Font * asset_font, struct Glyph_Params * params, uint32_t glyph_id, float scale) {
 	int advance_width, left_side_bearing;
 	stbtt_GetGlyphHMetrics(&asset_font->font, (int)glyph_id, &advance_width, &left_side_bearing);
 
 	int rect[4];
-	stbtt_GetGlyphBox(&asset_font->font, (int)glyph_id, rect + 0, rect + 1, rect + 2, rect + 3);
+	stbtt_GetGlyphBitmapBox(&asset_font->font, (int)glyph_id, scale, scale, rect + 0, rect + 1, rect + 2, rect + 3);
 
 	params->bmp_size_x = (uint32_t)(rect[2] - rect[0]);
 	params->bmp_size_y = (uint32_t)(rect[3] - rect[1]);
-	params->offset_x = (int32_t)left_side_bearing;
+	params->offset_x = (int32_t)(((float)left_side_bearing) * scale);
 	params->offset_y = (int32_t)rect[1];
-	params->size_x = (uint32_t)advance_width;
+	params->size_x = (uint32_t)(((float)advance_width) * scale);
 	params->is_empty = stbtt_IsGlyphEmpty(&asset_font->font, (int)glyph_id);
 }
 
 void asset_font_fill_buffer(
 	struct Asset_Font * asset_font,
 	uint8_t * buffer, uint32_t buffer_rect_width,
-	uint32_t glyph_id,
-	uint32_t glyph_size_x, uint32_t glyph_size_y, float scale
+	uint32_t glyph_id, uint32_t glyph_size_x, uint32_t glyph_size_y, float scale
 ) {
 	stbtt_MakeGlyphBitmap(
 		&asset_font->font, buffer,

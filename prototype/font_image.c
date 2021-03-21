@@ -1,8 +1,10 @@
+#include "framework/containers/array_byte.h"
 #include "framework/assets/asset_image.h"
 #include "framework/assets/asset_font.h"
 #include "framework/memory.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 struct Font_Image {
@@ -46,22 +48,55 @@ struct Asset_Image * font_image_get_asset(struct Font_Image * font_image) {
 	return &font_image->buffer;
 }
 
-void font_image_build(struct Font_Image * font_image) {
-	float const font_scale = asset_font_get_scale(font_image->asset_font, 32);
+void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint_ranges) {
+	uint32_t const line_height = 32;
+	float const font_scale = asset_font_get_scale(font_image->asset_font, (float)line_height);
 
-	struct Glyph_Params glyph_params;
-	uint32_t const glyph_id = asset_font_get_glyph_id(font_image->asset_font, (uint32_t)'h');
-	asset_font_get_glyph_parameters(font_image->asset_font, &glyph_params, glyph_id);
-	if (!glyph_params.is_empty) {
-		uint32_t const font_size_x = (uint32_t)(((float)glyph_params.bmp_size_x) * font_scale);
-		uint32_t const font_size_y = (uint32_t)(((float)glyph_params.bmp_size_y) * font_scale);
-		if (font_image->buffer.size_x > font_size_x && font_image->buffer.size_y > font_size_y) {
+	struct Array_Byte scratch_buffer;
+	array_byte_init(&scratch_buffer);
+
+	font_image_clear(font_image);
+
+	uint32_t offset_x = 0, offset_y = 0;
+	for (uint32_t const *range = codepoint_ranges; *range != 0; range += 2) {
+		for (uint32_t codepoint = *range, codepoint_to = range[1]; codepoint <= codepoint_to; codepoint++) {
+			if (font_image->buffer.size_y < offset_y + line_height) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
+
+			uint32_t const glyph_id = asset_font_get_glyph_id(font_image->asset_font, codepoint);
+
+			struct Glyph_Params glyph_params;
+			asset_font_get_glyph_parameters(font_image->asset_font, &glyph_params, glyph_id, font_scale);
+
+			if (glyph_params.is_empty) { continue; }
+
+			if (font_image->buffer.size_x < glyph_params.bmp_size_x) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); continue; }
+			if (font_image->buffer.size_y < glyph_params.bmp_size_y) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); continue; }
+
+			if (scratch_buffer.capacity < glyph_params.bmp_size_x * glyph_params.bmp_size_y) {
+				array_byte_resize(&scratch_buffer, glyph_params.bmp_size_x * glyph_params.bmp_size_y);
+			}
+
 			asset_font_fill_buffer(
 				font_image->asset_font,
-				font_image->buffer.data, font_image->buffer.size_x,
-				glyph_id,
-				font_size_x, font_size_y, font_scale
+				scratch_buffer.data, glyph_params.bmp_size_x,
+				glyph_id, glyph_params.bmp_size_x, glyph_params.bmp_size_y, font_scale
 			);
+
+			for (uint32_t y = 0; y < glyph_params.bmp_size_y; y++) {
+				memcpy(
+					font_image->buffer.data + ((offset_y + y) * font_image->buffer.size_x + offset_x),
+					scratch_buffer.data + ((glyph_params.bmp_size_y - y - 1) * glyph_params.bmp_size_x),
+					glyph_params.bmp_size_x * sizeof(*scratch_buffer.data)
+				);
+			}
+
+			offset_x += glyph_params.bmp_size_x;
+			if (offset_x > font_image->buffer.size_x - line_height) {
+				offset_x = 0;
+				offset_y += line_height;
+			}
 		}
 	}
+
+	array_byte_free(&scratch_buffer);
 }
