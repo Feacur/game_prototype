@@ -47,7 +47,7 @@ struct Window * platform_window_init(void) {
 	window->size_y = (uint32_t)(rect.bottom - rect.top);
 
 /*
-	uint8_t keys[256];
+	uint8_t keys[KEYBOARD_KEYS_MAX];
 	if (GetKeyboardState(keys)) {
 		window->keyboard.caps_lock = keys[VK_CAPITAL] & 0x01;
 		window->keyboard.num_lock = keys[VK_NUMLOCK] & 0x01;

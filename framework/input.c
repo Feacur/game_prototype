@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// @idea: use per-frame input states (as it is now; 2021, march 23)
+//        OR rely on the backend sending correct ammount of pushes and releases?
+
 //
 #include "input.h"
 

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
+
 //
 #include "memory.h"
 

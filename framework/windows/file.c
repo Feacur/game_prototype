@@ -10,7 +10,7 @@
 #include "framework/platform_file.h"
 
 /*
-bool platform_file_read(struct Array_Byte * buffer, char const * path) {
+bool platform_file_read(char const * path, struct Array_Byte * buffer) {
 	HANDLE handle = CreateFileA(
 		path,
 		GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
@@ -36,7 +36,6 @@ bool platform_file_read(struct Array_Byte * buffer, char const * path) {
 	uint64_t const file_size = (uint64_t)file_size_from_api.QuadPart;
 	uint8_t * data = MEMORY_ALLOCATE_ARRAY(uint8_t, file_size + 1);
 
-	// @todo: support large files?
 	DWORD bytes_read;
 	if (!ReadFile(handle, data, (DWORD)file_size, &bytes_read, NULL) || bytes_read < file_size) {
 		fprintf(stderr, "'ReadFile' failed\n"); DEBUG_BREAK();

@@ -15,6 +15,7 @@
 #include "framework/graphics/font_image.h"
 
 #include "framework/containers/array_byte.h"
+#include "framework/containers/array_any.h"
 #include "framework/containers/hash_table.h"
 
 #include "framework/assets/asset_mesh.h"
@@ -109,13 +110,13 @@ static void game_init(void) {
 		content.assets.font_mono = asset_font_init("assets/JetBrainsMono-Regular.ttf");
 
 		struct Array_Byte asset_shader_test;
-		platform_file_read(&asset_shader_test, "assets/test.glsl");
+		platform_file_read("assets/test.glsl", &asset_shader_test);
 
 		struct Array_Byte asset_shader_font;
-		platform_file_read(&asset_shader_font, "assets/font.glsl");
+		platform_file_read("assets/font.glsl", &asset_shader_font);
 		
 		struct Array_Byte asset_shader_target;
-		platform_file_read(&asset_shader_target, "assets/target.glsl");
+		platform_file_read("assets/target.glsl", &asset_shader_target);
 
 		struct Asset_Image asset_image_test;
 		asset_image_init(&asset_image_test, "assets/test.png");

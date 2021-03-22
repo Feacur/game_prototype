@@ -4,6 +4,8 @@
 #include "common.h"
 #include "input_keys.h"
 
+// @todo: recieve utf-8 input, too?
+
 void input_reset_delta(void);
 void input_update(void);
 

@@ -7,7 +7,7 @@
 //
 #include "framework/platform_file.h"
 
-bool platform_file_read(struct Array_Byte * buffer, char const * path) {
+bool platform_file_read(char const * path, struct Array_Byte * buffer) {
 	FILE * file = fopen(path, "rb");
 	if (file == NULL) { fprintf(stderr, "'fopen' failed\n"); DEBUG_BREAK(); return false; }
 

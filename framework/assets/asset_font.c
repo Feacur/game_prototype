@@ -32,6 +32,7 @@
 //
 #include "asset_font.h"
 
+// @idea: cache here basic metrics, without scaling?
 struct Asset_Font {
 	struct Array_Byte file;
 	stbtt_fontinfo font;
@@ -41,7 +42,7 @@ struct Asset_Font {
 struct Asset_Font * asset_font_init(char const * path) {
 	struct Asset_Font * asset_font = MEMORY_ALLOCATE(struct Asset_Font);
 
-	platform_file_read(&asset_font->file, path);
+	platform_file_read(path, &asset_font->file);
 	if (!stbtt_InitFont(&asset_font->font, asset_font->file.data, stbtt_GetFontOffsetForIndex(asset_font->file.data, 0))) {
 		fprintf(stderr, "'stbtt_InitFont' failed\n"); DEBUG_BREAK();
 	}

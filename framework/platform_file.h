@@ -5,7 +5,7 @@
 
 struct Array_Byte;
 
-bool platform_file_read(struct Array_Byte * buffer, char const * path);
+bool platform_file_read(char const * path, struct Array_Byte * buffer);
 
 uint64_t platform_file_size(char const * path);
 uint64_t platform_file_time(char const * path);

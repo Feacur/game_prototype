@@ -8,6 +8,7 @@
 #include "framework/graphics/batch_mesh.c"
 #include "framework/graphics/font_image.c"
 
+#include "framework/containers/array_any.c"
 #include "framework/containers/array_byte.c"
 #include "framework/containers/array_float.c"
 #include "framework/containers/array_u32.c"

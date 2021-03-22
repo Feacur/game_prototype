@@ -4,6 +4,7 @@
 #include <string.h>
 
 // @todo: make this dynamically compilable?
+// @todo: make it easier to use another growth factor
 #define GROWTH_FACTOR 2
 #define HASH_TABLE_SHOULD_GROW(count, capacity) ((count) > (capacity) * 2 / 3)
 // #define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR)
@@ -21,7 +22,6 @@ struct Hash_Table {
 	uint8_t * marks;
 	uint8_t * values;
 };
-
 
 #if GROWTH_FACTOR == 2
 	// #include <framework/maths.h>
@@ -55,10 +55,11 @@ void hash_table_free(struct Hash_Table * hash_table) {
 
 static uint32_t hash_table_find_key_index(struct Hash_Table * hash_table, uint32_t key);
 void hash_table_ensure_minimum_capacity(struct Hash_Table * hash_table, uint32_t minimum_capacity) {
+	if (minimum_capacity < 8) { minimum_capacity = 8; }
 #if GROWTH_FACTOR == 2
 	if (minimum_capacity > 0x80000000) {
 		minimum_capacity = 0x80000000;
-		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK();
+		fprintf(stderr, "requested capacity is too large\n"); DEBUG_BREAK();
 	}
 	minimum_capacity = round_up_to_PO2_u32(minimum_capacity);
 #endif

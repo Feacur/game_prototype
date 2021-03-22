@@ -9,7 +9,7 @@
 //
 #include "asset_mesh.h"
 
-static void asset_mesh_obj_unpack(
+static void asset_mesh_obj_repack(
 	struct Asset_Mesh_Obj const * obj,
 	struct Array_Float * vertices,
 	struct Array_U32 * attributes,
@@ -25,7 +25,7 @@ static void asset_mesh_fill(
 
 void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
 	struct Array_Byte file;
-	platform_file_read(&file, path);
+	platform_file_read(path, &file);
 	array_byte_write(&file, '\0');
 
 	struct Asset_Mesh_Obj obj;
@@ -38,7 +38,7 @@ void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
 	struct Array_U32 attributes;
 	struct Array_U32 indices;
 
-	asset_mesh_obj_unpack(
+	asset_mesh_obj_repack(
 		&obj,
 		&vertices,
 		&attributes,
@@ -71,7 +71,7 @@ void asset_mesh_free(struct Asset_Mesh * asset_mesh) {
 
 //
 
-static void asset_mesh_obj_unpack(
+static void asset_mesh_obj_repack(
 	struct Asset_Mesh_Obj const * obj,
 	struct Array_Float * vertices,
 	struct Array_U32 * attributes,

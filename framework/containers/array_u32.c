@@ -30,6 +30,7 @@ void array_u32_resize(struct Array_U32 * array, uint32_t size) {
 
 void array_u32_write(struct Array_U32 * array, uint32_t value) {
 	if (array->count + 1 > array->capacity) {
+		// @todo: correctly process capacities past 0x80000000
 		array->capacity = GROW_CAPACITY(array->capacity);
 		array->data = MEMORY_REALLOCATE_ARRAY(array->data, array->capacity);
 	}
@@ -40,6 +41,7 @@ void array_u32_write(struct Array_U32 * array, uint32_t value) {
 
 void array_u32_write_many(struct Array_U32 * array, uint32_t count, uint32_t const * value) {
 	if (array->count + count > array->capacity) {
+		// @todo: correctly process capacities past 0x80000000
 		while (array->count + count > array->capacity) {
 			array->capacity = GROW_CAPACITY(array->capacity);
 		}
@@ -52,6 +54,7 @@ void array_u32_write_many(struct Array_U32 * array, uint32_t count, uint32_t con
 
 void array_u32_write_many_zeroes(struct Array_U32 * array, uint32_t count) {
 	if (array->count + count > array->capacity) {
+		// @todo: correctly process capacities past 0x80000000
 		while (array->count + count > array->capacity) {
 			array->capacity = GROW_CAPACITY(array->capacity);
 		}

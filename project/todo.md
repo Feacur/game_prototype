@@ -13,9 +13,19 @@
         [ ] condense graphics material's buffers into a single bytes arrays?
         [ ] condense asset mesh's buffers into a single bytes arrays?
         [ ] use flexible array members with opaque pointers API?
+    [ ] expose screen buffer settings, as well as OpenGL's
 [ ] platform
     [ ] elaborate raw input
+    [ ] expose Caps Lock and Num Lock toggle states?
 [ ] organize standard includes?
+[ ] should batch_mesh and font_image belong to some other folder?
+[ ] support large files? more than 2gb? more than 4gb?
+[ ] async file access?
+[ ] reuse mesh vertices at `asset_mesh_obj_repack` function
+[ ] clean up containers implementation
+[ ] build system
+    [ ] streamline debug build switching
+    [ ] streamline unity build switching
 ```
 
 [Markdown](https://www.markdownguide.org/basic-syntax/)

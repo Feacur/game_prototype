@@ -3,6 +3,7 @@
 
 #include "framework/common.h"
 
+// @idea: expose the structure? will it reduce indirection?
 struct Hash_Table;
 
 struct Hash_Table * hash_table_init(uint32_t value_size);
