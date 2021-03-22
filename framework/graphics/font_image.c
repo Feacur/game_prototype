@@ -77,6 +77,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 	for (uint32_t const *range = codepoint_ranges; *range != 0; range += 2) {
 		for (uint32_t codepoint = *range, codepoint_to = range[1]; codepoint <= codepoint_to; codepoint++) {
 			uint32_t const glyph_id = asset_font_get_glyph_id(font_image->asset_font, codepoint);
+			if (glyph_id == 0) { continue; }
 
 			struct Glyph_Params glyph_params;
 			asset_font_get_glyph_parameters(font_image->asset_font, &glyph_params, glyph_id, font_image->scale);
@@ -152,13 +153,8 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 	}
 
 	// track glyphs
-	{
-		struct Font_Symbol const * symbol = symbols;
-		for (uint32_t const * range = codepoint_ranges; *range != 0; range += 2) {
-			for (uint32_t codepoint = *range, codepoint_to = range[1]; codepoint <= codepoint_to; codepoint++) {
-				hash_table_set(font_image->table, codepoint, symbol++); // treat symbol as glyph
-			}
-		}
+	for (struct Font_Symbol * symbol = symbols; symbol->glyph.id != 0; symbol++) {
+		hash_table_set(font_image->table, symbol->codepoint, symbol); // treat symbol as glyph
 	}
 
 	MEMORY_FREE(symbols);
