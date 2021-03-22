@@ -51,96 +51,68 @@ void gfx_material_free(struct Gfx_Material * material) {
 	array_float_free(&material->values_float);
 }
 
+static void gfx_material_set_value(
+	struct Gfx_Material * material, uint32_t uniform_id, enum Data_Type type,
+	uint8_t * target,
+	uint32_t values_count, uint32_t value_size, void const * value
+);
+
 void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Gpu_Texture ** value) {
-	uint32_t uniforms_count;
-	struct Gpu_Program_Field const * uniforms;
-	gpu_program_get_uniforms(material->program, &uniforms_count, &uniforms);
-
-	uint32_t offset = 0;
-	for (uint32_t i = 0; i < uniforms_count; i++) {
-		if (data_type_get_element_type(uniforms[i].type) != DATA_TYPE_UNIT) { continue; }
-
-		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
-		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
-
-		if (count != elements_count) {
-			fprintf(stderr, "data is too large\n"); DEBUG_BREAK();
-			return;
-		}
-
-		memcpy(material->textures.data + offset, value, count * sizeof(*value));
-		return;
-	}
-
-	fprintf(stderr, "material doesn't have such a property\n"); DEBUG_BREAK();
+	gfx_material_set_value(
+		material, uniform_id, DATA_TYPE_UNIT,
+		(uint8_t *)material->textures.data,
+		count, sizeof(*value), value
+	);
 }
 
 void gfx_material_set_u32(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, uint32_t const * value) {
-	uint32_t uniforms_count;
-	struct Gpu_Program_Field const * uniforms;
-	gpu_program_get_uniforms(material->program, &uniforms_count, &uniforms);
-
-	uint32_t offset = 0;
-	for (uint32_t i = 0; i < uniforms_count; i++) {
-		if (data_type_get_element_type(uniforms[i].type) != DATA_TYPE_U32) { continue; }
-
-		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
-		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
-
-		if (count != elements_count) {
-			fprintf(stderr, "data is too large\n"); DEBUG_BREAK();
-			return;
-		}
-
-		memcpy(material->values_u32.data + offset, value, count * sizeof(*value));
-		return;
-	}
-
-	fprintf(stderr, "material doesn't have such a property\n"); DEBUG_BREAK();
+	gfx_material_set_value(
+		material, uniform_id, DATA_TYPE_U32,
+		(uint8_t *)material->values_u32.data,
+		count, sizeof(*value), value
+	);
 }
 
 void gfx_material_set_s32(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, int32_t const * value) {
-	uint32_t uniforms_count;
-	struct Gpu_Program_Field const * uniforms;
-	gpu_program_get_uniforms(material->program, &uniforms_count, &uniforms);
-
-	uint32_t offset = 0;
-	for (uint32_t i = 0; i < uniforms_count; i++) {
-		if (data_type_get_element_type(uniforms[i].type) != DATA_TYPE_S32) { continue; }
-
-		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
-		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
-
-		if (count != elements_count) {
-			fprintf(stderr, "data is too large\n"); DEBUG_BREAK();
-			return;
-		}
-
-		memcpy(material->values_s32.data + offset, value, count * sizeof(*value));
-		return;
-	}
-
-	fprintf(stderr, "material doesn't have such a property\n"); DEBUG_BREAK();
+	gfx_material_set_value(
+		material, uniform_id, DATA_TYPE_S32,
+		(uint8_t *)material->values_s32.data,
+		count, sizeof(*value), value
+	);
 }
 
 void gfx_material_set_float(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, float const * value) {
+	gfx_material_set_value(
+		material, uniform_id, DATA_TYPE_R32,
+		(uint8_t *)material->values_float.data,
+		count, sizeof(*value), value
+	);
+}
+
+//
+
+static void gfx_material_set_value(
+	struct Gfx_Material * material, uint32_t uniform_id, enum Data_Type type,
+	uint8_t * target,
+	uint32_t values_count, uint32_t value_size, void const * value
+) {
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
 	gpu_program_get_uniforms(material->program, &uniforms_count, &uniforms);
 
 	uint32_t offset = 0;
 	for (uint32_t i = 0; i < uniforms_count; i++) {
-		if (data_type_get_element_type(uniforms[i].type) != DATA_TYPE_R32) { continue; }
+		if (data_type_get_element_type(uniforms[i].type) != type) { continue; }
 
 		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
 		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
 
-		if (count != elements_count) {
+		if (values_count != elements_count) {
 			fprintf(stderr, "data is too large\n"); DEBUG_BREAK();
 			return;
 		}
 
-		memcpy(material->values_float.data + offset, value, count * sizeof(*value));
+		memcpy(target + offset * value_size, value, values_count * value_size);
 		return;
 	}
 

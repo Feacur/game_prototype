@@ -35,14 +35,14 @@ uint32_t data_type_get_count(enum Data_Type value) {
 		case DATA_TYPE_NONE: break;
 
 		case DATA_TYPE_UNIT: return 1;
-		case DATA_TYPE_U64: return 1;
-		case DATA_TYPE_S64: return 1;
 
 		case DATA_TYPE_U8:  return 1;
 		case DATA_TYPE_U16: return 1;
+		case DATA_TYPE_U64: return 1;
 
 		case DATA_TYPE_S8:  return 1;
 		case DATA_TYPE_S16: return 1;
+		case DATA_TYPE_S64: return 1;
 
 		case DATA_TYPE_R64: return 1;
 
@@ -72,16 +72,15 @@ uint32_t data_type_get_size(enum Data_Type value) {
 	switch (value) {
 		case DATA_TYPE_NONE: break;
 
-		case DATA_TYPE_U64: return sizeof(int64_t);
-		case DATA_TYPE_S64: return sizeof(uint64_t);
-
 		case DATA_TYPE_UNIT: return sizeof(uint32_t);
 
 		case DATA_TYPE_U8:  return sizeof(uint8_t);
 		case DATA_TYPE_U16: return sizeof(uint16_t);
+		case DATA_TYPE_U64: return sizeof(uint64_t);
 
 		case DATA_TYPE_S8:  return sizeof(int8_t);
 		case DATA_TYPE_S16: return sizeof(int16_t);
+		case DATA_TYPE_S64: return sizeof(int64_t);
 
 		case DATA_TYPE_R64: return sizeof(double);
 
