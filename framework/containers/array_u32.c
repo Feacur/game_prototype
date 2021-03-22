@@ -2,6 +2,9 @@
 
 #include <string.h>
 
+#define GROWTH_FACTOR 2
+#define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR)
+
 //
 #include "array_u32.h"
 
@@ -58,3 +61,6 @@ void array_u32_write_many_zeroes(struct Array_U32 * array, uint32_t count) {
 	memset(array->data + array->count, 0, count * sizeof(*array->data));
 	array->count += count;
 }
+
+#undef GROWTH_FACTOR
+#undef GROW_CAPACITY

@@ -7,12 +7,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 struct Font_Image {
 	struct Asset_Image buffer;
 	struct Asset_Font * asset_font; // weak reference
 	struct Hash_Table * table;
-	uint32_t size;
 	float scale;
 };
 
@@ -24,7 +24,7 @@ struct Font_Symbol {
 	uint32_t codepoint;
 };
 
-struct Font_Image * font_image_init(struct Asset_Font * asset_font, uint32_t size, uint32_t size_x, uint32_t size_y) {
+struct Font_Image * font_image_init(struct Asset_Font * asset_font, int32_t size, uint32_t size_x, uint32_t size_y) {
 	struct Font_Image * font_image = MEMORY_ALLOCATE(struct Font_Image);
 
 	font_image->buffer = (struct Asset_Image){
@@ -39,7 +39,6 @@ struct Font_Image * font_image_init(struct Asset_Font * asset_font, uint32_t siz
 	};
 
 	font_image->table = hash_table_init(sizeof(struct Font_Glyph));
-	font_image->size = size;
 	font_image->scale = asset_font_get_scale(asset_font, (float)size);
 
 	font_image->asset_font = asset_font;
@@ -96,16 +95,18 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 	font_image_clear(font_image);
 
 	{
+		uint32_t const padding = 1;
+		uint32_t const line_height = (uint32_t)ceilf(font_image_get_height(font_image));
+
 		struct Array_Byte scratch_buffer;
 		array_byte_init(&scratch_buffer);
 
-		uint32_t const padding = 1;
 		uint32_t offset_x = padding, offset_y = padding;
 		for (struct Font_Symbol * symbol = symbols; symbol->glyph.id != 0; symbol++) {
 			struct Glyph_Params const * params = &symbol->glyph.params;
 			if (params->is_empty) { continue; }
 
-			if (font_image->buffer.size_y < offset_y + font_image->size) {
+			if (font_image->buffer.size_y < offset_y + line_height) {
 				fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break;
 			}
 
@@ -143,9 +144,9 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 
 			//
 			offset_x += size_x + padding;
-			if (offset_x > font_image->buffer.size_x - font_image->size) {
+			if (offset_x > font_image->buffer.size_x - line_height) {
 				offset_x = padding;
-				offset_y += font_image->size + padding;
+				offset_y += line_height + padding;
 			}
 		}
 
@@ -153,6 +154,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 	}
 
 	// track glyphs
+	hash_table_ensure_minimum_capacity(font_image->table, symbols_count);
 	for (struct Font_Symbol * symbol = symbols; symbol->glyph.id != 0; symbol++) {
 		hash_table_set(font_image->table, symbol->codepoint, symbol); // treat symbol as glyph
 	}

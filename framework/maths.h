@@ -20,6 +20,8 @@ uint32_t convert_bits_r32_u32(float value);
 uint32_t hash_bytes_fnv1(uint8_t const * value, uint32_t length);
 uint32_t hash_u32_xorshift(uint32_t value);
 
+uint32_t round_up_to_PO2_u32(uint32_t value);
+
 uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator);
 uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator);
 

@@ -37,6 +37,17 @@ uint32_t hash_u32_xorshift(uint32_t value) {
 	return value;
 }
 
+uint32_t round_up_to_PO2_u32(uint32_t value) {
+	value--;
+	value |= value >> 1;
+	value |= value >> 2;
+	value |= value >> 4;
+	value |= value >> 8;
+	value |= value >> 16;
+	value++;
+	return value;
+}
+
 uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator) {
 	uint32_t a = value / denominator;
 	uint32_t b = value % denominator;
