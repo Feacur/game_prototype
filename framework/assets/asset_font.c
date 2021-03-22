@@ -41,7 +41,7 @@ struct Asset_Font {
 struct Asset_Font * asset_font_init(char const * path) {
 	struct Asset_Font * asset_font = MEMORY_ALLOCATE(struct Asset_Font);
 
-	platform_file_init(&asset_font->file, path);
+	platform_file_read(&asset_font->file, path);
 	if (!stbtt_InitFont(&asset_font->font, asset_font->file.data, stbtt_GetFontOffsetForIndex(asset_font->file.data, 0))) {
 		fprintf(stderr, "'stbtt_InitFont' failed\n"); DEBUG_BREAK();
 	}
@@ -52,7 +52,7 @@ struct Asset_Font * asset_font_init(char const * path) {
 }
 
 void asset_font_free(struct Asset_Font * asset_font) {
-	platform_file_free(&asset_font->file);
+	array_byte_free(&asset_font->file);
 	memset(asset_font, 0, sizeof(*asset_font));
 	MEMORY_FREE(asset_font);
 }

@@ -5,7 +5,9 @@
 
 struct Array_Byte;
 
-void platform_file_init(struct Array_Byte * buffer, char const * path);
-void platform_file_free(struct Array_Byte * buffer);
+bool platform_file_read(struct Array_Byte * buffer, char const * path);
+
+uint64_t platform_file_size(char const * path);
+uint64_t platform_file_time(char const * path);
 
 #endif

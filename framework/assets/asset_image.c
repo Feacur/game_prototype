@@ -39,7 +39,7 @@
 
 void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 	struct Array_Byte file;
-	platform_file_init(&file, path);
+	platform_file_read(&file, path);
 
 	// @todo: check if it's opengl-specific?
 	stbi_set_flip_vertically_on_load(1);

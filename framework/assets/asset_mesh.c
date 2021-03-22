@@ -25,7 +25,7 @@ static void asset_mesh_fill(
 
 void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
 	struct Array_Byte file;
-	platform_file_init(&file, path);
+	platform_file_read(&file, path);
 	array_byte_write(&file, '\0');
 
 	struct Asset_Mesh_Obj obj;

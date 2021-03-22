@@ -109,13 +109,13 @@ static void game_init(void) {
 		content.assets.font_mono = asset_font_init("assets/JetBrainsMono-Regular.ttf");
 
 		struct Array_Byte asset_shader_test;
-		platform_file_init(&asset_shader_test, "assets/test.glsl");
+		platform_file_read(&asset_shader_test, "assets/test.glsl");
 
 		struct Array_Byte asset_shader_font;
-		platform_file_init(&asset_shader_font, "assets/font.glsl");
+		platform_file_read(&asset_shader_font, "assets/font.glsl");
 		
 		struct Array_Byte asset_shader_target;
-		platform_file_init(&asset_shader_target, "assets/target.glsl");
+		platform_file_read(&asset_shader_target, "assets/target.glsl");
 
 		struct Asset_Image asset_image_test;
 		asset_image_init(&asset_image_test, "assets/test.png");
@@ -129,9 +129,9 @@ static void game_init(void) {
 		content.gpu.texture_test = gpu_texture_init(&asset_image_test);
 		content.gpu.mesh_cube = gpu_mesh_init(&asset_mesh_cube);
 
-		platform_file_free(&asset_shader_test);
-		platform_file_free(&asset_shader_font);
-		platform_file_free(&asset_shader_target);
+		array_byte_free(&asset_shader_test);
+		array_byte_free(&asset_shader_font);
+		array_byte_free(&asset_shader_target);
 		asset_image_free(&asset_image_test);
 		asset_mesh_free(&asset_mesh_cube);
 

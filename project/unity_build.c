@@ -1,7 +1,7 @@
 #include "framework/maths.c"
 #include "framework/memory.c"
-#include "framework/platform_file.c"
 #include "framework/input.c"
+#include "framework/platform_file.c"
 
 #include "framework/graphics/types.c"
 #include "framework/graphics/material.c"
@@ -26,6 +26,7 @@
 #define GAME_GRAPHICS_IS_OPENGL
 #if defined(_WIN32) || defined(_WIN64)
 	#include "framework/windows/timer.c"
+	#include "framework/windows/file.c"
 	#include "framework/windows/system.c"
 	#include "framework/windows/window.c"
 
