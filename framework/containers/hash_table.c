@@ -18,9 +18,9 @@ enum Hash_Table_Mark {
 struct Hash_Table {
 	uint32_t value_size;
 	uint32_t capacity, count;
-	uint32_t * keys;
-	uint8_t * marks;
+	uint32_t * key_hashes;
 	uint8_t * values;
+	uint8_t * marks;
 };
 
 #if GROWTH_FACTOR == 2
@@ -45,15 +45,15 @@ struct Hash_Table * hash_table_init(uint32_t value_size) {
 }
 
 void hash_table_free(struct Hash_Table * hash_table) {
-	MEMORY_FREE(hash_table->keys);
-	MEMORY_FREE(hash_table->marks);
+	MEMORY_FREE(hash_table->key_hashes);
 	MEMORY_FREE(hash_table->values);
+	MEMORY_FREE(hash_table->marks);
 
 	memset(hash_table, 0, sizeof(*hash_table));
 	MEMORY_FREE(hash_table);
 }
 
-static uint32_t hash_table_find_key_index(struct Hash_Table * hash_table, uint32_t key);
+static uint32_t hash_table_find_key_index(struct Hash_Table * hash_table, uint32_t key_hash);
 void hash_table_ensure_minimum_capacity(struct Hash_Table * hash_table, uint32_t minimum_capacity) {
 	if (minimum_capacity < 8) { minimum_capacity = 8; }
 #if GROWTH_FACTOR == 2
@@ -65,14 +65,14 @@ void hash_table_ensure_minimum_capacity(struct Hash_Table * hash_table, uint32_t
 #endif
 
 	uint32_t const capacity = hash_table->capacity;
-	uint32_t * keys = hash_table->keys;
-	uint8_t * marks = hash_table->marks;
+	uint32_t * key_hashes = hash_table->key_hashes;
 	uint8_t * values = hash_table->values;
+	uint8_t * marks = hash_table->marks;
 
 	hash_table->capacity = minimum_capacity;
-	hash_table->keys = MEMORY_ALLOCATE_ARRAY(uint32_t, hash_table->capacity);
-	hash_table->marks = MEMORY_ALLOCATE_ARRAY(uint8_t, hash_table->capacity);
+	hash_table->key_hashes = MEMORY_ALLOCATE_ARRAY(uint32_t, hash_table->capacity);
 	hash_table->values = MEMORY_ALLOCATE_ARRAY(uint8_t, hash_table->capacity * hash_table->value_size);
+	hash_table->marks = MEMORY_ALLOCATE_ARRAY(uint8_t, hash_table->capacity);
 
 	memset(hash_table->marks, HASH_TABLE_MARK_NONE, hash_table->capacity * sizeof(*hash_table->marks));
 
@@ -80,19 +80,19 @@ void hash_table_ensure_minimum_capacity(struct Hash_Table * hash_table, uint32_t
 	for (uint32_t i = 0; i < capacity; i++) {
 		if (marks[i] != HASH_TABLE_MARK_FULL) { continue; }
 
-		uint32_t key_index = hash_table_find_key_index(hash_table, keys[i]);
-		hash_table->keys[key_index] = keys[i];
-		hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
+		uint32_t const key_index = hash_table_find_key_index(hash_table, key_hashes[i]);
+		hash_table->key_hashes[key_index] = key_hashes[i];
 		memcpy(
 			hash_table->values + key_index * hash_table->value_size,
 			values + i * hash_table->value_size,
-			hash_table->value_size * sizeof(*hash_table->values)
+			hash_table->value_size
 		);
+		hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
 	}
 
-	MEMORY_FREE(keys);
-	MEMORY_FREE(marks);
+	MEMORY_FREE(key_hashes);
 	MEMORY_FREE(values);
+	MEMORY_FREE(marks);
 }
 
 void hash_table_clear(struct Hash_Table * hash_table) {
@@ -100,39 +100,39 @@ void hash_table_clear(struct Hash_Table * hash_table) {
 	memset(hash_table->marks, HASH_TABLE_MARK_NONE, hash_table->capacity * sizeof(*hash_table->marks));
 }
 
-void * hash_table_get(struct Hash_Table * hash_table, uint32_t key) {
+void * hash_table_get(struct Hash_Table * hash_table, uint32_t key_hash) {
 	if (hash_table->count == 0) { return NULL; }
-	uint32_t key_index = hash_table_find_key_index(hash_table, key);
+	uint32_t const key_index = hash_table_find_key_index(hash_table, key_hash);
 	if (hash_table->marks[key_index] == HASH_TABLE_MARK_FULL) {
 		return hash_table->values + key_index * hash_table->value_size;
 	}
 	return NULL;
 }
 
-bool hash_table_set(struct Hash_Table * hash_table, uint32_t key, void const * value) {
+bool hash_table_set(struct Hash_Table * hash_table, uint32_t key_hash, void const * value) {
 	if (HASH_TABLE_SHOULD_GROW(hash_table->count + 1, hash_table->capacity)) {
 		// hash_table_ensure_minimum_capacity(hash_table, GROW_CAPACITY(hash_table->capacity));
 		hash_table_ensure_minimum_capacity(hash_table, hash_table->capacity + 1);
 	}
 
-	uint32_t key_index = hash_table_find_key_index(hash_table, key);
+	uint32_t const key_index = hash_table_find_key_index(hash_table, key_hash);
 	bool const is_new = hash_table->marks[key_index] != HASH_TABLE_MARK_FULL;
 	if (is_new) { hash_table->count++; }
 
-	hash_table->keys[key_index] = key;
-	hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
+	hash_table->key_hashes[key_index] = key_hash;
 	memcpy(
 		hash_table->values + key_index * hash_table->value_size,
 		value,
-		hash_table->value_size * sizeof(*hash_table->values)
+		hash_table->value_size
 	);
+	hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
 	
 	return is_new;
 }
 
-bool hash_table_del(struct Hash_Table * hash_table, uint32_t key) {
+bool hash_table_del(struct Hash_Table * hash_table, uint32_t key_hash) {
 	if (hash_table->count == 0) { return false; }
-	uint32_t key_index = hash_table_find_key_index(hash_table, key);
+	uint32_t const key_index = hash_table_find_key_index(hash_table, key_hash);
 	if (hash_table->marks[key_index] != HASH_TABLE_MARK_FULL) { return false; }
 	hash_table->marks[key_index] = HASH_TABLE_MARK_SKIP;
 	return true;
@@ -140,20 +140,20 @@ bool hash_table_del(struct Hash_Table * hash_table, uint32_t key) {
 
 //
 
-static uint32_t hash_table_find_key_index(struct Hash_Table * hash_table, uint32_t key) {
+static uint32_t hash_table_find_key_index(struct Hash_Table * hash_table, uint32_t key_hash) {
 #if GROWTH_FACTOR == 2
 	#define WRAP_VALUE(value, range) ((value) & ((range) - 1))
 #else
 	#define WRAP_VALUE(value, range) ((value) % (range))
 #endif
 
-	uint32_t const offset = WRAP_VALUE(key, hash_table->capacity);
+	uint32_t const offset = WRAP_VALUE(key_hash, hash_table->capacity);
 	for (uint32_t i = 0; i < hash_table->capacity; i++) {
 		uint32_t const index = WRAP_VALUE(i + offset, hash_table->capacity);
 		uint8_t const mark = hash_table->marks[index];
 		if (mark == HASH_TABLE_MARK_SKIP) { continue; }
 		if (mark == HASH_TABLE_MARK_NONE) { return index; }
-		if (hash_table->keys[index] == key) { return index; }
+		if (hash_table->key_hashes[index] == key_hash) { return index; }
 	}
 	return INDEX_EMPTY;
 

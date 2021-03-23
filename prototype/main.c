@@ -17,6 +17,7 @@
 #include "framework/containers/array_byte.h"
 #include "framework/containers/array_any.h"
 #include "framework/containers/hash_table.h"
+#include "framework/containers/hash_table_any.h"
 
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"

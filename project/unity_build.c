@@ -15,6 +15,7 @@
 #include "framework/containers/array_s32.c"
 #include "framework/containers/array_pointer.c"
 #include "framework/containers/hash_table.c"
+#include "framework/containers/hash_table_any.c"
 #include "framework/containers/strings.c"
 
 #include "framework/assets/parsing.c"
