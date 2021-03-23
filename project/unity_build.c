@@ -33,7 +33,7 @@
 	#include "framework/windows/window.c"
 
 	#if defined(GAME_GRAPHICS_IS_OPENGL)
-		#include "framework/windows/opengl/glibrary.c"
+		#include "framework/windows/opengl.c"
 		#include "framework/opengl/functions.c"
 		#include "framework/opengl/graphics.c"
 	#endif

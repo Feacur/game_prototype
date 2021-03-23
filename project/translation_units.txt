@@ -30,7 +30,7 @@ framework/windows/file.c
 framework/windows/system.c
 framework/windows/window.c
 
-framework/windows/opengl/glibrary.c
+framework/windows/opengl.c
 framework/opengl/functions.c
 framework/opengl/graphics.c
 
