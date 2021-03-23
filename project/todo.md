@@ -1,8 +1,7 @@
 # framework
 ```
-[o] text rendering
+[ ] text rendering
     [ ] GPU texture data streaming, probably, too?
-    [ ] UTF-8 decoding
     [ ] improve font glyphs packer (probably make it a sprite/rect packer)
 [ ] graphics
     [ ] API to correctly batch-update meshes/textures and create a render pass (or whatever)
@@ -22,11 +21,11 @@
 [ ] support large files? more than 2gb? more than 4gb?
 [ ] async file access?
 [ ] reuse mesh vertices at `asset_mesh_obj_repack` function
+[ ] UTF-8 edge cases, different languages, LTR/RTL, etc.
 [ ] clean up containers implementation
     [ ] ever need a uint64_t hashes for hash tables?
 [ ] build system
     [ ] streamline build settings switching
-	[x] make translation units list explicit
 ```
 
 [Markdown](https://www.markdownguide.org/basic-syntax/)

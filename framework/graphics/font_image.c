@@ -57,7 +57,7 @@ void font_image_free(struct Font_Image * font_image) {
 
 void font_image_clear(struct Font_Image * font_image) {
 	hash_table_clear(font_image->table);
-	memset(font_image->buffer.data, 0, font_image->buffer.size_x * font_image->buffer.size_x * sizeof(uint8_t));
+	memset(font_image->buffer.data, 0, font_image->buffer.size_x * font_image->buffer.size_y * sizeof(*font_image->buffer.data));
 }
 
 struct Asset_Image * font_image_get_asset(struct Font_Image * font_image) {

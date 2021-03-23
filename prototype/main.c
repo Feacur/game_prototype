@@ -1,4 +1,5 @@
 #include "framework/memory.h"
+#include "framework/utf8.h"
 #include "framework/platform_timer.h"
 #include "framework/platform_file.h"
 #include "framework/platform_system.h"
@@ -54,6 +55,7 @@ static struct Game_Content {
 	struct {
 		struct Asset_Font * font_sans;
 		struct Asset_Font * font_mono;
+		struct Array_Byte text_test;
 	} assets;
 	//
 	struct {
@@ -111,6 +113,9 @@ static void game_init(void) {
 		content.assets.font_sans = asset_font_init("assets/OpenSans-Regular.ttf");
 		content.assets.font_mono = asset_font_init("assets/JetBrainsMono-Regular.ttf");
 
+		platform_file_read("assets/test.txt", &content.assets.text_test);
+		content.assets.text_test.data[content.assets.text_test.count] = '\0';
+
 		struct Array_Byte asset_shader_test;
 		platform_file_read("assets/test.glsl", &asset_shader_test);
 
@@ -138,10 +143,45 @@ static void game_init(void) {
 		asset_image_free(&asset_image_test);
 		asset_mesh_free(&asset_mesh_cube);
 
-		content.fonts.sans.buffer = font_image_init(content.assets.font_sans, 32, 256, 256);
-		font_image_build(content.fonts.sans.buffer, (uint32_t[]){0x20, 0x7e, 0});
+		struct Array_Byte asset_codepoints;
+		platform_file_read("assets/additional_codepoints_french.txt", &asset_codepoints);
+		asset_codepoints.data[asset_codepoints.count] = '\0';
+
+		uint32_t codepoints_count = 0;
+		uint32_t * codepoints = MEMORY_ALLOCATE_ARRAY(uint32_t, (asset_codepoints.count + 4) * 2 + 1);
+		codepoints[codepoints_count++] = 0x20;
+		codepoints[codepoints_count++] = 0x7e;
+		codepoints[codepoints_count++] = 0x401;
+		codepoints[codepoints_count++] = 0x401;
+		codepoints[codepoints_count++] = 0x410;
+		codepoints[codepoints_count++] = 0x44f;
+		codepoints[codepoints_count++] = 0x451;
+		codepoints[codepoints_count++] = 0x451;
+		for (size_t i = 0; i < asset_codepoints.count;) {
+			uint32_t const octets_count = utf8_length(asset_codepoints.data + i);
+			if (octets_count == 0) { i++; continue; }
+
+			uint32_t const codepoint = utf8_decode(asset_codepoints.data + i, octets_count);
+			if (codepoint == UTF8_EMPTY) { i++; continue; }
+
+			i += octets_count;
+
+			if (codepoint == '\r') { continue; }
+			if (codepoint == '\n') { continue; }
+
+			codepoints[codepoints_count++] = codepoint;
+			codepoints[codepoints_count++] = codepoint;
+		}
+		codepoints[codepoints_count++] = 0;
+
+		array_byte_free(&asset_codepoints);
+
+		content.fonts.sans.buffer = font_image_init(content.assets.font_sans, 32, 512, 256);
+		font_image_build(content.fonts.sans.buffer, codepoints);
 		content.fonts.sans.gpu_texture = gpu_texture_init(font_image_get_asset(content.fonts.sans.buffer));
 		gfx_material_init(&content.fonts.sans.material, content.gpu.program_font);
+
+		MEMORY_FREE(codepoints);
 
 		content.fonts.mono.buffer = font_image_init(content.assets.font_mono, 32, 256, 256);
 		font_image_build(content.fonts.mono.buffer, (uint32_t[]){0x20, 0x7e, 0});
@@ -213,13 +253,15 @@ static void game_init(void) {
 }
 
 static void game_free(void) {
+	asset_font_free(content.assets.font_sans);
+	asset_font_free(content.assets.font_mono);
+	array_byte_free(&content.assets.text_test);
+
 	gpu_program_free(content.gpu.program_test);
 	gpu_program_free(content.gpu.program_font);
 	gpu_program_free(content.gpu.program_target);
 	gpu_texture_free(content.gpu.texture_test);
 	gpu_mesh_free(content.gpu.mesh_cube);
-	asset_font_free(content.assets.font_sans);
-	asset_font_free(content.assets.font_mono);
 	gfx_material_free(&content.materials.test);
 	gfx_material_free(&content.materials.target);
 
@@ -274,40 +316,46 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	float const text_x = 50, text_y = 200;
 	float offset_x = text_x, offset_y = text_y;
-	char const * ascii_text = "Hello, Game!\nDoing fine?\nIs text rendering doin' all right?\nGood!";
 	uint32_t previous_glyph_id = 0;
-	for (char const * ascii_char = ascii_text; *ascii_char != '\0'; ascii_char++) {
-		if (*ascii_char == '\r') {
+	for (size_t i = 0; i < content.assets.text_test.count;) {
+		uint32_t const octets_count = utf8_length(content.assets.text_test.data + i);
+		if (octets_count == 0) { i++; continue; }
+
+		uint32_t const codepoint = utf8_decode(content.assets.text_test.data + i, octets_count);
+		if (codepoint == UTF8_EMPTY) { i++; continue; }
+
+		i += octets_count;
+
+		if (codepoint == '\r') {
 			previous_glyph_id = 0;
 			// offset_x = text_x;
 			continue;
 		}
 
-		if (*ascii_char == '\n') {
+		if (codepoint == '\n') {
 			previous_glyph_id = 0;
 			offset_x = text_x;
 			offset_y -= font_image_get_height(font->buffer) + font_image_get_gap(font->buffer);
 			continue;
 		}
 
-		struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, (uint32_t)*ascii_char);
-		if (glyph != NULL && glyph->id != 0) {
-			offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font->buffer, previous_glyph_id, glyph->id) : 0;
-			float const rect[] = { // left, bottom, top, right
-				((float)glyph->params.rect[0]) + offset_x,
-				((float)glyph->params.rect[1]) + offset_y,
-				((float)glyph->params.rect[2]) + offset_x,
-				((float)glyph->params.rect[3]) + offset_y,
-			};
-			offset_x += glyph->params.full_size_x;
+		struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, codepoint);
+		if (glyph == NULL) { previous_glyph_id = 0; continue; }
+		if (glyph->id == 0) { previous_glyph_id = 0; continue; }
 
-			batch_mesh_add_quad(batch.buffer, rect, glyph->uv);
-		}
+		offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font->buffer, previous_glyph_id, glyph->id) : 0;
+		float const rect[] = { // left, bottom, top, right
+			((float)glyph->params.rect[0]) + offset_x,
+			((float)glyph->params.rect[1]) + offset_y,
+			((float)glyph->params.rect[2]) + offset_x,
+			((float)glyph->params.rect[3]) + offset_y,
+		};
+		offset_x += glyph->params.full_size_x;
 
-		previous_glyph_id = glyph->id;
+		batch_mesh_add_quad(batch.buffer, rect, glyph->uv);
 	}
 
-	batch_mesh_add_quad(batch.buffer, (float[]){0,(float)(size_y-256),256,(float)size_y}, (float[]){0,0,1,1});
+	batch_mesh_add_quad(batch.buffer, (float[]){0,(float)(size_y-256),512,(float)size_y}, (float[]){0,0,1,1});
 
 	struct Asset_Mesh * batch_mesh = batch_mesh_get_asset(batch.buffer);
 	gpu_mesh_update(batch.gpu_mesh, batch_mesh);

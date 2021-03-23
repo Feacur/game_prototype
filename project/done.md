@@ -1,7 +1,15 @@
+# 2021, march 24
+```
+[o] text rendering
+    [x] UTF-8 decoding
+[o] build system
+	[x] make translation units list explicit
+```
+
 # 2021, march 21
 ```
  - framework
-[x] text rendering
+[o] text rendering
     [x] GPU mesh data streaming
     [x] 2d batch renderer (quite universal, actually, but needs testing)
     [x] asset loader: *.ttf

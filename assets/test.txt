@@ -1,0 +1,5 @@
+Hello, World! ASCII works fine.
+Ёмкое предложение: пчёлы делают мёд.
+Français: Liberté, égalité, fraternité.
+Marie mère de dieu! Comme ça?
+Ça marche bien, Grâce à naïve UTF-8 =)

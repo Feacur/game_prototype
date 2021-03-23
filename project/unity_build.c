@@ -1,6 +1,7 @@
 #include "framework/maths.c"
 #include "framework/memory.c"
 #include "framework/input.c"
+#include "framework/utf8.c"
 #include "framework/platform_file.c"
 
 #include "framework/graphics/types.c"
