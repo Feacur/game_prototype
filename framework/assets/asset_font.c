@@ -31,6 +31,7 @@
 
 //
 #include "asset_font.h"
+#include "asset_font_glyph.h"
 
 // @idea: cache here basic metrics, without scaling?
 struct Asset_Font {

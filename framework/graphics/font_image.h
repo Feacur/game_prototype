@@ -7,12 +7,7 @@ struct Font_Image;
 struct Asset_Image;
 struct Asset_Font;
 struct Glyph_Params;
-
-struct Font_Glyph {
-	struct Glyph_Params params;
-	uint32_t id;
-	float uv[4];
-};
+struct Font_Glyph;
 
 struct Font_Image * font_image_init(struct Asset_Font * asset_font, int32_t size, uint32_t size_x, uint32_t size_y);
 void font_image_free(struct Font_Image * font_image);

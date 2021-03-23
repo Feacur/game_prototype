@@ -4,12 +4,7 @@
 #include "framework/common.h"
 
 struct Asset_Font;
-
-struct Glyph_Params {
-	int32_t rect[4]; // left, bottom, right, top
-	float full_size_x;
-	bool is_empty;
-};
+struct Glyph_Params;
 
 struct Asset_Font * asset_font_init(char const * path);
 void asset_font_free(struct Asset_Font * asset_font);

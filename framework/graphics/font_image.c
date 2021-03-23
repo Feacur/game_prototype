@@ -2,6 +2,7 @@
 #include "framework/containers/hash_table.h"
 #include "framework/assets/asset_image.h"
 #include "framework/assets/asset_font.h"
+#include "framework/assets/asset_font_glyph.h"
 #include "framework/memory.h"
 
 #include <stdlib.h>
@@ -18,6 +19,7 @@ struct Font_Image {
 
 //
 #include "font_image.h"
+#include "font_image_glyph.h"
 
 struct Font_Symbol {
 	struct Font_Glyph glyph;

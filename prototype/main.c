@@ -13,6 +13,7 @@
 #include "framework/graphics/graphics.h"
 #include "framework/graphics/batch_mesh.h"
 #include "framework/graphics/font_image.h"
+#include "framework/graphics/font_image_glyph.h"
 
 #include "framework/containers/array_byte.h"
 #include "framework/containers/array_any.h"
