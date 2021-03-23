@@ -40,4 +40,5 @@
 #endif
 
 #include "application/application.c"
+
 #include "prototype/main.c"

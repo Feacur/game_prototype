@@ -427,7 +427,7 @@ int main (int argc, char * argv[]) {
 		.fixed_refresh_rate = 50,
 		.slow_frames_limit = 5,
 	});
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 //

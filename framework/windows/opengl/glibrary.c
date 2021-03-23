@@ -47,7 +47,7 @@ void glibrary_to_system_init(void) {
 #define OPENGL_CLASS_NAME APPLICATION_CLASS_NAME
 
 	glibrary.handle = LoadLibraryA("opengl32.dll");
-	if (glibrary.handle == NULL) { fprintf(stderr, "'LoadLibrary' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (glibrary.handle == NULL) { fprintf(stderr, "'LoadLibrary' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	// fetch basic DLL functions
 	glibrary.dll.GetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(glibrary.handle, "wglGetProcAddress");
@@ -63,7 +63,7 @@ void glibrary_to_system_init(void) {
 	// 	.hInstance = system_to_internal_get_module(),
 	// 	.lpfnWndProc = DefWindowProcA,
 	// });
-	// if (atom == 0) { fprintf(stderr, "'RegisterClassExA' failed\n"); DEBUG_BREAK(); exit(1); }
+	// if (atom == 0) { fprintf(stderr, "'RegisterClassExA' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	// create temporary window
 	HWND hwnd = CreateWindowExA(
@@ -73,10 +73,10 @@ void glibrary_to_system_init(void) {
 		0, 0, 1, 1,
 		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
-	if (hwnd == NULL) { fprintf(stderr, "'CreateWindow' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (hwnd == NULL) { fprintf(stderr, "'CreateWindow' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	HDC hdc = GetDC(hwnd);
-	if (hdc == NULL) { fprintf(stderr, "'GetDC' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (hdc == NULL) { fprintf(stderr, "'GetDC' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	// create temporary rendering context
 	PIXELFORMATDESCRIPTOR pfd_hint = {
@@ -91,20 +91,20 @@ void glibrary_to_system_init(void) {
 	};
 
 	int pfd_id = ChoosePixelFormat(hdc, &pfd_hint);
-	if (pfd_id == 0) { fprintf(stderr, "'ChoosePixelFormat' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (pfd_id == 0) { fprintf(stderr, "'ChoosePixelFormat' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	PIXELFORMATDESCRIPTOR pfd;
 	int formats_count = DescribePixelFormat(hdc, pfd_id, sizeof(pfd), &pfd);
-	if (formats_count == 0) { fprintf(stderr, "'DescribePixelFormat' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (formats_count == 0) { fprintf(stderr, "'DescribePixelFormat' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	BOOL pfd_found = SetPixelFormat(hdc, pfd_id, &pfd);
-	if (!pfd_found) { fprintf(stderr, "'SetPixelFormat' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (!pfd_found) { fprintf(stderr, "'SetPixelFormat' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	HGLRC rc_handle = glibrary.dll.CreateContext(hdc);
-	if (rc_handle == NULL) { fprintf(stderr, "'CreateContext' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (rc_handle == NULL) { fprintf(stderr, "'CreateContext' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	BOOL rc_is_current = glibrary.dll.MakeCurrent(hdc, rc_handle);
-	if (!rc_is_current) { fprintf(stderr, "'MakeCurrent' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (!rc_is_current) { fprintf(stderr, "'MakeCurrent' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	// fetch extensions
 	glibrary.arb.GetExtensionsString    = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   glibrary.dll.GetProcAddress("wglGetExtensionsStringARB");
@@ -512,20 +512,20 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 	if (pixel_formats == NULL) { pixel_formats = allocate_pixel_formats_legacy(device); }
 
 	struct Pixel_Format pixel_format = choose_pixel_format(pixel_formats, hint);
-	if (pixel_format.id == 0) { fprintf(stderr, "failed to choose format\n"); DEBUG_BREAK(); exit(1); }
+	if (pixel_format.id == 0) { fprintf(stderr, "failed to choose format\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	MEMORY_FREE(pixel_formats);
 
 	PIXELFORMATDESCRIPTOR pfd;
 	int formats_count = DescribePixelFormat(device, pixel_format.id, sizeof(pfd), &pfd);
-	if (formats_count == 0) { fprintf(stderr, "failed to describe format\n"); DEBUG_BREAK(); exit(1); }
+	if (formats_count == 0) { fprintf(stderr, "failed to describe format\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	BOOL pfd_found = SetPixelFormat(device, pixel_format.id, &pfd);
-	if (!pfd_found) { fprintf(stderr, "'SetPixelFormat' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (!pfd_found) { fprintf(stderr, "'SetPixelFormat' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	HGLRC result = create_context_arb(device, shared, settings);
 	if (result == NULL) { result = create_context_legacy(device, shared); }
-	if (result == NULL) { fprintf(stderr, "failed to create context\n"); DEBUG_BREAK(); exit(1); }
+	if (result == NULL) { fprintf(stderr, "failed to create context\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	*selected_pixel_format = pixel_format;
 	return result;

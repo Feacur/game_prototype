@@ -124,7 +124,7 @@ static bool application_update(void) {
 
 void application_run(struct Application_Config * config) {
 	app.config = config;
-	if (config == NULL) { fprintf(stderr, "provide an application config\n"); DEBUG_BREAK(); exit(1); }
+	if (config == NULL) { fprintf(stderr, "provide an application config\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	application_init();
 	while (application_update()) { }

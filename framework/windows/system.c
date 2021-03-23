@@ -24,7 +24,7 @@ static void set_process_dpi_awareness(void);
 static void system_signal_handler(int value);
 void platform_system_init(void) {
 	platform_system.module = GetModuleHandleA(NULL);
-	if (platform_system.module == NULL) { fprintf(stderr, "'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (platform_system.module == NULL) { fprintf(stderr, "'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	set_process_dpi_awareness();
 

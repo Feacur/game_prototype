@@ -33,13 +33,13 @@ struct Window * platform_window_init(void) {
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
-	if (window->handle == NULL) { fprintf(stderr, "'CreateWindow' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (window->handle == NULL) { fprintf(stderr, "'CreateWindow' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	window->private_context = GetDC(window->handle);
-	if (window->private_context == NULL) { fprintf(stderr, "'GetDC' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (window->private_context == NULL) { fprintf(stderr, "'GetDC' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	BOOL prop_is_set = SetPropA(window->handle, APPLICATION_CLASS_NAME, window);
-	if (!prop_is_set) { fprintf(stderr, "'SetProp' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (!prop_is_set) { fprintf(stderr, "'SetProp' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	RECT rect;
 	GetClientRect(window->handle, &rect);
@@ -113,7 +113,7 @@ void window_to_system_init(void) {
 		.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
 		.hCursor = LoadCursorA(0, IDC_ARROW),
 	});
-	if (atom == 0) { fprintf(stderr, "'RegisterClassExA' failed\n"); DEBUG_BREAK(); exit(1); }
+	if (atom == 0) { fprintf(stderr, "'RegisterClassExA' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 	// https://docs.microsoft.com/en-us/windows/win32/winmsg/about-window-classes
 	// https://docs.microsoft.com/en-us/windows/win32/gdi/private-display-device-contexts
 }
