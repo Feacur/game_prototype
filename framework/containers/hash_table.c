@@ -150,9 +150,11 @@ static uint32_t hash_table_find_key_index(struct Hash_Table * hash_table, uint32
 	uint32_t const offset = WRAP_VALUE(key_hash, hash_table->capacity);
 	for (uint32_t i = 0; i < hash_table->capacity; i++) {
 		uint32_t const index = WRAP_VALUE(i + offset, hash_table->capacity);
+
 		uint8_t const mark = hash_table->marks[index];
 		if (mark == HASH_TABLE_MARK_SKIP) { continue; }
 		if (mark == HASH_TABLE_MARK_NONE) { return index; }
+
 		if (hash_table->key_hashes[index] == key_hash) { return index; }
 	}
 	return INDEX_EMPTY;

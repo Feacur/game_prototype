@@ -172,9 +172,13 @@ static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any * hash_table
 	uint32_t const offset = WRAP_VALUE(hash, hash_table->capacity);
 	for (uint32_t i = 0; i < hash_table->capacity; i++) {
 		uint32_t const index = WRAP_VALUE(i + offset, hash_table->capacity);
+
 		uint8_t const mark = hash_table->marks[index];
 		if (mark == HASH_TABLE_ANY_MARK_SKIP) { continue; }
 		if (mark == HASH_TABLE_ANY_MARK_NONE) { return index; }
+
+		if (hash_table->hashes[index] != hash) { continue; }
+
 		void const * ht_key = hash_table->keys + index * hash_table->key_size;
 		if (memcmp(ht_key, key, hash_table->key_size) == 0) { return index; }
 	}
