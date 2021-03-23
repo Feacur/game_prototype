@@ -23,9 +23,10 @@
 [ ] async file access?
 [ ] reuse mesh vertices at `asset_mesh_obj_repack` function
 [ ] clean up containers implementation
+    [ ] ever need a uint64_t hashes for hash tables?
 [ ] build system
-    [ ] streamline debug build switching
-    [ ] streamline unity build switching
+    [ ] streamline build settings switching
+	[x] make translation units list explicit
 ```
 
 [Markdown](https://www.markdownguide.org/basic-syntax/)

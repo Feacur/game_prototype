@@ -10,10 +10,6 @@ rem https://docs.microsoft.com/cpp/build/reference/compiler-options
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
 
 rem > PREPARE TOOLS
-rem set "PATH=%PATH%;C:/Program Files/LLVM/bin"
-rem possible `clang-cl` instead `cl -std:c11`
-rem possible `lld-link` instead `link`
-
 set VSLANG=1033
 pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
 call "vcvarsall.bat" x64 >nul
@@ -52,31 +48,27 @@ if defined unity_build (
 set warnings=%warnings% -wd5105
 
 rem > COMPILE AND LINK
-set timeCompile=%time%
-set timeLink=%time%
 cd ..
 if not exist bin mkdir bin
 cd bin
 
 if not exist temp mkdir temp
 
-if defined unity_build (
+set timeCompile=%time%
+if defined unity_build ( rem > compile and auto-link unity build
+	set timeLink=%time%
 	cl -std:c11 %compiler% %warnings% "../project/unity_build.c" -Fe"game.exe" %linker%
-) else ( rem alternatively, compile a set of translation units
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
-	cl -std:c11 -c %compiler% %warnings% "../framework/*.c"
-	cl -std:c11 -c %compiler% %warnings% "../framework/containers/*.c"
-	cl -std:c11 -c %compiler% %warnings% "../framework/assets/*.c"
-	cl -std:c11 -c %compiler% %warnings% "../framework/graphics/*.c"
-	cl -std:c11 -c %compiler% %warnings% "../framework/windows/*.c"
-	cl -std:c11 -c %compiler% %warnings% "../framework/windows/opengl/*.c"
-	cl -std:c11 -c %compiler% %warnings% "../framework/opengl/*.c"
-	cl -std:c11 -c %compiler% %warnings% "../application/*.c"
-	cl -std:c11 -c %compiler% %warnings% "../prototype/*.c"
+) else ( rem > alternatively, compile a set of translation units
+	for /f %%v in (../project/translation_units.txt) do ( rem > for each line %%v in the file
+		cl -std:c11 -c %compiler% %warnings% "../%%v"
+		if errorlevel 1 goto error
+	)
 	set timeLink=%time%
 	link "./temp/*.obj" -out:"game.exe" %linker%
 )
 
+:error
 set timeStop=%time%
 
 rem > REPORT

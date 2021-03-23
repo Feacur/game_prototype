@@ -49,35 +49,27 @@ if defined unity_build (
 set warnings=%warnings% -Wno-reserved-id-macro -Wno-nonportable-system-include-path -Wno-assign-enum -Wno-bad-function-cast
 
 rem > COMPILE AND LINK
-set timeCompile=%time%
-set timeLink=%time%
 cd ..
 if not exist bin mkdir bin
 cd bin
 
 if not exist temp mkdir temp
 
-if defined unity_build (
-	echo %compiler% %warnings% %linker%
-	clang -std=c99 %compiler% %warnings% "../project/unity_build.c" -o"game.exe" %linker%
-) else ( rem alternatively, compile a set of translation units
-	if exist "./temp/unity_build*" del ".\temp\unity_build*"
-	clang -std=c99 -c %compiler% %warnings% "../framework/*.c"
-	clang -std=c99 -c %compiler% %warnings% "../framework/containers/*.c"
-	clang -std=c99 -c %compiler% %warnings% "../framework/assets/*.c"
-	clang -std=c99 -c %compiler% %warnings% "../framework/graphics/*.c"
-	clang -std=c99 -c %compiler% %warnings% "../framework/windows/*.c"
-	clang -std=c99 -c %compiler% %warnings% "../framework/windows/opengl/*.c"
-	clang -std=c99 -c %compiler% %warnings% "../framework/opengl/*.c"
-	clang -std=c99 -c %compiler% %warnings% "../application/*.c"
-	clang -std=c99 -c %compiler% %warnings% "../prototype/*.c"
+set timeCompile=%time%
+if defined unity_build ( rem > compile and auto-link unity build
 	set timeLink=%time%
-	rem alternatively, `cd temp`, build, link, `cd ..`
-	rem but that seems awkward; `move` is quite fast anyways, unlike `lld-link` itself
-	move ".\*.o" ".\temp" >nul
+	clang -std=c99 %compiler% %warnings% "../project/unity_build.c" -o"game.exe" %linker%
+) else ( rem > alternatively, compile a set of translation units
+	for /f %%v in (../project/translation_units.txt) do ( rem > for each line %%v in the file
+		clang -std=c99 -c %compiler% %warnings% "../%%v"
+		if errorlevel 1 goto error
+		move ".\*.o" ".\temp" >nul
+	)
+	set timeLink=%time%
 	lld-link "./temp/*.o" libcmt.lib -out:"game.exe" %linker%
 )
 
+:error
 set timeStop=%time%
 
 rem > REPORT
