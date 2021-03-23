@@ -24,7 +24,7 @@ struct Hash_Table {
 };
 
 #if GROWTH_FACTOR == 2
-	// #include <framework/maths.h>
+	// #include "framework/maths.h"
 	uint32_t round_up_to_PO2_u32(uint32_t value);
 #endif
 

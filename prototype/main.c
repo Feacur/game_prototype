@@ -176,14 +176,14 @@ static void game_init(void) {
 
 		array_byte_free(&asset_codepoints);
 
-		content.fonts.sans.buffer = font_image_init(content.assets.font_sans, 32, 512, 256);
+		content.fonts.sans.buffer = font_image_init(content.assets.font_sans, 32);
 		font_image_build(content.fonts.sans.buffer, codepoints);
 		content.fonts.sans.gpu_texture = gpu_texture_init(font_image_get_asset(content.fonts.sans.buffer));
 		gfx_material_init(&content.fonts.sans.material, content.gpu.program_font);
 
 		MEMORY_FREE(codepoints);
 
-		content.fonts.mono.buffer = font_image_init(content.assets.font_mono, 32, 256, 256);
+		content.fonts.mono.buffer = font_image_init(content.assets.font_mono, 32);
 		font_image_build(content.fonts.mono.buffer, (uint32_t[]){0x20, 0x7e, 0});
 		content.fonts.mono.gpu_texture = gpu_texture_init(font_image_get_asset(content.fonts.mono.buffer));
 		gfx_material_init(&content.fonts.mono.material, content.gpu.program_font);
@@ -355,7 +355,12 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		batch_mesh_add_quad(batch.buffer, rect, glyph->uv);
 	}
 
-	batch_mesh_add_quad(batch.buffer, (float[]){0,(float)(size_y-256),512,(float)size_y}, (float[]){0,0,1,1});
+	struct Asset_Image const * font_image = font_image_get_asset(font->buffer);
+	batch_mesh_add_quad(
+		batch.buffer,
+		(float[]){0, (float)(size_y - font_image->size_y), (float)font_image->size_x, (float)size_y},
+		(float[]){0,0,1,1}
+	);
 
 	struct Asset_Mesh * batch_mesh = batch_mesh_get_asset(batch.buffer);
 	gpu_mesh_update(batch.gpu_mesh, batch_mesh);
