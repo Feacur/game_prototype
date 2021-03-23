@@ -1,13 +1,33 @@
 // %appdata%/Code/User
 {
+	"search.quickOpen.includeHistory": false,
+	"terminal.integrated.shell.windows": "C:\\WINDOWS\\System32\\cmd.exe",
+	// workbench
 	"workbench.startupEditor": "newUntitledFile",
 	"workbench.sideBar.location": "right",
 	"workbench.commandPalette.history": 0,
+	// editor
+	"editor.tabSize": 4,
+	"editor.insertSpaces": false,
+	"editor.detectIndentation": false,
 	"editor.lineNumbers": "on",
 	"editor.renderWhitespace": "all",
 	"editor.minimap.enabled": false,
 	"editor.scrollBeyondLastColumn": 5,
 	"editor.scrollBeyondLastLine": true,
-	"search.quickOpen.includeHistory": false,
-	"terminal.integrated.shell.windows": "C:\\WINDOWS\\System32\\cmd.exe",
+	// extensions: ms-vscode.cpptools
+	"C_Cpp.default.cStandard": "c99",
+	"C_Cpp.default.cppStandard": "c++11",
+	"C_Cpp.default.compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+	"C_Cpp.default.intelliSenseMode": "clang-x64",
+	// "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.24.28314/bin/Hostx64/x64/cl.exe",
+	// "C_Cpp.default.intelliSenseMode": "msvc-x64",
+	"C_Cpp.formatting": "Disabled",
+	"C_Cpp.preferredPathSeparator": "Forward Slash",
+	"C_Cpp.autoAddFileAssociations": false,
+	"C_Cpp.errorSquiggles": "Disabled",
+	"C_Cpp.intelliSenseEngine": "Default",
+	"C_Cpp.intelliSenseEngineFallback": "Enabled",
+	"C_Cpp.intelliSenseCacheSize": 0,
+	"C_Cpp.intelliSenseMemoryLimit": 256,
 }
