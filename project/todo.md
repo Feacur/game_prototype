@@ -1,9 +1,10 @@
 # framework
 ```
-[ ] text rendering
+[o] text rendering
     [ ] GPU texture data streaming, probably, too?
-    [ ] improve font glyphs packer (probably make it a sprite/rect packer)
+    [x] improve font glyphs packer
     [ ] automatically build atlas based on input text?
+    [ ] select suitable fonts for different locales
 [ ] graphics
     [ ] API to correctly batch-update meshes/textures and create a render pass (or whatever)
     [ ] elaborate the idea of render passes
@@ -28,6 +29,8 @@
 [ ] async file access?
 [ ] reuse mesh vertices at `asset_mesh_obj_repack` function
 [ ] UTF-8 edge cases, different languages, LTR/RTL, etc.
+[ ] make a universal sprite packer?
+[ ] try custom sorting algorithms?
 [ ] clean up containers implementation
     [ ] ever need a uint64_t hashes for hash tables?
 [ ] build system

@@ -172,7 +172,7 @@ static void game_init(void) {
 			codepoints[codepoints_count++] = codepoint;
 			codepoints[codepoints_count++] = codepoint;
 		}
-		codepoints[codepoints_count++] = 0;
+		codepoints[codepoints_count] = 0;
 
 		array_byte_free(&asset_codepoints);
 
