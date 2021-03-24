@@ -72,7 +72,6 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 
 	uint32_t symbols_count = 0;
 	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(struct Font_Symbol, codepoints_count + 1);
-	symbols[codepoints_count].glyph.id = 0;
 
 	// collect glyphs
 	for (uint32_t const *range = codepoint_ranges; *range != 0; range += 2) {
@@ -92,35 +91,42 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 			};
 		}
 	}
+	symbols[symbols_count].glyph.id = 0;
 
-	// estimate required atlas dimesions
+	// resize the atlas
 	uint32_t max_x = 0, max_y = 0;
-	// uint32_t minimum_area = 0;
-	for (struct Font_Symbol * symbol = symbols; symbol->glyph.id != 0; symbol++) {
-		int32_t const * rect = symbol->glyph.params.rect;
-		uint32_t const size_x = (uint32_t)(rect[2] - rect[0]);
-		uint32_t const size_y = (uint32_t)(rect[3] - rect[1]);
-		if (max_x < size_x) { max_x = size_x; }
-		if (max_y < size_y) { max_y = size_y; }
-		// area += (size_x + 1) * (size_y + 1);
-	}
 
-	uint32_t const maximum_area = (max_x + 1) * (max_y + 1) * symbols_count;
-	uint32_t atlas_size_x = (uint32_t)sqrtf((float)maximum_area);
-	atlas_size_x = round_up_to_PO2_u32(atlas_size_x);
-	if (atlas_size_x > 0x1000) {
-		atlas_size_x = 0x1000;
-		fprintf(stderr, "too many codepoints\n"); DEBUG_BREAK(); return;
-	}
+	{
+		// collect the stats
+		// uint32_t minimum_area = 0;
+		for (struct Font_Symbol const * symbol = symbols; symbol->glyph.id != 0; symbol++) {
+			int32_t const * rect = symbol->glyph.params.rect;
+			uint32_t const size_x = (uint32_t)(rect[2] - rect[0]);
+			uint32_t const size_y = (uint32_t)(rect[3] - rect[1]);
+			if (max_x < size_x) { max_x = size_x; }
+			if (max_y < size_y) { max_y = size_y; }
+			// area += (size_x + 1) * (size_y + 1);
+		}
 
-	uint32_t atlas_size_y = atlas_size_x;
-	if (atlas_size_x * (atlas_size_y / 2) > maximum_area) {
-		atlas_size_y = atlas_size_y / 2;
-	}
+		// estimate required atlas dimesions
+		uint32_t const maximum_area = (max_x + 1) * (max_y + 1) * symbols_count;
+		uint32_t atlas_size_x = (uint32_t)sqrtf((float)maximum_area);
+		atlas_size_x = round_up_to_PO2_u32(atlas_size_x);
+		if (atlas_size_x > 0x1000) {
+			atlas_size_x = 0x1000;
+			fprintf(stderr, "too many codepoints or symbols are too large\n"); DEBUG_BREAK(); return;
+		}
 
-	font_image->buffer.size_x = atlas_size_x;
-	font_image->buffer.size_y = atlas_size_y;
-	font_image->buffer.data = MEMORY_REALLOCATE_ARRAY(font_image->buffer.data, atlas_size_x * atlas_size_y);
+		uint32_t atlas_size_y = atlas_size_x;
+		if (atlas_size_x * (atlas_size_y / 2) > maximum_area) {
+			atlas_size_y = atlas_size_y / 2;
+		}
+
+		// @todo: keep the maximum size without shrinking?
+		font_image->buffer.size_x = atlas_size_x;
+		font_image->buffer.size_y = atlas_size_y;
+		font_image->buffer.data = MEMORY_REALLOCATE_ARRAY(font_image->buffer.data, atlas_size_x * atlas_size_y);
+	}
 
 	// pack glyphs into the atlas
 	font_image_clear(font_image);
@@ -186,7 +192,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 
 	// track glyphs
 	hash_table_ensure_minimum_capacity(font_image->table, symbols_count);
-	for (struct Font_Symbol * symbol = symbols; symbol->glyph.id != 0; symbol++) {
+	for (struct Font_Symbol const * symbol = symbols; symbol->glyph.id != 0; symbol++) {
 		hash_table_set(font_image->table, symbol->codepoint, symbol); // treat symbol as glyph
 	}
 
