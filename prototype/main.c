@@ -352,11 +352,11 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		};
 		offset_x += glyph->params.full_size_x;
 
-		batch_mesh_add_quad(batch.buffer, rect, glyph->uv);
+		batch_mesh_add_quad_xy(batch.buffer, rect, glyph->uv);
 	}
 
 	struct Asset_Image const * font_image = font_image_get_asset(font->buffer);
-	batch_mesh_add_quad(
+	batch_mesh_add_quad_xy(
 		batch.buffer,
 		(float[]){0, (float)(size_y - font_image->size_y), (float)font_image->size_x, (float)size_y},
 		(float[]){0,0,1,1}

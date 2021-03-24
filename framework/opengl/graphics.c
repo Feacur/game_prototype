@@ -944,14 +944,11 @@ static void verify_shader(GLuint id, GLenum parameter) {
 	glGetShaderiv(id, GL_INFO_LOG_LENGTH, &max_length);
 
 	if (max_length > 0) {
-		struct Array_Byte message;
-		array_byte_init(&message);
-		array_byte_resize(&message, (uint32_t)max_length);
-
-		glGetShaderInfoLog(id, max_length, &max_length, (char *)message.data);
-		fprintf(stderr, "%s\n", (char *)message.data);
-
-		array_byte_free(&message);
+		// @todo: use scratch buffer
+		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(GLchar, max_length);
+		glGetShaderInfoLog(id, max_length, &max_length, buffer);
+		fprintf(stderr, "%s\n", buffer);
+		MEMORY_FREE(buffer);
 	}
 
 	DEBUG_BREAK();
@@ -966,14 +963,11 @@ static void verify_program(GLuint id, GLenum parameter) {
 	glGetProgramiv(id, GL_INFO_LOG_LENGTH, &max_length);
 
 	if (max_length > 0) {
-		struct Array_Byte message;
-		array_byte_init(&message);
-		array_byte_resize(&message, (uint32_t)max_length);
-
-		glGetProgramInfoLog(id, max_length, &max_length, (char *)message.data);
-		fprintf(stderr, "%s\n", (char *)message.data);
-
-		array_byte_free(&message);
+		// @todo: use scratch buffer
+		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(GLchar, max_length);
+		glGetProgramInfoLog(id, max_length, &max_length, buffer);
+		fprintf(stderr, "%s\n", buffer);
+		MEMORY_FREE(buffer);
 	}
 
 	DEBUG_BREAK();

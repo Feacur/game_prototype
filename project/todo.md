@@ -3,6 +3,7 @@
 [ ] text rendering
     [ ] GPU texture data streaming, probably, too?
     [ ] improve font glyphs packer (probably make it a sprite/rect packer)
+    [ ] automatically build atlas based on input text?
 [ ] graphics
     [ ] API to correctly batch-update meshes/textures and create a render pass (or whatever)
     [ ] elaborate the idea of render passes
@@ -16,6 +17,11 @@
 [ ] platform
     [ ] elaborate raw input
     [ ] expose Caps Lock and Num Lock toggle states?
+[ ] memory
+    [ ] universal scratch memory allocator
+    [ ] allocators: stack (bulk-free only), pool (fixed chunks allocation only), free (completely custom)
+    [ ] use OS-native allocators
+    [ ] mind the alignment
 [ ] organize standard includes?
 [ ] should batch_mesh and font_image belong to some other folder?
 [ ] support large files? more than 2gb? more than 4gb?
