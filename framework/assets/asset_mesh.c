@@ -64,7 +64,7 @@ void asset_mesh_free(struct Asset_Mesh * asset_mesh) {
 	}
 	if (asset_mesh->capacity != 0) {
 		MEMORY_FREE(asset_mesh->buffers);
-		MEMORY_FREE(asset_mesh->settings);
+		MEMORY_FREE(asset_mesh->parameters);
 	}
 	memset(asset_mesh, 0, sizeof(*asset_mesh));
 }
@@ -127,7 +127,7 @@ static void asset_mesh_fill(
 	asset_mesh->capacity = count;
 	asset_mesh->count = count;
 	asset_mesh->buffers = MEMORY_ALLOCATE_ARRAY(struct Array_Byte, count);
-	asset_mesh->settings = MEMORY_ALLOCATE_ARRAY(struct Mesh_Settings, count);
+	asset_mesh->parameters = MEMORY_ALLOCATE_ARRAY(struct Mesh_Parameters, count);
 
 	asset_mesh->buffers[0] = (struct Array_Byte){
 		.data = (uint8_t *)vertices->data,
@@ -140,17 +140,13 @@ static void asset_mesh_fill(
 		.capacity = indices->capacity * sizeof(uint32_t),
 	};
 
-	asset_mesh->settings[0] = (struct Mesh_Settings){
+	asset_mesh->parameters[0] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_R32,
-		.frequency = MESH_FREQUENCY_STATIC,
-		.access = MESH_ACCESS_DRAW,
 		.attributes_count = attributes->count / 2,
 	};
-	asset_mesh->settings[1] = (struct Mesh_Settings){
+	asset_mesh->parameters[1] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_U32,
-		.frequency = MESH_FREQUENCY_STATIC,
-		.access = MESH_ACCESS_DRAW,
 		.is_index = true,
 	};
-	memcpy(asset_mesh->settings[0].attributes, attributes->data, attributes->count * sizeof(uint32_t));
+	memcpy(asset_mesh->parameters[0].attributes, attributes->data, attributes->count * sizeof(uint32_t));
 }

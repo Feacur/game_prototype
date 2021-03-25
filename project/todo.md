@@ -6,6 +6,7 @@
     [ ] automatically build atlas based on input text?
     [ ] select suitable fonts for different locales
 [ ] graphics
+    [x] introduce immutable buffers
     [ ] API to correctly batch-update meshes/textures and create a render pass (or whatever)
     [ ] elaborate the idea of render passes
     [ ] GPU scissor test

@@ -57,16 +57,12 @@ enum Texture_Type {
 	TEXTURE_TYPE_DSTENCIL = TEXTURE_TYPE_DEPTH | TEXTURE_TYPE_STENCIL,
 };
 
-enum Mesh_Frequency {
-	MESH_FREQUENCY_STATIC,
-	MESH_FREQUENCY_DYNAMIC,
-	MESH_FREQUENCY_STREAM,
-};
-
-enum Mesh_Access {
-	MESH_ACCESS_DRAW,
-	MESH_ACCESS_READ,
-	MESH_ACCESS_COPY,
+enum Mesh_Flag {
+	MESH_FLAG_NONE     = 0,
+	MESH_FLAG_MUTABLE  = (1 << 0),
+	MESH_FLAG_WRITE    = (1 << 1),
+	MESH_FLAG_READ     = (1 << 2),
+	MESH_FLAG_FREQUENT = (1 << 3),
 };
 
 enum Comparison_Op {
@@ -180,10 +176,9 @@ struct Texture_Settings {
 
 #define MAX_MESH_ATTRIBUTES (2 * 3)
 
-struct Mesh_Settings {
+struct Mesh_Parameters {
 	enum Data_Type type;
-	enum Mesh_Frequency frequency;
-	enum Mesh_Access access;
+	enum Mesh_Flag flags;
 	uint32_t attributes_count;
 	uint32_t attributes[MAX_MESH_ATTRIBUTES];
 	bool is_index;

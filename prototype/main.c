@@ -506,19 +506,15 @@ static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
 		},
 	};
 
-	static struct Mesh_Settings settings[] = {
+	static struct Mesh_Parameters parameters[] = {
 		[0] = {
 			.type = DATA_TYPE_R32,
-			.frequency = MESH_FREQUENCY_STATIC,
-			.access = MESH_ACCESS_DRAW,
 			.attributes_count = 2,
 			.attributes[0] = 0, .attributes[1] = 3,
 			.attributes[2] = 1, .attributes[3] = 2,
 		},
 		[1] = {
 			.type = DATA_TYPE_U32,
-			.frequency = MESH_FREQUENCY_STATIC,
-			.access = MESH_ACCESS_DRAW,
 			.is_index = true,
 		},
 	};
@@ -526,6 +522,6 @@ static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
 	*asset_mesh = (struct Asset_Mesh){
 		.count = 2,
 		.buffers = buffers,
-		.settings = settings,
+		.parameters = parameters,
 	};
 }

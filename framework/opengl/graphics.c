@@ -28,7 +28,8 @@ static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t cha
 static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type);
 static GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index);
 
-static GLenum gpu_mesh_usage_pattern(enum Mesh_Frequency frequency, enum Mesh_Access access);
+static GLenum gpu_mesh_usage_pattern(enum Mesh_Flag flags);
+static GLbitfield gpu_mesh_immutable_flag(enum Mesh_Flag flags);
 
 static GLenum gpu_comparison_op(enum Comparison_Op value);
 static GLenum gpu_cull_mode(enum Cull_Mode value);
@@ -71,7 +72,7 @@ struct Gpu_Mesh {
 	GLuint id;
 	uint32_t buffers_count;
 	GLuint buffer_ids[MAX_MESH_BUFFERS];
-	struct Mesh_Settings settings[MAX_MESH_BUFFERS];
+	struct Mesh_Parameters parameters[MAX_MESH_BUFFERS];
 	uint32_t capacities[MAX_MESH_BUFFERS];
 	uint32_t counts[MAX_MESH_BUFFERS];
 	uint32_t elements_index;
@@ -238,6 +239,7 @@ static struct Gpu_Texture * gpu_texture_allocate(
 	struct Texture_Parameters const * parameters,
 	struct Texture_Settings const * settings
 ) {
+	// @todo: allow mutable textures? probably, by complete recreation of storage?
 	if (size_x == 0) { fprintf(stderr, "size should be at least 1\n"); DEBUG_BREAK(); size_x = 1; }
 	if (size_y == 0) { fprintf(stderr, "size should be at least 1\n"); DEBUG_BREAK(); size_y = 1; }
 
@@ -429,7 +431,8 @@ struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum
 struct Gpu_Mesh * gpu_mesh_allocate(
 	uint32_t buffers_count,
 	uint32_t * byte_lengths,
-	struct Mesh_Settings const * settings_set
+	void ** data,
+	struct Mesh_Parameters const * parameters_set
 ) {
 	if (buffers_count > MAX_MESH_BUFFERS) {
 		fprintf(stderr, "too many buffers\n"); DEBUG_BREAK();
@@ -444,25 +447,41 @@ struct Gpu_Mesh * gpu_mesh_allocate(
 
 	// allocate buffers
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct Mesh_Settings const * settings = settings_set + i;
+		struct Mesh_Parameters const * parameters = parameters_set + i;
 
 		glCreateBuffers(1, buffer_ids + i);
-		glNamedBufferData(
-			buffer_ids[i],
-			(GLsizeiptr)byte_lengths[i], NULL,
-			gpu_mesh_usage_pattern(settings->frequency, settings->access)
-		);
 
-		capacities[i] = byte_lengths[i] / data_type_get_size(settings->type);
+		if (data[i] == NULL && !(parameters->flags & MESH_FLAG_WRITE)) {
+			fprintf(stderr, "non-writable storage should have initial data\n"); DEBUG_BREAK();
+		}
+		else if (parameters->flags & MESH_FLAG_MUTABLE) {
+			glNamedBufferData(
+				buffer_ids[i],
+				(GLsizeiptr)byte_lengths[i], data[i],
+				gpu_mesh_usage_pattern(parameters->flags)
+			);
+		}
+		else if (byte_lengths[i] != 0) {
+			glNamedBufferStorage(
+				buffer_ids[i],
+				(GLsizeiptr)byte_lengths[i], data[i],
+				gpu_mesh_immutable_flag(parameters->flags)
+			);
+		}
+		else {
+			fprintf(stderr, "immutable storage should have non-zero size\n"); DEBUG_BREAK();
+		}
+
+		capacities[i] = byte_lengths[i] / data_type_get_size(parameters->type);
 	}
 
 	// chart buffers
 	uint32_t elements_index = INDEX_EMPTY;
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct Mesh_Settings const * settings = settings_set + i;
+		struct Mesh_Parameters const * parameters = parameters_set + i;
 
 		// element buffer
-		if (settings->is_index) {
+		if (parameters->is_index) {
 			elements_index = i;
 			glVertexArrayElementBuffer(mesh_id, buffer_ids[i]);
 			continue;
@@ -470,8 +489,8 @@ struct Gpu_Mesh * gpu_mesh_allocate(
 
 		// vertex buffer
 		uint32_t all_attributes_size = 0;
-		for (uint32_t atti = 0; atti < settings->attributes_count; atti++) {
-			all_attributes_size += settings->attributes[atti * 2 + 1] * data_type_get_size(settings->type);
+		for (uint32_t atti = 0; atti < parameters->attributes_count; atti++) {
+			all_attributes_size += parameters->attributes[atti * 2 + 1] * data_type_get_size(parameters->type);
 		}
 
 		GLuint buffer_index = 0;
@@ -479,17 +498,17 @@ struct Gpu_Mesh * gpu_mesh_allocate(
 		glVertexArrayVertexBuffer(mesh_id, buffer_index, buffer_ids[i], buffer_start, (GLsizei)all_attributes_size);
 
 		uint32_t attribute_offset = 0;
-		for (uint32_t atti = 0; atti < settings->attributes_count; atti++) {
-			GLuint location = (GLuint)settings->attributes[atti * 2];
-			uint32_t size = settings->attributes[atti * 2 + 1];
+		for (uint32_t atti = 0; atti < parameters->attributes_count; atti++) {
+			GLuint location = (GLuint)parameters->attributes[atti * 2];
+			uint32_t size = parameters->attributes[atti * 2 + 1];
 			glEnableVertexArrayAttrib(mesh_id, location);
 			glVertexArrayAttribBinding(mesh_id, location, buffer_index);
 			glVertexArrayAttribFormat(
 				mesh_id, location,
-				(GLint)size, gpu_data_type(settings->type),
+				(GLint)size, gpu_data_type(parameters->type),
 				GL_FALSE, (GLuint)attribute_offset
 			);
-			attribute_offset += size * data_type_get_size(settings->type);
+			attribute_offset += size * data_type_get_size(parameters->type);
 		}
 	}
 
@@ -505,20 +524,24 @@ struct Gpu_Mesh * gpu_mesh_allocate(
 		.elements_index = elements_index,
 	};
 	memcpy(gpu_mesh->buffer_ids, buffer_ids, buffers_count * sizeof(*buffer_ids));
-	memcpy(gpu_mesh->settings, settings_set, buffers_count * sizeof(*settings_set));
+	memcpy(gpu_mesh->parameters, parameters_set, buffers_count * sizeof(*parameters_set));
 	memcpy(gpu_mesh->capacities, capacities, buffers_count * sizeof(*capacities));
-	memset(gpu_mesh->counts, 0, buffers_count * sizeof(*capacities));
+	for (uint32_t i = 0; i < buffers_count; i++) {
+		gpu_mesh->counts[i] = (data[i] != NULL) ? capacities[i] : 0;
+	}
 	return gpu_mesh;
 }
 
 struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 	uint32_t byte_lengths[MAX_MESH_BUFFERS];
+	void * data[MAX_MESH_BUFFERS];
 	for (uint32_t i = 0; i < asset->count; i++) {
 		byte_lengths[i] = asset->buffers[i].count;
+		data[i] = asset->buffers[i].data;
 	}
 
 	struct Gpu_Mesh * gpu_mesh = gpu_mesh_allocate(
-		asset->count, byte_lengths, asset->settings
+		asset->count, byte_lengths, data, asset->parameters
 	);
 
 	gpu_mesh_update(gpu_mesh, asset);
@@ -538,15 +561,18 @@ void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
 
 void gpu_mesh_update(struct Gpu_Mesh * gpu_mesh, struct Asset_Mesh * asset) {
 	for (uint32_t i = 0; i < gpu_mesh->buffers_count; i++) {
-		struct Array_Byte const * buffer = asset->buffers + i;
+		// @todo: compare mesh and asset parameters?
+		// struct Mesh_Parameters const * asset_parameters = asset->parameters + i;
 
+		struct Mesh_Parameters const * parameters = gpu_mesh->parameters + i;
+		if (!(parameters->flags & MESH_FLAG_WRITE)) { continue; }
 		gpu_mesh->counts[i] = 0;
 
+		struct Array_Byte const * buffer = asset->buffers + i;
 		if (buffer->count == 0) { continue; }
 		if (buffer->data == NULL) { continue; }
 
-		struct Mesh_Settings const * settings = asset->settings + i;
-		uint32_t const data_type_size = data_type_get_size(settings->type);
+		uint32_t const data_type_size = data_type_get_size(parameters->type);
 
 		gpu_mesh->counts[i] = buffer->count / data_type_size;
 
@@ -557,13 +583,17 @@ void gpu_mesh_update(struct Gpu_Mesh * gpu_mesh, struct Asset_Mesh * asset) {
 				buffer->data
 			);
 		}
-		else {
+		else if (parameters->flags & MESH_FLAG_MUTABLE) {
+			printf("WARNING! reallocating a buffer\n"); // DEBUG_BREAK();
 			gpu_mesh->capacities[i] = gpu_mesh->counts[i];
 			glNamedBufferData(
 				gpu_mesh->buffer_ids[i],
 				(GLsizeiptr)buffer->count, buffer->data,
-				gpu_mesh_usage_pattern(settings->frequency, settings->access)
+				gpu_mesh_usage_pattern(parameters->flags)
 			);
+		}
+		else {
+			fprintf(stderr, "trying to reallocate an immutable buffer"); DEBUG_BREAK();
 		}
 	}
 }
@@ -859,7 +889,7 @@ void graphics_draw(struct Render_Pass const * pass) {
 	glDrawElements(
 		GL_TRIANGLES,
 		(GLsizei)elements_count,
-		gpu_data_type(pass->mesh->settings[pass->mesh->elements_index].type),
+		gpu_data_type(pass->mesh->parameters[pass->mesh->elements_index].type),
 		NULL
 	);
 }
@@ -1294,28 +1324,43 @@ static GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t inde
 	return GL_NONE;
 }
 
-static GLenum gpu_mesh_usage_pattern(enum Mesh_Frequency frequency, enum Mesh_Access access) {
-	switch (frequency) {
-		case MESH_FREQUENCY_STATIC: switch (access) {
-			case MESH_ACCESS_DRAW: return GL_STATIC_DRAW;
-			case MESH_ACCESS_READ: return GL_STATIC_READ;
-			case MESH_ACCESS_COPY: return GL_STATIC_COPY;
-		} break;
-
-		case MESH_FREQUENCY_DYNAMIC: switch (access) {
-			case MESH_ACCESS_DRAW: return GL_DYNAMIC_DRAW;
-			case MESH_ACCESS_READ: return GL_DYNAMIC_READ;
-			case MESH_ACCESS_COPY: return GL_DYNAMIC_COPY;
-		} break;
-
-		case MESH_FREQUENCY_STREAM: switch (access) {
-			case MESH_ACCESS_DRAW: return GL_STREAM_DRAW;
-			case MESH_ACCESS_READ: return GL_STREAM_READ;
-			case MESH_ACCESS_COPY: return GL_STREAM_COPY;
-		} break;
+static GLenum gpu_mesh_usage_pattern(enum Mesh_Flag flags) {
+	// @note: those a hints, not directives
+	if (flags & MESH_FLAG_MUTABLE) {
+		if (flags & MESH_FLAG_FREQUENT) {
+			return (flags & MESH_FLAG_READ)  ? GL_STREAM_READ
+			     : (flags & MESH_FLAG_WRITE) ? GL_STREAM_DRAW
+			                                 : GL_STREAM_COPY;
+		}
+		return (flags & MESH_FLAG_READ)  ? GL_DYNAMIC_READ
+		     : (flags & MESH_FLAG_WRITE) ? GL_DYNAMIC_DRAW
+		                                 : GL_DYNAMIC_COPY;
 	}
-	fprintf(stderr, "unknown mesh usage\n"); DEBUG_BREAK();
-	return GL_NONE;
+	return (flags & MESH_FLAG_READ)  ? GL_STATIC_READ
+	     : (flags & MESH_FLAG_WRITE) ? GL_STATIC_DRAW
+	                                 : GL_STATIC_COPY;
+}
+
+static GLbitfield gpu_mesh_immutable_flag(enum Mesh_Flag flags) {
+	GLbitfield bitfield = 0;
+	if (flags & MESH_FLAG_WRITE) {
+		bitfield |= GL_DYNAMIC_STORAGE_BIT; // for `glNamedBufferSubData`
+	}
+
+/*
+	if (flags & MESH_FLAG_WRITE) {
+		bitfield |= GL_MAP_WRITE_BIT;
+	}
+	if (flags & MESH_FLAG_READ) {
+		bitfield |= GL_MAP_READ_BIT;
+	}
+	if (bitfield != 0) {
+		bitfield |= GL_MAP_PERSISTENT_BIT;
+		bitfield |= GL_MAP_COHERENT_BIT;
+	}
+*/
+
+	return bitfield;
 }
 
 static GLenum gpu_comparison_op(enum Comparison_Op value) {

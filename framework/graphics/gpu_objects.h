@@ -22,6 +22,8 @@ void gpu_texture_free(struct Gpu_Texture * gpu_texture);
 
 void gpu_texture_get_size(struct Gpu_Texture * gpu_texture, uint32_t * x, uint32_t * y);
 
+void gpu_texture_update(struct Gpu_Texture * gpu_texture, struct Asset_Image * asset);
+
 // -- GPU target part
 struct Gpu_Target;
 struct Gpu_Target * gpu_target_init(
@@ -40,7 +42,8 @@ struct Gpu_Mesh;
 struct Gpu_Mesh * gpu_mesh_allocate(
 	uint32_t buffers_count,
 	uint32_t * byte_lengths,
-	struct Mesh_Settings const * settings_set
+	void ** data,
+	struct Mesh_Parameters const * parameters_set
 );
 struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset);
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh);

@@ -8,7 +8,7 @@
 struct Asset_Mesh {
 	uint32_t capacity, count;
 	struct Array_Byte * buffers;
-	struct Mesh_Settings * settings;
+	struct Mesh_Parameters * parameters;
 };
 
 void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path);

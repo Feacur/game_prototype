@@ -27,25 +27,23 @@ struct Batch_Mesh * batch_mesh_init(uint32_t attributes_count, uint32_t const * 
 		.mesh = (struct Asset_Mesh){
 			.count = buffers_count,
 			.buffers = MEMORY_ALLOCATE_ARRAY(struct Array_Byte, buffers_count),
-			.settings = MEMORY_ALLOCATE_ARRAY(struct Mesh_Settings, buffers_count),
+			.parameters = MEMORY_ALLOCATE_ARRAY(struct Mesh_Parameters, buffers_count),
 		},
 	};
 
 	array_byte_init(batch_mesh->mesh.buffers + 0);
 	array_byte_init(batch_mesh->mesh.buffers + 1);
-	batch_mesh->mesh.settings[0] = (struct Mesh_Settings){
+	batch_mesh->mesh.parameters[0] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_R32,
-		.frequency = MESH_FREQUENCY_STREAM,
-		.access = MESH_ACCESS_DRAW,
+		.flags = MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
 		.attributes_count = attributes_count,
 	};
-	batch_mesh->mesh.settings[1] = (struct Mesh_Settings){
+	batch_mesh->mesh.parameters[1] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_U32,
-		.frequency = MESH_FREQUENCY_STREAM,
-		.access = MESH_ACCESS_DRAW,
+		.flags = MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
 		.is_index = true,
 	};
-	memcpy(batch_mesh->mesh.settings[0].attributes, attributes, attributes_count * 2 * sizeof(uint32_t));
+	memcpy(batch_mesh->mesh.parameters[0].attributes, attributes, attributes_count * 2 * sizeof(uint32_t));
 
 	array_float_init(&batch_mesh->vertices);
 	array_u32_init(&batch_mesh->indices);
@@ -55,7 +53,7 @@ struct Batch_Mesh * batch_mesh_init(uint32_t attributes_count, uint32_t const * 
 
 void batch_mesh_free(struct Batch_Mesh * batch_mesh) {
 	MEMORY_FREE(batch_mesh->mesh.buffers);
-	MEMORY_FREE(batch_mesh->mesh.settings);
+	MEMORY_FREE(batch_mesh->mesh.parameters);
 	MEMORY_FREE(batch_mesh->scratch);
 
 	array_float_free(&batch_mesh->vertices);
@@ -88,8 +86,8 @@ void batch_mesh_add_quad_xy(
 	float const * rect, float const * uv // left, bottom, right, top
 ) {
 
-	uint32_t const attributes_count = batch_mesh->mesh.settings[0].attributes_count;
-	uint32_t const * attributes = batch_mesh->mesh.settings[0].attributes;
+	uint32_t const attributes_count = batch_mesh->mesh.parameters[0].attributes_count;
+	uint32_t const * attributes = batch_mesh->mesh.parameters[0].attributes;
 
 	uint32_t vertex_size = 0;
 	for (uint32_t i = 0; i < attributes_count; i++) {
