@@ -146,7 +146,7 @@ static void asset_mesh_fill(
 	};
 	asset_mesh->parameters[1] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_U32,
-		.is_index = true,
+		.flags = MESH_FLAG_INDEX,
 	};
 	memcpy(asset_mesh->parameters[0].attributes, attributes->data, attributes->count * sizeof(uint32_t));
 }

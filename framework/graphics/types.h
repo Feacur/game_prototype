@@ -59,10 +59,11 @@ enum Texture_Type {
 
 enum Mesh_Flag {
 	MESH_FLAG_NONE     = 0,
-	MESH_FLAG_MUTABLE  = (1 << 0),
-	MESH_FLAG_WRITE    = (1 << 1),
-	MESH_FLAG_READ     = (1 << 2),
-	MESH_FLAG_FREQUENT = (1 << 3),
+	MESH_FLAG_INDEX    = (1 << 0),
+	MESH_FLAG_MUTABLE  = (1 << 1),
+	MESH_FLAG_FREQUENT = (1 << 2),
+	MESH_FLAG_WRITE    = (1 << 3),
+	MESH_FLAG_READ     = (1 << 4),
 };
 
 enum Comparison_Op {
@@ -174,14 +175,13 @@ struct Texture_Settings {
 	bool mirror_wrap_x, mirror_wrap_y;
 };
 
-#define MAX_MESH_ATTRIBUTES (2 * 3)
+#define MAX_MESH_ATTRIBUTES (2 * 4)
 
 struct Mesh_Parameters {
 	enum Data_Type type;
 	enum Mesh_Flag flags;
 	uint32_t attributes_count;
 	uint32_t attributes[MAX_MESH_ATTRIBUTES];
-	bool is_index;
 };
 
 enum Data_Type data_type_get_element_type(enum Data_Type value);

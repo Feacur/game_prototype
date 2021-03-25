@@ -40,8 +40,7 @@ struct Batch_Mesh * batch_mesh_init(uint32_t attributes_count, uint32_t const * 
 	};
 	batch_mesh->mesh.parameters[1] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_U32,
-		.flags = MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
-		.is_index = true,
+		.flags = MESH_FLAG_INDEX | MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
 	};
 	memcpy(batch_mesh->mesh.parameters[0].attributes, attributes, attributes_count * 2 * sizeof(uint32_t));
 

@@ -481,7 +481,7 @@ struct Gpu_Mesh * gpu_mesh_allocate(
 		struct Mesh_Parameters const * parameters = parameters_set + i;
 
 		// element buffer
-		if (parameters->is_index) {
+		if (parameters->flags & MESH_FLAG_INDEX) {
 			elements_index = i;
 			glVertexArrayElementBuffer(mesh_id, buffer_ids[i]);
 			continue;

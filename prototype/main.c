@@ -515,7 +515,7 @@ static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
 		},
 		[1] = {
 			.type = DATA_TYPE_U32,
-			.is_index = true,
+			.flags = MESH_FLAG_INDEX,
 		},
 	};
 
