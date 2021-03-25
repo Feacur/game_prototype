@@ -238,6 +238,9 @@ static struct Gpu_Texture * gpu_texture_allocate(
 	struct Texture_Parameters const * parameters,
 	struct Texture_Settings const * settings
 ) {
+	if (size_x == 0) { fprintf(stderr, "size should be at least 1\n"); DEBUG_BREAK(); size_x = 1; }
+	if (size_y == 0) { fprintf(stderr, "size should be at least 1\n"); DEBUG_BREAK(); size_y = 1; }
+
 	GLuint texture_id;
 	glCreateTextures(GL_TEXTURE_2D, 1, &texture_id);
 
@@ -272,14 +275,7 @@ struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
 		asset->size_x, asset->size_y, &asset->parameters, &asset->settings
 	);
 
-	GLint const level = 0;
-	glTextureSubImage2D(
-		gpu_texture->id, level,
-		0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y,
-		gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.channels),
-		gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
-		asset->data
-	);
+	gpu_texture_update(gpu_texture, asset);
 
 	return gpu_texture;
 }
@@ -301,6 +297,28 @@ void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 void gpu_texture_get_size(struct Gpu_Texture * gpu_texture, uint32_t * x, uint32_t * y) {
 	*x = gpu_texture->size_x;
 	*y = gpu_texture->size_y;
+}
+
+void gpu_texture_update(struct Gpu_Texture * gpu_texture, struct Asset_Image * asset) {
+	// @todo: compare texture and asset parameters?
+	uint32_t size_x = asset->size_x;
+	uint32_t size_y = asset->size_y;
+
+	if (asset->data == NULL) { return; }
+	if (size_x == 0) { return; }
+	if (size_y == 0) { return; }
+
+	if (size_x > gpu_texture->size_x) { fprintf(stderr, "target size is too large\n"); DEBUG_BREAK(); size_x = gpu_texture->size_x; }
+	if (size_y > gpu_texture->size_y) { fprintf(stderr, "target size is too large\n"); DEBUG_BREAK(); size_y = gpu_texture->size_y; }
+
+	GLint const level = 0;
+	glTextureSubImage2D(
+		gpu_texture->id, level,
+		0, 0, (GLsizei)size_x, (GLsizei)size_y,
+		gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.channels),
+		gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
+		asset->data
+	);
 }
 
 // -- GPU target part

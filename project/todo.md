@@ -1,7 +1,7 @@
 # framework
 ```
 [o] text rendering
-    [ ] GPU texture data streaming, probably, too?
+    [x] GPU texture data streaming
     [x] improve font glyphs packer
     [ ] automatically build atlas based on input text?
     [ ] select suitable fonts for different locales

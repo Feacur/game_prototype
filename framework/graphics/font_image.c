@@ -31,19 +31,20 @@ struct Font_Symbol {
 
 struct Font_Image * font_image_init(struct Asset_Font * asset_font, int32_t size) {
 	struct Font_Image * font_image = MEMORY_ALLOCATE(struct Font_Image);
-
-	font_image->buffer = (struct Asset_Image){
-		.parameters = {
-			.texture_type = TEXTURE_TYPE_COLOR,
-			.data_type = DATA_TYPE_U8,
-			.channels = 1,
+	*font_image = (struct Font_Image){
+		.buffer = {
+			.size_x = 1,
+			.size_y = 1,
+			.parameters = {
+				.texture_type = TEXTURE_TYPE_COLOR,
+				.data_type = DATA_TYPE_U8,
+				.channels = 1,
+			},
 		},
+		.table = hash_table_init(sizeof(struct Font_Glyph)),
+		.scale = asset_font_get_scale(asset_font, (float)size),
+		.asset_font = asset_font,
 	};
-
-	font_image->table = hash_table_init(sizeof(struct Font_Glyph));
-	font_image->scale = asset_font_get_scale(asset_font, (float)size);
-
-	font_image->asset_font = asset_font;
 	return font_image;
 }
 
@@ -64,8 +65,10 @@ struct Asset_Image * font_image_get_asset(struct Font_Image * font_image) {
 	return &font_image->buffer;
 }
 
-static int font_image_sort(void const * v1, void const * v2);
+static int font_image_sort_comparison(void const * v1, void const * v2);
 void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint_ranges) {
+	if (codepoint_ranges == NULL) { return; }
+
 	uint32_t codepoints_count = 0;
 	for (uint32_t const *range = codepoint_ranges; *range != 0; range += 2) {
 		codepoints_count += 1 + (range[1] - range[0]);
@@ -97,7 +100,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 	symbols[symbols_count].glyph.id = 0;
 
 	// sort glyphs by height, then by width
-	qsort(symbols, symbols_count, sizeof(*symbols), font_image_sort);
+	qsort(symbols, symbols_count, sizeof(*symbols), font_image_sort_comparison);
 
 	// resize the atlas
 	{
@@ -225,7 +228,7 @@ float font_image_get_kerning(struct Font_Image * font_image, uint32_t id1, uint3
 
 //
 
-static int font_image_sort(void const * v1, void const * v2) {
+static int font_image_sort_comparison(void const * v1, void const * v2) {
 	struct Font_Symbol const * s1 = v1;
 	struct Font_Symbol const * s2 = v2;
 	
