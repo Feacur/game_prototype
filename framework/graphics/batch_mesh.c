@@ -1,5 +1,6 @@
 #include "framework/assets/asset_mesh.h"
 #include "framework/containers/array_float.h"
+#include "framework/containers/array_u32.h"
 #include "framework/containers/array_byte.h"
 #include "framework/memory.h"
 
