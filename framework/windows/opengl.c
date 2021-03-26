@@ -46,8 +46,8 @@ void glibrary_to_system_init(void) {
 // #define OPENGL_CLASS_NAME "temporary_opengl_class"
 #define OPENGL_CLASS_NAME APPLICATION_CLASS_NAME
 
-	glibrary.handle = LoadLibraryA("opengl32.dll");
-	if (glibrary.handle == NULL) { fprintf(stderr, "'LoadLibrary' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	glibrary.handle = LoadLibrary(TEXT("opengl32.dll"));
+	if (glibrary.handle == NULL) { fprintf(stderr, "'LoadLibraryA' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	// fetch basic DLL functions
 	glibrary.dll.GetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(glibrary.handle, "wglGetProcAddress");
@@ -57,23 +57,23 @@ void glibrary_to_system_init(void) {
 	glibrary.dll.ShareLists     = (PFNWGLSHARELISTSPROC)    GetProcAddress(glibrary.handle, "wglShareLists");
 
 	// create temporary class
-	// ATOM atom = RegisterClassExA(&(WNDCLASSEXA){
-	// 	.cbSize = sizeof(WNDCLASSEXA),
-	// 	.lpszClassName = OPENGL_CLASS_NAME,
+	// ATOM atom = RegisterClassEx(&(WNDCLASSEX){
+	// 	.cbSize = sizeof(WNDCLASSEX),
+	// 	.lpszClassName = TEXT(OPENGL_CLASS_NAME),
 	// 	.hInstance = system_to_internal_get_module(),
-	// 	.lpfnWndProc = DefWindowProcA,
+	// 	.lpfnWndProc = DefWindowProc,
 	// });
-	// if (atom == 0) { fprintf(stderr, "'RegisterClassExA' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	// if (atom == 0) { fprintf(stderr, "'RegisterClassEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	// create temporary window
-	HWND hwnd = CreateWindowExA(
+	HWND hwnd = CreateWindowEx(
 		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
-		OPENGL_CLASS_NAME, "",
+		TEXT(OPENGL_CLASS_NAME), TEXT(""),
 		WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		0, 0, 1, 1,
 		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
-	if (hwnd == NULL) { fprintf(stderr, "'CreateWindow' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (hwnd == NULL) { fprintf(stderr, "'CreateWindowEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	HDC hdc = GetDC(hwnd);
 	if (hdc == NULL) { fprintf(stderr, "'GetDC' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
@@ -127,7 +127,7 @@ void glibrary_to_system_init(void) {
 
 	// ReleaseDC(hwnd, hdc);
 	DestroyWindow(hwnd);
-	// UnregisterClassA(OPENGL_CLASS_NAME, system_to_internal_get_module());
+	// UnregisterClass(TEXT(OPENGL_CLASS_NAME), system_to_internal_get_module());
 
 	// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/
 	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)

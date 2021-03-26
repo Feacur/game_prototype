@@ -23,7 +23,7 @@ static struct Platform_System {
 static void set_process_dpi_awareness(void);
 static void system_signal_handler(int value);
 void platform_system_init(void) {
-	platform_system.module = GetModuleHandleA(NULL);
+	platform_system.module = GetModuleHandle(NULL);
 	if (platform_system.module == NULL) { fprintf(stderr, "'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	set_process_dpi_awareness();
@@ -56,14 +56,14 @@ bool platform_window_is_running(void) {
 void platform_system_update(void) {
 	MSG message;
 	input_to_platform_before_update();
-	while (PeekMessageA(&message, NULL, 0, 0, PM_REMOVE)) {
+	while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE)) {
 		if (message.message == WM_QUIT) {
 			platform_system.should_close = true;
 			DEBUG_BREAK();
 			continue;
 		}
 		TranslateMessage(&message);
-		DispatchMessageA(&message);
+		DispatchMessage(&message);
 	}
 	input_to_platform_after_update();
 }
@@ -90,8 +90,8 @@ static void set_process_dpi_awareness(void) {
 		if (Shcore_dll != NULL) { FreeLibrary(Shcore_dll); Shcore_dll = NULL; } \
 	} while (false)\
 
-	HMODULE User32_dll = LoadLibraryA("User32.dll");
-	HMODULE Shcore_dll = LoadLibraryA("Shcore.dll");
+	HMODULE User32_dll = LoadLibrary(TEXT("User32.dll"));
+	HMODULE Shcore_dll = LoadLibrary(TEXT("Shcore.dll"));
 
 	// Windows 10, version 1607
 	if (User32_dll != NULL) {

@@ -15,6 +15,7 @@ struct Window {
 	HWND handle;
 	HDC private_context;
 	uint32_t size_x, size_y;
+	// bool is_unicode;
 
 	struct GInstance * ginstance;
 };
@@ -26,25 +27,26 @@ static void platform_window_toggle_raw_input(struct Window * window, bool state)
 struct Window * platform_window_init(void) {
 	struct Window * window = MEMORY_ALLOCATE(struct Window);
 
-	window->handle = CreateWindowExA(
+	window->handle = CreateWindowEx(
 		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
-		APPLICATION_CLASS_NAME, "game prototype",
+		TEXT(APPLICATION_CLASS_NAME), TEXT("game prototype"),
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
-	if (window->handle == NULL) { fprintf(stderr, "'CreateWindow' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (window->handle == NULL) { fprintf(stderr, "'CreateWindowEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	window->private_context = GetDC(window->handle);
 	if (window->private_context == NULL) { fprintf(stderr, "'GetDC' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
-	BOOL prop_is_set = SetPropA(window->handle, APPLICATION_CLASS_NAME, window);
+	BOOL prop_is_set = SetProp(window->handle, TEXT(APPLICATION_CLASS_NAME), window);
 	if (!prop_is_set) { fprintf(stderr, "'SetProp' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	RECT rect;
 	GetClientRect(window->handle, &rect);
 	window->size_x = (uint32_t)(rect.right - rect.left);
 	window->size_y = (uint32_t)(rect.bottom - rect.top);
+	// window->is_unicode = IsWindowUnicode(window->handle);
 
 /*
 	uint8_t keys[KEYBOARD_KEYS_MAX];
@@ -105,21 +107,21 @@ uint32_t platform_window_get_refresh_rate(struct Window * window, uint32_t defau
 static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 void window_to_system_init(void) {
-	ATOM atom = RegisterClassExA(&(WNDCLASSEXA){
-		.cbSize = sizeof(WNDCLASSEXA),
-		.lpszClassName = APPLICATION_CLASS_NAME,
+	ATOM atom = RegisterClassEx(&(WNDCLASSEX){
+		.cbSize = sizeof(WNDCLASSEX),
+		.lpszClassName = TEXT(APPLICATION_CLASS_NAME),
 		.hInstance = system_to_internal_get_module(),
 		.lpfnWndProc = window_procedure,
 		.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
-		.hCursor = LoadCursorA(0, IDC_ARROW),
+		.hCursor = LoadCursor(0, IDC_ARROW),
 	});
-	if (atom == 0) { fprintf(stderr, "'RegisterClassExA' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (atom == 0) { fprintf(stderr, "'RegisterClassEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 	// https://docs.microsoft.com/en-us/windows/win32/winmsg/about-window-classes
 	// https://docs.microsoft.com/en-us/windows/win32/gdi/private-display-device-contexts
 }
 
 void window_to_system_free(void) {
-	UnregisterClassA(APPLICATION_CLASS_NAME, system_to_internal_get_module());
+	UnregisterClass(TEXT(APPLICATION_CLASS_NAME), system_to_internal_get_module());
 }
 
 //
@@ -158,7 +160,7 @@ static enum Key_Code translate_virtual_key_to_application(uint8_t scan, uint8_t 
 		case VK_OEM_PLUS:   return '=';
 		// non-ASCII, common
 		case VK_CAPITAL:  return KC_CAPS_LOCK;
-		case VK_SHIFT: switch ((uint8_t)MapVirtualKeyA(scan, MAPVK_VSC_TO_VK_EX)) {
+		case VK_SHIFT: switch ((uint8_t)MapVirtualKey(scan, MAPVK_VSC_TO_VK_EX)) {
 			// default: return KC_SHIFT;
 			case VK_LSHIFT: return KC_LSHIFT;
 			case VK_RSHIFT: return KC_RSHIFT;
@@ -258,7 +260,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 	if ((data->Flags & RI_KEY_E1)) {
 		scan = (key == VK_PAUSE)
 			? 0x45
-			: (uint8_t)MapVirtualKeyA(key, MAPVK_VK_TO_VSC);
+			: (uint8_t)MapVirtualKey(key, MAPVK_VK_TO_VSC);
 	}
 
 	if (key == VK_NUMLOCK) { is_extended = true; }
@@ -273,7 +275,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 
 /*
 	char key_name[32];
-	GetKeyNameTextA((LONG)((scan << 16) | (is_extended << 24)), key_name, sizeof(key_name));
+	GetKeyNameText((LONG)((scan << 16) | (is_extended << 24)), key_name, sizeof(key_name));
 	printf("%s\n", key_name);
 */
 }
@@ -449,8 +451,8 @@ static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam,
 }
 
 static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	struct Window * window = GetPropA(hwnd, APPLICATION_CLASS_NAME);
-	if (window == NULL) { return DefWindowProcA(hwnd, message, wParam, lParam); }
+	struct Window * window = GetProp(hwnd, TEXT(APPLICATION_CLASS_NAME));
+	if (window == NULL) { return DefWindowProc(hwnd, message, wParam, lParam); }
 
 	switch (message) {
 		case WM_INPUT:
@@ -501,7 +503,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 
 		case WM_DESTROY: {
 			bool should_free = window->handle != NULL;
-			RemovePropA(hwnd, APPLICATION_CLASS_NAME);
+			RemoveProp(hwnd, TEXT(APPLICATION_CLASS_NAME));
 			input_to_platform_reset();
 			if (window->ginstance != NULL) { ginstance_free(window->ginstance); }
 			if (raw_input_window == window) {
@@ -513,5 +515,5 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		}
 	}
 
-	return DefWindowProcA(hwnd, message, wParam, lParam);
+	return DefWindowProc(hwnd, message, wParam, lParam);
 }

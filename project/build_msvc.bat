@@ -17,7 +17,7 @@ popd
 
 rem > OPTIONS
 set includes=-I".." -I"../third_party"
-set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX
+set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE 
 set libs=user32.lib gdi32.lib
 set warnings=-WX -W4
 set compiler=-nologo -diagnostics:caret -EHa- -GR- -Fo"./temp/"
