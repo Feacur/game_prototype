@@ -1,14 +1,18 @@
 #include "memory.h"
 #include "framework/containers/array_byte.h"
 
+// @note: not much sense having fopen abstraction
+// FILE * platform_file_fopen(char const * path, char const * mode);
+
 #include <stdio.h>
 #include <stdlib.h>
 
 //
 #include "framework/platform_file.h"
 
+/*
 bool platform_file_read(char const * path, struct Array_Byte * buffer) {
-	FILE * file = fopen(path, "rb");
+	FILE * file = platform_file_fopen(path, "rb");
 	if (file == NULL) { fprintf(stderr, "'fopen' failed\n"); DEBUG_BREAK(); return false; }
 
 	fseek(file, 0L, SEEK_END);
@@ -32,3 +36,4 @@ bool platform_file_read(char const * path, struct Array_Byte * buffer) {
 	};
 	return true;
 }
+*/

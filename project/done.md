@@ -1,3 +1,14 @@
+# 2021, march 26
+```
+[o] text rendering
+    [x] GPU texture data streaming
+    [x] improve font glyphs packer
+[o] graphics
+    [x] introduce immutable buffers
+[o] platform
+    [x] make the application Unicode-aware: file paths, input
+```
+
 # 2021, march 24
 ```
 [o] text rendering

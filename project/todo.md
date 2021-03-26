@@ -1,13 +1,10 @@
 # framework
 ```
 [o] text rendering
-    [x] GPU texture data streaming
-    [x] improve font glyphs packer
     [ ] automatically build atlas based on input text?
     [ ] select suitable fonts for different locales
 [ ] graphics
     [ ] remove mutable buffers, but recreate immutable ones completely?
-    [x] introduce immutable buffers
     [ ] API to correctly batch-update meshes/textures and create a render pass (or whatever)
     [ ] elaborate the idea of render passes
     [ ] GPU scissor test
