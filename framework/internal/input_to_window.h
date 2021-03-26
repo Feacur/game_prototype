@@ -1,5 +1,5 @@
-#if !defined(GAME_INPUT_TO_PLATFORM)
-#define GAME_INPUT_TO_PLATFORM
+#if !defined(GAME_INPUT_TO_WINDOW)
+#define GAME_INPUT_TO_WINDOW
 
 #include "framework/common.h"
 #include "framework/input_keys.h"

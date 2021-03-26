@@ -1,5 +1,5 @@
 #include "framework/memory.h"
-#include "framework/internal/input_to_platform.h"
+#include "framework/internal/input_to_window.h"
 
 #include "system_to_internal.h"
 #include "ginstance.h"

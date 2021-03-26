@@ -149,8 +149,8 @@ static void game_init(void) {
 
 		uint32_t codepoints_count = 0;
 		uint32_t * codepoints = MEMORY_ALLOCATE_ARRAY(uint32_t, (asset_codepoints.count + 4) * 2 + 1);
-		codepoints[codepoints_count++] = 0x20;
-		codepoints[codepoints_count++] = 0x7e;
+		codepoints[codepoints_count++] = ' ';
+		codepoints[codepoints_count++] = '~';
 		codepoints[codepoints_count++] = 0x401;
 		codepoints[codepoints_count++] = 0x401;
 		codepoints[codepoints_count++] = 0x410;
@@ -166,25 +166,22 @@ static void game_init(void) {
 
 			i += octets_count;
 
-			if (codepoint == '\r') { continue; }
-			if (codepoint == '\n') { continue; }
-
+			if (codepoint <= 0x7f) { continue; }
 			codepoints[codepoints_count++] = codepoint;
 			codepoints[codepoints_count++] = codepoint;
 		}
-		codepoints[codepoints_count] = 0;
 
 		array_byte_free(&asset_codepoints);
 
 		content.fonts.sans.buffer = font_image_init(content.assets.font_sans, 32);
-		font_image_build(content.fonts.sans.buffer, codepoints);
+		font_image_build(content.fonts.sans.buffer, codepoints_count / 2, codepoints);
 		content.fonts.sans.gpu_texture = gpu_texture_init(font_image_get_asset(content.fonts.sans.buffer));
 		gfx_material_init(&content.fonts.sans.material, content.gpu.program_font);
 
 		MEMORY_FREE(codepoints);
 
 		content.fonts.mono.buffer = font_image_init(content.assets.font_mono, 32);
-		font_image_build(content.fonts.mono.buffer, (uint32_t[]){0x20, 0x7e, 0});
+		font_image_build(content.fonts.mono.buffer, 1, (uint32_t[]){' ', '~'});
 		content.fonts.mono.gpu_texture = gpu_texture_init(font_image_get_asset(content.fonts.mono.buffer));
 		gfx_material_init(&content.fonts.mono.material, content.gpu.program_font);
 
@@ -314,14 +311,15 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	// draw into the batch mesh
 	batch_mesh_clear(batch.buffer);
 
+	float const text_x = 50, text_y = 200;
+	float const line_height = font_image_get_height(font->buffer) + font_image_get_gap(font->buffer);
+	float offset_x = text_x, offset_y = text_y;
+	uint32_t previous_glyph_id = 0;
+
 	// struct Array_U32 const * codepoints = input_get_codepoints();
 	// for (size_t i = 0; i < codepoints->count; i++) {
 	// 	uint32_t const codepoint = codepoints->data[i];
-	// }
 
-	float const text_x = 50, text_y = 200;
-	float offset_x = text_x, offset_y = text_y;
-	uint32_t previous_glyph_id = 0;
 	for (size_t i = 0; i < content.assets.text_test.count;) {
 		uint32_t const octets_count = utf8_length(content.assets.text_test.data + i);
 		if (octets_count == 0) { i++; continue; }
@@ -331,22 +329,21 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 		i += octets_count;
 
-		if (codepoint == '\r') {
+		if (codepoint < ' ') {
 			previous_glyph_id = 0;
-			// offset_x = text_x;
-			continue;
-		}
-
-		if (codepoint == '\n') {
-			previous_glyph_id = 0;
-			offset_x = text_x;
-			offset_y -= font_image_get_height(font->buffer) + font_image_get_gap(font->buffer);
+			if (codepoint == '\t') {
+				struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, ' ');
+				if (glyph != NULL) { offset_x += glyph->params.full_size_x * 4; }
+			}
+			else if (codepoint == '\n') {
+				offset_x = text_x;
+				offset_y -= line_height;
+			}
 			continue;
 		}
 
 		struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, codepoint);
 		if (glyph == NULL) { previous_glyph_id = 0; continue; }
-		if (glyph->id == 0) { previous_glyph_id = 0; continue; }
 
 		offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font->buffer, previous_glyph_id, glyph->id) : 0;
 		float const rect[] = { // left, bottom, top, right

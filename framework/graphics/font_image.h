@@ -15,7 +15,7 @@ void font_image_free(struct Font_Image * font_image);
 void font_image_clear(struct Font_Image * font_image);
 struct Asset_Image * font_image_get_asset(struct Font_Image * font_image);
 
-void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint_ranges);
+void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uint32_t const * codepoint_ranges);
 struct Font_Glyph const * font_image_get_glyph(struct Font_Image * const font_image, uint32_t codepoint);
 
 float font_image_get_height(struct Font_Image * font_image);

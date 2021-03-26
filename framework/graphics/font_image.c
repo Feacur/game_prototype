@@ -65,11 +65,12 @@ struct Asset_Image * font_image_get_asset(struct Font_Image * font_image) {
 }
 
 static int font_image_sort_comparison(void const * v1, void const * v2);
-void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint_ranges) {
+void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uint32_t const * codepoint_ranges) {
 	if (codepoint_ranges == NULL) { return; }
 
 	uint32_t codepoints_count = 0;
-	for (uint32_t const *range = codepoint_ranges; *range != 0; range += 2) {
+	for (uint32_t i = 0; i < ranges_count; i++) {
+		uint32_t const * range = codepoint_ranges + i * 2;
 		codepoints_count += 1 + (range[1] - range[0]);
 	}
 
@@ -79,7 +80,8 @@ void font_image_build(struct Font_Image * font_image, uint32_t const * codepoint
 	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(struct Font_Symbol, codepoints_count + 1);
 
 	// collect glyphs
-	for (uint32_t const *range = codepoint_ranges; *range != 0; range += 2) {
+	for (uint32_t i = 0; i < ranges_count; i++) {
+		uint32_t const * range = codepoint_ranges + i * 2;
 		for (uint32_t codepoint = *range, codepoint_to = range[1]; codepoint <= codepoint_to; codepoint++) {
 			uint32_t const glyph_id = asset_font_get_glyph_id(font_image->asset_font, codepoint);
 			if (glyph_id == 0) { continue; }

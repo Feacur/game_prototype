@@ -80,10 +80,24 @@ bool input_mouse_transition(enum Mouse_Code key, bool state) {
 }
 
 //
-#include "framework/internal/input_to_platform.h"
+#include "framework/internal/input_to_system.h"
+
+void input_to_system_init(void) {
+	array_u32_init(&input_state.codepoints);
+}
+
+void input_to_system_free(void) {
+	array_u32_free(&input_state.codepoints);
+}
+
+//
+#include "framework/internal/input_to_window.h"
 
 void input_to_platform_reset(void) {
-	memset(&input_state, 0, sizeof(input_state));
+	memset(&input_state.keyboard, 0, sizeof(input_state.keyboard));
+	memset(&input_state.keyboard_prev, 0, sizeof(input_state.keyboard_prev));
+	memset(&input_state.mouse, 0, sizeof(input_state.mouse));
+	memset(&input_state.mouse_prev, 0, sizeof(input_state.mouse_prev));
 }
 
 void input_to_platform_before_update(void) {
@@ -127,14 +141,7 @@ void input_to_platform_on_key(enum Key_Code key, bool is_down) {
 
 void input_to_platform_on_codepoint(uint32_t codepoint) {
 	if (!input_state.track_codepoints) { return; }
-	switch (codepoint) {
-		case '\b':
-			if (input_state.codepoints.count > 0) { input_state.codepoints.count--; }
-			break;
-		default:
-			array_u32_write(&input_state.codepoints, codepoint);
-			break;
-	}
+	array_u32_write(&input_state.codepoints, codepoint);
 }
 
 void input_to_platform_on_mouse_move(uint32_t x, uint32_t y) {

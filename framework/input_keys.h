@@ -3,16 +3,38 @@
 
 enum Key_Code {
 	// ASCII, control characters
-	KC_NULL   = '\0',
-	KC_BELL   = '\a',
-	KC_BSPACE = '\b',
-	KC_TAB    = '\t',
-	KC_LINE   = '\n',
-	KC_VTAB   = '\v',
-	KC_FORM   = '\f',
-	KC_ENTER  = '\r',
-	KC_ESC    = 0x1b,
-	KC_DEL    = 0x7f,
+	// KC_NULL   = '\0', // ctrl + shift + 2
+	// KC_SOH    = 0x01, // ctrl + a
+	// KC_STX    = 0x02, // ctrl + b
+	// KC_ETX    = 0x03, // ctrl + c
+	// KC_EOT    = 0x04, // ctrl + d
+	// KC_ENQ    = 0x05, // ctrl + e
+	// KC_ACK    = 0x06, // ctrl + f
+	// KC_BELL   = '\a', // ctrl + g
+	KC_BSPACE = '\b', // ctrl + h
+	KC_TAB    = '\t', // ctrl + i, tab
+	// KC_LINE   = '\n', // ctrl + j, ctrl + enter
+	// KC_VTAB   = '\v', // ctrl + k
+	// KC_FORM   = '\f', // ctrl + l
+	KC_ENTER  = '\r', // ctrl + m, enter
+	// KC_SO     = 0x0e, // ctrl + n
+	// KC_SI     = 0x0f, // ctrl + o
+	// KC_DLE    = 0x10, // ctrl + p
+	// KC_DC1    = 0x11, // ctrl + q
+	// KC_DC2    = 0x12, // ctrl + r
+	// KC_DC3    = 0x13, // ctrl + s
+	// KC_DC4    = 0x14, // ctrl + t
+	// KC_NAK    = 0x15, // ctrl + u
+	// KC_SYN    = 0x16, // ctrl + v
+	// KC_ETB    = 0x17, // ctrl + w
+	// KC_EM     = 0x19, // ctrl + y
+	// KC_SUB    = 0x1a, // ctrl + z
+	KC_ESC    = 0x1b, // escape
+	// KC_FS     = 0x1c, // ??
+	// KC_GS     = 0x1d, // ??
+	// KC_RS     = 0x1e, // ctrl + shift + 6
+	// KC_US     = 0x1f, // ??
+	KC_DEL    = 0x7f, // ctrl + backspace
 	// ASCII, printable characters
 	KC_SPACE = ' ',
 	KC_COMMA   = ',',  KC_LANGLE   = '<',
