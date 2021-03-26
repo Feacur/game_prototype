@@ -29,7 +29,6 @@ struct Gpu_Target;
 struct Gpu_Target * gpu_target_init(
 	uint32_t size_x, uint32_t size_y,
 	struct Texture_Parameters const * parameters,
-	bool const * readable,
 	uint32_t count
 );
 void gpu_target_free(struct Gpu_Target * gpu_target);
@@ -39,12 +38,6 @@ struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum
 
 // -- GPU mesh part
 struct Gpu_Mesh;
-struct Gpu_Mesh * gpu_mesh_allocate(
-	uint32_t buffers_count,
-	uint32_t * byte_lengths,
-	void ** data,
-	struct Mesh_Parameters const * parameters_set
-);
 struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset);
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh);
 

@@ -93,6 +93,8 @@ static struct Graphics_State {
 
 	uint32_t units_capacity;
 	struct Gpu_Unit * units;
+
+	uint32_t max_texture_size;
 } graphics_state;
 
 //
@@ -237,22 +239,58 @@ void gpu_program_get_uniforms(struct Gpu_Program * gpu_program, uint32_t * count
 static struct Gpu_Texture * gpu_texture_allocate(
 	uint32_t size_x, uint32_t size_y,
 	struct Texture_Parameters const * parameters,
-	struct Texture_Settings const * settings
+	struct Texture_Settings const * settings,
+	void const * data
 ) {
-	// @todo: allow mutable textures? probably, by complete recreation of storage?
-	if (size_x == 0) { fprintf(stderr, "size should be at least 1\n"); DEBUG_BREAK(); size_x = 1; }
-	if (size_y == 0) { fprintf(stderr, "size should be at least 1\n"); DEBUG_BREAK(); size_y = 1; }
+	if (size_x > graphics_state.max_texture_size) {
+		fprintf(stderr, "requested size is too large\n"); DEBUG_BREAK();
+		size_x = graphics_state.max_texture_size;
+	}
+
+	if (size_y > graphics_state.max_texture_size) {
+		fprintf(stderr, "requested size is too large\n"); DEBUG_BREAK();
+		size_y = graphics_state.max_texture_size;
+	}
 
 	GLuint texture_id;
 	glCreateTextures(GL_TEXTURE_2D, 1, &texture_id);
 
 	// allocate buffer
-	GLsizei const levels = 1;
-	glTextureStorage2D(
-		texture_id, levels,
-		gpu_sized_internal_format(parameters->texture_type, parameters->data_type, parameters->channels),
-		(GLsizei)size_x, (GLsizei)size_y
-	);
+	GLint const level = 0;
+	if (data == NULL && !(parameters->flags & (TEXTURE_FLAG_WRITE | TEXTURE_FLAG_READ | TEXTURE_FLAG_INTERNAL))) {
+		fprintf(stderr, "non-internal storage should have initial data\n"); DEBUG_BREAK();
+	}
+	else if (parameters->flags & TEXTURE_FLAG_MUTABLE) {
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		glTexImage2D(
+			GL_TEXTURE_2D, level,
+			(GLint)gpu_sized_internal_format(parameters->texture_type, parameters->data_type, parameters->channels),
+			(GLsizei)size_x, (GLsizei)size_y, 0,
+			gpu_pixel_data_format(parameters->texture_type, parameters->channels),
+			gpu_pixel_data_type(parameters->texture_type, parameters->data_type),
+			data
+		);
+	}
+	else if (size_x > 0 && size_y > 0) {
+		GLsizei const levels = 1;
+		glTextureStorage2D(
+			texture_id, levels,
+			gpu_sized_internal_format(parameters->texture_type, parameters->data_type, parameters->channels),
+			(GLsizei)size_x, (GLsizei)size_y
+		);
+		if (data != NULL) {
+			glTextureSubImage2D(
+				texture_id, level,
+				0, 0, (GLsizei)size_x, (GLsizei)size_y,
+				gpu_pixel_data_format(parameters->texture_type, parameters->channels),
+				gpu_pixel_data_type(parameters->texture_type, parameters->data_type),
+				data
+			);
+		}
+	}
+	else {
+		fprintf(stderr, "immutable storage should have non-zero size\n"); DEBUG_BREAK();
+	}
 
 	// chart buffer
 	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(settings->mipmap, settings->minification));
@@ -274,7 +312,7 @@ static struct Gpu_Texture * gpu_texture_allocate(
 
 struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
 	struct Gpu_Texture * gpu_texture = gpu_texture_allocate(
-		asset->size_x, asset->size_y, &asset->parameters, &asset->settings
+		asset->size_x, asset->size_y, &asset->parameters, &asset->settings, asset->data
 	);
 
 	gpu_texture_update(gpu_texture, asset);
@@ -310,24 +348,38 @@ void gpu_texture_update(struct Gpu_Texture * gpu_texture, struct Asset_Image * a
 	if (size_x == 0) { return; }
 	if (size_y == 0) { return; }
 
-	if (size_x > gpu_texture->size_x) { fprintf(stderr, "target size is too large\n"); DEBUG_BREAK(); size_x = gpu_texture->size_x; }
-	if (size_y > gpu_texture->size_y) { fprintf(stderr, "target size is too large\n"); DEBUG_BREAK(); size_y = gpu_texture->size_y; }
-
 	GLint const level = 0;
-	glTextureSubImage2D(
-		gpu_texture->id, level,
-		0, 0, (GLsizei)size_x, (GLsizei)size_y,
-		gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.channels),
-		gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
-		asset->data
-	);
+	if (gpu_texture->size_x >= size_x && gpu_texture->size_y >= size_y) {
+		glTextureSubImage2D(
+			gpu_texture->id, level,
+			0, 0, (GLsizei)size_x, (GLsizei)size_y,
+			gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.channels),
+			gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
+			asset->data
+		);
+	}
+	else if (gpu_texture->parameters.flags & TEXTURE_FLAG_MUTABLE) {
+		printf("WARNING! reallocating a buffer\n"); // DEBUG_BREAK();
+		glBindTexture(GL_TEXTURE_2D, gpu_texture->id);
+		glTexImage2D(
+			GL_TEXTURE_2D, level,
+			(GLint)gpu_sized_internal_format(gpu_texture->parameters.texture_type, gpu_texture->parameters.data_type, gpu_texture->parameters.channels),
+			(GLsizei)size_x, (GLsizei)size_y, 0,
+			gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.channels),
+			gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
+			asset->data
+		);
+	}
+	else {
+		fprintf(stderr, "trying to reallocate an immutable buffer"); DEBUG_BREAK();
+		// @todo: completely recreate object instead of using a mutable storage?
+	}
 }
 
 // -- GPU target part
 struct Gpu_Target * gpu_target_init(
 	uint32_t size_x, uint32_t size_y,
 	struct Texture_Parameters const * parameters,
-	bool const * readable,
 	uint32_t count
 ) {
 	GLuint target_id;
@@ -341,7 +393,13 @@ struct Gpu_Target * gpu_target_init(
 
 	// allocate buffers
 	for (uint32_t i = 0; i < count; i++) {
-		if (!readable[i]) {
+		if (parameters[i].flags & TEXTURE_FLAG_READ) {
+			textures[textures_count++] = gpu_texture_allocate(size_x, size_y, parameters + i, &(struct Texture_Settings){
+				.wrap_x = WRAP_MODE_CLAMP,
+				.wrap_y = WRAP_MODE_CLAMP,
+			}, NULL);
+		}
+		else {
 			GLuint buffer_id;
 			glCreateRenderbuffers(1, &buffer_id);
 			glNamedRenderbufferStorage(
@@ -351,17 +409,11 @@ struct Gpu_Target * gpu_target_init(
 			);
 			buffers[buffers_count++] = buffer_id;
 		}
-		else {
-			textures[textures_count++] = gpu_texture_allocate(size_x, size_y, parameters + i, &(struct Texture_Settings){
-				.wrap_x = WRAP_MODE_CLAMP,
-				.wrap_y = WRAP_MODE_CLAMP,
-			});
-		}
 	}
 
 	// chart buffers
 	for (uint32_t i = 0, texture_index = 0, color_index = 0, buffer_index = 0; i < count; i++) {
-		if (!readable[i]) {
+		if (!(parameters[i].flags & TEXTURE_FLAG_READ)) {
 			glNamedFramebufferRenderbuffer(
 				target_id,
 				gpu_attachment_point(parameters[i].texture_type, color_index),
@@ -428,11 +480,11 @@ struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum
 }
 
 // -- GPU mesh part
-struct Gpu_Mesh * gpu_mesh_allocate(
+static struct Gpu_Mesh * gpu_mesh_allocate(
 	uint32_t buffers_count,
 	uint32_t * byte_lengths,
-	void ** data,
-	struct Mesh_Parameters const * parameters_set
+	struct Mesh_Parameters const * parameters_set,
+	void ** data
 ) {
 	if (buffers_count > MAX_MESH_BUFFERS) {
 		fprintf(stderr, "too many buffers\n"); DEBUG_BREAK();
@@ -451,8 +503,8 @@ struct Gpu_Mesh * gpu_mesh_allocate(
 
 		glCreateBuffers(1, buffer_ids + i);
 
-		if (data[i] == NULL && !(parameters->flags & MESH_FLAG_WRITE)) {
-			fprintf(stderr, "non-writable storage should have initial data\n"); DEBUG_BREAK();
+		if (data[i] == NULL && !(parameters->flags & (MESH_FLAG_WRITE | MESH_FLAG_READ | MESH_FLAG_INTERNAL))) {
+			fprintf(stderr, "non-internal storage should have initial data\n"); DEBUG_BREAK();
 		}
 		else if (parameters->flags & MESH_FLAG_MUTABLE) {
 			glNamedBufferData(
@@ -541,7 +593,7 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 	}
 
 	struct Gpu_Mesh * gpu_mesh = gpu_mesh_allocate(
-		asset->count, byte_lengths, data, asset->parameters
+		asset->count, byte_lengths, asset->parameters, data
 	);
 
 	gpu_mesh_update(gpu_mesh, asset);
@@ -594,6 +646,7 @@ void gpu_mesh_update(struct Gpu_Mesh * gpu_mesh, struct Asset_Mesh * asset) {
 		}
 		else {
 			fprintf(stderr, "trying to reallocate an immutable buffer"); DEBUG_BREAK();
+			// @todo: completely recreate object instead of using a mutable storage?
 		}
 	}
 }
@@ -933,6 +986,11 @@ void graphics_to_glibrary_init(void) {
 	graphics_state.units_capacity = (uint32_t)max_units;
 	graphics_state.units = MEMORY_ALLOCATE_ARRAY(struct Gpu_Unit, max_units);
 	memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
+
+	//
+	GLint max_texture_size;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
+	graphics_state.max_texture_size = (uint32_t)max_texture_size;
 
 	//
 #if defined(REVERSE_Z)
@@ -1325,20 +1383,36 @@ static GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t inde
 }
 
 static GLenum gpu_mesh_usage_pattern(enum Mesh_Flag flags) {
+#if defined(__clang__)
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wcomma"
+#elif defined(_MSC_VER)
+	#pragma warning(push, 0)
+#endif
+
 	// @note: those a hints, not directives
 	if (flags & MESH_FLAG_MUTABLE) {
 		if (flags & MESH_FLAG_FREQUENT) {
-			return (flags & MESH_FLAG_READ)  ? GL_STREAM_READ
-			     : (flags & MESH_FLAG_WRITE) ? GL_STREAM_DRAW
-			                                 : GL_STREAM_COPY;
+			return (flags & MESH_FLAG_READ)     ? GL_STREAM_READ
+			     : (flags & MESH_FLAG_WRITE)    ? GL_STREAM_DRAW
+			     : (flags & MESH_FLAG_INTERNAL) ? GL_STREAM_COPY
+			                                    : (DEBUG_BREAK(), GL_NONE); // catch first
 		}
-		return (flags & MESH_FLAG_READ)  ? GL_DYNAMIC_READ
-		     : (flags & MESH_FLAG_WRITE) ? GL_DYNAMIC_DRAW
-		                                 : GL_DYNAMIC_COPY;
+		return (flags & MESH_FLAG_READ)     ? GL_DYNAMIC_READ
+		     : (flags & MESH_FLAG_WRITE)    ? GL_DYNAMIC_DRAW
+		     : (flags & MESH_FLAG_INTERNAL) ? GL_DYNAMIC_COPY
+		                                    : (DEBUG_BREAK(), GL_NONE); // catch first
 	}
-	return (flags & MESH_FLAG_READ)  ? GL_STATIC_READ
-	     : (flags & MESH_FLAG_WRITE) ? GL_STATIC_DRAW
-	                                 : GL_STATIC_COPY;
+	return (flags & MESH_FLAG_READ)     ? GL_STATIC_READ
+	     : (flags & MESH_FLAG_WRITE)    ? GL_STATIC_DRAW
+	     : (flags & MESH_FLAG_INTERNAL) ? GL_STATIC_COPY
+	                                    : (DEBUG_BREAK(), GL_NONE); // catch first
+
+#if defined(__clang__)
+	#pragma clang diagnostic pop
+#elif defined(_MSC_VER)
+	#pragma warning(pop)
+#endif
 }
 
 static GLbitfield gpu_mesh_immutable_flag(enum Mesh_Flag flags) {

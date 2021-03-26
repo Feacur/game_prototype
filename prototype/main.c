@@ -204,13 +204,13 @@ static void game_init(void) {
 					.texture_type = TEXTURE_TYPE_COLOR,
 					.data_type = DATA_TYPE_U8,
 					.channels = 4,
+					.flags = TEXTURE_FLAG_READ
 				},
 				[1] = {
 					.texture_type = TEXTURE_TYPE_DEPTH,
 					.data_type = DATA_TYPE_R32,
 				},
 			},
-			(bool[]){true, false}, // readable color texture
 			2
 		);
 	}

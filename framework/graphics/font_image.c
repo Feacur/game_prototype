@@ -33,11 +33,10 @@ struct Font_Image * font_image_init(struct Asset_Font * asset_font, int32_t size
 	struct Font_Image * font_image = MEMORY_ALLOCATE(struct Font_Image);
 	*font_image = (struct Font_Image){
 		.buffer = {
-			.size_x = 1,
-			.size_y = 1,
 			.parameters = {
 				.texture_type = TEXTURE_TYPE_COLOR,
 				.data_type = DATA_TYPE_U8,
+				.flags = TEXTURE_FLAG_MUTABLE | TEXTURE_FLAG_WRITE,
 				.channels = 1,
 			},
 		},

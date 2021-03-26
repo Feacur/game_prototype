@@ -57,13 +57,22 @@ enum Texture_Type {
 	TEXTURE_TYPE_DSTENCIL = TEXTURE_TYPE_DEPTH | TEXTURE_TYPE_STENCIL,
 };
 
+enum Texture_Flag {
+	TEXTURE_FLAG_NONE     = 0,
+	TEXTURE_FLAG_MUTABLE  = (1 << 0),
+	TEXTURE_FLAG_WRITE    = (1 << 1),
+	TEXTURE_FLAG_READ     = (1 << 2),
+	TEXTURE_FLAG_INTERNAL = (1 << 3),
+};
+
 enum Mesh_Flag {
 	MESH_FLAG_NONE     = 0,
-	MESH_FLAG_INDEX    = (1 << 0),
-	MESH_FLAG_MUTABLE  = (1 << 1),
-	MESH_FLAG_FREQUENT = (1 << 2),
-	MESH_FLAG_WRITE    = (1 << 3),
-	MESH_FLAG_READ     = (1 << 4),
+	MESH_FLAG_MUTABLE  = (1 << 0),
+	MESH_FLAG_WRITE    = (1 << 1),
+	MESH_FLAG_READ     = (1 << 2),
+	MESH_FLAG_INTERNAL = (1 << 3),
+	MESH_FLAG_INDEX    = (1 << 4),
+	MESH_FLAG_FREQUENT = (1 << 5),
 };
 
 enum Comparison_Op {
@@ -166,6 +175,7 @@ struct Blend_Mode {
 struct Texture_Parameters {
 	enum Texture_Type texture_type;
 	enum Data_Type data_type;
+	enum Texture_Flag flags;
 	uint32_t channels;
 };
 
