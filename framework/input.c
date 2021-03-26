@@ -1,3 +1,5 @@
+#include "framework/containers/array_u32.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,6 +31,8 @@ struct Mouse_State {
 static struct Input_State {
 	struct Keyboard_State keyboard, keyboard_prev;
 	struct Mouse_State mouse, mouse_prev;
+	struct Array_U32 codepoints;
+	bool track_codepoints;
 } input_state;
 
 bool input_key(enum Key_Code key) {
@@ -39,6 +43,15 @@ bool input_key_transition(enum Key_Code key, bool state) {
 	uint8_t now = input_state.keyboard.keys[key];
 	uint8_t was = input_state.keyboard_prev.keys[key];
 	return (now != was) && (now == state);
+}
+
+void input_track_codepoints(bool state) {
+	if (input_state.track_codepoints != state) { input_state.codepoints.count = 0; }
+	input_state.track_codepoints = state;
+}
+
+struct Array_U32 const * input_get_codepoints(void) {
+	return &input_state.codepoints;
 }
 
 void input_mouse_position_window(uint32_t * x, uint32_t * y) {
@@ -110,6 +123,18 @@ void input_to_platform_after_update(void) {
 
 void input_to_platform_on_key(enum Key_Code key, bool is_down) {
 	input_state.keyboard.keys[key] = is_down;
+}
+
+void input_to_platform_on_codepoint(uint32_t codepoint) {
+	if (!input_state.track_codepoints) { return; }
+	switch (codepoint) {
+		case '\b':
+			if (input_state.codepoints.count > 0) { input_state.codepoints.count--; }
+			break;
+		default:
+			array_u32_write(&input_state.codepoints, codepoint);
+			break;
+	}
 }
 
 void input_to_platform_on_mouse_move(uint32_t x, uint32_t y) {

@@ -9,6 +9,7 @@ void input_to_platform_before_update(void);
 void input_to_platform_after_update(void);
 
 void input_to_platform_on_key(enum Key_Code key, bool is_down);
+void input_to_platform_on_codepoint(uint32_t codepoint);
 
 void input_to_platform_on_mouse_move(uint32_t x, uint32_t y);
 void input_to_platform_on_mouse_move_window(uint32_t x, uint32_t y);

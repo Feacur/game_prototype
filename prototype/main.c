@@ -314,6 +314,11 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	// draw into the batch mesh
 	batch_mesh_clear(batch.buffer);
 
+	// struct Array_U32 const * codepoints = input_get_codepoints();
+	// for (size_t i = 0; i < codepoints->count; i++) {
+	// 	uint32_t const codepoint = codepoints->data[i];
+	// }
+
 	float const text_x = 50, text_y = 200;
 	float offset_x = text_x, offset_y = text_y;
 	uint32_t previous_glyph_id = 0;

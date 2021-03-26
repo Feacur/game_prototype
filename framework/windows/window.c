@@ -464,6 +464,26 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		case WM_KEYDOWN:
 			return handle_message_input_keyboard(window, wParam, lParam);
 
+		case WM_CHAR: {
+			uint32_t value = (uint32_t)wParam;
+
+			static uint32_t utf16_high_surrogate = 0;
+			if ((0xd800 <= value) && (value <= 0xdbff)) {
+				// if (utf16_high_surrogate != 0) { DEBUG_BREAK(); utf16_high_surrogate = 0; return 0; }
+				utf16_high_surrogate = value;
+				return 0;
+			}
+
+			if ((0xdc00 <= value) && (value <= 0xdfff)) {
+				// if (utf16_high_surrogate == 0) { DEBUG_BREAK(); return 0; }
+				value = (((utf16_high_surrogate & 0x03ff) << 10) | (value & 0x03ff)) + 0x10000;
+				utf16_high_surrogate = 0;
+			}
+
+			input_to_platform_on_codepoint(value);
+			return 0;
+		}
+
 		case WM_MOUSEMOVE:
 		case WM_LBUTTONDOWN:
 		case WM_LBUTTONUP:
