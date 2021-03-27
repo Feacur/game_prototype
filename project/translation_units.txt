@@ -2,7 +2,6 @@ framework/maths.c
 framework/memory.c
 framework/input.c
 framework/utf8.c
-framework/platform_file.c
 
 framework/graphics/types.c
 framework/graphics/material.c

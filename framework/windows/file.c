@@ -1,128 +1,150 @@
 #include "framework/containers/array_byte.h"
 #include "framework/memory.h"
 
-// @todo: sidestep `MAX_PATH` limit?
-// @todo: support `UNICODE` define?
-
 #include <Windows.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
+struct File {
+	HANDLE handle;
+};
+
 //
 #include "framework/platform_file.h"
 
-static wchar_t * platform_file_allocate_utf8_to_utf16(char const * value);
+bool platform_file_read_entire(char const * path, struct Array_Byte * buffer) {
+	array_byte_init(buffer);
 
-bool platform_file_read(char const * path, struct Array_Byte * buffer) {
-	wchar_t * path_utf16 = platform_file_allocate_utf8_to_utf16(path);
-	HANDLE handle = CreateFileW(
-		path_utf16,
+	struct File * file = platform_file_init(path);
+	uint64_t size = platform_file_size(file);
+
+	if (size == 0) { platform_file_free(file); return true; }
+
+	array_byte_resize(buffer, size + 1);
+	buffer->count = platform_file_read(file, buffer->data, size);
+
+	platform_file_free(file);
+	if (buffer->count == size) { return true; }
+
+	fprintf(stderr, "'platform_file_read_entire' failed\n"); DEBUG_BREAK();
+	array_byte_free(buffer);
+	return false;
+}
+
+struct File * platform_file_init(char const * path) {
+// @todo: sidestep `MAX_PATH` limit?
+#if defined(UNICODE)
+	wchar_t * path_valid;
+	{
+		const int length = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
+		path_valid = MEMORY_ALLOCATE_ARRAY(wchar_t, length);
+		MultiByteToWideChar(CP_UTF8, 0, path, -1, path_valid, length);
+	}
+#else
+	char const * path_valid = path;
+#endif
+
+	HANDLE handle = CreateFile(
+		path_valid,
 		GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL,
 		NULL
 	);
-	MEMORY_FREE(path_utf16);
+
+#if defined(UNICODE)
+	// @todo: use scratch buffer
+	MEMORY_FREE(path_valid);
+#endif
 
 	if (handle == INVALID_HANDLE_VALUE) {
 		fprintf(stderr, "'CreateFile' failed\n"); DEBUG_BREAK();
-		return false;
+		return NULL;
 	}
 
-	LARGE_INTEGER file_size_from_api;
-	if (!GetFileSizeEx(handle, &file_size_from_api)) {
-		fprintf(stderr, "'GetFileSizeEx' failed\n"); DEBUG_BREAK();
-		CloseHandle(handle);
-		return false;
-	}
-
-	// @todo: support large files?
-	if (file_size_from_api.QuadPart >= UINT32_MAX) { fprintf(stderr, "file is too large\n"); DEBUG_BREAK(); return false; }
-
-	uint64_t const file_size = (uint64_t)file_size_from_api.QuadPart;
-	uint8_t * data = MEMORY_ALLOCATE_ARRAY(uint8_t, file_size + 1);
-
-	DWORD bytes_read;
-	if (!ReadFile(handle, data, (DWORD)file_size, &bytes_read, NULL) || bytes_read < file_size) {
-		fprintf(stderr, "'ReadFile' failed\n"); DEBUG_BREAK();
-		CloseHandle(handle);
-		return false;
-	}
-
-	CloseHandle(handle);
-
-	*buffer = (struct Array_Byte){
-		.capacity = (uint32_t)(file_size + 1),
-		.count = (uint32_t)file_size,
-		.data = data,
+	struct File * file = MEMORY_ALLOCATE(struct File);
+	*file = (struct File){
+		.handle = handle,
 	};
-	return true;
-}
-
-uint64_t platform_file_size(char const * path) {
-	WIN32_FIND_DATAW find_file_data;
-	wchar_t * path_utf16 = platform_file_allocate_utf8_to_utf16(path);
-	HANDLE handle = FindFirstFileW(path_utf16, &find_file_data);
-	MEMORY_FREE(path_utf16);
-
-	if (handle == INVALID_HANDLE_VALUE) {
-		fprintf(stderr, "'FindFirstFileA' failed\n"); DEBUG_BREAK();
-		return 0;
-	}
-
-	ULARGE_INTEGER const large = {
-		.LowPart = find_file_data.nFileSizeLow,
-		.HighPart = find_file_data.nFileSizeHigh,
-	};
-
-	FindClose(handle);
-
-	return (uint64_t)large.QuadPart;
-}
-
-uint64_t platform_file_time(char const * path) {
-	WIN32_FIND_DATAW find_file_data;
-	wchar_t * path_utf16 = platform_file_allocate_utf8_to_utf16(path);
-	HANDLE handle = FindFirstFileW(path_utf16, &find_file_data);
-	MEMORY_FREE(path_utf16);
-
-	if (handle == INVALID_HANDLE_VALUE) {
-		fprintf(stderr, "'FindFirstFileA' failed\n"); DEBUG_BREAK();
-		return 0;
-	}
-
-	ULARGE_INTEGER const large = {
-		.LowPart = find_file_data.ftLastWriteTime.dwLowDateTime,
-		.HighPart = find_file_data.ftLastWriteTime.dwHighDateTime,
-	};
-
-	FindClose(handle);
-
-	return (uint64_t)large.QuadPart;
-}
-
-//
-
-static wchar_t * platform_file_allocate_utf8_to_utf16(char const * value) {
-	// @todo: use scratch buffer
-	const int length = MultiByteToWideChar(CP_UTF8, 0, value, -1, NULL, 0);
-	wchar_t * buffer = MEMORY_ALLOCATE_ARRAY(wchar_t, length);
-	MultiByteToWideChar(CP_UTF8, 0, value, -1, buffer, length);
-	return buffer;
-}
-
-/*
-FILE * platform_file_fopen(char const * path, char const * mode) {
-	// @todo: use scratch buffer
-	const int path_length = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
-	const int mode_length = MultiByteToWideChar(CP_UTF8, 0, mode, -1, NULL, 0);
-	wchar_t * buffer = MEMORY_ALLOCATE_ARRAY(wchar_t, path_length + mode_length);
-	MultiByteToWideChar(CP_UTF8, 0, path, -1, buffer + 0, path_length);
-	MultiByteToWideChar(CP_UTF8, 0, mode, -1, buffer + path_length, mode_length);
-
-	FILE * file = _wfopen(buffer + 0, buffer + path_length);
-	MEMORY_FREE(buffer);
-
 	return file;
 }
-*/
+
+void platform_file_free(struct File * file) {
+	CloseHandle(file->handle);
+	memset(file, 0, sizeof(*file));
+	MEMORY_FREE(file);
+}
+
+uint64_t platform_file_size(struct File * file) {
+	LARGE_INTEGER file_size;
+	if (!GetFileSizeEx(file->handle, &file_size)) { return 0; }
+	return (uint64_t)file_size.QuadPart;
+}
+
+uint64_t platform_file_time(struct File * file) {
+	FILETIME write;
+	if (!GetFileTime(file->handle, NULL, NULL, &write)) { return 0; }
+
+	ULARGE_INTEGER const large = {
+		.LowPart = write.dwLowDateTime,
+		.HighPart = write.dwHighDateTime,
+	};
+
+	return (uint64_t)large.QuadPart;
+}
+
+uint64_t platform_file_position_get(struct File * file) {
+	LARGE_INTEGER input = {.QuadPart = 0}, output;
+	if (!SetFilePointerEx(file->handle, input, &output, FILE_CURRENT)) { return 0; }
+	return (uint64_t)output.QuadPart;
+}
+
+uint64_t platform_file_position_set(struct File * file, uint64_t position) {
+	LARGE_INTEGER input = {.QuadPart = (LONGLONG)position}, output;
+	if (!SetFilePointerEx(file->handle, input, &output, FILE_BEGIN)) { return 0; }
+	return (uint64_t)output.QuadPart;
+}
+
+uint64_t platform_file_read(struct File * file, uint8_t * buffer, uint64_t size) {
+	DWORD const max_chunk_size = UINT16_MAX + 1;
+	
+	uint64_t read = 0;
+	while (read < size) {
+		DWORD const to_read = ((size - read) < (uint64_t)max_chunk_size)
+			? (DWORD)(size - read)
+			: max_chunk_size;
+
+		DWORD read_chunk_size;
+		if (!ReadFile(file->handle, buffer + read, to_read, &read_chunk_size, NULL)) {
+			fprintf(stderr, "'ReadFile' failed\n"); DEBUG_BREAK();
+			break;
+		}
+
+		read += read_chunk_size;
+		if (read_chunk_size < to_read) { break; }
+	}
+
+	return read;
+}
+
+uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size) {
+	DWORD const max_chunk_size = UINT16_MAX + 1;
+	
+	uint64_t written = 0;
+	while (written < size) {
+		DWORD const to_write = ((size - written) < (uint64_t)max_chunk_size)
+			? (DWORD)(size - written)
+			: max_chunk_size;
+
+		DWORD read_chunk_size;
+		if (!WriteFile(file->handle, buffer + written, to_write, &read_chunk_size, NULL)) {
+			fprintf(stderr, "'WriteFile' failed\n"); DEBUG_BREAK();
+			break;
+		}
+
+		written += read_chunk_size;
+		if (read_chunk_size < to_write) { break; }
+	}
+
+	return written;
+}

@@ -22,7 +22,7 @@ void array_byte_free(struct Array_Byte * array) {
 	array_byte_init(array);
 }
 
-void array_byte_resize(struct Array_Byte * array, uint32_t size) {
+void array_byte_resize(struct Array_Byte * array, uint64_t size) {
 	array->data = MEMORY_REALLOCATE_ARRAY(array->data, size);
 	array->capacity = size;
 	array->count = (size >= array->count) ? array->count : size;
@@ -39,7 +39,7 @@ void array_byte_write(struct Array_Byte * array, uint8_t value) {
 	array->count++;
 }
 
-void array_byte_write_many(struct Array_Byte * array, uint32_t count, uint8_t const * value) {
+void array_byte_write_many(struct Array_Byte * array, uint64_t count, uint8_t const * value) {
 	if (array->count + count > array->capacity) {
 		// @todo: correctly process capacities past 0x80000000
 		while (array->count + count > array->capacity) {
@@ -52,7 +52,7 @@ void array_byte_write_many(struct Array_Byte * array, uint32_t count, uint8_t co
 	array->count += count;
 }
 
-void array_byte_write_many_zeroes(struct Array_Byte * array, uint32_t count) {
+void array_byte_write_many_zeroes(struct Array_Byte * array, uint64_t count) {
 	if (array->count + count > array->capacity) {
 		// @todo: correctly process capacities past 0x80000000
 		while (array->count + count > array->capacity) {

@@ -588,7 +588,7 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 	uint32_t byte_lengths[MAX_MESH_BUFFERS];
 	void * data[MAX_MESH_BUFFERS];
 	for (uint32_t i = 0; i < asset->count; i++) {
-		byte_lengths[i] = asset->buffers[i].count;
+		byte_lengths[i] = (uint32_t)asset->buffers[i].count;
 		data[i] = asset->buffers[i].data;
 	}
 
@@ -626,7 +626,7 @@ void gpu_mesh_update(struct Gpu_Mesh * gpu_mesh, struct Asset_Mesh * asset) {
 
 		uint32_t const data_type_size = data_type_get_size(parameters->type);
 
-		gpu_mesh->counts[i] = buffer->count / data_type_size;
+		gpu_mesh->counts[i] = ((uint32_t)buffer->count) / data_type_size;
 
 		if (gpu_mesh->capacities[i] * data_type_size >= buffer->count) {
 			glNamedBufferSubData(

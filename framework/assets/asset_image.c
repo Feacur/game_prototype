@@ -11,16 +11,7 @@
 	#pragma clang diagnostic ignored "-Weverything"
 #endif
 
-#define STBI_NO_STDIO
-#define STBI_NO_JPEG
-// #define STBI_NO_PNG
-#define STBI_NO_BMP
-#define STBI_NO_PSD
-#define STBI_NO_TGA
-#define STBI_NO_GIF
-#define STBI_NO_HDR
-#define STBI_NO_PIC
-#define STBI_NO_PNM
+#define STBI_ONLY_PNG
 
 #define STBI_MALLOC(size)           MEMORY_ALLOCATE_SIZE(size)
 #define STBI_REALLOC(pointer, size) MEMORY_REALLOCATE_SIZE(pointer, size)
@@ -39,7 +30,7 @@
 
 void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 	struct Array_Byte file;
-	platform_file_read(path, &file);
+	platform_file_read_entire(path, &file);
 
 	// @todo: check if it's opengl-specific?
 	stbi_set_flip_vertically_on_load(1);

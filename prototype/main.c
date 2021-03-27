@@ -113,17 +113,17 @@ static void game_init(void) {
 		content.assets.font_sans = asset_font_init("assets/OpenSans-Regular.ttf");
 		content.assets.font_mono = asset_font_init("assets/JetBrainsMono-Regular.ttf");
 
-		platform_file_read("assets/test.txt", &content.assets.text_test);
+		platform_file_read_entire("assets/test.txt", &content.assets.text_test);
 		content.assets.text_test.data[content.assets.text_test.count] = '\0';
 
 		struct Array_Byte asset_shader_test;
-		platform_file_read("assets/test.glsl", &asset_shader_test);
+		platform_file_read_entire("assets/test.glsl", &asset_shader_test);
 
 		struct Array_Byte asset_shader_font;
-		platform_file_read("assets/font.glsl", &asset_shader_font);
+		platform_file_read_entire("assets/font.glsl", &asset_shader_font);
 		
 		struct Array_Byte asset_shader_target;
-		platform_file_read("assets/target.glsl", &asset_shader_target);
+		platform_file_read_entire("assets/target.glsl", &asset_shader_target);
 
 		struct Asset_Image asset_image_test;
 		asset_image_init(&asset_image_test, "assets/test.png");
@@ -144,7 +144,7 @@ static void game_init(void) {
 		asset_mesh_free(&asset_mesh_cube);
 
 		struct Array_Byte asset_codepoints;
-		platform_file_read("assets/additional_codepoints_french.txt", &asset_codepoints);
+		platform_file_read_entire("assets/additional_codepoints_french.txt", &asset_codepoints);
 		asset_codepoints.data[asset_codepoints.count] = '\0';
 
 		uint32_t codepoints_count = 0;
