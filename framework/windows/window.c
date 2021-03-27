@@ -101,6 +101,38 @@ uint32_t platform_window_get_refresh_rate(struct Window * window, uint32_t defau
 	return value > 1 ? (uint32_t)value : default_value;
 }
 
+
+void platform_window_toggle_borderless_fullscreen(struct Window * window) {
+	static WINDOWPLACEMENT normal_window_position;
+	
+	LONG window_style = GetWindowLong(window->handle, GWL_STYLE);
+	if (window_style & WS_OVERLAPPEDWINDOW) {
+		if (!GetWindowPlacement(window->handle, &normal_window_position)) { return; }
+
+		MONITORINFO monitor_info = {.cbSize = sizeof(MONITORINFO)};
+		if (!GetMonitorInfo(MonitorFromWindow(window->handle, MONITOR_DEFAULTTOPRIMARY), &monitor_info)) { return; }
+
+		SetWindowLongPtr(window->handle, GWL_STYLE, window_style & ~WS_OVERLAPPEDWINDOW);
+		SetWindowPos(
+			window->handle, HWND_TOP,
+			monitor_info.rcMonitor.left, monitor_info.rcMonitor.top,
+			monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
+			monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
+			SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+		);
+		return;
+	}
+
+	// Restore windowed mode
+	SetWindowLongPtr(window->handle, GWL_STYLE, window_style | WS_OVERLAPPEDWINDOW);
+	SetWindowPlacement(window->handle, &normal_window_position);
+	SetWindowPos(
+		window->handle, 0,
+		0, 0, 0, 0,
+		SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+	);
+}
+
 //
 #include "window_to_system.h"
 

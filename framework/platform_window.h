@@ -17,5 +17,6 @@ void platform_window_display(struct Window * window);
 
 void platform_window_get_size(struct Window * window, uint32_t * size_x, uint32_t * size_y);
 uint32_t platform_window_get_refresh_rate(struct Window * window, uint32_t default_value);
+void platform_window_toggle_borderless_fullscreen(struct Window * window);
 
 #endif

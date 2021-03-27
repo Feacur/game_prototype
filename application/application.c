@@ -2,6 +2,7 @@
 #include "framework/platform_file.h"
 #include "framework/platform_system.h"
 #include "framework/platform_window.h"
+#include "framework/input.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,6 +71,13 @@ static bool application_update(void) {
 
 	// window might be closed by platform
 	if (!platform_window_exists(app.window)) { return false; }
+
+	if (input_key(KC_ALT)) {
+		if (input_key_transition(KC_F4, true)) { return false; }
+		if (input_key_transition(KC_ENTER, true)) {
+			platform_window_toggle_borderless_fullscreen(app.window);
+		}
+	}
 
 	// track frame time
 	int32_t const vsync = platform_window_get_vsync(app.window);
