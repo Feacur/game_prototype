@@ -1,6 +1,9 @@
 @echo off
 set timeHeader=%time%
-chcp 65001 >nul
+chcp 65001 > nul
+
+rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
+rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
 set debug=dummy
 rem set unity_build=dummy
@@ -12,7 +15,7 @@ rem https://docs.microsoft.com/cpp/build/reference/linker-options
 rem > PREPARE TOOLS
 set VSLANG=1033
 pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
-call "vcvarsall.bat" x64 >nul
+call "vcvarsall.bat" x64 > nul
 popd
 
 rem > OPTIONS

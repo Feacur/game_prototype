@@ -20,13 +20,16 @@ static struct Platform_System {
 //
 #include "framework/platform_system.h"
 
-static void set_process_dpi_awareness(void);
+static void system_set_process_dpi_awareness(void);
+// static void system_enable_virtual_terminal_processing(void);
 static void system_signal_handler(int value);
 void platform_system_init(void) {
 	platform_system.module = GetModuleHandle(NULL);
 	if (platform_system.module == NULL) { fprintf(stderr, "'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
-	set_process_dpi_awareness();
+	system_set_process_dpi_awareness();
+	// system_enable_virtual_terminal_processing();
+	SetConsoleOutputCP(CP_UTF8);
 
 	signal(SIGABRT, system_signal_handler);
 	signal(SIGFPE,  system_signal_handler);
@@ -83,7 +86,7 @@ HMODULE system_to_internal_get_module(void) {
 
 #include <ShellScalingApi.h>
 
-static void set_process_dpi_awareness(void) {
+static void system_set_process_dpi_awareness(void) {
 #define FREE_DPI_LIBS() \
 	do { \
 		if (User32_dll != NULL) { FreeLibrary(User32_dll); User32_dll = NULL; } \
@@ -129,6 +132,18 @@ static void set_process_dpi_awareness(void) {
 
 #undef FREE_DPI_LIBS
 }
+
+// static void system_enable_virtual_terminal_processing(void) {
+// 	DWORD const handles[] = {STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
+// 	for (uint32_t i = 0; i < sizeof(handles) / sizeof(*handles); i++) {
+// 		HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+// 		if (handle == NULL) { continue; }
+// 		DWORD mode = 0;
+// 		if (GetConsoleMode(handle, &mode)) {
+// 			SetConsoleMode(handle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+// 		}
+// 	}
+// }
 
 static void system_signal_handler(int value) {
 	switch (value) {

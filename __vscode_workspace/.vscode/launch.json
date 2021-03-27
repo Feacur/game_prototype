@@ -9,7 +9,7 @@
 			"args": [],
 			"cwd": "${workspaceFolder}/..",
 			"stopOnEntry": false,
-			"console": "integratedTerminal",
+			"terminal": "integrated",
 		},
 		{
 			"name": "Launch MSVC",

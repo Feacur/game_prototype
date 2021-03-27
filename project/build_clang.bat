@@ -1,6 +1,9 @@
 @echo off
 set timeHeader=%time%
-chcp 65001 >nul
+chcp 65001 > nul
+
+rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
+rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
 set debug=dummy
 rem set unity_build=dummy
@@ -18,7 +21,7 @@ set "PATH=%PATH%;C:/Program Files/LLVM/bin"
 if not defined unity_build (
 	set VSLANG=1033
 	pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
-	call "vcvarsall.bat" x64 >nul
+	call "vcvarsall.bat" x64 > nul
 	popd
 )
 
@@ -63,7 +66,7 @@ if defined unity_build ( rem > compile and auto-link unity build
 	for /f %%v in (../project/translation_units.txt) do ( rem > for each line %%v in the file
 		clang -std=c99 -c %compiler% %warnings% "../%%v"
 		if errorlevel 1 goto error
-		move ".\*.o" ".\temp" >nul
+		move ".\*.o" ".\temp" > nul
 	)
 	set timeLink=%time%
 	lld-link "./temp/*.o" libcmt.lib -out:"game.exe" %linker%
