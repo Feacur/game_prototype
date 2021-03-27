@@ -94,7 +94,13 @@ static struct Graphics_State {
 	uint32_t units_capacity;
 	struct Gpu_Unit * units;
 
+	uint32_t max_units_vertex_shader;
+	uint32_t max_units_fragment_shader;
+	uint32_t max_units_compute_shader;
 	uint32_t max_texture_size;
+	uint32_t max_renderbuffer_size;
+	uint32_t max_elements_vertices;
+	uint32_t max_elements_indices;
 } graphics_state;
 
 //
@@ -982,15 +988,30 @@ void graphics_to_glibrary_init(void) {
 
 	//
 	GLint max_units;
+	GLint max_units_vertex_shader, max_units_fragment_shader, max_units_compute_shader;
+	GLint max_texture_size, max_renderbuffer_size;
+	GLint max_elements_vertices, max_elements_indices;
+
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_units);
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,          &max_units_fragment_shader);
+	glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS,   &max_units_vertex_shader);
+	glGetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS,  &max_units_compute_shader);
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE,                 &max_texture_size);
+	glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE,            &max_renderbuffer_size);
+	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,            &max_elements_vertices);
+	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,             &max_elements_indices);
+
+	graphics_state.max_units_vertex_shader   = (uint32_t)max_units_vertex_shader;
+	graphics_state.max_units_fragment_shader = (uint32_t)max_units_fragment_shader;
+	graphics_state.max_units_compute_shader  = (uint32_t)max_units_compute_shader;
+	graphics_state.max_texture_size          = (uint32_t)max_texture_size;
+	graphics_state.max_renderbuffer_size     = (uint32_t)max_renderbuffer_size;
+	graphics_state.max_elements_vertices     = (uint32_t)max_elements_vertices;
+	graphics_state.max_elements_indices      = (uint32_t)max_elements_indices;
+
 	graphics_state.units_capacity = (uint32_t)max_units;
 	graphics_state.units = MEMORY_ALLOCATE_ARRAY(struct Gpu_Unit, max_units);
 	memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
-
-	//
-	GLint max_texture_size;
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-	graphics_state.max_texture_size = (uint32_t)max_texture_size;
 
 	//
 #if defined(REVERSE_Z)
