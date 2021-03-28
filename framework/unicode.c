@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 //
-#include "utf8.h"
+#include "unicode.h"
 
 uint32_t utf8_length(uint8_t const * value) {
 	uint8_t const octet = value[0];
@@ -15,7 +15,7 @@ uint32_t utf8_length(uint8_t const * value) {
 	if ((octet & 0xe0) == 0xc0) { return 2; }
 	if ((octet & 0xf0) == 0xe0) { return 3; }
 	if ((octet & 0xf8) == 0xf0) { return 4; }
-	fprintf(stderr, "utf-8 sequence is malformed\n"); DEBUG_BREAK();
+	fprintf(stderr, "UTF-8 sequence is malformed\n"); DEBUG_BREAK();
 
 	return 0;
 }
@@ -29,7 +29,7 @@ uint32_t utf8_decode(uint8_t const * value, uint32_t length) {
 	for (uint32_t i = 1; i < length; i++) {
 		uint8_t const octet = value[i];
 		if ((octet & 0xc0) != 0x80) {
-			fprintf(stderr, "utf-8 sequence is malformed\n"); DEBUG_BREAK();
+			fprintf(stderr, "UTF-8 sequence is malformed\n"); DEBUG_BREAK();
 			return UTF8_EMPTY;
 		}
 		codepoint = (codepoint << 6) | (octet & 0x3f);

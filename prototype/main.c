@@ -1,5 +1,5 @@
 #include "framework/memory.h"
-#include "framework/utf8.h"
+#include "framework/unicode.h"
 #include "framework/platform_timer.h"
 #include "framework/platform_file.h"
 #include "framework/platform_system.h"
