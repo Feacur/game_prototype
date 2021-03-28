@@ -83,6 +83,9 @@ static enum Mesh_Obj_Token_Type asset_mesh_obj_scanner_check_keyword(struct Mesh
 static enum Mesh_Obj_Token_Type asset_mesh_obj_scanner_identifier_type(struct Mesh_Obj_Scanner * scanner) {
 	switch (scanner->start[0]) {
 		case 'f': return asset_mesh_obj_scanner_check_keyword(scanner, 1, 0, "", MESH_OBJ_TOKEN_FACE);
+		case 'g': return asset_mesh_obj_scanner_check_keyword(scanner, 1, 0, "", MESH_OBJ_TOKEN_GROUP);
+		case 'o': return asset_mesh_obj_scanner_check_keyword(scanner, 1, 0, "", MESH_OBJ_TOKEN_OBJECT);
+		case 's': return asset_mesh_obj_scanner_check_keyword(scanner, 1, 0, "", MESH_OBJ_TOKEN_SMOOTH);
 		case 'v':
 			if (scanner->current - scanner->start > 1) {
 				switch (scanner->start[1]) {
@@ -124,6 +127,8 @@ inline static struct Mesh_Obj_Token asset_mesh_obj_scanner_next_internal(struct 
 	if (is_digit(PEEK())) { return asset_mesh_obj_scanner_make_number_token(scanner); }
 
 	switch (PEEK()) {
+		case '.': ADVANCE();
+			return asset_mesh_obj_scanner_make_token(scanner, MESH_OBJ_TOKEN_DOT);
 		case '-': ADVANCE();
 			return asset_mesh_obj_scanner_make_token(scanner, MESH_OBJ_TOKEN_MINUS);
 		case '/': ADVANCE();

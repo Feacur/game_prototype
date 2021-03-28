@@ -87,6 +87,12 @@ static bool asset_mesh_obj_consume_s32(struct Mesh_Obj_Scanner * scanner, struct
 #undef ADVANCE
 }
 
+static void asset_mesh_obj_do_name(struct Mesh_Obj_Scanner * scanner, struct Mesh_Obj_Token * token) {
+	while (token->type != MESH_OBJ_TOKEN_EOF && token->type != MESH_OBJ_TOKEN_NEW_LINE) {
+		asset_mesh_obj_advance(scanner, token);
+	}
+}
+
 static void asset_mesh_obj_do_vertex(struct Mesh_Obj_Scanner * scanner, struct Mesh_Obj_Token * token, struct Array_Float * buffer, uint32_t limit) {
 #define ADVANCE() asset_mesh_obj_advance(scanner, token)
 
@@ -152,6 +158,7 @@ static void asset_mesh_obj_do_faces(
 		}
 
 		// face format: position/texcoord/normal
+		ADVANCE();
 		asset_mesh_obj_consume_s32(scanner, token, &value);
 		face[2] = asset_mesh_obj_translate_index(value, normals_count);
 
@@ -206,6 +213,9 @@ inline static void asset_mesh_obj_init_internal(struct Asset_Mesh_Obj * obj, cha
 		switch (token.type) {
 			// silent
 			case MESH_OBJ_TOKEN_NEW_LINE: break;
+			case MESH_OBJ_TOKEN_GROUP: asset_mesh_obj_do_name(&scanner, &token); break;
+			case MESH_OBJ_TOKEN_OBJECT: asset_mesh_obj_do_name(&scanner, &token); break;
+			case MESH_OBJ_TOKEN_SMOOTH: ADVANCE(); break;
 
 			// errors
 			case MESH_OBJ_TOKEN_IDENTIFIER: asset_mesh_obj_error_at(&token, "unknown identifier"); break;
