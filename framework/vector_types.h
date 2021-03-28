@@ -19,4 +19,12 @@ struct mat2 { struct vec2 x, y; };
 struct mat3 { struct vec3 x, y, z; };
 struct mat4 { struct vec4 x, y, z, w; };
 
+//
+
+extern struct vec4 const quat_identity;
+
+extern struct mat2 const mat2_identity;
+extern struct mat3 const mat3_identity;
+extern struct mat4 const mat4_identity;
+
 #endif

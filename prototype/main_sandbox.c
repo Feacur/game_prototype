@@ -26,16 +26,11 @@
 #include "framework/assets/asset_font.h"
 
 #include "application/application.h"
+#include "transform.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-struct Transform {
-	struct vec3 position;
-	struct vec3 scale;
-	struct vec4 rotation;
-};
 
 static struct Game_Uniforms {
 	uint32_t color;
@@ -91,13 +86,6 @@ static struct Game_State {
 	struct Transform object;
 } state;
 
-static struct mat4 const mat4_identity = {
-	{1,0,0,0},
-	{0,1,0,0},
-	{0,0,1,0},
-	{0,0,0,1},
-};
-
 static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh);
 
 static void game_init(void) {
@@ -110,26 +98,26 @@ static void game_init(void) {
 
 	// load content
 	{
-		content.assets.font_sans = asset_font_init("assets/OpenSans-Regular.ttf");
-		content.assets.font_mono = asset_font_init("assets/JetBrainsMono-Regular.ttf");
+		content.assets.font_sans = asset_font_init("assets/fonts/OpenSans-Regular.ttf");
+		content.assets.font_mono = asset_font_init("assets/fonts/JetBrainsMono-Regular.ttf");
 
-		platform_file_read_entire("assets/test.txt", &content.assets.text_test);
+		platform_file_read_entire("assets/sandbox/test.txt", &content.assets.text_test);
 		content.assets.text_test.data[content.assets.text_test.count] = '\0';
 
 		struct Array_Byte asset_shader_test;
-		platform_file_read_entire("assets/test.glsl", &asset_shader_test);
+		platform_file_read_entire("assets/shaders/test.glsl", &asset_shader_test);
 
 		struct Array_Byte asset_shader_font;
-		platform_file_read_entire("assets/font.glsl", &asset_shader_font);
+		platform_file_read_entire("assets/shaders/font.glsl", &asset_shader_font);
 		
 		struct Array_Byte asset_shader_target;
-		platform_file_read_entire("assets/target.glsl", &asset_shader_target);
+		platform_file_read_entire("assets/shaders/target.glsl", &asset_shader_target);
 
 		struct Asset_Image asset_image_test;
-		asset_image_init(&asset_image_test, "assets/test.png");
+		asset_image_init(&asset_image_test, "assets/sandbox/test.png");
 
 		struct Asset_Mesh asset_mesh_cube;
-		asset_mesh_init(&asset_mesh_cube, "assets/cube.obj");
+		asset_mesh_init(&asset_mesh_cube, "assets/sandbox/cube.obj");
 
 		content.gpu.program_test = gpu_program_init(&asset_shader_test);
 		content.gpu.program_font = gpu_program_init(&asset_shader_font);
@@ -144,7 +132,7 @@ static void game_init(void) {
 		asset_mesh_free(&asset_mesh_cube);
 
 		struct Array_Byte asset_codepoints;
-		platform_file_read_entire("assets/additional_codepoints_french.txt", &asset_codepoints);
+		platform_file_read_entire("assets/sandbox/additional_codepoints_french.txt", &asset_codepoints);
 		asset_codepoints.data[asset_codepoints.count] = '\0';
 
 		uint32_t codepoints_count = 0;

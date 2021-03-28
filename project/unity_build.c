@@ -2,6 +2,7 @@
 #include "framework/memory.c"
 #include "framework/input.c"
 #include "framework/unicode.c"
+#include "framework/vector_types.c"
 
 #include "framework/graphics/types.c"
 #include "framework/graphics/material.c"
@@ -41,4 +42,4 @@
 
 #include "application/application.c"
 
-#include "prototype/main.c"
+#include "prototype/main_sandbox.c"
