@@ -6,7 +6,6 @@ framework/vector_types.c
 
 framework/graphics/types.c
 framework/graphics/material.c
-framework/graphics/batch_mesh.c
 framework/graphics/font_image.c
 
 framework/containers/array_any.c
@@ -37,4 +36,5 @@ framework/opengl/graphics.c
 
 application/application.c
 
+prototype/game_batch_mesh_2d.c
 prototype/main_sandbox.c

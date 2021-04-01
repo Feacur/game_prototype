@@ -41,7 +41,7 @@ static struct GLibrary {
 //
 #include "framework/windows/glibrary_to_system.h"
 
-static bool contains_full_word(char const * container, char const * value);
+bool contains_full_word(char const * container, char const * value);
 void glibrary_to_system_init(void) {
 // #define OPENGL_CLASS_NAME "temporary_opengl_class"
 #define OPENGL_CLASS_NAME APPLICATION_CLASS_NAME
@@ -214,7 +214,7 @@ void ginstance_display(struct GInstance * ginstance) {
 
 //
 
-static bool contains_full_word(char const * container, char const * value) {
+bool contains_full_word(char const * container, char const * value) {
 	if (container == NULL) { return false; }
 	if (value == NULL)     { return false; }
 

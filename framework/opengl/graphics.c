@@ -39,7 +39,6 @@ static GLenum gpu_stencil_op(enum Stencil_Op value);
 static GLenum gpu_blend_op(enum Blend_Op value);
 static GLenum gpu_blend_factor(enum Blend_Factor value);
 
-#define REVERSE_Z
 #define MAX_UNIFORMS 32
 #define MAX_UNITS_PER_MATERIAL 64
 #define MAX_TARGET_ATTACHMENTS 4
@@ -93,6 +92,8 @@ static struct Graphics_State {
 
 	uint32_t units_capacity;
 	struct Gpu_Unit * units;
+
+	float clip_space[4]; // origin XY; normalized-space near and far
 
 	uint32_t max_units_vertex_shader;
 	uint32_t max_units_fragment_shader;
@@ -966,6 +967,7 @@ static void __stdcall opengl_debug_message_callback(
 	const void *userParam
 );
 
+bool contains_full_word(char const * container, char const * value);
 static char * allocate_extensions_string(void);
 void graphics_to_glibrary_init(void) {
 	// setup debug
@@ -1013,17 +1015,18 @@ void graphics_to_glibrary_init(void) {
 	graphics_state.units = MEMORY_ALLOCATE_ARRAY(struct Gpu_Unit, max_units);
 	memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
 
-	//
-#if defined(REVERSE_Z)
-	glDepthRangef(1, 0);
-	glClearDepthf(0);
-	glDepthFunc(gpu_comparison_op(COMPARISON_OP_MORE));
-	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-#else
-	glDepthRangef(0, 1);
-	glClearDepthf(1);
-	glDepthFunc(gpu_comparison_op(COMPARISON_OP_LESS));
-#endif
+	// (ns_ncp > ns_fcp) == reverse Z
+	bool const supports_reverse_z = (ogl_version >= 45) || contains_full_word(graphics_state.extensions, "GL_ARB_clip_control");
+	if (supports_reverse_z) { glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); }
+
+	graphics_state.clip_space[0] =                          0; // origin X
+	graphics_state.clip_space[1] = supports_reverse_z ? 0 : 1; // origin Y
+	graphics_state.clip_space[2] = supports_reverse_z ? 1 : 0; // normalized-space near
+	graphics_state.clip_space[3] = supports_reverse_z ? 0 : 1; // normalized-space far
+
+	glDepthRangef(graphics_state.clip_space[2], graphics_state.clip_space[3]);
+	glClearDepthf(graphics_state.clip_space[3]);
+	glDepthFunc(gpu_comparison_op((graphics_state.clip_space[2] > graphics_state.clip_space[3]) ? COMPARISON_OP_MORE : COMPARISON_OP_LESS));
 
 	//
 	glEnable(GL_CULL_FACE);

@@ -12,7 +12,6 @@
 #include "framework/graphics/material.h"
 #include "framework/graphics/pass.h"
 #include "framework/graphics/graphics.h"
-#include "framework/graphics/batch_mesh.h"
 #include "framework/graphics/font_image.h"
 #include "framework/graphics/font_image_glyph.h"
 
@@ -26,6 +25,7 @@
 #include "framework/assets/asset_font.h"
 
 #include "application/application.h"
+#include "game_batch_mesh_2d.h"
 #include "transform.h"
 
 #include <stdio.h>
@@ -72,12 +72,11 @@ static struct Game_Content {
 } content;
 
 static struct Game_Target {
-	struct Gpu_Mesh * gpu_mesh;
 	struct Gpu_Target * gpu_target;
 } target;
 
 static struct Game_Batch {
-	struct Batch_Mesh * buffer;
+	struct Game_Batch_Mesh_2D * buffer;
 	struct Gpu_Mesh * gpu_mesh;
 } batch;
 
@@ -85,8 +84,6 @@ static struct Game_State {
 	struct Transform camera;
 	struct Transform object;
 } state;
-
-static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh);
 
 static void game_init(void) {
 	// init uniforms ids
@@ -179,9 +176,6 @@ static void game_init(void) {
 
 	// init target
 	{
-		struct Asset_Mesh asset_mesh_target;
-		asset_mesh_init__target_quad(&asset_mesh_target);
-		target.gpu_mesh = gpu_mesh_init(&asset_mesh_target);
 		target.gpu_target = gpu_target_init(
 			320, 180,
 			(struct Texture_Parameters[]){
@@ -202,8 +196,8 @@ static void game_init(void) {
 
 	// init batch mesh
 	{
-		batch.buffer = batch_mesh_init(2, (uint32_t[]){0, 3, 1, 2});
-		batch.gpu_mesh = gpu_mesh_init(batch_mesh_get_asset(batch.buffer));
+		batch.buffer = game_batch_mesh_2d_init();
+		batch.gpu_mesh = gpu_mesh_init(game_batch_mesh_2d_get_asset(batch.buffer));
 	}
 
 	// fill materials
@@ -258,10 +252,9 @@ static void game_free(void) {
 	gpu_texture_free(content.fonts.mono.gpu_texture);
 	gfx_material_free(&content.fonts.mono.material);
 
-	gpu_mesh_free(target.gpu_mesh);
 	gpu_target_free(target.gpu_target);
 
-	batch_mesh_free(batch.buffer);
+	game_batch_mesh_2d_free(batch.buffer);
 	gpu_mesh_free(batch.gpu_mesh);
 
 	memset(&uniforms, 0, sizeof(uniforms));
@@ -296,65 +289,6 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	uint32_t target_size_x, target_size_y;
 	gpu_target_get_size(target.gpu_target, &target_size_x, &target_size_y);
 
-	// draw into the batch mesh
-	batch_mesh_clear(batch.buffer);
-
-	float const text_x = 50, text_y = 200;
-	float const line_height = font_image_get_height(font->buffer) + font_image_get_gap(font->buffer);
-	float offset_x = text_x, offset_y = text_y;
-	uint32_t previous_glyph_id = 0;
-
-	// struct Array_U32 const * codepoints = input_get_codepoints();
-	// for (size_t i = 0; i < codepoints->count; i++) {
-	// 	uint32_t const codepoint = codepoints->data[i];
-
-	for (size_t i = 0; i < content.assets.text_test.count;) {
-		uint32_t const octets_count = utf8_length(content.assets.text_test.data + i);
-		if (octets_count == 0) { i++; continue; }
-
-		uint32_t const codepoint = utf8_decode(content.assets.text_test.data + i, octets_count);
-		if (codepoint == UTF8_EMPTY) { i++; continue; }
-
-		i += octets_count;
-
-		if (codepoint < ' ') {
-			previous_glyph_id = 0;
-			if (codepoint == '\t') {
-				struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, ' ');
-				if (glyph != NULL) { offset_x += glyph->params.full_size_x * 4; }
-			}
-			else if (codepoint == '\n') {
-				offset_x = text_x;
-				offset_y -= line_height;
-			}
-			continue;
-		}
-
-		struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, codepoint);
-		if (glyph == NULL) { previous_glyph_id = 0; continue; }
-
-		offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font->buffer, previous_glyph_id, glyph->id) : 0;
-		float const rect[] = { // left, bottom, top, right
-			((float)glyph->params.rect[0]) + offset_x,
-			((float)glyph->params.rect[1]) + offset_y,
-			((float)glyph->params.rect[2]) + offset_x,
-			((float)glyph->params.rect[3]) + offset_y,
-		};
-		offset_x += glyph->params.full_size_x;
-
-		batch_mesh_add_quad_xy(batch.buffer, rect, glyph->uv);
-	}
-
-	struct Asset_Image const * font_image = font_image_get_asset(font->buffer);
-	batch_mesh_add_quad_xy(
-		batch.buffer,
-		(float[]){0, (float)(size_y - font_image->size_y), (float)font_image->size_x, (float)size_y},
-		(float[]){0,0,1,1}
-	);
-
-	struct Asset_Mesh * batch_mesh = batch_mesh_get_asset(batch.buffer);
-	gpu_mesh_update(batch.gpu_mesh, batch_mesh);
-
 	// target: clear
 	graphics_draw(&(struct Render_Pass){
 		.target = target.gpu_target,
@@ -364,28 +298,6 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
 		.clear_rgba = 0x303030ff,
 	});
-
-	// target: draw HUD
-	// graphics_draw(&(struct Render_Pass){
-	// 	.target = target.gpu_target,
-	// 	.blend_mode = {
-	// 		.rgb = {
-	// 			.op = BLEND_OP_ADD,
-	// 			.src = BLEND_FACTOR_SRC_ALPHA,
-	// 			.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-	// 		},
-	// 		.mask = COLOR_CHANNEL_FULL
-	// 	},
-	// 	.depth_enabled = true, .depth_mask = true,
-	// 	//
-	// 	.material = &content.materials.font,
-	// 	.mesh = batch.gpu_mesh,
-	// 	// draw at the nearest point, map to target buffer coords
-	// 	.camera_id = uniforms.camera,
-	// 	.transform_id = uniforms.transform,
-	// 	.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)target_size_x, 2 / (float)target_size_y}, 0, 1, 1),
-	// 	.transform = mat4_identity,
-	// });
 
 	// target: draw 3d
 	graphics_draw(&(struct Render_Pass){
@@ -416,12 +328,26 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	});
 
 	// screen buffer: draw target
+	{
+		// @todo: provide options to fit draw buffer into the window (useful for fullscreen?)
+		// @todo: restrict window scaling by render buffer (useful for windowed?)
+		game_batch_mesh_2d_clear(batch.buffer);
+		game_batch_mesh_2d_add_quad(
+			batch.buffer,
+			(float[]){-1, -1, 1, 1},
+			(float[]){0,0,1,1}
+		);
+
+		struct Asset_Mesh * batch_mesh = game_batch_mesh_2d_get_asset(batch.buffer);
+		gpu_mesh_update(batch.gpu_mesh, batch_mesh);
+	}
+
 	graphics_draw(&(struct Render_Pass){
 		.size_x = size_x, .size_y = size_y,
 		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
 		//
 		.material = &content.materials.target,
-		.mesh = target.gpu_mesh,
+		.mesh = batch.gpu_mesh,
 		// draw at the farthest point, map to normalized device coords
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,
@@ -431,6 +357,66 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	});
 
 	// screen buffer: draw HUD
+	{
+		game_batch_mesh_2d_clear(batch.buffer);
+
+		float const text_x = 50, text_y = 200;
+		float const line_height = font_image_get_height(font->buffer) + font_image_get_gap(font->buffer);
+		float offset_x = text_x, offset_y = text_y;
+		uint32_t previous_glyph_id = 0;
+
+		// struct Array_U32 const * codepoints = input_get_codepoints();
+		// for (size_t i = 0; i < codepoints->count; i++) {
+		// 	uint32_t const codepoint = codepoints->data[i];
+
+		for (size_t i = 0; i < content.assets.text_test.count;) {
+			uint32_t const octets_count = utf8_length(content.assets.text_test.data + i);
+			if (octets_count == 0) { i++; continue; }
+
+			uint32_t const codepoint = utf8_decode(content.assets.text_test.data + i, octets_count);
+			if (codepoint == UTF8_EMPTY) { i++; continue; }
+
+			i += octets_count;
+
+			if (codepoint < ' ') {
+				previous_glyph_id = 0;
+				if (codepoint == '\t') {
+					struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, ' ');
+					if (glyph != NULL) { offset_x += glyph->params.full_size_x * 4; }
+				}
+				else if (codepoint == '\n') {
+					offset_x = text_x;
+					offset_y -= line_height;
+				}
+				continue;
+			}
+
+			struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, codepoint);
+			if (glyph == NULL) { previous_glyph_id = 0; continue; }
+
+			offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font->buffer, previous_glyph_id, glyph->id) : 0;
+			float const rect[] = { // left, bottom, top, right
+				((float)glyph->params.rect[0]) + offset_x,
+				((float)glyph->params.rect[1]) + offset_y,
+				((float)glyph->params.rect[2]) + offset_x,
+				((float)glyph->params.rect[3]) + offset_y,
+			};
+			offset_x += glyph->params.full_size_x;
+
+			game_batch_mesh_2d_add_quad(batch.buffer, rect, glyph->uv);
+		}
+
+		struct Asset_Image const * font_image = font_image_get_asset(font->buffer);
+		game_batch_mesh_2d_add_quad(
+			batch.buffer,
+			(float[]){0, (float)(size_y - font_image->size_y), (float)font_image->size_x, (float)size_y},
+			(float[]){0,0,1,1}
+		);
+
+		struct Asset_Mesh * batch_mesh = game_batch_mesh_2d_get_asset(batch.buffer);
+		gpu_mesh_update(batch.gpu_mesh, batch_mesh);
+	}
+
 	graphics_draw(&(struct Render_Pass){
 		.size_x = size_x, .size_y = size_y,
 		.blend_mode = {
@@ -441,7 +427,6 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 			},
 			.mask = COLOR_CHANNEL_FULL
 		},
-		.depth_enabled = true, .depth_mask = true,
 		//
 		.material = &font->material,
 		.mesh = batch.gpu_mesh,
@@ -471,47 +456,4 @@ int main (int argc, char * argv[]) {
 		.slow_frames_limit = 5,
 	});
 	return EXIT_SUCCESS;
-}
-
-//
-
-static void asset_mesh_init__target_quad(struct Asset_Mesh * asset_mesh) {
-	static float vertices[] = {
-		-1, -1, 0, 0, 0,
-		-1,  1, 0, 0, 1,
-		 1, -1, 0, 1, 0,
-		 1,  1, 0, 1, 1,
-	};
-	static uint32_t indices[] = {1, 0, 2, 1, 2, 3};
-
-	//
-	static struct Array_Byte buffers[] = {
-		[0] = {
-			.data = (uint8_t *)vertices,
-			.count = sizeof(vertices),
-		},
-		[1] = {
-			.data = (uint8_t *)indices,
-			.count = sizeof(indices),
-		},
-	};
-
-	static struct Mesh_Parameters parameters[] = {
-		[0] = {
-			.type = DATA_TYPE_R32,
-			.attributes_count = 2,
-			.attributes[0] = 0, .attributes[1] = 3,
-			.attributes[2] = 1, .attributes[3] = 2,
-		},
-		[1] = {
-			.type = DATA_TYPE_U32,
-			.flags = MESH_FLAG_INDEX,
-		},
-	};
-
-	*asset_mesh = (struct Asset_Mesh){
-		.count = 2,
-		.buffers = buffers,
-		.parameters = parameters,
-	};
 }
