@@ -1553,3 +1553,7 @@ static GLenum gpu_blend_factor(enum Blend_Factor value) {
 	fprintf(stderr, "unknown blend factor\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
+
+/*
+MSI Afterburner uses deprecated functions like `glPushAttrib/glPopAttrib`
+*/

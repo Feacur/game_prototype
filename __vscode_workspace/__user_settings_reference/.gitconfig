@@ -9,6 +9,8 @@
 [user]
 	name = name for commits
 	email = mail@for.commits
+[gui]
+	encoding = utf-8
 [core]
 	autocrlf = true
 	editor = code --wait # VS Code as default editor
@@ -19,6 +21,7 @@
 	cmd = code --wait --diff $LOCAL $REMOTE
 # VS Code as default merge tool
 [merge]
+	conflictstyle = diff3
 	tool = vscode
 [mergetool "vscode"]
 	cmd = code --wait $MERGED

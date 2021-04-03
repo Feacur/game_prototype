@@ -2,9 +2,5 @@
 
 * text=auto
 
-# code
-*.h text diff=cpp
-*.c text diff=cpp
-
-# project
-*.bat text eol=crlf
+*.h text diff=cpp working-tree-encoding=UTF-8
+*.c text diff=cpp working-tree-encoding=UTF-8

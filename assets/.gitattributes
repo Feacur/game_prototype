@@ -1,0 +1,7 @@
+# https://git-scm.com/docs/gitattributes
+
+*.ttf  binary
+*.png  binary
+*.obj  text eol=lf
+*.glsl text diff=cpp eol=lf
+*.txt  text working-tree-encoding=UTF-8 eol=lf
