@@ -3,7 +3,7 @@
 
 enum Key_Code {
 	// ASCII, control characters
-	// KC_NULL   = '\0', // ctrl + shift + 2
+	// KC_NULL   = '\0', // ctrl + @
 	// KC_SOH    = 0x01, // ctrl + a
 	// KC_STX    = 0x02, // ctrl + b
 	// KC_ETX    = 0x03, // ctrl + c
@@ -29,11 +29,11 @@ enum Key_Code {
 	// KC_ETB    = 0x17, // ctrl + w
 	// KC_EM     = 0x19, // ctrl + y
 	// KC_SUB    = 0x1a, // ctrl + z
-	KC_ESC    = 0x1b, // escape
-	// KC_FS     = 0x1c, // ??
-	// KC_GS     = 0x1d, // ??
-	// KC_RS     = 0x1e, // ctrl + shift + 6
-	// KC_US     = 0x1f, // ??
+	KC_ESC    = 0x1b, // ctrl + [, escape
+	// KC_FS     = 0x1c, // ctrl + \
+	// KC_GS     = 0x1d, // ctrl + ]
+	// KC_RS     = 0x1e, // ctrl + ^
+	// KC_US     = 0x1f, // ctrl + _
 	KC_DEL    = 0x7f, // ctrl + backspace
 	// ASCII, printable characters
 	KC_SPACE = ' ',
