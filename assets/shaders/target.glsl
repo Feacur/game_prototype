@@ -1,6 +1,15 @@
+// @todo: automate locations
+#define ATTRIBUTE_TYPE_POSITION 0
+#define ATTRIBUTE_TYPE_TEXCOORD 1
+#define ATTRIBUTE_TYPE_NORMAL   2
+#define ATTRIBUTE_TYPE_COLOR    3
+
+
+
+
 #if defined(VERTEX_SHADER)
-layout(location = 0) in vec2 a_Position;
-layout(location = 1) in vec2 a_TexCoord;
+layout(location = ATTRIBUTE_TYPE_POSITION) in vec2 a_Position;
+layout(location = ATTRIBUTE_TYPE_TEXCOORD) in vec2 a_TexCoord;
 
 uniform mat4 u_Camera;
 uniform mat4 u_Transform;

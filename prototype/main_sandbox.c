@@ -14,6 +14,8 @@
 #include "framework/graphics/graphics.h"
 #include "framework/graphics/font_image.h"
 #include "framework/graphics/font_image_glyph.h"
+#include "framework/graphics/batch_mesh_2d.h"
+#include "framework/graphics/batch_mesh_3d.h"
 
 #include "framework/containers/array_byte.h"
 #include "framework/containers/array_any.h"
@@ -25,7 +27,6 @@
 #include "framework/assets/asset_font.h"
 
 #include "application/application.h"
-#include "game_batch_mesh_2d.h"
 #include "transform.h"
 
 #include <stdio.h>

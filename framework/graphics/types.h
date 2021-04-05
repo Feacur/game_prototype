@@ -185,7 +185,16 @@ struct Texture_Settings {
 	bool mirror_wrap_x, mirror_wrap_y;
 };
 
-#define MAX_MESH_ATTRIBUTES (2 * 4)
+enum Attribute_Type {
+	ATTRIBUTE_TYPE_POSITION,
+	ATTRIBUTE_TYPE_TEXCOORD,
+	ATTRIBUTE_TYPE_NORMAL,
+	ATTRIBUTE_TYPE_COLOR,
+	//
+	ATTRIBUTE_TYPE_INTERNAL_COUNT,
+};
+
+#define MAX_MESH_ATTRIBUTES (2 * ATTRIBUTE_TYPE_INTERNAL_COUNT)
 
 struct Mesh_Parameters {
 	enum Data_Type type;

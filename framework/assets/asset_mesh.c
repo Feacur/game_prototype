@@ -81,16 +81,14 @@ static void asset_mesh_obj_repack(
 	array_u32_init(attributes);
 	array_u32_init(indices);
 
-	uint32_t attribute_sizes[3];
+	uint32_t attributes_buffer[MAX_MESH_ATTRIBUTES];
 	uint32_t attributes_count = 0;
 
-	if (obj->positions.count > 0) { attribute_sizes[attributes_count++] = 3; }
-	if (obj->texcoords.count > 0) { attribute_sizes[attributes_count++] = 2; }
-	if (obj->normals.count > 0) { attribute_sizes[attributes_count++] = 3; }
+	if (obj->positions.count > 0) { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_POSITION; attributes_buffer[attributes_count++] = 3; }
+	if (obj->texcoords.count > 0) { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_TEXCOORD; attributes_buffer[attributes_count++] = 2; }
+	if (obj->normals.count > 0)   { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_NORMAL;   attributes_buffer[attributes_count++] = 3; }
 
-	for (uint32_t i = 0; i < attributes_count; i++) {
-		array_u32_write_many(attributes, 2, (uint32_t[]){i, attribute_sizes[i]});
-	}
+	array_u32_write_many(attributes, attributes_count, attributes_buffer);
 
 	uint32_t indices_count = obj->triangles.count / 3;
 	for (uint32_t i = 0, vertex_id = 0; i < indices_count; i++) {
@@ -104,10 +102,10 @@ static void asset_mesh_obj_repack(
 		//        naive linear search would be quadrativally slow,
 		//        so a hashset it is
 
-		uint32_t attribute_index = 0;
-		if (obj->positions.count > 0) { array_float_write_many(vertices, 3, obj->positions.data + vertex_index[0] * attribute_sizes[attribute_index++]); }
-		if (obj->texcoords.count > 0) { array_float_write_many(vertices, 2, obj->texcoords.data + vertex_index[1] * attribute_sizes[attribute_index++]); }
-		if (obj->normals.count > 0) { array_float_write_many(vertices, 3, obj->normals.data + vertex_index[2] * attribute_sizes[attribute_index++]); }
+		uint32_t attribute_index = 1;
+		if (obj->positions.count > 0) { array_float_write_many(vertices, 3, obj->positions.data + vertex_index[0] * attributes_buffer[attribute_index]); attribute_index += 2; }
+		if (obj->texcoords.count > 0) { array_float_write_many(vertices, 2, obj->texcoords.data + vertex_index[1] * attributes_buffer[attribute_index]); attribute_index += 2; }
+		if (obj->normals.count > 0)   { array_float_write_many(vertices, 3, obj->normals.data   + vertex_index[2] * attributes_buffer[attribute_index]); attribute_index += 2; }
 
 		array_u32_write(indices, vertex_id);
 		vertex_id++;
