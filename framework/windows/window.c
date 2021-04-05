@@ -30,7 +30,7 @@ struct Window * platform_window_init(void) {
 	window->handle = CreateWindowEx(
 		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
 		TEXT(APPLICATION_CLASS_NAME), TEXT("game prototype"),
-		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+		WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_CAPTION,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
@@ -105,14 +105,14 @@ uint32_t platform_window_get_refresh_rate(struct Window * window, uint32_t defau
 void platform_window_toggle_borderless_fullscreen(struct Window * window) {
 	static WINDOWPLACEMENT normal_window_position;
 	
-	LONG window_style = GetWindowLong(window->handle, GWL_STYLE);
-	if (window_style & WS_OVERLAPPEDWINDOW) {
+	LONG_PTR window_style = GetWindowLongPtr(window->handle, GWL_STYLE);
+	if (window_style & WS_CAPTION) {
 		if (!GetWindowPlacement(window->handle, &normal_window_position)) { return; }
 
 		MONITORINFO monitor_info = {.cbSize = sizeof(MONITORINFO)};
 		if (!GetMonitorInfo(MonitorFromWindow(window->handle, MONITOR_DEFAULTTOPRIMARY), &monitor_info)) { return; }
 
-		SetWindowLongPtr(window->handle, GWL_STYLE, window_style & ~WS_OVERLAPPEDWINDOW);
+		SetWindowLongPtr(window->handle, GWL_STYLE, window_style & ~WS_CAPTION);
 		SetWindowPos(
 			window->handle, HWND_TOP,
 			monitor_info.rcMonitor.left, monitor_info.rcMonitor.top,
@@ -124,13 +124,13 @@ void platform_window_toggle_borderless_fullscreen(struct Window * window) {
 	}
 
 	// Restore windowed mode
-	SetWindowLongPtr(window->handle, GWL_STYLE, window_style | WS_OVERLAPPEDWINDOW);
-	SetWindowPlacement(window->handle, &normal_window_position);
+	SetWindowLongPtr(window->handle, GWL_STYLE, window_style | WS_CAPTION);
 	SetWindowPos(
-		window->handle, 0,
+		window->handle, HWND_TOP,
 		0, 0, 0, 0,
-		SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+		SWP_NOOWNERZORDER | SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
 	);
+	SetWindowPlacement(window->handle, &normal_window_position);
 }
 
 //
