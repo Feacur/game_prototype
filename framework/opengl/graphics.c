@@ -939,9 +939,9 @@ void graphics_draw(struct Render_Pass const * pass) {
 		gpu_target_get_size(pass->target, &size_x, &size_y);
 	}
 
+	if (pass->camera_id != 0) { gfx_material_set_float(pass->material, pass->camera_id, 4*4, &pass->camera.x.x); }
+	if (pass->transform_id != 0) { gfx_material_set_float(pass->material, pass->transform_id, 4*4, &pass->transform.x.x); }
 	graphics_select_program(pass->material->program);
-	gfx_material_set_float(pass->material, pass->camera_id, 4*4, &pass->camera.x.x);
-	gfx_material_set_float(pass->material, pass->transform_id, 4*4, &pass->transform.x.x);
 	graphics_upload_uniforms(pass->material);
 
 	graphics_select_mesh(pass->mesh);

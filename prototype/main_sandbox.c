@@ -308,7 +308,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		//
 		.material = &content.materials.test,
 		.mesh = content.gpu.mesh_cube,
-		// draw transformed, map to camera coords
+		// map to camera coords; draw transformed
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,
 		.camera = mat4_mul_mat(
@@ -349,12 +349,11 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		//
 		.material = &content.materials.target,
 		.mesh = batch.gpu_mesh,
-		// draw at the farthest point, map to normalized device coords
+		// map to normalized device coords; draw at the farthest point
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,
 		.camera = mat4_identity,
-		.transform = mat4_identity,
-		// .transform = mat4_set_transformation((struct vec3){0, 0, FLOAT_ALMSOST_1}, (struct vec3){1, 1, 1}, (struct vec4){0, 0, 0, 1}),
+		.transform = mat4_set_transformation((struct vec3){0, 0, 1}, (struct vec3){1, 1, 1}, (struct vec4){0, 0, 0, 1}),
 	});
 
 	// screen buffer: draw HUD
@@ -431,7 +430,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		//
 		.material = &font->material,
 		.mesh = batch.gpu_mesh,
-		// draw at the nearest point, map to screen buffer coords
+		// map to screen buffer coords; draw at the nearest point
 		.camera_id = uniforms.camera,
 		.transform_id = uniforms.transform,
 		.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1),
