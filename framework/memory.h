@@ -3,9 +3,9 @@
 
 #include "common.h"
 
-// void * memory_allocate(void * owner, char const * source, size_t size);
-void * memory_reallocate(void * owner, char const * source, void * pointer, size_t size);
-// void memory_free(void * owner, char const * source, void * pointer);
+// void * memory_allocate(void const * owner, char const * source, size_t size);
+void * memory_reallocate(void const * owner, char const * source, void * pointer, size_t size);
+// void memory_free(void const * owner, char const * source, void * pointer);
 
 #define MEMORY_ALLOCATE(owner, type) memory_reallocate(owner, FILE_AND_LINE, (type *)NULL, sizeof(type))
 #define MEMORY_FREE(owner, pointer) memory_reallocate(owner, FILE_AND_LINE, pointer, 0)

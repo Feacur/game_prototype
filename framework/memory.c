@@ -8,7 +8,7 @@
 
 struct Pointer_Data {
 	size_t size;
-	void * owner;
+	void const * owner;
 	char const * source;
 };
 
@@ -21,7 +21,7 @@ static struct Memory_State {
 //
 #include "memory.h"
 
-// void * memory_allocate(void * owner, char const * source, size_t size) {
+// void * memory_allocate(void const * owner, char const * source, size_t size) {
 // 	bool const track_allocation = (memory_state.pointers != NULL && memory_state.pointers != owner);
 // 
 // 	void * result = malloc(size);
@@ -31,8 +31,8 @@ static struct Memory_State {
 // 		memory_state.pointers_count++;
 // 		memory_state.total_bytes += size;
 // 		hash_table_u64_set(memory_state.pointers, (uint64_t)result, &(struct Pointer_Data){
-// 			.size = size,
-// 			.owner = owner,
+// 			.size   = size,
+// 			.owner  = owner,
 // 			.source = source,
 // 		});
 // 	}
@@ -40,7 +40,7 @@ static struct Memory_State {
 // 	return result;
 // }
 
-void * memory_reallocate(void * owner, char const * source, void * pointer, size_t size) {
+void * memory_reallocate(void const * owner, char const * source, void * pointer, size_t size) {
 	bool const track_allocation = (memory_state.pointers != NULL && memory_state.pointers != owner);
 	struct Pointer_Data const * pointer_data = NULL;
 	if (pointer != NULL && track_allocation) {
@@ -70,8 +70,8 @@ void * memory_reallocate(void * owner, char const * source, void * pointer, size
 		memory_state.pointers_count++;
 		memory_state.total_bytes += size;
 		hash_table_u64_set(memory_state.pointers, (uint64_t)result, &(struct Pointer_Data){
-			.size = size,
-			.owner = owner,
+			.size   = size,
+			.owner  = owner,
 			.source = source,
 		});
 	}
@@ -79,7 +79,7 @@ void * memory_reallocate(void * owner, char const * source, void * pointer, size
 	return result;
 }
 
-// void memory_free(void * owner, char const * source, void * pointer) {
+// void memory_free(void const * owner, char const * source, void * pointer) {
 // 	bool const track_allocation = (memory_state.pointers != NULL && memory_state.pointers != owner);
 // 	struct Pointer_Data const * pointer_data = NULL;
 // 	if (pointer != NULL && track_allocation) {
