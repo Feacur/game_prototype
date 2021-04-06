@@ -27,7 +27,7 @@ struct Array_Any * array_any_init(uint32_t value_size) {
 		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK(); return NULL;
 	}
 
-	struct Array_Any * array = MEMORY_ALLOCATE(struct Array_Any);
+	struct Array_Any * array = MEMORY_ALLOCATE(NULL, struct Array_Any);
 	*array = (struct Array_Any){
 		.value_size = value_size,
 	};
@@ -35,10 +35,10 @@ struct Array_Any * array_any_init(uint32_t value_size) {
 }
 
 void array_any_free(struct Array_Any * array) {
-	MEMORY_FREE(array->data);
+	MEMORY_FREE(array, array->data);
 
 	memset(array, 0, sizeof(*array));
-	MEMORY_FREE(array);
+	MEMORY_FREE(array, array);
 }
 
 void array_any_clear(struct Array_Any * array) {
@@ -56,7 +56,7 @@ void array_any_ensure_minimum_capacity(struct Array_Any * array, uint32_t minimu
 #endif
 
 	array->capacity = minimum_capacity;
-	array->data = MEMORY_REALLOCATE_ARRAY(array->data, array->capacity * array->value_size);
+	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity * array->value_size);
 }
 
 uint32_t array_any_get_count(struct Array_Any * array) {

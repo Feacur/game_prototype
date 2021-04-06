@@ -1,4 +1,5 @@
 #include "framework/internal/input_to_system.h"
+#include "framework/internal/memory_to_system.h"
 #include "framework/containers/array_byte.h"
 #include "framework/memory.h"
 #include "framework/unicode.h"
@@ -42,6 +43,7 @@ void platform_system_init(void) {
 	signal(SIGSEGV, system_signal_handler);
 	signal(SIGTERM, system_signal_handler);
 
+	memory_to_system_init();
 	timer_to_system_init();
 	window_to_system_init();
 	glibrary_to_system_init();
@@ -53,6 +55,7 @@ void platform_system_free(void) {
 	glibrary_to_system_free();
 	window_to_system_free();
 	timer_to_system_free();
+	memory_to_system_free();
 	memset(&platform_system, 0, sizeof(platform_system));
 }
 

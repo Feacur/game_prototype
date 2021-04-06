@@ -16,8 +16,8 @@
 	#pragma warning(push, 0)
 #endif
 
-#define STBTT_malloc(size, user_data)  MEMORY_ALLOCATE_SIZE(size)
-#define STBTT_free(pointer, user_data) MEMORY_FREE(pointer)
+#define STBTT_malloc(size, user_data)  MEMORY_ALLOCATE_SIZE(NULL, size)
+#define STBTT_free(pointer, user_data) MEMORY_FREE(NULL, pointer)
 
 #define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -41,7 +41,7 @@ struct Asset_Font {
 };
 
 struct Asset_Font * asset_font_init(char const * path) {
-	struct Asset_Font * asset_font = MEMORY_ALLOCATE(struct Asset_Font);
+	struct Asset_Font * asset_font = MEMORY_ALLOCATE(NULL, struct Asset_Font);
 
 	platform_file_read_entire(path, &asset_font->file);
 	if (!stbtt_InitFont(&asset_font->font, asset_font->file.data, stbtt_GetFontOffsetForIndex(asset_font->file.data, 0))) {
@@ -56,7 +56,7 @@ struct Asset_Font * asset_font_init(char const * path) {
 void asset_font_free(struct Asset_Font * asset_font) {
 	array_byte_free(&asset_font->file);
 	memset(asset_font, 0, sizeof(*asset_font));
-	MEMORY_FREE(asset_font);
+	MEMORY_FREE(asset_font, asset_font);
 }
 
 float asset_font_get_scale(struct Asset_Font * asset_font, float pixels_size) {

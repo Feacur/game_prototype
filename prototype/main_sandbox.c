@@ -134,7 +134,7 @@ static void game_init(void) {
 		asset_codepoints.data[asset_codepoints.count] = '\0';
 
 		uint32_t codepoints_count = 0;
-		uint32_t * codepoints = MEMORY_ALLOCATE_ARRAY(uint32_t, (asset_codepoints.count + 4) * 2 + 1);
+		uint32_t * codepoints = MEMORY_ALLOCATE_ARRAY(NULL, uint32_t, (asset_codepoints.count + 4) * 2 + 1);
 		codepoints[codepoints_count++] = ' ';
 		codepoints[codepoints_count++] = '~';
 		codepoints[codepoints_count++] = 0x401;
@@ -164,7 +164,7 @@ static void game_init(void) {
 		content.fonts.sans.gpu_texture = gpu_texture_init(font_image_get_asset(content.fonts.sans.buffer));
 		gfx_material_init(&content.fonts.sans.material, content.gpu.program_font);
 
-		MEMORY_FREE(codepoints);
+		MEMORY_FREE(NULL, codepoints);
 
 		content.fonts.mono.buffer = font_image_init(content.assets.font_mono, 32);
 		font_image_build(content.fonts.mono.buffer, 1, (uint32_t[]){' ', '~'});

@@ -161,7 +161,7 @@ struct GInstance {
 static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format);
 static void * rlib_get_function(char const * name);
 struct GInstance * ginstance_init(struct Window * window) {
-	struct GInstance * ginstance = MEMORY_ALLOCATE(struct GInstance);
+	struct GInstance * ginstance = MEMORY_ALLOCATE(&glibrary, struct GInstance);
 
 	ginstance->private_device = window_to_glibrary_get_private_device(window);
 	ginstance->handle = create_context_auto(ginstance->private_device, NULL, &ginstance->pixel_format);
@@ -182,7 +182,7 @@ void ginstance_free(struct GInstance * ginstance) {
 	glibrary.dll.DeleteContext(ginstance->handle);
 
 	memset(ginstance, 0, sizeof(*ginstance));
-	MEMORY_FREE(ginstance);
+	MEMORY_FREE(&glibrary, ginstance);
 }
 
 int32_t ginstance_get_vsync(struct GInstance * ginstance) {
@@ -280,7 +280,7 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 	int request_vals[KEYS_COUNT];
 
 	int formats_count = 0;
-	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(struct Pixel_Format, formats_capacity + 1);
+	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(&glibrary, struct Pixel_Format, formats_capacity + 1);
 	for (int i = 0; i < formats_capacity; i++) {
 		int pfd_id = i + 1;
 		if (!glibrary.arb.GetPixelFormatAttribiv(device, pfd_id, 0, KEYS_COUNT, request_keys, request_vals)) { DEBUG_BREAK(); continue; }
@@ -339,7 +339,7 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 	if (formats_capacity == 0) { return NULL; }
 
 	int formats_count = 0;
-	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(struct Pixel_Format, formats_capacity + 1);
+	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(&glibrary, struct Pixel_Format, formats_capacity + 1);
 	for (int i = 0; i < formats_capacity; i++) {
 		int pfd_id = i + 1;
 		PIXELFORMATDESCRIPTOR pfd;
@@ -514,7 +514,7 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 	struct Pixel_Format pixel_format = choose_pixel_format(pixel_formats, hint);
 	if (pixel_format.id == 0) { fprintf(stderr, "failed to choose format\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
-	MEMORY_FREE(pixel_formats);
+	MEMORY_FREE(&glibrary, pixel_formats);
 
 	PIXELFORMATDESCRIPTOR pfd;
 	int formats_count = DescribePixelFormat(device, pixel_format.id, sizeof(pfd), &pfd);

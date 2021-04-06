@@ -18,12 +18,12 @@ void array_pointer_init(struct Array_Pointer * array) {
 
 void array_pointer_free(struct Array_Pointer * array) {
 	if (array->capacity == 0) { return; }
-	MEMORY_FREE(array->data);
+	MEMORY_FREE(array, array->data);
 	array_pointer_init(array);
 }
 
 void array_pointer_resize(struct Array_Pointer * array, uint32_t size) {
-	array->data = MEMORY_REALLOCATE_ARRAY(array->data, size);
+	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, size);
 	array->capacity = size;
 	array->count = (size >= array->count) ? array->count : size;
 }
@@ -32,7 +32,7 @@ void array_pointer_write(struct Array_Pointer * array, void * value) {
 	if (array->count + 1 > array->capacity) {
 		// @todo: correctly process capacities past 0x80000000
 		array->capacity = GROW_CAPACITY(array->capacity);
-		array->data = MEMORY_REALLOCATE_ARRAY(array->data, array->capacity);
+		array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity);
 	}
 
 	array->data[array->count] = value;
@@ -45,7 +45,7 @@ void array_pointer_write_many(struct Array_Pointer * array, uint32_t count, void
 		while (array->count + count > array->capacity) {
 			array->capacity = GROW_CAPACITY(array->capacity);
 		}
-		array->data = MEMORY_REALLOCATE_ARRAY(array->data, array->capacity);
+		array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity);
 	}
 
 	memcpy(array->data + array->count, value, count * sizeof(*value));
@@ -58,7 +58,7 @@ void array_pointer_write_many_zeroes(struct Array_Pointer * array, uint32_t coun
 		while (array->count + count > array->capacity) {
 			array->capacity = GROW_CAPACITY(array->capacity);
 		}
-		array->data = MEMORY_REALLOCATE_ARRAY(array->data, array->capacity);
+		array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity);
 	}
 
 	memset(array->data + array->count, 0, count * sizeof(*array->data));

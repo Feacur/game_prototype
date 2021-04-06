@@ -15,7 +15,7 @@ struct Strings {
 };
 
 struct Strings * strings_init(void) {
-	struct Strings * strings = MEMORY_ALLOCATE(struct Strings);
+	struct Strings * strings = MEMORY_ALLOCATE(NULL, struct Strings);
 	array_u32_init(&strings->offsets);
 	array_u32_init(&strings->lengths);
 	array_byte_init(&strings->buffer);
@@ -26,7 +26,7 @@ void strings_free(struct Strings * strings) {
 	array_u32_free(&strings->offsets);
 	array_u32_free(&strings->lengths);
 	array_byte_free(&strings->buffer);
-	MEMORY_FREE(strings);
+	MEMORY_FREE(strings, strings);
 }
 
 uint32_t strings_find(struct Strings * strings, uint32_t length, char const * value) {

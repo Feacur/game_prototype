@@ -30,7 +30,7 @@ struct Font_Symbol {
 };
 
 struct Font_Image * font_image_init(struct Asset_Font * asset_font, int32_t size) {
-	struct Font_Image * font_image = MEMORY_ALLOCATE(struct Font_Image);
+	struct Font_Image * font_image = MEMORY_ALLOCATE(NULL, struct Font_Image);
 	*font_image = (struct Font_Image){
 		.buffer = {
 			.parameters = {
@@ -48,11 +48,11 @@ struct Font_Image * font_image_init(struct Asset_Font * asset_font, int32_t size
 }
 
 void font_image_free(struct Font_Image * font_image) {
-	MEMORY_FREE(font_image->buffer.data);
+	MEMORY_FREE(font_image, font_image->buffer.data);
 	hash_table_u32_free(font_image->table);
 
 	memset(font_image, 0, sizeof(*font_image));
-	MEMORY_FREE(font_image);
+	MEMORY_FREE(font_image, font_image);
 }
 
 void font_image_clear(struct Font_Image * font_image) {
@@ -77,7 +77,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 	if (codepoints_count == 0) { return; }
 
 	uint32_t symbols_count = 0;
-	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(struct Font_Symbol, codepoints_count + 1);
+	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(font_image, struct Font_Symbol, codepoints_count + 1);
 
 	// collect glyphs
 	for (uint32_t i = 0; i < ranges_count; i++) {
@@ -130,7 +130,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 		// @todo: keep the maximum size without shrinking?
 		font_image->buffer.size_x = atlas_size_x;
 		font_image->buffer.size_y = atlas_size_y;
-		font_image->buffer.data = MEMORY_REALLOCATE_ARRAY(font_image->buffer.data, atlas_size_x * atlas_size_y);
+		font_image->buffer.data = MEMORY_REALLOCATE_ARRAY(font_image, font_image->buffer.data, atlas_size_x * atlas_size_y);
 	}
 
 	// pack glyphs into the atlas, assuming they are sorted by height
@@ -205,7 +205,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 		hash_table_u32_set(font_image->table, symbol->codepoint, symbol); // treat symbol as glyph
 	}
 
-	MEMORY_FREE(symbols);
+	MEMORY_FREE(font_image, symbols);
 }
 
 struct Font_Glyph const * font_image_get_glyph(struct Font_Image * const font_image, uint32_t codepoint) {

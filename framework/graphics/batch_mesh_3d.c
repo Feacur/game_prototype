@@ -22,14 +22,14 @@ struct Game_Batch_Mesh_3D * game_batch_mesh_3d_init(void) {
 	uint32_t const attributes[] = {ATTRIBUTE_TYPE_POSITION, 3, ATTRIBUTE_TYPE_TEXCOORD, 2};
 	uint32_t const attributes_count = (sizeof(attributes) / sizeof(*attributes)) / 2;
 
-	struct Game_Batch_Mesh_3D * batch_mesh = MEMORY_ALLOCATE(struct Game_Batch_Mesh_3D);
+	struct Game_Batch_Mesh_3D * batch_mesh = MEMORY_ALLOCATE(NULL, struct Game_Batch_Mesh_3D);
 
 	uint32_t const buffers_count = 2;
 	*batch_mesh = (struct Game_Batch_Mesh_3D){
 		.mesh = (struct Asset_Mesh){
-			.count = buffers_count,
-			.buffers = MEMORY_ALLOCATE_ARRAY(struct Array_Byte, buffers_count),
-			.parameters = MEMORY_ALLOCATE_ARRAY(struct Mesh_Parameters, buffers_count),
+			.count      = buffers_count,
+			.buffers    = MEMORY_ALLOCATE_ARRAY(batch_mesh, struct Array_Byte, buffers_count),
+			.parameters = MEMORY_ALLOCATE_ARRAY(batch_mesh, struct Mesh_Parameters, buffers_count),
 		},
 	};
 
@@ -53,14 +53,14 @@ struct Game_Batch_Mesh_3D * game_batch_mesh_3d_init(void) {
 }
 
 void game_batch_mesh_3d_free(struct Game_Batch_Mesh_3D * batch_mesh) {
-	MEMORY_FREE(batch_mesh->mesh.buffers);
-	MEMORY_FREE(batch_mesh->mesh.parameters);
+	MEMORY_FREE(batch_mesh, batch_mesh->mesh.buffers);
+	MEMORY_FREE(batch_mesh, batch_mesh->mesh.parameters);
 
 	array_float_free(&batch_mesh->vertices);
 	array_u32_free(&batch_mesh->indices);
 
 	memset(batch_mesh, 0, sizeof(*batch_mesh));
-	MEMORY_FREE(batch_mesh);
+	MEMORY_FREE(batch_mesh, batch_mesh);
 }
 
 void game_batch_mesh_3d_clear(struct Game_Batch_Mesh_3D * batch_mesh) {

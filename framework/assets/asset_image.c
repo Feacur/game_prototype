@@ -13,9 +13,9 @@
 
 #define STBI_ONLY_PNG
 
-#define STBI_MALLOC(size)           MEMORY_ALLOCATE_SIZE(size)
-#define STBI_REALLOC(pointer, size) MEMORY_REALLOCATE_SIZE(pointer, size)
-#define STBI_FREE(pointer)          MEMORY_FREE(pointer)
+#define STBI_MALLOC(size)           MEMORY_ALLOCATE_SIZE(NULL, size)
+#define STBI_REALLOC(pointer, size) MEMORY_REALLOCATE_SIZE(NULL, pointer, size)
+#define STBI_FREE(pointer)          MEMORY_FREE(NULL, pointer)
 
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
@@ -59,7 +59,7 @@ void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 
 void asset_image_free(struct Asset_Image * asset_image) {
 	if (asset_image->capacity > 0) {
-		MEMORY_FREE(asset_image->data);
+		MEMORY_FREE(asset_image, asset_image->data);
 	}
 	memset(asset_image, 0, sizeof(*asset_image));
 }

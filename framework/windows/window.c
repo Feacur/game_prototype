@@ -25,7 +25,7 @@ struct Window {
 
 static void platform_window_toggle_raw_input(struct Window * window, bool state);
 struct Window * platform_window_init(void) {
-	struct Window * window = MEMORY_ALLOCATE(struct Window);
+	struct Window * window = MEMORY_ALLOCATE(NULL, struct Window);
 
 	window->handle = CreateWindowEx(
 		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
@@ -70,7 +70,7 @@ void platform_window_free(struct Window * window) {
 		// delegate all the work to WM_DESTROY
 	}
 	else {
-		MEMORY_FREE(window);
+		MEMORY_FREE(window, window);
 		// WM_CLOSE has been processed; now, just free the application window
 	}
 }
@@ -394,7 +394,7 @@ static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, L
 	UINT header_size = sizeof(header);
 	if (GetRawInputData((HRAWINPUT)lParam, RID_HEADER, &header, &header_size, sizeof(RAWINPUTHEADER)) == (UINT)-1) { return 0; }
 
-	RAWINPUT * input = MEMORY_ALLOCATE_SIZE(header.dwSize);
+	RAWINPUT * input = MEMORY_ALLOCATE_SIZE(window, header.dwSize);
 
 	UINT input_size = header.dwSize;
 	if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, input, &input_size, sizeof(RAWINPUTHEADER)) == header.dwSize) {
@@ -405,7 +405,7 @@ static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, L
 		}
 	}
 
-	MEMORY_FREE(input);
+	MEMORY_FREE(window, input);
 
 	return 0;
 	// https://docs.microsoft.com/en-us/windows/win32/inputdev/raw-input
@@ -562,7 +562,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 				platform_window_toggle_raw_input(window, false);
 			}
 			memset(window, 0, sizeof(*window));
-			if (should_free) { MEMORY_FREE(window); }
+			if (should_free) { MEMORY_FREE(window, window); }
 			return 0;
 		}
 	}

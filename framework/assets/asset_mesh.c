@@ -63,8 +63,8 @@ void asset_mesh_free(struct Asset_Mesh * asset_mesh) {
 		array_byte_free(asset_mesh->buffers + i);
 	}
 	if (asset_mesh->capacity != 0) {
-		MEMORY_FREE(asset_mesh->buffers);
-		MEMORY_FREE(asset_mesh->parameters);
+		MEMORY_FREE(asset_mesh, asset_mesh->buffers);
+		MEMORY_FREE(asset_mesh, asset_mesh->parameters);
 	}
 	memset(asset_mesh, 0, sizeof(*asset_mesh));
 }
@@ -124,8 +124,8 @@ static void asset_mesh_fill(
 	uint32_t const count = 2;
 	asset_mesh->capacity = count;
 	asset_mesh->count = count;
-	asset_mesh->buffers = MEMORY_ALLOCATE_ARRAY(struct Array_Byte, count);
-	asset_mesh->parameters = MEMORY_ALLOCATE_ARRAY(struct Mesh_Parameters, count);
+	asset_mesh->buffers    = MEMORY_ALLOCATE_ARRAY(asset_mesh, struct Array_Byte, count);
+	asset_mesh->parameters = MEMORY_ALLOCATE_ARRAY(asset_mesh, struct Mesh_Parameters, count);
 
 	asset_mesh->buffers[0] = (struct Array_Byte){
 		.data = (uint8_t *)vertices->data,

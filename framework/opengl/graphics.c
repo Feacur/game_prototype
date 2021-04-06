@@ -182,7 +182,7 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 	
 	GLint uniform_name_buffer_length; // includes zero-terminator
 	glGetProgramInterfaceiv(program_id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
-	GLchar * uniform_name_buffer = MEMORY_ALLOCATE_ARRAY(GLchar, uniform_name_buffer_length);
+	GLchar * uniform_name_buffer = MEMORY_ALLOCATE_ARRAY(&graphics_state, GLchar, uniform_name_buffer_length);
 
 	struct Gpu_Program_Field uniforms[MAX_UNIFORMS];
 	GLint uniform_locations[MAX_UNIFORMS];
@@ -212,10 +212,10 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 		uniform_locations[i] = params[2];
 	}
 
-	MEMORY_FREE(uniform_name_buffer);
+	MEMORY_FREE(&graphics_state, uniform_name_buffer);
 
 	//
-	struct Gpu_Program * gpu_program = MEMORY_ALLOCATE(struct Gpu_Program);
+	struct Gpu_Program * gpu_program = MEMORY_ALLOCATE(&graphics_state, struct Gpu_Program);
 	*gpu_program = (struct Gpu_Program){
 		.id = program_id,
 		.uniforms_count = (uint32_t)uniforms_count,
@@ -234,7 +234,7 @@ void gpu_program_free(struct Gpu_Program * gpu_program) {
 		glDeleteProgram(gpu_program->id);
 	}
 	memset(gpu_program, 0, sizeof(*gpu_program));
-	MEMORY_FREE(gpu_program);
+	MEMORY_FREE(&graphics_state, gpu_program);
 }
 
 void gpu_program_get_uniforms(struct Gpu_Program * gpu_program, uint32_t * count, struct Gpu_Program_Field const ** values) {
@@ -306,7 +306,7 @@ static struct Gpu_Texture * gpu_texture_allocate(
 	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings->wrap_y, settings->mirror_wrap_y));
 
 	//
-	struct Gpu_Texture * gpu_texture = MEMORY_ALLOCATE(struct Gpu_Texture);
+	struct Gpu_Texture * gpu_texture = MEMORY_ALLOCATE(&graphics_state, struct Gpu_Texture);
 	*gpu_texture = (struct Gpu_Texture){
 		.id = texture_id,
 		.size_x = size_x,
@@ -338,7 +338,7 @@ void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
 		glDeleteTextures(1, &gpu_texture->id);
 	}
 	memset(gpu_texture, 0, sizeof(*gpu_texture));
-	MEMORY_FREE(gpu_texture);
+	MEMORY_FREE(&graphics_state, gpu_texture);
 }
 
 void gpu_texture_get_size(struct Gpu_Texture * gpu_texture, uint32_t * x, uint32_t * y) {
@@ -442,7 +442,7 @@ struct Gpu_Target * gpu_target_init(
 	}
 
 	//
-	struct Gpu_Target * gpu_target = MEMORY_ALLOCATE(struct Gpu_Target);
+	struct Gpu_Target * gpu_target = MEMORY_ALLOCATE(&graphics_state, struct Gpu_Target);
 	*gpu_target = (struct Gpu_Target){
 		.id = target_id,
 		.size_x = size_x,
@@ -467,7 +467,7 @@ void gpu_target_free(struct Gpu_Target * gpu_target) {
 		glDeleteFramebuffers(1, &gpu_target->id);
 	}
 	memset(gpu_target, 0, sizeof(*gpu_target));
-	MEMORY_FREE(gpu_target);
+	MEMORY_FREE(&graphics_state, gpu_target);
 }
 
 void gpu_target_get_size(struct Gpu_Target * gpu_target, uint32_t * x, uint32_t * y) {
@@ -576,7 +576,7 @@ static struct Gpu_Mesh * gpu_mesh_allocate(
 		fprintf(stderr, "not element buffer\n"); DEBUG_BREAK();
 	}
 
-	struct Gpu_Mesh * gpu_mesh = MEMORY_ALLOCATE(struct Gpu_Mesh);
+	struct Gpu_Mesh * gpu_mesh = MEMORY_ALLOCATE(&graphics_state, struct Gpu_Mesh);
 	*gpu_mesh = (struct Gpu_Mesh){
 		.id = mesh_id,
 		.buffers_count = buffers_count,
@@ -615,7 +615,7 @@ void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
 		glDeleteVertexArrays(1, &gpu_mesh->id);
 	}
 	memset(gpu_mesh, 0, sizeof(*gpu_mesh));
-	MEMORY_FREE(gpu_mesh);
+	MEMORY_FREE(&graphics_state, gpu_mesh);
 }
 
 void gpu_mesh_update(struct Gpu_Mesh * gpu_mesh, struct Asset_Mesh * asset) {
@@ -1012,7 +1012,7 @@ void graphics_to_glibrary_init(void) {
 	graphics_state.max_elements_indices      = (uint32_t)max_elements_indices;
 
 	graphics_state.units_capacity = (uint32_t)max_units;
-	graphics_state.units = MEMORY_ALLOCATE_ARRAY(struct Gpu_Unit, max_units);
+	graphics_state.units = MEMORY_ALLOCATE_ARRAY(&graphics_state, struct Gpu_Unit, max_units);
 	memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
 
 	// (ns_ncp > ns_fcp) == reverse Z
@@ -1036,8 +1036,8 @@ void graphics_to_glibrary_init(void) {
 
 void graphics_to_glibrary_free(void) {
 	strings_free(graphics_state.uniforms);
-	MEMORY_FREE(graphics_state.extensions);
-	MEMORY_FREE(graphics_state.units);
+	MEMORY_FREE(&graphics_state, graphics_state.extensions);
+	MEMORY_FREE(&graphics_state, graphics_state.units);
 	memset(&graphics_state, 0, sizeof(graphics_state));
 
 	(void)gpu_stencil_op;
@@ -1075,10 +1075,10 @@ static void verify_shader(GLuint id, GLenum parameter) {
 
 	if (max_length > 0) {
 		// @todo: use scratch buffer
-		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(GLchar, max_length);
+		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(&graphics_state, GLchar, max_length);
 		glGetShaderInfoLog(id, max_length, &max_length, buffer);
 		fprintf(stderr, "%s\n", buffer);
-		MEMORY_FREE(buffer);
+		MEMORY_FREE(&graphics_state, buffer);
 	}
 
 	DEBUG_BREAK();
@@ -1094,10 +1094,10 @@ static void verify_program(GLuint id, GLenum parameter) {
 
 	if (max_length > 0) {
 		// @todo: use scratch buffer
-		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(GLchar, max_length);
+		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(&graphics_state, GLchar, max_length);
 		glGetProgramInfoLog(id, max_length, &max_length, buffer);
 		fprintf(stderr, "%s\n", buffer);
-		MEMORY_FREE(buffer);
+		MEMORY_FREE(&graphics_state, buffer);
 	}
 
 	DEBUG_BREAK();

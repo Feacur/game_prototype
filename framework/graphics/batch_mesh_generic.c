@@ -20,14 +20,14 @@ struct Batch_Mesh_Generic {
 #include "batch_mesh_generic.h"
 
 struct Batch_Mesh_Generic * batch_mesh_generic_init(uint32_t attributes_count, uint32_t const * attributes) {
-	struct Batch_Mesh_Generic * batch_mesh = MEMORY_ALLOCATE(struct Batch_Mesh_Generic);
+	struct Batch_Mesh_Generic * batch_mesh = MEMORY_ALLOCATE(NULL, struct Batch_Mesh_Generic);
 
 	uint32_t const buffers_count = 2;
 	*batch_mesh = (struct Batch_Mesh_Generic){
 		.mesh = (struct Asset_Mesh){
-			.count = buffers_count,
-			.buffers = MEMORY_ALLOCATE_ARRAY(struct Array_Byte, buffers_count),
-			.parameters = MEMORY_ALLOCATE_ARRAY(struct Mesh_Parameters, buffers_count),
+			.count      = buffers_count,
+			.buffers    = MEMORY_ALLOCATE_ARRAY(batch_mesh, struct Array_Byte, buffers_count),
+			.parameters = MEMORY_ALLOCATE_ARRAY(batch_mesh, struct Mesh_Parameters, buffers_count),
 		},
 	};
 
@@ -51,15 +51,15 @@ struct Batch_Mesh_Generic * batch_mesh_generic_init(uint32_t attributes_count, u
 }
 
 void batch_mesh_generic_free(struct Batch_Mesh_Generic * batch_mesh) {
-	MEMORY_FREE(batch_mesh->mesh.buffers);
-	MEMORY_FREE(batch_mesh->mesh.parameters);
-	MEMORY_FREE(batch_mesh->scratch);
+	MEMORY_FREE(batch_mesh, batch_mesh->mesh.buffers);
+	MEMORY_FREE(batch_mesh, batch_mesh->mesh.parameters);
+	MEMORY_FREE(batch_mesh, batch_mesh->scratch);
 
 	array_float_free(&batch_mesh->vertices);
 	array_u32_free(&batch_mesh->indices);
 
 	memset(batch_mesh, 0, sizeof(*batch_mesh));
-	MEMORY_FREE(batch_mesh);
+	MEMORY_FREE(batch_mesh, batch_mesh);
 }
 
 void batch_mesh_generic_clear(struct Batch_Mesh_Generic * batch_mesh) {

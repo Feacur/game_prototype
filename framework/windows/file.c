@@ -49,7 +49,7 @@ void platform_file_delete(char const * path) {
 	DeleteFile(path_valid);
 
 #if defined(UNICODE)
-	MEMORY_FREE(path_valid);
+	MEMORY_FREE(NULL, path_valid);
 #endif
 }
 
@@ -83,7 +83,7 @@ struct File * platform_file_init(char const * path, enum File_Mode mode) {
 	);
 
 #if defined(UNICODE)
-	MEMORY_FREE(path_valid);
+	MEMORY_FREE(NULL, path_valid);
 #endif
 
 	if (handle == INVALID_HANDLE_VALUE) {
@@ -91,7 +91,7 @@ struct File * platform_file_init(char const * path, enum File_Mode mode) {
 		return NULL;
 	}
 
-	struct File * file = MEMORY_ALLOCATE(struct File);
+	struct File * file = MEMORY_ALLOCATE(NULL, struct File);
 	*file = (struct File){
 		.handle = handle,
 		.mode = mode,
@@ -102,7 +102,7 @@ struct File * platform_file_init(char const * path, enum File_Mode mode) {
 void platform_file_free(struct File * file) {
 	CloseHandle(file->handle);
 	memset(file, 0, sizeof(*file));
-	MEMORY_FREE(file);
+	MEMORY_FREE(file, file);
 }
 
 uint64_t platform_file_size(struct File * file) {
@@ -195,7 +195,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 	static wchar_t * platform_file_allocate_utf8_to_utf16(char const * value) {
 		// @todo: use scratch buffer
 		const int length = MultiByteToWideChar(CP_UTF8, 0, value, -1, NULL, 0);
-		wchar_t * buffer = MEMORY_ALLOCATE_ARRAY(wchar_t, length);
+		wchar_t * buffer = MEMORY_ALLOCATE_ARRAY(NULL, wchar_t, length);
 		MultiByteToWideChar(CP_UTF8, 0, value, -1, buffer, length);
 		return buffer;
 	}
