@@ -18,7 +18,7 @@ void asset_mesh_obj_free(struct Asset_Mesh_Obj * obj) {
 	array_float_free(&obj->positions);
 	array_float_free(&obj->texcoords);
 	array_float_free(&obj->normals);
-	array_u32_init(&obj->triangles);
+	array_u32_free(&obj->triangles);
 }
 
 //

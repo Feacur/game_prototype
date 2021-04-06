@@ -17,4 +17,7 @@ void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, 
 bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash, void const * value);
 bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash);
 
+uint32_t hash_table_any_get_iteration_capacity(struct Hash_Table_Any * hash_table);
+void * hash_table_any_iterate(struct Hash_Table_Any * hash_table, uint32_t index);
+
 #endif

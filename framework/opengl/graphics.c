@@ -328,13 +328,13 @@ struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
 }
 
 void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
-	if (ogl_version > 0) {
-		for (uint32_t i = 1; i < graphics_state.units_capacity; i++) {
-			if (graphics_state.units[i].gpu_texture == gpu_texture) {
-				graphics_state.units[i].gpu_texture = NULL;
-				// glBindTextureUnit((GLuint)i, 0);
-			}
+	for (uint32_t i = 1; i < graphics_state.units_capacity; i++) {
+		if (graphics_state.units[i].gpu_texture == gpu_texture) {
+			graphics_state.units[i].gpu_texture = NULL;
+			// if (ogl_version > 0) {glBindTextureUnit((GLuint)i, 0); }
 		}
+	}
+	if (ogl_version > 0) {
 		glDeleteTextures(1, &gpu_texture->id);
 	}
 	memset(gpu_texture, 0, sizeof(*gpu_texture));
@@ -456,11 +456,11 @@ struct Gpu_Target * gpu_target_init(
 }
 
 void gpu_target_free(struct Gpu_Target * gpu_target) {
+	if (graphics_state.active_target == gpu_target) { graphics_state.active_target = NULL; }
+	for (uint32_t i = 0; i < gpu_target->textures_count; i++) {
+		gpu_texture_free(gpu_target->textures[i]);
+	}
 	if (ogl_version > 0) {
-		if (graphics_state.active_target == gpu_target) { graphics_state.active_target = NULL; }
-		for (uint32_t i = 0; i < gpu_target->textures_count; i++) {
-			gpu_texture_free(gpu_target->textures[i]);
-		}
 		for (uint32_t i = 0; i < gpu_target->buffers_count; i++) {
 			glDeleteRenderbuffers(1, gpu_target->buffers + i);
 		}
@@ -609,8 +609,8 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 }
 
 void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
+	if (graphics_state.active_mesh == gpu_mesh) { graphics_state.active_mesh = NULL; }
 	if (ogl_version > 0) {
-		if (graphics_state.active_mesh == gpu_mesh) { graphics_state.active_mesh = NULL; }
 		glDeleteBuffers((GLsizei)gpu_mesh->buffers_count, gpu_mesh->buffer_ids);
 		glDeleteVertexArrays(1, &gpu_mesh->id);
 	}

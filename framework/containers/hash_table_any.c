@@ -121,10 +121,8 @@ void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, 
 	if (hash_table->count == 0) { return NULL; }
 	uint32_t const key_index = hash_table_any_find_key_index(hash_table, key, hash);
 	// if (key_index == INDEX_EMPTY) { return NULL; }
-	if (hash_table->marks[key_index] == HASH_TABLE_ANY_MARK_FULL) {
-		return hash_table->values + key_index * hash_table->value_size;
-	}
-	return NULL;
+	if (hash_table->marks[key_index] != HASH_TABLE_ANY_MARK_FULL) { return NULL; }
+	return hash_table->values + key_index * hash_table->value_size;
 }
 
 bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash, void const * value) {
@@ -162,6 +160,15 @@ bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, ui
 	if (hash_table->marks[key_index] != HASH_TABLE_ANY_MARK_FULL) { return false; }
 	hash_table->marks[key_index] = HASH_TABLE_ANY_MARK_SKIP;
 	return true;
+}
+
+uint32_t hash_table_any_get_iteration_capacity(struct Hash_Table_Any * hash_table) {
+	return hash_table->capacity;
+}
+
+void * hash_table_any_iterate(struct Hash_Table_Any * hash_table, uint32_t index) {
+	if (hash_table->marks[index] != HASH_TABLE_ANY_MARK_FULL) { return NULL; }
+	return hash_table->values + index * hash_table->value_size;
 }
 
 //

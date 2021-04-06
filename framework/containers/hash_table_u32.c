@@ -104,10 +104,8 @@ void * hash_table_u32_get(struct Hash_Table_U32 * hash_table, uint32_t key_hash)
 	if (hash_table->count == 0) { return NULL; }
 	uint32_t const key_index = hash_table_u32_find_key_index(hash_table, key_hash);
 	// if (key_index == INDEX_EMPTY) { return NULL; }
-	if (hash_table->marks[key_index] == HASH_TABLE_U32_MARK_FULL) {
-		return hash_table->values + key_index * hash_table->value_size;
-	}
-	return NULL;
+	if (hash_table->marks[key_index] != HASH_TABLE_U32_MARK_FULL) { return NULL; }
+	return hash_table->values + key_index * hash_table->value_size;
 }
 
 bool hash_table_u32_set(struct Hash_Table_U32 * hash_table, uint32_t key_hash, void const * value) {
@@ -140,6 +138,15 @@ bool hash_table_u32_del(struct Hash_Table_U32 * hash_table, uint32_t key_hash) {
 	if (hash_table->marks[key_index] != HASH_TABLE_U32_MARK_FULL) { return false; }
 	hash_table->marks[key_index] = HASH_TABLE_U32_MARK_SKIP;
 	return true;
+}
+
+uint32_t hash_table_u32_get_iteration_capacity(struct Hash_Table_U32 * hash_table) {
+	return hash_table->capacity;
+}
+
+void * hash_table_u32_iterate(struct Hash_Table_U32 * hash_table, uint32_t index) {
+	if (hash_table->marks[index] != HASH_TABLE_U32_MARK_FULL) { return NULL; }
+	return hash_table->values + index * hash_table->value_size;
 }
 
 //

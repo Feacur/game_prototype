@@ -7,6 +7,15 @@
 
 #define INDEX_EMPTY UINT32_MAX
 
+// -- utility
+
+#define STRINGIFY_A_VALUE(v) #v
+#define STRINGIFY_A_MACRO(m) STRINGIFY_A_VALUE(m)
+#define TOKENIZE_A_VALUE(v1, v2) v1 ## v2
+#define TOKENIZE_A_MACRO(m1, m2) TOKENIZE_A_VALUE(m1, m2)
+
+#define FILE_AND_LINE __FILE__ ":" STRINGIFY_A_MACRO(__LINE__)
+
 // -- FLEXIBLE_ARRAY
 #if __STDC_VERSION__ >= 199901L
 	#if defined(__clang__)
