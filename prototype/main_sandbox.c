@@ -17,10 +17,10 @@
 #include "framework/graphics/batch_mesh_2d.h"
 #include "framework/graphics/batch_mesh_3d.h"
 
-#include "framework/containers/array_byte.h"
 #include "framework/containers/array_any.h"
-#include "framework/containers/hash_table.h"
+#include "framework/containers/array_byte.h"
 #include "framework/containers/hash_table_any.h"
+#include "framework/containers/hash_table_u32.h"
 
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"

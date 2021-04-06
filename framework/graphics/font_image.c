@@ -1,5 +1,5 @@
 #include "framework/containers/array_byte.h"
-#include "framework/containers/hash_table.h"
+#include "framework/containers/hash_table_u32.h"
 #include "framework/assets/asset_image.h"
 #include "framework/assets/asset_font.h"
 #include "framework/assets/asset_font_glyph.h"
@@ -16,7 +16,7 @@ uint32_t round_up_to_PO2_u32(uint32_t value);
 struct Font_Image {
 	struct Asset_Image buffer;
 	struct Asset_Font * asset_font; // weak reference
-	struct Hash_Table * table;
+	struct Hash_Table_U32 * table;
 	float scale;
 };
 
@@ -40,7 +40,7 @@ struct Font_Image * font_image_init(struct Asset_Font * asset_font, int32_t size
 				.channels = 1,
 			},
 		},
-		.table = hash_table_init(sizeof(struct Font_Glyph)),
+		.table = hash_table_u32_init(sizeof(struct Font_Glyph)),
 		.scale = asset_font_get_scale(asset_font, (float)size),
 		.asset_font = asset_font,
 	};
@@ -49,14 +49,14 @@ struct Font_Image * font_image_init(struct Asset_Font * asset_font, int32_t size
 
 void font_image_free(struct Font_Image * font_image) {
 	MEMORY_FREE(font_image->buffer.data);
-	hash_table_free(font_image->table);
+	hash_table_u32_free(font_image->table);
 
 	memset(font_image, 0, sizeof(*font_image));
 	MEMORY_FREE(font_image);
 }
 
 void font_image_clear(struct Font_Image * font_image) {
-	hash_table_clear(font_image->table);
+	hash_table_u32_clear(font_image->table);
 	memset(font_image->buffer.data, 0, font_image->buffer.size_x * font_image->buffer.size_y * sizeof(*font_image->buffer.data));
 }
 
@@ -200,16 +200,16 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 	}
 
 	// track glyphs
-	hash_table_ensure_minimum_capacity(font_image->table, symbols_count);
+	hash_table_u32_ensure_minimum_capacity(font_image->table, symbols_count);
 	for (struct Font_Symbol const * symbol = symbols; symbol->glyph.id != 0; symbol++) {
-		hash_table_set(font_image->table, symbol->codepoint, symbol); // treat symbol as glyph
+		hash_table_u32_set(font_image->table, symbol->codepoint, symbol); // treat symbol as glyph
 	}
 
 	MEMORY_FREE(symbols);
 }
 
 struct Font_Glyph const * font_image_get_glyph(struct Font_Image * const font_image, uint32_t codepoint) {
-	return hash_table_get(font_image->table, codepoint);
+	return hash_table_u32_get(font_image->table, codepoint);
 }
 
 float font_image_get_height(struct Font_Image * font_image) {

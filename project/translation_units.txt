@@ -16,8 +16,9 @@ framework/containers/array_float.c
 framework/containers/array_s32.c
 framework/containers/array_u32.c
 framework/containers/array_pointer.c
-framework/containers/hash_table.c
 framework/containers/hash_table_any.c
+framework/containers/hash_table_u32.c
+framework/containers/hash_table_u64.c
 framework/containers/strings.c
 
 framework/assets/parsing.c

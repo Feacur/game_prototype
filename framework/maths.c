@@ -21,11 +21,12 @@ uint32_t convert_bits_r32_u32(float value) {
 	return data.value_u32;
 }
 
-uint32_t hash_bytes_fnv1(uint8_t const * value, uint32_t length) {
-	uint32_t hash = 0x811c9dc5;
-	for (uint32_t i = 0; i < length; i++) {
+uint32_t hash_u32_bytes_fnv1(uint8_t const * value, uint64_t length) {
+	uint32_t const prime = 0x01000193u;
+	uint32_t hash = 0x811c9dc5u;
+	for (uint64_t i = 0; i < length; i++) {
 		hash ^= value[i];
-		hash *= 0x01000193;
+		hash *= prime;
 	}
 	return hash;
 }
@@ -33,17 +34,46 @@ uint32_t hash_bytes_fnv1(uint8_t const * value, uint32_t length) {
 uint32_t hash_u32_xorshift(uint32_t value) {
 	value ^= value << 13;
 	value ^= value >> 17;
-	value ^= value << 15;
+	value ^= value <<  5;
+	return value;
+}
+
+uint64_t hash_u64_bytes_fnv1(uint8_t const * value, uint64_t length) {
+	uint64_t const prime = 0x00000100000001B3ul;
+	uint64_t hash = 0xcbf29ce484222325ul;
+	for (uint64_t i = 0; i < length; i++) {
+		hash ^= value[i];
+		hash *= prime;
+	}
+	return hash;
+}
+
+uint64_t hash_u64_xorshift(uint64_t value) {
+	value ^= value << 13;
+	value ^= value >>  7;
+	value ^= value << 17;
 	return value;
 }
 
 uint32_t round_up_to_PO2_u32(uint32_t value) {
 	value--;
-	value |= value >> 1;
-	value |= value >> 2;
-	value |= value >> 4;
-	value |= value >> 8;
+	value |= value >>  1;
+	value |= value >>  2;
+	value |= value >>  4;
+	value |= value >>  8;
 	value |= value >> 16;
+	value++;
+	return value;
+}
+
+uint64_t round_up_to_PO2_u64(uint64_t value) {
+	value--;
+	value |= value >>  1;
+	value |= value >>  2;
+	value |= value >>  4;
+	value |= value >>  8;
+	value |= value >> 16;
+	value |= value >> 32;
 	value++;
 	return value;
 }
