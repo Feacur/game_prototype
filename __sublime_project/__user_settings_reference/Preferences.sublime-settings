@@ -11,6 +11,7 @@
 	],
 	"ignored_packages":
 	[
+		"Vintage"
 	],
 	"index_exclude_patterns":
 	[

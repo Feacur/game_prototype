@@ -2,4 +2,5 @@
 [
 	{ "keys": ["ctrl+shift+o"], "command": "prompt_switch_project" },
 	{ "keys": ["ctrl+b"], "command": "cancel_build" },
+	{ "keys": ["ctrl+k", "s"], "command": "save_all" },
 ]

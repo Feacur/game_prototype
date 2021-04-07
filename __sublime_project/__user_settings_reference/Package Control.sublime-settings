@@ -6,6 +6,7 @@
 	],
 	"installed_packages":
 	[
+		"EasyClangComplete",
 		"HexViewer",
 		"Package Control"
 	]
