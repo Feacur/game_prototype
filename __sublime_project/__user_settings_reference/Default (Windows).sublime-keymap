@@ -1,0 +1,5 @@
+// %appdata%/Sublime Text 3/Packages/User
+[
+	{ "keys": ["ctrl+shift+o"], "command": "prompt_switch_project" },
+	{ "keys": ["ctrl+b"], "command": "cancel_build" },
+]

@@ -1,0 +1,59 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../framework"
+		},
+		{
+			"path": "../application"
+		},
+		{
+			"path": "../prototype"
+		},
+		{
+			"path": "../third_party"
+		},
+		{
+			"path": "../assets"
+		},
+		{
+			"path": "../project"
+		},
+		{
+			"path": "../bin"
+		},
+		{
+			"path": "../__vscode_workspace"
+		},
+	],
+	"settings": {
+		"translate_tabs_to_spaces": false
+	},
+	"build_systems": [
+		{
+			"name": "Build Clang",
+			"working_dir": "${project_path:${folder}}/../project",
+			"windows": {
+				"cmd": "build_clang.bat",
+			},
+			"word_wrap": false,
+		},
+		{
+			"name": "Build MSVC",
+			"working_dir": "${project_path:${folder}}/../project",
+			"windows": {
+				"cmd": "build_msvc.bat",
+			},
+			"word_wrap": false,
+		},
+		{
+			"name": "Run",
+			"working_dir": "${project_path:${folder}}/..",
+			"windows": {
+				"shell_cmd": "bin\\game.exe",
+			},
+		},
+	],
+}

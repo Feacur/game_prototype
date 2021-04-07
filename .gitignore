@@ -1,6 +1,7 @@
 # https://git-scm.com/docs/gitignore
 
 # IDE
+*.sublime-workspace
 
 # caches
 /bin/

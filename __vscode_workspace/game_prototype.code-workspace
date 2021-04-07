@@ -23,7 +23,10 @@
 		},
 		{
 			"path": "../bin"
-		}
+		},
+		{
+			"path": "../__sublime_project"
+		},
 	],
 	"settings": {
 		// editor
