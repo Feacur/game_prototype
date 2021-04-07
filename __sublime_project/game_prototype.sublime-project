@@ -29,7 +29,14 @@
 		},
 	],
 	"settings": {
-		"translate_tabs_to_spaces": false
+		// editor
+		"translate_tabs_to_spaces": false,
+		// extensions: EasyClangComplete
+		"ecc_force_unix_includes": true,
+		"ecc_common_flags": [
+			"-I..",
+			"-I../third_party",
+		],
 	},
 	"build_systems": [
 		{

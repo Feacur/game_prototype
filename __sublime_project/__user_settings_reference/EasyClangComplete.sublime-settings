@@ -1,0 +1,16 @@
+// %appdata%/Sublime Text 3/Packages/User
+{
+	"lang_flags": {
+		"C": ["-std=c99"],
+		"CPP": ["-std=c++11"],
+		"OBJECTIVE_C": ["-std=c99"],
+		"OBJECTIVE_CPP": ["-std=c++11"],
+	},
+	"flags_sources" : [],
+	"clang_binary" : "C:/Program Files/LLVM/bin/clang.exe",
+	"hide_default_completions": true,
+	"use_default_includes": false,
+	"use_default_definitions": false,
+	// "max_cache_age": "00:00:30",
+	// "use_libclang_caching": false,
+}
