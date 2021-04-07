@@ -1019,10 +1019,10 @@ void graphics_to_glibrary_init(void) {
 	bool const supports_reverse_z = (ogl_version >= 45) || contains_full_word(graphics_state.extensions, "GL_ARB_clip_control");
 	if (supports_reverse_z) { glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); }
 
-	graphics_state.clip_space[0] =                          0; // origin X
-	graphics_state.clip_space[1] = supports_reverse_z ? 0 : 1; // origin Y
-	graphics_state.clip_space[2] = supports_reverse_z ? 1 : 0; // normalized-space near
-	graphics_state.clip_space[3] = supports_reverse_z ? 0 : 1; // normalized-space far
+	graphics_state.clip_space[0] =                             0.0f; // origin X
+	graphics_state.clip_space[1] = supports_reverse_z ? 0.0f : 1.0f; // origin Y
+	graphics_state.clip_space[2] = supports_reverse_z ? 1.0f : 0.0f; // normalized-space near
+	graphics_state.clip_space[3] = supports_reverse_z ? 0.0f : 1.0f; // normalized-space far
 
 	glDepthRangef(graphics_state.clip_space[2], graphics_state.clip_space[3]);
 	glClearDepthf(graphics_state.clip_space[3]);

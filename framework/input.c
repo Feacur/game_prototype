@@ -90,16 +90,6 @@ void input_to_system_free(void) {
 	array_u32_free(&input_state.codepoints);
 }
 
-//
-#include "framework/internal/input_to_window.h"
-
-void input_to_platform_reset(void) {
-	memset(&input_state.keyboard, 0, sizeof(input_state.keyboard));
-	memset(&input_state.keyboard_prev, 0, sizeof(input_state.keyboard_prev));
-	memset(&input_state.mouse, 0, sizeof(input_state.mouse));
-	memset(&input_state.mouse_prev, 0, sizeof(input_state.mouse_prev));
-}
-
 void input_to_platform_before_update(void) {
 	// track input transitions
 	memcpy(&input_state.keyboard_prev, &input_state.keyboard, sizeof(input_state.keyboard));
@@ -133,6 +123,16 @@ void input_to_platform_after_update(void) {
 		input_state.mouse.delta_x = (int32_t)input_state.mouse.window_x - (int32_t)input_state.mouse_prev.window_x;
 		input_state.mouse.delta_y = (int32_t)input_state.mouse.window_y - (int32_t)input_state.mouse_prev.window_y;
 	}
+}
+
+//
+#include "framework/internal/input_to_window.h"
+
+void input_to_platform_reset(void) {
+	memset(&input_state.keyboard, 0, sizeof(input_state.keyboard));
+	memset(&input_state.keyboard_prev, 0, sizeof(input_state.keyboard_prev));
+	memset(&input_state.mouse, 0, sizeof(input_state.mouse));
+	memset(&input_state.mouse_prev, 0, sizeof(input_state.mouse_prev));
 }
 
 void input_to_platform_on_key(enum Key_Code key, bool is_down) {

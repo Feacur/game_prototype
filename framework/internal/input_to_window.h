@@ -5,8 +5,6 @@
 #include "framework/input_keys.h"
 
 void input_to_platform_reset(void);
-void input_to_platform_before_update(void);
-void input_to_platform_after_update(void);
 
 void input_to_platform_on_key(enum Key_Code key, bool is_down);
 void input_to_platform_on_codepoint(uint32_t codepoint);
