@@ -5,8 +5,9 @@ chcp 65001 > nul
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
 rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
-set debug=dummy
-rem set unity_build=dummy
+rem set debug=dummy
+set unity_build=dummy
+rem set dynamic_rt=dummy
 
 rem https://clang.llvm.org/docs/index.html
 rem https://clang.llvm.org/docs/CommandGuide/clang.html
@@ -32,6 +33,14 @@ set libs=user32.lib gdi32.lib
 set warnings=-Werror -Weverything -Wno-switch-enum -Wno-float-equal
 set compiler=-fno-exceptions -fno-rtti
 set linker=-nologo -WX -subsystem:console
+
+set linker=%linker% -nodefaultlib:libcmt.lib
+if defined dynamic_rt (
+	set libs=%libs% msvcrt.lib
+	set defines=%defines% -D_MT -D_DLL
+) else (
+	set libs=%libs% libcmt.lib
+)
 
 if defined debug (
 	set defines=%defines% -DGAME_TARGET_DEBUG
@@ -69,7 +78,7 @@ if defined unity_build ( rem > compile and auto-link unity build
 		move ".\*.o" ".\temp" > nul
 	)
 	set timeLink=%time%
-	lld-link "./temp/*.o" libcmt.lib -out:"game.exe" %linker%
+	lld-link "./temp/*.o" -out:"game.exe" %linker%
 )
 
 :error

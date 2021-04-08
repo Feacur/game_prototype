@@ -5,8 +5,8 @@ chcp 65001 > nul
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
 rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
-set debug=dummy
-rem set unity_build=dummy
+rem set debug=dummy
+set unity_build=dummy
 rem set dynamic_rt=dummy
 
 rem https://docs.microsoft.com/cpp/build/reference/compiler-options
@@ -26,10 +26,12 @@ set warnings=-WX -W4
 set compiler=-nologo -diagnostics:caret -EHa- -GR- -Fo"./temp/"
 set linker=-nologo -WX -subsystem:console
 
+set linker=%linker% -nodefaultlib:libcmt.lib
 if defined dynamic_rt (
-	set compiler=%compiler% -MD
+	set libs=%libs% msvcrt.lib
+	set defines=%defines% -D_MT -D_DLL
 ) else (
-	set compiler=%compiler% -MT
+	set libs=%libs% libcmt.lib
 )
 
 if defined debug (
