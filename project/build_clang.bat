@@ -15,6 +15,7 @@ rem https://clang.llvm.org/docs/UsersManual.html
 rem https://clang.llvm.org/docs/ClangCommandLineReference.html
 rem https://lld.llvm.org/windows_support.html
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
+rem https://docs.microsoft.com/en-us/cpp/c-runtime-library/crt-library-features
 
 rem > PREPARE TOOLS
 set "PATH=%PATH%;C:/Program Files/LLVM/bin"

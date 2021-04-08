@@ -11,6 +11,7 @@ rem set dynamic_rt=dummy
 
 rem https://docs.microsoft.com/cpp/build/reference/compiler-options
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
+rem https://docs.microsoft.com/en-us/cpp/c-runtime-library/crt-library-features
 
 rem > PREPARE TOOLS
 set VSLANG=1033
