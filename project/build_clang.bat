@@ -29,17 +29,17 @@ if not defined unity_build (
 rem > OPTIONS
 set includes=-I".." -I"../third_party"
 set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE
-set libs=user32.lib gdi32.lib
+set libs=kernel32.lib user32.lib gdi32.lib
 set warnings=-Werror -Weverything -Wno-switch-enum -Wno-float-equal
 set compiler=-fno-exceptions -fno-rtti
 set linker=-nologo -WX -subsystem:console
 
-set linker=%linker% -nodefaultlib:libcmt.lib
+set linker=%linker% -nodefaultlib
 if defined dynamic_rt (
-	set libs=%libs% msvcrt.lib
+	set libs=%libs% ucrt.lib vcruntime.lib msvcrt.lib
 	set defines=%defines% -D_MT -D_DLL
 ) else (
-	set libs=%libs% libcmt.lib
+	set libs=%libs% libucrt.lib libvcruntime.lib libcmt.lib
 )
 
 if defined debug (
