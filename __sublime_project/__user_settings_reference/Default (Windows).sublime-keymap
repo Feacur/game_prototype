@@ -1,6 +1,11 @@
 // %appdata%/Sublime Text 3/Packages/User
 [
-	{ "keys": ["ctrl+shift+o"], "command": "prompt_switch_project" },
+	{ "keys": ["shift+escape"], "command": "show_panel", "args": {"panel": "output.exec"} },
 	{ "keys": ["ctrl+b"], "command": "cancel_build" },
 	{ "keys": ["ctrl+k", "s"], "command": "save_all" },
+	{ "keys": ["ctrl+shift+o"], "command": "project_manager", "args": {"action": "switch"} },
+	{
+		"keys": ["ctrl+shift+b"], "command": "build", "args": {"select": true},
+		"context": [{"key": "for_buildx", "operator": "equal", "operand": true}]
+	},
 ]

@@ -34,13 +34,21 @@
 		// extensions: EasyClangComplete
 		"ecc_force_unix_includes": true,
 		"ecc_common_flags": [
+			// includes
 			"-I..",
 			"-I../third_party",
+			// defines
+			"-DGAME_TARGET_DEBUG",
+			"-D_CRT_SECURE_NO_WARNINGS",
+			"-DWIN32_LEAN_AND_MEAN",
+			"-DNOMINMAX",
+			"-DUNICODE",
 		],
 	},
 	"build_systems": [
 		{
 			"name": "Build Clang",
+			"file_regex": "^(.+):(\\d+):(\\d+): (.+)$",
 			"working_dir": "${project_path:${folder}}/../project",
 			"windows": {
 				"cmd": "build_clang.bat",
@@ -49,6 +57,7 @@
 		},
 		{
 			"name": "Build MSVC",
+			"file_regex": "^(.+)\\((\\d+),?(\\d+)?\\)(?: +|): (.+)$",
 			"working_dir": "${project_path:${folder}}/../project",
 			"windows": {
 				"cmd": "build_msvc.bat",

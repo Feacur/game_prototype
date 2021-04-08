@@ -8,9 +8,9 @@
 	},
 	"flags_sources" : [],
 	"clang_binary" : "C:/Program Files/LLVM/bin/clang.exe",
-	"hide_default_completions": true,
 	"use_default_includes": false,
 	"use_default_definitions": false,
+	// "hide_default_completions": true,
 	// "max_cache_age": "00:00:30",
 	// "use_libclang_caching": false,
 }

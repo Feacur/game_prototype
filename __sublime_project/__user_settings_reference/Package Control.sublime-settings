@@ -6,8 +6,12 @@
 	],
 	"installed_packages":
 	[
+		"BuildX",
 		"EasyClangComplete",
 		"HexViewer",
-		"Package Control"
+		"Package Control",
+		"PackageDev",
+		"ProjectManager",
+		"Terminus"
 	]
 }
