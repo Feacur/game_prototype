@@ -1,11 +1,80 @@
 // %appdata%/Sublime Text 3/Packages/User
 [
-	{ "keys": ["shift+escape"], "command": "show_panel", "args": {"panel": "output.exec"} },
-	{ "keys": ["ctrl+b"], "command": "cancel_build" },
+	{ "keys": ["shift+escape"], "command": "show_panel",
+		"args": {"panel": "output.exec"},
+	},
+	{ "keys": ["ctrl+b"], "command": "toggle_side_bar" },
 	{ "keys": ["ctrl+k", "s"], "command": "save_all" },
-	{ "keys": ["ctrl+shift+o"], "command": "project_manager", "args": {"action": "switch"} },
+	{ "keys": ["ctrl+shift+o"], "command": "project_manager",
+		"args": {"action": "switch"},
+	},
+	{ "keys": ["ctrl+k", "w"], "command": "close_all" },
+	{ "keys": ["alt+["], "command": "prev_result" },
+	{ "keys": ["alt+]"], "command": "next_result" },
+	{ "keys": ["alt+left"], "command": "jump_back" },
+	{ "keys": ["alt+right"], "command": "jump_forward" },
+	{ "keys": ["ctrl+alt+["], "command": "prev_modification" },
+	{ "keys": ["ctrl+alt+]"], "command": "next_modification" },
+	{ "keys": ["ctrl+,"], "command": "context_menu" },
+	{ "keys": ["ctrl+."], "command": "ecc_show_popup_info" },
+	{ "keys": ["f12"], "command": "ecc_goto_declaration" },
+	{ "keys": ["shift+f12"], "command": "goto_definition" },
+	{ "keys": ["f5"], "command": "build",
+		"args": { "build_system": "Debug" }
+	},
+	{ "keys": ["shift+f5"], "command": "build",
+		"args": { "build_system": "Run" }
+	},
+	// {
+	// 	"keys": ["ctrl+."], "command": "???",
+	// 	"context": [
+	// 		{"key": "control", "operand": "sidebar_tree"},
+	// 	],
+	// },
 	{
-		"keys": ["ctrl+shift+b"], "command": "build", "args": {"select": true},
-		"context": [{"key": "for_buildx", "operator": "equal", "operand": true}]
+		"keys": ["ctrl+shift+b"], "command": "build",
+		"args": {"select": true},
+		"context": [
+			{"key": "for_buildx", "operator": "equal", "operand": true},
+		],
+	},
+	{
+		"keys": ["alt+up"], "command": "move",
+		"args": {
+			"by": "stops",
+			"empty_line": true,
+			"forward": false,
+		}
+	},
+	{
+		"keys": ["alt+down"], "command": "move",
+		"args": {
+			"by": "stops",
+			"empty_line": true,
+			"forward": true,
+		}
+	},
+	{
+		"keys": ["alt+shift+up"], "command": "move",
+		"args": {
+			"by": "stops",
+			"empty_line": true,
+			"forward": false,
+			"extend": true,
+		}
+	},
+	{
+		"keys": ["alt+shift+down"], "command": "move",
+		"args": {
+			"by": "stops",
+			"empty_line": true,
+			"forward": true,
+			"extend": true,
+		}
+	},
+	{
+		"keys": ["enter"], "command": "double_click_at_caret", "context": [
+			{ "key": "selector", "operator": "equal", "operand": "text.find-in-files", "match_all": true },
+		],
 	},
 ]

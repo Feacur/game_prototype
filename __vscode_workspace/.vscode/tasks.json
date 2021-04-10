@@ -19,7 +19,7 @@
 				"pattern": {
 					// between "^start" and "end$" tokens:
 					// path:line:column: type: message[ code in square braces][spaces]
-					// ^(.+):(\d+):(\d+): (error|warning|note): ([^\[]+)( \[.*\])?( +|)$
+					// ^(.+):(\d+):(\d+): (error|warning|note): ([^\[]+)( \[.*\])?(?: +|)$
 					"regexp": "^(.+):(\\d+):(\\d+): (error|warning|note): ([^\\[]+)( \\[.*\\])?( +|)$",
 					"file": 1,
 					"line": 2,
@@ -40,15 +40,15 @@
 				"fileLocation": ["autoDetect", "${workspaceFolder}"],
 				"pattern": {
 					// between "^start" and "end$" tokens:
-					// path(line[,column])[spaces]: type code: message[spaces]
-					// ^(.+)\((\d+),?(\d+)?\)( +|): (error|warning) (C\d+): (.+)( +|)$
-					"regexp": "^(.+)\\((\\d+),?(\\d+)?\\)( +|): (error|warning) (C\\d+): (.+)( +|)$",
+					// path(line[,][column]): type[ ][code]: message
+					// ^(.+)\((\d+),?(\d+)?\): (error|warning) ?(C\d+)?: (.+)$
+					"regexp": "^(.+)\\((\\d+),?(\\d+)?\\): (error|warning|note) ?(C\\d+)?: (.+)( +|)$",
 					"file": 1,
 					"line": 2,
 					"column": 3,
-					"severity": 5,
-					"code": 6,
-					"message": 7,
+					"severity": 4,
+					"code": 5,
+					"message": 6,
 				},
 			},
 		},

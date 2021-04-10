@@ -48,6 +48,9 @@
 	"build_systems": [
 		{
 			"name": "Build Clang",
+			// between "^start" and "end$" tokens:
+			// path:line:column: message
+			// ^(.+):(\d+):(\d+): (.+)$
 			"file_regex": "^(.+):(\\d+):(\\d+): (.+)$",
 			"working_dir": "${project_path:${folder}}/../project",
 			"windows": {
@@ -57,7 +60,10 @@
 		},
 		{
 			"name": "Build MSVC",
-			"file_regex": "^(.+)\\((\\d+),?(\\d+)?\\)(?: +|): (.+)$",
+			// between "^start" and "end$" tokens:
+			// path(line[,][column]): message
+			// ^(.+)\((\d+),?(\d+)?\): (.+)$
+			"file_regex": "^(.+)\\((\\d+),?(\\d+)?\\): (.+)$",
 			"working_dir": "${project_path:${folder}}/../project",
 			"windows": {
 				"cmd": "build_msvc.bat",
@@ -65,10 +71,17 @@
 			"word_wrap": false,
 		},
 		{
+			"name": "Debug",
+			"working_dir": "${project_path:${folder}}/../project",
+			"windows": {
+				"cmd": "debug.bat",
+			},
+		},
+		{
 			"name": "Run",
 			"working_dir": "${project_path:${folder}}/..",
 			"windows": {
-				"shell_cmd": "bin\\game.exe",
+				"shell_cmd": "start bin/game.exe",
 			},
 		},
 	],
