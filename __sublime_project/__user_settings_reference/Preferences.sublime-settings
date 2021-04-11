@@ -1,9 +1,6 @@
 // %appdata%/Sublime Text 3/Packages/User
 {
 	"auto_complete_cycle": true,
-	"auto_complete_triggers":
-	[
-	],
 	"close_windows_when_empty": false,
 	"color_scheme": "Packages/Color Scheme - Default/Mariana.sublime-color-scheme",
 	"detect_indentation": false,
