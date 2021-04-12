@@ -19,7 +19,11 @@ struct Batch_Mesh_2D {
 #include "batch_mesh_2d.h"
 
 struct Batch_Mesh_2D * batch_mesh_2d_init(void) {
-	uint32_t const attributes[] = {ATTRIBUTE_TYPE_POSITION, 2, ATTRIBUTE_TYPE_TEXCOORD, 2};
+	uint32_t const attributes[] = {
+		ATTRIBUTE_TYPE_POSITION, 2,
+		ATTRIBUTE_TYPE_TEXCOORD, 2,
+		ATTRIBUTE_TYPE_MIXER, 2,
+	};
 	uint32_t const attributes_count = (sizeof(attributes) / sizeof(*attributes)) / 2;
 
 	struct Batch_Mesh_2D * batch_mesh = MEMORY_ALLOCATE(NULL, struct Batch_Mesh_2D);
@@ -88,14 +92,15 @@ uint32_t batch_mesh_2d_get_offset(struct Batch_Mesh_2D * batch_mesh) {
 
 void batch_mesh_2d_add_quad(
 	struct Batch_Mesh_2D * batch_mesh,
-	float const * rect, float const * uv // left, bottom, right, top
+	float const * rect, float const * uv, // left, bottom, right, top
+	float const * mixer
 ) {
 	uint32_t const vertex_index = batch_mesh->vertex_index;
-	array_float_write_many(&batch_mesh->vertices, (2 + 2) * 4, (float[]){
-		rect[0], rect[1], uv[0], uv[1],
-		rect[0], rect[3], uv[0], uv[3],
-		rect[2], rect[1], uv[2], uv[1],
-		rect[2], rect[3], uv[2], uv[3],
+	array_float_write_many(&batch_mesh->vertices, (2 + 2 + 2) * 4, (float[]){
+		rect[0], rect[1], uv[0], uv[1], mixer[0], mixer[1],
+		rect[0], rect[3], uv[0], uv[3], mixer[0], mixer[1],
+		rect[2], rect[1], uv[2], uv[1], mixer[0], mixer[1],
+		rect[2], rect[3], uv[2], uv[3], mixer[0], mixer[1],
 	});
 	array_u32_write_many(&batch_mesh->indices, 3 * 2, (uint32_t[]){
 		vertex_index + 1, vertex_index + 0, vertex_index + 2,

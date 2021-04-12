@@ -87,7 +87,7 @@ void batcher_add_quad(
 	struct Batcher * batcher,
 	float const * rect, float const * uv
 ) {
-	batch_mesh_2d_add_quad(batcher->buffer, rect, uv);
+	batch_mesh_2d_add_quad(batcher->buffer, rect, uv, (float[]){1, 0});
 }
 
 void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64_t length, uint8_t const * data, float x, float y) {
@@ -147,7 +147,8 @@ void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64
 				((float)glyph->params.rect[2]) + offset_x,
 				((float)glyph->params.rect[3]) + offset_y,
 			},
-			glyph->uv
+			glyph->uv,
+			(float[]){0, 1}
 		);
 
 		offset_x += glyph->params.full_size_x;
@@ -155,8 +156,9 @@ void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64
 }
 
 void batcher_draw(struct Batcher * batcher, uint32_t size_x, uint32_t size_y, struct Gpu_Target * gpu_target) {
-	uint32_t const texture_id   = graphics_add_uniform("u_Texture");
 	uint32_t const camera_id    = graphics_add_uniform("u_Camera");
+	uint32_t const texture_id   = graphics_add_uniform("u_Texture");
+	uint32_t const color_id     = graphics_add_uniform("u_Color");
 	uint32_t const transform_id = graphics_add_uniform("u_Transform");
 
 	gpu_mesh_update(batcher->gpu_mesh, batch_mesh_2d_get_asset(batcher->buffer));
@@ -176,10 +178,10 @@ void batcher_draw(struct Batcher * batcher, uint32_t size_x, uint32_t size_y, st
 	for (uint32_t i = 0; i < passes_count; i++) {
 		struct Batch * batch = array_any_at(batcher->passes, i);
 
-		if (batch->texture != NULL) { gfx_material_set_texture(batch->material, texture_id, 1, &batch->texture); }
-
-		// @todo: do CPU-side?
+		// @todo: do matrix computations CPU-side
 		gfx_material_set_float(batch->material, camera_id, 4*4, &batch->camera.x.x);
+		gfx_material_set_texture(batch->material, texture_id, 1, &batch->texture);
+		gfx_material_set_float(batch->material, color_id, 4, &(struct vec4){1, 1, 1, 1}.x);
 		gfx_material_set_float(batch->material, transform_id, 4*4, &batch->transform.x.x);
 
 		graphics_draw(&(struct Render_Pass){

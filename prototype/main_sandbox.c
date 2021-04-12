@@ -37,16 +37,15 @@
 #include <string.h>
 
 static struct Game_Uniforms {
+	uint32_t camera;
 	uint32_t color;
 	uint32_t texture;
-	uint32_t camera;
 	uint32_t transform;
 } uniforms;
 
 struct Game_Font {
 	struct Font_Image * buffer;
 	struct Gpu_Texture * gpu_texture;
-	struct Gfx_Material material;
 };
 
 static struct Game_Content {
@@ -58,8 +57,7 @@ static struct Game_Content {
 	//
 	struct {
 		struct Gpu_Program * program_test;
-		struct Gpu_Program * program_font;
-		struct Gpu_Program * program_target;
+		struct Gpu_Program * program_batcher;
 		struct Gpu_Texture * texture_test;
 		struct Gpu_Mesh * mesh_cube;
 	} gpu;
@@ -70,7 +68,7 @@ static struct Game_Content {
 	//
 	struct {
 		struct Gfx_Material test;
-		struct Gfx_Material target;
+		struct Gfx_Material batcher;
 	} materials;
 } content;
 
@@ -103,11 +101,8 @@ static void game_init(void) {
 		struct Array_Byte asset_shader_test;
 		platform_file_read_entire("assets/shaders/test.glsl", &asset_shader_test);
 
-		struct Array_Byte asset_shader_font;
-		platform_file_read_entire("assets/shaders/font.glsl", &asset_shader_font);
-		
-		struct Array_Byte asset_shader_target;
-		platform_file_read_entire("assets/shaders/target.glsl", &asset_shader_target);
+		struct Array_Byte asset_shader_batcher;
+		platform_file_read_entire("assets/shaders/batcher.glsl", &asset_shader_batcher);
 
 		struct Asset_Image asset_image_test;
 		asset_image_init(&asset_image_test, "assets/sandbox/test.png");
@@ -116,14 +111,12 @@ static void game_init(void) {
 		asset_mesh_init(&asset_mesh_cube, "assets/sandbox/cube.obj");
 
 		content.gpu.program_test = gpu_program_init(&asset_shader_test);
-		content.gpu.program_font = gpu_program_init(&asset_shader_font);
-		content.gpu.program_target = gpu_program_init(&asset_shader_target);
+		content.gpu.program_batcher = gpu_program_init(&asset_shader_batcher);
 		content.gpu.texture_test = gpu_texture_init(&asset_image_test);
 		content.gpu.mesh_cube = gpu_mesh_init(&asset_mesh_cube);
 
 		array_byte_free(&asset_shader_test);
-		array_byte_free(&asset_shader_font);
-		array_byte_free(&asset_shader_target);
+		array_byte_free(&asset_shader_batcher);
 		asset_image_free(&asset_image_test);
 		asset_mesh_free(&asset_mesh_cube);
 
@@ -160,17 +153,16 @@ static void game_init(void) {
 		content.fonts.sans.buffer = font_image_init(content.assets.font_sans, 32);
 		font_image_build(content.fonts.sans.buffer, codepoints_count / 2, codepoints);
 		content.fonts.sans.gpu_texture = gpu_texture_init(font_image_get_asset(content.fonts.sans.buffer));
-		gfx_material_init(&content.fonts.sans.material, content.gpu.program_font);
 
 		MEMORY_FREE(NULL, codepoints);
 
 		content.fonts.mono.buffer = font_image_init(content.assets.font_mono, 32);
 		font_image_build(content.fonts.mono.buffer, 1, (uint32_t[]){' ', '~'});
 		content.fonts.mono.gpu_texture = gpu_texture_init(font_image_get_asset(content.fonts.mono.buffer));
-		gfx_material_init(&content.fonts.mono.material, content.gpu.program_font);
 
+		//
 		gfx_material_init(&content.materials.test, content.gpu.program_test);
-		gfx_material_init(&content.materials.target, content.gpu.program_target);
+		gfx_material_init(&content.materials.batcher, content.gpu.program_batcher);
 	}
 
 	// init target
@@ -196,16 +188,6 @@ static void game_init(void) {
 	// init batch mesh
 	batcher_init(&batcher);
 
-	// fill materials
-	{
-		gfx_material_set_float(&content.fonts.sans.material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
-		gfx_material_set_float(&content.fonts.mono.material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
-		gfx_material_set_float(&content.materials.test, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
-
-		struct Gpu_Texture * target_texture = gpu_target_get_texture(target.gpu_target, TEXTURE_TYPE_COLOR, 0);
-		gfx_material_set_texture(&content.materials.target, uniforms.texture, 1, &target_texture);
-	}
-
 	// init state
 	{
 		state.camera = (struct Transform){
@@ -228,20 +210,17 @@ static void game_free(void) {
 	array_byte_free(&content.assets.text_test);
 
 	gpu_program_free(content.gpu.program_test);
-	gpu_program_free(content.gpu.program_font);
-	gpu_program_free(content.gpu.program_target);
+	gpu_program_free(content.gpu.program_batcher);
 	gpu_texture_free(content.gpu.texture_test);
 	gpu_mesh_free(content.gpu.mesh_cube);
 	gfx_material_free(&content.materials.test);
-	gfx_material_free(&content.materials.target);
+	gfx_material_free(&content.materials.batcher);
 
 	font_image_free(content.fonts.sans.buffer);
 	gpu_texture_free(content.fonts.sans.gpu_texture);
-	gfx_material_free(&content.fonts.sans.material);
 
 	font_image_free(content.fonts.mono.buffer);
 	gpu_texture_free(content.fonts.mono.gpu_texture);
-	gfx_material_free(&content.fonts.mono.material);
 
 	gpu_target_free(target.gpu_target);
 
@@ -298,6 +277,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	gfx_material_set_float(&content.materials.test, uniforms.camera, 4*4, &test_camera.x.x);
 
 	gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &content.gpu.texture_test);
+	gfx_material_set_float(&content.materials.test, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 
 	gfx_material_set_float(&content.materials.test, uniforms.transform, 4*4, &test_transform.x.x);
 	graphics_draw(&(struct Render_Pass){
@@ -318,7 +298,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	batcher_set_blend_mode(&batcher, (struct Blend_Mode){.mask = COLOR_CHANNEL_FULL});
 	batcher_set_depth_mode(&batcher, (struct Depth_Mode){0});
 
-	batcher_set_material(&batcher, &content.materials.target);
+	batcher_set_material(&batcher, &content.materials.batcher);
 	batcher_set_texture(&batcher, gpu_target_get_texture(target.gpu_target, TEXTURE_TYPE_COLOR, 0));
 
 	batcher_set_transform(&batcher, mat4_set_transformation((struct vec3){0, 0, 1}, (struct vec3){1, 1, 1}, (struct vec4){0, 0, 0, 1}));
@@ -345,7 +325,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	});
 	batcher_set_depth_mode(&batcher, (struct Depth_Mode){0});
 
-	batcher_set_material(&batcher, &font->material);
+	batcher_set_material(&batcher, &content.materials.batcher);
 	batcher_set_texture(&batcher, font->gpu_texture);
 
 	batcher_set_transform(&batcher, mat4_identity);
