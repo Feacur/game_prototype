@@ -6,13 +6,16 @@ rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerm
 rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
 rem optimized|debug
-set configuration=optimized
+set configuration=%1
+if [%configuration%] == [] ( set configuration=optimized )
 
 rem static|dynamic
-set runtime_mode=static
+set runtime_mode=%2
+if [%runtime_mode%] == [] ( set runtime_mode=static )
 
 rem normal|unity|unity_link
-set build_mode=unity_link
+set build_mode=%3
+if [%build_mode%] == [] ( set build_mode=unity_link )
 
 rem https://docs.microsoft.com/cpp/build/reference/compiler-options
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
