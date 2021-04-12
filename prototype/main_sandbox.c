@@ -148,7 +148,7 @@ static void game_init(void) {
 			if (octets_count == 0) { i++; continue; }
 
 			uint32_t const codepoint = utf8_decode(asset_codepoints.data + i, octets_count);
-			if (codepoint == UTF8_EMPTY) { i++; continue; }
+			if (codepoint == CODEPOINT_EMPTY) { i++; continue; }
 
 			i += octets_count;
 

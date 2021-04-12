@@ -23,14 +23,14 @@ uint32_t utf8_length(uint8_t const * value) {
 uint32_t utf8_decode(uint8_t const * value, uint32_t length) {
 	// @note: do range checks or not?
 	static uint8_t const masks[8] = {0x00, 0x7f, 0x1f, 0x0f, 0x07, 0x00, 0x00, 0x00};
-	// if (length >= sizeof(masks) / sizeof(*masks)) { return UTF8_EMPTY; }
+	// if (length >= sizeof(masks) / sizeof(*masks)) { return CODEPOINT_EMPTY; }
 
 	uint32_t codepoint = value[0] & masks[length];
 	for (uint32_t i = 1; i < length; i++) {
 		uint8_t const octet = value[i];
 		if ((octet & 0xc0) != 0x80) {
 			fprintf(stderr, "UTF-8 sequence is malformed\n"); DEBUG_BREAK();
-			return UTF8_EMPTY;
+			return CODEPOINT_EMPTY;
 		}
 		codepoint = (codepoint << 6) | (octet & 0x3f);
 	}
