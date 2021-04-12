@@ -60,7 +60,12 @@ if %configuration% == debug (
 set compiler=%compiler% %includes% %defines%
 set linker=%linker% %libs%
 
-set warnings=%warnings% -Wno-switch-enum -Wno-float-equal -Wno-reserved-id-macro -Wno-nonportable-system-include-path -Wno-assign-enum -Wno-bad-function-cast
+set warnings=%warnings% -Wno-switch-enum
+set warnings=%warnings% -Wno-float-equal
+set warnings=%warnings% -Wno-reserved-id-macro
+set warnings=%warnings% -Wno-nonportable-system-include-path
+set warnings=%warnings% -Wno-assign-enum
+set warnings=%warnings% -Wno-bad-function-cast
 
 rem |> COMPILE AND LINK
 cd ..
