@@ -44,4 +44,5 @@
 
 #include "application/application.c"
 
+#include "prototype/batcher.c"
 #include "prototype/main_sandbox.c"

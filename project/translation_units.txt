@@ -39,4 +39,5 @@ framework/opengl/graphics.c
 
 application/application.c
 
+prototype/batcher.c
 prototype/main_sandbox.c

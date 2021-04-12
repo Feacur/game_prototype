@@ -13,16 +13,14 @@ struct Render_Pass {
 	uint32_t size_x, size_y;
 	struct Gpu_Target * target;
 	struct Blend_Mode blend_mode;
-	bool depth_enabled; bool depth_mask;
+	struct Depth_Mode depth_mode;
 	//
 	enum Texture_Type clear_mask;
 	uint32_t clear_rgba;
 	//
 	struct Gfx_Material * material;
 	struct Gpu_Mesh * mesh;
-	//
-	uint32_t camera_id, transform_id;
-	struct mat4 camera, transform;
+	uint32_t offset, length;
 };
 
 #endif

@@ -17,6 +17,8 @@
 #include "framework/graphics/batch_mesh_2d.h"
 #include "framework/graphics/batch_mesh_3d.h"
 
+#include "application/application.h"
+
 #include "framework/containers/array_any.h"
 #include "framework/containers/array_byte.h"
 #include "framework/containers/hash_table_any.h"
@@ -28,6 +30,7 @@
 
 #include "application/application.h"
 #include "transform.h"
+#include "batcher.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +39,6 @@
 static struct Game_Uniforms {
 	uint32_t color;
 	uint32_t texture;
-	uint32_t font;
 	uint32_t camera;
 	uint32_t transform;
 } uniforms;
@@ -76,10 +78,7 @@ static struct Game_Target {
 	struct Gpu_Target * gpu_target;
 } target;
 
-static struct Game_Batch {
-	struct Game_Batch_Mesh_2D * buffer;
-	struct Gpu_Mesh * gpu_mesh;
-} batch;
+static struct Batcher batcher;
 
 static struct Game_State {
 	struct Transform camera;
@@ -90,7 +89,6 @@ static void game_init(void) {
 	// init uniforms ids
 	uniforms.color = graphics_add_uniform("u_Color");
 	uniforms.texture = graphics_add_uniform("u_Texture");
-	uniforms.font = graphics_add_uniform("u_Font");
 	uniforms.camera = graphics_add_uniform("u_Camera");
 	uniforms.transform = graphics_add_uniform("u_Transform");
 
@@ -196,20 +194,12 @@ static void game_init(void) {
 	}
 
 	// init batch mesh
-	{
-		batch.buffer = game_batch_mesh_2d_init();
-		batch.gpu_mesh = gpu_mesh_init(game_batch_mesh_2d_get_asset(batch.buffer));
-	}
+	batcher_init(&batcher);
 
 	// fill materials
 	{
-		gfx_material_set_texture(&content.fonts.sans.material, uniforms.font, 1, &content.fonts.sans.gpu_texture);
 		gfx_material_set_float(&content.fonts.sans.material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
-
-		gfx_material_set_texture(&content.fonts.mono.material, uniforms.font, 1, &content.fonts.mono.gpu_texture);
 		gfx_material_set_float(&content.fonts.mono.material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
-
-		gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &content.gpu.texture_test);
 		gfx_material_set_float(&content.materials.test, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 
 		struct Gpu_Texture * target_texture = gpu_target_get_texture(target.gpu_target, TEXTURE_TYPE_COLOR, 0);
@@ -255,13 +245,11 @@ static void game_free(void) {
 
 	gpu_target_free(target.gpu_target);
 
-	game_batch_mesh_2d_free(batch.buffer);
-	gpu_mesh_free(batch.gpu_mesh);
+	batcher_free(&batcher);
 
 	memset(&uniforms, 0, sizeof(uniforms));
 	memset(&content, 0, sizeof(content));
 	memset(&target, 0, sizeof(target));
-	memset(&batch, 0, sizeof(batch));
 	memset(&state, 0, sizeof(state));
 }
 
@@ -285,157 +273,100 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 }
 
 static void game_render(uint32_t size_x, uint32_t size_y) {
-	struct Game_Font * font = &content.fonts.sans;
-
 	uint32_t target_size_x, target_size_y;
 	gpu_target_get_size(target.gpu_target, &target_size_x, &target_size_y);
 
-	// target: clear
+
+	// render to target
 	graphics_draw(&(struct Render_Pass){
 		.target = target.gpu_target,
 		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-		.depth_enabled = true, .depth_mask = true,
+		.depth_mode = {.enabled = true, .mask = true},
 		//
 		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
 		.clear_rgba = 0x303030ff,
 	});
 
-	// target: draw 3d
+	struct mat4 test_camera = mat4_mul_mat(
+		mat4_set_projection((struct vec2){0, 0}, (struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 10, 0),
+		mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
+	);
+	struct mat4 test_transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation);
+
+
+	// --- map to camera coords; draw transformed
+	gfx_material_set_float(&content.materials.test, uniforms.camera, 4*4, &test_camera.x.x);
+
+	gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &content.gpu.texture_test);
+
+	gfx_material_set_float(&content.materials.test, uniforms.transform, 4*4, &test_transform.x.x);
 	graphics_draw(&(struct Render_Pass){
+		// .size_x = size_x, .size_y = size_y,
 		.target = target.gpu_target,
 		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-		.depth_enabled = true, .depth_mask = true,
+		.depth_mode = {.enabled = true, .mask = true},
 		//
 		.material = &content.materials.test,
 		.mesh = content.gpu.mesh_cube,
-		// map to camera coords; draw transformed
-		.camera_id = uniforms.camera,
-		.transform_id = uniforms.transform,
-		.camera = mat4_mul_mat(
-			mat4_set_projection((struct vec2){0, 0}, (struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 10, 0),
-			mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
-		),
-		.transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation),
 	});
 
-	// screen buffer: clear
-	graphics_draw(&(struct Render_Pass){
-		.size_x = size_x, .size_y = size_y,
-		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-		.depth_enabled = true, .depth_mask = true,
-		//
-		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
-		.clear_rgba = 0x303030ff,
-	});
 
-	// screen buffer: draw target
-	{
-		// @todo: provide options to fit draw buffer into the window (useful for fullscreen?)
-		// @todo: restrict window scaling by render buffer (useful for windowed?)
-		game_batch_mesh_2d_clear(batch.buffer);
-		game_batch_mesh_2d_add_quad(
-			batch.buffer,
-			(float[]){-1, -1, 1, 1},
-			(float[]){0,0,1,1}
-		);
+	// batch a quad with target texture
+	// --- map to normalized device coords; draw at the farthest point
+	batcher_set_camera(&batcher, mat4_identity);
 
-		struct Asset_Mesh * batch_mesh = game_batch_mesh_2d_get_asset(batch.buffer);
-		gpu_mesh_update(batch.gpu_mesh, batch_mesh);
-	}
+	batcher_set_blend_mode(&batcher, (struct Blend_Mode){.mask = COLOR_CHANNEL_FULL});
+	batcher_set_depth_mode(&batcher, (struct Depth_Mode){0});
 
-	graphics_draw(&(struct Render_Pass){
-		.size_x = size_x, .size_y = size_y,
-		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-		//
-		.material = &content.materials.target,
-		.mesh = batch.gpu_mesh,
-		// map to normalized device coords; draw at the farthest point
-		.camera_id = uniforms.camera,
-		.transform_id = uniforms.transform,
-		.camera = mat4_identity,
-		.transform = mat4_set_transformation((struct vec3){0, 0, 1}, (struct vec3){1, 1, 1}, (struct vec4){0, 0, 0, 1}),
-	});
+	batcher_set_material(&batcher, &content.materials.target);
+	batcher_set_texture(&batcher, gpu_target_get_texture(target.gpu_target, TEXTURE_TYPE_COLOR, 0));
 
-	// screen buffer: draw HUD
-	{
-		game_batch_mesh_2d_clear(batch.buffer);
+	batcher_set_transform(&batcher, mat4_set_transformation((struct vec3){0, 0, 1}, (struct vec3){1, 1, 1}, (struct vec4){0, 0, 0, 1}));
+	batcher_add_quad(
+		&batcher,
+		(float[]){-1, -1, 1, 1},
+		(float[]){0,0,1,1}
+	);
 
-		float const text_x = 50, text_y = 200;
-		float const line_height = font_image_get_height(font->buffer) + font_image_get_gap(font->buffer);
-		float offset_x = text_x, offset_y = text_y;
-		uint32_t previous_glyph_id = 0;
 
-		// struct Array_U32 const * codepoints = input_get_codepoints();
-		// for (size_t i = 0; i < codepoints->count; i++) {
-		// 	uint32_t const codepoint = codepoints->data[i];
+	// batch some text and a texture
+	// --- map to screen buffer coords; draw at the nearest point
+	struct Game_Font * font = &content.fonts.sans;
 
-		for (size_t i = 0; i < content.assets.text_test.count;) {
-			uint32_t const octets_count = utf8_length(content.assets.text_test.data + i);
-			if (octets_count == 0) { i++; continue; }
+	batcher_set_camera(&batcher, mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1));
 
-			uint32_t const codepoint = utf8_decode(content.assets.text_test.data + i, octets_count);
-			if (codepoint == UTF8_EMPTY) { i++; continue; }
-
-			i += octets_count;
-
-			if (codepoint < ' ') {
-				previous_glyph_id = 0;
-				if (codepoint == '\t') {
-					struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, ' ');
-					if (glyph != NULL) { offset_x += glyph->params.full_size_x * 4; }
-				}
-				else if (codepoint == '\n') {
-					offset_x = text_x;
-					offset_y -= line_height;
-				}
-				continue;
-			}
-
-			struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, codepoint);
-			if (glyph == NULL) { previous_glyph_id = 0; continue; }
-
-			offset_x += (previous_glyph_id != 0) ? font_image_get_kerning(font->buffer, previous_glyph_id, glyph->id) : 0;
-			float const rect[] = { // left, bottom, top, right
-				((float)glyph->params.rect[0]) + offset_x,
-				((float)glyph->params.rect[1]) + offset_y,
-				((float)glyph->params.rect[2]) + offset_x,
-				((float)glyph->params.rect[3]) + offset_y,
-			};
-			offset_x += glyph->params.full_size_x;
-
-			game_batch_mesh_2d_add_quad(batch.buffer, rect, glyph->uv);
-		}
-
-		struct Asset_Image const * font_image = font_image_get_asset(font->buffer);
-		game_batch_mesh_2d_add_quad(
-			batch.buffer,
-			(float[]){0, (float)(size_y - font_image->size_y), (float)font_image->size_x, (float)size_y},
-			(float[]){0,0,1,1}
-		);
-
-		struct Asset_Mesh * batch_mesh = game_batch_mesh_2d_get_asset(batch.buffer);
-		gpu_mesh_update(batch.gpu_mesh, batch_mesh);
-	}
-
-	graphics_draw(&(struct Render_Pass){
-		.size_x = size_x, .size_y = size_y,
-		.blend_mode = {
-			.rgb = {
-				.op = BLEND_OP_ADD,
-				.src = BLEND_FACTOR_SRC_ALPHA,
-				.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-			},
-			.mask = COLOR_CHANNEL_FULL
+	batcher_set_blend_mode(&batcher, (struct Blend_Mode){
+		.rgb = {
+			.op = BLEND_OP_ADD,
+			.src = BLEND_FACTOR_SRC_ALPHA,
+			.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
 		},
-		//
-		.material = &font->material,
-		.mesh = batch.gpu_mesh,
-		// map to screen buffer coords; draw at the nearest point
-		.camera_id = uniforms.camera,
-		.transform_id = uniforms.transform,
-		.camera = mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1),
-		.transform = mat4_identity,
+		.mask = COLOR_CHANNEL_FULL
 	});
+	batcher_set_depth_mode(&batcher, (struct Depth_Mode){0});
+
+	batcher_set_material(&batcher, &font->material);
+	batcher_set_texture(&batcher, font->gpu_texture);
+
+	batcher_set_transform(&batcher, mat4_identity);
+	batcher_add_text(
+		&batcher,
+		font->buffer,
+		content.assets.text_test.count,
+		content.assets.text_test.data,
+		50, 200
+	);
+
+	struct Asset_Image const * font_image = font_image_get_asset(font->buffer);
+	batcher_add_quad(
+		&batcher,
+		(float[]){0, (float)(size_y - font_image->size_y), (float)font_image->size_x, (float)size_y},
+		(float[]){0,0,1,1}
+	);
+
+
+	// draw batches
+	batcher_draw(&batcher, size_x, size_y, NULL);
 }
 
 //

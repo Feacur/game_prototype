@@ -172,6 +172,10 @@ struct Blend_Mode {
 	uint32_t rgba;
 };
 
+struct Depth_Mode {
+	bool enabled, mask;
+};
+
 struct Texture_Parameters {
 	enum Texture_Type texture_type;
 	enum Data_Type data_type;

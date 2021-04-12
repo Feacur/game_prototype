@@ -30,13 +30,13 @@ void main()
 in vec2 v_TexCoord;
 
 uniform vec4 u_Color;
-uniform sampler2D u_Font;
+uniform sampler2D u_Texture;
 
 layout(location = 0) out vec4 out_color;
 
 void main()
 {
-	float value = texture(u_Font, v_TexCoord).r;
+	float value = texture(u_Texture, v_TexCoord).r;
 	out_color = vec4(u_Color.rgb, u_Color.a * value);
 }
 #endif

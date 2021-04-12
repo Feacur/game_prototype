@@ -889,9 +889,9 @@ static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 	}
 }
 
-static void graphics_set_depth_mode(bool enabled, bool mask) {
-	glDepthMask((enabled && mask) ? GL_TRUE : GL_FALSE);
-	if (enabled) {
+static void graphics_set_depth_mode(struct Depth_Mode const * mode) {
+	glDepthMask((mode->enabled && mode->mask) ? GL_TRUE : GL_FALSE);
+	if (mode->enabled) {
 		glEnable(GL_DEPTH_TEST);
 	}
 	else {
@@ -921,7 +921,7 @@ void graphics_draw(struct Render_Pass const * pass) {
 	if (pass->target == NULL && pass->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
 
 	graphics_set_blend_mode(&pass->blend_mode);
-	graphics_set_depth_mode(pass->depth_enabled, pass->depth_mask);
+	graphics_set_depth_mode(&pass->depth_mode);
 
 	graphics_select_target(pass->target);
 	graphics_clear(pass->clear_mask, pass->clear_rgba);
@@ -931,26 +931,35 @@ void graphics_draw(struct Render_Pass const * pass) {
 	if (pass->material->program == NULL) { return; }
 	if (pass->mesh->elements_index == INDEX_EMPTY) { return; }
 
-	uint32_t const elements_count = pass->mesh->counts[pass->mesh->elements_index];
+	if (pass->length == 0) {
+
+	}
+	uint32_t const elements_count = (pass->length != 0)
+		? pass->length
+		: pass->mesh->counts[pass->mesh->elements_index];
 	if (elements_count == 0) { return; }
+
+	size_t const elements_offset = (pass->offset != 0)
+		? pass->offset
+		: 0;
 
 	uint32_t size_x = pass->size_x, size_y = pass->size_y;
 	if (pass->target != NULL) {
 		gpu_target_get_size(pass->target, &size_x, &size_y);
 	}
 
-	if (pass->camera_id != 0) { gfx_material_set_float(pass->material, pass->camera_id, 4*4, &pass->camera.x.x); }
-	if (pass->transform_id != 0) { gfx_material_set_float(pass->material, pass->transform_id, 4*4, &pass->transform.x.x); }
 	graphics_select_program(pass->material->program);
 	graphics_upload_uniforms(pass->material);
 
 	graphics_select_mesh(pass->mesh);
 	glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
+
+	enum Data_Type const elements_type = pass->mesh->parameters[pass->mesh->elements_index].type;
 	glDrawElements(
 		GL_TRIANGLES,
 		(GLsizei)elements_count,
-		gpu_data_type(pass->mesh->parameters[pass->mesh->elements_index].type),
-		NULL
+		gpu_data_type(elements_type),
+		(void const *)(elements_offset * data_type_get_size(elements_type))
 	);
 }
 
