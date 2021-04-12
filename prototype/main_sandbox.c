@@ -1,8 +1,6 @@
 #include "framework/memory.h"
 #include "framework/unicode.h"
-#include "framework/platform_timer.h"
 #include "framework/platform_file.h"
-#include "framework/platform_system.h"
 
 #include "framework/maths.h"
 #include "framework/input.h"
@@ -13,16 +11,10 @@
 #include "framework/graphics/pass.h"
 #include "framework/graphics/graphics.h"
 #include "framework/graphics/font_image.h"
-#include "framework/graphics/font_image_glyph.h"
-#include "framework/graphics/batch_mesh_2d.h"
-#include "framework/graphics/batch_mesh_3d.h"
 
 #include "application/application.h"
 
-#include "framework/containers/array_any.h"
 #include "framework/containers/array_byte.h"
-#include "framework/containers/hash_table_any.h"
-#include "framework/containers/hash_table_u32.h"
 
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"

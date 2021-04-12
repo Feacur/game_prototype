@@ -4,6 +4,8 @@
 #include "framework/graphics/types.h"
 #include "framework/vector_types.h"
 
+// @note: seems to be intimately coupled with the `Batch_Mesh_2D`?
+
 struct Batch_Mesh_2D;
 struct Array_Any;
 struct Gfx_Material;
