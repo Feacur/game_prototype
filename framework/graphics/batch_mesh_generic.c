@@ -12,8 +12,8 @@ struct Batch_Mesh_Generic {
 	struct Asset_Mesh mesh;
 	struct Array_Float vertices;
 	struct Array_U32 indices;
-	void * scratch; uint32_t scratch_capacity;
-	uint32_t index_offset;
+	float * scratch; uint32_t scratch_capacity;
+	uint32_t vertex_index, element_index;
 };
 
 //
@@ -64,8 +64,9 @@ void batch_mesh_generic_free(struct Batch_Mesh_Generic * batch_mesh) {
 
 void batch_mesh_generic_clear(struct Batch_Mesh_Generic * batch_mesh) {
 	batch_mesh->vertices.count = 0;
-	batch_mesh->indices.count = 0;
-	batch_mesh->index_offset = 0;
+	batch_mesh->indices.count  = 0;
+	batch_mesh->vertex_index   = 0;
+	batch_mesh->element_index  = 0;
 }
 
 struct Asset_Mesh * batch_mesh_generic_get_asset(struct Batch_Mesh_Generic * batch_mesh) {
@@ -78,6 +79,10 @@ struct Asset_Mesh * batch_mesh_generic_get_asset(struct Batch_Mesh_Generic * bat
 		.count = batch_mesh->indices.count * sizeof(uint32_t),
 	};
 	return &batch_mesh->mesh;
+}
+
+uint32_t batch_mesh_generic_get_offset(struct Batch_Mesh_Generic * batch_mesh) {
+	return batch_mesh->element_index;
 }
 
 void batch_mesh_generic_add_quad_xy(
@@ -93,10 +98,10 @@ void batch_mesh_generic_add_quad_xy(
 		vertex_size += attributes[i * 2 + 1];
 	}
 
-	uint32_t const vertex_size_bytes = vertex_size * 4 * sizeof(float);
-	if (batch_mesh->scratch_capacity < vertex_size_bytes) {
-		batch_mesh->scratch_capacity = vertex_size_bytes;
-		batch_mesh->scratch = memory_reallocate(batch_mesh->scratch, vertex_size_bytes);
+	uint32_t const quad_size = vertex_size * 4;
+	if (batch_mesh->scratch_capacity < quad_size) {
+		batch_mesh->scratch_capacity = quad_size;
+		batch_mesh->scratch = MEMORY_REALLOCATE_ARRAY(batch_mesh, batch_mesh->scratch, quad_size);
 	}
 	float * vertices = batch_mesh->scratch;
 
@@ -118,11 +123,12 @@ void batch_mesh_generic_add_quad_xy(
 		vertex_offset += size;
 	}
 
-	uint32_t const index_offset = batch_mesh->index_offset;
+	uint32_t const vertex_index = batch_mesh->vertex_index;
 	array_float_write_many(&batch_mesh->vertices, vertex_size * 4, vertices);
 	array_u32_write_many(&batch_mesh->indices, 3 * 2, (uint32_t[]){
-		index_offset + 1, index_offset + 0, index_offset + 2,
-		index_offset + 1, index_offset + 2, index_offset + 3
+		vertex_index + 1, vertex_index + 0, vertex_index + 2,
+		vertex_index + 1, vertex_index + 2, vertex_index + 3
 	});
-	batch_mesh->index_offset += 4;
+	batch_mesh->vertex_index += 4;
+	batch_mesh->element_index += 3 * 2;
 }
