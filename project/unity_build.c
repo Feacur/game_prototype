@@ -7,8 +7,6 @@
 #include "framework/graphics/types.c"
 #include "framework/graphics/material.c"
 #include "framework/graphics/font_image.c"
-#include "framework/graphics/batch_mesh_2d.c"
-#include "framework/graphics/batch_mesh_3d.c"
 
 #include "framework/containers/array_any.c"
 #include "framework/containers/array_byte.c"

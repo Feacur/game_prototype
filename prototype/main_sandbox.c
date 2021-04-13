@@ -68,7 +68,7 @@ static struct Game_Target {
 	struct Gpu_Target * gpu_target;
 } target;
 
-static struct Batcher batcher;
+static struct Batcher * batcher = NULL;
 
 static struct Game_State {
 	struct Transform camera;
@@ -178,7 +178,7 @@ static void game_init(void) {
 	}
 
 	// init batch mesh
-	batcher_init(&batcher);
+	batcher = batcher_init();
 
 	// init state
 	{
@@ -216,8 +216,9 @@ static void game_free(void) {
 
 	gpu_target_free(target.gpu_target);
 
-	batcher_free(&batcher);
+	batcher_free(batcher);
 
+	batcher = NULL;
 	memset(&uniforms, 0, sizeof(uniforms));
 	memset(&content, 0, sizeof(content));
 	memset(&target, 0, sizeof(target));
@@ -285,17 +286,17 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	// batch a quad with target texture
 	// --- map to normalized device coords; draw at the farthest point
-	batcher_set_camera(&batcher, mat4_identity);
+	batcher_set_camera(batcher, mat4_identity);
 
-	batcher_set_blend_mode(&batcher, (struct Blend_Mode){.mask = COLOR_CHANNEL_FULL});
-	batcher_set_depth_mode(&batcher, (struct Depth_Mode){0});
+	batcher_set_blend_mode(batcher, (struct Blend_Mode){.mask = COLOR_CHANNEL_FULL});
+	batcher_set_depth_mode(batcher, (struct Depth_Mode){0});
 
-	batcher_set_material(&batcher, &content.materials.batcher);
-	batcher_set_texture(&batcher, gpu_target_get_texture(target.gpu_target, TEXTURE_TYPE_COLOR, 0));
+	batcher_set_material(batcher, &content.materials.batcher);
+	batcher_set_texture(batcher, gpu_target_get_texture(target.gpu_target, TEXTURE_TYPE_COLOR, 0));
 
-	batcher_set_transform(&batcher, mat4_set_transformation((struct vec3){0, 0, 1}, (struct vec3){1, 1, 1}, (struct vec4){0, 0, 0, 1}));
+	batcher_set_transform(batcher, mat4_set_transformation((struct vec3){0, 0, 1}, (struct vec3){1, 1, 1}, (struct vec4){0, 0, 0, 1}));
 	batcher_add_quad(
-		&batcher,
+		batcher,
 		(float[]){-1, -1, 1, 1},
 		(float[]){0,0,1,1}
 	);
@@ -305,9 +306,9 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	// --- map to screen buffer coords; draw at the nearest point
 	struct Game_Font * font = &content.fonts.sans;
 
-	batcher_set_camera(&batcher, mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1));
+	batcher_set_camera(batcher, mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1));
 
-	batcher_set_blend_mode(&batcher, (struct Blend_Mode){
+	batcher_set_blend_mode(batcher, (struct Blend_Mode){
 		.rgb = {
 			.op = BLEND_OP_ADD,
 			.src = BLEND_FACTOR_SRC_ALPHA,
@@ -315,14 +316,14 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		},
 		.mask = COLOR_CHANNEL_FULL
 	});
-	batcher_set_depth_mode(&batcher, (struct Depth_Mode){0});
+	batcher_set_depth_mode(batcher, (struct Depth_Mode){0});
 
-	batcher_set_material(&batcher, &content.materials.batcher);
-	batcher_set_texture(&batcher, font->gpu_texture);
+	batcher_set_material(batcher, &content.materials.batcher);
+	batcher_set_texture(batcher, font->gpu_texture);
 
-	batcher_set_transform(&batcher, mat4_identity);
+	batcher_set_transform(batcher, mat4_identity);
 	batcher_add_text(
-		&batcher,
+		batcher,
 		font->buffer,
 		content.assets.text_test.count,
 		content.assets.text_test.data,
@@ -331,14 +332,14 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	struct Asset_Image const * font_image = font_image_get_asset(font->buffer);
 	batcher_add_quad(
-		&batcher,
+		batcher,
 		(float[]){0, (float)(size_y - font_image->size_y), (float)font_image->size_x, (float)size_y},
 		(float[]){0,0,1,1}
 	);
 
 
 	// draw batches
-	batcher_draw(&batcher, size_x, size_y, NULL);
+	batcher_draw(batcher, size_x, size_y, NULL);
 }
 
 //

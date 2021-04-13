@@ -1,37 +1,106 @@
+#include "framework/memory.h"
 #include "framework/unicode.h"
+
 #include "framework/containers/array_any.h"
-#include "framework/graphics/batch_mesh_2d.h"
+#include "framework/containers/array_float.h"
+#include "framework/containers/array_u32.h"
+
+#include "framework/assets/asset_mesh.h"
+
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/graphics.h"
 #include "framework/graphics/material.h"
 #include "framework/graphics/pass.h"
-
 #include "framework/graphics/font_image.h"
 #include "framework/graphics/font_image_glyph.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+
+struct Batch {
+	uint32_t offset, length;
+	struct Gfx_Material * material;
+	struct Gpu_Texture * texture;
+	struct Blend_Mode blend_mode;
+	struct Depth_Mode depth_mode;
+	struct mat4 camera, transform;
+};
+
+struct Batcher {
+	struct Batch pass;
+	struct Array_Any * passes;
+	//
+	struct Asset_Mesh mesh;
+	struct Array_Float vertices;
+	struct Array_U32 indices;
+	uint32_t vertex_index, element_index;
+	//
+	struct Gpu_Mesh * gpu_mesh;
+};
+
+static void batcher_update_asset(struct Batcher * batcher);
 
 //
 #include "batcher.h"
 
-void batcher_init(struct Batcher * batcher) {
-	memset(batcher, 0, sizeof(*batcher));
-	batcher->passes   = array_any_init(sizeof(struct Batch));
-	batcher->buffer   = batch_mesh_2d_init();
-	batcher->gpu_mesh = gpu_mesh_init(batch_mesh_2d_get_asset(batcher->buffer));
+struct Batcher * batcher_init(void) {
+	uint32_t const buffers_count = 2;
+
+	struct Batcher * batcher = MEMORY_ALLOCATE(NULL, struct Batcher);
+	*batcher = (struct Batcher){
+		.passes = array_any_init(sizeof(struct Batch)),
+		.mesh = (struct Asset_Mesh){
+			.count      = buffers_count,
+			.buffers    = MEMORY_ALLOCATE_ARRAY(batcher, struct Array_Byte, buffers_count),
+			.parameters = MEMORY_ALLOCATE_ARRAY(batcher, struct Mesh_Parameters, buffers_count),
+		},
+	};
+
+	//
+	uint32_t const attributes[] = {
+		ATTRIBUTE_TYPE_POSITION, 2,
+		ATTRIBUTE_TYPE_TEXCOORD, 2,
+	};
+	uint32_t const attributes_count = (sizeof(attributes) / sizeof(*attributes)) / 2;
+
+	array_byte_init(batcher->mesh.buffers + 0);
+	array_byte_init(batcher->mesh.buffers + 1);
+	batcher->mesh.parameters[0] = (struct Mesh_Parameters){
+		.type = DATA_TYPE_R32,
+		.flags = MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
+		.attributes_count = attributes_count,
+	};
+	batcher->mesh.parameters[1] = (struct Mesh_Parameters){
+		.type = DATA_TYPE_U32,
+		.flags = MESH_FLAG_INDEX | MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
+	};
+	memcpy(batcher->mesh.parameters[0].attributes, attributes, attributes_count * 2 * sizeof(uint32_t));
+
+	//
+	array_float_init(&batcher->vertices);
+	array_u32_init(&batcher->indices);
+
+	batcher_update_asset(batcher);
+	batcher->gpu_mesh = gpu_mesh_init(&batcher->mesh);
+
+	return batcher;
 }
 
 void batcher_free(struct Batcher * batcher) {
-	batch_mesh_2d_free(batcher->buffer);
-	array_any_free(batcher->passes);
 	gpu_mesh_free(batcher->gpu_mesh);
+	//
+	MEMORY_FREE(batcher, batcher->mesh.buffers);
+	MEMORY_FREE(batcher, batcher->mesh.parameters);
+	array_float_free(&batcher->vertices);
+	array_u32_free(&batcher->indices);
+	//
+	array_any_free(batcher->passes);
+	//
 	memset(batcher, 0, sizeof(*batcher));
+	MEMORY_FREE(batcher, batcher);
 }
 
 static void batcher_bake_pass(struct Batcher * batcher) {
-	uint32_t const offset = batch_mesh_2d_get_offset(batcher->buffer);
+	uint32_t const offset = batcher->element_index;
 	if (batcher->pass.offset < offset) {
 		batcher->pass.length = offset - batcher->pass.offset;
 		array_any_push(batcher->passes, &batcher->pass);
@@ -87,11 +156,19 @@ void batcher_add_quad(
 	struct Batcher * batcher,
 	float const * rect, float const * uv
 ) {
-	batch_mesh_2d_add_quad(
-		batcher->buffer,
-		rect, uv
-		// (float[]){1, 0}
-	);
+	uint32_t const vertex_index = batcher->vertex_index;
+	array_float_write_many(&batcher->vertices, (2 + 2) * 4, (float[]){
+		rect[0], rect[1], uv[0], uv[1],
+		rect[0], rect[3], uv[0], uv[3],
+		rect[2], rect[1], uv[2], uv[1],
+		rect[2], rect[3], uv[2], uv[3],
+	});
+	array_u32_write_many(&batcher->indices, 3 * 2, (uint32_t[]){
+		vertex_index + 1, vertex_index + 0, vertex_index + 2,
+		vertex_index + 1, vertex_index + 2, vertex_index + 3
+	});
+	batcher->vertex_index += 4;
+	batcher->element_index += 3 * 2;
 }
 
 void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64_t length, uint8_t const * data, float x, float y) {
@@ -143,8 +220,8 @@ void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64
 		if (glyph == NULL) { glyph = glyph_error; }
 
 		offset_x += font_image_get_kerning(font, previous_codepoint, codepoint);
-		batch_mesh_2d_add_quad(
-			batcher->buffer,
+		batcher_add_quad(
+			batcher,
 			(float[]){
 				((float)glyph->params.rect[0]) + offset_x,
 				((float)glyph->params.rect[1]) + offset_y,
@@ -152,7 +229,6 @@ void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64
 				((float)glyph->params.rect[3]) + offset_y,
 			},
 			glyph->uv
-			// (float[]){0, 1}
 		);
 
 		offset_x += glyph->params.full_size_x;
@@ -165,8 +241,14 @@ void batcher_draw(struct Batcher * batcher, uint32_t size_x, uint32_t size_y, st
 	uint32_t const color_id     = graphics_add_uniform("u_Color");
 	uint32_t const transform_id = graphics_add_uniform("u_Transform");
 
-	gpu_mesh_update(batcher->gpu_mesh, batch_mesh_2d_get_asset(batcher->buffer));
+	//
+	batcher_update_asset(batcher);
+	gpu_mesh_update(batcher->gpu_mesh, &batcher->mesh);
 
+	batcher_bake_pass(batcher);
+	uint32_t passes_count = array_any_get_count(batcher->passes);
+
+	//
 	graphics_draw(&(struct Render_Pass){
 		.size_x = size_x, .size_y = size_y,
 		.target = gpu_target,
@@ -177,8 +259,6 @@ void batcher_draw(struct Batcher * batcher, uint32_t size_x, uint32_t size_y, st
 		.clear_rgba = 0x303030ff,
 	});
 
-	batcher_bake_pass(batcher);
-	uint32_t passes_count = array_any_get_count(batcher->passes);
 	for (uint32_t i = 0; i < passes_count; i++) {
 		struct Batch * batch = array_any_at(batcher->passes, i);
 
@@ -200,7 +280,24 @@ void batcher_draw(struct Batcher * batcher, uint32_t size_x, uint32_t size_y, st
 		});
 	}
 
+	//
 	memset(&batcher->pass, 0, sizeof(batcher->pass));
 	array_any_clear(batcher->passes);
-	batch_mesh_2d_clear(batcher->buffer);
+	batcher->vertices.count = 0;
+	batcher->indices.count  = 0;
+	batcher->vertex_index   = 0;
+	batcher->element_index  = 0;
+}
+
+//
+
+static void batcher_update_asset(struct Batcher * batcher) {
+	batcher->mesh.buffers[0] = (struct Array_Byte){
+		.data = (uint8_t *)batcher->vertices.data,
+		.count = batcher->vertices.count * sizeof(float),
+	};
+	batcher->mesh.buffers[1] = (struct Array_Byte){
+		.data = (uint8_t *)batcher->indices.data,
+		.count = batcher->indices.count * sizeof(uint32_t),
+	};
 }

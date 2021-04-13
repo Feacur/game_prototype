@@ -1,36 +1,17 @@
 #if !defined(GAME_BATCHER)
 #define GAME_BATCHER
 
-#include "framework/graphics/types.h"
 #include "framework/vector_types.h"
+#include "framework/graphics/types.h"
 
-// @note: seems to be intimately coupled with the `Batch_Mesh_2D`?
+struct Batcher;
 
-struct Batch_Mesh_2D;
-struct Array_Any;
 struct Gfx_Material;
-struct Gpu_Mesh;
 struct Gpu_Target;
 struct Gpu_Texture;
 struct Font_Image;
 
-struct Batch {
-	uint32_t offset, length;
-	struct Gfx_Material * material;
-	struct Gpu_Texture * texture;
-	struct Blend_Mode blend_mode;
-	struct Depth_Mode depth_mode;
-	struct mat4 camera, transform;
-};
-
-struct Batcher {
-	struct Batch pass;
-	struct Array_Any * passes;
-	struct Batch_Mesh_2D * buffer;
-	struct Gpu_Mesh * gpu_mesh;
-};
-
-void batcher_init(struct Batcher * batcher);
+struct Batcher * batcher_init(void);
 void batcher_free(struct Batcher * batcher);
 
 void batcher_set_camera(struct Batcher * batcher, struct mat4 camera);
