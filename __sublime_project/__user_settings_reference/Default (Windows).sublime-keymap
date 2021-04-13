@@ -73,7 +73,7 @@
 		}
 	},
 	{
-		"keys": ["enter"], "command": "double_click_at_caret", "context": [
+		"keys": ["enter"], "command": "find_results_goto", "context": [
 			{ "key": "selector", "operator": "equal", "operand": "text.find-in-files", "match_all": true },
 		],
 	},

@@ -1,33 +1,38 @@
 import sublime
 import sublime_plugin
+import re
+import os.path
 
-# https://github.com/STealthy-and-haSTy/SublimeScraps/blob/master/plugins/double_click.py
-class DoubleClickAtCaretCommand(sublime_plugin.TextCommand):
-	"""
-	This command will emulate a double left click at the caret position(s).
-	(If there is a selection, it will use the beginning of the selection.)
-	To do this, it converts the caret position/offset to window coordinates.
-	These coordinates are then passed along to the `drag_select` command, with
-	the arguments that reflect a double left mouse click at said coordinates.
-	
-	Why is this useful? Because some functionality in ST is only implemented
-	for double left clicking, like in the search or build results panel - there
-	is no other command that can achieve the same thing. So, if you want to be
-	able to keep your hands away from the mouse at all times, then this plug-in
-	is your friend!
-	"""
-	def run(self, edit, **kwargs):
+# http://www.sublimetext.com/docs/3/api_reference.html
+
+class FindResultsGotoCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
 		view = self.view
-		# enumerate through each selection, while keeping a note of which index it is and looking up the window coordinates
-		for idx, vector in enumerate(map(lambda sel: view.text_to_window(sel.begin()), view.sel())):
-			# emulate a double click at those coordinates
-			view.run_command("drag_select", {
-				"event": {
-					"button": 1,
-					"count": 2,
-					"x": vector[0],
-					"y": vector[1]
-				},
-				"by": "words",
-				"additive": idx > 0 or kwargs.get("additive", False) # if there are multiple selections, act like pressing Ctrl while double clicking - otherwise we will end up with only one selection. The first double click should replace any existing selections unless told otherwise.
-			})
+		selection_range = view.sel()[0];
+		file_path = self.get_file_path(selection_range)
+		if file_path is not None:
+			position = self.get_position(selection_range)
+			if position is not None:
+				view.window().open_file("%s:%s" % (file_path, position), sublime.ENCODED_POSITION)
+			else:
+				view.window().open_file(file_path)
+
+	def get_file_path(self, target_range):
+		view = self.view
+		line_range = view.line(target_range)
+		while line_range.begin() > 0:
+			match = re.match(r"^(.+):$", view.substr(line_range))
+			if match:
+				if os.path.exists(match.group(1)):
+					return match.group(1)
+			line_range = view.line(line_range.begin() - 1)
+		return None
+
+	def get_position(self, target_range):
+		view = self.view
+		line_text = view.substr(view.line(target_range))
+		match = re.match(r"^ *(\d+)[: ] ", line_text)
+		if match:
+			column = view.rowcol(target_range.begin())[1] + 1 - len(match.group(0))
+			return "%s:%s" % (match.group(1), column)
+		return None
