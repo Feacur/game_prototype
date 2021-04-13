@@ -16,8 +16,8 @@ uint32_t batch_mesh_2d_get_offset(struct Batch_Mesh_2D * batch_mesh);
 
 void batch_mesh_2d_add_quad(
 	struct Batch_Mesh_2D * batch_mesh,
-	float const * rect, float const * uv,
-	float const * mixer
+	float const * rect, float const * uv
+	// float const * mixer
 );
 
 #endif

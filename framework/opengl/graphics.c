@@ -305,6 +305,14 @@ static struct Gpu_Texture * gpu_texture_allocate(
 	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(settings->wrap_x, settings->mirror_wrap_x));
 	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings->wrap_y, settings->mirror_wrap_y));
 
+	switch (parameters->channels) {
+		case 1: {
+			GLint swizzle[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
+			glTextureParameteriv(texture_id, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+			break;
+		}
+	}
+
 	//
 	struct Gpu_Texture * gpu_texture = MEMORY_ALLOCATE(&graphics_state, struct Gpu_Texture);
 	*gpu_texture = (struct Gpu_Texture){

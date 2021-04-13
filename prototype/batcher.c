@@ -87,7 +87,11 @@ void batcher_add_quad(
 	struct Batcher * batcher,
 	float const * rect, float const * uv
 ) {
-	batch_mesh_2d_add_quad(batcher->buffer, rect, uv, (float[]){1, 0});
+	batch_mesh_2d_add_quad(
+		batcher->buffer,
+		rect, uv
+		// (float[]){1, 0}
+	);
 }
 
 void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64_t length, uint8_t const * data, float x, float y) {
@@ -147,8 +151,8 @@ void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64
 				((float)glyph->params.rect[2]) + offset_x,
 				((float)glyph->params.rect[3]) + offset_y,
 			},
-			glyph->uv,
-			(float[]){0, 1}
+			glyph->uv
+			// (float[]){0, 1}
 		);
 
 		offset_x += glyph->params.full_size_x;
