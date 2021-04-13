@@ -12,6 +12,7 @@ struct Application_Config {
 		void (* render)(uint32_t size_x, uint32_t size_y);
 	} callbacks;
 
+	uint32_t size_x, size_y;
 	int32_t vsync;
 	uint32_t target_refresh_rate, fixed_refresh_rate;
 	uint32_t slow_frames_limit;

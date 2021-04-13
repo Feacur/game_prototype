@@ -24,14 +24,26 @@ struct Window {
 #include "framework/platform_window.h"
 
 static void platform_window_toggle_raw_input(struct Window * window, bool state);
-struct Window * platform_window_init(void) {
+struct Window * platform_window_init(uint32_t size_x, uint32_t size_y) {
 	struct Window * window = MEMORY_ALLOCATE(NULL, struct Window);
 
+	RECT target_rect = {
+		.left   = 0,
+		.top    = 0,
+		.right  = (LONG)size_x,
+		.bottom = (LONG)size_y,
+	};
+
+	DWORD const target_style = WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_CAPTION;
+	DWORD const target_ex_style = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
+	AdjustWindowRectEx(&target_rect, target_style, FALSE, target_ex_style);
+
 	window->handle = CreateWindowEx(
-		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
+		target_ex_style,
 		TEXT(APPLICATION_CLASS_NAME), TEXT("game prototype"),
-		WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_CAPTION,
-		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		target_style,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		target_rect.right - target_rect.left, target_rect.bottom - target_rect.top,
 		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
 	if (window->handle == NULL) { fprintf(stderr, "'CreateWindowEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }

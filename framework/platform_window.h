@@ -5,7 +5,7 @@
 
 struct Window;
 
-struct Window * platform_window_init(void);
+struct Window * platform_window_init(uint32_t size_x, uint32_t size_y);
 void platform_window_free(struct Window * window);
 
 bool platform_window_exists(struct Window * window);

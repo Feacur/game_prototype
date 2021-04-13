@@ -260,7 +260,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	});
 
 	struct mat4 test_camera = mat4_mul_mat(
-		mat4_set_projection((struct vec2){0, 0}, (struct vec2){1, (float)size_x / (float)size_y}, 0.1f, 10, 0),
+		mat4_set_projection((struct vec2){0, 0}, (struct vec2){1, (float)target_size_x / (float)target_size_y}, 0.1f, 10, 0),
 		mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
 	);
 	struct mat4 test_transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation);
@@ -274,7 +274,6 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	gfx_material_set_float(&content.materials.test, uniforms.transform, 4*4, &test_transform.x.x);
 	graphics_draw(&(struct Render_Pass){
-		// .size_x = size_x, .size_y = size_y,
 		.target = target.gpu_target,
 		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
 		.depth_mode = {.enabled = true, .mask = true},
@@ -285,8 +284,16 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 
 	// batch a quad with target texture
-	// --- map to normalized device coords; draw at the farthest point
-	batcher_set_camera(batcher, mat4_identity);
+	// --- fully fit to normalized device coords; draw at the farthest point
+	// batcher_set_camera(batcher, mat4_identity);
+	float const scale_x   = (float)target_size_x / (float)size_x;
+	float const scale_y   = (float)target_size_y / (float)size_y;
+	float const scale_max = max_r32(scale_x, scale_y);
+	batcher_set_camera(batcher, mat4_set_projection(
+		(struct vec2){0, 0},
+		(struct vec2){scale_x / scale_max, scale_y / scale_max},
+		0, 1, 1
+	));
 
 	batcher_set_blend_mode(batcher, (struct Blend_Mode){.mask = COLOR_CHANNEL_FULL});
 	batcher_set_depth_mode(batcher, (struct Depth_Mode){0});
@@ -339,6 +346,14 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 
 	// draw batches
+	graphics_draw(&(struct Render_Pass){
+		.size_x = size_x, .size_y = size_y,
+		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.depth_mode = {.enabled = true, .mask = true},
+		//
+		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
+		.clear_rgba = 0x303030ff,
+	});
 	batcher_draw(batcher, size_x, size_y, NULL);
 }
 
@@ -354,6 +369,7 @@ int main (int argc, char * argv[]) {
 			.update = game_update,
 			.render = game_render,
 		},
+		.size_x = 1280, .size_y = 720,
 		.vsync = 1,
 		.target_refresh_rate = 72,
 		.fixed_refresh_rate = 50,

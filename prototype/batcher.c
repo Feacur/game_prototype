@@ -248,17 +248,6 @@ void batcher_draw(struct Batcher * batcher, uint32_t size_x, uint32_t size_y, st
 	batcher_bake_pass(batcher);
 	uint32_t passes_count = array_any_get_count(batcher->passes);
 
-	//
-	graphics_draw(&(struct Render_Pass){
-		.size_x = size_x, .size_y = size_y,
-		.target = gpu_target,
-		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-		.depth_mode = {.enabled = true, .mask = true},
-		//
-		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
-		.clear_rgba = 0x303030ff,
-	});
-
 	for (uint32_t i = 0; i < passes_count; i++) {
 		struct Batch * batch = array_any_at(batcher->passes, i);
 

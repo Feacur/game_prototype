@@ -32,7 +32,7 @@ static uint64_t get_target_ticks(int32_t vsync) {
 static void application_init(void) {
 	platform_system_init();
 
-	app.window = platform_window_init();
+	app.window = platform_window_init(app.config->size_x, app.config->size_y);
 	platform_window_set_vsync(app.window, app.config->vsync);
 
 	app.ticks.frame_start = platform_timer_get_ticks();
