@@ -53,6 +53,12 @@
 			"-DNOMINMAX",
 			"-DUNICODE",
 		],
+		// extensions: LSP
+		"LSP": {
+			"clangd": {
+				"enabled": true,
+			},
+		},
 	},
 	"build_systems": [
 		{

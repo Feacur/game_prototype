@@ -71,9 +71,9 @@ set warnings=%warnings% -Wno-assign-enum
 set warnings=%warnings% -Wno-bad-function-cast
 
 rem |> COMPILE AND LINK
-cd ..
+pushd ..
 if not exist bin mkdir bin
-cd bin
+pushd bin
 
 set timeCompile=%time%
 if %build_mode% == normal ( rem |> compile a set of translation units, then link them
@@ -85,16 +85,19 @@ if %build_mode% == normal ( rem |> compile a set of translation units, then link
 	set timeLink=%time%
 	lld-link "./temp/*.o" -out:"game.exe" %linker%
 ) else if %build_mode% == unity ( rem |> compile as a unity build, then link separately
-	clang -std=c99 -c -o"unity_build.o" %compiler% %warnings% "../project/unity_build.c"
+	clang -std=c99 -c -o"./unity_build.o" %compiler% %warnings% "../project/unity_build.c"
 	set timeLink=%time%
 	lld-link "./unity_build.o" -out:"game.exe" %linker%
 ) else if %build_mode% == unity_link ( rem |> compile and link as a unity build
 	set timeLink=%time%
-	clang -std=c99 %compiler% %warnings% "../project/unity_build.c" -o"game.exe" -Wl,%linker: =,%
+	clang -std=c99 %compiler% %warnings% "../project/unity_build.c" -o"./game.exe" -Wl,%linker: =,%
 )
 
 :error
 set timeStop=%time%
+
+popd
+popd
 
 rem |> REPORT
 echo header:  %timeHeader%

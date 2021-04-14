@@ -15,6 +15,7 @@
 	"font_size": 11,
 	"ignored_packages":
 	[
+		"EasyClangComplete",
 		"Vintage"
 	],
 	"index_exclude_patterns":

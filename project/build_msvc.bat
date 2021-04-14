@@ -58,9 +58,9 @@ set linker=%linker% %libs%
 set warnings=%warnings% -wd5105
 
 rem |> COMPILE AND LINK
-cd ..
+pushd ..
 if not exist bin mkdir bin
-cd bin
+pushd bin
 
 set timeCompile=%time%
 if %build_mode% == normal ( rem |> compile a set of translation units, then link them
@@ -77,11 +77,14 @@ if %build_mode% == normal ( rem |> compile a set of translation units, then link
 	link "./unity_build.obj" -out:"game.exe" %linker%
 ) else if %build_mode% == unity_link ( rem |> compile and link as a unity build
 	set timeLink=%time%
-	cl -std:c11 %compiler% %warnings% "../project/unity_build.c" -Fe"game.exe" -link %linker%
+	cl -std:c11 %compiler% %warnings% "../project/unity_build.c" -Fe"./game.exe" -link %linker%
 )
 
 :error
 set timeStop=%time%
+
+popd
+popd
 
 rem |> REPORT
 echo header:  %timeHeader%

@@ -1,5 +1,6 @@
 // %appdata%/Sublime Text 3/Packages/User
 {
+	// "verbose": true,
 	"lang_flags": {
 		"C": ["-std=c99"],
 		"CPP": ["-std=c++11"],
