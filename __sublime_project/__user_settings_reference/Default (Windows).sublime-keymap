@@ -77,4 +77,9 @@
 			{ "key": "selector", "operator": "equal", "operand": "text.find-in-files", "match_all": true },
 		],
 	},
+	{
+		"keys": ["enter"], "command": "build_output_goto", "context": [
+			{ "key": "selector", "operator": "equal", "operand": "text.buildoutput", "match_all": true },
+		],
+	},
 ]
