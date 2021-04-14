@@ -23,11 +23,18 @@
 	// "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.24.28314/bin/Hostx64/x64/cl.exe",
 	// "C_Cpp.default.intelliSenseMode": "msvc-x64",
 	"C_Cpp.formatting": "Disabled",
-	"C_Cpp.preferredPathSeparator": "Forward Slash",
 	"C_Cpp.autoAddFileAssociations": false,
+	"C_Cpp.preferredPathSeparator": "Forward Slash",
 	"C_Cpp.errorSquiggles": "Disabled",
 	"C_Cpp.intelliSenseEngine": "Default",
 	"C_Cpp.intelliSenseEngineFallback": "Enabled",
 	"C_Cpp.intelliSenseCacheSize": 0,
 	"C_Cpp.intelliSenseMemoryLimit": 256,
+	// extensions: llvm-vs-code-extensions.vscode-clangd
+	"clangd.path": "C:/Program Files/LLVM/bin/clangd.exe",
+	"clangd.arguments": [
+		"-compile-commands-dir=${workspaceFolder}",
+		// "--log=verbose",
+	],
+	"clangd.onConfigChanged": "prompt",
 }
