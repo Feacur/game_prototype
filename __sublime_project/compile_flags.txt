@@ -7,6 +7,7 @@
 -Wno-nonportable-system-include-path
 -Wno-assign-enum
 -Wno-bad-function-cast
+-Wno-documentation-unknown-command
 
 -I..
 -I../third_party
