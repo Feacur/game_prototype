@@ -81,7 +81,7 @@ void hash_table_u64_ensure_minimum_capacity(struct Hash_Table_U64 * hash_table, 
 	hash_table->values     = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity * hash_table->value_size);
 	hash_table->marks      = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity);
 
-	memset(hash_table->marks, HASH_TABLE_U64_MARK_NONE, hash_table->capacity * sizeof(*hash_table->marks));
+	memset(hash_table->marks, HASH_TABLE_U64_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 	hash_table->total_bytes = 0;
 	hash_table->total_bytes += sizeof(uint64_t) * hash_table->capacity;
 	hash_table->total_bytes += sizeof(uint8_t) * hash_table->capacity * hash_table->value_size;
@@ -108,7 +108,7 @@ void hash_table_u64_ensure_minimum_capacity(struct Hash_Table_U64 * hash_table, 
 
 void hash_table_u64_clear(struct Hash_Table_U64 * hash_table) {
 	hash_table->count = 0;
-	memset(hash_table->marks, HASH_TABLE_U64_MARK_NONE, hash_table->capacity * sizeof(*hash_table->marks));
+	memset(hash_table->marks, HASH_TABLE_U64_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 }
 
 void * hash_table_u64_get(struct Hash_Table_U64 * hash_table, uint64_t key_hash) {

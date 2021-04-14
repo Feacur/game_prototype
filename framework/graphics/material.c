@@ -112,7 +112,7 @@ static void gfx_material_set_value(
 			return;
 		}
 
-		memcpy(target + offset * value_size, value, values_count * value_size);
+		memcpy(target + offset * value_size, value, value_size * values_count);
 		return;
 	}
 

@@ -129,13 +129,13 @@ static void asset_mesh_fill(
 
 	asset_mesh->buffers[0] = (struct Array_Byte){
 		.data = (uint8_t *)vertices->data,
-		.count = vertices->count * sizeof(float),
-		.capacity = vertices->capacity * sizeof(float),
+		.count = sizeof(float) * vertices->count,
+		.capacity = sizeof(float) * vertices->capacity,
 	};
 	asset_mesh->buffers[1] = (struct Array_Byte){
 		.data = (uint8_t *)indices->data,
-		.count = indices->count * sizeof(uint32_t),
-		.capacity = indices->capacity * sizeof(uint32_t),
+		.count = sizeof(uint32_t) * indices->count,
+		.capacity = sizeof(uint32_t) * indices->capacity,
 	};
 
 	asset_mesh->parameters[0] = (struct Mesh_Parameters){
@@ -146,5 +146,5 @@ static void asset_mesh_fill(
 		.type = DATA_TYPE_U32,
 		.flags = MESH_FLAG_INDEX,
 	};
-	memcpy(asset_mesh->parameters[0].attributes, attributes->data, attributes->count * sizeof(uint32_t));
+	memcpy(asset_mesh->parameters[0].attributes, attributes->data, sizeof(*attributes->data) * attributes->count);
 }

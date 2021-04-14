@@ -60,20 +60,20 @@ struct Batcher * batcher_init(void) {
 		ATTRIBUTE_TYPE_POSITION, 2,
 		ATTRIBUTE_TYPE_TEXCOORD, 2,
 	};
-	uint32_t const attributes_count = (sizeof(attributes) / sizeof(*attributes)) / 2;
+	uint32_t const attribute_pairs_count = (sizeof(attributes) / sizeof(*attributes));
 
 	array_byte_init(batcher->mesh.buffers + 0);
 	array_byte_init(batcher->mesh.buffers + 1);
 	batcher->mesh.parameters[0] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_R32,
 		.flags = MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
-		.attributes_count = attributes_count,
+		.attributes_count = attribute_pairs_count / 2,
 	};
 	batcher->mesh.parameters[1] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_U32,
 		.flags = MESH_FLAG_INDEX | MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
 	};
-	memcpy(batcher->mesh.parameters[0].attributes, attributes, attributes_count * 2 * sizeof(uint32_t));
+	memcpy(batcher->mesh.parameters[0].attributes, attributes, sizeof(uint32_t) * attribute_pairs_count);
 
 	//
 	array_float_init(&batcher->vertices);
@@ -283,10 +283,10 @@ void batcher_draw(struct Batcher * batcher, uint32_t size_x, uint32_t size_y, st
 static void batcher_update_asset(struct Batcher * batcher) {
 	batcher->mesh.buffers[0] = (struct Array_Byte){
 		.data = (uint8_t *)batcher->vertices.data,
-		.count = batcher->vertices.count * sizeof(float),
+		.count = sizeof(float) * batcher->vertices.count,
 	};
 	batcher->mesh.buffers[1] = (struct Array_Byte){
 		.data = (uint8_t *)batcher->indices.data,
-		.count = batcher->indices.count * sizeof(uint32_t),
+		.count = sizeof(uint32_t) * batcher->indices.count,
 	};
 }

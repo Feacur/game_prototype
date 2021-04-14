@@ -74,7 +74,7 @@ void hash_table_u32_ensure_minimum_capacity(struct Hash_Table_U32 * hash_table, 
 	hash_table->values     = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity * hash_table->value_size);
 	hash_table->marks      = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity);
 
-	memset(hash_table->marks, HASH_TABLE_U32_MARK_NONE, hash_table->capacity * sizeof(*hash_table->marks));
+	memset(hash_table->marks, HASH_TABLE_U32_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 
 	// @note: .count remains as is
 	for (uint32_t i = 0; i < capacity; i++) {
@@ -97,7 +97,7 @@ void hash_table_u32_ensure_minimum_capacity(struct Hash_Table_U32 * hash_table, 
 
 void hash_table_u32_clear(struct Hash_Table_U32 * hash_table) {
 	hash_table->count = 0;
-	memset(hash_table->marks, HASH_TABLE_U32_MARK_NONE, hash_table->capacity * sizeof(*hash_table->marks));
+	memset(hash_table->marks, HASH_TABLE_U32_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 }
 
 void * hash_table_u32_get(struct Hash_Table_U32 * hash_table, uint32_t key_hash) {

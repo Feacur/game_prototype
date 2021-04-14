@@ -61,7 +61,7 @@ void font_image_free(struct Font_Image * font_image) {
 
 void font_image_clear(struct Font_Image * font_image) {
 	hash_table_u32_clear(font_image->table);
-	memset(font_image->buffer.data, 0, font_image->buffer.size_x * font_image->buffer.size_y * sizeof(*font_image->buffer.data));
+	memset(font_image->buffer.data, 0, sizeof(*font_image->buffer.data) * font_image->buffer.size_x * font_image->buffer.size_y);
 }
 
 struct Asset_Image * font_image_get_asset(struct Font_Image * font_image) {
@@ -230,7 +230,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 				memcpy(
 					font_image->buffer.data + ((offset_y + y) * atlas_size_x + offset_x),
 					scratch_buffer.data + ((size_y - y - 1) * size_x),
-					size_x * sizeof(*scratch_buffer.data)
+					sizeof(*scratch_buffer.data) * size_x
 				);
 			}
 

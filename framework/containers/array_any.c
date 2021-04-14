@@ -1,5 +1,6 @@
 #include "framework/memory.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -71,7 +72,7 @@ void array_any_push(struct Array_Any * array, void const * value) {
 	memcpy(
 		array->data + array->count * array->value_size,
 		value,
-		array->value_size * sizeof(*array->data)
+		sizeof(uint8_t) * array->value_size
 	);
 	array->count++;
 }

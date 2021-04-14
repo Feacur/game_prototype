@@ -1,3 +1,4 @@
+#include "GL/glcorearb.h"
 #include "framework/memory.h"
 
 #include "framework/containers/strings.h"
@@ -458,8 +459,8 @@ struct Gpu_Target * gpu_target_init(
 		.textures_count = textures_count,
 		.buffers_count = buffers_count,
 	};
-	memcpy(gpu_target->textures, textures, textures_count * sizeof(*textures));
-	memcpy(gpu_target->buffers, buffers, buffers_count * sizeof(*buffers));
+	memcpy(gpu_target->textures, textures, sizeof(*textures) * textures_count);
+	memcpy(gpu_target->buffers, buffers, sizeof(*buffers) * buffers_count);
 	return gpu_target;
 }
 
@@ -590,9 +591,9 @@ static struct Gpu_Mesh * gpu_mesh_allocate(
 		.buffers_count = buffers_count,
 		.elements_index = elements_index,
 	};
-	memcpy(gpu_mesh->buffer_ids, buffer_ids, buffers_count * sizeof(*buffer_ids));
-	memcpy(gpu_mesh->parameters, parameters_set, buffers_count * sizeof(*parameters_set));
-	memcpy(gpu_mesh->capacities, capacities, buffers_count * sizeof(*capacities));
+	memcpy(gpu_mesh->buffer_ids, buffer_ids, sizeof(*buffer_ids) * buffers_count);
+	memcpy(gpu_mesh->parameters, parameters_set, sizeof(*parameters_set) * buffers_count);
+	memcpy(gpu_mesh->capacities, capacities, sizeof(*capacities) * buffers_count);
 	for (uint32_t i = 0; i < buffers_count; i++) {
 		gpu_mesh->counts[i] = (data[i] != NULL) ? capacities[i] : 0;
 	}

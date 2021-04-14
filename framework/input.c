@@ -111,7 +111,11 @@ void input_to_platform_after_update(void) {
 		input_state.keyboard.keys[(uint8_t)remap_dst[i]] = input_state.keyboard.keys[(uint8_t)remap_src[i]];
 	}
 
-	memcpy(input_state.keyboard.keys + (uint8_t)'A', input_state.keyboard.keys + (uint8_t)'a', sizeof(*input_state.keyboard.keys) * (1 + 'Z' - 'A'));
+	memcpy(
+		input_state.keyboard.keys + (uint8_t)'A',
+		input_state.keyboard.keys + (uint8_t)'a',
+		sizeof(*input_state.keyboard.keys) * (1 + 'Z' - 'A')
+	);
 
 	//
 	input_state.keyboard.keys[KC_SHIFT] = input_state.keyboard.keys[KC_LSHIFT] || input_state.keyboard.keys[KC_RSHIFT];

@@ -48,7 +48,7 @@ void array_float_write_many(struct Array_Float * array, uint32_t count, float co
 		array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity);
 	}
 
-	memcpy(array->data + array->count, value, count * sizeof(*value));
+	memcpy(array->data + array->count, value, sizeof(*value) * count);
 	array->count += count;
 }
 
@@ -61,7 +61,7 @@ void array_float_write_many_zeroes(struct Array_Float * array, uint32_t count) {
 		array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity);
 	}
 
-	memset(array->data + array->count, 0, count * sizeof(*array->data));
+	memset(array->data + array->count, 0, sizeof(*array->data) * count);
 	array->count += count;
 }
 

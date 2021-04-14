@@ -48,7 +48,7 @@ void array_s32_write_many(struct Array_S32 * array, uint32_t count, int32_t cons
 		array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity);
 	}
 
-	memcpy(array->data + array->count, value, count * sizeof(*value));
+	memcpy(array->data + array->count, value, sizeof(*value) * count);
 	array->count += count;
 }
 
@@ -61,7 +61,7 @@ void array_s32_write_many_zeroes(struct Array_S32 * array, uint32_t count) {
 		array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity);
 	}
 
-	memset(array->data + array->count, 0, count * sizeof(*array->data));
+	memset(array->data + array->count, 0, sizeof(*array->data) * count);
 	array->count += count;
 }
 
