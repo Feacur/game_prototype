@@ -18,7 +18,7 @@
 		"-Wno-bad-function-cast",
 	],
 	"autocomplete_includes": false,
-	"triggers" : [ ".", "->", "::", " ", "\t", "(", ")", "[", "&", "\"", "<", "/" ],
+	"triggers" : [ ".", "->", "::", " ", "\t", "(", ")", "[", "&", "*", "\"", "<", "/" ],
 	"ignore_flags": [],
 	"ignore_list": [],
 	"flags_sources" : [],
