@@ -42,7 +42,7 @@
 	{ "keys": ["f12"], "command": "lsp_symbol_definition", "context": [{"key": "setting.lsp_active"}] },
 	{ "keys": ["shift+f12"], "command": "lsp_symbol_references", "context": [{"key": "setting.lsp_active"}] },
 	{ "keys": ["ctrl+."], "command": "lsp_hover", "context": [{"key": "setting.lsp_active"}] },
-	{ "keys": ["f2"], "command": "rename", "context": [{"key": "setting.lsp_active"}] },
+	{ "keys": ["f2"], "command": "lsp_symbol_rename", "context": [{"key": "setting.lsp_active"}] },
 	// extensions: BuildX
 	{ "keys": ["ctrl+shift+b"], "command": "build",
 		"args": {"select": true},
