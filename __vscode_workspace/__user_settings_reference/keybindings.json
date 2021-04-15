@@ -74,6 +74,23 @@
 		"when": "editorTextFocus",
 		"args": {"to": "down", "by": "line", "revealCursor": true}
 	},
+	// editor: interface
+	{
+		"key": "ctrl+shift+alt+[",
+		"command": "workbench.action.newGroupLeft"
+	},
+	{
+		"key": "ctrl+shift+alt+]",
+		"command": "workbench.action.newGroupRight"
+	},
+	{
+		"key": "ctrl+shift+alt+left",
+		"command": "workbench.action.moveEditorToLeftGroup"
+	},
+	{
+		"key": "ctrl+shift+alt+right",
+		"command": "workbench.action.moveEditorToRightGroup"
+	},
 	// editor: edit
 	{
 		"key": "ctrl+shift+down",

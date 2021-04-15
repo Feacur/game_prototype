@@ -27,6 +27,10 @@
 	{ "keys": ["ctrl+b"], "command": "toggle_side_bar" },
 	{ "keys": ["ctrl+k", "s"], "command": "save_all" },
 	{ "keys": ["ctrl+k", "w"], "command": "close_all" },
+	{ "keys": ["ctrl+alt+shift+["], "command": "close_pane" },
+	{ "keys": ["ctrl+alt+shift+]"], "command": "new_pane" },
+	{ "keys": ["ctrl+alt+shift+left"], "command": "move_to_neighboring_group", "args": {"forward": false} },
+	{ "keys": ["ctrl+alt+shift+right"], "command": "move_to_neighboring_group" },
 	// editor: utils
 	{ "keys": ["ctrl+f12"], "command": "goto_definition" },
 	{ "keys": ["ctrl+shift+f12"], "command": "goto_reference" },
