@@ -11,15 +11,12 @@
 layout(location = ATTRIBUTE_TYPE_POSITION) in vec2 a_Position;
 layout(location = ATTRIBUTE_TYPE_TEXCOORD) in vec2 a_TexCoord;
 
-uniform mat4 u_Camera;
-uniform mat4 u_Transform;
-
 out vec2 v_TexCoord;
 
 void main()
 {
 	v_TexCoord = a_TexCoord;
-	gl_Position = u_Camera * u_Transform * vec4(a_Position, 0, 1);
+	gl_Position = vec4(a_Position, 0, 1);
 }
 #endif
 

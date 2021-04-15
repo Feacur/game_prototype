@@ -42,5 +42,5 @@
 
 #include "application/application.c"
 
-#include "prototype/batcher.c"
+#include "prototype/batcher_2d.c"
 #include "prototype/main_sandbox.c"

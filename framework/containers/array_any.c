@@ -76,6 +76,19 @@ void array_any_push(struct Array_Any * array, void const * value) {
 	array->count++;
 }
 
+void array_any_push_many(struct Array_Any * array, uint32_t count, void const * value) {
+	if (array->count + count > array->capacity) {
+		array_any_ensure_minimum_capacity(array, array->count + count);
+	}
+
+	memcpy(
+		array->data + array->value_size * array->count,
+		value,
+		array->value_size * count
+	);
+	array->count += count;
+}
+
 void * array_any_pop(struct Array_Any * array) {
 	if (array->count == 0) { return NULL; }
 	array->count--;

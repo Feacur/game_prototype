@@ -1,3 +1,5 @@
+
+#include "framework/common.h"
 #include "framework/memory.h"
 #include "framework/unicode.h"
 
@@ -13,41 +15,55 @@
 #include "framework/graphics/pass.h"
 #include "framework/graphics/font_image.h"
 #include "framework/graphics/font_image_glyph.h"
+#include "framework/maths.h"
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
-struct Batch {
+
+struct Batcher_2D_Batch {
 	uint32_t offset, length;
 	struct Gfx_Material * material;
 	struct Gpu_Texture * texture;
 	struct Blend_Mode blend_mode;
 	struct Depth_Mode depth_mode;
-	struct mat4 camera, transform;
 };
 
-struct Batcher {
-	struct Batch pass;
-	struct Array_Any * passes;
+struct Batcher_2D_Vertex {
+	struct vec2 position;
+	struct vec2 tex_coord;
+};
+
+struct Batcher_2D {
+	struct Batcher_2D_Batch batch;
+	struct Array_Any * batches;
+	//
+	struct mat4 matrix;
+	struct Array_Any * matrices;
+	//
+	struct Array_Any * vertices;
+	struct Array_U32 indices;
+	uint32_t vertex_offset, element_offset;
 	//
 	struct Asset_Mesh mesh;
-	struct Array_Float vertices;
-	struct Array_U32 indices;
-	uint32_t vertex_index, element_index;
-	//
 	struct Gpu_Mesh * gpu_mesh;
 };
 
-static void batcher_update_asset(struct Batcher * batcher);
+static void batcher_2d_update_asset(struct Batcher_2D * batcher);
 
 //
-#include "batcher.h"
+#include "batcher_2d.h"
 
-struct Batcher * batcher_init(void) {
+struct Batcher_2D * batcher_2d_init(void) {
 	uint32_t const buffers_count = 2;
 
-	struct Batcher * batcher = MEMORY_ALLOCATE(NULL, struct Batcher);
-	*batcher = (struct Batcher){
-		.passes = array_any_init(sizeof(struct Batch)),
+	struct Batcher_2D * batcher = MEMORY_ALLOCATE(NULL, struct Batcher_2D);
+	*batcher = (struct Batcher_2D){
+		.batches = array_any_init(sizeof(struct Batcher_2D_Batch)),
+		.matrix = mat4_identity,
+		.matrices = array_any_init(sizeof(struct mat4)),
+		.vertices = array_any_init(sizeof(struct Batcher_2D_Vertex)),
 		.mesh = (struct Asset_Mesh){
 			.count      = buffers_count,
 			.buffers    = MEMORY_ALLOCATE_ARRAY(batcher, struct Array_Byte, buffers_count),
@@ -76,102 +92,102 @@ struct Batcher * batcher_init(void) {
 	memcpy(batcher->mesh.parameters[0].attributes, attributes, sizeof(uint32_t) * attribute_pairs_count);
 
 	//
-	array_float_init(&batcher->vertices);
 	array_u32_init(&batcher->indices);
 
-	batcher_update_asset(batcher);
+	batcher_2d_update_asset(batcher);
 	batcher->gpu_mesh = gpu_mesh_init(&batcher->mesh);
 
 	return batcher;
 }
 
-void batcher_free(struct Batcher * batcher) {
+void batcher_2d_free(struct Batcher_2D * batcher) {
 	gpu_mesh_free(batcher->gpu_mesh);
 	//
 	MEMORY_FREE(batcher, batcher->mesh.buffers);
 	MEMORY_FREE(batcher, batcher->mesh.parameters);
-	array_float_free(&batcher->vertices);
 	array_u32_free(&batcher->indices);
 	//
-	array_any_free(batcher->passes);
+	array_any_free(batcher->batches);
+	array_any_free(batcher->matrices);
+	array_any_free(batcher->vertices);
 	//
 	memset(batcher, 0, sizeof(*batcher));
 	MEMORY_FREE(batcher, batcher);
 }
 
-static void batcher_bake_pass(struct Batcher * batcher) {
-	uint32_t const offset = batcher->element_index;
-	if (batcher->pass.offset < offset) {
-		batcher->pass.length = offset - batcher->pass.offset;
-		array_any_push(batcher->passes, &batcher->pass);
+static void batcher_2d_bake_pass(struct Batcher_2D * batcher) {
+	uint32_t const offset = batcher->element_offset;
+	if (batcher->batch.offset < offset) {
+		batcher->batch.length = offset - batcher->batch.offset;
+		array_any_push(batcher->batches, &batcher->batch);
 
-		batcher->pass.offset = offset;
-		batcher->pass.length = 0;
+		batcher->batch.offset = offset;
+		batcher->batch.length = 0;
 	}
 }
 
-void batcher_set_camera(struct Batcher * batcher, struct mat4 camera) {
-	if (memcmp(&batcher->pass.camera, &camera, sizeof(camera)) != 0) {
-		batcher_bake_pass(batcher);
-	}
-	batcher->pass.camera = camera;
+void batcher_2d_push_matrix(struct Batcher_2D * batcher, struct mat4 matrix) {
+	array_any_push(batcher->matrices, &batcher->matrix);
+	batcher->matrix = matrix;
 }
 
-void batcher_set_transform(struct Batcher * batcher, struct mat4 transform) {
-	if (memcmp(&batcher->pass.transform, &transform, sizeof(transform)) != 0) {
-		batcher_bake_pass(batcher);
-	}
-	batcher->pass.transform = transform;
+void batcher_2d_pop_matrix(struct Batcher_2D * batcher) {
+	struct mat4 const * matrix = array_any_pop(batcher->matrices);
+	if (matrix != NULL) { batcher->matrix = *matrix; return; }
+	fprintf(stderr, "non-matching matrices\n"); DEBUG_BREAK();
+	batcher->matrix = mat4_identity;
 }
 
-void batcher_set_blend_mode(struct Batcher * batcher, struct Blend_Mode blend_mode) {
-	if (memcmp(&batcher->pass.blend_mode, &blend_mode, sizeof(blend_mode)) != 0) {
-		batcher_bake_pass(batcher);
+void batcher_2d_set_blend_mode(struct Batcher_2D * batcher, struct Blend_Mode blend_mode) {
+	if (memcmp(&batcher->batch.blend_mode, &blend_mode, sizeof(blend_mode)) != 0) {
+		batcher_2d_bake_pass(batcher);
 	}
-	batcher->pass.blend_mode = blend_mode;
+	batcher->batch.blend_mode = blend_mode;
 }
 
-void batcher_set_depth_mode(struct Batcher * batcher, struct Depth_Mode depth_mode) {
-	if (memcmp(&batcher->pass.depth_mode, &depth_mode, sizeof(depth_mode)) != 0) {
-		batcher_bake_pass(batcher);
+void batcher_2d_set_depth_mode(struct Batcher_2D * batcher, struct Depth_Mode depth_mode) {
+	if (memcmp(&batcher->batch.depth_mode, &depth_mode, sizeof(depth_mode)) != 0) {
+		batcher_2d_bake_pass(batcher);
 	}
-	batcher->pass.depth_mode = depth_mode;
+	batcher->batch.depth_mode = depth_mode;
 }
 
-void batcher_set_material(struct Batcher * batcher, struct Gfx_Material * material) {
-	if (batcher->pass.material != material) {
-		batcher_bake_pass(batcher);
+void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material * material) {
+	if (batcher->batch.material != material) {
+		batcher_2d_bake_pass(batcher);
 	}
-	batcher->pass.material = material;
+	batcher->batch.material = material;
 }
 
-void batcher_set_texture(struct Batcher * batcher, struct Gpu_Texture * texture) {
-	if (batcher->pass.texture != texture) {
-		batcher_bake_pass(batcher);
+void batcher_2d_set_texture(struct Batcher_2D * batcher, struct Gpu_Texture * texture) {
+	if (batcher->batch.texture != texture) {
+		batcher_2d_bake_pass(batcher);
 	}
-	batcher->pass.texture = texture;
+	batcher->batch.texture = texture;
 }
 
-void batcher_add_quad(
-	struct Batcher * batcher,
+static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord);
+
+void batcher_2d_add_quad(
+	struct Batcher_2D * batcher,
 	float const * rect, float const * uv
 ) {
-	uint32_t const vertex_index = batcher->vertex_index;
-	array_float_write_many(&batcher->vertices, (2 + 2) * 4, (float[]){
-		rect[0], rect[1], uv[0], uv[1],
-		rect[0], rect[3], uv[0], uv[3],
-		rect[2], rect[1], uv[2], uv[1],
-		rect[2], rect[3], uv[2], uv[3],
+	uint32_t const vertex_offset = batcher->vertex_offset;
+	array_any_push_many(batcher->vertices, 4, (struct Batcher_2D_Vertex[]){
+		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect[0], rect[1]}, (struct vec2){uv[0], uv[1]}),
+		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect[0], rect[3]}, (struct vec2){uv[0], uv[3]}),
+		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect[2], rect[1]}, (struct vec2){uv[2], uv[1]}),
+		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect[2], rect[3]}, (struct vec2){uv[2], uv[3]}),
 	});
 	array_u32_write_many(&batcher->indices, 3 * 2, (uint32_t[]){
-		vertex_index + 1, vertex_index + 0, vertex_index + 2,
-		vertex_index + 1, vertex_index + 2, vertex_index + 3
+		vertex_offset + 1, vertex_offset + 0, vertex_offset + 2,
+		vertex_offset + 1, vertex_offset + 2, vertex_offset + 3
 	});
-	batcher->vertex_index += 4;
-	batcher->element_index += 3 * 2;
+	batcher->vertex_offset += 4;
+	batcher->element_offset += 3 * 2;
 }
 
-void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64_t length, uint8_t const * data, float x, float y) {
+void batcher_2d_add_text(struct Batcher_2D * batcher, struct Font_Image * font, uint64_t length, uint8_t const * data, float x, float y) {
 	float const line_height = font_image_get_height(font) + font_image_get_gap(font);
 	float offset_x = x, offset_y = y;
 
@@ -220,7 +236,7 @@ void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64
 		if (glyph == NULL) { glyph = glyph_error; }
 
 		offset_x += font_image_get_kerning(font, previous_codepoint, codepoint);
-		batcher_add_quad(
+		batcher_2d_add_quad(
 			batcher,
 			(float[]){
 				((float)glyph->params.rect[0]) + offset_x,
@@ -235,27 +251,23 @@ void batcher_add_text(struct Batcher * batcher, struct Font_Image * font, uint64
 	}
 }
 
-void batcher_draw(struct Batcher * batcher, uint32_t size_x, uint32_t size_y, struct Gpu_Target * gpu_target) {
-	uint32_t const camera_id    = graphics_add_uniform("u_Camera");
+void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size_y, struct Gpu_Target * gpu_target) {
 	uint32_t const texture_id   = graphics_add_uniform("u_Texture");
 	uint32_t const color_id     = graphics_add_uniform("u_Color");
-	uint32_t const transform_id = graphics_add_uniform("u_Transform");
 
 	//
-	batcher_update_asset(batcher);
+	batcher_2d_update_asset(batcher);
 	gpu_mesh_update(batcher->gpu_mesh, &batcher->mesh);
 
-	batcher_bake_pass(batcher);
-	uint32_t passes_count = array_any_get_count(batcher->passes);
+	batcher_2d_bake_pass(batcher);
+	uint32_t passes_count = array_any_get_count(batcher->batches);
 
 	for (uint32_t i = 0; i < passes_count; i++) {
-		struct Batch * batch = array_any_at(batcher->passes, i);
+		struct Batcher_2D_Batch * batch = array_any_at(batcher->batches, i);
 
 		// @todo: do matrix computations CPU-side
-		gfx_material_set_float(batch->material, camera_id, 4*4, &batch->camera.x.x);
 		gfx_material_set_texture(batch->material, texture_id, 1, &batch->texture);
 		gfx_material_set_float(batch->material, color_id, 4, &(struct vec4){1, 1, 1, 1}.x);
-		gfx_material_set_float(batch->material, transform_id, 4*4, &batch->transform.x.x);
 
 		graphics_draw(&(struct Render_Pass){
 			.size_x = size_x, .size_y = size_y,
@@ -270,20 +282,30 @@ void batcher_draw(struct Batcher * batcher, uint32_t size_x, uint32_t size_y, st
 	}
 
 	//
-	memset(&batcher->pass, 0, sizeof(batcher->pass));
-	array_any_clear(batcher->passes);
-	batcher->vertices.count = 0;
+	memset(&batcher->batch, 0, sizeof(batcher->batch));
+	array_any_clear(batcher->batches);
+	array_any_clear(batcher->vertices);
 	batcher->indices.count  = 0;
-	batcher->vertex_index   = 0;
-	batcher->element_index  = 0;
+	batcher->vertex_offset   = 0;
+	batcher->element_offset  = 0;
 }
 
 //
 
-static void batcher_update_asset(struct Batcher * batcher) {
+static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord) {
+	return (struct Batcher_2D_Vertex){
+		.position = {
+			m.x.x * position.x + m.y.x * position.y + m.w.x,
+			m.x.y * position.x + m.y.y * position.y + m.w.y,
+		},
+		.tex_coord = tex_coord,
+	};
+}
+
+static void batcher_2d_update_asset(struct Batcher_2D * batcher) {
 	batcher->mesh.buffers[0] = (struct Array_Byte){
-		.data = (uint8_t *)batcher->vertices.data,
-		.count = sizeof(float) * batcher->vertices.count,
+		.data = array_any_at(batcher->vertices, 0),
+		.count = sizeof(struct Batcher_2D_Vertex) * array_any_get_count(batcher->vertices),
 	};
 	batcher->mesh.buffers[1] = (struct Array_Byte){
 		.data = (uint8_t *)batcher->indices.data,
