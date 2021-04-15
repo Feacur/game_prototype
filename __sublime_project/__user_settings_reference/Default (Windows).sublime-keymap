@@ -1,19 +1,8 @@
 // %appdata%/Sublime Text 3/Packages/User
 [
-	// editor
-	{ "keys": ["ctrl+b"], "command": "toggle_side_bar" },
-	{ "keys": ["ctrl+k", "s"], "command": "save_all" },
-	{ "keys": ["ctrl+k", "w"], "command": "close_all" },
-	{ "keys": ["shift+escape"], "command": "show_panel",
-		"args": {"panel": "output.exec"},
-	},
-	{ "keys": ["alt+["], "command": "prev_result" },
-	{ "keys": ["alt+]"], "command": "next_result" },
+	// editor: input navigation
 	{ "keys": ["ctrl+alt+left"], "command": "jump_back" },
 	{ "keys": ["ctrl+alt+right"], "command": "jump_forward" },
-	{ "keys": ["ctrl+alt+["], "command": "prev_modification" },
-	{ "keys": ["ctrl+alt+]"], "command": "next_modification" },
-	{ "keys": ["ctrl+,"], "command": "context_menu" },
 	{ "keys": ["alt+up"], "command": "move",
 		"args": {"by": "stops", "empty_line": true, "forward": false}
 	},
@@ -26,9 +15,24 @@
 	{ "keys": ["alt+shift+down"], "command": "move",
 		"args": {"by": "stops", "empty_line": true, "forward": true, "extend": true}
 	},
+	{ "keys": ["shift+escape"], "command": "show_panel",
+		"args": {"panel": "output.exec"},
+	},
+	// editor: navigation
+	{ "keys": ["alt+["], "command": "prev_result" },
+	{ "keys": ["alt+]"], "command": "next_result" },
+	{ "keys": ["ctrl+alt+["], "command": "prev_modification" },
+	{ "keys": ["ctrl+alt+]"], "command": "next_modification" },
+	// editor: interface
+	{ "keys": ["ctrl+b"], "command": "toggle_side_bar" },
+	{ "keys": ["ctrl+k", "s"], "command": "save_all" },
+	{ "keys": ["ctrl+k", "w"], "command": "close_all" },
+	// editor: utils
+	{ "keys": ["ctrl+f12"], "command": "goto_definition" },
+	{ "keys": ["ctrl+shift+f12"], "command": "goto_reference" },
+	{ "keys": ["ctrl+,"], "command": "context_menu" },
 	// extensions: EasyClangComplete
-	{ "keys": ["f12"], "command": "ecc_goto_declaration", },
-	{ "keys": ["shift+f12"], "command": "goto_definition" },
+	{ "keys": ["f12"], "command": "ecc_goto_declaration" },
 	{ "keys": ["ctrl+."], "command": "ecc_show_popup_info" },
 	// extensions: LSP
 	{ "keys": ["f12"], "command": "lsp_symbol_definition", "context": [{"key": "setting.lsp_active"}] },

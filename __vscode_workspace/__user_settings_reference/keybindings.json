@@ -1,43 +1,98 @@
 // %appdata%/Code/User
 [
+	// editor: input navigation
+	{
+		"key": "ctrl+alt+left",
+		"command": "workbench.action.navigateBack"
+	},
+	{
+		"key": "ctrl+alt+right",
+		"command": "workbench.action.navigateForward"
+	},
+	{
+		"key": "alt+up",
+		"command": "cursorMove",
+		"when": "editorTextFocus",
+		"args": {"to": "prevBlankLine"}
+	},
+	{
+		"key": "alt+down",
+		"command": "cursorMove",
+		"when": "editorTextFocus",
+		"args": {"to": "nextBlankLine"}
+	},
+	{
+		"key": "alt+shift+up",
+		"command": "cursorMove",
+		"when": "editorTextFocus",
+		"args": {"to": "prevBlankLine", "select": true}
+	},
+	{
+		"key": "alt+shift+down",
+		"command": "cursorMove",
+		"when": "editorTextFocus",
+		"args": {"to": "nextBlankLine", "select": true}
+	},
+	{
+		"key": "alt+left",
+		"command": "cursorWordPartLeft",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "alt+right",
+		"command": "cursorWordPartRight",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "alt+shift+left",
+		"command": "cursorWordPartLeftSelect",
+		"when": "editorTextFocus",
+	},
+	{
+		"key": "alt+shift+right",
+		"command": "cursorWordPartRightSelect",
+		"when": "editorTextFocus",
+	},
+	{
+		"key": "ctrl+m",
+		"command": "editor.action.jumpToBracket",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+shift+m",
+		"command": "editor.action.selectToBracket"
+	},
 	{
 		"key": "ctrl+up",
 		"command": "editorScroll",
 		"when": "editorTextFocus",
-		"args": {
-			"to": "up",
-			"by": "line",
-			"revealCursor": true,
-		}
+		"args": {"to": "up", "by": "line", "revealCursor": true}
 	},
 	{
 		"key": "ctrl+down",
 		"command": "editorScroll",
 		"when": "editorTextFocus",
-		"args": {
-			"to": "down",
-			"by": "line",
-			"revealCursor": true,
-		}
+		"args": {"to": "down", "by": "line", "revealCursor": true}
+	},
+	// editor: edit
+	{
+		"key": "ctrl+shift+down",
+		"command": "editor.action.moveLinesDownAction",
+		"when": "editorTextFocus && !editorReadonly"
 	},
 	{
-		"key": "alt+pageup",
-		"command": "editorScroll",
-		"when": "editorTextFocus",
-		"args": {
-			"to": "up",
-			"by": "page",
-			"revealCursor": true,
-		}
+		"key": "ctrl+shift+up",
+		"command": "editor.action.moveLinesUpAction",
+		"when": "editorTextFocus && !editorReadonly"
 	},
 	{
-		"key": "alt+pagedown",
-		"command": "editorScroll",
-		"when": "editorTextFocus",
-		"args": {
-			"to": "down",
-			"by": "page",
-			"revealCursor": true,
-		}
+		"key": "ctrl+shift+backspace",
+		"command": "deleteAllLeft",
+		"when": "editorTextFocus && !editorReadonly"
+	},
+	{
+		"key": "ctrl+shift+delete",
+		"command": "deleteAllRight",
+		"when": "editorTextFocus && !editorReadonly"
 	},
 ]
