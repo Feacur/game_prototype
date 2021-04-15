@@ -4,7 +4,8 @@
 		"clangd": {
 			"command": [
 				"C:/Program Files/LLVM/bin/clangd.exe",
-				"-compile-commands-dir=${project_path:${folder}}",
+				"--compile-commands-dir=${project_path:${folder}}",
+				"--header-insertion=never",
 				// "--log=verbose",
 			],
 			"enabled": false

@@ -33,7 +33,8 @@
 	// extensions: llvm-vs-code-extensions.vscode-clangd
 	"clangd.path": "C:/Program Files/LLVM/bin/clangd.exe",
 	"clangd.arguments": [
-		"-compile-commands-dir=${workspaceFolder}",
+		"--compile-commands-dir=${workspaceFolder}",
+		"--header-insertion=never",
 		// "--log=verbose",
 	],
 	"clangd.onConfigChanged": "prompt",
