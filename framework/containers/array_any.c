@@ -24,7 +24,6 @@ struct Array_Any {
 
 struct Array_Any * array_any_init(uint32_t value_size) {
 	if (value_size == 0) {
-		value_size = 1;
 		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK(); return NULL;
 	}
 
@@ -57,7 +56,7 @@ void array_any_ensure_minimum_capacity(struct Array_Any * array, uint32_t minimu
 #endif
 
 	array->capacity = minimum_capacity;
-	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity * array->value_size);
+	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->value_size * array->capacity);
 }
 
 uint32_t array_any_get_count(struct Array_Any * array) {
@@ -66,13 +65,13 @@ uint32_t array_any_get_count(struct Array_Any * array) {
 
 void array_any_push(struct Array_Any * array, void const * value) {
 	if (array->count + 1 > array->capacity) {
-		array_any_ensure_minimum_capacity(array, array->capacity + 1);
+		array_any_ensure_minimum_capacity(array, array->count + 1);
 	}
 
 	memcpy(
-		array->data + array->count * array->value_size,
+		array->data + array->value_size * array->count,
 		value,
-		sizeof(uint8_t) * array->value_size
+		array->value_size
 	);
 	array->count++;
 }
@@ -80,17 +79,17 @@ void array_any_push(struct Array_Any * array, void const * value) {
 void * array_any_pop(struct Array_Any * array) {
 	if (array->count == 0) { return NULL; }
 	array->count--;
-	return array->data + array->count * array->value_size;
+	return array->data + array->value_size * array->count;
 }
 
 void * array_any_peek(struct Array_Any * array, uint32_t offset) {
 	if (offset >= array->count) { return NULL; }
-	return array->data + (array->count - offset - 1) * array->value_size;
+	return array->data + array->value_size * (array->count - offset - 1);
 }
 
 void * array_any_at(struct Array_Any * array, uint32_t index) {
 	if (index >= array->count) { return NULL; }
-	return array->data + index * array->value_size;
+	return array->data + array->value_size * index;
 }
 
 #undef GROWTH_FACTOR

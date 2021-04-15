@@ -21,7 +21,6 @@ struct Hash_Table_U64 {
 	uint64_t * key_hashes;
 	uint8_t * values;
 	uint8_t * marks;
-	uint64_t total_bytes;
 };
 
 #if GROWTH_FACTOR == 2
@@ -34,7 +33,6 @@ struct Hash_Table_U64 {
 
 struct Hash_Table_U64 * hash_table_u64_init(uint32_t value_size) {
 	if (value_size == 0) {
-		value_size = 1;
 		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK(); return NULL;
 	}
 
@@ -78,14 +76,10 @@ void hash_table_u64_ensure_minimum_capacity(struct Hash_Table_U64 * hash_table, 
 
 	hash_table->capacity   = minimum_capacity;
 	hash_table->key_hashes = MEMORY_ALLOCATE_ARRAY(hash_table, uint64_t, hash_table->capacity);
-	hash_table->values     = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity * hash_table->value_size);
+	hash_table->values     = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->value_size * hash_table->capacity);
 	hash_table->marks      = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity);
 
 	memset(hash_table->marks, HASH_TABLE_U64_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
-	hash_table->total_bytes = 0;
-	hash_table->total_bytes += sizeof(uint64_t) * hash_table->capacity;
-	hash_table->total_bytes += sizeof(uint8_t) * hash_table->capacity * hash_table->value_size;
-	hash_table->total_bytes += sizeof(uint8_t) * hash_table->capacity;
 
 	// @note: .count remains as is
 	for (uint32_t i = 0; i < capacity; i++) {
@@ -94,8 +88,8 @@ void hash_table_u64_ensure_minimum_capacity(struct Hash_Table_U64 * hash_table, 
 		uint32_t const key_index = hash_table_u64_find_key_index(hash_table, key_hashes[i]);
 		hash_table->key_hashes[key_index] = key_hashes[i];
 		memcpy(
-			hash_table->values + key_index * hash_table->value_size,
-			values + i * hash_table->value_size,
+			hash_table->values + hash_table->value_size * key_index,
+			values + hash_table->value_size * i,
 			hash_table->value_size
 		);
 		hash_table->marks[key_index] = HASH_TABLE_U64_MARK_FULL;
@@ -116,7 +110,7 @@ void * hash_table_u64_get(struct Hash_Table_U64 * hash_table, uint64_t key_hash)
 	uint32_t const key_index = hash_table_u64_find_key_index(hash_table, key_hash);
 	// if (key_index == INDEX_EMPTY) { return NULL; }
 	if (hash_table->marks[key_index] != HASH_TABLE_U64_MARK_FULL) { return NULL; }
-	return hash_table->values + key_index * hash_table->value_size;
+	return hash_table->values + hash_table->value_size * key_index;
 }
 
 bool hash_table_u64_set(struct Hash_Table_U64 * hash_table, uint64_t key_hash, void const * value) {
@@ -133,7 +127,7 @@ bool hash_table_u64_set(struct Hash_Table_U64 * hash_table, uint64_t key_hash, v
 
 	hash_table->key_hashes[key_index] = key_hash;
 	memcpy(
-		hash_table->values + key_index * hash_table->value_size,
+		hash_table->values + hash_table->value_size * key_index,
 		value,
 		hash_table->value_size
 	);
@@ -157,7 +151,7 @@ uint32_t hash_table_u64_get_iteration_capacity(struct Hash_Table_U64 * hash_tabl
 
 void * hash_table_u64_iterate(struct Hash_Table_U64 * hash_table, uint32_t index) {
 	if (hash_table->marks[index] != HASH_TABLE_U64_MARK_FULL) { return NULL; }
-	return hash_table->values + index * hash_table->value_size;
+	return hash_table->values + hash_table->value_size * index;
 }
 
 //
