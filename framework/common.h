@@ -17,6 +17,8 @@
 
 #define FILE_AND_LINE __FILE__ ":" STRINGIFY_A_MACRO(__LINE__)
 
+#define SIZE_OF_MEMBER(type, name) sizeof(((type *)0)->name)
+
 // -- FLEXIBLE_ARRAY
 #if __STDC_VERSION__ >= 199901L
 	#if defined(__clang__)

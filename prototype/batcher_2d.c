@@ -73,8 +73,8 @@ struct Batcher_2D * batcher_2d_init(void) {
 
 	//
 	uint32_t const attributes[] = {
-		ATTRIBUTE_TYPE_POSITION, 2,
-		ATTRIBUTE_TYPE_TEXCOORD, 2,
+		ATTRIBUTE_TYPE_POSITION, SIZE_OF_MEMBER(struct Batcher_2D_Vertex, position) / sizeof(float),
+		ATTRIBUTE_TYPE_TEXCOORD, SIZE_OF_MEMBER(struct Batcher_2D_Vertex, tex_coord) / sizeof(float),
 	};
 	uint32_t const attribute_pairs_count = (sizeof(attributes) / sizeof(*attributes));
 
