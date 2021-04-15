@@ -90,13 +90,21 @@ uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator) {
 	return a * numerator + b * numerator / denominator;
 }
 
-float lerp(float v1, float v2, float t) { return v1 + (v2 - v1)*t; }
-float lerp_stable(float v1, float v2, float t) { return v1*(1 - t) + v2*t; }
-float inverse_lerp(float v1, float v2, float value) { return (value - v1) / (v2 - v1); }
+uint32_t min_u32(uint32_t v1, uint32_t v2) { return (v1 < v2) ? v1 : v2; }
+uint32_t max_u32(uint32_t v1, uint32_t v2) { return (v1 > v2) ? v1 : v2; }
+uint32_t clamp_u32(uint32_t v, uint32_t low, uint32_t high) { return min_u32(max_u32(v, low), high); }
+
+int32_t min_s32(int32_t v1, int32_t v2) { return (v1 < v2) ? v1 : v2; }
+int32_t max_s32(int32_t v1, int32_t v2) { return (v1 > v2) ? v1 : v2; }
+int32_t clamp_s32(int32_t v, int32_t low, int32_t high) { return min_s32(max_s32(v, low), high); }
 
 float min_r32(float v1, float v2) { return (v1 < v2) ? v1 : v2; }
 float max_r32(float v1, float v2) { return (v1 > v2) ? v1 : v2; }
 float clamp_r32(float v, float low, float high) { return min_r32(max_r32(v, low), high); }
+
+float lerp(float v1, float v2, float t) { return v1 + (v2 - v1)*t; }
+float lerp_stable(float v1, float v2, float t) { return v1*(1 - t) + v2*t; }
+float inverse_lerp(float v1, float v2, float value) { return (value - v1) / (v2 - v1); }
 
 /* -- vectors
 
@@ -115,6 +123,61 @@ ii = jj = kk = ijk = -1 == cos(90 + 90)
 
 */
 
+// -- uint32_t vectors
+struct uvec2 uvec2_add(struct uvec2 v1, struct uvec2 v2) { return (struct uvec2){v1.x + v2.x, v1.y + v2.y}; }
+struct uvec2 uvec2_sub(struct uvec2 v1, struct uvec2 v2) { return (struct uvec2){v1.x - v2.x, v1.y - v2.y}; }
+struct uvec2 uvec2_mul(struct uvec2 v1, struct uvec2 v2) { return (struct uvec2){v1.x * v2.x, v1.y * v2.y}; }
+struct uvec2 uvec2_div(struct uvec2 v1, struct uvec2 v2) { return (struct uvec2){v1.x / v2.x, v1.y / v2.y}; }
+uint32_t     uvec2_dot(struct uvec2 v1, struct uvec2 v2) { return v1.x * v2.x + v1.y * v2.y; }
+
+struct uvec3 uvec3_add(struct uvec3 v1, struct uvec3 v2) { return (struct uvec3){v1.x + v2.x, v1.y + v2.y, v1.z + v2.z}; }
+struct uvec3 uvec3_sub(struct uvec3 v1, struct uvec3 v2) { return (struct uvec3){v1.x - v2.x, v1.y - v2.y, v1.z - v2.z}; }
+struct uvec3 uvec3_mul(struct uvec3 v1, struct uvec3 v2) { return (struct uvec3){v1.x * v2.x, v1.y * v2.y, v1.z * v2.z}; }
+struct uvec3 uvec3_div(struct uvec3 v1, struct uvec3 v2) { return (struct uvec3){v1.x / v2.x, v1.y / v2.y, v1.z / v2.z}; }
+uint32_t     uvec3_dot(struct uvec3 v1, struct uvec3 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z; }
+
+struct uvec4 uvec4_add(struct uvec4 v1, struct uvec4 v2) { return (struct uvec4){v1.x + v2.x, v1.y + v2.y, v1.z + v2.z, v1.w + v2.w}; }
+struct uvec4 uvec4_sub(struct uvec4 v1, struct uvec4 v2) { return (struct uvec4){v1.x - v2.x, v1.y - v2.y, v1.z - v2.z, v1.w - v2.w}; }
+struct uvec4 uvec4_mul(struct uvec4 v1, struct uvec4 v2) { return (struct uvec4){v1.x * v2.x, v1.y * v2.y, v1.z * v2.z, v1.w * v2.w}; }
+struct uvec4 uvec4_div(struct uvec4 v1, struct uvec4 v2) { return (struct uvec4){v1.x / v2.x, v1.y / v2.y, v1.z / v2.z, v1.w / v2.w}; }
+uint32_t     uvec4_dot(struct uvec4 v1, struct uvec4 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w; }
+
+struct uvec3 uvec3_cross(struct uvec3 v1, struct uvec3 v2) {
+	return (struct uvec3){
+		v1.y*v2.z - v1.z*v2.y,
+		v1.z*v2.x - v1.x*v2.z,
+		v1.x*v2.y - v1.y*v2.x,
+	};
+}
+
+// -- int32_t vectors
+struct svec2 svec2_add(struct svec2 v1, struct svec2 v2) { return (struct svec2){v1.x + v2.x, v1.y + v2.y}; }
+struct svec2 svec2_sub(struct svec2 v1, struct svec2 v2) { return (struct svec2){v1.x - v2.x, v1.y - v2.y}; }
+struct svec2 svec2_mul(struct svec2 v1, struct svec2 v2) { return (struct svec2){v1.x * v2.x, v1.y * v2.y}; }
+struct svec2 svec2_div(struct svec2 v1, struct svec2 v2) { return (struct svec2){v1.x / v2.x, v1.y / v2.y}; }
+int32_t      svec2_dot(struct svec2 v1, struct svec2 v2) { return v1.x * v2.x + v1.y * v2.y; }
+
+struct svec3 svec3_add(struct svec3 v1, struct svec3 v2) { return (struct svec3){v1.x + v2.x, v1.y + v2.y, v1.z + v2.z}; }
+struct svec3 svec3_sub(struct svec3 v1, struct svec3 v2) { return (struct svec3){v1.x - v2.x, v1.y - v2.y, v1.z - v2.z}; }
+struct svec3 svec3_mul(struct svec3 v1, struct svec3 v2) { return (struct svec3){v1.x * v2.x, v1.y * v2.y, v1.z * v2.z}; }
+struct svec3 svec3_div(struct svec3 v1, struct svec3 v2) { return (struct svec3){v1.x / v2.x, v1.y / v2.y, v1.z / v2.z}; }
+int32_t      svec3_dot(struct svec3 v1, struct svec3 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z; }
+
+struct svec4 svec4_add(struct svec4 v1, struct svec4 v2) { return (struct svec4){v1.x + v2.x, v1.y + v2.y, v1.z + v2.z, v1.w + v2.w}; }
+struct svec4 svec4_sub(struct svec4 v1, struct svec4 v2) { return (struct svec4){v1.x - v2.x, v1.y - v2.y, v1.z - v2.z, v1.w - v2.w}; }
+struct svec4 svec4_mul(struct svec4 v1, struct svec4 v2) { return (struct svec4){v1.x * v2.x, v1.y * v2.y, v1.z * v2.z, v1.w * v2.w}; }
+struct svec4 svec4_div(struct svec4 v1, struct svec4 v2) { return (struct svec4){v1.x / v2.x, v1.y / v2.y, v1.z / v2.z, v1.w / v2.w}; }
+int32_t      svec4_dot(struct svec4 v1, struct svec4 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w; }
+
+struct svec3 svec3_cross(struct svec3 v1, struct svec3 v2) {
+	return (struct svec3){
+		v1.y*v2.z - v1.z*v2.y,
+		v1.z*v2.x - v1.x*v2.z,
+		v1.x*v2.y - v1.y*v2.x,
+	};
+}
+
+// -- float vectors
 struct vec2 vec2_add(struct vec2 v1, struct vec2 v2) { return (struct vec2){v1.x + v2.x, v1.y + v2.y}; }
 struct vec2 vec2_sub(struct vec2 v1, struct vec2 v2) { return (struct vec2){v1.x - v2.x, v1.y - v2.y}; }
 struct vec2 vec2_mul(struct vec2 v1, struct vec2 v2) { return (struct vec2){v1.x * v2.x, v1.y * v2.y}; }
@@ -139,6 +202,21 @@ struct vec3 vec3_cross(struct vec3 v1, struct vec3 v2) {
 		v1.z*v2.x - v1.x*v2.z,
 		v1.x*v2.y - v1.y*v2.x,
 	};
+}
+
+struct vec2 vec2_norm(struct vec2 v) {
+	float rm = 1 / vec2_dot(v, v);
+	return (struct vec2){v.x * rm, v.y * rm};
+}
+
+struct vec3 vec3_norm(struct vec3 v) {
+	float rm = 1 / vec3_dot(v, v);
+	return (struct vec3){v.x * rm, v.y * rm, v.z * rm};
+}
+
+struct vec4 vec4_norm(struct vec4 v) {
+	float rm = 1 / vec4_dot(v, v);
+	return (struct vec4){v.x * rm, v.y * rm, v.z * rm, v.w * rm};
 }
 
 /* -- quaternions
@@ -222,8 +300,8 @@ struct vec4 quat_mul(struct vec4 q1, struct vec4 q2) {
 
 struct vec4 quat_conjugate(struct vec4 q) { return (struct vec4){-q.x, -q.y, -q.z, q.w}; }
 struct vec4 quat_reciprocal(struct vec4 q) {
-	float const ms = vec4_dot(q, q);
-	return (struct vec4){-q.x/ms, -q.y/ms, -q.z/ms, q.w/ms};
+	float const rms = 1 / vec4_dot(q, q);
+	return (struct vec4){-q.x * rms, -q.y * rms, -q.z * rms, q.w * rms};
 }
 
 struct vec3 quat_transform(struct vec4 q, struct vec3 v) {

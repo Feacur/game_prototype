@@ -191,7 +191,7 @@ static void game_init(void) {
 		state.object = (struct Transform){
 			.position = (struct vec3){0, 0, 0},
 			.scale = (struct vec3){1, 1, 1},
-			.rotation = (struct vec4){0, 0, 0, 1},
+			.rotation = quat_identity,
 		};
 	}
 }
@@ -239,9 +239,9 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 		printf("delta: %d %d\n", x, y);
 	}
 
-	state.object.rotation = quat_mul(state.object.rotation, quat_set_radians(
+	state.object.rotation = vec4_norm(quat_mul(state.object.rotation, quat_set_radians(
 		(struct vec3){0 * delta_time, 1 * delta_time, 0 * delta_time}
-	));
+	)));
 }
 
 static void game_render(uint32_t size_x, uint32_t size_y) {
@@ -259,19 +259,17 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.clear_rgba = 0x303030ff,
 	});
 
-	struct mat4 test_camera = mat4_mul_mat(
+	// --- map to camera coords; draw transformed
+	struct mat4 const test_camera = mat4_mul_mat(
 		mat4_set_projection((struct vec2){0, 0}, (struct vec2){1, (float)target_size_x / (float)target_size_y}, 0.1f, 10, 0),
 		mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
 	);
-	struct mat4 test_transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation);
-
-
-	// --- map to camera coords; draw transformed
 	gfx_material_set_float(&content.materials.test, uniforms.camera, 4*4, &test_camera.x.x);
 
 	gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &content.gpu.texture_test);
 	gfx_material_set_float(&content.materials.test, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 
+	struct mat4 const test_transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation);
 	gfx_material_set_float(&content.materials.test, uniforms.transform, 4*4, &test_transform.x.x);
 	graphics_draw(&(struct Render_Pass){
 		.target = target.gpu_target,
@@ -285,13 +283,12 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	// batch a quad with target texture
 	// --- fully fit to normalized device coords; draw at the farthest point
-	// batcher_2d_set_camera(batcher, mat4_identity);
-	float const scale_x   = (float)target_size_x / (float)size_x;
-	float const scale_y   = (float)target_size_y / (float)size_y;
-	float const scale_max = max_r32(scale_x, scale_y);
+	float const target_scale_x   = (float)target_size_x / (float)size_x;
+	float const target_scale_y   = (float)target_size_y / (float)size_y;
+	float const target_scale_max = max_r32(target_scale_x, target_scale_y);
 	batcher_2d_push_matrix(batcher, mat4_set_projection(
 		(struct vec2){0, 0},
-		(struct vec2){scale_x / scale_max, scale_y / scale_max},
+		(struct vec2){target_scale_x / target_scale_max, target_scale_y / target_scale_max},
 		0, 1, 1
 	));
 
@@ -310,9 +307,13 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	// batch some text and a texture
 	// --- map to screen buffer coords; draw at the nearest point
-	struct Game_Font * font = &content.fonts.sans;
+	batcher_2d_push_matrix(batcher, mat4_set_projection(
+		(struct vec2){-1, -1},
+		(struct vec2){2 / (float)size_x, 2 / (float)size_y},
+		0, 1, 1
+	));
 
-	batcher_2d_push_matrix(batcher, mat4_set_projection((struct vec2){-1, -1}, (struct vec2){2 / (float)size_x, 2 / (float)size_y}, 0, 1, 1));
+	struct Game_Font * font = &content.fonts.sans;
 
 	batcher_2d_set_blend_mode(batcher, (struct Blend_Mode){
 		.rgb = {
