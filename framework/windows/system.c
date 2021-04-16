@@ -3,6 +3,7 @@
 #include "framework/containers/array_byte.h"
 #include "framework/memory.h"
 #include "framework/unicode.h"
+#include "framework/input_keys.h"
 
 #include "timer_to_system.h"
 #include "window_to_system.h"
@@ -75,6 +76,13 @@ void platform_system_update(void) {
 		TranslateMessage(&message);
 		DispatchMessage(&message);
 	}
+
+	// high-order is state, low-order is toggle
+	// 1) SHORT const caps_lock = GetKeyState(VK_CAPITAL);
+	//    SHORT const num_lock = GetKeyState(VK_NUMLOCK);
+	// 2) BYTE key_states[256];
+	//    GetKeyboardState(key_states);
+
 	input_to_platform_after_update();
 }
 

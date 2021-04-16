@@ -15,8 +15,8 @@ struct Window {
 	HWND handle;
 	HDC private_context;
 	uint32_t size_x, size_y;
-	// bool is_unicode;
 
+	// bool is_unicode;
 	struct GInstance * ginstance;
 };
 
@@ -25,20 +25,17 @@ struct Window {
 
 static void platform_window_toggle_raw_input(struct Window * window, bool state);
 struct Window * platform_window_init(uint32_t size_x, uint32_t size_y) {
-	struct Window * window = MEMORY_ALLOCATE(NULL, struct Window);
-
-	RECT target_rect = {
-		.left   = 0,
-		.top    = 0,
-		.right  = (LONG)size_x,
-		.bottom = (LONG)size_y,
-	};
-
-	DWORD const target_style = WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_CAPTION;
+	// @note: initial styles are bound to have some implicit flags
+	DWORD const target_style = WS_CLIPSIBLINGS | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_CAPTION;
 	DWORD const target_ex_style = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
-	AdjustWindowRectEx(&target_rect, target_style, FALSE, target_ex_style);
 
-	window->handle = CreateWindowEx(
+	RECT target_rect = {.right  = (LONG)size_x, .bottom = (LONG)size_y};
+	AdjustWindowRectExForDpi(
+		&target_rect, target_style, FALSE, target_ex_style,
+		GetDpiForSystem()
+	);
+
+	HWND const handle = CreateWindowEx(
 		target_ex_style,
 		TEXT(APPLICATION_CLASS_NAME), TEXT("game prototype"),
 		target_style,
@@ -46,32 +43,39 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y) {
 		target_rect.right - target_rect.left, target_rect.bottom - target_rect.top,
 		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
-	if (window->handle == NULL) { fprintf(stderr, "'CreateWindowEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (handle == NULL) { fprintf(stderr, "'CreateWindowEx' failed\n"); DEBUG_BREAK(); return NULL; }
 
-	window->private_context = GetDC(window->handle);
-	if (window->private_context == NULL) { fprintf(stderr, "'GetDC' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
-
-	BOOL prop_is_set = SetProp(window->handle, TEXT(APPLICATION_CLASS_NAME), window);
-	if (!prop_is_set) { fprintf(stderr, "'SetProp' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
-
-	RECT rect;
-	GetClientRect(window->handle, &rect);
-	window->size_x = (uint32_t)(rect.right - rect.left);
-	window->size_y = (uint32_t)(rect.bottom - rect.top);
-	// window->is_unicode = IsWindowUnicode(window->handle);
-
-/*
-	uint8_t keys[KEYBOARD_KEYS_MAX];
-	if (GetKeyboardState(keys)) {
-		window->keyboard.caps_lock = keys[VK_CAPITAL] & 0x01;
-		window->keyboard.num_lock = keys[VK_NUMLOCK] & 0x01;
+	HDC const private_context = GetDC(handle);
+	if (private_context == NULL) {
+		fprintf(stderr, "'GetDC' failed\n"); DEBUG_BREAK();
+		DestroyWindow(handle); return NULL;
 	}
-*/
 
-	window->ginstance = ginstance_init(window);
+	//
+	struct Window * window = MEMORY_ALLOCATE(NULL, struct Window);
 
+	BOOL prop_is_set = SetProp(handle, TEXT(APPLICATION_CLASS_NAME), window);
+	if (!prop_is_set) {
+		fprintf(stderr, "'SetProp' failed\n"); DEBUG_BREAK();
+		DestroyWindow(handle); MEMORY_FREE(window, window); return NULL;
+	}
+
+	RECT client_rect;
+	GetClientRect(handle, &client_rect);
+
+	*window = (struct Window){
+		.handle = handle,
+		.private_context = private_context,
+		.size_x = (uint32_t)(client_rect.right - client_rect.left),
+		.size_y = (uint32_t)(client_rect.bottom - client_rect.top),
+	};
+
+	//
 	platform_window_toggle_raw_input(window, true);
 	// (void)platform_window_toggle_raw_input;
+
+	// window->is_unicode = IsWindowUnicode(window->handle);
+	window->ginstance = ginstance_init(window);
 
 	return window;
 }
@@ -104,8 +108,10 @@ void platform_window_display(struct Window * window) {
 }
 
 void platform_window_get_size(struct Window * window, uint32_t * size_x, uint32_t * size_y) {
-	*size_x = window->size_x;
-	*size_y = window->size_y;
+	RECT rect;
+	GetClientRect(window->handle, &rect);
+	*size_x = (uint32_t)(rect.right - rect.left);
+	*size_y = (uint32_t)(rect.bottom - rect.top);
 }
 
 uint32_t platform_window_get_refresh_rate(struct Window * window, uint32_t default_value) {
@@ -115,32 +121,35 @@ uint32_t platform_window_get_refresh_rate(struct Window * window, uint32_t defau
 
 
 void platform_window_toggle_borderless_fullscreen(struct Window * window) {
-	static WINDOWPLACEMENT normal_window_position;
-	
-	LONG_PTR window_style = GetWindowLongPtr(window->handle, GWL_STYLE);
-	if (window_style & WS_CAPTION) {
-		if (!GetWindowPlacement(window->handle, &normal_window_position)) { return; }
+	static WINDOWPLACEMENT normal_window_position = {.length = sizeof(WINDOWPLACEMENT)};
+	static LONG_PTR        normal_window_style;
 
+	LONG_PTR const window_style = GetWindowLongPtr(window->handle, GWL_STYLE);
+	if (window_style & WS_CAPTION) {
 		MONITORINFO monitor_info = {.cbSize = sizeof(MONITORINFO)};
 		if (!GetMonitorInfo(MonitorFromWindow(window->handle, MONITOR_DEFAULTTOPRIMARY), &monitor_info)) { return; }
 
-		SetWindowLongPtr(window->handle, GWL_STYLE, window_style & ~WS_CAPTION);
+		if (!GetWindowPlacement(window->handle, &normal_window_position)) { return; }
+		normal_window_style = window_style;
+
+		// @note: disable user-side sizing until restored
+		SetWindowLongPtr(window->handle, GWL_STYLE, WS_CLIPSIBLINGS | WS_VISIBLE);
 		SetWindowPos(
 			window->handle, HWND_TOP,
 			monitor_info.rcMonitor.left, monitor_info.rcMonitor.top,
 			monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
 			monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
-			SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+			SWP_FRAMECHANGED | SWP_NOZORDER
 		);
 		return;
 	}
 
 	// Restore windowed mode
-	SetWindowLongPtr(window->handle, GWL_STYLE, window_style | WS_CAPTION);
+	SetWindowLongPtr(window->handle, GWL_STYLE, normal_window_style);
 	SetWindowPos(
 		window->handle, HWND_TOP,
 		0, 0, 0, 0,
-		SWP_NOOWNERZORDER | SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
+		SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE
 	);
 	SetWindowPlacement(window->handle, &normal_window_position);
 }
@@ -249,21 +258,6 @@ static enum Key_Code translate_virtual_key_to_application(uint8_t scan, uint8_t 
 	}
 
 	return KC_ERROR;
-
-/*
-	switch (key) {
-		// non-ASCII, common
-		case VK_CAPITAL: {
-			window->keyboard.caps_lock = GetKeyState(key) & 0x0001;
-			break;
-		}
-		// non-ASCII, numeric
-		case VK_NUMLOCK: {
-			window->keyboard.num_lock = GetKeyState(key) & 0x0001;
-			break;
-		}
-	}
-*/
 }
 
 static struct Window * raw_input_window = NULL;
@@ -546,9 +540,13 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			return handle_message_input_mouse(window, wParam, lParam, false, 1, 0);
 
 		case WM_SIZE: {
+			// switch (wParam) {
+			// 	case SIZE_RESTORED:  break;
+			// 	case SIZE_MINIMIZED: break;
+			// 	case SIZE_MAXIMIZED: break;
+			// }
 			window->size_x = (uint32_t)LOWORD(lParam);
 			window->size_y = (uint32_t)HIWORD(lParam);
-			// ginstance_size(window->graphics, window->size_x, window->size_y);
 			return 0;
 		}
 

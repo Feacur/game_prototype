@@ -207,11 +207,6 @@ void ginstance_display(struct GInstance * ginstance) {
 	// glFinish();
 }
 
-// void ginstance_size(struct GInstance * ginstance, uint32_t size_x, uint32_t size_y) {
-// 	(void)ginstance;
-// 	glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
-// }
-
 //
 
 bool contains_full_word(char const * container, char const * value) {

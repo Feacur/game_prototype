@@ -33,6 +33,8 @@ static void application_init(void) {
 	platform_system_init();
 
 	app.window = platform_window_init(app.config->size_x, app.config->size_y);
+	if (app.window == NULL) { fprintf(stderr, "'platform_window_init' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+
 	platform_window_set_vsync(app.window, app.config->vsync);
 
 	app.ticks.frame_start = platform_timer_get_ticks();
