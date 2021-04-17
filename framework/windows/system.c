@@ -12,9 +12,9 @@
 #include <Windows.h>
 #include <signal.h>
 
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 static struct Platform_System {
 	HMODULE module;

@@ -2,9 +2,9 @@
 
 #include <Windows.h>
 
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 static struct Platform_Timer {
 	LARGE_INTEGER ticks_per_second;

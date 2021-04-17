@@ -13,9 +13,9 @@
 
 #include "functions.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 static GLenum gpu_data_type(enum Data_Type value);
 static enum Data_Type interpret_gl_type(GLint value);

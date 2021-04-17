@@ -1,8 +1,8 @@
 #include "containers/hash_table_u64.h"
 
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 // @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
 

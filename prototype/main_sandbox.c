@@ -24,9 +24,9 @@
 #include "transform.h"
 #include "batcher_2d.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 static struct Game_Uniforms {
 	uint32_t camera;

@@ -17,10 +17,9 @@
 #include "framework/graphics/font_image_glyph.h"
 #include "framework/maths.h"
 
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-
 
 struct Batcher_2D_Batch {
 	uint32_t offset, length;

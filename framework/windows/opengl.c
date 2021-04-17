@@ -5,9 +5,9 @@
 #include "framework/windows/window_to_glibrary.h"
 #include "framework/opengl/graphics_to_glibrary.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include <Windows.h>
 #include <GL/wgl.h>

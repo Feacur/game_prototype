@@ -1,7 +1,7 @@
 #include "framework/memory.h"
 
-#include <stdio.h>
 #include <string.h>
+#include <stdio.h>
 
 // @todo: make this dynamically compilable?
 // @todo: make it easier to use another growth factor

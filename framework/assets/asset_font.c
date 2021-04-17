@@ -3,9 +3,9 @@
 
 #include "framework/platform_file.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
 // better to compile third-parties as separate units

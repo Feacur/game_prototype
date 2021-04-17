@@ -4,9 +4,9 @@
 #include "framework/platform_window.h"
 #include "framework/input.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 //
 #include "application.h"

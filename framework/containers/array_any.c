@@ -1,8 +1,7 @@
 #include "framework/memory.h"
 
-#include <stdint.h>
-#include <stdio.h>
 #include <string.h>
+#include <stdio.h>
 
 // @todo: use 2/3 as a growth factor here? no real need to be a power of 2
 #define GROWTH_FACTOR 2

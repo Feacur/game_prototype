@@ -7,9 +7,9 @@
 #include <Windows.h>
 #include <hidusage.h>
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 struct Window {
 	HWND handle;
