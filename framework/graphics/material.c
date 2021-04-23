@@ -10,7 +10,7 @@
 
 void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_program) {
 	material->program = gpu_program;
-	array_pointer_init(&material->textures);
+	array_u64_init(&material->textures);
 	array_u32_init(&material->values_u32);
 	array_s32_init(&material->values_s32);
 	array_float_init(&material->values_float);
@@ -32,12 +32,12 @@ void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_
 		}
 	}
 
-	array_pointer_resize(&material->textures, unit_count);
+	array_u64_resize(&material->textures, unit_count);
 	array_u32_resize(&material->values_u32, u32_count);
 	array_s32_resize(&material->values_s32, s32_count);
 	array_float_resize(&material->values_float, float_count);
 
-	array_pointer_write_many_zeroes(&material->textures, unit_count);
+	array_u64_write_many_zeroes(&material->textures, unit_count);
 	array_u32_write_many_zeroes(&material->values_u32, u32_count);
 	array_s32_write_many_zeroes(&material->values_s32, s32_count);
 	array_float_write_many_zeroes(&material->values_float, float_count);
@@ -45,7 +45,7 @@ void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_
 
 void gfx_material_free(struct Gfx_Material * material) {
 	material->program = NULL;
-	array_pointer_free(&material->textures);
+	array_u64_free(&material->textures);
 	array_u32_free(&material->values_u32);
 	array_s32_free(&material->values_s32);
 	array_float_free(&material->values_float);
@@ -61,7 +61,7 @@ void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_i
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_UNIT,
 		(uint8_t *)material->textures.data,
-		count, sizeof(*value), value
+		count, sizeof(*material->textures.data), value
 	);
 }
 
@@ -69,7 +69,7 @@ void gfx_material_set_u32(struct Gfx_Material * material, uint32_t uniform_id, u
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_U32,
 		(uint8_t *)material->values_u32.data,
-		count, sizeof(*value), value
+		count, sizeof(*material->values_u32.data), value
 	);
 }
 
@@ -77,7 +77,7 @@ void gfx_material_set_s32(struct Gfx_Material * material, uint32_t uniform_id, u
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_S32,
 		(uint8_t *)material->values_s32.data,
-		count, sizeof(*value), value
+		count, sizeof(*material->values_s32.data), value
 	);
 }
 
@@ -85,7 +85,7 @@ void gfx_material_set_float(struct Gfx_Material * material, uint32_t uniform_id,
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_R32,
 		(uint8_t *)material->values_float.data,
-		count, sizeof(*value), value
+		count, sizeof(*material->values_float.data), value
 	);
 }
 

@@ -1,7 +1,7 @@
 #if !defined(GAME_FRAMEWORK_GRAPHICS_MATERIAL)
 #define GAME_FRAMEWORK_GRAPHICS_MATERIAL
 
-#include "framework/containers/array_pointer.h"
+#include "framework/containers/array_u64.h"
 #include "framework/containers/array_u32.h"
 #include "framework/containers/array_s32.h"
 #include "framework/containers/array_float.h"
@@ -12,7 +12,7 @@ struct Gpu_Texture;
 struct Gfx_Material {
 	struct Gpu_Program * program; // weak reference
 
-	struct Array_Pointer textures;
+	struct Array_U64 textures;
 	struct Array_U32 values_u32;
 	struct Array_S32 values_s32;
 	struct Array_Float values_float;

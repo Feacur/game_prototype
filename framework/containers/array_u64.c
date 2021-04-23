@@ -6,29 +6,29 @@
 #define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR)
 
 //
-#include "array_pointer.h"
+#include "array_u64.h"
 
-void array_pointer_init(struct Array_Pointer * array) {
-	*array = (struct Array_Pointer){
+void array_u64_init(struct Array_U64 * array) {
+	*array = (struct Array_U64){
 		.capacity = 0,
 		.count = 0,
 		.data = 0,
 	};
 }
 
-void array_pointer_free(struct Array_Pointer * array) {
+void array_u64_free(struct Array_U64 * array) {
 	if (array->capacity == 0) { return; }
 	MEMORY_FREE(array, array->data);
-	array_pointer_init(array);
+	array_u64_init(array);
 }
 
-void array_pointer_resize(struct Array_Pointer * array, uint32_t size) {
+void array_u64_resize(struct Array_U64 * array, uint32_t size) {
 	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, size);
 	array->capacity = size;
 	array->count = (size >= array->count) ? array->count : size;
 }
 
-void array_pointer_write(struct Array_Pointer * array, void * value) {
+void array_u64_write(struct Array_U64 * array, uint32_t value) {
 	if (array->count + 1 > array->capacity) {
 		// @todo: correctly process capacities past 0x80000000
 		array->capacity = GROW_CAPACITY(array->capacity);
@@ -39,7 +39,7 @@ void array_pointer_write(struct Array_Pointer * array, void * value) {
 	array->count++;
 }
 
-void array_pointer_write_many(struct Array_Pointer * array, uint32_t count, void ** value) {
+void array_u64_write_many(struct Array_U64 * array, uint32_t count, uint32_t const * value) {
 	if (array->count + count > array->capacity) {
 		// @todo: correctly process capacities past 0x80000000
 		while (array->count + count > array->capacity) {
@@ -52,7 +52,7 @@ void array_pointer_write_many(struct Array_Pointer * array, uint32_t count, void
 	array->count += count;
 }
 
-void array_pointer_write_many_zeroes(struct Array_Pointer * array, uint32_t count) {
+void array_u64_write_many_zeroes(struct Array_U64 * array, uint32_t count) {
 	if (array->count + count > array->capacity) {
 		// @todo: correctly process capacities past 0x80000000
 		while (array->count + count > array->capacity) {

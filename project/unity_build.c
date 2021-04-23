@@ -13,7 +13,7 @@
 #include "framework/containers/array_float.c"
 #include "framework/containers/array_u32.c"
 #include "framework/containers/array_s32.c"
-#include "framework/containers/array_pointer.c"
+#include "framework/containers/array_u64.c"
 #include "framework/containers/hash_table_any.c"
 #include "framework/containers/hash_table_u32.c"
 #include "framework/containers/hash_table_u64.c"
