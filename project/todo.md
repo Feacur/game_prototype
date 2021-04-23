@@ -1,11 +1,13 @@
 # framework
 ```
-[o] text rendering
+[o] entity system
+    [x] create relocation table to expose handles as an alternative to raw pointers
+[ ] text rendering
     [ ] automatically build atlas based on input text?
     [ ] select suitable fonts for different locales
 [ ] graphics
     [ ] remove mutable buffers, but recreate immutable ones completely?
-    [ ] API to correctly batch-update meshes/textures and create a render pass (or whatever)
+    [x] API to correctly batch-update meshes/textures and create a render pass (or whatever)
     [ ] elaborate the idea of render passes
     [ ] GPU scissor test
     [ ] support older OpenGL versions (pre direct state access, which is 4.5)

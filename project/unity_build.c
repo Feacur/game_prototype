@@ -17,6 +17,7 @@
 #include "framework/containers/hash_table_any.c"
 #include "framework/containers/hash_table_u32.c"
 #include "framework/containers/hash_table_u64.c"
+#include "framework/containers/ref_table.c"
 #include "framework/containers/strings.c"
 
 #include "framework/assets/parsing.c"
@@ -43,4 +44,5 @@
 #include "application/application.c"
 
 #include "prototype/batcher_2d.c"
+#include "prototype/world.c"
 #include "prototype/main_sandbox.c"

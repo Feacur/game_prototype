@@ -15,6 +15,7 @@
 #include "application/application.h"
 
 #include "framework/containers/array_byte.h"
+#include "framework/containers/ref_table.h"
 
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"
@@ -76,6 +77,26 @@ static struct Game_State {
 } state;
 
 static void game_init(void) {
+	{
+		struct Ref_Table ref_table;
+		ref_table_init(&ref_table, sizeof(float));
+		struct Ref refs[20];
+		for (uint32_t i = 0; i < 20; i++) {
+			float value = (float)((i + 1) * 10 + i + 1);
+			refs[i] = ref_table_aquire(&ref_table, &value);
+		}
+		ref_table_discard(&ref_table, refs[2]);
+		ref_table_discard(&ref_table, refs[4]);
+		ref_table_discard(&ref_table, refs[6]);
+		ref_table_aquire(&ref_table, &(float){500});
+		ref_table_aquire(&ref_table, &(float){600});
+		ref_table_discard(&ref_table, refs[8]);
+		for (uint32_t i = 0; i < ref_table_get_count(&ref_table); i++) {
+			printf("%f\n", (double)*(float *)ref_table_value_at(&ref_table, i));
+		}
+		ref_table_free(&ref_table);
+	}
+
 	// init uniforms ids
 	uniforms.color = graphics_add_uniform("u_Color");
 	uniforms.texture = graphics_add_uniform("u_Texture");
