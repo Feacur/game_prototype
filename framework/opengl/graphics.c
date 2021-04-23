@@ -85,7 +85,7 @@ struct Gpu_Unit {
 static struct Graphics_State {
 	char * extensions;
 
-	struct Strings * uniforms;
+	struct Strings uniforms;
 
 	struct Gpu_Program const * active_program;
 	struct Gpu_Target const * active_target;
@@ -206,7 +206,7 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 		}
 
 		uniforms[i] = (struct Gpu_Program_Field){
-			.id = strings_add(graphics_state.uniforms, (uint32_t)name_length, uniform_name_buffer),
+			.id = strings_add(&graphics_state.uniforms, (uint32_t)name_length, uniform_name_buffer),
 			.type = interpret_gl_type(params[0]),
 			.array_size = (uint32_t)params[1],
 		};
@@ -671,11 +671,11 @@ void gpu_mesh_update(struct Gpu_Mesh * gpu_mesh, struct Asset_Mesh * asset) {
 #include "framework/graphics/graphics.h"
 
 uint32_t graphics_add_uniform(char const * name) {
-	return strings_add(graphics_state.uniforms, (uint32_t)strlen(name), name);
+	return strings_add(&graphics_state.uniforms, (uint32_t)strlen(name), name);
 }
 
 uint32_t graphics_find_uniform(char const * name) {
-	return strings_find(graphics_state.uniforms, (uint32_t)strlen(name), name);
+	return strings_find(&graphics_state.uniforms, (uint32_t)strlen(name), name);
 }
 
 // static void graphics_stencil_test(void) {
@@ -1003,8 +1003,8 @@ void graphics_to_glibrary_init(void) {
 	graphics_state.extensions = allocate_extensions_string();
 
 	//
-	graphics_state.uniforms = strings_init();
-	strings_add(graphics_state.uniforms, 0, "");
+	strings_init(&graphics_state.uniforms);
+	strings_add(&graphics_state.uniforms, 0, "");
 
 	//
 	GLint max_units;
@@ -1053,7 +1053,7 @@ void graphics_to_glibrary_init(void) {
 }
 
 void graphics_to_glibrary_free(void) {
-	strings_free(graphics_state.uniforms);
+	strings_free(&graphics_state.uniforms);
 	MEMORY_FREE(&graphics_state, graphics_state.extensions);
 	MEMORY_FREE(&graphics_state, graphics_state.units);
 	memset(&graphics_state, 0, sizeof(graphics_state));

@@ -1,32 +1,18 @@
-#include "framework/containers/array_byte.h"
-#include "framework/containers/array_u32.h"
-
-#include "framework/memory.h"
-
 #include <string.h>
 
 //
 #include "strings.h"
 
-struct Strings {
-	struct Array_U32 offsets;
-	struct Array_U32 lengths;
-	struct Array_Byte buffer;
-};
-
-struct Strings * strings_init(void) {
-	struct Strings * strings = MEMORY_ALLOCATE(NULL, struct Strings);
+void strings_init(struct Strings * strings) {
 	array_u32_init(&strings->offsets);
 	array_u32_init(&strings->lengths);
 	array_byte_init(&strings->buffer);
-	return strings;
 }
 
 void strings_free(struct Strings * strings) {
 	array_u32_free(&strings->offsets);
 	array_u32_free(&strings->lengths);
 	array_byte_free(&strings->buffer);
-	MEMORY_FREE(strings, strings);
 }
 
 uint32_t strings_find(struct Strings * strings, uint32_t length, char const * value) {

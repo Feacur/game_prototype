@@ -7,12 +7,6 @@
 #define GROWTH_FACTOR 2
 // #define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR)
 
-struct Array_Any {
-	uint32_t value_size;
-	uint32_t capacity, count;
-	uint8_t * data;
-};
-
 #if GROWTH_FACTOR == 2
 	// #include "framework/maths.h"
 	uint32_t round_up_to_PO2_u32(uint32_t value);
@@ -21,23 +15,19 @@ struct Array_Any {
 //
 #include "array_any.h"
 
-struct Array_Any * array_any_init(uint32_t value_size) {
+void array_any_init(struct Array_Any * array, uint32_t value_size) {
 	if (value_size == 0) {
-		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK(); return NULL;
+		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK(); return;
 	}
 
-	struct Array_Any * array = MEMORY_ALLOCATE(NULL, struct Array_Any);
 	*array = (struct Array_Any){
 		.value_size = value_size,
 	};
-	return array;
 }
 
 void array_any_free(struct Array_Any * array) {
 	MEMORY_FREE(array, array->data);
-
 	memset(array, 0, sizeof(*array));
-	MEMORY_FREE(array, array);
 }
 
 void array_any_clear(struct Array_Any * array) {
@@ -58,13 +48,9 @@ void array_any_ensure_minimum_capacity(struct Array_Any * array, uint32_t minimu
 	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->value_size * array->capacity);
 }
 
-uint32_t array_any_get_count(struct Array_Any * array) {
-	return array->count;
-}
-
 void array_any_push(struct Array_Any * array, void const * value) {
 	if (array->count + 1 > array->capacity) {
-		array_any_ensure_minimum_capacity(array, array->count + 1);
+		array_any_ensure_minimum_capacity(array, array->capacity + 1);
 	}
 
 	memcpy(
@@ -97,6 +83,10 @@ void * array_any_pop(struct Array_Any * array) {
 void * array_any_peek(struct Array_Any * array, uint32_t offset) {
 	if (offset >= array->count) { return NULL; }
 	return array->data + array->value_size * (array->count - offset - 1);
+}
+
+uint32_t array_any_get_count(struct Array_Any * array) {
+	return array->count;
 }
 
 void * array_any_at(struct Array_Any * array, uint32_t index) {

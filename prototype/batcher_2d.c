@@ -36,12 +36,12 @@ struct Batcher_2D_Vertex {
 
 struct Batcher_2D {
 	struct Batcher_2D_Batch batch;
-	struct Array_Any * batches;
+	struct Array_Any batches;
 	//
 	struct mat4 matrix;
-	struct Array_Any * matrices;
+	struct Array_Any matrices;
 	//
-	struct Array_Any * vertices;
+	struct Array_Any vertices;
 	struct Array_U32 indices;
 	uint32_t vertex_offset, element_offset;
 	//
@@ -59,16 +59,16 @@ struct Batcher_2D * batcher_2d_init(void) {
 
 	struct Batcher_2D * batcher = MEMORY_ALLOCATE(NULL, struct Batcher_2D);
 	*batcher = (struct Batcher_2D){
-		.batches = array_any_init(sizeof(struct Batcher_2D_Batch)),
 		.matrix = mat4_identity,
-		.matrices = array_any_init(sizeof(struct mat4)),
-		.vertices = array_any_init(sizeof(struct Batcher_2D_Vertex)),
 		.mesh = (struct Asset_Mesh){
 			.count      = buffers_count,
 			.buffers    = MEMORY_ALLOCATE_ARRAY(batcher, struct Array_Byte, buffers_count),
 			.parameters = MEMORY_ALLOCATE_ARRAY(batcher, struct Mesh_Parameters, buffers_count),
 		},
 	};
+	array_any_init(&batcher->batches,  sizeof(struct Batcher_2D_Batch));
+	array_any_init(&batcher->matrices, sizeof(struct mat4));
+	array_any_init(&batcher->vertices, sizeof(struct Batcher_2D_Vertex));
 
 	//
 	uint32_t const attributes[] = {
@@ -106,9 +106,9 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	MEMORY_FREE(batcher, batcher->mesh.parameters);
 	array_u32_free(&batcher->indices);
 	//
-	array_any_free(batcher->batches);
-	array_any_free(batcher->matrices);
-	array_any_free(batcher->vertices);
+	array_any_free(&batcher->batches);
+	array_any_free(&batcher->matrices);
+	array_any_free(&batcher->vertices);
 	//
 	memset(batcher, 0, sizeof(*batcher));
 	MEMORY_FREE(batcher, batcher);
@@ -118,7 +118,7 @@ static void batcher_2d_bake_pass(struct Batcher_2D * batcher) {
 	uint32_t const offset = batcher->element_offset;
 	if (batcher->batch.offset < offset) {
 		batcher->batch.length = offset - batcher->batch.offset;
-		array_any_push(batcher->batches, &batcher->batch);
+		array_any_push(&batcher->batches, &batcher->batch);
 
 		batcher->batch.offset = offset;
 		batcher->batch.length = 0;
@@ -126,12 +126,12 @@ static void batcher_2d_bake_pass(struct Batcher_2D * batcher) {
 }
 
 void batcher_2d_push_matrix(struct Batcher_2D * batcher, struct mat4 matrix) {
-	array_any_push(batcher->matrices, &batcher->matrix);
+	array_any_push(&batcher->matrices, &batcher->matrix);
 	batcher->matrix = matrix;
 }
 
 void batcher_2d_pop_matrix(struct Batcher_2D * batcher) {
-	struct mat4 const * matrix = array_any_pop(batcher->matrices);
+	struct mat4 const * matrix = array_any_pop(&batcher->matrices);
 	if (matrix != NULL) { batcher->matrix = *matrix; return; }
 	fprintf(stderr, "non-matching matrices\n"); DEBUG_BREAK();
 	batcher->matrix = mat4_identity;
@@ -172,7 +172,7 @@ void batcher_2d_add_quad(
 	float const * rect, float const * uv
 ) {
 	uint32_t const vertex_offset = batcher->vertex_offset;
-	array_any_push_many(batcher->vertices, 4, (struct Batcher_2D_Vertex[]){
+	array_any_push_many(&batcher->vertices, 4, (struct Batcher_2D_Vertex[]){
 		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect[0], rect[1]}, (struct vec2){uv[0], uv[1]}),
 		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect[0], rect[3]}, (struct vec2){uv[0], uv[3]}),
 		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect[2], rect[1]}, (struct vec2){uv[2], uv[1]}),
@@ -259,10 +259,10 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 	gpu_mesh_update(batcher->gpu_mesh, &batcher->mesh);
 
 	batcher_2d_bake_pass(batcher);
-	uint32_t passes_count = array_any_get_count(batcher->batches);
+	uint32_t passes_count = array_any_get_count(&batcher->batches);
 
 	for (uint32_t i = 0; i < passes_count; i++) {
-		struct Batcher_2D_Batch * batch = array_any_at(batcher->batches, i);
+		struct Batcher_2D_Batch * batch = array_any_at(&batcher->batches, i);
 
 		// @todo: do matrix computations CPU-side
 		gfx_material_set_texture(batch->material, texture_id, 1, &batch->texture);
@@ -282,8 +282,8 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 
 	//
 	memset(&batcher->batch, 0, sizeof(batcher->batch));
-	array_any_clear(batcher->batches);
-	array_any_clear(batcher->vertices);
+	array_any_clear(&batcher->batches);
+	array_any_clear(&batcher->vertices);
 	batcher->indices.count  = 0;
 	batcher->vertex_offset   = 0;
 	batcher->element_offset  = 0;
@@ -303,8 +303,8 @@ static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec
 
 static void batcher_2d_update_asset(struct Batcher_2D * batcher) {
 	batcher->mesh.buffers[0] = (struct Array_Byte){
-		.data = array_any_at(batcher->vertices, 0),
-		.count = sizeof(struct Batcher_2D_Vertex) * array_any_get_count(batcher->vertices),
+		.data = array_any_at(&batcher->vertices, 0),
+		.count = sizeof(struct Batcher_2D_Vertex) * array_any_get_count(&batcher->vertices),
 	};
 	batcher->mesh.buffers[1] = (struct Array_Byte){
 		.data = (uint8_t *)batcher->indices.data,

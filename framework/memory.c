@@ -14,7 +14,7 @@ struct Pointer_Data {
 
 static struct Memory_State {
 	uint64_t total_bytes;
-	struct Hash_Table_U64 * pointers;
+	struct Hash_Table_U64 pointers;
 	uint32_t pointers_count;
 } memory_state;
 
@@ -41,10 +41,10 @@ static struct Memory_State {
 // }
 
 void * memory_reallocate(void const * owner, char const * source, void * pointer, size_t size) {
-	bool const track_allocation = (memory_state.pointers != NULL && memory_state.pointers != owner);
+	bool const track_allocation = (&memory_state.pointers != owner);
 	struct Pointer_Data const * pointer_data = NULL;
 	if (pointer != NULL && track_allocation) {
-		pointer_data = hash_table_u64_get(memory_state.pointers, (uint64_t)pointer);
+		pointer_data = hash_table_u64_get(&memory_state.pointers, (uint64_t)pointer);
 	}
 
 	if (size == 0) {
@@ -52,7 +52,7 @@ void * memory_reallocate(void const * owner, char const * source, void * pointer
 		if (pointer_data != NULL) {
 			memory_state.pointers_count--;
 			memory_state.total_bytes -= pointer_data->size;
-			hash_table_u64_del(memory_state.pointers, (uint64_t)pointer);
+			hash_table_u64_del(&memory_state.pointers, (uint64_t)pointer);
 		}
 		return NULL;
 	}
@@ -63,13 +63,13 @@ void * memory_reallocate(void const * owner, char const * source, void * pointer
 	if (pointer_data != NULL) {
 		memory_state.pointers_count--;
 		memory_state.total_bytes -= pointer_data->size;
-		hash_table_u64_del(memory_state.pointers, (uint64_t)pointer);
+		hash_table_u64_del(&memory_state.pointers, (uint64_t)pointer);
 	}
 
 	if (track_allocation) {
 		memory_state.pointers_count++;
 		memory_state.total_bytes += size;
-		hash_table_u64_set(memory_state.pointers, (uint64_t)result, &(struct Pointer_Data){
+		hash_table_u64_set(&memory_state.pointers, (uint64_t)result, &(struct Pointer_Data){
 			.size   = size,
 			.owner  = owner,
 			.source = source,
@@ -99,22 +99,22 @@ void * memory_reallocate(void const * owner, char const * source, void * pointer
 #include "framework/internal/memory_to_system.h"
 
 void memory_to_system_init(void) {
-	memory_state.pointers = hash_table_u64_init(sizeof(struct Pointer_Data));
+	hash_table_u64_init(&memory_state.pointers, sizeof(struct Pointer_Data));
 }
 
 void memory_to_system_free(void) {
 	if (memory_state.total_bytes > 0 || memory_state.pointers_count > 0) {
 		fprintf(stderr, "leaked %llu bytes with %u pointers(s):\n", memory_state.total_bytes, memory_state.pointers_count);
 
-		uint32_t const iteration_capacity = hash_table_u64_get_iteration_capacity(memory_state.pointers);
+		uint32_t const iteration_capacity = hash_table_u64_get_iteration_capacity(&memory_state.pointers);
 		for (uint32_t i = 0; i < iteration_capacity; i++) {
-			struct Pointer_Data const * value = hash_table_u64_iterate(memory_state.pointers, i);
+			struct Pointer_Data const * value = hash_table_u64_iterate(&memory_state.pointers, i);
 			if (value == NULL) { continue; }
 			fprintf(stderr, "-- %llu bytes from '%s'\n", value->size, value->source);
 		}
 
 		DEBUG_BREAK();
 	}
-	hash_table_u64_free(memory_state.pointers);
+	hash_table_u64_free(&memory_state.pointers);
 	memset(&memory_state, 0, sizeof(memory_state));
 }

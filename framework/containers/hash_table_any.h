@@ -3,11 +3,17 @@
 
 #include "framework/common.h"
 
-// @idea: expose the structure? will it reduce indirection?
 // @idea: hash the key automatically as bytes array?
-struct Hash_Table_Any;
+struct Hash_Table_Any {
+	uint32_t key_size, value_size;
+	uint32_t capacity, count;
+	uint32_t * hashes;
+	uint8_t * keys;
+	uint8_t * values;
+	uint8_t * marks;
+};
 
-struct Hash_Table_Any * hash_table_any_init(uint32_t key_size, uint32_t value_size);
+void hash_table_any_init(struct Hash_Table_Any * hash_table, uint32_t key_size, uint32_t value_size);
 void hash_table_any_free(struct Hash_Table_Any * hash_table);
 
 void hash_table_any_clear(struct Hash_Table_Any * hash_table);

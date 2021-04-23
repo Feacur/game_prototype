@@ -3,10 +3,15 @@
 
 #include "framework/common.h"
 
-// @idea: expose the structure? will it reduce indirection?
-struct Hash_Table_U32;
+struct Hash_Table_U32 {
+	uint32_t value_size;
+	uint32_t capacity, count;
+	uint32_t * key_hashes;
+	uint8_t * values;
+	uint8_t * marks;
+};
 
-struct Hash_Table_U32 * hash_table_u32_init(uint32_t value_size);
+void hash_table_u32_init(struct Hash_Table_U32 * hash_table, uint32_t value_size);
 void hash_table_u32_free(struct Hash_Table_U32 * hash_table);
 
 void hash_table_u32_clear(struct Hash_Table_U32 * hash_table);

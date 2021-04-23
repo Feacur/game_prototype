@@ -9,20 +9,9 @@
 #define HASH_TABLE_SHOULD_GROW(count, capacity) ((count) > (capacity) * 2 / 3)
 // #define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR)
 
-enum Hash_Table_Any_Mark {
-	HASH_TABLE_ANY_MARK_NONE,
-	HASH_TABLE_ANY_MARK_SKIP,
-	HASH_TABLE_ANY_MARK_FULL,
-};
-
-struct Hash_Table_Any {
-	uint32_t key_size, value_size;
-	uint32_t capacity, count;
-	uint32_t * hashes;
-	uint8_t * keys;
-	uint8_t * values;
-	uint8_t * marks;
-};
+#define HASH_TABLE_MARK_NONE ((uint8_t)0)
+#define HASH_TABLE_MARK_SKIP ((uint8_t)1)
+#define HASH_TABLE_MARK_FULL ((uint8_t)2)
 
 #if GROWTH_FACTOR == 2
 	// #include "framework/maths.h"
@@ -32,21 +21,19 @@ struct Hash_Table_Any {
 //
 #include "hash_table_any.h"
 
-struct Hash_Table_Any * hash_table_any_init(uint32_t key_size, uint32_t value_size) {
+void hash_table_any_init(struct Hash_Table_Any * hash_table, uint32_t key_size, uint32_t value_size) {
 	if (key_size == 0) {
-		fprintf(stderr, "key size should be non-zero\n"); DEBUG_BREAK(); return NULL;
+		fprintf(stderr, "key size should be non-zero\n"); DEBUG_BREAK(); return;
 	}
 
 	if (value_size == 0) {
-		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK(); return NULL;
+		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK(); return;
 	}
 
-	struct Hash_Table_Any * hash_table = MEMORY_ALLOCATE(NULL, struct Hash_Table_Any);
 	*hash_table = (struct Hash_Table_Any){
 		.key_size = key_size,
 		.value_size = value_size,
 	};
-	return hash_table;
 }
 
 void hash_table_any_free(struct Hash_Table_Any * hash_table) {
@@ -56,7 +43,6 @@ void hash_table_any_free(struct Hash_Table_Any * hash_table) {
 	MEMORY_FREE(hash_table, hash_table->marks);
 
 	memset(hash_table, 0, sizeof(*hash_table));
-	MEMORY_FREE(hash_table, hash_table);
 }
 
 static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash);
@@ -82,11 +68,11 @@ void hash_table_any_ensure_minimum_capacity(struct Hash_Table_Any * hash_table, 
 	hash_table->values = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->value_size * hash_table->capacity);
 	hash_table->marks  = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity);
 
-	memset(hash_table->marks, HASH_TABLE_ANY_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
+	memset(hash_table->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 
-	// @note: .count remains as is
+	// @note: `hash_table->count` remains as is
 	for (uint32_t i = 0; i < capacity; i++) {
-		if (marks[i] != HASH_TABLE_ANY_MARK_FULL) { continue; }
+		if (marks[i] != HASH_TABLE_MARK_FULL) { continue; }
 
 		void const * ht_key = keys + hash_table->key_size * i;
 		uint32_t const key_index = hash_table_any_find_key_index(hash_table, ht_key, hashes[i]);
@@ -101,7 +87,7 @@ void hash_table_any_ensure_minimum_capacity(struct Hash_Table_Any * hash_table, 
 			values + hash_table->value_size * i,
 			hash_table->value_size
 		);
-		hash_table->marks[key_index] = HASH_TABLE_ANY_MARK_FULL;
+		hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
 	}
 
 	MEMORY_FREE(hash_table, hashes);
@@ -112,14 +98,14 @@ void hash_table_any_ensure_minimum_capacity(struct Hash_Table_Any * hash_table, 
 
 void hash_table_any_clear(struct Hash_Table_Any * hash_table) {
 	hash_table->count = 0;
-	memset(hash_table->marks, HASH_TABLE_ANY_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
+	memset(hash_table->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 }
 
 void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash) {
 	if (hash_table->count == 0) { return NULL; }
 	uint32_t const key_index = hash_table_any_find_key_index(hash_table, key, hash);
 	// if (key_index == INDEX_EMPTY) { return NULL; }
-	if (hash_table->marks[key_index] != HASH_TABLE_ANY_MARK_FULL) { return NULL; }
+	if (hash_table->marks[key_index] != HASH_TABLE_MARK_FULL) { return NULL; }
 	return hash_table->values + hash_table->value_size * key_index;
 }
 
@@ -131,8 +117,8 @@ bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, ui
 
 	uint32_t const key_index = hash_table_any_find_key_index(hash_table, key, hash);
 	// if (key_index == INDEX_EMPTY) { return false; }
-	enum Hash_Table_Any_Mark const mark = hash_table->marks[key_index];
-	bool const is_new = (mark == HASH_TABLE_ANY_MARK_NONE);
+	uint8_t const mark = hash_table->marks[key_index];
+	bool const is_new = (mark == HASH_TABLE_MARK_NONE);
 	if (is_new) { hash_table->count++; }
 
 	hash_table->hashes[key_index] = hash;
@@ -146,7 +132,7 @@ bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, ui
 		value,
 		hash_table->value_size
 	);
-	hash_table->marks[key_index] = HASH_TABLE_ANY_MARK_FULL;
+	hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
 	
 	return is_new;
 }
@@ -155,8 +141,8 @@ bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, ui
 	if (hash_table->count == 0) { return false; }
 	uint32_t const key_index = hash_table_any_find_key_index(hash_table, key, hash);
 	// if (key_index == INDEX_EMPTY) { return false; }
-	if (hash_table->marks[key_index] != HASH_TABLE_ANY_MARK_FULL) { return false; }
-	hash_table->marks[key_index] = HASH_TABLE_ANY_MARK_SKIP;
+	if (hash_table->marks[key_index] != HASH_TABLE_MARK_FULL) { return false; }
+	hash_table->marks[key_index] = HASH_TABLE_MARK_SKIP;
 	return true;
 }
 
@@ -165,7 +151,7 @@ uint32_t hash_table_any_get_iteration_capacity(struct Hash_Table_Any * hash_tabl
 }
 
 void * hash_table_any_iterate(struct Hash_Table_Any * hash_table, uint32_t index) {
-	if (hash_table->marks[index] != HASH_TABLE_ANY_MARK_FULL) { return NULL; }
+	if (hash_table->marks[index] != HASH_TABLE_MARK_FULL) { return NULL; }
 	return hash_table->values + hash_table->value_size * index;
 }
 
@@ -185,11 +171,11 @@ static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any * hash_table
 		uint32_t const index = WRAP_VALUE(i + offset, hash_table->capacity);
 
 		uint8_t const mark = hash_table->marks[index];
-		if (mark == HASH_TABLE_ANY_MARK_SKIP) {
+		if (mark == HASH_TABLE_MARK_SKIP) {
 			if (empty == INDEX_EMPTY) { empty = index; }
 			continue;
 		}
-		if (mark == HASH_TABLE_ANY_MARK_NONE) {
+		if (mark == HASH_TABLE_MARK_NONE) {
 			if (empty == INDEX_EMPTY) { empty = index; }
 			break;
 		}
@@ -204,6 +190,10 @@ static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any * hash_table
 
 #undef WRAP_VALUE
 }
+
+#undef HASH_TABLE_MARK_NONE
+#undef HASH_TABLE_MARK_SKIP
+#undef HASH_TABLE_MARK_FULL
 
 #undef GROWTH_FACTOR
 #undef HASH_TABLE_SHOULD_GROW

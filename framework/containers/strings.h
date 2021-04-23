@@ -1,11 +1,16 @@
 #if !defined(GAME_STRINGS)
 #define GAME_STRINGS
 
-#include "framework/common.h"
+#include "framework/containers/array_byte.h"
+#include "framework/containers/array_u32.h"
 
-struct Strings;
+struct Strings {
+	struct Array_U32 offsets;
+	struct Array_U32 lengths;
+	struct Array_Byte buffer;
+};
 
-struct Strings * strings_init(void);
+void strings_init(struct Strings * strings);
 void strings_free(struct Strings * strings);
 
 uint32_t strings_find(struct Strings * strings, uint32_t length, char const * value);
