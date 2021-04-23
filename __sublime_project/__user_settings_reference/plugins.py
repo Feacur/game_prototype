@@ -55,7 +55,7 @@ class BuildOutputGotoCommand(sublime_plugin.TextCommand):
 			match = re.match(r"^(.+):(\d+:\d+).*$", view.substr(line_range))
 			if match:
 				if os.path.exists(match.group(1)):
-					return "%s:%s" % (match.group(1), match.group(2))
+					return "%s:%s" % (os.path.abspath(match.group(1)), match.group(2))
 			line_range = view.line(line_range.begin() - 1)
 		return None
 
@@ -66,6 +66,6 @@ class BuildOutputGotoCommand(sublime_plugin.TextCommand):
 			match = re.match(r"^(.+)\((\d+),?(\d+)?\).*$", view.substr(line_range))
 			if match:
 				if os.path.exists(match.group(1)):
-					return "%s:%s:%s" % (match.group(1), match.group(2), match.group(3))
+					return "%s:%s:%s" % (os.path.abspath(match.group(1)), match.group(2), match.group(3))
 			line_range = view.line(line_range.begin() - 1)
 		return None
