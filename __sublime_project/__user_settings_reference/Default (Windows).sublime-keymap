@@ -36,8 +36,8 @@
 	{ "keys": ["ctrl+shift+f12"], "command": "goto_reference" },
 	{ "keys": ["ctrl+,"], "command": "context_menu" },
 	// extensions: EasyClangComplete
-	{ "keys": ["f12"], "command": "ecc_goto_declaration" },
-	{ "keys": ["ctrl+."], "command": "ecc_show_popup_info" },
+	// { "keys": ["f12"], "command": "ecc_goto_declaration" },
+	// { "keys": ["ctrl+."], "command": "ecc_show_popup_info" },
 	// extensions: LSP
 	{ "keys": ["f12"], "command": "lsp_symbol_definition", "context": [{"key": "setting.lsp_active"}] },
 	{ "keys": ["shift+f12"], "command": "lsp_symbol_references", "context": [{"key": "setting.lsp_active"}] },

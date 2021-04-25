@@ -77,7 +77,7 @@
 	// editor: interface
 	{
 		"key": "ctrl+shift+alt+[",
-		"command": "workbench.action.newGroupLeft"
+		"command": "workbench.action.closeGroup"
 	},
 	{
 		"key": "ctrl+shift+alt+]",
