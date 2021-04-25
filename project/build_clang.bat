@@ -25,6 +25,10 @@ rem https://lld.llvm.org/windows_support.html
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
 rem https://docs.microsoft.com/en-us/cpp/c-runtime-library/crt-library-features
 
+rem |> PREPARE PROJECT
+set project_folder=%cd%
+set project=game
+
 rem |> PREPARE TOOLS
 set "PATH=%PATH%;C:/Program Files/LLVM/bin"
 
@@ -79,19 +83,19 @@ pushd bin
 set timeCompile=%time%
 if %build_mode% == normal ( rem |> compile a set of translation units, then link them
 	if not exist temp mkdir temp
-	for /f %%v in (../project/translation_units.txt) do ( rem |> for each line %%v in the file
+	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem |> for each line %%v in the file
 		clang -std=c99 -c -o"./temp/%%~nv.o" %compiler% %warnings% "../%%v"
-		if errorlevel 1 goto error
+		if errorlevel == 1 goto error
 	)
 	set timeLink=%time%
-	lld-link "./temp/*.o" -out:"game.exe" %linker%
+	lld-link "./temp/*.o" -out:"%project%.exe" %linker%
 ) else if %build_mode% == unity ( rem |> compile as a unity build, then link separately
-	clang -std=c99 -c -o"./unity_build.o" %compiler% %warnings% "../project/unity_build.c"
+	clang -std=c99 -c -o"./%project%_unity_build.o" %compiler% %warnings% "%project_folder%/%project%_unity_build.c"
 	set timeLink=%time%
-	lld-link "./unity_build.o" -out:"game.exe" %linker%
+	lld-link "./%project%_unity_build.o" -out:"%project%.exe" %linker%
 ) else if %build_mode% == unity_link ( rem |> compile and link as a unity build
 	set timeLink=%time%
-	clang -std=c99 %compiler% %warnings% "../project/unity_build.c" -o"./game.exe" -Wl,%linker: =,%
+	clang -std=c99 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%.exe" -Wl,%linker: =,%
 )
 
 :error

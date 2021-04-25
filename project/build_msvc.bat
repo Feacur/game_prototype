@@ -21,6 +21,10 @@ rem https://docs.microsoft.com/cpp/build/reference/compiler-options
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
 rem https://docs.microsoft.com/en-us/cpp/c-runtime-library/crt-library-features
 
+rem |> PREPARE PROJECT
+set project_folder=%cd%
+set project=game
+
 rem |> PREPARE TOOLS
 set VSLANG=1033
 pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
@@ -65,19 +69,19 @@ pushd bin
 set timeCompile=%time%
 if %build_mode% == normal ( rem |> compile a set of translation units, then link them
 	if not exist temp mkdir temp
-	for /f %%v in (../project/translation_units.txt) do ( rem |> for each line %%v in the file
+	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem |> for each line %%v in the file
 		cl -std:c11 -c -Fo"./temp/%%~nv.obj" %compiler% %warnings% "../%%v"
-		if errorlevel 1 goto error
+		if errorlevel == 1 goto error
 	)
 	set timeLink=%time%
-	link "./temp/*.obj" -out:"game.exe" %linker%
+	link "./temp/*.obj" -out:"%project%.exe" %linker%
 ) else if %build_mode% == unity ( rem |> compile as a unity build, then link separately
-	cl -std:c11 -c -Fo"./unity_build.obj" %compiler% %warnings% "../project/unity_build.c"
+	cl -std:c11 -c -Fo"./%project%_unity_build.obj" %compiler% %warnings% "%project_folder%/%project%_unity_build.c"
 	set timeLink=%time%
-	link "./unity_build.obj" -out:"game.exe" %linker%
+	link "./%project%_unity_build.obj" -out:"%project%.exe" %linker%
 ) else if %build_mode% == unity_link ( rem |> compile and link as a unity build
 	set timeLink=%time%
-	cl -std:c11 %compiler% %warnings% "../project/unity_build.c" -Fe"./game.exe" -link %linker%
+	cl -std:c11 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -Fe"./%project%.exe" -link %linker%
 )
 
 :error
