@@ -1,5 +1,5 @@
-#if !defined(GAME_ARRAY_ANY)
-#define GAME_ARRAY_ANY
+#if !defined(GAME_CONTAINTERS_ARRAY_ANY)
+#define GAME_CONTAINTERS_ARRAY_ANY
 
 #include "framework/common.h"
 

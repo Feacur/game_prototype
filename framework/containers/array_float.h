@@ -1,5 +1,5 @@
-#if !defined(GAME_ARRAY_FLOAT)
-#define GAME_ARRAY_FLOAT
+#if !defined(GAME_CONTAINTERS_ARRAY_FLOAT)
+#define GAME_CONTAINTERS_ARRAY_FLOAT
 
 #include "framework/common.h"
 

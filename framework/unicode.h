@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_UTF8)
-#define GAME_FRAMEWORK_UTF8
+#if !defined(GAME_FRAMEWORK_UNICODE)
+#define GAME_FRAMEWORK_UNICODE
 
 #include "common.h"
 

@@ -1,5 +1,5 @@
-#if !defined (GAME_REF_TABLE)
-#define GAME_REF_TABLE
+#if !defined (GAME_CONTAINTERS_REF_TABLE)
+#define GAME_CONTAINTERS_REF_TABLE
 
 #include "framework/common.h"
 

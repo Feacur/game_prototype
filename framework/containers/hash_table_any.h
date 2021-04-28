@@ -1,5 +1,5 @@
-#if !defined(GAME_HASHTABLE_ANY)
-#define GAME_HASHTABLE_ANY
+#if !defined(GAME_CONTAINTERS_HASHTABLE_ANY)
+#define GAME_CONTAINTERS_HASHTABLE_ANY
 
 #include "framework/common.h"
 

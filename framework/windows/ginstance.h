@@ -1,5 +1,5 @@
-#if !defined(GAME_PLATFORM_GLIBRARY)
-#define GAME_PLATFORM_GLIBRARY
+#if !defined(GAME_PLATFORM_GINSTANCE)
+#define GAME_PLATFORM_GINSTANCE
 
 #include "framework/common.h"
 

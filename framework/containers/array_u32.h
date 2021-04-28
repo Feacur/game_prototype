@@ -1,5 +1,5 @@
-#if !defined(GAME_ARRAY_U32)
-#define GAME_ARRAY_U32
+#if !defined(GAME_CONTAINTERS_ARRAY_U32)
+#define GAME_CONTAINTERS_ARRAY_U32
 
 #include "framework/common.h"
 

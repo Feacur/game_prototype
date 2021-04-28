@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_FONT_IMAGE)
-#define GAME_FRAMEWORK_FONT_IMAGE
+#if !defined(GAME_GRAPHICS_FONT_IMAGE)
+#define GAME_GRAPHICS_FONT_IMAGE
 
 #include "framework/common.h"
 

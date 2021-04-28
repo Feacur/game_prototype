@@ -22,7 +22,7 @@
 #include "framework/assets/asset_font.h"
 
 #include "application/application.h"
-#include "transform.h"
+#include "components.h"
 #include "batcher_2d.h"
 
 #include <string.h>
@@ -72,8 +72,8 @@ static struct Game_Target {
 static struct Batcher_2D * batcher = NULL;
 
 static struct Game_State {
-	struct Transform camera;
-	struct Transform object;
+	struct Transform_3D camera;
+	struct Transform_3D object;
 } state;
 
 static void game_init(void) {
@@ -203,13 +203,13 @@ static void game_init(void) {
 
 	// init state
 	{
-		state.camera = (struct Transform){
+		state.camera = (struct Transform_3D){
 			.position = (struct vec3){0, 3, -5},
 			.scale = (struct vec3){1, 1, 1},
 			.rotation = quat_set_radians((struct vec3){MATHS_TAU / 16, 0, 0}),
 		};
 
-		state.object = (struct Transform){
+		state.object = (struct Transform_3D){
 			.position = (struct vec3){0, 0, 0},
 			.scale = (struct vec3){1, 1, 1},
 			.rotation = quat_identity,

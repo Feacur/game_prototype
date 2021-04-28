@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_GRAPHICS_TYPES)
-#define GAME_FRAMEWORK_GRAPHICS_TYPES
+#if !defined(GAME_GRAPHICS_TYPES)
+#define GAME_GRAPHICS_TYPES
 
 #include "framework/common.h"
 

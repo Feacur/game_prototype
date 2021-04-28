@@ -1,5 +1,5 @@
-#if !defined(GAME_ARRAY_BYTE)
-#define GAME_ARRAY_BYTE
+#if !defined(GAME_CONTAINTERS_ARRAY_BYTE)
+#define GAME_CONTAINTERS_ARRAY_BYTE
 
 #include "framework/common.h"
 

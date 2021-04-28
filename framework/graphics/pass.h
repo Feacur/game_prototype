@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_GRAPHICS_PASS)
-#define GAME_FRAMEWORK_GRAPHICS_PASS
+#if !defined(GAME_GRAPHICS_PASS)
+#define GAME_GRAPHICS_PASS
 
 #include "framework/vector_types.h"
 
