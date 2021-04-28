@@ -104,7 +104,8 @@ void ref_table_discard(struct Ref_Table * ref_table, struct Ref ref) {
 	if (ref.id >= ref_table->capacity) { DEBUG_BREAK(); return; }
 
 	struct Ref * entry = ref_table->sparse + ref.id;
-	if (ref.gen != entry->gen) { DEBUG_BREAK(); return; }
+	if (ref.id  != ref_table->dense[entry->id]) { DEBUG_BREAK(); return; }
+	if (ref.gen != entry->gen)                  { DEBUG_BREAK(); return; }
 
 	// invalidate the entry
 	ref_table->count--;
@@ -137,7 +138,8 @@ void * ref_table_get(struct Ref_Table * ref_table, struct Ref ref) {
 	if (ref.id >= ref_table->capacity) { return NULL; }
 
 	struct Ref const * entry = ref_table->sparse + ref.id;
-	if (ref.gen != entry->gen) { return NULL; }
+	if (ref.id  != ref_table->dense[entry->id]) { return NULL; }
+	if (ref.gen != entry->gen)                  { return NULL; }
 
 	return ref_table->values + ref_table->value_size * entry->id;
 }
@@ -146,7 +148,8 @@ void ref_table_set(struct Ref_Table * ref_table, struct Ref ref, void const * va
 	if (ref.id >= ref_table->capacity) { DEBUG_BREAK(); return; }
 
 	struct Ref const * entry = ref_table->sparse + ref.id;
-	if (ref.gen != entry->gen) { DEBUG_BREAK(); return; }
+	if (ref.id  != ref_table->dense[entry->id]) { DEBUG_BREAK(); return; }
+	if (ref.gen != entry->gen)                  { DEBUG_BREAK(); return; }
 
 	memcpy(
 		ref_table->values + ref_table->value_size * entry->id,
@@ -157,7 +160,12 @@ void ref_table_set(struct Ref_Table * ref_table, struct Ref ref, void const * va
 
 bool ref_table_exists(struct Ref_Table * ref_table, struct Ref ref) {
 	if (ref.id >= ref_table->capacity) { return false; }
-	return ref_table->sparse[ref.id].gen == ref.gen;
+
+	struct Ref const * entry = ref_table->sparse + ref.id;
+	if (ref.id  != ref_table->dense[entry->id]) { return false; }
+	if (ref.gen != entry->gen)                  { return false; }
+
+	return true;
 }
 
 uint32_t ref_table_get_count(struct Ref_Table * ref_table) {
