@@ -103,7 +103,7 @@ static void asset_mesh_obj_do_vertex(struct Mesh_Obj_Scanner * scanner, struct M
 		float value;
 		if (asset_mesh_obj_consume_float(scanner, token, &value)) {
 			if (entries >= limit) { continue; } entries++;
-			array_float_write(buffer, value);
+			array_float_push(buffer, value);
 		}
 		else { ADVANCE(); }
 	}
@@ -132,7 +132,7 @@ static void asset_mesh_obj_do_faces(
 		face[0] = asset_mesh_obj_translate_index(value, positions_count);
 
 		if (token->type != MESH_OBJ_TOKEN_SLASH) {
-			array_u32_write_many(buffer, 3, face);
+			array_u32_push_many(buffer, 3, face);
 			continue;
 		}
 
@@ -144,7 +144,7 @@ static void asset_mesh_obj_do_faces(
 			asset_mesh_obj_consume_s32(scanner, token, &value);
 			face[2] = asset_mesh_obj_translate_index(value, normals_count);
 
-			array_u32_write_many(buffer, 3, face);
+			array_u32_push_many(buffer, 3, face);
 			continue;
 		}
 
@@ -153,7 +153,7 @@ static void asset_mesh_obj_do_faces(
 		face[1] = asset_mesh_obj_translate_index(value, texcoords_count);
 
 		if (token->type != MESH_OBJ_TOKEN_SLASH) {
-			array_u32_write_many(buffer, 3, face);
+			array_u32_push_many(buffer, 3, face);
 			continue;
 		}
 
@@ -162,7 +162,7 @@ static void asset_mesh_obj_do_faces(
 		asset_mesh_obj_consume_s32(scanner, token, &value);
 		face[2] = asset_mesh_obj_translate_index(value, normals_count);
 
-		array_u32_write_many(buffer, 3, face);
+		array_u32_push_many(buffer, 3, face);
 	}
 
 #undef ADVANCE
@@ -247,9 +247,9 @@ inline static void asset_mesh_obj_init_internal(struct Asset_Mesh_Obj * obj, cha
 
 				uint32_t indices_count = scratch_u32.count / 3;
 				for (uint32_t i = 2; i < indices_count; i++) {
-					array_u32_write_many(&obj->triangles, 3, scratch_u32.data + 0);
-					array_u32_write_many(&obj->triangles, 3, scratch_u32.data + (i - 1) * 3);
-					array_u32_write_many(&obj->triangles, 3, scratch_u32.data + i * 3);
+					array_u32_push_many(&obj->triangles, 3, scratch_u32.data + 0);
+					array_u32_push_many(&obj->triangles, 3, scratch_u32.data + (i - 1) * 3);
+					array_u32_push_many(&obj->triangles, 3, scratch_u32.data + i * 3);
 				}
 				break;
 			}

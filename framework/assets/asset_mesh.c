@@ -26,7 +26,7 @@ static void asset_mesh_fill(
 void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
 	struct Array_Byte file;
 	platform_file_read_entire(path, &file);
-	array_byte_write(&file, '\0');
+	array_byte_push(&file, '\0');
 
 	struct Asset_Mesh_Obj obj;
 	asset_mesh_obj_init(&obj, (char const *)file.data);
@@ -88,7 +88,7 @@ static void asset_mesh_obj_repack(
 	if (obj->texcoords.count > 0) { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_TEXCOORD; attributes_buffer[attributes_count++] = 2; }
 	if (obj->normals.count > 0)   { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_NORMAL;   attributes_buffer[attributes_count++] = 3; }
 
-	array_u32_write_many(attributes, attributes_count, attributes_buffer);
+	array_u32_push_many(attributes, attributes_count, attributes_buffer);
 
 	uint32_t indices_count = obj->triangles.count / 3;
 	for (uint32_t i = 0, vertex_id = 0; i < indices_count; i++) {
@@ -99,15 +99,15 @@ static void asset_mesh_obj_repack(
 		};
 
 		// @todo: reuse matching vertices instead of copying them
-		//        naive linear search would be quadrativally slow,
+		//        naive linear search would be quadratically slow,
 		//        so a hashset it is
 
 		uint32_t attribute_index = 1;
-		if (obj->positions.count > 0) { array_float_write_many(vertices, 3, obj->positions.data + vertex_index[0] * attributes_buffer[attribute_index]); attribute_index += 2; }
-		if (obj->texcoords.count > 0) { array_float_write_many(vertices, 2, obj->texcoords.data + vertex_index[1] * attributes_buffer[attribute_index]); attribute_index += 2; }
-		if (obj->normals.count > 0)   { array_float_write_many(vertices, 3, obj->normals.data   + vertex_index[2] * attributes_buffer[attribute_index]); attribute_index += 2; }
+		if (obj->positions.count > 0) { array_float_push_many(vertices, 3, obj->positions.data + vertex_index[0] * attributes_buffer[attribute_index]); attribute_index += 2; }
+		if (obj->texcoords.count > 0) { array_float_push_many(vertices, 2, obj->texcoords.data + vertex_index[1] * attributes_buffer[attribute_index]); attribute_index += 2; }
+		if (obj->normals.count > 0)   { array_float_push_many(vertices, 3, obj->normals.data   + vertex_index[2] * attributes_buffer[attribute_index]); attribute_index += 2; }
 
-		array_u32_write(indices, vertex_id);
+		array_u32_push(indices, vertex_id);
 		vertex_id++;
 	}
 }

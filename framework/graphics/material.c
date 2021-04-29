@@ -37,10 +37,10 @@ void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_
 	array_s32_resize(&material->values_s32, s32_count);
 	array_float_resize(&material->values_float, float_count);
 
-	array_u64_write_many_zeroes(&material->textures, unit_count);
-	array_u32_write_many_zeroes(&material->values_u32, u32_count);
-	array_s32_write_many_zeroes(&material->values_s32, s32_count);
-	array_float_write_many_zeroes(&material->values_float, float_count);
+	array_u64_resize(&material->textures,       unit_count);  memset(material->textures.data,     0, sizeof(uint64_t) * unit_count);
+	array_u32_resize(&material->values_u32,     u32_count);   memset(material->values_u32.data,   0, sizeof(uint32_t) * u32_count);
+	array_s32_resize(&material->values_s32,     s32_count);   memset(material->values_s32.data,   0, sizeof(int32_t) * s32_count);
+	array_float_resize(&material->values_float, float_count); memset(material->values_float.data, 0, sizeof(float) * float_count);
 }
 
 void gfx_material_free(struct Gfx_Material * material) {

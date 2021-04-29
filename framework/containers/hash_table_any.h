@@ -17,7 +17,7 @@ void hash_table_any_init(struct Hash_Table_Any * hash_table, uint32_t key_size, 
 void hash_table_any_free(struct Hash_Table_Any * hash_table);
 
 void hash_table_any_clear(struct Hash_Table_Any * hash_table);
-void hash_table_any_ensure_minimum_capacity(struct Hash_Table_Any * hash_table, uint32_t minimum_capacity);
+void hash_table_any_resize(struct Hash_Table_Any * hash_table, uint32_t target_capacity);
 
 void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash);
 bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash, void const * value);

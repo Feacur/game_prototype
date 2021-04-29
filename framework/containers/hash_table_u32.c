@@ -1,22 +1,8 @@
 #include "framework/memory.h"
+#include "internal.h"
 
 #include <string.h>
 #include <stdio.h>
-
-// @todo: make this dynamically compilable?
-// @todo: make it easier to use another growth factor
-#define GROWTH_FACTOR 2
-#define HASH_TABLE_SHOULD_GROW(count, capacity) ((count) > (capacity) * 2 / 3)
-// #define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR)
-
-#define HASH_TABLE_MARK_NONE ((uint8_t)0)
-#define HASH_TABLE_MARK_SKIP ((uint8_t)1)
-#define HASH_TABLE_MARK_FULL ((uint8_t)2)
-
-#if GROWTH_FACTOR == 2
-	// #include "framework/maths.h"
-	uint32_t round_up_to_PO2_u32(uint32_t value);
-#endif
 
 //
 #include "hash_table_u32.h"
@@ -40,22 +26,18 @@ void hash_table_u32_free(struct Hash_Table_U32 * hash_table) {
 }
 
 static uint32_t hash_table_u32_find_key_index(struct Hash_Table_U32 * hash_table, uint32_t key_hash);
-void hash_table_u32_ensure_minimum_capacity(struct Hash_Table_U32 * hash_table, uint32_t minimum_capacity) {
-	if (minimum_capacity < 8) { minimum_capacity = 8; }
-#if GROWTH_FACTOR == 2
-	if (minimum_capacity > 0x80000000) {
-		minimum_capacity = 0x80000000;
-		fprintf(stderr, "requested capacity is too large\n"); DEBUG_BREAK();
+void hash_table_u32_resize(struct Hash_Table_U32 * hash_table, uint32_t target_capacity) {
+	if (target_capacity < hash_table->count) {
+		fprintf(stderr, "limiting target resize capacity to the number of elements\n"); DEBUG_BREAK();
+		target_capacity = hash_table->count;
 	}
-	minimum_capacity = round_up_to_PO2_u32(minimum_capacity);
-#endif
 
 	uint32_t const capacity = hash_table->capacity;
 	uint32_t * key_hashes = hash_table->key_hashes;
 	uint8_t  * values     = hash_table->values;
 	uint8_t  * marks      = hash_table->marks;
 
-	hash_table->capacity   = minimum_capacity;
+	hash_table->capacity   = adjust_hash_table_capacity_value(target_capacity);
 	hash_table->key_hashes = MEMORY_ALLOCATE_ARRAY(hash_table, uint32_t, hash_table->capacity);
 	hash_table->values     = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->value_size * hash_table->capacity);
 	hash_table->marks      = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity);
@@ -67,6 +49,9 @@ void hash_table_u32_ensure_minimum_capacity(struct Hash_Table_U32 * hash_table, 
 		if (marks[i] != HASH_TABLE_MARK_FULL) { continue; }
 
 		uint32_t const key_index = hash_table_u32_find_key_index(hash_table, key_hashes[i]);
+		// if (key_index == INDEX_EMPTY) { DEBUG_BREAK(); continue; }
+		// if (key_index >= hash_table->capacity) { DEBUG_BREAK(); continue; }
+
 		hash_table->key_hashes[key_index] = key_hashes[i];
 		memcpy(
 			hash_table->values + hash_table->value_size * key_index,
@@ -95,9 +80,9 @@ void * hash_table_u32_get(struct Hash_Table_U32 * hash_table, uint32_t key_hash)
 }
 
 bool hash_table_u32_set(struct Hash_Table_U32 * hash_table, uint32_t key_hash, void const * value) {
-	if (HASH_TABLE_SHOULD_GROW(hash_table->count + 1, hash_table->capacity)) {
-		// hash_table_u32_ensure_minimum_capacity(hash_table, GROW_CAPACITY(hash_table->capacity));
-		hash_table_u32_ensure_minimum_capacity(hash_table, hash_table->capacity + 1);
+	if (should_hash_table_grow(hash_table->capacity, hash_table->count)) {
+		uint32_t const target_capacity = grow_capacity_value_u32(hash_table->capacity, 1);
+		hash_table_u32_resize(hash_table, target_capacity);
 	}
 
 	uint32_t const key_index = hash_table_u32_find_key_index(hash_table, key_hash);
@@ -138,17 +123,11 @@ void * hash_table_u32_iterate(struct Hash_Table_U32 * hash_table, uint32_t index
 //
 
 static uint32_t hash_table_u32_find_key_index(struct Hash_Table_U32 * hash_table, uint32_t key_hash) {
-#if GROWTH_FACTOR == 2
-	#define WRAP_VALUE(value, range) ((value) & ((range) - 1))
-#else
-	#define WRAP_VALUE(value, range) ((value) % (range))
-#endif
-
 	uint32_t empty = INDEX_EMPTY;
 
-	uint32_t const offset = WRAP_VALUE(key_hash, hash_table->capacity);
+	uint32_t const offset = HASH_TABLE_WRAP(key_hash, hash_table->capacity);
 	for (uint32_t i = 0; i < hash_table->capacity; i++) {
-		uint32_t const index = WRAP_VALUE(i + offset, hash_table->capacity);
+		uint32_t const index = HASH_TABLE_WRAP(i + offset, hash_table->capacity);
 
 		uint8_t const mark = hash_table->marks[index];
 		if (mark == HASH_TABLE_MARK_SKIP) {
@@ -164,14 +143,4 @@ static uint32_t hash_table_u32_find_key_index(struct Hash_Table_U32 * hash_table
 	}
 
 	return empty;
-
-#undef WRAP_VALUE
 }
-
-#undef HASH_TABLE_MARK_NONE
-#undef HASH_TABLE_MARK_SKIP
-#undef HASH_TABLE_MARK_FULL
-
-#undef GROWTH_FACTOR
-#undef HASH_TABLE_SHOULD_GROW
-// #undef GROW_CAPACITY

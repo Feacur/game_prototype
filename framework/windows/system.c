@@ -197,22 +197,22 @@ static void system_set_process_dpi_awareness(void) {
 // 
 // 		// UTF-32 -> UTF-8
 // 		if (value <= 0x0000007F) {
-// 			array_byte_write(&buffer_utf8, (uint8_t)value);
+// 			array_byte_push(&buffer_utf8, (uint8_t)value);
 // 		}
 // 		else  if (0x00000080 <= value && value <= 0x000007FF) {
-// 			array_byte_write(&buffer_utf8, (uint8_t)((value >> 8) & 0x1f) | 0xc0);
-// 			array_byte_write(&buffer_utf8, (uint8_t)(value        & 0x3f) | 0x80);
+// 			array_byte_push(&buffer_utf8, (uint8_t)((value >> 8) & 0x1f) | 0xc0);
+// 			array_byte_push(&buffer_utf8, (uint8_t)(value        & 0x3f) | 0x80);
 // 		}
 // 		else if (0x00000800 <= value && value <= 0x0000FFFF) {
-// 			array_byte_write(&buffer_utf8, (uint8_t)((value >> 16) & 0x0f) | 0xe0);
-// 			array_byte_write(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
-// 			array_byte_write(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
+// 			array_byte_push(&buffer_utf8, (uint8_t)((value >> 16) & 0x0f) | 0xe0);
+// 			array_byte_push(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
+// 			array_byte_push(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
 // 		}
 // 		else if (0x00010000 <= value && value <= 0x0010FFFF) {
-// 			array_byte_write(&buffer_utf8, (uint8_t)((value >> 24) & 0x07) | 0xf0);
-// 			array_byte_write(&buffer_utf8, (uint8_t)((value >> 16) & 0x3f) | 0x80);
-// 			array_byte_write(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
-// 			array_byte_write(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
+// 			array_byte_push(&buffer_utf8, (uint8_t)((value >> 24) & 0x07) | 0xf0);
+// 			array_byte_push(&buffer_utf8, (uint8_t)((value >> 16) & 0x3f) | 0x80);
+// 			array_byte_push(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
+// 			array_byte_push(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
 // 		}
 // 		// else { fprintf(stderr, "UTF-32 sequence is malformed\n"); DEBUG_BREAK(); }
 // 	}

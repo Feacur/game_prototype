@@ -125,7 +125,7 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 		} \
 	} while (false) \
 
-	// array_byte_write(asset, '\0');
+	// array_byte_push(asset, '\0');
 
 	// a mandatory version header
 	static GLchar glsl_version[20];
@@ -1073,10 +1073,10 @@ static char * allocate_extensions_string(void) {
 	array_byte_resize(&string, (uint32_t)(extensions_count * 26));
 	for(GLint i = 0; i < extensions_count; i++) {
 		GLubyte const * value = glGetStringi(GL_EXTENSIONS, (GLuint)i);
-		array_byte_write_many(&string, (uint32_t)strlen((char const *)value), value);
-		array_byte_write(&string, ' ');
+		array_byte_push_many(&string, (uint32_t)strlen((char const *)value), value);
+		array_byte_push(&string, ' ');
 	}
-	array_byte_write(&string, '\0');
+	array_byte_push(&string, '\0');
 
 	return (char *)string.data;
 }

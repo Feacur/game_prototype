@@ -7,6 +7,7 @@
 
 #define MATHS_PI 3.14159265359f
 #define MATHS_TAU 6.28318530718f
+#define FLOAT_NAN convert_bits_u32_r32(0x7fc00000)
 #define FLOAT_POS_INFINITY convert_bits_u32_r32(0x7f800000)
 #define FLOAT_NEG_INFINITY convert_bits_u32_r32(0xff800000)
 #define FLOAT_MAX convert_bits_u32_r32(0x7f7fffff)

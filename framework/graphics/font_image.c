@@ -276,7 +276,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 	}
 
 	// track glyphs
-	hash_table_u32_ensure_minimum_capacity(&font_image->table, symbols_count);
+	hash_table_u32_resize(&font_image->table, symbols_count);
 	for (struct Font_Symbol const * symbol = symbols; symbol->glyph.id != 0; symbol++) {
 		hash_table_u32_set(&font_image->table, symbol->codepoint, symbol); // treat symbol as glyph
 	}

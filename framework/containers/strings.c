@@ -35,10 +35,10 @@ uint32_t strings_add(struct Strings * strings, uint32_t length, char const * val
 		offset += strings->lengths.data[i] + 1;
 	}
 
-	array_u32_write(&strings->offsets, offset);
-	array_u32_write(&strings->lengths, length);
-	array_byte_write_many(&strings->buffer, length, (uint8_t const *)value);
-	array_byte_write(&strings->buffer, '\0');
+	array_u32_push(&strings->offsets, offset);
+	array_u32_push(&strings->lengths, length);
+	array_byte_push_many(&strings->buffer, length, (uint8_t const *)value);
+	array_byte_push(&strings->buffer, '\0');
 
 	return strings->lengths.count - 1;
 }

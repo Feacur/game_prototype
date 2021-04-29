@@ -15,7 +15,7 @@ void hash_table_u64_init(struct Hash_Table_U64 * hash_table, uint32_t value_size
 void hash_table_u64_free(struct Hash_Table_U64 * hash_table);
 
 void hash_table_u64_clear(struct Hash_Table_U64 * hash_table);
-void hash_table_u64_ensure_minimum_capacity(struct Hash_Table_U64 * hash_table, uint32_t minimum_capacity);
+void hash_table_u64_resize(struct Hash_Table_U64 * hash_table, uint32_t target_capacity);
 
 void * hash_table_u64_get(struct Hash_Table_U64 * hash_table, uint64_t key_hash);
 bool hash_table_u64_set(struct Hash_Table_U64 * hash_table, uint64_t key_hash, void const * value);

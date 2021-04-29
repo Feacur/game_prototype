@@ -8,6 +8,7 @@
 #include "framework/graphics/material.c"
 #include "framework/graphics/font_image.c"
 
+#include "framework/containers/internal.c"
 #include "framework/containers/array_any.c"
 #include "framework/containers/array_byte.c"
 #include "framework/containers/array_float.c"

@@ -18,7 +18,7 @@ void ref_table_init(struct Ref_Table * ref_table, uint32_t value_size);
 void ref_table_free(struct Ref_Table * ref_table);
 
 void ref_table_clear(struct Ref_Table * ref_table);
-void ref_table_ensure_minimum_capacity(struct Ref_Table * ref_table, uint32_t minimum_capacity);
+void ref_table_resize(struct Ref_Table * ref_table, uint32_t target_capacity);
 
 struct Ref ref_table_aquire(struct Ref_Table * ref_table, void const * value);
 void ref_table_discard(struct Ref_Table * ref_table, struct Ref ref);

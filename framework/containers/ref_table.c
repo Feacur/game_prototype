@@ -1,17 +1,8 @@
 #include "framework/memory.h"
+#include "internal.h"
 
 #include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
-
-// @todo: use 2/3 as a growth factor here? no real need to be a power of 2
-#define GROWTH_FACTOR 2
-// #define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR)
-
-#if GROWTH_FACTOR == 2
-	// #include "framework/maths.h"
-	uint32_t round_up_to_PO2_u32(uint32_t value);
-#endif
 
 //
 #include "ref_table.h"
@@ -45,22 +36,25 @@ void ref_table_clear(struct Ref_Table * ref_table) {
 	}
 }
 
-void ref_table_ensure_minimum_capacity(struct Ref_Table * ref_table, uint32_t minimum_capacity) {
+void ref_table_resize(struct Ref_Table * ref_table, uint32_t target_capacity) {
+	if ((ref_table->count > 0) && (target_capacity < ref_table->capacity)) {
+		fprintf(stderr, "limiting target resize capacity\n"); DEBUG_BREAK();
+		uint32_t largest_ref_id = 0;
+		for (uint32_t i = 0; i < ref_table->count; i++) {
+			uint32_t const id = ref_table->dense[i];
+			if (largest_ref_id < id) {
+				largest_ref_id = id;
+			}
+		}
+		target_capacity = largest_ref_id + 1;
+	}
+
 	uint32_t const capacity = ref_table->capacity;
 
-	if (minimum_capacity < 8) { minimum_capacity = 8; }
-#if GROWTH_FACTOR == 2
-	if (minimum_capacity > 0x80000000) {
-		minimum_capacity = 0x80000000;
-		fprintf(stderr, "requested capacity is too large\n"); DEBUG_BREAK();
-	}
-	minimum_capacity = round_up_to_PO2_u32(minimum_capacity);
-#endif
-
-	ref_table->capacity = minimum_capacity;
-	ref_table->values = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->values, ref_table->value_size * ref_table->capacity);
-	ref_table->dense = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->dense, ref_table->capacity);
-	ref_table->sparse = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->sparse, ref_table->capacity);
+	ref_table->capacity = target_capacity;
+	ref_table->values   = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->values, ref_table->value_size * ref_table->capacity);
+	ref_table->dense    = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->dense, ref_table->capacity);
+	ref_table->sparse   = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->sparse, ref_table->capacity);
 
 	for (uint32_t i = capacity; i < ref_table->capacity; i++) {
 		ref_table->dense[i] = INDEX_EMPTY;
@@ -70,12 +64,17 @@ void ref_table_ensure_minimum_capacity(struct Ref_Table * ref_table, uint32_t mi
 	}
 }
 
-struct Ref ref_table_aquire(struct Ref_Table * ref_table, void const * value) {
-	uint32_t const ref_id = ref_table->free_sparse_index;
-
-	if (ref_id >= ref_table->capacity) {
-		ref_table_ensure_minimum_capacity(ref_table, ref_table->capacity + 1);
+static void ref_table_ensure_capacity(struct Ref_Table * ref_table, uint32_t target_count) {
+	if (ref_table->capacity < target_count) {
+		uint32_t const target_capacity = grow_capacity_value_u32(ref_table->capacity, target_count - ref_table->capacity);
+		ref_table_resize(ref_table, target_capacity);
 	}
+}
+
+struct Ref ref_table_aquire(struct Ref_Table * ref_table, void const * value) {
+	ref_table_ensure_capacity(ref_table, ref_table->count + 1);
+
+	uint32_t const ref_id = ref_table->free_sparse_index;
 
 	// update the free list
 	struct Ref * entry = ref_table->sparse + ref_id;
@@ -185,6 +184,3 @@ void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index) {
 	if (index >= ref_table->count) { return NULL; }
 	return ref_table->values + ref_table->value_size * index;
 }
-
-#undef GROWTH_FACTOR
-// #undef GROW_CAPACITY

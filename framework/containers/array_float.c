@@ -1,69 +1,63 @@
 #include "framework/memory.h"
+#include "internal.h"
 
 #include <string.h>
-
-#define GROWTH_FACTOR 2
-#define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * GROWTH_FACTOR)
 
 //
 #include "array_float.h"
 
 void array_float_init(struct Array_Float * array) {
-	*array = (struct Array_Float){
-		.capacity = 0,
-		.count = 0,
-		.data = 0,
-	};
+	*array = (struct Array_Float){0};
 }
 
 void array_float_free(struct Array_Float * array) {
-	if (array->capacity == 0) { return; }
 	MEMORY_FREE(array, array->data);
-	array_float_init(array);
+	memset(array, 0, sizeof(*array));
 }
 
-void array_float_resize(struct Array_Float * array, uint32_t size) {
-	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, size);
-	array->capacity = size;
-	array->count = (size >= array->count) ? array->count : size;
+void array_float_clear(struct Array_Float * array) {
+	array->count = 0;
 }
 
-void array_float_write(struct Array_Float * array, float value) {
-	if (array->count + 1 > array->capacity) {
-		// @todo: correctly process capacities past 0x80000000
-		array->capacity = GROW_CAPACITY(array->capacity);
-		array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity);
+void array_float_resize(struct Array_Float * array, uint32_t target_capacity) {
+	array->capacity = target_capacity;
+	if (array->count > target_capacity) { array->count = target_capacity; }
+	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, target_capacity);
+}
+
+static void array_float_ensure_capacity(struct Array_Float * array, uint32_t target_count) {
+	if (array->capacity < target_count) {
+		uint32_t const target_capacity = grow_capacity_value_u32(array->capacity, target_count - array->capacity);
+		array_float_resize(array, target_capacity);
 	}
-
-	array->data[array->count] = value;
-	array->count++;
 }
 
-void array_float_write_many(struct Array_Float * array, uint32_t count, float const * value) {
-	if (array->count + count > array->capacity) {
-		// @todo: correctly process capacities past 0x80000000
-		while (array->count + count > array->capacity) {
-			array->capacity = GROW_CAPACITY(array->capacity);
-		}
-		array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity);
-	}
+void array_float_push(struct Array_Float * array, float value) {
+	array_float_ensure_capacity(array, array->count + 1);
+	array->data[array->count++] = value;
+}
 
-	memcpy(array->data + array->count, value, sizeof(*value) * count);
+void array_float_push_many(struct Array_Float * array, uint32_t count, float const * value) {
+	array_float_ensure_capacity(array, array->count + count);
+	memcpy(
+		array->data + array->count,
+		value,
+		sizeof(*array->data) * count
+	);
 	array->count += count;
 }
 
-void array_float_write_many_zeroes(struct Array_Float * array, uint32_t count) {
-	if (array->count + count > array->capacity) {
-		// @todo: correctly process capacities past 0x80000000
-		while (array->count + count > array->capacity) {
-			array->capacity = GROW_CAPACITY(array->capacity);
-		}
-		array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->capacity);
-	}
-
-	memset(array->data + array->count, 0, sizeof(*array->data) * count);
-	array->count += count;
+float array_float_pop(struct Array_Float * array) {
+	if (array->count == 0) { DEBUG_BREAK(); return 0; }
+	return array->data[--array->count];
 }
 
-#undef GROWTH_FACTOR
-#undef GROW_CAPACITY
+float array_float_peek(struct Array_Float * array, uint32_t offset) {
+	if (offset >= array->count) { DEBUG_BREAK(); return 0; }
+	return array->data[array->count - offset - 1];
+}
+
+float array_float_at(struct Array_Float * array, uint32_t index) {
+	if (index >= array->count) { DEBUG_BREAK(); return 0; }
+	return array->data[index];
+}

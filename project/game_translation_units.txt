@@ -8,6 +8,7 @@ framework/graphics/types.c
 framework/graphics/material.c
 framework/graphics/font_image.c
 
+framework/containers/internal.c
 framework/containers/array_any.c
 framework/containers/array_byte.c
 framework/containers/array_float.c
