@@ -74,6 +74,36 @@
 		"when": "editorTextFocus",
 		"args": {"to": "down", "by": "line", "revealCursor": true}
 	},
+	{
+		"key": "alt+]",
+		"command": "search.action.focusNextSearchResult",
+		"when": "hasSearchResult || inSearchEditor"
+	},
+	{
+		"key": "alt+[",
+		"command": "search.action.focusPreviousSearchResult",
+		"when": "hasSearchResult || inSearchEditor"
+	},
+	{
+		"key": "alt+]",
+		"command": "references-view.next",
+		"when": "reference-list.hasResult && references-view.canNavigate"
+	},
+	{
+		"key": "alt+[",
+		"command": "references-view.prev",
+		"when": "reference-list.hasResult && references-view.canNavigate"
+	},
+	{
+		"key": "alt+[",
+		"command": "goToPreviousReference",
+		"when": "inReferenceSearchEditor || referenceSearchVisible"
+	},
+	{
+		"key": "alt+]",
+		"command": "goToNextReference",
+		"when": "inReferenceSearchEditor || referenceSearchVisible"
+	},
 	// editor: interface
 	{
 		"key": "ctrl+shift+alt+[",
