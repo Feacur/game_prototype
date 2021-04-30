@@ -71,9 +71,13 @@ static struct Game_Target {
 
 static struct Batcher_2D * batcher = NULL;
 
+struct Entity {
+	struct Transform_3D transform;
+};
+
 static struct Game_State {
-	struct Transform_3D camera;
-	struct Transform_3D object;
+	struct Entity camera;
+	struct Entity object;
 } state;
 
 static void game_init(void) {
@@ -203,16 +207,20 @@ static void game_init(void) {
 
 	// init state
 	{
-		state.camera = (struct Transform_3D){
-			.position = (struct vec3){0, 3, -5},
-			.scale = (struct vec3){1, 1, 1},
-			.rotation = quat_set_radians((struct vec3){MATHS_TAU / 16, 0, 0}),
+		state.camera = (struct Entity){
+			.transform = {
+				.position = (struct vec3){0, 3, -5},
+				.scale = (struct vec3){1, 1, 1},
+				.rotation = quat_set_radians((struct vec3){MATHS_TAU / 16, 0, 0}),
+			},
 		};
 
-		state.object = (struct Transform_3D){
-			.position = (struct vec3){0, 0, 0},
-			.scale = (struct vec3){1, 1, 1},
-			.rotation = quat_identity,
+		state.object = (struct Entity){
+			.transform = {
+				.position = (struct vec3){0, 0, 0},
+				.scale = (struct vec3){1, 1, 1},
+				.rotation = quat_identity,
+			},
 		};
 	}
 }
@@ -260,7 +268,7 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 		printf("delta: %d %d\n", x, y);
 	}
 
-	state.object.rotation = vec4_norm(quat_mul(state.object.rotation, quat_set_radians(
+	state.object.transform.rotation = vec4_norm(quat_mul(state.object.transform.rotation, quat_set_radians(
 		(struct vec3){0 * delta_time, 1 * delta_time, 0 * delta_time}
 	)));
 }
@@ -283,14 +291,14 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	// --- map to camera coords; draw transformed
 	struct mat4 const test_camera = mat4_mul_mat(
 		mat4_set_projection((struct vec2){0, 0}, (struct vec2){1, (float)target_size_x / (float)target_size_y}, 0.1f, 10, 0),
-		mat4_set_inverse_transformation(state.camera.position, state.camera.scale, state.camera.rotation)
+		mat4_set_inverse_transformation(state.camera.transform.position, state.camera.transform.scale, state.camera.transform.rotation)
 	);
 	gfx_material_set_float(&content.materials.test, uniforms.camera, 4*4, &test_camera.x.x);
 
 	gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &content.gpu.texture_test);
 	gfx_material_set_float(&content.materials.test, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 
-	struct mat4 const test_transform = mat4_set_transformation(state.object.position, state.object.scale, state.object.rotation);
+	struct mat4 const test_transform = mat4_set_transformation(state.object.transform.position, state.object.transform.scale, state.object.transform.rotation);
 	gfx_material_set_float(&content.materials.test, uniforms.transform, 4*4, &test_transform.x.x);
 	graphics_draw(&(struct Render_Pass){
 		.target = target.gpu_target,
