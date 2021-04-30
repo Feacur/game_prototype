@@ -8,14 +8,6 @@
 #include "hash_table_any.h"
 
 void hash_table_any_init(struct Hash_Table_Any * hash_table, uint32_t key_size, uint32_t value_size) {
-	if (key_size == 0) {
-		fprintf(stderr, "key size should be non-zero\n"); DEBUG_BREAK(); return;
-	}
-
-	if (value_size == 0) {
-		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK(); return;
-	}
-
 	*hash_table = (struct Hash_Table_Any){
 		.key_size = key_size,
 		.value_size = value_size,

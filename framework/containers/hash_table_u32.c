@@ -8,10 +8,6 @@
 #include "hash_table_u32.h"
 
 void hash_table_u32_init(struct Hash_Table_U32 * hash_table, uint32_t value_size) {
-	if (value_size == 0) {
-		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK(); return;
-	}
-
 	*hash_table = (struct Hash_Table_U32){
 		.value_size = value_size,
 	};

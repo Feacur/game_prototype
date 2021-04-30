@@ -8,10 +8,6 @@
 #include "ref_table.h"
 
 void ref_table_init(struct Ref_Table * ref_table, uint32_t value_size) {
-	if (value_size == 0) {
-		fprintf(stderr, "value size should be non-zero\n"); DEBUG_BREAK(); return;
-	}
-
 	*ref_table = (struct Ref_Table){
 		.value_size = value_size,
 	};
