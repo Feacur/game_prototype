@@ -3,6 +3,7 @@
 
 #include "framework/containers/strings.h"
 #include "framework/containers/array_byte.h"
+#include "framework/containers/ref_table.h"
 
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"
@@ -87,9 +88,13 @@ static struct Graphics_State {
 
 	struct Strings uniforms;
 
+	struct Ref_Table programs;
+	struct Ref_Table targets;
+	struct Ref_Table meshes;
+
 	struct Gpu_Program const * active_program;
 	struct Gpu_Target const * active_target;
-	struct Gpu_Mesh const * active_mesh;
+	struct Ref active_mesh;
 
 	uint32_t units_capacity;
 	struct Gpu_Unit * units;
@@ -496,7 +501,7 @@ struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum
 }
 
 // -- GPU mesh part
-static struct Gpu_Mesh * gpu_mesh_allocate(
+static struct Ref gpu_mesh_allocate(
 	uint32_t buffers_count,
 	uint32_t * byte_lengths,
 	struct Mesh_Parameters const * parameters_set,
@@ -585,22 +590,22 @@ static struct Gpu_Mesh * gpu_mesh_allocate(
 		fprintf(stderr, "not element buffer\n"); DEBUG_BREAK();
 	}
 
-	struct Gpu_Mesh * gpu_mesh = MEMORY_ALLOCATE(&graphics_state, struct Gpu_Mesh);
-	*gpu_mesh = (struct Gpu_Mesh){
+	struct Gpu_Mesh gpu_mesh = (struct Gpu_Mesh){
 		.id = mesh_id,
 		.buffers_count = buffers_count,
 		.elements_index = elements_index,
 	};
-	memcpy(gpu_mesh->buffer_ids, buffer_ids, sizeof(*buffer_ids) * buffers_count);
-	memcpy(gpu_mesh->parameters, parameters_set, sizeof(*parameters_set) * buffers_count);
-	memcpy(gpu_mesh->capacities, capacities, sizeof(*capacities) * buffers_count);
+	memcpy(gpu_mesh.buffer_ids, buffer_ids,     sizeof(*buffer_ids) * buffers_count);
+	memcpy(gpu_mesh.parameters, parameters_set, sizeof(*parameters_set) * buffers_count);
+	memcpy(gpu_mesh.capacities, capacities,     sizeof(*capacities) * buffers_count);
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		gpu_mesh->counts[i] = (data[i] != NULL) ? capacities[i] : 0;
+		gpu_mesh.counts[i] = (data[i] != NULL) ? capacities[i] : 0;
 	}
-	return gpu_mesh;
+
+	return ref_table_aquire(&graphics_state.meshes, &gpu_mesh);
 }
 
-struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
+struct Ref gpu_mesh_init(struct Asset_Mesh * asset) {
 	uint32_t byte_lengths[MAX_MESH_BUFFERS];
 	void * data[MAX_MESH_BUFFERS];
 	for (uint32_t i = 0; i < asset->count; i++) {
@@ -608,26 +613,32 @@ struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset) {
 		data[i] = asset->buffers[i].data;
 	}
 
-	struct Gpu_Mesh * gpu_mesh = gpu_mesh_allocate(
+	struct Ref const gpu_mesh_ref = gpu_mesh_allocate(
 		asset->count, byte_lengths, asset->parameters, data
 	);
 
-	gpu_mesh_update(gpu_mesh, asset);
-
-	return gpu_mesh;
+	gpu_mesh_update(gpu_mesh_ref, asset);
+	return gpu_mesh_ref;
 }
 
-void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh) {
-	if (graphics_state.active_mesh == gpu_mesh) { graphics_state.active_mesh = NULL; }
-	if (ogl_version > 0) {
-		glDeleteBuffers((GLsizei)gpu_mesh->buffers_count, gpu_mesh->buffer_ids);
-		glDeleteVertexArrays(1, &gpu_mesh->id);
+static void gpu_mesh_free_internal(struct Gpu_Mesh const * gpu_mesh) {
+	glDeleteBuffers((GLsizei)gpu_mesh->buffers_count, gpu_mesh->buffer_ids);
+	glDeleteVertexArrays(1, &gpu_mesh->id);
+}
+
+void gpu_mesh_free(struct Ref gpu_mesh_ref) {
+	if (graphics_state.active_mesh.id == gpu_mesh_ref.id && graphics_state.active_mesh.gen == gpu_mesh_ref.gen) {
+		graphics_state.active_mesh.id = INDEX_EMPTY;
 	}
-	memset(gpu_mesh, 0, sizeof(*gpu_mesh));
-	MEMORY_FREE(&graphics_state, gpu_mesh);
+	struct Gpu_Mesh const * gpu_mesh = ref_table_get(&graphics_state.meshes, gpu_mesh_ref);
+	if (gpu_mesh != NULL) {
+		gpu_mesh_free_internal(gpu_mesh);
+		ref_table_discard(&graphics_state.meshes, gpu_mesh_ref);
+	}
 }
 
-void gpu_mesh_update(struct Gpu_Mesh * gpu_mesh, struct Asset_Mesh * asset) {
+void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Asset_Mesh * asset) {
+	struct Gpu_Mesh * gpu_mesh = ref_table_get(&graphics_state.meshes, gpu_mesh_ref);
 	for (uint32_t i = 0; i < gpu_mesh->buffers_count; i++) {
 		// @todo: compare mesh and asset parameters?
 		// struct Mesh_Parameters const * asset_parameters = asset->parameters + i;
@@ -761,9 +772,12 @@ static void graphics_select_target(struct Gpu_Target const * gpu_target) {
 	glBindFramebuffer(GL_FRAMEBUFFER, (gpu_target != NULL) ? gpu_target->id : 0);
 }
 
-static void graphics_select_mesh(struct Gpu_Mesh const * gpu_mesh) {
-	if (graphics_state.active_mesh == gpu_mesh) { return; }
-	graphics_state.active_mesh = gpu_mesh;
+static void graphics_select_mesh(struct Ref gpu_mesh_ref) {
+	if (graphics_state.active_mesh.id == gpu_mesh_ref.id && graphics_state.active_mesh.gen == gpu_mesh_ref.gen) {
+		return;
+	}
+	graphics_state.active_mesh = gpu_mesh_ref;
+	struct Gpu_Mesh const * gpu_mesh = ref_table_get(&graphics_state.meshes, gpu_mesh_ref);
 	glBindVertexArray((gpu_mesh != NULL) ? gpu_mesh->id : 0);
 }
 
@@ -935,17 +949,16 @@ void graphics_draw(struct Render_Pass const * pass) {
 	graphics_select_target(pass->target);
 	graphics_clear(pass->clear_mask, pass->clear_rgba);
 
-	if (pass->mesh == NULL) { return; }
+	if (pass->mesh.id == INDEX_EMPTY) { return; }
 	if (pass->material == NULL) { return; }
 	if (pass->material->program == NULL) { return; }
-	if (pass->mesh->elements_index == INDEX_EMPTY) { return; }
 
-	if (pass->length == 0) {
+	struct Gpu_Mesh const * mesh = ref_table_get(&graphics_state.meshes, pass->mesh);
+	if (mesh->elements_index == INDEX_EMPTY) { return; }
 
-	}
 	uint32_t const elements_count = (pass->length != 0)
 		? pass->length
-		: pass->mesh->counts[pass->mesh->elements_index];
+		: mesh->counts[mesh->elements_index];
 	if (elements_count == 0) { return; }
 
 	size_t const elements_offset = (pass->offset != 0)
@@ -963,7 +976,7 @@ void graphics_draw(struct Render_Pass const * pass) {
 	graphics_select_mesh(pass->mesh);
 	glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
 
-	enum Data_Type const elements_type = pass->mesh->parameters[pass->mesh->elements_index].type;
+	enum Data_Type const elements_type = mesh->parameters[mesh->elements_index].type;
 	glDrawElements(
 		GL_TRIANGLES,
 		(GLsizei)elements_count,
@@ -1005,6 +1018,9 @@ void graphics_to_glibrary_init(void) {
 	//
 	strings_init(&graphics_state.uniforms);
 	strings_add(&graphics_state.uniforms, 0, "");
+
+	ref_table_init(&graphics_state.meshes, sizeof(struct Gpu_Mesh));
+	graphics_state.active_mesh.id = INDEX_EMPTY;
 
 	//
 	GLint max_units;
@@ -1053,6 +1069,12 @@ void graphics_to_glibrary_init(void) {
 }
 
 void graphics_to_glibrary_free(void) {
+	for (uint32_t i = 0; i < graphics_state.meshes.count; i++) {
+		gpu_mesh_free_internal(ref_table_value_at(&graphics_state.meshes, i));
+	}
+	ref_table_free(&graphics_state.meshes);
+	graphics_state.active_mesh.id = INDEX_EMPTY;
+
 	strings_free(&graphics_state.uniforms);
 	MEMORY_FREE(&graphics_state, graphics_state.extensions);
 	MEMORY_FREE(&graphics_state, graphics_state.units);

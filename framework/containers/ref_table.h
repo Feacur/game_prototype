@@ -1,9 +1,7 @@
 #if !defined (GAME_CONTAINTERS_REF_TABLE)
 #define GAME_CONTAINTERS_REF_TABLE
 
-#include "framework/common.h"
-
-struct Ref { uint32_t id, gen; };
+#include "ref.h"
 
 struct Ref_Table {
 	uint32_t free_sparse_index;

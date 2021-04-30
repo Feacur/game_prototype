@@ -52,7 +52,7 @@ static struct Game_Content {
 		struct Gpu_Program * program_test;
 		struct Gpu_Program * program_batcher;
 		struct Gpu_Texture * texture_test;
-		struct Gpu_Mesh * mesh_cube;
+		struct Ref cube_gpu_mesh_ref;
 	} gpu;
 	//
 	struct {
@@ -130,7 +130,7 @@ static void game_init(void) {
 		content.gpu.program_test = gpu_program_init(&asset_shader_test);
 		content.gpu.program_batcher = gpu_program_init(&asset_shader_batcher);
 		content.gpu.texture_test = gpu_texture_init(&asset_image_test);
-		content.gpu.mesh_cube = gpu_mesh_init(&asset_mesh_cube);
+		content.gpu.cube_gpu_mesh_ref = gpu_mesh_init(&asset_mesh_cube);
 
 		array_byte_free(&asset_shader_test);
 		array_byte_free(&asset_shader_batcher);
@@ -233,7 +233,6 @@ static void game_free(void) {
 	gpu_program_free(content.gpu.program_test);
 	gpu_program_free(content.gpu.program_batcher);
 	gpu_texture_free(content.gpu.texture_test);
-	gpu_mesh_free(content.gpu.mesh_cube);
 	gfx_material_free(&content.materials.test);
 	gfx_material_free(&content.materials.batcher);
 
@@ -306,7 +305,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.depth_mode = {.enabled = true, .mask = true},
 		//
 		.material = &content.materials.test,
-		.mesh = content.gpu.mesh_cube,
+		.mesh = content.gpu.cube_gpu_mesh_ref,
 	});
 
 

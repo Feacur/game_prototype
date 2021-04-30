@@ -6,6 +6,7 @@
 #include "framework/containers/array_any.h"
 #include "framework/containers/array_float.h"
 #include "framework/containers/array_u32.h"
+#include "framework/containers/ref.h"
 
 #include "framework/assets/asset_mesh.h"
 
@@ -46,7 +47,7 @@ struct Batcher_2D {
 	uint32_t vertex_offset, element_offset;
 	//
 	struct Asset_Mesh mesh;
-	struct Gpu_Mesh * gpu_mesh;
+	struct Ref gpu_mesh_ref;
 };
 
 static void batcher_2d_update_asset(struct Batcher_2D * batcher);
@@ -94,13 +95,13 @@ struct Batcher_2D * batcher_2d_init(void) {
 	array_u32_init(&batcher->indices);
 
 	batcher_2d_update_asset(batcher);
-	batcher->gpu_mesh = gpu_mesh_init(&batcher->mesh);
+	batcher->gpu_mesh_ref = gpu_mesh_init(&batcher->mesh);
 
 	return batcher;
 }
 
 void batcher_2d_free(struct Batcher_2D * batcher) {
-	gpu_mesh_free(batcher->gpu_mesh);
+	gpu_mesh_free(batcher->gpu_mesh_ref);
 	//
 	MEMORY_FREE(batcher, batcher->mesh.buffers);
 	MEMORY_FREE(batcher, batcher->mesh.parameters);
@@ -256,7 +257,7 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 
 	//
 	batcher_2d_update_asset(batcher);
-	gpu_mesh_update(batcher->gpu_mesh, &batcher->mesh);
+	gpu_mesh_update(batcher->gpu_mesh_ref, &batcher->mesh);
 
 	batcher_2d_bake_pass(batcher);
 	uint32_t passes_count = batcher->batches.count;
@@ -275,7 +276,7 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 			.depth_mode = batch->depth_mode,
 			//
 			.material = batch->material,
-			.mesh = batcher->gpu_mesh,
+			.mesh = batcher->gpu_mesh_ref,
 			.offset = batch->offset, .length = batch->length,
 		});
 	}

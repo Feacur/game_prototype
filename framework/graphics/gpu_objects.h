@@ -37,10 +37,9 @@ void gpu_target_get_size(struct Gpu_Target * gpu_target, uint32_t * x, uint32_t 
 struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum Texture_Type type, uint32_t index);
 
 // -- GPU mesh part
-struct Gpu_Mesh;
-struct Gpu_Mesh * gpu_mesh_init(struct Asset_Mesh * asset);
-void gpu_mesh_free(struct Gpu_Mesh * gpu_mesh);
+struct Ref gpu_mesh_init(struct Asset_Mesh * asset);
+void gpu_mesh_free(struct Ref gpu_mesh_ref);
 
-void gpu_mesh_update(struct Gpu_Mesh * gpu_mesh, struct Asset_Mesh * asset);
+void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Asset_Mesh * asset);
 
 #endif

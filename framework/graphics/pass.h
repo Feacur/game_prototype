@@ -2,6 +2,7 @@
 #define GAME_GRAPHICS_PASS
 
 #include "framework/vector_types.h"
+#include "framework/containers/ref.h"
 
 #include "types.h"
 
@@ -19,7 +20,7 @@ struct Render_Pass {
 	uint32_t clear_rgba;
 	//
 	struct Gfx_Material * material;
-	struct Gpu_Mesh * mesh;
+	struct Ref mesh;
 	uint32_t offset, length;
 };
 
