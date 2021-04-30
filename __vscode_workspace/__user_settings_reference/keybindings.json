@@ -76,6 +76,16 @@
 	},
 	{
 		"key": "alt+]",
+		"command": "editor.action.marker.nextInFiles",
+		"when": "editorFocus"
+	},
+	{
+		"key": "alt+[",
+		"command": "editor.action.marker.prevInFiles",
+		"when": "editorFocus"
+	},
+	{
+		"key": "alt+]",
 		"command": "search.action.focusNextSearchResult",
 		"when": "hasSearchResult || inSearchEditor"
 	},
