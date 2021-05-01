@@ -63,7 +63,7 @@ struct Gpu_Texture {
 struct Gpu_Target {
 	GLuint id;
 	uint32_t size_x, size_y;
-	struct Gpu_Texture * textures[MAX_TARGET_ATTACHMENTS];
+	struct Ref texture_refs[MAX_TARGET_ATTACHMENTS];
 	uint32_t textures_count;
 	GLuint buffers[MAX_TARGET_ATTACHMENTS];
 	uint32_t buffers_count;
@@ -80,7 +80,7 @@ struct Gpu_Mesh {
 };
 
 struct Gpu_Unit {
-	struct Gpu_Texture * gpu_texture;
+	struct Ref gpu_texture_ref;
 };
 
 static struct Graphics_State {
@@ -89,6 +89,7 @@ static struct Graphics_State {
 	struct Strings uniforms;
 
 	struct Ref_Table programs;
+	struct Ref_Table textures;
 	struct Ref_Table targets;
 	struct Ref_Table meshes;
 
@@ -249,7 +250,7 @@ void gpu_program_get_uniforms(struct Gpu_Program * gpu_program, uint32_t * count
 }
 
 // -- GPU texture part
-static struct Gpu_Texture * gpu_texture_allocate(
+static struct Ref gpu_texture_allocate(
 	uint32_t size_x, uint32_t size_y,
 	struct Texture_Parameters const * parameters,
 	struct Texture_Settings const * settings,
@@ -320,60 +321,65 @@ static struct Gpu_Texture * gpu_texture_allocate(
 	}
 
 	//
-	struct Gpu_Texture * gpu_texture = MEMORY_ALLOCATE(&graphics_state, struct Gpu_Texture);
-	*gpu_texture = (struct Gpu_Texture){
+	struct Gpu_Texture gpu_texture = (struct Gpu_Texture){
 		.id = texture_id,
 		.size_x = size_x,
 		.size_y = size_y,
 		.parameters = *parameters,
 		.settings = *settings,
 	};
-	return gpu_texture;
+
+	return ref_table_aquire(&graphics_state.textures, &gpu_texture);
 }
 
-struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset) {
-	struct Gpu_Texture * gpu_texture = gpu_texture_allocate(
+struct Ref gpu_texture_init(struct Asset_Image * asset) {
+	struct Ref const gpu_texture_ref = gpu_texture_allocate(
 		asset->size_x, asset->size_y, &asset->parameters, &asset->settings, asset->data
 	);
 
-	gpu_texture_update(gpu_texture, asset);
+	gpu_texture_update(gpu_texture_ref, asset);
 
-	return gpu_texture;
+	return gpu_texture_ref;
 }
 
-void gpu_texture_free(struct Gpu_Texture * gpu_texture) {
+static void gpu_texture_free_internal(struct Gpu_Texture const * gpu_texture) {
+	glDeleteTextures(1, &gpu_texture->id);
+}
+
+void gpu_texture_free(struct Ref gpu_texture_ref) {
 	for (uint32_t i = 1; i < graphics_state.units_capacity; i++) {
-		if (graphics_state.units[i].gpu_texture == gpu_texture) {
-			graphics_state.units[i].gpu_texture = NULL;
-			// if (ogl_version > 0) {glBindTextureUnit((GLuint)i, 0); }
+		struct Gpu_Unit * unit = graphics_state.units + i;
+		if (unit->gpu_texture_ref.id == gpu_texture_ref.id && unit->gpu_texture_ref.gen == gpu_texture_ref.gen) {
+			unit->gpu_texture_ref = (struct Ref){0};
 		}
 	}
-	if (ogl_version > 0) {
-		glDeleteTextures(1, &gpu_texture->id);
+	struct Gpu_Texture const * gpu_texture = ref_table_get(&graphics_state.textures, gpu_texture_ref);
+	if (gpu_texture != NULL) {
+		gpu_texture_free_internal(gpu_texture);
+		ref_table_discard(&graphics_state.textures, gpu_texture_ref);
 	}
-	memset(gpu_texture, 0, sizeof(*gpu_texture));
-	MEMORY_FREE(&graphics_state, gpu_texture);
 }
 
-void gpu_texture_get_size(struct Gpu_Texture * gpu_texture, uint32_t * x, uint32_t * y) {
+void gpu_texture_get_size(struct Ref gpu_texture_ref, uint32_t * x, uint32_t * y) {
+	struct Gpu_Texture const * gpu_texture = ref_table_get(&graphics_state.textures, gpu_texture_ref);
 	*x = gpu_texture->size_x;
 	*y = gpu_texture->size_y;
 }
 
-void gpu_texture_update(struct Gpu_Texture * gpu_texture, struct Asset_Image * asset) {
+void gpu_texture_update(struct Ref gpu_texture_ref, struct Asset_Image * asset) {
+	struct Gpu_Texture * gpu_texture = ref_table_get(&graphics_state.textures, gpu_texture_ref);
+
 	// @todo: compare texture and asset parameters?
-	uint32_t size_x = asset->size_x;
-	uint32_t size_y = asset->size_y;
 
 	if (asset->data == NULL) { return; }
-	if (size_x == 0) { return; }
-	if (size_y == 0) { return; }
+	if (asset->size_x == 0) { return; }
+	if (asset->size_y == 0) { return; }
 
 	GLint const level = 0;
-	if (gpu_texture->size_x >= size_x && gpu_texture->size_y >= size_y) {
+	if (gpu_texture->size_x >= asset->size_x && gpu_texture->size_y >= asset->size_y) {
 		glTextureSubImage2D(
 			gpu_texture->id, level,
-			0, 0, (GLsizei)size_x, (GLsizei)size_y,
+			0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y,
 			gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.channels),
 			gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
 			asset->data
@@ -385,7 +391,7 @@ void gpu_texture_update(struct Gpu_Texture * gpu_texture, struct Asset_Image * a
 		glTexImage2D(
 			GL_TEXTURE_2D, level,
 			(GLint)gpu_sized_internal_format(gpu_texture->parameters.texture_type, gpu_texture->parameters.data_type, gpu_texture->parameters.channels),
-			(GLsizei)size_x, (GLsizei)size_y, 0,
+			(GLsizei)asset->size_x, (GLsizei)asset->size_y, 0,
 			gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.channels),
 			gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
 			asset->data
@@ -406,7 +412,7 @@ struct Ref gpu_target_init(
 	GLuint target_id;
 	glCreateFramebuffers(1, &target_id);
 
-	struct Gpu_Texture * textures[MAX_TARGET_ATTACHMENTS];
+	struct Ref texture_refs[MAX_TARGET_ATTACHMENTS];
 	uint32_t textures_count = 0;
 
 	GLuint buffers[MAX_TARGET_ATTACHMENTS];
@@ -415,7 +421,7 @@ struct Ref gpu_target_init(
 	// allocate buffers
 	for (uint32_t i = 0; i < count; i++) {
 		if (parameters[i].flags & TEXTURE_FLAG_READ) {
-			textures[textures_count++] = gpu_texture_allocate(size_x, size_y, parameters + i, &(struct Texture_Settings){
+			texture_refs[textures_count++] = gpu_texture_allocate(size_x, size_y, parameters + i, &(struct Texture_Settings){
 				.wrap_x = WRAP_MODE_CLAMP,
 				.wrap_y = WRAP_MODE_CLAMP,
 			}, NULL);
@@ -443,11 +449,14 @@ struct Ref gpu_target_init(
 			);
 		}
 		else {
+			struct Ref const gpu_texture_ref = texture_refs[texture_index++];
+			struct Gpu_Texture const * gpu_texture = ref_table_get(&graphics_state.textures, gpu_texture_ref);
+
 			GLint const level = 0;
 			glNamedFramebufferTexture(
 				target_id,
 				gpu_attachment_point(parameters[i].texture_type, color_index),
-				textures[texture_index++]->id,
+				gpu_texture->id,
 				level
 			);
 		}
@@ -463,7 +472,7 @@ struct Ref gpu_target_init(
 		.textures_count = textures_count,
 		.buffers_count = buffers_count,
 	};
-	memcpy(gpu_target.textures, textures, sizeof(*textures) * textures_count);
+	memcpy(gpu_target.texture_refs, texture_refs, sizeof(*texture_refs) * textures_count);
 	memcpy(gpu_target.buffers, buffers, sizeof(*buffers) * buffers_count);
 
 	return ref_table_aquire(&graphics_state.targets, &gpu_target);
@@ -471,7 +480,7 @@ struct Ref gpu_target_init(
 
 static void gpu_target_free_internal(struct Gpu_Target const * gpu_target) {
 	for (uint32_t i = 0; i < gpu_target->textures_count; i++) {
-		gpu_texture_free(gpu_target->textures[i]);
+		gpu_texture_free(gpu_target->texture_refs[i]);
 	}
 	for (uint32_t i = 0; i < gpu_target->buffers_count; i++) {
 		glDeleteRenderbuffers(1, gpu_target->buffers + i);
@@ -497,16 +506,20 @@ void gpu_target_get_size(struct Ref gpu_target_ref, uint32_t * x, uint32_t * y) 
 	*y = gpu_target->size_y;
 }
 
-struct Gpu_Texture * gpu_target_get_texture(struct Ref gpu_target_ref, enum Texture_Type type, uint32_t index) {
+struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Type type, uint32_t index) {
 	struct Gpu_Target const * gpu_target = ref_table_get(&graphics_state.targets, gpu_target_ref);
 	for (uint32_t i = 0, color_index = 0; i < gpu_target->textures_count; i++) {
-		if (gpu_target->textures[i]->parameters.texture_type == type) {
+		struct Ref const gpu_texture_ref = gpu_target->texture_refs[i];
+		struct Gpu_Texture const * gpu_texture = ref_table_get(&graphics_state.textures, gpu_texture_ref);
+		if (gpu_texture->parameters.texture_type == type) {
 			if (type == TEXTURE_TYPE_COLOR && color_index != index) { color_index++; continue; }
-			return gpu_target->textures[i];
+			return gpu_texture_ref;
 		}
 	}
+
+	// @note: consider 0 ref.id empty
 	fprintf(stderr, "failed to find the attached texture\n"); DEBUG_BREAK();
-	return NULL;
+	return (struct Ref){0};
 }
 
 // -- GPU mesh part
@@ -727,28 +740,33 @@ uint32_t graphics_find_uniform(char const * name) {
 // 	}
 // }
 
-static uint32_t graphics_unit_find(struct Gpu_Texture * gpu_texture) {
+static uint32_t graphics_unit_find(struct Ref gpu_texture_ref) {
 	// @note: consider 0 id empty
 	for (uint32_t i = 1; i < graphics_state.units_capacity; i++) {
-		if (graphics_state.units[i].gpu_texture == gpu_texture) { return i; }
+		struct Gpu_Unit const * unit = graphics_state.units + i;
+		if (unit->gpu_texture_ref.id != gpu_texture_ref.id) { continue; }
+		if (unit->gpu_texture_ref.gen != gpu_texture_ref.gen) { continue; }
+		return i;
 	}
 	return 0;
 }
 
-static uint32_t graphics_unit_init(struct Gpu_Texture * gpu_texture) {
-	uint32_t unit = graphics_unit_find(gpu_texture);
+static uint32_t graphics_unit_init(struct Ref gpu_texture_ref) {
+	uint32_t unit = graphics_unit_find(gpu_texture_ref);
 	if (unit != 0) { return unit; }
 
-	unit = graphics_unit_find(NULL);
+	// @note: consider 0 ref.id empty
+	unit = graphics_unit_find((struct Ref){0});
 	if (unit == 0) {
 		fprintf(stderr, "'graphics_unit_find' failed\n"); DEBUG_BREAK();
 		return unit;
 	}
 
 	graphics_state.units[unit] = (struct Gpu_Unit){
-		.gpu_texture = gpu_texture,
+		.gpu_texture_ref = gpu_texture_ref,
 	};
 
+	struct Gpu_Texture const * gpu_texture = ref_table_get(&graphics_state.textures, gpu_texture_ref);
 	glBindTextureUnit((GLuint)unit, gpu_texture->id);
 
 	return unit;
@@ -805,11 +823,11 @@ static void graphics_upload_single_uniform(struct Gpu_Program * gpu_program, uin
 			GLint units[MAX_UNITS_PER_MATERIAL];
 			uint32_t units_count = 0;
 
-			struct Gpu_Texture * const * gpu_textures = (struct Gpu_Texture * const *)data;
+			struct Ref const * gpu_texture_refs = (struct Ref const *)data;
 			for (uint32_t i = 0; i < field->array_size; i++) {
-				uint32_t unit = graphics_unit_find(gpu_textures[i]);
+				uint32_t unit = graphics_unit_find(gpu_texture_refs[i]);
 				if (unit == 0) {
-					unit = graphics_unit_init(gpu_textures[i]);
+					unit = graphics_unit_init(gpu_texture_refs[i]);
 					if (unit == 0) {
 						fprintf(stderr, "failed to find a vacant texture/sampler unit\n"); DEBUG_BREAK();
 					}
@@ -1035,10 +1053,12 @@ void graphics_to_glibrary_init(void) {
 
 	// init gpu objects, consider 0 ref.id empty
 	ref_table_init(&graphics_state.programs, sizeof(struct Gpu_Program));
+	ref_table_init(&graphics_state.textures, sizeof(struct Gpu_Texture));
 	ref_table_init(&graphics_state.targets, sizeof(struct Gpu_Target));
 	ref_table_init(&graphics_state.meshes, sizeof(struct Gpu_Mesh));
 
 	ref_table_aquire(&graphics_state.programs, &(struct Gpu_Program){0});
+	ref_table_aquire(&graphics_state.textures, &(struct Gpu_Texture){0});
 	ref_table_aquire(&graphics_state.targets, &(struct Gpu_Target){0});
 	ref_table_aquire(&graphics_state.meshes, &(struct Gpu_Mesh){0});
 
@@ -1093,6 +1113,9 @@ void graphics_to_glibrary_free(void) {
 	// for (uint32_t i = 1; i < graphics_state.programs.count; i++) {
 	// 	gpu_program_free_internal(ref_table_value_at(&graphics_state.programs, i));
 	// }
+	for (uint32_t i = 1; i < graphics_state.textures.count; i++) {
+		gpu_target_free_internal(ref_table_value_at(&graphics_state.textures, i));
+	}
 	for (uint32_t i = 1; i < graphics_state.targets.count; i++) {
 		gpu_target_free_internal(ref_table_value_at(&graphics_state.targets, i));
 	}
@@ -1102,6 +1125,7 @@ void graphics_to_glibrary_free(void) {
 
 	//
 	ref_table_free(&graphics_state.programs);
+	ref_table_free(&graphics_state.textures);
 	ref_table_free(&graphics_state.targets);
 	ref_table_free(&graphics_state.meshes);
 

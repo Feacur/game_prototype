@@ -8,8 +8,6 @@
 struct Batcher_2D;
 
 struct Gfx_Material;
-struct Gpu_Target;
-struct Gpu_Texture;
 struct Font_Image;
 
 struct Batcher_2D * batcher_2d_init(void);
@@ -21,7 +19,7 @@ void batcher_2d_pop_matrix(struct Batcher_2D * batcher);
 void batcher_2d_set_blend_mode(struct Batcher_2D * batcher, struct Blend_Mode blend_mode);
 void batcher_2d_set_depth_mode(struct Batcher_2D * batcher, struct Depth_Mode depth_mode);
 void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material * material);
-void batcher_2d_set_texture(struct Batcher_2D * batcher, struct Gpu_Texture * texture);
+void batcher_2d_set_texture(struct Batcher_2D * batcher, struct Ref gpu_texture_ref);
 
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,

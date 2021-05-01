@@ -16,13 +16,12 @@ void gpu_program_free(struct Gpu_Program * gpu_program);
 void gpu_program_get_uniforms(struct Gpu_Program * gpu_program, uint32_t * count, struct Gpu_Program_Field const ** values);
 
 // -- GPU texture part
-struct Gpu_Texture;
-struct Gpu_Texture * gpu_texture_init(struct Asset_Image * asset);
-void gpu_texture_free(struct Gpu_Texture * gpu_texture);
+struct Ref gpu_texture_init(struct Asset_Image * asset);
+void gpu_texture_free(struct Ref gpu_texture_ref);
 
-void gpu_texture_get_size(struct Gpu_Texture * gpu_texture, uint32_t * x, uint32_t * y);
+void gpu_texture_get_size(struct Ref gpu_texture_ref, uint32_t * x, uint32_t * y);
 
-void gpu_texture_update(struct Gpu_Texture * gpu_texture, struct Asset_Image * asset);
+void gpu_texture_update(struct Ref gpu_texture_ref, struct Asset_Image * asset);
 
 // -- GPU target part
 struct Ref gpu_target_init(
@@ -33,7 +32,7 @@ struct Ref gpu_target_init(
 void gpu_target_free(struct Ref gpu_target_ref);
 
 void gpu_target_get_size(struct Ref gpu_target_ref, uint32_t * x, uint32_t * y);
-struct Gpu_Texture * gpu_target_get_texture(struct Ref gpu_target_ref, enum Texture_Type type, uint32_t index);
+struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Type type, uint32_t index);
 
 // -- GPU mesh part
 struct Ref gpu_mesh_init(struct Asset_Mesh * asset);

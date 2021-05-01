@@ -38,7 +38,7 @@ static struct Game_Uniforms {
 
 struct Game_Font {
 	struct Font_Image * buffer;
-	struct Gpu_Texture * gpu_texture;
+	struct Ref gpu_texture_ref;
 };
 
 static struct Game_Content {
@@ -51,7 +51,7 @@ static struct Game_Content {
 	struct {
 		struct Gpu_Program * program_test;
 		struct Gpu_Program * program_batcher;
-		struct Gpu_Texture * texture_test;
+		struct Ref test_gpu_texture_ref;
 		struct Ref cube_gpu_mesh_ref;
 	} gpu;
 	//
@@ -129,7 +129,7 @@ static void game_init(void) {
 
 		content.gpu.program_test = gpu_program_init(&asset_shader_test);
 		content.gpu.program_batcher = gpu_program_init(&asset_shader_batcher);
-		content.gpu.texture_test = gpu_texture_init(&asset_image_test);
+		content.gpu.test_gpu_texture_ref = gpu_texture_init(&asset_image_test);
 		content.gpu.cube_gpu_mesh_ref = gpu_mesh_init(&asset_mesh_cube);
 
 		array_byte_free(&asset_shader_test);
@@ -169,13 +169,13 @@ static void game_init(void) {
 
 		content.fonts.sans.buffer = font_image_init(content.assets.font_sans, 32);
 		font_image_build(content.fonts.sans.buffer, codepoints_count / 2, codepoints);
-		content.fonts.sans.gpu_texture = gpu_texture_init(font_image_get_asset(content.fonts.sans.buffer));
+		content.fonts.sans.gpu_texture_ref = gpu_texture_init(font_image_get_asset(content.fonts.sans.buffer));
 
 		MEMORY_FREE(NULL, codepoints);
 
 		content.fonts.mono.buffer = font_image_init(content.assets.font_mono, 32);
 		font_image_build(content.fonts.mono.buffer, 1, (uint32_t[]){' ', '~'});
-		content.fonts.mono.gpu_texture = gpu_texture_init(font_image_get_asset(content.fonts.mono.buffer));
+		content.fonts.mono.gpu_texture_ref = gpu_texture_init(font_image_get_asset(content.fonts.mono.buffer));
 
 		//
 		gfx_material_init(&content.materials.test, content.gpu.program_test);
@@ -232,15 +232,16 @@ static void game_free(void) {
 
 	gpu_program_free(content.gpu.program_test);
 	gpu_program_free(content.gpu.program_batcher);
-	gpu_texture_free(content.gpu.texture_test);
+	gpu_texture_free(content.gpu.test_gpu_texture_ref);
+	gpu_mesh_free(content.gpu.cube_gpu_mesh_ref);
 	gfx_material_free(&content.materials.test);
 	gfx_material_free(&content.materials.batcher);
 
 	font_image_free(content.fonts.sans.buffer);
-	gpu_texture_free(content.fonts.sans.gpu_texture);
+	gpu_texture_free(content.fonts.sans.gpu_texture_ref);
 
 	font_image_free(content.fonts.mono.buffer);
-	gpu_texture_free(content.fonts.mono.gpu_texture);
+	gpu_texture_free(content.fonts.mono.gpu_texture_ref);
 
 	gpu_target_free(target.gpu_target_ref);
 
@@ -294,7 +295,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	);
 	gfx_material_set_float(&content.materials.test, uniforms.camera, 4*4, &test_camera.x.x);
 
-	gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &content.gpu.texture_test);
+	gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &content.gpu.test_gpu_texture_ref);
 	gfx_material_set_float(&content.materials.test, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 
 	struct mat4 const test_transform = mat4_set_transformation(state.object.transform.position, state.object.transform.scale, state.object.transform.rotation);
@@ -324,7 +325,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	batcher_2d_set_depth_mode(batcher, (struct Depth_Mode){0});
 
 	batcher_2d_set_material(batcher, &content.materials.batcher);
-	batcher_2d_set_texture(batcher, gpu_target_get_texture(target.gpu_target_ref, TEXTURE_TYPE_COLOR, 0));
+	batcher_2d_set_texture(batcher, gpu_target_get_texture_ref(target.gpu_target_ref, TEXTURE_TYPE_COLOR, 0));
 
 	batcher_2d_add_quad(
 		batcher,
@@ -354,7 +355,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	batcher_2d_set_depth_mode(batcher, (struct Depth_Mode){0});
 
 	batcher_2d_set_material(batcher, &content.materials.batcher);
-	batcher_2d_set_texture(batcher, font->gpu_texture);
+	batcher_2d_set_texture(batcher, font->gpu_texture_ref);
 
 	batcher_2d_add_text(
 		batcher,

@@ -25,7 +25,7 @@
 struct Batcher_2D_Batch {
 	uint32_t offset, length;
 	struct Gfx_Material * material;
-	struct Gpu_Texture * texture;
+	struct Ref gpu_texture_ref;
 	struct Blend_Mode blend_mode;
 	struct Depth_Mode depth_mode;
 };
@@ -159,11 +159,11 @@ void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material * 
 	batcher->batch.material = material;
 }
 
-void batcher_2d_set_texture(struct Batcher_2D * batcher, struct Gpu_Texture * texture) {
-	if (batcher->batch.texture != texture) {
+void batcher_2d_set_texture(struct Batcher_2D * batcher, struct Ref gpu_texture_ref) {
+	if (batcher->batch.gpu_texture_ref.id != gpu_texture_ref.id || batcher->batch.gpu_texture_ref.gen != gpu_texture_ref.gen) {
 		batcher_2d_bake_pass(batcher);
 	}
-	batcher->batch.texture = texture;
+	batcher->batch.gpu_texture_ref = gpu_texture_ref;
 }
 
 static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord);
@@ -266,7 +266,7 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 		struct Batcher_2D_Batch * batch = array_any_at(&batcher->batches, i);
 
 		// @todo: do matrix computations CPU-side
-		gfx_material_set_texture(batch->material, texture_id, 1, &batch->texture);
+		gfx_material_set_texture(batch->material, texture_id, 1, &batch->gpu_texture_ref);
 		gfx_material_set_float(batch->material, color_id, 4, &(struct vec4){1, 1, 1, 1}.x);
 
 		graphics_draw(&(struct Render_Pass){

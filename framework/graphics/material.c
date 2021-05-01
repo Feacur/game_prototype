@@ -10,7 +10,7 @@
 
 void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_program) {
 	material->program = gpu_program;
-	array_u64_init(&material->textures);
+	array_any_init(&material->textures, sizeof(struct Ref));
 	array_u32_init(&material->values_u32);
 	array_s32_init(&material->values_s32);
 	array_float_init(&material->values_float);
@@ -32,12 +32,12 @@ void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_
 		}
 	}
 
-	array_u64_resize(&material->textures, unit_count);
+	array_any_resize(&material->textures, unit_count);
 	array_u32_resize(&material->values_u32, u32_count);
 	array_s32_resize(&material->values_s32, s32_count);
 	array_float_resize(&material->values_float, float_count);
 
-	array_u64_resize(&material->textures,       unit_count);  memset(material->textures.data,     0, sizeof(uint64_t) * unit_count);
+	array_any_resize(&material->textures,       unit_count);  memset(material->textures.data,     0, sizeof(struct Ref) * unit_count);
 	array_u32_resize(&material->values_u32,     u32_count);   memset(material->values_u32.data,   0, sizeof(uint32_t) * u32_count);
 	array_s32_resize(&material->values_s32,     s32_count);   memset(material->values_s32.data,   0, sizeof(int32_t) * s32_count);
 	array_float_resize(&material->values_float, float_count); memset(material->values_float.data, 0, sizeof(float) * float_count);
@@ -45,7 +45,7 @@ void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_
 
 void gfx_material_free(struct Gfx_Material * material) {
 	material->program = NULL;
-	array_u64_free(&material->textures);
+	array_any_free(&material->textures);
 	array_u32_free(&material->values_u32);
 	array_s32_free(&material->values_s32);
 	array_float_free(&material->values_float);
@@ -57,7 +57,7 @@ static void gfx_material_set_value(
 	uint32_t values_count, uint32_t value_size, void const * value
 );
 
-void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Gpu_Texture ** value) {
+void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Ref * value) {
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_UNIT,
 		(uint8_t *)material->textures.data,
