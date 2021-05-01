@@ -7,8 +7,6 @@
 #include "types.h"
 
 struct Gfx_Material;
-struct Gpu_Target;
-struct Gpu_Mesh;
 
 struct Render_Pass {
 	uint32_t size_x, size_y;

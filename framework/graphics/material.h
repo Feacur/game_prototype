@@ -7,10 +7,8 @@
 #include "framework/containers/array_float.h"
 #include "framework/containers/ref.h"
 
-struct Gpu_Program;
-
 struct Gfx_Material {
-	struct Gpu_Program * program; // weak reference
+	struct Ref gpu_program_ref; // weak reference
 
 	struct Array_Any textures;
 	struct Array_U32 values_u32;
@@ -18,7 +16,7 @@ struct Gfx_Material {
 	struct Array_Float values_float;
 };
 
-void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_program);
+void gfx_material_init(struct Gfx_Material * material, struct Ref gpu_program_ref);
 void gfx_material_free(struct Gfx_Material * material);
 
 void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Ref * value);

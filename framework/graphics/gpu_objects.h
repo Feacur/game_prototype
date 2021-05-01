@@ -9,11 +9,10 @@ struct Asset_Mesh;
 struct Asset_Image;
 
 // -- GPU program part
-struct Gpu_Program;
 struct Gpu_Program_Field;
-struct Gpu_Program * gpu_program_init(struct Array_Byte * asset);
-void gpu_program_free(struct Gpu_Program * gpu_program);
-void gpu_program_get_uniforms(struct Gpu_Program * gpu_program, uint32_t * count, struct Gpu_Program_Field const ** values);
+struct Ref gpu_program_init(struct Array_Byte * asset);
+void gpu_program_free(struct Ref gpu_program_ref);
+void gpu_program_get_uniforms(struct Ref gpu_program_ref, uint32_t * count, struct Gpu_Program_Field const ** values);
 
 // -- GPU texture part
 struct Ref gpu_texture_init(struct Asset_Image * asset);

@@ -49,8 +49,8 @@ static struct Game_Content {
 	} assets;
 	//
 	struct {
-		struct Gpu_Program * program_test;
-		struct Gpu_Program * program_batcher;
+		struct Ref test_gpu_program_ref;
+		struct Ref batcher_gpu_program_ref;
 		struct Ref test_gpu_texture_ref;
 		struct Ref cube_gpu_mesh_ref;
 	} gpu;
@@ -127,8 +127,8 @@ static void game_init(void) {
 		struct Asset_Mesh asset_mesh_cube;
 		asset_mesh_init(&asset_mesh_cube, "assets/sandbox/cube.obj");
 
-		content.gpu.program_test = gpu_program_init(&asset_shader_test);
-		content.gpu.program_batcher = gpu_program_init(&asset_shader_batcher);
+		content.gpu.test_gpu_program_ref = gpu_program_init(&asset_shader_test);
+		content.gpu.batcher_gpu_program_ref = gpu_program_init(&asset_shader_batcher);
 		content.gpu.test_gpu_texture_ref = gpu_texture_init(&asset_image_test);
 		content.gpu.cube_gpu_mesh_ref = gpu_mesh_init(&asset_mesh_cube);
 
@@ -178,8 +178,8 @@ static void game_init(void) {
 		content.fonts.mono.gpu_texture_ref = gpu_texture_init(font_image_get_asset(content.fonts.mono.buffer));
 
 		//
-		gfx_material_init(&content.materials.test, content.gpu.program_test);
-		gfx_material_init(&content.materials.batcher, content.gpu.program_batcher);
+		gfx_material_init(&content.materials.test, content.gpu.test_gpu_program_ref);
+		gfx_material_init(&content.materials.batcher, content.gpu.batcher_gpu_program_ref);
 	}
 
 	// init target
@@ -230,8 +230,8 @@ static void game_free(void) {
 	asset_font_free(content.assets.font_mono);
 	array_byte_free(&content.assets.text_test);
 
-	gpu_program_free(content.gpu.program_test);
-	gpu_program_free(content.gpu.program_batcher);
+	gpu_program_free(content.gpu.test_gpu_program_ref);
+	gpu_program_free(content.gpu.batcher_gpu_program_ref);
 	gpu_texture_free(content.gpu.test_gpu_texture_ref);
 	gpu_mesh_free(content.gpu.cube_gpu_mesh_ref);
 	gfx_material_free(&content.materials.test);

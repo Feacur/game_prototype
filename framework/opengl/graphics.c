@@ -93,7 +93,7 @@ static struct Graphics_State {
 	struct Ref_Table targets;
 	struct Ref_Table meshes;
 
-	struct Gpu_Program const * active_program;
+	struct Ref active_program_ref;
 	struct Ref active_target_ref;
 	struct Ref active_mesh_ref;
 
@@ -117,7 +117,7 @@ static struct Graphics_State {
 // -- GPU program part
 static void verify_shader(GLuint id, GLenum parameter);
 static void verify_program(GLuint id, GLenum parameter);
-struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
+struct Ref gpu_program_init(struct Array_Byte * asset) {
 #define ADD_SECTION_HEADER(shader_type, version) \
 	do { \
 		if (strstr((char const *)asset->data, #shader_type)) {\
@@ -222,29 +222,37 @@ struct Gpu_Program * gpu_program_init(struct Array_Byte * asset) {
 	MEMORY_FREE(&graphics_state, uniform_name_buffer);
 
 	//
-	struct Gpu_Program * gpu_program = MEMORY_ALLOCATE(&graphics_state, struct Gpu_Program);
-	*gpu_program = (struct Gpu_Program){
+	struct Gpu_Program gpu_program = (struct Gpu_Program){
 		.id = program_id,
 		.uniforms_count = (uint32_t)uniforms_count,
 	};
-	memcpy(gpu_program->uniforms, uniforms, sizeof(*uniforms) * (size_t)uniforms_count);
-	memcpy(gpu_program->uniform_locations, uniform_locations, sizeof(*uniform_locations) * (size_t)uniforms_count);
-	return gpu_program;
+	memcpy(gpu_program.uniforms, uniforms, sizeof(*uniforms) * (size_t)uniforms_count);
+	memcpy(gpu_program.uniform_locations, uniform_locations, sizeof(*uniform_locations) * (size_t)uniforms_count);
+
+	return ref_table_aquire(&graphics_state.programs, &gpu_program);
 	// https://www.khronos.org/opengl/wiki/Program_Introspection
 
 #undef ADD_HEADER
 }
 
-void gpu_program_free(struct Gpu_Program * gpu_program) {
-	if (ogl_version > 0) {
-		if (graphics_state.active_program == gpu_program) { graphics_state.active_program = NULL; }
-		glDeleteProgram(gpu_program->id);
-	}
-	memset(gpu_program, 0, sizeof(*gpu_program));
-	MEMORY_FREE(&graphics_state, gpu_program);
+static void gpu_program_free_internal(struct Gpu_Program const * gpu_program) {
+	glDeleteProgram(gpu_program->id);
 }
 
-void gpu_program_get_uniforms(struct Gpu_Program * gpu_program, uint32_t * count, struct Gpu_Program_Field const ** values) {
+void gpu_program_free(struct Ref gpu_program_ref) {
+	if (graphics_state.active_program_ref.id == gpu_program_ref.id && graphics_state.active_program_ref.gen == gpu_program_ref.gen) {
+		// @note: consider 0 ref.id empty
+		graphics_state.active_program_ref = (struct Ref){0};
+	}
+	struct Gpu_Program const * gpu_program = ref_table_get(&graphics_state.programs, gpu_program_ref);
+	if (gpu_program != NULL) {
+		gpu_program_free_internal(gpu_program);
+		ref_table_discard(&graphics_state.programs, gpu_program_ref);
+	}
+}
+
+void gpu_program_get_uniforms(struct Ref gpu_program_ref, uint32_t * count, struct Gpu_Program_Field const ** values) {
+	struct Gpu_Program const * gpu_program = ref_table_get(&graphics_state.programs, gpu_program_ref);
 	*count = gpu_program->uniforms_count;
 	*values = gpu_program->uniforms;
 }
@@ -491,7 +499,7 @@ static void gpu_target_free_internal(struct Gpu_Target const * gpu_target) {
 void gpu_target_free(struct Ref gpu_target_ref) {
 	if (graphics_state.active_target_ref.id == gpu_target_ref.id && graphics_state.active_target_ref.gen == gpu_target_ref.gen) {
 		// @note: consider 0 ref.id empty
-		graphics_state.active_target_ref.id = 0;
+		graphics_state.active_target_ref = (struct Ref){0};
 	}
 	struct Gpu_Target const * gpu_target = ref_table_get(&graphics_state.targets, gpu_target_ref);
 	if (gpu_target != NULL) {
@@ -651,7 +659,7 @@ static void gpu_mesh_free_internal(struct Gpu_Mesh const * gpu_mesh) {
 void gpu_mesh_free(struct Ref gpu_mesh_ref) {
 	if (graphics_state.active_mesh_ref.id == gpu_mesh_ref.id && graphics_state.active_mesh_ref.gen == gpu_mesh_ref.gen) {
 		// @note: consider 0 ref.id empty
-		graphics_state.active_mesh_ref.id = 0;
+		graphics_state.active_mesh_ref = (struct Ref){0};
 	}
 	struct Gpu_Mesh const * gpu_mesh = ref_table_get(&graphics_state.meshes, gpu_mesh_ref);
 	if (gpu_mesh != NULL) {
@@ -788,9 +796,12 @@ static uint32_t graphics_unit_init(struct Ref gpu_texture_ref) {
 // 	}
 // }
 
-static void graphics_select_program(struct Gpu_Program const * gpu_program) {
-	if (graphics_state.active_program == gpu_program) { return; }
-	graphics_state.active_program = gpu_program;
+static void graphics_select_program(struct Ref gpu_program_ref) {
+	if (graphics_state.active_program_ref.id == gpu_program_ref.id && graphics_state.active_program_ref.gen == gpu_program_ref.gen) {
+		return;
+	}
+	graphics_state.active_program_ref = gpu_program_ref;
+	struct Gpu_Program const * gpu_program = ref_table_get(&graphics_state.programs, gpu_program_ref);
 	glUseProgram((gpu_program != NULL) ? gpu_program->id : 0);
 }
 
@@ -812,7 +823,7 @@ static void graphics_select_mesh(struct Ref gpu_mesh_ref) {
 	glBindVertexArray((gpu_mesh != NULL) ? gpu_mesh->id : 0);
 }
 
-static void graphics_upload_single_uniform(struct Gpu_Program * gpu_program, uint32_t uniform_index, void const * data) {
+static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_program, uint32_t uniform_index, void const * data) {
 	struct Gpu_Program_Field const * field = gpu_program->uniforms + uniform_index;
 	GLint const location = gpu_program->uniform_locations[uniform_index];
 
@@ -860,8 +871,9 @@ static void graphics_upload_single_uniform(struct Gpu_Program * gpu_program, uin
 }
 
 static void graphics_upload_uniforms(struct Gfx_Material const * material) {
-	uint32_t const uniforms_count = material->program->uniforms_count;
-	struct Gpu_Program_Field const * uniforms = material->program->uniforms;
+	struct Gpu_Program const * gpu_program = ref_table_get(&graphics_state.programs, material->gpu_program_ref);
+	uint32_t const uniforms_count = gpu_program->uniforms_count;
+	struct Gpu_Program_Field const * uniforms = gpu_program->uniforms;
 
 	uint32_t unit_offset = 0, u32_offset = 0, s32_offset = 0, float_offset = 0;
 	for (uint32_t i = 0; i < uniforms_count; i++) {
@@ -870,25 +882,25 @@ static void graphics_upload_uniforms(struct Gfx_Material const * material) {
 			default: fprintf(stderr, "unknown data type\n"); DEBUG_BREAK(); break;
 
 			case DATA_TYPE_UNIT: {
-				graphics_upload_single_uniform(material->program, i, material->textures.data + unit_offset);
+				graphics_upload_single_uniform(gpu_program, i, material->textures.data + unit_offset);
 				unit_offset += elements_count;
 				break;
 			}
 
 			case DATA_TYPE_U32: {
-				graphics_upload_single_uniform(material->program, i, material->values_u32.data + u32_offset);
+				graphics_upload_single_uniform(gpu_program, i, material->values_u32.data + u32_offset);
 				u32_offset += elements_count;
 				break;
 			}
 
 			case DATA_TYPE_S32: {
-				graphics_upload_single_uniform(material->program, i, material->values_s32.data + s32_offset);
+				graphics_upload_single_uniform(gpu_program, i, material->values_s32.data + s32_offset);
 				s32_offset += elements_count;
 				break;
 			}
 
 			case DATA_TYPE_R32: {
-				graphics_upload_single_uniform(material->program, i, material->values_float.data + float_offset);
+				graphics_upload_single_uniform(gpu_program, i, material->values_float.data + float_offset);
 				float_offset += elements_count;
 				break;
 			}
@@ -983,7 +995,7 @@ void graphics_draw(struct Render_Pass const * pass) {
 
 	if (pass->mesh.id == 0) { return; }
 	if (pass->material == NULL) { return; }
-	if (pass->material->program == NULL) { return; }
+	if (pass->material->gpu_program_ref.id == 0) { return; }
 
 	struct Gpu_Mesh const * mesh = ref_table_get(&graphics_state.meshes, pass->mesh);
 	if (mesh->elements_index == INDEX_EMPTY) { return; }
@@ -1002,7 +1014,7 @@ void graphics_draw(struct Render_Pass const * pass) {
 		gpu_target_get_size(pass->target, &size_x, &size_y);
 	}
 
-	graphics_select_program(pass->material->program);
+	graphics_select_program(pass->material->gpu_program_ref);
 	graphics_upload_uniforms(pass->material);
 
 	graphics_select_mesh(pass->mesh);
@@ -1110,9 +1122,9 @@ void graphics_to_glibrary_init(void) {
 
 void graphics_to_glibrary_free(void) {
 	// @note: consider 0 ref.id empty
-	// for (uint32_t i = 1; i < graphics_state.programs.count; i++) {
-	// 	gpu_program_free_internal(ref_table_value_at(&graphics_state.programs, i));
-	// }
+	for (uint32_t i = 1; i < graphics_state.programs.count; i++) {
+		gpu_program_free_internal(ref_table_value_at(&graphics_state.programs, i));
+	}
 	for (uint32_t i = 1; i < graphics_state.textures.count; i++) {
 		gpu_target_free_internal(ref_table_value_at(&graphics_state.textures, i));
 	}

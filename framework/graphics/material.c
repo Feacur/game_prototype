@@ -8,8 +8,8 @@
 //
 #include "material.h"
 
-void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_program) {
-	material->program = gpu_program;
+void gfx_material_init(struct Gfx_Material * material, struct Ref gpu_program_ref) {
+	material->gpu_program_ref = gpu_program_ref;
 	array_any_init(&material->textures, sizeof(struct Ref));
 	array_u32_init(&material->values_u32);
 	array_s32_init(&material->values_s32);
@@ -17,7 +17,7 @@ void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_
 
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
-	gpu_program_get_uniforms(gpu_program, &uniforms_count, &uniforms);
+	gpu_program_get_uniforms(gpu_program_ref, &uniforms_count, &uniforms);
 
 	uint32_t unit_count = 0, u32_count = 0, s32_count = 0, float_count = 0;
 	for (uint32_t i = 0; i < uniforms_count; i++) {
@@ -44,7 +44,8 @@ void gfx_material_init(struct Gfx_Material * material, struct Gpu_Program * gpu_
 }
 
 void gfx_material_free(struct Gfx_Material * material) {
-	material->program = NULL;
+	// @note: consider ref.id 0 empty
+	material->gpu_program_ref = (struct Ref){0};
 	array_any_free(&material->textures);
 	array_u32_free(&material->values_u32);
 	array_s32_free(&material->values_s32);
@@ -98,7 +99,7 @@ static void gfx_material_set_value(
 ) {
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
-	gpu_program_get_uniforms(material->program, &uniforms_count, &uniforms);
+	gpu_program_get_uniforms(material->gpu_program_ref, &uniforms_count, &uniforms);
 
 	uint32_t offset = 0;
 	for (uint32_t i = 0; i < uniforms_count; i++) {
