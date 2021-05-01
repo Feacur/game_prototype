@@ -251,7 +251,7 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Font_Image * font, 
 	}
 }
 
-void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size_y, struct Gpu_Target * gpu_target) {
+void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size_y, struct Ref gpu_target_ref) {
 	uint32_t const texture_id   = graphics_add_uniform("u_Texture");
 	uint32_t const color_id     = graphics_add_uniform("u_Color");
 
@@ -271,7 +271,7 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 
 		graphics_draw(&(struct Render_Pass){
 			.size_x = size_x, .size_y = size_y,
-			.target = gpu_target,
+			.target = gpu_target_ref,
 			.blend_mode = batch->blend_mode,
 			.depth_mode = batch->depth_mode,
 			//

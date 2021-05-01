@@ -3,6 +3,7 @@
 
 #include "ref.h"
 
+// @todo: provide "0 id is empty" guarantee?
 struct Ref_Table {
 	uint32_t free_sparse_index;
 	uint32_t value_size;

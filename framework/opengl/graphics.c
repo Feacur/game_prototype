@@ -93,8 +93,8 @@ static struct Graphics_State {
 	struct Ref_Table meshes;
 
 	struct Gpu_Program const * active_program;
-	struct Gpu_Target const * active_target;
-	struct Ref active_mesh;
+	struct Ref active_target_ref;
+	struct Ref active_mesh_ref;
 
 	uint32_t units_capacity;
 	struct Gpu_Unit * units;
@@ -398,7 +398,7 @@ void gpu_texture_update(struct Gpu_Texture * gpu_texture, struct Asset_Image * a
 }
 
 // -- GPU target part
-struct Gpu_Target * gpu_target_init(
+struct Ref gpu_target_init(
 	uint32_t size_x, uint32_t size_y,
 	struct Texture_Parameters const * parameters,
 	uint32_t count
@@ -456,40 +456,49 @@ struct Gpu_Target * gpu_target_init(
 	}
 
 	//
-	struct Gpu_Target * gpu_target = MEMORY_ALLOCATE(&graphics_state, struct Gpu_Target);
-	*gpu_target = (struct Gpu_Target){
+	struct Gpu_Target gpu_target = (struct Gpu_Target){
 		.id = target_id,
 		.size_x = size_x,
 		.size_y = size_y,
 		.textures_count = textures_count,
 		.buffers_count = buffers_count,
 	};
-	memcpy(gpu_target->textures, textures, sizeof(*textures) * textures_count);
-	memcpy(gpu_target->buffers, buffers, sizeof(*buffers) * buffers_count);
-	return gpu_target;
+	memcpy(gpu_target.textures, textures, sizeof(*textures) * textures_count);
+	memcpy(gpu_target.buffers, buffers, sizeof(*buffers) * buffers_count);
+
+	return ref_table_aquire(&graphics_state.targets, &gpu_target);
 }
 
-void gpu_target_free(struct Gpu_Target * gpu_target) {
-	if (graphics_state.active_target == gpu_target) { graphics_state.active_target = NULL; }
+static void gpu_target_free_internal(struct Gpu_Target const * gpu_target) {
 	for (uint32_t i = 0; i < gpu_target->textures_count; i++) {
 		gpu_texture_free(gpu_target->textures[i]);
 	}
-	if (ogl_version > 0) {
-		for (uint32_t i = 0; i < gpu_target->buffers_count; i++) {
-			glDeleteRenderbuffers(1, gpu_target->buffers + i);
-		}
-		glDeleteFramebuffers(1, &gpu_target->id);
+	for (uint32_t i = 0; i < gpu_target->buffers_count; i++) {
+		glDeleteRenderbuffers(1, gpu_target->buffers + i);
 	}
-	memset(gpu_target, 0, sizeof(*gpu_target));
-	MEMORY_FREE(&graphics_state, gpu_target);
+	glDeleteFramebuffers(1, &gpu_target->id);
 }
 
-void gpu_target_get_size(struct Gpu_Target * gpu_target, uint32_t * x, uint32_t * y) {
+void gpu_target_free(struct Ref gpu_target_ref) {
+	if (graphics_state.active_target_ref.id == gpu_target_ref.id && graphics_state.active_target_ref.gen == gpu_target_ref.gen) {
+		// @note: consider 0 ref.id empty
+		graphics_state.active_target_ref.id = 0;
+	}
+	struct Gpu_Target const * gpu_target = ref_table_get(&graphics_state.targets, gpu_target_ref);
+	if (gpu_target != NULL) {
+		gpu_target_free_internal(gpu_target);
+		ref_table_discard(&graphics_state.targets, gpu_target_ref);
+	}
+}
+
+void gpu_target_get_size(struct Ref gpu_target_ref, uint32_t * x, uint32_t * y) {
+	struct Gpu_Target const * gpu_target = ref_table_get(&graphics_state.targets, gpu_target_ref);
 	*x = gpu_target->size_x;
 	*y = gpu_target->size_y;
 }
 
-struct Gpu_Texture * gpu_target_get_texture(struct Gpu_Target * gpu_target, enum Texture_Type type, uint32_t index) {
+struct Gpu_Texture * gpu_target_get_texture(struct Ref gpu_target_ref, enum Texture_Type type, uint32_t index) {
+	struct Gpu_Target const * gpu_target = ref_table_get(&graphics_state.targets, gpu_target_ref);
 	for (uint32_t i = 0, color_index = 0; i < gpu_target->textures_count; i++) {
 		if (gpu_target->textures[i]->parameters.texture_type == type) {
 			if (type == TEXTURE_TYPE_COLOR && color_index != index) { color_index++; continue; }
@@ -627,8 +636,9 @@ static void gpu_mesh_free_internal(struct Gpu_Mesh const * gpu_mesh) {
 }
 
 void gpu_mesh_free(struct Ref gpu_mesh_ref) {
-	if (graphics_state.active_mesh.id == gpu_mesh_ref.id && graphics_state.active_mesh.gen == gpu_mesh_ref.gen) {
-		graphics_state.active_mesh.id = INDEX_EMPTY;
+	if (graphics_state.active_mesh_ref.id == gpu_mesh_ref.id && graphics_state.active_mesh_ref.gen == gpu_mesh_ref.gen) {
+		// @note: consider 0 ref.id empty
+		graphics_state.active_mesh_ref.id = 0;
 	}
 	struct Gpu_Mesh const * gpu_mesh = ref_table_get(&graphics_state.meshes, gpu_mesh_ref);
 	if (gpu_mesh != NULL) {
@@ -718,7 +728,7 @@ uint32_t graphics_find_uniform(char const * name) {
 // }
 
 static uint32_t graphics_unit_find(struct Gpu_Texture * gpu_texture) {
-	// @note: 0 value is considered empty
+	// @note: consider 0 id empty
 	for (uint32_t i = 1; i < graphics_state.units_capacity; i++) {
 		if (graphics_state.units[i].gpu_texture == gpu_texture) { return i; }
 	}
@@ -766,17 +776,20 @@ static void graphics_select_program(struct Gpu_Program const * gpu_program) {
 	glUseProgram((gpu_program != NULL) ? gpu_program->id : 0);
 }
 
-static void graphics_select_target(struct Gpu_Target const * gpu_target) {
-	if (graphics_state.active_target == gpu_target) { return; }
-	graphics_state.active_target = gpu_target;
+static void graphics_select_target(struct Ref gpu_target_ref) {
+	if (graphics_state.active_target_ref.id == gpu_target_ref.id && graphics_state.active_target_ref.gen == gpu_target_ref.gen) {
+		return;
+	}
+	graphics_state.active_target_ref = gpu_target_ref;
+	struct Gpu_Target const * gpu_target = ref_table_get(&graphics_state.targets, gpu_target_ref);
 	glBindFramebuffer(GL_FRAMEBUFFER, (gpu_target != NULL) ? gpu_target->id : 0);
 }
 
 static void graphics_select_mesh(struct Ref gpu_mesh_ref) {
-	if (graphics_state.active_mesh.id == gpu_mesh_ref.id && graphics_state.active_mesh.gen == gpu_mesh_ref.gen) {
+	if (graphics_state.active_mesh_ref.id == gpu_mesh_ref.id && graphics_state.active_mesh_ref.gen == gpu_mesh_ref.gen) {
 		return;
 	}
-	graphics_state.active_mesh = gpu_mesh_ref;
+	graphics_state.active_mesh_ref = gpu_mesh_ref;
 	struct Gpu_Mesh const * gpu_mesh = ref_table_get(&graphics_state.meshes, gpu_mesh_ref);
 	glBindVertexArray((gpu_mesh != NULL) ? gpu_mesh->id : 0);
 }
@@ -941,7 +954,8 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 }
 
 void graphics_draw(struct Render_Pass const * pass) {
-	if (pass->target == NULL && pass->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
+	// @note: consider 0 ref.id empty
+	if (pass->target.id == 0 && pass->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
 
 	graphics_set_blend_mode(&pass->blend_mode);
 	graphics_set_depth_mode(&pass->depth_mode);
@@ -949,7 +963,7 @@ void graphics_draw(struct Render_Pass const * pass) {
 	graphics_select_target(pass->target);
 	graphics_clear(pass->clear_mask, pass->clear_rgba);
 
-	if (pass->mesh.id == INDEX_EMPTY) { return; }
+	if (pass->mesh.id == 0) { return; }
 	if (pass->material == NULL) { return; }
 	if (pass->material->program == NULL) { return; }
 
@@ -966,7 +980,7 @@ void graphics_draw(struct Render_Pass const * pass) {
 		: 0;
 
 	uint32_t size_x = pass->size_x, size_y = pass->size_y;
-	if (pass->target != NULL) {
+	if (pass->target.id != 0) {
 		gpu_target_get_size(pass->target, &size_x, &size_y);
 	}
 
@@ -1015,12 +1029,18 @@ void graphics_to_glibrary_init(void) {
 	memset(&graphics_state, 0, sizeof(graphics_state));
 	graphics_state.extensions = allocate_extensions_string();
 
-	//
+	// init uniforms strings, consider 0 id empty
 	strings_init(&graphics_state.uniforms);
 	strings_add(&graphics_state.uniforms, 0, "");
 
+	// init gpu objects, consider 0 ref.id empty
+	ref_table_init(&graphics_state.programs, sizeof(struct Gpu_Program));
+	ref_table_init(&graphics_state.targets, sizeof(struct Gpu_Target));
 	ref_table_init(&graphics_state.meshes, sizeof(struct Gpu_Mesh));
-	graphics_state.active_mesh.id = INDEX_EMPTY;
+
+	ref_table_aquire(&graphics_state.programs, &(struct Gpu_Program){0});
+	ref_table_aquire(&graphics_state.targets, &(struct Gpu_Target){0});
+	ref_table_aquire(&graphics_state.meshes, &(struct Gpu_Mesh){0});
 
 	//
 	GLint max_units;
@@ -1069,12 +1089,23 @@ void graphics_to_glibrary_init(void) {
 }
 
 void graphics_to_glibrary_free(void) {
-	for (uint32_t i = 0; i < graphics_state.meshes.count; i++) {
+	// @note: consider 0 ref.id empty
+	// for (uint32_t i = 1; i < graphics_state.programs.count; i++) {
+	// 	gpu_program_free_internal(ref_table_value_at(&graphics_state.programs, i));
+	// }
+	for (uint32_t i = 1; i < graphics_state.targets.count; i++) {
+		gpu_target_free_internal(ref_table_value_at(&graphics_state.targets, i));
+	}
+	for (uint32_t i = 1; i < graphics_state.meshes.count; i++) {
 		gpu_mesh_free_internal(ref_table_value_at(&graphics_state.meshes, i));
 	}
-	ref_table_free(&graphics_state.meshes);
-	graphics_state.active_mesh.id = INDEX_EMPTY;
 
+	//
+	ref_table_free(&graphics_state.programs);
+	ref_table_free(&graphics_state.targets);
+	ref_table_free(&graphics_state.meshes);
+
+	//
 	strings_free(&graphics_state.uniforms);
 	MEMORY_FREE(&graphics_state, graphics_state.extensions);
 	MEMORY_FREE(&graphics_state, graphics_state.units);

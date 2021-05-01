@@ -30,6 +30,8 @@ void ref_table_clear(struct Ref_Table * ref_table) {
 			.id = i + 1,
 		};
 	}
+	ref_table_aquire(ref_table, NULL);
+	memset(ref_table->values, 0, ref_table->value_size);
 }
 
 void ref_table_resize(struct Ref_Table * ref_table, uint32_t target_capacity) {

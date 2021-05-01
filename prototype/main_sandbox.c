@@ -66,7 +66,7 @@ static struct Game_Content {
 } content;
 
 static struct Game_Target {
-	struct Gpu_Target * gpu_target;
+	struct Ref gpu_target_ref;
 } target;
 
 static struct Batcher_2D * batcher = NULL;
@@ -184,7 +184,7 @@ static void game_init(void) {
 
 	// init target
 	{
-		target.gpu_target = gpu_target_init(
+		target.gpu_target_ref = gpu_target_init(
 			320, 180,
 			(struct Texture_Parameters[]){
 				[0] = {
@@ -242,7 +242,7 @@ static void game_free(void) {
 	font_image_free(content.fonts.mono.buffer);
 	gpu_texture_free(content.fonts.mono.gpu_texture);
 
-	gpu_target_free(target.gpu_target);
+	gpu_target_free(target.gpu_target_ref);
 
 	batcher_2d_free(batcher);
 
@@ -274,12 +274,12 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 
 static void game_render(uint32_t size_x, uint32_t size_y) {
 	uint32_t target_size_x, target_size_y;
-	gpu_target_get_size(target.gpu_target, &target_size_x, &target_size_y);
+	gpu_target_get_size(target.gpu_target_ref, &target_size_x, &target_size_y);
 
 
 	// render to target
 	graphics_draw(&(struct Render_Pass){
-		.target = target.gpu_target,
+		.target = target.gpu_target_ref,
 		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
 		.depth_mode = {.enabled = true, .mask = true},
 		//
@@ -300,7 +300,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	struct mat4 const test_transform = mat4_set_transformation(state.object.transform.position, state.object.transform.scale, state.object.transform.rotation);
 	gfx_material_set_float(&content.materials.test, uniforms.transform, 4*4, &test_transform.x.x);
 	graphics_draw(&(struct Render_Pass){
-		.target = target.gpu_target,
+		.target = target.gpu_target_ref,
 		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
 		.depth_mode = {.enabled = true, .mask = true},
 		//
@@ -324,7 +324,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	batcher_2d_set_depth_mode(batcher, (struct Depth_Mode){0});
 
 	batcher_2d_set_material(batcher, &content.materials.batcher);
-	batcher_2d_set_texture(batcher, gpu_target_get_texture(target.gpu_target, TEXTURE_TYPE_COLOR, 0));
+	batcher_2d_set_texture(batcher, gpu_target_get_texture(target.gpu_target_ref, TEXTURE_TYPE_COLOR, 0));
 
 	batcher_2d_add_quad(
 		batcher,
@@ -382,7 +382,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
 		.clear_rgba = 0x303030ff,
 	});
-	batcher_2d_draw(batcher, size_x, size_y, NULL);
+	batcher_2d_draw(batcher, size_x, size_y, (struct Ref){0});
 }
 
 //

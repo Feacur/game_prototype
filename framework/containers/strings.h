@@ -4,6 +4,7 @@
 #include "framework/containers/array_byte.h"
 #include "framework/containers/array_u32.h"
 
+// @todo: provide "0 id is empty" guarantee?
 struct Strings {
 	struct Array_U32 offsets;
 	struct Array_U32 lengths;

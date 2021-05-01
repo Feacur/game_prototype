@@ -2,6 +2,7 @@
 #define GAME_PROTOTYPE_BATCHER
 
 #include "framework/vector_types.h"
+#include "framework/containers/ref.h"
 #include "framework/graphics/types.h"
 
 struct Batcher_2D;
@@ -29,6 +30,6 @@ void batcher_2d_add_quad(
 
 void batcher_2d_add_text(struct Batcher_2D * batcher, struct Font_Image * font, uint64_t length, uint8_t const * data, float x, float y);
 
-void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size_y, struct Gpu_Target * gpu_target);
+void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size_y, struct Ref gpu_target_ref);
 
 #endif
