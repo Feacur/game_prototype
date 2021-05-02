@@ -123,13 +123,16 @@ bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, ui
 	return true;
 }
 
-uint32_t hash_table_any_get_iteration_capacity(struct Hash_Table_Any * hash_table) {
-	return hash_table->capacity;
-}
-
-void * hash_table_any_iterate(struct Hash_Table_Any * hash_table, uint32_t index) {
-	if (hash_table->marks[index] != HASH_TABLE_MARK_FULL) { return NULL; }
-	return hash_table->values + hash_table->value_size * index;
+bool hash_table_any_iterate(struct Hash_Table_Any * hash_table, struct Hash_Table_Any_Entry * entry) {
+	while (entry->next < hash_table->capacity) {
+		uint32_t const index = entry->next++;
+		if (hash_table->marks[index] != HASH_TABLE_MARK_FULL) { continue; }
+		entry->hash  = hash_table->hashes[index];
+		entry->key   = hash_table->keys   + hash_table->key_size * index;
+		entry->value = hash_table->values + hash_table->value_size * index;
+		return true;
+	}
+	return false;
 }
 
 //

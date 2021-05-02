@@ -3,6 +3,12 @@
 
 #include "framework/common.h"
 
+struct Hash_Table_U64_Entry {
+	uint32_t next;
+	uint64_t key_hash;
+	void * value;
+};
+
 struct Hash_Table_U64 {
 	uint32_t value_size;
 	uint32_t capacity, count;
@@ -21,7 +27,6 @@ void * hash_table_u64_get(struct Hash_Table_U64 * hash_table, uint64_t key_hash)
 bool hash_table_u64_set(struct Hash_Table_U64 * hash_table, uint64_t key_hash, void const * value);
 bool hash_table_u64_del(struct Hash_Table_U64 * hash_table, uint64_t key_hash);
 
-uint32_t hash_table_u64_get_iteration_capacity(struct Hash_Table_U64 * hash_table);
-void * hash_table_u64_iterate(struct Hash_Table_U64 * hash_table, uint32_t index);
+bool hash_table_u64_iterate(struct Hash_Table_U64 * hash_table, struct Hash_Table_U64_Entry * entry);
 
 #endif

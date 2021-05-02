@@ -104,13 +104,12 @@ void memory_to_system_init(void) {
 
 void memory_to_system_free(void) {
 	if (memory_state.total_bytes > 0 || memory_state.pointers_count > 0) {
-		fprintf(stderr, "leaked %llu bytes with %u pointers(s):\n", memory_state.total_bytes, memory_state.pointers_count);
+		fprintf(stderr, "leaked %zu bytes with %u pointers(s):\n", memory_state.total_bytes, memory_state.pointers_count);
 
-		uint32_t const iteration_capacity = hash_table_u64_get_iteration_capacity(&memory_state.pointers);
-		for (uint32_t i = 0; i < iteration_capacity; i++) {
-			struct Pointer_Data const * value = hash_table_u64_iterate(&memory_state.pointers, i);
-			if (value == NULL) { continue; }
-			fprintf(stderr, "-- %llu bytes from '%s'\n", value->size, value->source);
+		struct Hash_Table_U64_Entry it = {0};
+		while (hash_table_u64_iterate(&memory_state.pointers, &it)) {
+			struct Pointer_Data const * value = it.value;
+			fprintf(stderr, "-- 0x%zx: '%s' (%zu bytes)\n", it.key_hash, value->source, value->size);
 		}
 
 		DEBUG_BREAK();

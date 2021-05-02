@@ -3,6 +3,13 @@
 
 #include "framework/common.h"
 
+struct Hash_Table_Any_Entry {
+	uint32_t next;
+	uint32_t hash;
+	void const * key;
+	void * value;
+};
+
 // @idea: hash the key automatically as bytes array?
 struct Hash_Table_Any {
 	uint32_t key_size, value_size;
@@ -23,7 +30,6 @@ void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, 
 bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash, void const * value);
 bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash);
 
-uint32_t hash_table_any_get_iteration_capacity(struct Hash_Table_Any * hash_table);
-void * hash_table_any_iterate(struct Hash_Table_Any * hash_table, uint32_t index);
+bool hash_table_any_iterate(struct Hash_Table_Any * hash_table, struct Hash_Table_Any_Entry * entry);
 
 #endif
