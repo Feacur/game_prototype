@@ -199,12 +199,11 @@ struct Ref gpu_program_init(struct Array_Byte * asset) {
 		GLint params[sizeof(props) / sizeof(*props)];
 		glGetProgramResourceiv(program_id, GL_UNIFORM, (GLuint)i, sizeof(props) / sizeof(*props), props, sizeof(params) / sizeof(*params), NULL, params);
 
-		enum Data_Type type = interpret_gl_type(params[0]); (void)type;
-
 		GLsizei name_length;
 		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
 
 		if (params[1] > 1) {
+			// @todo: improve reflection/introspection/whatever
 			// simple arrays have names ending with a `[0]`
 			if (memcmp(uniform_name_buffer + name_length - 3, "[0]", 3) == 0) {
 				name_length -= 3;
@@ -1126,7 +1125,7 @@ void graphics_to_glibrary_free(void) {
 		gpu_program_free_internal(ref_table_value_at(&graphics_state.programs, i));
 	}
 	for (uint32_t i = 1; i < graphics_state.textures.count; i++) {
-		gpu_target_free_internal(ref_table_value_at(&graphics_state.textures, i));
+		gpu_texture_free_internal(ref_table_value_at(&graphics_state.textures, i));
 	}
 	for (uint32_t i = 1; i < graphics_state.targets.count; i++) {
 		gpu_target_free_internal(ref_table_value_at(&graphics_state.targets, i));
