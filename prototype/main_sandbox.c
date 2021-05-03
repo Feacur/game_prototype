@@ -10,7 +10,6 @@
 #include "framework/graphics/material.h"
 #include "framework/graphics/pass.h"
 #include "framework/graphics/graphics.h"
-#include "framework/graphics/font_image.h"
 
 #include "application/application.h"
 
@@ -40,21 +39,12 @@ static struct Game_Uniforms {
 	uint32_t transform;
 } uniforms;
 
-struct Game_Font {
-	struct Font_Image * buffer;
-	struct Ref gpu_texture_ref;
-};
-
 static struct Game_Content {
 	struct Asset_System asset_system;
 
 	struct {
 		struct Array_Byte text_test;
 	} assets;
-	//
-	struct {
-		struct Game_Font sans, mono;
-	} fonts;
 	//
 	struct {
 		struct Gfx_Material test;
@@ -147,48 +137,6 @@ static void game_init(void) {
 		platform_file_read_entire("assets/sandbox/test.txt", &content.assets.text_test);
 		content.assets.text_test.data[content.assets.text_test.count] = '\0';
 
-		struct Array_Byte asset_codepoints;
-		platform_file_read_entire("assets/sandbox/additional_codepoints_french.txt", &asset_codepoints);
-		asset_codepoints.data[asset_codepoints.count] = '\0';
-
-		uint32_t codepoints_count = 0;
-		uint32_t * codepoints = MEMORY_ALLOCATE_ARRAY(NULL, uint32_t, (asset_codepoints.count + 4) * 2 + 1);
-		codepoints[codepoints_count++] = ' ';
-		codepoints[codepoints_count++] = '~';
-		codepoints[codepoints_count++] = 0x401;
-		codepoints[codepoints_count++] = 0x401;
-		codepoints[codepoints_count++] = 0x410;
-		codepoints[codepoints_count++] = 0x44f;
-		codepoints[codepoints_count++] = 0x451;
-		codepoints[codepoints_count++] = 0x451;
-		for (size_t i = 0; i < asset_codepoints.count;) {
-			uint32_t const octets_count = utf8_length(asset_codepoints.data + i);
-			if (octets_count == 0) { i++; continue; }
-
-			uint32_t const codepoint = utf8_decode(asset_codepoints.data + i, octets_count);
-			if (codepoint == CODEPOINT_EMPTY) { i++; continue; }
-
-			i += octets_count;
-
-			if (codepoint <= 0x7f) { continue; }
-			codepoints[codepoints_count++] = codepoint;
-			codepoints[codepoints_count++] = codepoint;
-		}
-
-		array_byte_free(&asset_codepoints);
-
-		struct Asset_Font const * font_sans = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/fonts/OpenSans-Regular.ttf"));
-		content.fonts.sans.buffer = font_image_init(font_sans->font, 32);
-		font_image_build(content.fonts.sans.buffer, codepoints_count / 2, codepoints);
-		content.fonts.sans.gpu_texture_ref = gpu_texture_init(font_image_get_asset(content.fonts.sans.buffer));
-
-		MEMORY_FREE(NULL, codepoints);
-
-		struct Asset_Font const * font_mono = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/fonts/JetBrainsMono-Regular.ttf"));
-		content.fonts.mono.buffer = font_image_init(font_mono->font, 32);
-		font_image_build(content.fonts.mono.buffer, 1, (uint32_t[]){' ', '~'});
-		content.fonts.mono.gpu_texture_ref = gpu_texture_init(font_image_get_asset(content.fonts.mono.buffer));
-
 		//
 		struct Asset_Shader const * gpu_program_test = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/test.glsl"));
 		gfx_material_init(&content.materials.test, gpu_program_test->gpu_ref);
@@ -246,12 +194,6 @@ static void game_free(void) {
 	gfx_material_free(&content.materials.test);
 	gfx_material_free(&content.materials.batcher);
 
-	font_image_free(content.fonts.sans.buffer);
-	gpu_texture_free(content.fonts.sans.gpu_texture_ref);
-
-	font_image_free(content.fonts.mono.buffer);
-	gpu_texture_free(content.fonts.mono.gpu_texture_ref);
-
 	gpu_target_free(target.gpu_target_ref);
 
 	batcher_2d_free(batcher);
@@ -290,6 +232,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	struct Asset_Model const * mesh_cube = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/sandbox/cube.obj"));
 	struct Asset_Image const * texture_test = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/sandbox/test.png"));
+	struct Asset_Font const * font = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/fonts/OpenSans-Regular.ttf"));
 
 	// render to target
 	graphics_draw(&(struct Render_Pass){
@@ -355,8 +298,6 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		0, 1, 1
 	));
 
-	struct Game_Font * font = &content.fonts.sans;
-
 	batcher_2d_set_blend_mode(batcher, (struct Blend_Mode){
 		.rgb = {
 			.op = BLEND_OP_ADD,
@@ -368,7 +309,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	batcher_2d_set_depth_mode(batcher, (struct Depth_Mode){0});
 
 	batcher_2d_set_material(batcher, &content.materials.batcher);
-	batcher_2d_set_texture(batcher, font->gpu_texture_ref);
+	batcher_2d_set_texture(batcher, font->gpu_ref);
 
 	batcher_2d_add_text(
 		batcher,

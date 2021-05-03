@@ -64,11 +64,20 @@ void asset_image_free(void * instance) {
 void asset_font_init(void * instance, char const * name) {
 	struct Font * font = font_init(name);
 
+	struct Font_Image * buffer = font_image_init(font, 32);
+	font_image_build(buffer, 1, (uint32_t[]){' ', '~'});
+
+	struct Ref const gpu_ref = gpu_texture_init(font_image_get_asset(buffer));
+
 	struct Asset_Font * asset = instance;
 	asset->font = font;
+	asset->buffer = buffer;
+	asset->gpu_ref = gpu_ref;
 }
 
 void asset_font_free(void * instance) {
 	struct Asset_Font * asset = instance;
+	gpu_texture_free(asset->gpu_ref);
+	font_image_free(asset->buffer);
 	font_free(asset->font);
 }

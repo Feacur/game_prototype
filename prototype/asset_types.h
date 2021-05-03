@@ -2,8 +2,10 @@
 #define GAME_PROTOTYPE
 
 #include "framework/containers/ref.h"
+#include "framework/graphics/font_image.h"
 
 struct Font;
+struct Font_Image;
 
 // -- Asset shader part
 struct Asset_Shader {
@@ -32,6 +34,8 @@ void asset_image_free(void * instance);
 // -- Asset font part
 struct Asset_Font {
 	struct Font * font;
+	struct Font_Image * buffer;
+	struct Ref gpu_ref;
 };
 
 void asset_font_init(void * instance, char const * name);
