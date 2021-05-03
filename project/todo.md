@@ -1,13 +1,14 @@
 # framework
 ```
-[o] entity system
-    [x] create relocation table to expose handles as an alternative to raw pointers
+[ ] entity system
+    [ ] operate entities and components
+[ ] asset system
+    [ ] make file extension to type id association
 [ ] text rendering
     [ ] automatically build atlas based on input text?
     [ ] select suitable fonts for different locales
 [ ] graphics
     [ ] remove mutable buffers, but recreate immutable ones completely?
-    [x] API to correctly batch-update meshes/textures and create a render pass (or whatever)
     [ ] elaborate the idea of render passes
     [ ] GPU scissor test
     [ ] support older OpenGL versions (pre direct state access, which is 4.5)
@@ -26,7 +27,6 @@
     [ ] mind the alignment
 [ ] organize standard includes?
 [ ] should batch_mesh and font_image belong to some other folder?
-[ ] support large files? more than 2gb? more than 4gb?
 [ ] async file access?
 [ ] reuse mesh vertices at `asset_mesh_obj_repack` function
 [ ] UTF-8 edge cases, different languages, LTR/RTL, etc.
