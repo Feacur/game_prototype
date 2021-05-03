@@ -79,6 +79,11 @@ void hash_table_any_clear(struct Hash_Table_Any * hash_table) {
 }
 
 void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash) {
+	if (key == NULL) {
+		fprintf(stderr, "hash table key should be non-null\n"); DEBUG_BREAK();
+		return false;
+	}
+
 	if (hash_table->count == 0) { return NULL; }
 	uint32_t const key_index = hash_table_any_find_key_index(hash_table, key, hash);
 	// if (key_index == INDEX_EMPTY) { return NULL; }
@@ -87,6 +92,11 @@ void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, 
 }
 
 bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash, void const * value) {
+	if (key == NULL) {
+		fprintf(stderr, "hash table key should be non-null\n"); DEBUG_BREAK();
+		return false;
+	}
+
 	if (should_hash_table_grow(hash_table->capacity, hash_table->count)) {
 		uint32_t const target_capacity = grow_capacity_value_u32(hash_table->capacity, 1);
 		hash_table_any_resize(hash_table, target_capacity);
@@ -104,17 +114,24 @@ bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, ui
 		key,
 		hash_table->key_size
 	);
-	memcpy(
-		hash_table->values + hash_table->value_size * key_index,
-		value,
-		hash_table->value_size
-	);
+	if (value != NULL) {
+		memcpy(
+			hash_table->values + hash_table->value_size * key_index,
+			value,
+			hash_table->value_size
+		);
+	}
 	hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
 	
 	return is_new;
 }
 
 bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash) {
+	if (key == NULL) {
+		fprintf(stderr, "hash table key should be non-null\n"); DEBUG_BREAK();
+		return false;
+	}
+
 	if (hash_table->count == 0) { return false; }
 	uint32_t const key_index = hash_table_any_find_key_index(hash_table, key, hash);
 	// if (key_index == INDEX_EMPTY) { return false; }
