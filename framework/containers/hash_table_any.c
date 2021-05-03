@@ -120,6 +120,7 @@ bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, ui
 	// if (key_index == INDEX_EMPTY) { return false; }
 	if (hash_table->marks[key_index] != HASH_TABLE_MARK_FULL) { return false; }
 	hash_table->marks[key_index] = HASH_TABLE_MARK_SKIP;
+	hash_table->count--;
 	return true;
 }
 

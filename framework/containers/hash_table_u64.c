@@ -104,6 +104,7 @@ bool hash_table_u64_del(struct Hash_Table_U64 * hash_table, uint64_t key_hash) {
 	// if (key_index == INDEX_EMPTY) { return false; }
 	if (hash_table->marks[key_index] != HASH_TABLE_MARK_FULL) { return false; }
 	hash_table->marks[key_index] = HASH_TABLE_MARK_SKIP;
+	hash_table->count--;
 	return true;
 }
 

@@ -104,6 +104,7 @@ bool hash_table_u32_del(struct Hash_Table_U32 * hash_table, uint32_t key_hash) {
 	// if (key_index == INDEX_EMPTY) { return false; }
 	if (hash_table->marks[key_index] != HASH_TABLE_MARK_FULL) { return false; }
 	hash_table->marks[key_index] = HASH_TABLE_MARK_SKIP;
+	hash_table->count--;
 	return true;
 }
 
