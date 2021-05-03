@@ -141,9 +141,17 @@ bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, ui
 	return true;
 }
 
+void hash_table_any_del_at(struct Hash_Table_Any * hash_table, uint32_t key_index) {
+	if (key_index >= hash_table->count) { DEBUG_BREAK(); return; }
+	if (hash_table->marks[key_index] != HASH_TABLE_MARK_FULL) { DEBUG_BREAK(); return; }
+	hash_table->marks[key_index] = HASH_TABLE_MARK_SKIP;
+	hash_table->count--;
+}
+
 bool hash_table_any_iterate(struct Hash_Table_Any * hash_table, struct Hash_Table_Any_Entry * entry) {
 	while (entry->next < hash_table->capacity) {
 		uint32_t const index = entry->next++;
+		//
 		if (hash_table->marks[index] != HASH_TABLE_MARK_FULL) { continue; }
 		entry->hash  = hash_table->hashes[index];
 		entry->key   = hash_table->keys   + hash_table->key_size * index;

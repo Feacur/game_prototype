@@ -26,6 +26,7 @@ void hash_table_u64_resize(struct Hash_Table_U64 * hash_table, uint32_t target_c
 void * hash_table_u64_get(struct Hash_Table_U64 * hash_table, uint64_t key_hash);
 bool hash_table_u64_set(struct Hash_Table_U64 * hash_table, uint64_t key_hash, void const * value);
 bool hash_table_u64_del(struct Hash_Table_U64 * hash_table, uint64_t key_hash);
+void hash_table_u64_del_at(struct Hash_Table_U64 * hash_table, uint32_t key_index);
 
 bool hash_table_u64_iterate(struct Hash_Table_U64 * hash_table, struct Hash_Table_U64_Entry * entry);
 
