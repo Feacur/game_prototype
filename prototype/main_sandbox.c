@@ -49,8 +49,6 @@ static struct Game_Content {
 	struct Asset_System asset_system;
 
 	struct {
-		struct Font * font_sans;
-		struct Font * font_mono;
 		struct Array_Byte text_test;
 	} assets;
 	//
@@ -87,13 +85,24 @@ static struct Game_State {
 static void game_init(void) {
 	{
 		asset_system_init(&content.asset_system);
+
+		// -- Asset gpu program part
 		asset_system_set_type(&content.asset_system, "glsl", (struct Asset_Callbacks){
-			.init = asset_program_init,
-			.free = asset_program_free,
-		}, sizeof(struct Asset_Program));
+			.init = asset_gpu_program_init,
+			.free = asset_gpu_program_free,
+		}, sizeof(struct Asset_Gpu_Program));
 
 		asset_system_aquire(&content.asset_system, "assets/shaders/test.glsl");
 		asset_system_aquire(&content.asset_system, "assets/shaders/batcher_2d.glsl");
+
+		// -- Asset font part
+		asset_system_set_type(&content.asset_system, "ttf", (struct Asset_Callbacks){
+			.init = asset_font_init,
+			.free = asset_font_free,
+		}, sizeof(struct Asset_Font));
+
+		asset_system_aquire(&content.asset_system, "assets/fonts/OpenSans-Regular.ttf");
+		asset_system_aquire(&content.asset_system, "assets/fonts/JetBrainsMono-Regular.ttf");
 	}
 
 	{
@@ -124,9 +133,6 @@ static void game_init(void) {
 
 	// load content
 	{
-		content.assets.font_sans = font_init("assets/fonts/OpenSans-Regular.ttf");
-		content.assets.font_mono = font_init("assets/fonts/JetBrainsMono-Regular.ttf");
-
 		platform_file_read_entire("assets/sandbox/test.txt", &content.assets.text_test);
 		content.assets.text_test.data[content.assets.text_test.count] = '\0';
 
@@ -172,22 +178,24 @@ static void game_init(void) {
 
 		array_byte_free(&asset_codepoints);
 
-		content.fonts.sans.buffer = font_image_init(content.assets.font_sans, 32);
+		struct Asset_Font const * font_sans = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/fonts/OpenSans-Regular.ttf"));
+		content.fonts.sans.buffer = font_image_init(font_sans->font, 32);
 		font_image_build(content.fonts.sans.buffer, codepoints_count / 2, codepoints);
 		content.fonts.sans.gpu_texture_ref = gpu_texture_init(font_image_get_asset(content.fonts.sans.buffer));
 
 		MEMORY_FREE(NULL, codepoints);
 
-		content.fonts.mono.buffer = font_image_init(content.assets.font_mono, 32);
+		struct Asset_Font const * font_mono = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/fonts/JetBrainsMono-Regular.ttf"));
+		content.fonts.mono.buffer = font_image_init(font_mono->font, 32);
 		font_image_build(content.fonts.mono.buffer, 1, (uint32_t[]){' ', '~'});
 		content.fonts.mono.gpu_texture_ref = gpu_texture_init(font_image_get_asset(content.fonts.mono.buffer));
 
 		//
-		struct Asset_Program const * test_asset_program = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/test.glsl"));
-		struct Asset_Program const * batcher_asset_program = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/batcher_2d.glsl"));
+		struct Asset_Gpu_Program const * gpu_program_test = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/test.glsl"));
+		gfx_material_init(&content.materials.test, gpu_program_test->gpu_ref);
 
-		gfx_material_init(&content.materials.test, test_asset_program->gpu_ref);
-		gfx_material_init(&content.materials.batcher, batcher_asset_program->gpu_ref);
+		struct Asset_Gpu_Program const * gpu_program_batcher = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/batcher_2d.glsl"));
+		gfx_material_init(&content.materials.batcher, gpu_program_batcher->gpu_ref);
 	}
 
 	// init target
@@ -234,8 +242,6 @@ static void game_init(void) {
 }
 
 static void game_free(void) {
-	font_free(content.assets.font_sans);
-	font_free(content.assets.font_mono);
 	array_byte_free(&content.assets.text_test);
 
 	gpu_texture_free(content.gpu.test_gpu_texture_ref);
