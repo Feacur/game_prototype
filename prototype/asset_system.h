@@ -19,10 +19,13 @@ struct Asset_System {
 	struct Strings strings;
 	struct Hash_Table_U32 types;
 	struct Hash_Table_U32 refs;
+	struct Hash_Table_U32 map;
 };
 
 void asset_system_init(struct Asset_System * system);
 void asset_system_free(struct Asset_System * system);
+
+void asset_system_map_extension(struct Asset_System * system, char const * type_name, char const * extension);
 
 void asset_system_set_type(struct Asset_System * system, char const * type_name, struct Asset_Callbacks callbacks, uint32_t value_size);
 void asset_system_del_type(struct Asset_System * system, char const * type_name);

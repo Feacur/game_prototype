@@ -67,29 +67,37 @@ static void game_init(void) {
 	{
 		asset_system_init(&state.asset_system);
 
+		// map extensions
+		asset_system_map_extension(&state.asset_system, "shader", "glsl");
+		asset_system_map_extension(&state.asset_system, "model",  "obj");
+		asset_system_map_extension(&state.asset_system, "model",  "fbx");
+		asset_system_map_extension(&state.asset_system, "image",  "png");
+		asset_system_map_extension(&state.asset_system, "font",   "ttf");
+		asset_system_map_extension(&state.asset_system, "font",   "otf");
+
 		// -- Asset gpu program part
-		asset_system_set_type(&state.asset_system, "glsl", (struct Asset_Callbacks){
+		asset_system_set_type(&state.asset_system, "shader", (struct Asset_Callbacks){
 			.init = asset_shader_init,
 			.free = asset_shader_free,
 		}, sizeof(struct Asset_Shader));
 
-		// -- Asset font part
-		asset_system_set_type(&state.asset_system, "ttf", (struct Asset_Callbacks){
-			.init = asset_font_init,
-			.free = asset_font_free,
-		}, sizeof(struct Asset_Font));
-
 		// -- Asset mesh part
-		asset_system_set_type(&state.asset_system, "obj", (struct Asset_Callbacks){
+		asset_system_set_type(&state.asset_system, "model", (struct Asset_Callbacks){
 			.init = asset_model_init,
 			.free = asset_model_free,
 		}, sizeof(struct Asset_Model));
 
 		// -- Asset texture part
-		asset_system_set_type(&state.asset_system, "png", (struct Asset_Callbacks){
+		asset_system_set_type(&state.asset_system, "image", (struct Asset_Callbacks){
 			.init = asset_image_init,
 			.free = asset_image_free,
 		}, sizeof(struct Asset_Image));
+
+		// -- Asset font part
+		asset_system_set_type(&state.asset_system, "font", (struct Asset_Callbacks){
+			.init = asset_font_init,
+			.free = asset_font_free,
+		}, sizeof(struct Asset_Font));
 	}
 
 	// prefetch some assets

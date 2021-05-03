@@ -47,3 +47,8 @@ void * strings_get(struct Strings * strings, uint32_t id) {
 	if (id >= strings->lengths.count) { return NULL; }
 	return strings->buffer.data + strings->offsets.data[id];
 }
+
+uint32_t strings_get_length(struct Strings * strings, uint32_t id) {
+	if (id >= strings->lengths.count) { return 0; }
+	return strings->lengths.data[id];
+}

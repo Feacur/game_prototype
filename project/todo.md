@@ -3,7 +3,6 @@
 [ ] entity system
     [ ] operate entities and components
 [ ] asset system
-    [ ] make file extension to type id association
 [ ] text rendering
     [ ] automatically build atlas based on input text?
     [ ] select suitable fonts for different locales

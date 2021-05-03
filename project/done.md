@@ -5,6 +5,7 @@
 [>] asset system
     [x] create an asset-tracking system
     [x] migrate some asset loading to the system: shaders, models, textures, fonts
+    [x] make file extension to type id association
 [>] graphics
     [x] expose GPU object handles instead of opaque pointers
     [x] API to correctly batch-update meshes/textures and create a render pass (or whatever)

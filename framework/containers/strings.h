@@ -20,5 +20,6 @@ void strings_free(struct Strings * strings);
 uint32_t strings_find(struct Strings * strings, uint32_t length, void const * value);
 uint32_t strings_add(struct Strings * strings, uint32_t length, void const * value);
 void * strings_get(struct Strings * strings, uint32_t id);
+uint32_t strings_get_length(struct Strings * strings, uint32_t id);
 
 #endif

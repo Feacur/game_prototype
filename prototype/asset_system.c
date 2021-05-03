@@ -21,12 +21,13 @@ struct Asset_Entry {
 };
 
 static void asset_system_del_type_internal(struct Asset_System * system, struct Asset_Type * asset_type);
-static uint32_t asset_system_get_type_from_name(uint32_t name_lenth, char const * name);
+static uint32_t asset_system_get_extension_from_name(uint32_t name_lenth, char const * name);
 
 void asset_system_init(struct Asset_System * system) {
 	strings_init(&system->strings);
 	hash_table_u32_init(&system->types, sizeof(struct Asset_Type));
 	hash_table_u32_init(&system->refs, sizeof(struct Ref));
+	hash_table_u32_init(&system->map, sizeof(uint32_t));
 
 	// @note: consider type_id 0 empty
 	asset_system_set_type(system, "", (struct Asset_Callbacks){0}, 0);
@@ -45,6 +46,17 @@ void asset_system_free(struct Asset_System * system) {
 	strings_free(&system->strings);
 	hash_table_u32_free(&system->types);
 	hash_table_u32_free(&system->refs);
+	hash_table_u32_free(&system->map);
+}
+
+void asset_system_map_extension(struct Asset_System * system, char const * type_name, char const * extension) {
+	uint32_t const type_length = (uint32_t)strlen(type_name);
+	uint32_t const extension_length = (uint32_t)strlen(extension);
+
+	uint32_t const type_id = strings_add(&system->strings, type_length, type_name);
+	uint32_t const extension_id = strings_add(&system->strings, extension_length, extension);
+
+	hash_table_u32_set(&system->map, extension_id, &type_id);
 }
 
 void asset_system_set_type(struct Asset_System * system, char const * type_name, struct Asset_Callbacks callbacks, uint32_t value_size) {
@@ -62,7 +74,6 @@ void asset_system_set_type(struct Asset_System * system, char const * type_name,
 	uint32_t const type_id = strings_add(&system->strings, type_length, type_name);
 	hash_table_u32_set(&system->types, type_id, &asset_type);
 }
-
 
 void asset_system_del_type(struct Asset_System * system, char const * type_name) {
 	uint32_t const type_length = (uint32_t)strlen(type_name);
@@ -83,17 +94,21 @@ void asset_system_del_type(struct Asset_System * system, char const * type_name)
 struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * name) {
 	uint32_t const name_lenth = (uint32_t)strlen(name);
 
-	uint32_t const type_length = asset_system_get_type_from_name(name_lenth, name);
-	char const * type_name = name + (name_lenth - type_length);
+	uint32_t const extension_length = asset_system_get_extension_from_name(name_lenth, name);
+	char const * extension_name = name + (name_lenth - extension_length);
 
 	//
-	uint32_t const type_id = strings_find(&system->strings, type_length, type_name);
-	if (type_id == INDEX_EMPTY || type_id == 0) {
-		fprintf(stderr, "unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
+	uint32_t const extension_id = strings_find(&system->strings, extension_length, extension_name);
+	if (extension_id == INDEX_EMPTY || extension_id == 0) {
+		fprintf(stderr, "unknown extension: %*s\n", extension_length, extension_name); DEBUG_BREAK();
 		return (struct Asset_Ref){0};
 	}
 
-	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, type_id);
+	uint32_t const * type_id = hash_table_u32_get(&system->map, extension_id);
+	if (type_id == NULL) {
+		fprintf(stderr, "can't infer type from extension: %*s\n", extension_length, extension_name); DEBUG_BREAK();
+		return (struct Asset_Ref){0};
+	}
 
 	//
 	uint32_t resource_id = strings_add(&system->strings, name_lenth, name);
@@ -101,9 +116,18 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * 
 	if (instance_ref_ptr != NULL) {
 		return (struct Asset_Ref){
 			.instance_ref = *instance_ref_ptr,
-			.type_id = type_id,
+			.type_id = *type_id,
 			.resource_id = resource_id,
 		};
+	}
+
+	//
+	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, *type_id);
+	if (asset_type == NULL) {
+		char const * type_name = strings_get(&system->strings, *type_id);
+		uint32_t const type_length = strings_get_length(&system->strings, *type_id);
+		fprintf(stderr, "unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
+		return (struct Asset_Ref){0};
 	}
 
 	//
@@ -118,7 +142,7 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * 
 
 	return (struct Asset_Ref){
 		.instance_ref = instance_ref,
-		.type_id = type_id,
+		.type_id = *type_id,
 		.resource_id = resource_id,
 	};
 }
@@ -134,6 +158,13 @@ void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_r
 
 	//
 	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, asset_ref.type_id);
+	if (asset_type == NULL) {
+		char const * type_name = strings_get(&system->strings, asset_ref.type_id);
+		uint32_t const type_length = strings_get_length(&system->strings, asset_ref.type_id);
+		fprintf(stderr, "unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
+	}
+
+	//
 	if (asset_type->callbacks.free != NULL) {
 		struct Asset_Entry * entry = ref_table_get(&asset_type->instances, asset_ref.instance_ref);
 		// if (entry->header.resource_id != asset_ref.resource_id) { DEBUG_BREAK(); return; }
@@ -147,6 +178,13 @@ void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref 
 
 	//
 	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, asset_ref.type_id);
+	if (asset_type == NULL) {
+		char const * type_name = strings_get(&system->strings, asset_ref.type_id);
+		uint32_t const type_length = strings_get_length(&system->strings, asset_ref.type_id);
+		fprintf(stderr, "unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
+	}
+
+	//
 	struct Asset_Entry * entry = ref_table_get(&asset_type->instances, asset_ref.instance_ref);
 	// if (entry->header.resource_id != asset_ref.resource_id) { DEBUG_BREAK(); return NULL; }
 	return entry->payload;
@@ -172,7 +210,7 @@ static void asset_system_del_type_internal(struct Asset_System * system, struct 
 	ref_table_free(&asset_type->instances);
 }
 
-static uint32_t asset_system_get_type_from_name(uint32_t name_lenth, char const * name) {
+static uint32_t asset_system_get_extension_from_name(uint32_t name_lenth, char const * name) {
 	uint32_t type_length = 0;
 	for (; type_length < name_lenth; type_length++) {
 		// @todo: make it unicode-aware?
