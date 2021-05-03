@@ -4,14 +4,14 @@
 #include "framework/containers/array_float.h"
 #include "framework/containers/array_u32.h"
 
-struct Asset_Mesh_Obj {
+struct Mesh_Obj {
 	struct Array_Float positions;
 	struct Array_Float texcoords;
 	struct Array_Float normals;
 	struct Array_U32 triangles;
 };
 
-void asset_mesh_obj_init(struct Asset_Mesh_Obj * obj, const char * text);
-void asset_mesh_obj_free(struct Asset_Mesh_Obj * obj);
+void asset_mesh_obj_init(struct Mesh_Obj * obj, const char * text);
+void asset_mesh_obj_free(struct Mesh_Obj * obj);
 
 #endif

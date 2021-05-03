@@ -9,12 +9,12 @@
 //
 #include "mesh_obj.h"
 
-inline static void asset_mesh_obj_init_internal(struct Asset_Mesh_Obj * obj, char const * text);
-void asset_mesh_obj_init(struct Asset_Mesh_Obj * obj, char const * text) {
+inline static void asset_mesh_obj_init_internal(struct Mesh_Obj * obj, char const * text);
+void asset_mesh_obj_init(struct Mesh_Obj * obj, char const * text) {
 	asset_mesh_obj_init_internal(obj, text);
 }
 
-void asset_mesh_obj_free(struct Asset_Mesh_Obj * obj) {
+void asset_mesh_obj_free(struct Mesh_Obj * obj) {
 	array_float_free(&obj->positions);
 	array_float_free(&obj->texcoords);
 	array_float_free(&obj->normals);
@@ -168,7 +168,7 @@ static void asset_mesh_obj_do_faces(
 #undef ADVANCE
 }
 
-inline static void asset_mesh_obj_init_internal(struct Asset_Mesh_Obj * obj, char const * text) {
+inline static void asset_mesh_obj_init_internal(struct Mesh_Obj * obj, char const * text) {
 #define ADVANCE() asset_mesh_obj_advance(&scanner, &token)
 
 	struct Mesh_Obj_Scanner scanner;

@@ -49,8 +49,8 @@ static struct Game_Content {
 	struct Asset_System asset_system;
 
 	struct {
-		struct Asset_Font * font_sans;
-		struct Asset_Font * font_mono;
+		struct Font * font_sans;
+		struct Font * font_mono;
 		struct Array_Byte text_test;
 	} assets;
 	//
@@ -130,10 +130,10 @@ static void game_init(void) {
 		platform_file_read_entire("assets/sandbox/test.txt", &content.assets.text_test);
 		content.assets.text_test.data[content.assets.text_test.count] = '\0';
 
-		struct Asset_Image asset_image_test;
+		struct Image asset_image_test;
 		asset_image_init(&asset_image_test, "assets/sandbox/test.png");
 
-		struct Asset_Mesh asset_mesh_cube;
+		struct Mesh asset_mesh_cube;
 		asset_mesh_init(&asset_mesh_cube, "assets/sandbox/cube.obj");
 
 		content.gpu.test_gpu_texture_ref = gpu_texture_init(&asset_image_test);
@@ -373,7 +373,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		50, 200
 	);
 
-	struct Asset_Image const * font_image = font_image_get_asset(font->buffer);
+	struct Image const * font_image = font_image_get_asset(font->buffer);
 	batcher_2d_add_quad(
 		batcher,
 		(float[]){0, (float)(size_y - font_image->size_y), (float)font_image->size_x, (float)size_y},

@@ -4,14 +4,14 @@
 #include "framework/common.h"
 #include "framework/graphics/types.h"
 
-struct Asset_Image {
+struct Image {
 	uint32_t capacity, size_x, size_y;
 	uint8_t * data;
 	struct Texture_Parameters parameters;
 	struct Texture_Settings settings;
 };
 
-void asset_image_init(struct Asset_Image * asset_image, char const * path);
-void asset_image_free(struct Asset_Image * asset_image);
+void asset_image_init(struct Image * asset_image, char const * path);
+void asset_image_free(struct Image * asset_image);
 
 #endif

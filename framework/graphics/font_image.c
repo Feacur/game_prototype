@@ -15,8 +15,8 @@ uint32_t round_up_to_PO2_u32(uint32_t value);
 #include <math.h>
 
 struct Font_Image {
-	struct Asset_Image buffer;
-	struct Asset_Font * asset_font; // weak reference
+	struct Image buffer;
+	struct Font * asset_font; // weak reference
 	struct Hash_Table_U32 table;
 	struct Hash_Table_U64 kerning;
 	float scale;
@@ -31,7 +31,7 @@ struct Font_Symbol {
 	uint32_t codepoint;
 };
 
-struct Font_Image * font_image_init(struct Asset_Font * asset_font, int32_t size) {
+struct Font_Image * font_image_init(struct Font * asset_font, int32_t size) {
 	struct Font_Image * font_image = MEMORY_ALLOCATE(NULL, struct Font_Image);
 	*font_image = (struct Font_Image){
 		.buffer = {
@@ -64,7 +64,7 @@ void font_image_clear(struct Font_Image * font_image) {
 	memset(font_image->buffer.data, 0, sizeof(*font_image->buffer.data) * font_image->buffer.size_x * font_image->buffer.size_y);
 }
 
-struct Asset_Image * font_image_get_asset(struct Font_Image * font_image) {
+struct Image * font_image_get_asset(struct Font_Image * font_image) {
 	return &font_image->buffer;
 }
 

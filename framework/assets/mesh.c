@@ -10,7 +10,7 @@
 #include "mesh.h"
 
 static void asset_mesh_obj_repack(
-	struct Asset_Mesh_Obj const * obj,
+	struct Mesh_Obj const * obj,
 	struct Array_Float * vertices,
 	struct Array_U32 * attributes,
 	struct Array_U32 * indices
@@ -20,15 +20,15 @@ static void asset_mesh_fill(
 	struct Array_Float const * vertices,
 	struct Array_U32 const * attributes,
 	struct Array_U32 const * indices,
-	struct Asset_Mesh * asset_mesh
+	struct Mesh * asset_mesh
 );
 
-void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
+void asset_mesh_init(struct Mesh * asset_mesh, char const * path) {
 	struct Array_Byte file;
 	platform_file_read_entire(path, &file);
 	array_byte_push(&file, '\0');
 
-	struct Asset_Mesh_Obj obj;
+	struct Mesh_Obj obj;
 	asset_mesh_obj_init(&obj, (char const *)file.data);
 
 	array_byte_free(&file);
@@ -58,7 +58,7 @@ void asset_mesh_init(struct Asset_Mesh * asset_mesh, char const * path) {
 	array_u32_free(&attributes);
 }
 
-void asset_mesh_free(struct Asset_Mesh * asset_mesh) {
+void asset_mesh_free(struct Mesh * asset_mesh) {
 	for (uint32_t i = 0; i < asset_mesh->count; i++) {
 		array_byte_free(asset_mesh->buffers + i);
 	}
@@ -72,7 +72,7 @@ void asset_mesh_free(struct Asset_Mesh * asset_mesh) {
 //
 
 static void asset_mesh_obj_repack(
-	struct Asset_Mesh_Obj const * obj,
+	struct Mesh_Obj const * obj,
 	struct Array_Float * vertices,
 	struct Array_U32 * attributes,
 	struct Array_U32 * indices
@@ -116,7 +116,7 @@ static void asset_mesh_fill(
 	struct Array_Float const * vertices,
 	struct Array_U32 const * attributes,
 	struct Array_U32 const * indices,
-	struct Asset_Mesh * asset_mesh
+	struct Mesh * asset_mesh
 ) {
 	if (vertices->count == 0) { return; }
 	if (indices->count == 0) { return; }

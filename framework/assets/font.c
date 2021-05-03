@@ -34,14 +34,14 @@
 #include "font_glyph.h"
 
 // @idea: cache here basic metrics, without scaling?
-struct Asset_Font {
+struct Font {
 	struct Array_Byte file;
 	stbtt_fontinfo font;
 	int ascent, descent, line_gap;
 };
 
-struct Asset_Font * asset_font_init(char const * path) {
-	struct Asset_Font * asset_font = MEMORY_ALLOCATE(NULL, struct Asset_Font);
+struct Font * asset_font_init(char const * path) {
+	struct Font * asset_font = MEMORY_ALLOCATE(NULL, struct Font);
 
 	platform_file_read_entire(path, &asset_font->file);
 	if (!stbtt_InitFont(&asset_font->font, asset_font->file.data, stbtt_GetFontOffsetForIndex(asset_font->file.data, 0))) {
@@ -53,23 +53,23 @@ struct Asset_Font * asset_font_init(char const * path) {
 	return asset_font;
 }
 
-void asset_font_free(struct Asset_Font * asset_font) {
+void asset_font_free(struct Font * asset_font) {
 	array_byte_free(&asset_font->file);
 	memset(asset_font, 0, sizeof(*asset_font));
 	MEMORY_FREE(asset_font, asset_font);
 }
 
-float asset_font_get_scale(struct Asset_Font * asset_font, float pixels_size) {
+float asset_font_get_scale(struct Font * asset_font, float pixels_size) {
 	return (pixels_size > 0)
 		? stbtt_ScaleForPixelHeight(&asset_font->font, pixels_size)
 		: stbtt_ScaleForMappingEmToPixels(&asset_font->font, -pixels_size);
 }
 
-uint32_t asset_font_get_glyph_id(struct Asset_Font * asset_font, uint32_t codepoint) {
+uint32_t asset_font_get_glyph_id(struct Font * asset_font, uint32_t codepoint) {
 	return (uint32_t)stbtt_FindGlyphIndex(&asset_font->font, (int)codepoint);
 }
 
-void asset_font_get_glyph_parameters(struct Asset_Font * asset_font, struct Glyph_Params * params, uint32_t glyph_id, float scale) {
+void asset_font_get_glyph_parameters(struct Font * asset_font, struct Glyph_Params * params, uint32_t glyph_id, float scale) {
 	int advance_width, left_side_bearing;
 	stbtt_GetGlyphHMetrics(&asset_font->font, (int)glyph_id, &advance_width, &left_side_bearing);
 
@@ -96,7 +96,7 @@ void asset_font_get_glyph_parameters(struct Asset_Font * asset_font, struct Glyp
 }
 
 void asset_font_fill_buffer(
-	struct Asset_Font * asset_font,
+	struct Font * asset_font,
 	uint8_t * buffer, uint32_t buffer_rect_width,
 	uint32_t glyph_id, uint32_t glyph_size_x, uint32_t glyph_size_y, float scale
 ) {
@@ -108,14 +108,14 @@ void asset_font_fill_buffer(
 	);
 }
 
-int32_t asset_font_get_height(struct Asset_Font * asset_font) {
+int32_t asset_font_get_height(struct Font * asset_font) {
 	return (int32_t)(asset_font->ascent - asset_font->descent);
 }
 
-int32_t asset_font_get_gap(struct Asset_Font * asset_font) {
+int32_t asset_font_get_gap(struct Font * asset_font) {
 	return (int32_t)asset_font->line_gap;
 }
 
-int32_t asset_font_get_kerning(struct Asset_Font * asset_font, uint32_t glyph_id1, uint32_t glyph_id2) {
+int32_t asset_font_get_kerning(struct Font * asset_font, uint32_t glyph_id1, uint32_t glyph_id2) {
 	return (int32_t)stbtt_GetGlyphKernAdvance(&asset_font->font, (int)glyph_id1, (int)glyph_id2);
 }

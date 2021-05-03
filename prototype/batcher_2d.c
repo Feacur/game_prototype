@@ -46,7 +46,7 @@ struct Batcher_2D {
 	struct Array_U32 indices;
 	uint32_t vertex_offset, element_offset;
 	//
-	struct Asset_Mesh mesh;
+	struct Mesh mesh;
 	struct Ref gpu_mesh_ref;
 };
 
@@ -61,7 +61,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 	struct Batcher_2D * batcher = MEMORY_ALLOCATE(NULL, struct Batcher_2D);
 	*batcher = (struct Batcher_2D){
 		.matrix = mat4_identity,
-		.mesh = (struct Asset_Mesh){
+		.mesh = (struct Mesh){
 			.count      = buffers_count,
 			.buffers    = MEMORY_ALLOCATE_ARRAY(batcher, struct Array_Byte, buffers_count),
 			.parameters = MEMORY_ALLOCATE_ARRAY(batcher, struct Mesh_Parameters, buffers_count),
