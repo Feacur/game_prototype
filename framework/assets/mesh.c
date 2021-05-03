@@ -9,27 +9,27 @@
 //
 #include "mesh.h"
 
-static void asset_mesh_obj_repack(
+static void mesh_obj_repack(
 	struct Mesh_Obj const * obj,
 	struct Array_Float * vertices,
 	struct Array_U32 * attributes,
 	struct Array_U32 * indices
 );
 
-static void asset_mesh_fill(
+static void mesh_fill(
 	struct Array_Float const * vertices,
 	struct Array_U32 const * attributes,
 	struct Array_U32 const * indices,
-	struct Mesh * asset_mesh
+	struct Mesh * mesh
 );
 
-void asset_mesh_init(struct Mesh * asset_mesh, char const * path) {
+void mesh_init(struct Mesh * mesh, char const * path) {
 	struct Array_Byte file;
 	platform_file_read_entire(path, &file);
 	array_byte_push(&file, '\0');
 
 	struct Mesh_Obj obj;
-	asset_mesh_obj_init(&obj, (char const *)file.data);
+	mesh_obj_init(&obj, (char const *)file.data);
 
 	array_byte_free(&file);
 
@@ -38,40 +38,40 @@ void asset_mesh_init(struct Mesh * asset_mesh, char const * path) {
 	struct Array_U32 attributes;
 	struct Array_U32 indices;
 
-	asset_mesh_obj_repack(
+	mesh_obj_repack(
 		&obj,
 		&vertices,
 		&attributes,
 		&indices
 	);
 
-	asset_mesh_obj_free(&obj);
+	mesh_obj_free(&obj);
 
 	//
-	asset_mesh_fill(
+	mesh_fill(
 		&vertices,
 		&attributes,
 		&indices,
-		asset_mesh
+		mesh
 	);
 
 	array_u32_free(&attributes);
 }
 
-void asset_mesh_free(struct Mesh * asset_mesh) {
-	for (uint32_t i = 0; i < asset_mesh->count; i++) {
-		array_byte_free(asset_mesh->buffers + i);
+void mesh_free(struct Mesh * mesh) {
+	for (uint32_t i = 0; i < mesh->count; i++) {
+		array_byte_free(mesh->buffers + i);
 	}
-	if (asset_mesh->capacity != 0) {
-		MEMORY_FREE(asset_mesh, asset_mesh->buffers);
-		MEMORY_FREE(asset_mesh, asset_mesh->parameters);
+	if (mesh->capacity != 0) {
+		MEMORY_FREE(mesh, mesh->buffers);
+		MEMORY_FREE(mesh, mesh->parameters);
 	}
-	memset(asset_mesh, 0, sizeof(*asset_mesh));
+	memset(mesh, 0, sizeof(*mesh));
 }
 
 //
 
-static void asset_mesh_obj_repack(
+static void mesh_obj_repack(
 	struct Mesh_Obj const * obj,
 	struct Array_Float * vertices,
 	struct Array_U32 * attributes,
@@ -112,39 +112,39 @@ static void asset_mesh_obj_repack(
 	}
 }
 
-static void asset_mesh_fill(
+static void mesh_fill(
 	struct Array_Float const * vertices,
 	struct Array_U32 const * attributes,
 	struct Array_U32 const * indices,
-	struct Mesh * asset_mesh
+	struct Mesh * mesh
 ) {
 	if (vertices->count == 0) { return; }
 	if (indices->count == 0) { return; }
 
 	uint32_t const count = 2;
-	asset_mesh->capacity = count;
-	asset_mesh->count = count;
-	asset_mesh->buffers    = MEMORY_ALLOCATE_ARRAY(asset_mesh, struct Array_Byte, count);
-	asset_mesh->parameters = MEMORY_ALLOCATE_ARRAY(asset_mesh, struct Mesh_Parameters, count);
+	mesh->capacity = count;
+	mesh->count = count;
+	mesh->buffers    = MEMORY_ALLOCATE_ARRAY(mesh, struct Array_Byte, count);
+	mesh->parameters = MEMORY_ALLOCATE_ARRAY(mesh, struct Mesh_Parameters, count);
 
-	asset_mesh->buffers[0] = (struct Array_Byte){
+	mesh->buffers[0] = (struct Array_Byte){
 		.data = (uint8_t *)vertices->data,
 		.count = sizeof(float) * vertices->count,
 		.capacity = sizeof(float) * vertices->capacity,
 	};
-	asset_mesh->buffers[1] = (struct Array_Byte){
+	mesh->buffers[1] = (struct Array_Byte){
 		.data = (uint8_t *)indices->data,
 		.count = sizeof(uint32_t) * indices->count,
 		.capacity = sizeof(uint32_t) * indices->capacity,
 	};
 
-	asset_mesh->parameters[0] = (struct Mesh_Parameters){
+	mesh->parameters[0] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_R32,
 		.attributes_count = attributes->count / 2,
 	};
-	asset_mesh->parameters[1] = (struct Mesh_Parameters){
+	mesh->parameters[1] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_U32,
 		.flags = MESH_FLAG_INDEX,
 	};
-	memcpy(asset_mesh->parameters[0].attributes, attributes->data, sizeof(*attributes->data) * attributes->count);
+	memcpy(mesh->parameters[0].attributes, attributes->data, sizeof(*attributes->data) * attributes->count);
 }

@@ -11,7 +11,7 @@ struct Mesh {
 	struct Mesh_Parameters * parameters;
 };
 
-void asset_mesh_init(struct Mesh * asset_mesh, char const * path);
-void asset_mesh_free(struct Mesh * asset_mesh);
+void mesh_init(struct Mesh * mesh, char const * path);
+void mesh_free(struct Mesh * mesh);
 
 #endif

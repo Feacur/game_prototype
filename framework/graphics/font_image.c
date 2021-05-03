@@ -16,7 +16,7 @@ uint32_t round_up_to_PO2_u32(uint32_t value);
 
 struct Font_Image {
 	struct Image buffer;
-	struct Font * asset_font; // weak reference
+	struct Font * font; // weak reference
 	struct Hash_Table_U32 table;
 	struct Hash_Table_U64 kerning;
 	float scale;
@@ -31,7 +31,7 @@ struct Font_Symbol {
 	uint32_t codepoint;
 };
 
-struct Font_Image * font_image_init(struct Font * asset_font, int32_t size) {
+struct Font_Image * font_image_init(struct Font * font, int32_t size) {
 	struct Font_Image * font_image = MEMORY_ALLOCATE(NULL, struct Font_Image);
 	*font_image = (struct Font_Image){
 		.buffer = {
@@ -42,8 +42,8 @@ struct Font_Image * font_image_init(struct Font * asset_font, int32_t size) {
 				.channels = 1,
 			},
 		},
-		.scale = asset_font_get_scale(asset_font, (float)size),
-		.asset_font = asset_font,
+		.scale = font_get_scale(font, (float)size),
+		.font = font,
 	};
 	hash_table_u32_init(&font_image->table, sizeof(struct Font_Glyph));
 	hash_table_u64_init(&font_image->kerning, sizeof(float));
@@ -89,11 +89,11 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 	for (uint32_t i = 0; i < ranges_count; i++) {
 		uint32_t const * range = codepoint_ranges + i * 2;
 		for (uint32_t codepoint = *range, codepoint_to = range[1]; codepoint <= codepoint_to; codepoint++) {
-			uint32_t const glyph_id = asset_font_get_glyph_id(font_image->asset_font, codepoint);
+			uint32_t const glyph_id = font_get_glyph_id(font_image->font, codepoint);
 			if (glyph_id == 0) { continue; }
 
 			struct Glyph_Params glyph_params;
-			asset_font_get_glyph_parameters(font_image->asset_font, &glyph_params, glyph_id, font_image->scale);
+			font_get_glyph_parameters(font_image->font, &glyph_params, glyph_id, font_image->scale);
 
 			symbols[symbols_count++] = (struct Font_Symbol){
 				.glyph = {
@@ -220,8 +220,8 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 			}
 
 			// @todo: receive an `invert_y` flag?
-			asset_font_fill_buffer(
-				font_image->asset_font,
+			font_fill_buffer(
+				font_image->font,
 				scratch_buffer.data, size_x,
 				symbol->glyph.id, size_x, size_y, font_image->scale
 			);
@@ -284,7 +284,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 
 	for (struct Font_Symbol const * symbol1 = symbols; symbol1->glyph.id != 0; symbol1++) {
 		for (struct Font_Symbol const * symbol2 = symbols; symbol2->glyph.id != 0; symbol2++) {
-			int32_t const value = asset_font_get_kerning(font_image->asset_font, symbol1->glyph.id, symbol2->glyph.id);
+			int32_t const value = font_get_kerning(font_image->font, symbol1->glyph.id, symbol2->glyph.id);
 			if (value == 0) { continue; }
 
 			uint64_t const key_hash = ((uint64_t)symbol2->codepoint << 32) | (uint64_t)symbol1->codepoint;
@@ -301,12 +301,12 @@ struct Font_Glyph const * font_image_get_glyph(struct Font_Image * const font_im
 }
 
 float font_image_get_height(struct Font_Image * font_image) {
-	int32_t value = asset_font_get_height(font_image->asset_font);
+	int32_t value = font_get_height(font_image->font);
 	return ((float)value) * font_image->scale;
 }
 
 float font_image_get_gap(struct Font_Image * font_image) {
-	int32_t value = asset_font_get_gap(font_image->asset_font);
+	int32_t value = font_get_gap(font_image->font);
 	return ((float)value) * font_image->scale;
 }
 

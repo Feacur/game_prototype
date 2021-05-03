@@ -124,23 +124,23 @@ static void game_init(void) {
 
 	// load content
 	{
-		content.assets.font_sans = asset_font_init("assets/fonts/OpenSans-Regular.ttf");
-		content.assets.font_mono = asset_font_init("assets/fonts/JetBrainsMono-Regular.ttf");
+		content.assets.font_sans = font_init("assets/fonts/OpenSans-Regular.ttf");
+		content.assets.font_mono = font_init("assets/fonts/JetBrainsMono-Regular.ttf");
 
 		platform_file_read_entire("assets/sandbox/test.txt", &content.assets.text_test);
 		content.assets.text_test.data[content.assets.text_test.count] = '\0';
 
-		struct Image asset_image_test;
-		asset_image_init(&asset_image_test, "assets/sandbox/test.png");
+		struct Image image_test;
+		image_init(&image_test, "assets/sandbox/test.png");
 
-		struct Mesh asset_mesh_cube;
-		asset_mesh_init(&asset_mesh_cube, "assets/sandbox/cube.obj");
+		struct Mesh mesh_cube;
+		mesh_init(&mesh_cube, "assets/sandbox/cube.obj");
 
-		content.gpu.test_gpu_texture_ref = gpu_texture_init(&asset_image_test);
-		content.gpu.cube_gpu_mesh_ref = gpu_mesh_init(&asset_mesh_cube);
+		content.gpu.test_gpu_texture_ref = gpu_texture_init(&image_test);
+		content.gpu.cube_gpu_mesh_ref = gpu_mesh_init(&mesh_cube);
 
-		asset_image_free(&asset_image_test);
-		asset_mesh_free(&asset_mesh_cube);
+		image_free(&image_test);
+		mesh_free(&mesh_cube);
 
 		struct Array_Byte asset_codepoints;
 		platform_file_read_entire("assets/sandbox/additional_codepoints_french.txt", &asset_codepoints);
@@ -234,8 +234,8 @@ static void game_init(void) {
 }
 
 static void game_free(void) {
-	asset_font_free(content.assets.font_sans);
-	asset_font_free(content.assets.font_mono);
+	font_free(content.assets.font_sans);
+	font_free(content.assets.font_mono);
 	array_byte_free(&content.assets.text_test);
 
 	gpu_texture_free(content.gpu.test_gpu_texture_ref);

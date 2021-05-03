@@ -11,7 +11,7 @@ struct Mesh_Obj {
 	struct Array_U32 triangles;
 };
 
-void asset_mesh_obj_init(struct Mesh_Obj * obj, const char * text);
-void asset_mesh_obj_free(struct Mesh_Obj * obj);
+void mesh_obj_init(struct Mesh_Obj * obj, const char * text);
+void mesh_obj_free(struct Mesh_Obj * obj);
 
 #endif

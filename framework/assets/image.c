@@ -28,7 +28,7 @@
 //
 #include "image.h"
 
-void asset_image_init(struct Image * asset_image, char const * path) {
+void image_init(struct Image * image, char const * path) {
 	struct Array_Byte file;
 	platform_file_read_entire(path, &file);
 
@@ -40,7 +40,7 @@ void asset_image_init(struct Image * asset_image, char const * path) {
 
 	array_byte_free(&file);
 
-	*asset_image = (struct Image){
+	*image = (struct Image){
 		.capacity = (uint32_t)(size_x * size_y),
 		.size_x = (uint32_t)size_x,
 		.size_y = (uint32_t)size_y,
@@ -57,9 +57,9 @@ void asset_image_init(struct Image * asset_image, char const * path) {
 	};
 }
 
-void asset_image_free(struct Image * asset_image) {
-	if (asset_image->capacity > 0) {
-		MEMORY_FREE(asset_image, asset_image->data);
+void image_free(struct Image * image) {
+	if (image->capacity > 0) {
+		MEMORY_FREE(image, image->data);
 	}
-	memset(asset_image, 0, sizeof(*asset_image));
+	memset(image, 0, sizeof(*image));
 }

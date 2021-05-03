@@ -35,9 +35,9 @@ struct Mesh_Obj_Token {
 	uint32_t line;
 };
 
-void asset_mesh_obj_scanner_init(struct Mesh_Obj_Scanner * scanner, char const * text);
-void asset_mesh_obj_scanner_free(struct Mesh_Obj_Scanner * scanner);
+void mesh_obj_scanner_init(struct Mesh_Obj_Scanner * scanner, char const * text);
+void mesh_obj_scanner_free(struct Mesh_Obj_Scanner * scanner);
 
-struct Mesh_Obj_Token asset_mesh_obj_scanner_next(struct Mesh_Obj_Scanner * scanner);
+struct Mesh_Obj_Token mesh_obj_scanner_next(struct Mesh_Obj_Scanner * scanner);
 
 #endif

@@ -9,7 +9,7 @@ struct Font;
 struct Glyph_Params;
 struct Font_Glyph;
 
-struct Font_Image * font_image_init(struct Font * asset_font, int32_t size);
+struct Font_Image * font_image_init(struct Font * font, int32_t size);
 void font_image_free(struct Font_Image * font_image);
 
 void font_image_clear(struct Font_Image * font_image);

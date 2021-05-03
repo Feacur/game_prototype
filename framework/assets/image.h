@@ -11,7 +11,7 @@ struct Image {
 	struct Texture_Settings settings;
 };
 
-void asset_image_init(struct Image * asset_image, char const * path);
-void asset_image_free(struct Image * asset_image);
+void image_init(struct Image * image, char const * path);
+void image_free(struct Image * image);
 
 #endif
