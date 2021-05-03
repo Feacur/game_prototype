@@ -5,13 +5,29 @@
 
 struct Font;
 
-// -- Asset program part
-struct Asset_Gpu_Program {
+// -- Asset shader part
+struct Asset_Shader {
 	struct Ref gpu_ref;
 };
 
-void asset_gpu_program_init(void * instance, char const * name);
-void asset_gpu_program_free(void * instance);
+void asset_shader_init(void * instance, char const * name);
+void asset_shader_free(void * instance);
+
+// -- Asset model part
+struct Asset_Model {
+	struct Ref gpu_ref;
+};
+
+void asset_model_init(void * instance, char const * name);
+void asset_model_free(void * instance);
+
+// -- Asset image part
+struct Asset_Image {
+	struct Ref gpu_ref;
+};
+
+void asset_image_init(void * instance, char const * name);
+void asset_image_free(void * instance);
 
 // -- Asset font part
 struct Asset_Font {
@@ -20,21 +36,5 @@ struct Asset_Font {
 
 void asset_font_init(void * instance, char const * name);
 void asset_font_free(void * instance);
-
-// -- Asset mesh part
-struct Asset_Mesh {
-	struct Ref gpu_ref;
-};
-
-void asset_mesh_init(void * instance, char const * name);
-void asset_mesh_free(void * instance);
-
-// -- Asset texture part
-struct Asset_Texture {
-	struct Ref gpu_ref;
-};
-
-void asset_texture_init(void * instance, char const * name);
-void asset_texture_free(void * instance);
 
 #endif

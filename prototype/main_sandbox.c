@@ -83,9 +83,9 @@ static void game_init(void) {
 
 		// -- Asset gpu program part
 		asset_system_set_type(&content.asset_system, "glsl", (struct Asset_Callbacks){
-			.init = asset_gpu_program_init,
-			.free = asset_gpu_program_free,
-		}, sizeof(struct Asset_Gpu_Program));
+			.init = asset_shader_init,
+			.free = asset_shader_free,
+		}, sizeof(struct Asset_Shader));
 
 		asset_system_aquire(&content.asset_system, "assets/shaders/test.glsl");
 		asset_system_aquire(&content.asset_system, "assets/shaders/batcher_2d.glsl");
@@ -101,17 +101,17 @@ static void game_init(void) {
 
 		// -- Asset mesh part
 		asset_system_set_type(&content.asset_system, "obj", (struct Asset_Callbacks){
-			.init = asset_mesh_init,
-			.free = asset_mesh_free,
-		}, sizeof(struct Asset_Mesh));
+			.init = asset_model_init,
+			.free = asset_model_free,
+		}, sizeof(struct Asset_Model));
 
 		asset_system_aquire(&content.asset_system, "assets/sandbox/cube.obj");
 
 		// -- Asset texture part
 		asset_system_set_type(&content.asset_system, "png", (struct Asset_Callbacks){
-			.init = asset_texture_init,
-			.free = asset_texture_free,
-		}, sizeof(struct Asset_Texture));
+			.init = asset_image_init,
+			.free = asset_image_free,
+		}, sizeof(struct Asset_Image));
 
 		asset_system_aquire(&content.asset_system, "assets/sandbox/test.png");
 	}
@@ -190,10 +190,10 @@ static void game_init(void) {
 		content.fonts.mono.gpu_texture_ref = gpu_texture_init(font_image_get_asset(content.fonts.mono.buffer));
 
 		//
-		struct Asset_Gpu_Program const * gpu_program_test = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/test.glsl"));
+		struct Asset_Shader const * gpu_program_test = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/test.glsl"));
 		gfx_material_init(&content.materials.test, gpu_program_test->gpu_ref);
 
-		struct Asset_Gpu_Program const * gpu_program_batcher = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/batcher_2d.glsl"));
+		struct Asset_Shader const * gpu_program_batcher = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/batcher_2d.glsl"));
 		gfx_material_init(&content.materials.batcher, gpu_program_batcher->gpu_ref);
 	}
 
@@ -288,8 +288,8 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	uint32_t target_size_x, target_size_y;
 	gpu_target_get_size(target.gpu_target_ref, &target_size_x, &target_size_y);
 
-	struct Asset_Mesh const * mesh_cube = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/sandbox/cube.obj"));
-	struct Asset_Texture const * texture_test = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/sandbox/test.png"));
+	struct Asset_Model const * mesh_cube = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/sandbox/cube.obj"));
+	struct Asset_Image const * texture_test = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/sandbox/test.png"));
 
 	// render to target
 	graphics_draw(&(struct Render_Pass){
