@@ -152,6 +152,11 @@ void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref 
 	return entry->payload;
 }
 
+void * asset_system_find_instance(struct Asset_System * system, char const * name) {
+	struct Asset_Ref const asset_ref = asset_system_aquire(system, name);
+	return asset_system_get_instance(system, asset_ref);
+}
+
 //
 
 static void asset_system_del_type_internal(struct Asset_System * system, struct Asset_Type * asset_type) {

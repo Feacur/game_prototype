@@ -3,8 +3,6 @@
 
 #include "vector_types.h"
 
-// @todo: copy paste vector functions for uvecN and svecN, too?
-
 #define MATHS_PI 3.14159265359f
 #define MATHS_TAU 6.28318530718f
 #define FLOAT_NAN convert_bits_u32_r32(0x7fc00000)

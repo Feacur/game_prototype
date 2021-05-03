@@ -265,7 +265,6 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 	for (uint32_t i = 0; i < passes_count; i++) {
 		struct Batcher_2D_Batch * batch = array_any_at(&batcher->batches, i);
 
-		// @todo: do matrix computations CPU-side
 		gfx_material_set_texture(batch->material, texture_id, 1, &batch->gpu_texture_ref);
 		gfx_material_set_float(batch->material, color_id, 4, &(struct vec4){1, 1, 1, 1}.x);
 

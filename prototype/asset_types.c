@@ -77,7 +77,7 @@ void asset_font_init(void * instance, char const * name) {
 
 void asset_font_free(void * instance) {
 	struct Asset_Font * asset = instance;
-	gpu_texture_free(asset->gpu_ref);
-	font_image_free(asset->buffer);
 	font_free(asset->font);
+	font_image_free(asset->buffer);
+	gpu_texture_free(asset->gpu_ref);
 }

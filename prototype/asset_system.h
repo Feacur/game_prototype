@@ -31,5 +31,6 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * 
 void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_ref);
 
 void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref asset_ref);
+void * asset_system_find_instance(struct Asset_System * system, char const * name);
 
 #endif
