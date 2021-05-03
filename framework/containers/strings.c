@@ -23,7 +23,7 @@ uint32_t strings_find(struct Strings * strings, uint32_t length, void const * va
 		}
 		offset += strings->lengths.data[i] + 1;
 	}
-	return 0;
+	return INDEX_EMPTY;
 }
 
 uint32_t strings_add(struct Strings * strings, uint32_t length, void const * value) {
