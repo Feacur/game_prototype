@@ -182,3 +182,18 @@ void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index) {
 	if (index >= ref_table->count) { return NULL; }
 	return ref_table->values + ref_table->value_size * index;
 }
+
+bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Entry * entry) {
+	while (entry->next < ref_table->capacity) {
+		uint32_t const index = entry->next++;
+		//
+		uint32_t const ref_id = ref_table->dense[index];
+		entry->ref = (struct Ref){
+			.id = ref_id,
+			.gen = ref_table->sparse[ref_id].gen,
+		};
+		entry->value = ref_table->values + ref_table->value_size * index;
+		return true;
+	}
+	return false;
+}
