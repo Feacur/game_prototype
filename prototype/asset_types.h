@@ -21,4 +21,12 @@ struct Asset_Font {
 void asset_font_init(void * instance, char const * name);
 void asset_font_free(void * instance);
 
+// -- Asset mesh part
+struct Asset_Mesh {
+	struct Ref gpu_ref;
+};
+
+void asset_mesh_init(void * instance, char const * name);
+void asset_mesh_free(void * instance);
+
 #endif

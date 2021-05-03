@@ -54,7 +54,6 @@ static struct Game_Content {
 	//
 	struct {
 		struct Ref test_gpu_texture_ref;
-		struct Ref cube_gpu_mesh_ref;
 	} gpu;
 	//
 	struct {
@@ -103,6 +102,14 @@ static void game_init(void) {
 
 		asset_system_aquire(&content.asset_system, "assets/fonts/OpenSans-Regular.ttf");
 		asset_system_aquire(&content.asset_system, "assets/fonts/JetBrainsMono-Regular.ttf");
+
+		// -- Asset mesh part
+		asset_system_set_type(&content.asset_system, "obj", (struct Asset_Callbacks){
+			.init = asset_mesh_init,
+			.free = asset_mesh_free,
+		}, sizeof(struct Asset_Mesh));
+
+		asset_system_aquire(&content.asset_system, "assets/sandbox/cube.obj");
 	}
 
 	{
@@ -139,14 +146,9 @@ static void game_init(void) {
 		struct Image image_test;
 		image_init(&image_test, "assets/sandbox/test.png");
 
-		struct Mesh mesh_cube;
-		mesh_init(&mesh_cube, "assets/sandbox/cube.obj");
-
 		content.gpu.test_gpu_texture_ref = gpu_texture_init(&image_test);
-		content.gpu.cube_gpu_mesh_ref = gpu_mesh_init(&mesh_cube);
 
 		image_free(&image_test);
-		mesh_free(&mesh_cube);
 
 		struct Array_Byte asset_codepoints;
 		platform_file_read_entire("assets/sandbox/additional_codepoints_french.txt", &asset_codepoints);
@@ -245,7 +247,6 @@ static void game_free(void) {
 	array_byte_free(&content.assets.text_test);
 
 	gpu_texture_free(content.gpu.test_gpu_texture_ref);
-	gpu_mesh_free(content.gpu.cube_gpu_mesh_ref);
 	gfx_material_free(&content.materials.test);
 	gfx_material_free(&content.materials.batcher);
 
@@ -291,6 +292,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	uint32_t target_size_x, target_size_y;
 	gpu_target_get_size(target.gpu_target_ref, &target_size_x, &target_size_y);
 
+	struct Asset_Mesh const * gpu_mesh_cube = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/sandbox/cube.obj"));
 
 	// render to target
 	graphics_draw(&(struct Render_Pass){
@@ -320,7 +322,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.depth_mode = {.enabled = true, .mask = true},
 		//
 		.material = &content.materials.test,
-		.mesh = content.gpu.cube_gpu_mesh_ref,
+		.mesh = gpu_mesh_cube->gpu_ref,
 	});
 
 
