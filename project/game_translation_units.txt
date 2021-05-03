@@ -22,11 +22,11 @@ framework/containers/ref_table.c
 framework/containers/strings.c
 
 framework/assets/parsing.c
-framework/assets/asset_mesh_obj_scanner.c
-framework/assets/asset_mesh_obj.c
-framework/assets/asset_mesh.c
-framework/assets/asset_image.c
-framework/assets/asset_font.c
+framework/assets/mesh_obj_scanner.c
+framework/assets/mesh_obj.c
+framework/assets/mesh.c
+framework/assets/image.c
+framework/assets/font.c
 
 framework/windows/timer.c
 framework/windows/file.c

@@ -8,7 +8,7 @@
 #include "framework/containers/array_u32.h"
 #include "framework/containers/ref.h"
 
-#include "framework/assets/asset_mesh.h"
+#include "framework/assets/mesh.h"
 
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/graphics.h"

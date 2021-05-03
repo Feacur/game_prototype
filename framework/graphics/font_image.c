@@ -1,9 +1,9 @@
 #include "framework/containers/array_byte.h"
 #include "framework/containers/hash_table_u32.h"
 #include "framework/containers/hash_table_u64.h"
-#include "framework/assets/asset_image.h"
-#include "framework/assets/asset_font.h"
-#include "framework/assets/asset_font_glyph.h"
+#include "framework/assets/image.h"
+#include "framework/assets/font.h"
+#include "framework/assets/font_glyph.h"
 #include "framework/memory.h"
 
 // #include "framework/maths.h"

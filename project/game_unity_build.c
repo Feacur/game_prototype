@@ -22,11 +22,11 @@
 #include "framework/containers/strings.c"
 
 #include "framework/assets/parsing.c"
-#include "framework/assets/asset_mesh_obj_scanner.c"
-#include "framework/assets/asset_mesh_obj.c"
-#include "framework/assets/asset_mesh.c"
-#include "framework/assets/asset_image.c"
-#include "framework/assets/asset_font.c"
+#include "framework/assets/mesh_obj_scanner.c"
+#include "framework/assets/mesh_obj.c"
+#include "framework/assets/mesh.c"
+#include "framework/assets/image.c"
+#include "framework/assets/font.c"
 
 #define GAME_GRAPHICS_IS_OPENGL
 #if defined(_WIN32) || defined(_WIN64)

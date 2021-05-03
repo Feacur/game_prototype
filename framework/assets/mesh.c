@@ -2,12 +2,12 @@
 #include "framework/platform_file.h"
 #include "framework/containers/array_float.h"
 #include "framework/containers/array_u32.h"
-#include "asset_mesh_obj.h"
+#include "mesh_obj.h"
 
 #include <string.h>
 
 //
-#include "asset_mesh.h"
+#include "mesh.h"
 
 static void asset_mesh_obj_repack(
 	struct Asset_Mesh_Obj const * obj,

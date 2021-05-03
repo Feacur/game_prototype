@@ -19,9 +19,9 @@
 #include "framework/containers/strings.h"
 #include "framework/containers/hash_table_any.h"
 
-#include "framework/assets/asset_mesh.h"
-#include "framework/assets/asset_image.h"
-#include "framework/assets/asset_font.h"
+#include "framework/assets/mesh.h"
+#include "framework/assets/image.h"
+#include "framework/assets/font.h"
 
 #include "application/application.h"
 #include "components.h"

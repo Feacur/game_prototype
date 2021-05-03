@@ -4,7 +4,7 @@
 #include <string.h>
 
 //
-#include "asset_mesh_obj_scanner.h"
+#include "mesh_obj_scanner.h"
 
 void asset_mesh_obj_scanner_init(struct Mesh_Obj_Scanner * scanner, char const * text) {
 	*scanner = (struct Mesh_Obj_Scanner){

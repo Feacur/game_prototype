@@ -7,7 +7,7 @@
 #include <math.h>
 
 //
-#include "asset_mesh_obj.h"
+#include "mesh_obj.h"
 
 inline static void asset_mesh_obj_init_internal(struct Asset_Mesh_Obj * obj, char const * text);
 void asset_mesh_obj_init(struct Asset_Mesh_Obj * obj, char const * text) {
@@ -22,7 +22,7 @@ void asset_mesh_obj_free(struct Asset_Mesh_Obj * obj) {
 }
 
 //
-#include "asset_mesh_obj_scanner.h"
+#include "mesh_obj_scanner.h"
 
 static void asset_mesh_obj_error_at(struct Mesh_Obj_Token * token, char const * message) {
 	DEBUG_BREAK();

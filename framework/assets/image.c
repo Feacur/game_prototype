@@ -26,7 +26,7 @@
 #endif
 
 //
-#include "asset_image.h"
+#include "image.h"
 
 void asset_image_init(struct Asset_Image * asset_image, char const * path) {
 	struct Array_Byte file;

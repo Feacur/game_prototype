@@ -5,8 +5,8 @@
 #include "framework/containers/array_byte.h"
 #include "framework/containers/ref_table.h"
 
-#include "framework/assets/asset_mesh.h"
-#include "framework/assets/asset_image.h"
+#include "framework/assets/mesh.h"
+#include "framework/assets/image.h"
 
 #include "framework/graphics/types.h"
 #include "framework/graphics/material.h"
