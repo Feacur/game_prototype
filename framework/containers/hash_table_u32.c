@@ -84,7 +84,7 @@ bool hash_table_u32_set(struct Hash_Table_U32 * hash_table, uint32_t key_hash, v
 	uint32_t const key_index = hash_table_u32_find_key_index(hash_table, key_hash);
 	// if (key_index == INDEX_EMPTY) { return false; }
 	uint8_t const mark = hash_table->marks[key_index];
-	bool const is_new = (mark == HASH_TABLE_MARK_NONE);
+	bool const is_new = (mark != HASH_TABLE_MARK_FULL);
 	if (is_new) { hash_table->count++; }
 
 	hash_table->key_hashes[key_index] = key_hash;

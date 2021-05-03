@@ -105,7 +105,7 @@ bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, ui
 	uint32_t const key_index = hash_table_any_find_key_index(hash_table, key, hash);
 	// if (key_index == INDEX_EMPTY) { return false; }
 	uint8_t const mark = hash_table->marks[key_index];
-	bool const is_new = (mark == HASH_TABLE_MARK_NONE);
+	bool const is_new = (mark != HASH_TABLE_MARK_FULL);
 	if (is_new) { hash_table->count++; }
 
 	hash_table->hashes[key_index] = hash;
