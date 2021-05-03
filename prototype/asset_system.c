@@ -94,7 +94,13 @@ void asset_system_del_type(struct Asset_System * system, char const * type_name)
 struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * name) {
 	uint32_t const name_lenth = (uint32_t)strlen(name);
 
+	//
 	uint32_t const extension_length = asset_system_get_extension_from_name(name_lenth, name);
+	if (extension_length == 0) {
+		fprintf(stderr, "no extension: %*s\n", name_lenth, name); DEBUG_BREAK();
+		return (struct Asset_Ref){0};
+	}
+
 	char const * extension_name = name + (name_lenth - extension_length);
 
 	//
@@ -215,7 +221,8 @@ static uint32_t asset_system_get_extension_from_name(uint32_t name_lenth, char c
 	for (; type_length < name_lenth; type_length++) {
 		// @todo: make it unicode-aware?
 		char const symbol = name[name_lenth - type_length - 1];
-		if (symbol == '.' || symbol == '/') { break; }
+		if (symbol == '.') { return type_length; }
+		if (symbol == '/') { break; }
 	}
-	return type_length;
+	return 0;
 }
