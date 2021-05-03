@@ -58,7 +58,7 @@ static void gfx_material_set_value(
 	uint32_t values_count, uint32_t value_size, void const * value
 );
 
-void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Ref * value) {
+void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Ref const * value) {
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_UNIT,
 		(uint8_t *)material->textures.data,

@@ -29,4 +29,12 @@ struct Asset_Mesh {
 void asset_mesh_init(void * instance, char const * name);
 void asset_mesh_free(void * instance);
 
+// -- Asset texture part
+struct Asset_Texture {
+	struct Ref gpu_ref;
+};
+
+void asset_texture_init(void * instance, char const * name);
+void asset_texture_free(void * instance);
+
 #endif

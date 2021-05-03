@@ -4,6 +4,7 @@
 
 #include "framework/assets/font.h"
 #include "framework/assets/mesh.h"
+#include "framework/assets/image.h"
 
 //
 #include "asset_types.h"
@@ -53,4 +54,21 @@ void asset_mesh_init(void * instance, char const * name) {
 void asset_mesh_free(void * instance) {
 	struct Asset_Mesh * asset = instance;
 	gpu_mesh_free(asset->gpu_ref);
+}
+
+// -- Asset texture part
+void asset_texture_init(void * instance, char const * name) {
+	struct Image image;
+	image_init(&image, name);
+
+	struct Ref const gpu_ref = gpu_texture_init(&image);
+	image_free(&image);
+
+	struct Asset_Texture * asset = instance;
+	asset->gpu_ref = gpu_ref;
+}
+
+void asset_texture_free(void * instance) {
+	struct Asset_Texture * asset = instance;
+	gpu_texture_free(asset->gpu_ref);
 }

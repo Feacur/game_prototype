@@ -53,10 +53,6 @@ static struct Game_Content {
 	} assets;
 	//
 	struct {
-		struct Ref test_gpu_texture_ref;
-	} gpu;
-	//
-	struct {
 		struct Game_Font sans, mono;
 	} fonts;
 	//
@@ -110,6 +106,14 @@ static void game_init(void) {
 		}, sizeof(struct Asset_Mesh));
 
 		asset_system_aquire(&content.asset_system, "assets/sandbox/cube.obj");
+
+		// -- Asset texture part
+		asset_system_set_type(&content.asset_system, "png", (struct Asset_Callbacks){
+			.init = asset_texture_init,
+			.free = asset_texture_free,
+		}, sizeof(struct Asset_Texture));
+
+		asset_system_aquire(&content.asset_system, "assets/sandbox/test.png");
 	}
 
 	{
@@ -142,13 +146,6 @@ static void game_init(void) {
 	{
 		platform_file_read_entire("assets/sandbox/test.txt", &content.assets.text_test);
 		content.assets.text_test.data[content.assets.text_test.count] = '\0';
-
-		struct Image image_test;
-		image_init(&image_test, "assets/sandbox/test.png");
-
-		content.gpu.test_gpu_texture_ref = gpu_texture_init(&image_test);
-
-		image_free(&image_test);
 
 		struct Array_Byte asset_codepoints;
 		platform_file_read_entire("assets/sandbox/additional_codepoints_french.txt", &asset_codepoints);
@@ -246,7 +243,6 @@ static void game_init(void) {
 static void game_free(void) {
 	array_byte_free(&content.assets.text_test);
 
-	gpu_texture_free(content.gpu.test_gpu_texture_ref);
 	gfx_material_free(&content.materials.test);
 	gfx_material_free(&content.materials.batcher);
 
@@ -292,7 +288,8 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	uint32_t target_size_x, target_size_y;
 	gpu_target_get_size(target.gpu_target_ref, &target_size_x, &target_size_y);
 
-	struct Asset_Mesh const * gpu_mesh_cube = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/sandbox/cube.obj"));
+	struct Asset_Mesh const * mesh_cube = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/sandbox/cube.obj"));
+	struct Asset_Texture const * texture_test = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/sandbox/test.png"));
 
 	// render to target
 	graphics_draw(&(struct Render_Pass){
@@ -311,7 +308,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	);
 	gfx_material_set_float(&content.materials.test, uniforms.camera, 4*4, &test_camera.x.x);
 
-	gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &content.gpu.test_gpu_texture_ref);
+	gfx_material_set_texture(&content.materials.test, uniforms.texture, 1, &texture_test->gpu_ref);
 	gfx_material_set_float(&content.materials.test, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 
 	struct mat4 const test_transform = mat4_set_transformation(state.object.transform.position, state.object.transform.scale, state.object.transform.rotation);
@@ -322,7 +319,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.depth_mode = {.enabled = true, .mask = true},
 		//
 		.material = &content.materials.test,
-		.mesh = gpu_mesh_cube->gpu_ref,
+		.mesh = mesh_cube->gpu_ref,
 	});
 
 
