@@ -16,6 +16,8 @@
 
 #include "framework/containers/array_byte.h"
 #include "framework/containers/ref_table.h"
+#include "framework/containers/strings.h"
+#include "framework/containers/hash_table_any.h"
 
 #include "framework/assets/asset_mesh.h"
 #include "framework/assets/asset_image.h"
@@ -24,6 +26,8 @@
 #include "application/application.h"
 #include "components.h"
 #include "batcher_2d.h"
+#include "asset_system.h"
+#include "asset_types.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -42,6 +46,8 @@ struct Game_Font {
 };
 
 static struct Game_Content {
+	struct Asset_System asset_system;
+
 	struct {
 		struct Asset_Font * font_sans;
 		struct Asset_Font * font_mono;
@@ -49,8 +55,6 @@ static struct Game_Content {
 	} assets;
 	//
 	struct {
-		struct Ref test_gpu_program_ref;
-		struct Ref batcher_gpu_program_ref;
 		struct Ref test_gpu_texture_ref;
 		struct Ref cube_gpu_mesh_ref;
 	} gpu;
@@ -81,6 +85,17 @@ static struct Game_State {
 } state;
 
 static void game_init(void) {
+	{
+		asset_system_init(&content.asset_system);
+		asset_system_set_type(&content.asset_system, "glsl", (struct Asset_Callbacks){
+			.init = asset_program_init,
+			.free = asset_program_free,
+		}, sizeof(struct Asset_Program));
+
+		asset_system_aquire(&content.asset_system, "assets/shaders/test.glsl");
+		asset_system_aquire(&content.asset_system, "assets/shaders/batcher_2d.glsl");
+	}
+
 	{
 		struct Ref_Table ref_table;
 		ref_table_init(&ref_table, sizeof(float));
@@ -115,25 +130,15 @@ static void game_init(void) {
 		platform_file_read_entire("assets/sandbox/test.txt", &content.assets.text_test);
 		content.assets.text_test.data[content.assets.text_test.count] = '\0';
 
-		struct Array_Byte asset_shader_test;
-		platform_file_read_entire("assets/shaders/test.glsl", &asset_shader_test);
-
-		struct Array_Byte asset_shader_batcher;
-		platform_file_read_entire("assets/shaders/batcher_2d.glsl", &asset_shader_batcher);
-
 		struct Asset_Image asset_image_test;
 		asset_image_init(&asset_image_test, "assets/sandbox/test.png");
 
 		struct Asset_Mesh asset_mesh_cube;
 		asset_mesh_init(&asset_mesh_cube, "assets/sandbox/cube.obj");
 
-		content.gpu.test_gpu_program_ref = gpu_program_init(&asset_shader_test);
-		content.gpu.batcher_gpu_program_ref = gpu_program_init(&asset_shader_batcher);
 		content.gpu.test_gpu_texture_ref = gpu_texture_init(&asset_image_test);
 		content.gpu.cube_gpu_mesh_ref = gpu_mesh_init(&asset_mesh_cube);
 
-		array_byte_free(&asset_shader_test);
-		array_byte_free(&asset_shader_batcher);
 		asset_image_free(&asset_image_test);
 		asset_mesh_free(&asset_mesh_cube);
 
@@ -178,8 +183,11 @@ static void game_init(void) {
 		content.fonts.mono.gpu_texture_ref = gpu_texture_init(font_image_get_asset(content.fonts.mono.buffer));
 
 		//
-		gfx_material_init(&content.materials.test, content.gpu.test_gpu_program_ref);
-		gfx_material_init(&content.materials.batcher, content.gpu.batcher_gpu_program_ref);
+		struct Asset_Program const * test_asset_program = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/test.glsl"));
+		struct Asset_Program const * batcher_asset_program = asset_system_get_instance(&content.asset_system, asset_system_aquire(&content.asset_system, "assets/shaders/batcher_2d.glsl"));
+
+		gfx_material_init(&content.materials.test, test_asset_program->gpu_ref);
+		gfx_material_init(&content.materials.batcher, batcher_asset_program->gpu_ref);
 	}
 
 	// init target
@@ -230,8 +238,6 @@ static void game_free(void) {
 	asset_font_free(content.assets.font_mono);
 	array_byte_free(&content.assets.text_test);
 
-	gpu_program_free(content.gpu.test_gpu_program_ref);
-	gpu_program_free(content.gpu.batcher_gpu_program_ref);
 	gpu_texture_free(content.gpu.test_gpu_texture_ref);
 	gpu_mesh_free(content.gpu.cube_gpu_mesh_ref);
 	gfx_material_free(&content.materials.test);
@@ -246,6 +252,8 @@ static void game_free(void) {
 	gpu_target_free(target.gpu_target_ref);
 
 	batcher_2d_free(batcher);
+
+	asset_system_free(&content.asset_system);
 
 	batcher = NULL;
 	memset(&uniforms, 0, sizeof(uniforms));
