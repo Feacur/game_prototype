@@ -49,3 +49,41 @@
 #include "prototype/batcher_2d.c"
 #include "prototype/asset_types.c"
 #include "prototype/main_sandbox.c"
+
+/*
+Includes:
+- ".."
+- "../third_party"
+
+Defines:
+- _CRT_SECURE_NO_WARNINGS
+- WIN32_LEAN_AND_MEAN     (Windows OS)
+- NOMINMAX                (Windows OS)
+- UNICODE                 (Windows OS)
+- GAME_TARGET_DEBUG       (this game, optional)
+- _MT                     (MSVC, dynamic CRT)
+- _DLL                    (MSVC, dynamic CRT)
+
+Features:
+- disable exceptions
+- disable RTTI
+- maximum warnings level
+- warnings as errors
+
+Libs:
+- Windows OS: kernel32.lib, user32.lib, gdi32.lib
+- MSVC CRT:
+  - dynamic: ucrt.lib, vcruntime.lib, msvcrt.lib
+  - static:  libucrt.lib, libvcruntime.lib, libcmt.lib
+
+Disable Clang warnings:
+- switch-enum                   (allow partial list of enum cases in switch statements)
+- float-equal                   (allow exact floating point values comparison)
+- reserved-id-macro             (source: third-party libs; `GL`, `KHR`)
+- assign-enum                   (allow enum values have implicit flags cominations)
+- bad-function-cast             (allow casting function results without temporary assignment)
+- documentation-unknown-command (source: clangd; `@note`)
+
+Disable MSVC warnings:
+- 5105, macro expansion producing 'defined' has undefined behavior (source: OS; `winbase.h`)
+*/

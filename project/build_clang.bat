@@ -23,7 +23,7 @@ rem https://clang.llvm.org/docs/UsersManual.html
 rem https://clang.llvm.org/docs/ClangCommandLineReference.html
 rem https://lld.llvm.org/windows_support.html
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
-rem https://docs.microsoft.com/en-us/cpp/c-runtime-library/crt-library-features
+rem https://docs.microsoft.com/cpp/c-runtime-library
 
 rem |> PREPARE PROJECT
 set project_folder=%cd%
@@ -70,7 +70,6 @@ set linker=%linker% %libs%
 set warnings=%warnings% -Wno-switch-enum
 set warnings=%warnings% -Wno-float-equal
 set warnings=%warnings% -Wno-reserved-id-macro
-set warnings=%warnings% -Wno-nonportable-system-include-path
 set warnings=%warnings% -Wno-assign-enum
 set warnings=%warnings% -Wno-bad-function-cast
 set warnings=%warnings% -Wno-documentation-unknown-command

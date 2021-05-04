@@ -19,7 +19,7 @@ if [%build_mode%] == [] ( set build_mode=unity_link )
 
 rem https://docs.microsoft.com/cpp/build/reference/compiler-options
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
-rem https://docs.microsoft.com/en-us/cpp/c-runtime-library/crt-library-features
+rem https://docs.microsoft.com/cpp/c-runtime-library
 
 rem |> PREPARE PROJECT
 set project_folder=%cd%
