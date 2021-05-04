@@ -28,6 +28,8 @@ framework/assets/mesh.c
 framework/assets/image.c
 framework/assets/font.c
 
+framework/systems/asset_system.c
+
 framework/windows/timer.c
 framework/windows/file.c
 framework/windows/system.c

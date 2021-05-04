@@ -22,10 +22,11 @@
 #include "framework/assets/image.h"
 #include "framework/assets/font.h"
 
+#include "framework/systems/asset_system.h"
+
 #include "application/application.h"
 #include "components.h"
 #include "batcher_2d.h"
-#include "asset_system.h"
 #include "asset_types.h"
 
 #include <string.h>

@@ -28,6 +28,8 @@
 #include "framework/assets/image.c"
 #include "framework/assets/font.c"
 
+#include "framework/systems/asset_system.c"
+
 #define GAME_GRAPHICS_IS_OPENGL
 #if defined(_WIN32) || defined(_WIN64)
 	#include "framework/windows/timer.c"
@@ -45,6 +47,5 @@
 #include "application/application.c"
 
 #include "prototype/batcher_2d.c"
-#include "prototype/asset_system.c"
 #include "prototype/asset_types.c"
 #include "prototype/main_sandbox.c"
