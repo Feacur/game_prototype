@@ -41,10 +41,6 @@ static struct Game_State {
 	struct Asset_System asset_system;
 
 	struct {
-		struct Array_Byte text_test;
-	} assets;
-
-	struct {
 		struct Gfx_Material test;
 		struct Gfx_Material batcher;
 	} materials;
@@ -75,6 +71,7 @@ static void game_init(void) {
 		asset_system_map_extension(&state.asset_system, "image",  "png");
 		asset_system_map_extension(&state.asset_system, "font",   "ttf");
 		asset_system_map_extension(&state.asset_system, "font",   "otf");
+		asset_system_map_extension(&state.asset_system, "text",   "txt");
 
 		// -- Asset gpu program part
 		asset_system_set_type(&state.asset_system, "shader", (struct Asset_Callbacks){
@@ -99,6 +96,12 @@ static void game_init(void) {
 			.init = asset_font_init,
 			.free = asset_font_free,
 		}, sizeof(struct Asset_Font));
+
+		// -- Asset text part
+		asset_system_set_type(&state.asset_system, "text", (struct Asset_Callbacks){
+			.init = asset_text_init,
+			.free = asset_text_free,
+		}, sizeof(struct Asset_Text));
 	}
 
 	// prefetch some assets
@@ -109,6 +112,7 @@ static void game_init(void) {
 		asset_system_aquire(&state.asset_system, "assets/fonts/JetBrainsMono-Regular.ttf");
 		asset_system_aquire(&state.asset_system, "assets/sandbox/cube.obj");
 		asset_system_aquire(&state.asset_system, "assets/sandbox/test.png");
+		asset_system_aquire(&state.asset_system, "assets/sandbox/test.txt");
 	}
 
 	// init uniforms ids
@@ -119,12 +123,9 @@ static void game_init(void) {
 		state.uniforms.transform = graphics_add_uniform("u_Transform");
 	}
 
-	// load content
+	// prepare materials
 	{
-		platform_file_read_entire("assets/sandbox/test.txt", &state.assets.text_test);
-		state.assets.text_test.data[state.assets.text_test.count] = '\0';
-
-		//
+		// @todo: make material assets
 		struct Asset_Shader const * gpu_program_test = asset_system_find_instance(&state.asset_system, "assets/shaders/test.glsl");
 		gfx_material_init(&state.materials.test, gpu_program_test->gpu_ref);
 
@@ -159,6 +160,8 @@ static void game_init(void) {
 
 	// init objects
 	{
+		// @todo: make entity assets
+		// @todo: make an entities system
 		state.camera = (struct Entity){
 			.transform = {
 				.position = (struct vec3){0, 3, -5},
@@ -180,7 +183,6 @@ static void game_init(void) {
 static void game_free(void) {
 	asset_system_free(&state.asset_system);
 
-	array_byte_free(&state.assets.text_test);
 	gfx_material_free(&state.materials.test);
 	gfx_material_free(&state.materials.batcher);
 
@@ -216,6 +218,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	struct Asset_Model const * mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
 	struct Asset_Image const * texture_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.png");
 	struct Asset_Font const * font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
+	struct Asset_Text const * text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
 
 	// render to target
 	graphics_draw(&(struct Render_Pass){
@@ -297,8 +300,8 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	batcher_2d_add_text(
 		state.batcher,
 		font_open_sans->buffer,
-		state.assets.text_test.count,
-		state.assets.text_test.data,
+		text_test->length,
+		text_test->data,
 		50, 200
 	);
 

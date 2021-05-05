@@ -187,7 +187,7 @@ void batcher_2d_add_quad(
 	batcher->element_offset += 3 * 2;
 }
 
-void batcher_2d_add_text(struct Batcher_2D * batcher, struct Font_Image * font, uint64_t length, uint8_t const * data, float x, float y) {
+void batcher_2d_add_text(struct Batcher_2D * batcher, struct Font_Image * font, uint32_t length, uint8_t const * data, float x, float y) {
 	float const line_height = font_image_get_height(font) + font_image_get_gap(font);
 	float offset_x = x, offset_y = y;
 
@@ -198,7 +198,7 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Font_Image * font, 
 	float const tab_size = space_size * 4;
 
 	uint32_t codepoint = 0;
-	for (uint64_t i = 0; i < length;) {
+	for (uint32_t i = 0; i < length;) {
 		uint32_t previous_codepoint = codepoint;
 
 		uint32_t const octets_count = utf8_length(data + i);

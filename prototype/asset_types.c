@@ -1,3 +1,4 @@
+#include "framework/memory.h"
 #include "framework/platform_file.h"
 #include "framework/containers/array_byte.h"
 #include "framework/graphics/gpu_objects.h"
@@ -64,6 +65,9 @@ void asset_image_free(void * instance) {
 void asset_font_init(void * instance, char const * name) {
 	struct Font * font = font_init(name);
 
+	// @todo: allow variable-sized fonts
+	// @todo: dynamically generate glyphs
+	// @todo: multiple buffers and gpu-textures?
 	struct Font_Image * buffer = font_image_init(font, 32);
 	font_image_build(buffer, 1, (uint32_t[]){' ', '~'});
 
@@ -80,4 +84,21 @@ void asset_font_free(void * instance) {
 	font_free(asset->font);
 	font_image_free(asset->buffer);
 	gpu_texture_free(asset->gpu_ref);
+}
+
+// -- Asset text part
+void asset_text_init(void * instance, char const * name) {
+	struct Array_Byte buffer;
+	platform_file_read_entire(name, &buffer);
+	buffer.data[buffer.count] = '\0';
+
+	// @note: memory ownership transfer
+	struct Asset_Text * asset = instance;
+	asset->data = buffer.data;
+	asset->length = (uint32_t)buffer.count;
+}
+
+void asset_text_free(void * instance) {
+	struct Asset_Text * asset = instance;
+	MEMORY_FREE(instance, asset->data);
 }

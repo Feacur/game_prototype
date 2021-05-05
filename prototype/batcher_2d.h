@@ -26,7 +26,7 @@ void batcher_2d_add_quad(
 	float const * rect, float const * uv
 );
 
-void batcher_2d_add_text(struct Batcher_2D * batcher, struct Font_Image * font, uint64_t length, uint8_t const * data, float x, float y);
+void batcher_2d_add_text(struct Batcher_2D * batcher, struct Font_Image * font, uint32_t length, uint8_t const * data, float x, float y);
 
 void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size_y, struct Ref gpu_target_ref);
 

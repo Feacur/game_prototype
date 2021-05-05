@@ -41,4 +41,13 @@ struct Asset_Font {
 void asset_font_init(void * instance, char const * name);
 void asset_font_free(void * instance);
 
+// -- Asset text part
+struct Asset_Text {
+	uint8_t * data;
+	uint32_t length;
+};
+
+void asset_text_init(void * instance, char const * name);
+void asset_text_free(void * instance);
+
 #endif
