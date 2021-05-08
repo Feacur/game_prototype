@@ -1,8 +1,8 @@
 #include "framework/memory.h"
+#include "framework/logger.h"
 #include "internal.h"
 
 #include <string.h>
-#include <stdio.h>
 
 //
 #include "hash_table_u32.h"
@@ -24,7 +24,7 @@ void hash_table_u32_free(struct Hash_Table_U32 * hash_table) {
 static uint32_t hash_table_u32_find_key_index(struct Hash_Table_U32 * hash_table, uint32_t key_hash);
 void hash_table_u32_resize(struct Hash_Table_U32 * hash_table, uint32_t target_capacity) {
 	if (target_capacity < hash_table->count) {
-		fprintf(stderr, "limiting target resize capacity to the number of elements\n"); DEBUG_BREAK();
+		logger_to_console("limiting target resize capacity to the number of elements\n"); DEBUG_BREAK();
 		target_capacity = hash_table->count;
 	}
 

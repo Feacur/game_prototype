@@ -1,9 +1,9 @@
 #include "framework/memory.h"
+#include "framework/logger.h"
 #include "parsing.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 
 //
@@ -29,16 +29,16 @@ static void mesh_obj_error_at(struct Mesh_Obj_Token * token, char const * messag
 	// if (parser->panic_mode) { return; }
 	// parser->panic_mode = true;
 
-	fprintf(stderr, "[line %d] error", token->line + 1);
+	logger_to_console("[line %d] error", token->line + 1);
 
 	switch (token->type) {
 		case MESH_OBJ_TOKEN_ERROR: break;
-		case MESH_OBJ_TOKEN_EOF: fprintf(stderr, " at the end of file"); break;
-		case MESH_OBJ_TOKEN_NEW_LINE: fprintf(stderr, " at the end of line"); break;
-		default: fprintf(stderr, " at '%.*s'", token->length, token->start); break;
+		case MESH_OBJ_TOKEN_EOF: logger_to_console(" at the end of file"); break;
+		case MESH_OBJ_TOKEN_NEW_LINE: logger_to_console(" at the end of line"); break;
+		default: logger_to_console(" at '%.*s'", token->length, token->start); break;
 	}
 
-	fprintf(stderr, ": %s\n", message);
+	logger_to_console(": %s\n", message);
 	// parser->had_error = true;
 }
 

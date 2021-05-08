@@ -1,10 +1,10 @@
 #include "framework/common.h"
+#include "framework/logger.h"
 
 #include <Windows.h>
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 static struct Platform_Timer {
 	LARGE_INTEGER ticks_per_second;
@@ -16,7 +16,7 @@ static struct Platform_Timer {
 uint64_t platform_timer_get_ticks(void) {
 	LARGE_INTEGER ticks;
 	if (!QueryPerformanceCounter(&ticks)) {
-		fprintf(stderr, "'QueryPerformanceCounter' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE);
+		logger_to_console("'QueryPerformanceCounter' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE);
 	}
 	return (uint64_t)ticks.QuadPart;
 }
@@ -30,7 +30,7 @@ uint64_t platform_timer_get_ticks_per_second(void) {
 
 void timer_to_system_init(void) {
 	if (!QueryPerformanceFrequency(&platform_timer.ticks_per_second)) {
-		fprintf(stderr, "'QueryPerformanceFrequency' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE);
+		logger_to_console("'QueryPerformanceFrequency' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE);
 	}
 }
 

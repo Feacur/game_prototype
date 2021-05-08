@@ -1,8 +1,8 @@
 #include "framework/memory.h"
+#include "framework/logger.h"
 #include "internal.h"
 
 #include <string.h>
-#include <stdio.h>
 
 //
 #include "ref_table.h"
@@ -36,7 +36,7 @@ void ref_table_clear(struct Ref_Table * ref_table) {
 
 void ref_table_resize(struct Ref_Table * ref_table, uint32_t target_capacity) {
 	if ((ref_table->count > 0) && (target_capacity < ref_table->capacity)) {
-		fprintf(stderr, "limiting target resize capacity\n"); DEBUG_BREAK();
+		logger_to_console("limiting target resize capacity\n"); DEBUG_BREAK();
 		uint32_t largest_ref_id = 0;
 		for (uint32_t i = 0; i < ref_table->count; i++) {
 			uint32_t const id = ref_table->dense[i];

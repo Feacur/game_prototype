@@ -1,4 +1,5 @@
 #include "framework/memory.h"
+#include "framework/logger.h"
 #include "framework/internal/input_to_window.h"
 
 #include "system_to_internal.h"
@@ -9,7 +10,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 struct Window {
 	HWND handle;
@@ -43,11 +43,11 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y) {
 		target_rect.right - target_rect.left, target_rect.bottom - target_rect.top,
 		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
-	if (handle == NULL) { fprintf(stderr, "'CreateWindowEx' failed\n"); DEBUG_BREAK(); return NULL; }
+	if (handle == NULL) { logger_to_console("'CreateWindowEx' failed\n"); DEBUG_BREAK(); return NULL; }
 
 	HDC const private_context = GetDC(handle);
 	if (private_context == NULL) {
-		fprintf(stderr, "'GetDC' failed\n"); DEBUG_BREAK();
+		logger_to_console("'GetDC' failed\n"); DEBUG_BREAK();
 		DestroyWindow(handle); return NULL;
 	}
 
@@ -56,7 +56,7 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y) {
 
 	BOOL prop_is_set = SetProp(handle, TEXT(APPLICATION_CLASS_NAME), window);
 	if (!prop_is_set) {
-		fprintf(stderr, "'SetProp' failed\n"); DEBUG_BREAK();
+		logger_to_console("'SetProp' failed\n"); DEBUG_BREAK();
 		DestroyWindow(handle); MEMORY_FREE(window, window); return NULL;
 	}
 
@@ -168,7 +168,7 @@ void window_to_system_init(void) {
 		.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
 		.hCursor = LoadCursor(0, IDC_ARROW),
 	});
-	if (atom == 0) { fprintf(stderr, "'RegisterClassEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (atom == 0) { logger_to_console("'RegisterClassEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 	// https://docs.microsoft.com/en-us/windows/win32/winmsg/about-window-classes
 	// https://docs.microsoft.com/en-us/windows/win32/gdi/private-display-device-contexts
 }
@@ -281,7 +281,7 @@ static void platform_window_toggle_raw_input(struct Window * window, bool state)
 		return;
 	}
 
-	fprintf(stderr, "'RegisterRawInputDevices' failed\n"); DEBUG_BREAK();
+	logger_to_console("'RegisterRawInputDevices' failed\n"); DEBUG_BREAK();
 	previous_state = !previous_state;
 
 	// https://docs.microsoft.com/en-us/windows-hardware/drivers/hid/
@@ -385,7 +385,7 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 // static void handle_input_hid_raw(struct Window * window, RAWHID * data) {
 // 	if (raw_input_window != window) { return; }
 // 	(void)window; (void)data;
-// 	fprintf(stderr, "'RAWHID' input is not implemented\n"); DEBUG_BREAK();
+// 	logger_console("'RAWHID' input is not implemented\n"); DEBUG_BREAK();
 // 
 // 	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawhid
 // }

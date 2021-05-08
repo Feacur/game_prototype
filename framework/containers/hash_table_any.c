@@ -1,8 +1,8 @@
 #include "framework/memory.h"
+#include "framework/logger.h"
 #include "internal.h"
 
 #include <string.h>
-#include <stdio.h>
 
 //
 #include "hash_table_any.h"
@@ -26,7 +26,7 @@ void hash_table_any_free(struct Hash_Table_Any * hash_table) {
 static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash);
 void hash_table_any_resize(struct Hash_Table_Any * hash_table, uint32_t target_capacity) {
 	if (target_capacity < hash_table->count) {
-		fprintf(stderr, "limiting target resize capacity to the number of elements\n"); DEBUG_BREAK();
+		logger_to_console("limiting target resize capacity to the number of elements\n"); DEBUG_BREAK();
 		target_capacity = hash_table->count;
 	}
 
@@ -80,7 +80,7 @@ void hash_table_any_clear(struct Hash_Table_Any * hash_table) {
 
 void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash) {
 	if (key == NULL) {
-		fprintf(stderr, "hash table key should be non-null\n"); DEBUG_BREAK();
+		logger_to_console("hash table key should be non-null\n"); DEBUG_BREAK();
 		return false;
 	}
 
@@ -93,7 +93,7 @@ void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, 
 
 bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash, void const * value) {
 	if (key == NULL) {
-		fprintf(stderr, "hash table key should be non-null\n"); DEBUG_BREAK();
+		logger_to_console("hash table key should be non-null\n"); DEBUG_BREAK();
 		return false;
 	}
 
@@ -128,7 +128,7 @@ bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, ui
 
 bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash) {
 	if (key == NULL) {
-		fprintf(stderr, "hash table key should be non-null\n"); DEBUG_BREAK();
+		logger_to_console("hash table key should be non-null\n"); DEBUG_BREAK();
 		return false;
 	}
 

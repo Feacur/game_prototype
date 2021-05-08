@@ -1,6 +1,7 @@
 #include "framework/memory.h"
 #include "framework/unicode.h"
 #include "framework/platform_file.h"
+#include "framework/logger.h"
 
 #include "framework/maths.h"
 #include "framework/input.h"
@@ -31,7 +32,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 struct Entity {
 	struct Transform_3D transform;

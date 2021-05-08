@@ -1,9 +1,9 @@
 #include "framework/containers/array_byte.h"
 #include "framework/memory.h"
+#include "framework/logger.h"
 
 #include <Windows.h>
 
-#include <stdio.h>
 #include <stdlib.h>
 
 #if defined(UNICODE)
@@ -34,7 +34,7 @@ bool platform_file_read_entire(char const * path, struct Array_Byte * buffer) {
 	platform_file_free(file);
 	if (buffer->count == size) { return true; }
 
-	fprintf(stderr, "'platform_file_read_entire' failed\n"); DEBUG_BREAK();
+	logger_to_console("'platform_file_read_entire' failed\n"); DEBUG_BREAK();
 	array_byte_free(buffer);
 	return false;
 }
@@ -87,7 +87,7 @@ struct File * platform_file_init(char const * path, enum File_Mode mode) {
 #endif
 
 	if (handle == INVALID_HANDLE_VALUE) {
-		fprintf(stderr, "'CreateFile' failed\n"); DEBUG_BREAK();
+		logger_to_console("'CreateFile' failed\n"); DEBUG_BREAK();
 		return NULL;
 	}
 
@@ -139,7 +139,7 @@ uint64_t platform_file_read(struct File * file, uint8_t * buffer, uint64_t size)
 	DWORD const max_chunk_size = UINT16_MAX + 1;
 
 	if (!(file->mode & FILE_MODE_READ)) {
-		fprintf(stderr, "'platform_file_read' failed\n"); DEBUG_BREAK();
+		logger_to_console("'platform_file_read' failed\n"); DEBUG_BREAK();
 		return 0;
 	}
 	
@@ -151,7 +151,7 @@ uint64_t platform_file_read(struct File * file, uint8_t * buffer, uint64_t size)
 
 		DWORD read_chunk_size;
 		if (!ReadFile(file->handle, buffer + read, to_read, &read_chunk_size, NULL)) {
-			fprintf(stderr, "'ReadFile' failed\n"); DEBUG_BREAK();
+			logger_to_console("'ReadFile' failed\n"); DEBUG_BREAK();
 			break;
 		}
 
@@ -166,7 +166,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 	DWORD const max_chunk_size = UINT16_MAX + 1;
 
 	if (!(file->mode & FILE_MODE_WRITE)) {
-		fprintf(stderr, "'platform_file_write' failed\n"); DEBUG_BREAK();
+		logger_to_console("'platform_file_write' failed\n"); DEBUG_BREAK();
 		return 0;
 	}
 	
@@ -178,7 +178,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 
 		DWORD read_chunk_size;
 		if (!WriteFile(file->handle, buffer + written, to_write, &read_chunk_size, NULL)) {
-			fprintf(stderr, "'WriteFile' failed\n"); DEBUG_BREAK();
+			logger_to_console("'WriteFile' failed\n"); DEBUG_BREAK();
 			break;
 		}
 

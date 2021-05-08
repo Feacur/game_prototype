@@ -3,10 +3,10 @@
 #include "framework/platform_system.h"
 #include "framework/platform_window.h"
 #include "framework/input.h"
+#include "framework/logger.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 //
 #include "application.h"
@@ -33,7 +33,7 @@ static void application_init(void) {
 	platform_system_init();
 
 	app.window = platform_window_init(app.config->size_x, app.config->size_y);
-	if (app.window == NULL) { fprintf(stderr, "'platform_window_init' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (app.window == NULL) { logger_to_console("'platform_window_init' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	platform_window_set_vsync(app.window, app.config->vsync);
 
@@ -134,7 +134,7 @@ static bool application_update(void) {
 
 void application_run(struct Application_Config * config) {
 	app.config = config;
-	if (config == NULL) { fprintf(stderr, "provide an application config\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (config == NULL) { logger_to_console("provide an application config\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	application_init();
 	while (application_update()) { }

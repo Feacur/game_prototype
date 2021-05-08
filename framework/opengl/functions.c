@@ -1,7 +1,7 @@
+#include "framework/logger.h"
 #include "functions.h"
 
 #include <stdbool.h>
-#include <stdio.h>
 
 uint32_t ogl_version = 0;
 

@@ -1,11 +1,11 @@
 #include "framework/memory.h"
+#include "framework/logger.h"
 #include "framework/containers/array_byte.h"
 
 #include "framework/platform_file.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 
 // better to compile third-parties as separate units
@@ -45,7 +45,7 @@ struct Font * font_init(char const * path) {
 
 	platform_file_read_entire(path, &font->file);
 	if (!stbtt_InitFont(&font->font, font->file.data, stbtt_GetFontOffsetForIndex(font->file.data, 0))) {
-		fprintf(stderr, "'stbtt_InitFont' failed\n"); DEBUG_BREAK();
+		logger_to_console("'stbtt_InitFont' failed\n"); DEBUG_BREAK();
 	}
 
 	stbtt_GetFontVMetrics(&font->font, &font->ascent, &font->descent, &font->line_gap);

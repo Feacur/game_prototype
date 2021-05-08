@@ -1,9 +1,9 @@
+#include "framework/logger.h"
 #include "framework/graphics/types.h"
 #include "framework/graphics/gpu_objects.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 //
 #include "material.h"
@@ -23,7 +23,7 @@ void gfx_material_init(struct Gfx_Material * material, struct Ref gpu_program_re
 	for (uint32_t i = 0; i < uniforms_count; i++) {
 		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
 		switch (data_type_get_element_type(uniforms[i].type)) {
-			default: fprintf(stderr, "unknown data type\n"); DEBUG_BREAK(); break;
+			default: logger_to_console("unknown data type\n"); DEBUG_BREAK(); break;
 
 			case DATA_TYPE_UNIT: unit_count  += elements_count; break;
 			case DATA_TYPE_U32:  u32_count   += elements_count; break;
@@ -109,7 +109,7 @@ static void gfx_material_set_value(
 		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
 
 		if (values_count != elements_count) {
-			fprintf(stderr, "data is too large\n"); DEBUG_BREAK();
+			logger_to_console("data is too large\n"); DEBUG_BREAK();
 			return;
 		}
 
@@ -117,5 +117,5 @@ static void gfx_material_set_value(
 		return;
 	}
 
-	fprintf(stderr, "material doesn't have such a property\n"); DEBUG_BREAK();
+	logger_to_console("material doesn't have such a property\n"); DEBUG_BREAK();
 }

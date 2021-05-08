@@ -4,6 +4,7 @@
 #include "framework/memory.h"
 #include "framework/unicode.h"
 #include "framework/input_keys.h"
+#include "framework/logger.h"
 
 #include "timer_to_system.h"
 #include "window_to_system.h"
@@ -14,7 +15,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 static struct Platform_System {
 	HMODULE module;
@@ -30,7 +30,7 @@ static void system_set_process_dpi_awareness(void);
 static void system_signal_handler(int value);
 void platform_system_init(void) {
 	platform_system.module = GetModuleHandle(NULL);
-	if (platform_system.module == NULL) { fprintf(stderr, "'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (platform_system.module == NULL) { logger_to_console("'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	// system_cache_paths();
 	system_set_process_dpi_awareness();
@@ -214,7 +214,7 @@ static void system_set_process_dpi_awareness(void) {
 // 			array_byte_push(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
 // 			array_byte_push(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
 // 		}
-// 		// else { fprintf(stderr, "UTF-32 sequence is malformed\n"); DEBUG_BREAK(); }
+// 		// else { logger_console("UTF-32 sequence is malformed\n"); DEBUG_BREAK(); }
 // 	}
 // 
 // 	buffer_utf8.data[buffer_utf8.count] = '\0';

@@ -1,4 +1,5 @@
-#include <stdio.h>
+#include "framework/logger.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -64,7 +65,7 @@ uint32_t data_type_get_count(enum Data_Type value) {
 		case DATA_TYPE_MAT3: return 3 * 3;
 		case DATA_TYPE_MAT4: return 4 * 4;
 	}
-	fprintf(stderr, "unknown data type\n"); DEBUG_BREAK();
+	logger_to_console("unknown data type\n"); DEBUG_BREAK();
 	return 0;
 }
 
@@ -102,6 +103,6 @@ uint32_t data_type_get_size(enum Data_Type value) {
 		case DATA_TYPE_MAT3: return sizeof(float) * 3 * 3;
 		case DATA_TYPE_MAT4: return sizeof(float) * 4 * 4;
 	}
-	fprintf(stderr, "unknown data type\n"); DEBUG_BREAK();
+	logger_to_console("unknown data type\n"); DEBUG_BREAK();
 	return 0;
 }

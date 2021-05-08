@@ -1,7 +1,7 @@
+#include "framework/logger.h"
+
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
-
 
 //
 #include "asset_system.h"
@@ -77,7 +77,7 @@ void asset_system_del_type(struct Asset_System * system, char const * type_name)
 	uint32_t const type_length = (uint32_t)strlen(type_name);
 	uint32_t const type_id = strings_find(&system->strings, type_length, type_name);
 	if (type_id == INDEX_EMPTY || type_id == 0) {
-		fprintf(stderr, "unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
+		logger_to_console("unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
 		return;
 	}
 
@@ -95,7 +95,7 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * 
 	//
 	uint32_t const extension_length = asset_system_get_extension_from_name(name_lenth, name);
 	if (extension_length == 0) {
-		fprintf(stderr, "no extension: %*s\n", name_lenth, name); DEBUG_BREAK();
+		logger_to_console("no extension: %*s\n", name_lenth, name); DEBUG_BREAK();
 		return (struct Asset_Ref){0};
 	}
 
@@ -104,13 +104,13 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * 
 	//
 	uint32_t const extension_id = strings_find(&system->strings, extension_length, extension_name);
 	if (extension_id == INDEX_EMPTY || extension_id == 0) {
-		fprintf(stderr, "unknown extension: %*s\n", extension_length, extension_name); DEBUG_BREAK();
+		logger_to_console("unknown extension: %*s\n", extension_length, extension_name); DEBUG_BREAK();
 		return (struct Asset_Ref){0};
 	}
 
 	uint32_t const * type_id = hash_table_u32_get(&system->map, extension_id);
 	if (type_id == NULL) {
-		fprintf(stderr, "can't infer type from extension: %*s\n", extension_length, extension_name); DEBUG_BREAK();
+		logger_to_console("can't infer type from extension: %*s\n", extension_length, extension_name); DEBUG_BREAK();
 		return (struct Asset_Ref){0};
 	}
 
@@ -130,7 +130,7 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * 
 	if (asset_type == NULL) {
 		char const * type_name = strings_get(&system->strings, *type_id);
 		uint32_t const type_length = strings_get_length(&system->strings, *type_id);
-		fprintf(stderr, "unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
+		logger_to_console("unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
 		return (struct Asset_Ref){0};
 	}
 
@@ -153,11 +153,11 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * 
 
 void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_ref) {
 	if (asset_ref.type_id == INDEX_EMPTY || asset_ref.type_id == 0) {
-		fprintf(stderr, "unknown type"); DEBUG_BREAK(); return;
+		logger_to_console("unknown type"); DEBUG_BREAK(); return;
 	}
 
 	if (asset_ref.resource_id == INDEX_EMPTY) {
-		fprintf(stderr, "unknown resource"); DEBUG_BREAK(); return;
+		logger_to_console("unknown resource"); DEBUG_BREAK(); return;
 	}
 
 	//
@@ -165,7 +165,7 @@ void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_r
 	if (asset_type == NULL) {
 		char const * type_name = strings_get(&system->strings, asset_ref.type_id);
 		uint32_t const type_length = strings_get_length(&system->strings, asset_ref.type_id);
-		fprintf(stderr, "unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
+		logger_to_console("unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
 	}
 
 	//
@@ -185,7 +185,7 @@ void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref 
 	if (asset_type == NULL) {
 		char const * type_name = strings_get(&system->strings, asset_ref.type_id);
 		uint32_t const type_length = strings_get_length(&system->strings, asset_ref.type_id);
-		fprintf(stderr, "unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
+		logger_to_console("unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
 	}
 
 	//

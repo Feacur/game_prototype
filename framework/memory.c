@@ -1,8 +1,8 @@
-#include "containers/hash_table_u64.h"
+#include "framework/logger.h"
+#include "framework/containers/hash_table_u64.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 // @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
 
@@ -58,7 +58,7 @@ void * memory_reallocate(void const * owner, char const * source, void * pointer
 	}
 
 	void * result = realloc(pointer, size);
-	if (result == NULL) { fprintf(stderr, "'realloc' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (result == NULL) { logger_to_console("'realloc' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	if (pointer_data != NULL) {
 		memory_state.pointers_count--;
@@ -104,12 +104,12 @@ void memory_to_system_init(void) {
 
 void memory_to_system_free(void) {
 	if (memory_state.total_bytes > 0 || memory_state.pointers_count > 0) {
-		fprintf(stderr, "leaked %zu bytes with %u pointers(s):\n", memory_state.total_bytes, memory_state.pointers_count);
+		logger_to_console("leaked %zu bytes with %u pointers(s):\n", memory_state.total_bytes, memory_state.pointers_count);
 
 		struct Hash_Table_U64_Entry it = {0};
 		while (hash_table_u64_iterate(&memory_state.pointers, &it)) {
 			struct Pointer_Data const * value = it.value;
-			fprintf(stderr, "-- 0x%zx: '%s' (%zu bytes)\n", it.key_hash, value->source, value->size);
+			logger_to_console("-- 0x%zx: '%s' (%zu bytes)\n", it.key_hash, value->source, value->size);
 		}
 
 		DEBUG_BREAK();

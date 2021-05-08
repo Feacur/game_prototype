@@ -1,5 +1,6 @@
 #include "GL/glcorearb.h"
 #include "framework/memory.h"
+#include "framework/logger.h"
 
 #include "framework/containers/strings.h"
 #include "framework/containers/array_byte.h"
@@ -16,7 +17,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 static GLenum gpu_data_type(enum Data_Type value);
 static enum Data_Type interpret_gl_type(GLint value);
@@ -121,7 +121,7 @@ struct Ref gpu_program_init(struct Array_Byte * asset) {
 #define ADD_SECTION_HEADER(shader_type, version) \
 	do { \
 		if (strstr((char const *)asset->data, #shader_type)) {\
-			if (ogl_version < (version)) { fprintf(stderr, "'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); break; } \
+			if (ogl_version < (version)) { logger_to_console("'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); break; } \
 			static char const header_text[] = "#define " #shader_type "\n"; \
 			headers[headers_count++] = (struct Section_Header){ \
 				.type = GL_ ## shader_type, \
@@ -264,12 +264,12 @@ static struct Ref gpu_texture_allocate(
 	void const * data
 ) {
 	if (size_x > graphics_state.max_texture_size) {
-		fprintf(stderr, "requested size is too large\n"); DEBUG_BREAK();
+		logger_to_console("requested size is too large\n"); DEBUG_BREAK();
 		size_x = graphics_state.max_texture_size;
 	}
 
 	if (size_y > graphics_state.max_texture_size) {
-		fprintf(stderr, "requested size is too large\n"); DEBUG_BREAK();
+		logger_to_console("requested size is too large\n"); DEBUG_BREAK();
 		size_y = graphics_state.max_texture_size;
 	}
 
@@ -279,7 +279,7 @@ static struct Ref gpu_texture_allocate(
 	// allocate buffer
 	GLint const level = 0;
 	if (data == NULL && !(parameters->flags & (TEXTURE_FLAG_WRITE | TEXTURE_FLAG_READ | TEXTURE_FLAG_INTERNAL))) {
-		fprintf(stderr, "non-internal storage should have initial data\n"); DEBUG_BREAK();
+		logger_to_console("non-internal storage should have initial data\n"); DEBUG_BREAK();
 	}
 	else if (parameters->flags & TEXTURE_FLAG_MUTABLE) {
 		glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -310,7 +310,7 @@ static struct Ref gpu_texture_allocate(
 		}
 	}
 	else {
-		fprintf(stderr, "immutable storage should have non-zero size\n"); DEBUG_BREAK();
+		logger_to_console("immutable storage should have non-zero size\n"); DEBUG_BREAK();
 	}
 
 	// chart buffer
@@ -405,7 +405,7 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image * asset) {
 		);
 	}
 	else {
-		fprintf(stderr, "trying to reallocate an immutable buffer"); DEBUG_BREAK();
+		logger_to_console("trying to reallocate an immutable buffer"); DEBUG_BREAK();
 		// @todo: completely recreate object instead of using a mutable storage?
 	}
 }
@@ -525,7 +525,7 @@ struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Ty
 	}
 
 	// @note: consider 0 ref.id empty
-	fprintf(stderr, "failed to find the attached texture\n"); DEBUG_BREAK();
+	logger_to_console("failed to find the attached texture\n"); DEBUG_BREAK();
 	return (struct Ref){0};
 }
 
@@ -537,7 +537,7 @@ static struct Ref gpu_mesh_allocate(
 	void ** data
 ) {
 	if (buffers_count > MAX_MESH_BUFFERS) {
-		fprintf(stderr, "too many buffers\n"); DEBUG_BREAK();
+		logger_to_console("too many buffers\n"); DEBUG_BREAK();
 		buffers_count = MAX_MESH_BUFFERS;
 	}
 
@@ -554,7 +554,7 @@ static struct Ref gpu_mesh_allocate(
 		glCreateBuffers(1, buffer_ids + i);
 
 		if (data[i] == NULL && !(parameters->flags & (MESH_FLAG_WRITE | MESH_FLAG_READ | MESH_FLAG_INTERNAL))) {
-			fprintf(stderr, "non-internal storage should have initial data\n"); DEBUG_BREAK();
+			logger_to_console("non-internal storage should have initial data\n"); DEBUG_BREAK();
 		}
 		else if (parameters->flags & MESH_FLAG_MUTABLE) {
 			glNamedBufferData(
@@ -571,7 +571,7 @@ static struct Ref gpu_mesh_allocate(
 			);
 		}
 		else {
-			fprintf(stderr, "immutable storage should have non-zero size\n"); DEBUG_BREAK();
+			logger_to_console("immutable storage should have non-zero size\n"); DEBUG_BREAK();
 		}
 
 		capacities[i] = byte_lengths[i] / data_type_get_size(parameters->type);
@@ -616,7 +616,7 @@ static struct Ref gpu_mesh_allocate(
 
 	//
 	if (elements_index == INDEX_EMPTY) {
-		fprintf(stderr, "not element buffer\n"); DEBUG_BREAK();
+		logger_to_console("not element buffer\n"); DEBUG_BREAK();
 	}
 
 	struct Gpu_Mesh gpu_mesh = (struct Gpu_Mesh){
@@ -702,7 +702,7 @@ void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh * asset) {
 			);
 		}
 		else {
-			fprintf(stderr, "trying to reallocate an immutable buffer"); DEBUG_BREAK();
+			logger_to_console("trying to reallocate an immutable buffer"); DEBUG_BREAK();
 			// @todo: completely recreate object instead of using a mutable storage?
 		}
 	}
@@ -765,7 +765,7 @@ static uint32_t graphics_unit_init(struct Ref gpu_texture_ref) {
 	// @note: consider 0 ref.id empty
 	unit = graphics_unit_find((struct Ref){0});
 	if (unit == 0) {
-		fprintf(stderr, "'graphics_unit_find' failed\n"); DEBUG_BREAK();
+		logger_to_console("'graphics_unit_find' failed\n"); DEBUG_BREAK();
 		return unit;
 	}
 
@@ -783,7 +783,7 @@ static uint32_t graphics_unit_init(struct Ref gpu_texture_ref) {
 // 	if (ogl_version > 0) {
 // 		uint32_t unit = graphics_unit_find(gpu_texture);
 // 		if (unit == 0) {
-// 			fprintf(stderr, "'graphics_unit_find' failed\n"); DEBUG_BREAK();
+// 			logger_console("'graphics_unit_find' failed\n"); DEBUG_BREAK();
 // 			return;
 // 		}
 // 
@@ -839,7 +839,7 @@ static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_progra
 				if (unit == 0) {
 					unit = graphics_unit_init(gpu_texture_refs[i]);
 					if (unit == 0) {
-						fprintf(stderr, "failed to find a vacant texture/sampler unit\n"); DEBUG_BREAK();
+						logger_to_console("failed to find a vacant texture/sampler unit\n"); DEBUG_BREAK();
 					}
 				}
 				units[units_count++] = (GLint)unit;
@@ -878,7 +878,7 @@ static void graphics_upload_uniforms(struct Gfx_Material const * material) {
 	for (uint32_t i = 0; i < uniforms_count; i++) {
 		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
 		switch (data_type_get_element_type(uniforms[i].type)) {
-			default: fprintf(stderr, "unknown data type\n"); DEBUG_BREAK(); break;
+			default: logger_to_console("unknown data type\n"); DEBUG_BREAK(); break;
 
 			case DATA_TYPE_UNIT: {
 				graphics_upload_single_uniform(gpu_program, i, material->textures.data + unit_offset);
@@ -1183,7 +1183,7 @@ static void verify_shader(GLuint id, GLenum parameter) {
 		// @todo: use scratch buffer
 		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(&graphics_state, GLchar, max_length);
 		glGetShaderInfoLog(id, max_length, &max_length, buffer);
-		fprintf(stderr, "%s\n", buffer);
+		logger_to_console("%s\n", buffer);
 		MEMORY_FREE(&graphics_state, buffer);
 	}
 
@@ -1202,7 +1202,7 @@ static void verify_program(GLuint id, GLenum parameter) {
 		// @todo: use scratch buffer
 		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(&graphics_state, GLchar, max_length);
 		glGetProgramInfoLog(id, max_length, &max_length, buffer);
-		fprintf(stderr, "%s\n", buffer);
+		logger_to_console("%s\n", buffer);
 		MEMORY_FREE(&graphics_state, buffer);
 	}
 
@@ -1256,8 +1256,7 @@ static void __stdcall opengl_debug_message_callback(
 		default:                             severity_string = "[???]"; break; // ?
 	}
 
-	fprintf(
-		stderr,
+	logger_to_console(
 		"OpenGL message '0x%x'"
 		"\n  - message:  %s"
 		"\n  - severity: %s"
@@ -1307,7 +1306,7 @@ static GLenum gpu_data_type(enum Data_Type value) {
 		case DATA_TYPE_MAT3: return GL_FLOAT_MAT3;
 		case DATA_TYPE_MAT4: return GL_FLOAT_MAT4;
 	}
-	fprintf(stderr, "unknown data type\n"); DEBUG_BREAK();
+	logger_to_console("unknown data type\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1341,7 +1340,7 @@ static enum Data_Type interpret_gl_type(GLint value) {
 		case GL_FLOAT_MAT3:        return DATA_TYPE_MAT3;
 		case GL_FLOAT_MAT4:        return DATA_TYPE_MAT4;
 	}
-	fprintf(stderr, "unknown GL type\n"); DEBUG_BREAK();
+	logger_to_console("unknown GL type\n"); DEBUG_BREAK();
 	return DATA_TYPE_NONE;
 }
 
@@ -1365,7 +1364,7 @@ static GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode textu
 			case FILTER_MODE_LERP:  return GL_LINEAR_MIPMAP_LINEAR;
 		} break;
 	}
-	fprintf(stderr, "unknown min filter mode\n"); DEBUG_BREAK();
+	logger_to_console("unknown min filter mode\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1375,7 +1374,7 @@ static GLint gpu_mag_filter_mode(enum Filter_Mode value) {
 		case FILTER_MODE_POINT: return GL_NEAREST;
 		case FILTER_MODE_LERP:  return GL_LINEAR;
 	}
-	fprintf(stderr, "unknown mag filter mode\n"); DEBUG_BREAK();
+	logger_to_console("unknown mag filter mode\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1384,7 +1383,7 @@ static GLint gpu_wrap_mode(enum Wrap_Mode value, bool mirror) {
 		case WRAP_MODE_REPEAT: return mirror ? GL_MIRRORED_REPEAT : GL_REPEAT;
 		case WRAP_MODE_CLAMP:  return mirror ? GL_MIRROR_CLAMP_TO_EDGE : GL_CLAMP_TO_EDGE;
 	}
-	fprintf(stderr, "unknown wrap mode\n"); DEBUG_BREAK();
+	logger_to_console("unknown wrap mode\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1442,7 +1441,7 @@ static GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Dat
 			case DATA_TYPE_R32: return GL_DEPTH32F_STENCIL8;
 		} break;
 	}
-	fprintf(stderr, "unknown sized internal format\n"); DEBUG_BREAK();
+	logger_to_console("unknown sized internal format\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1461,7 +1460,7 @@ static GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t cha
 		case TEXTURE_TYPE_STENCIL:  return GL_STENCIL_INDEX;
 		case TEXTURE_TYPE_DSTENCIL: return GL_DEPTH_STENCIL;
 	}
-	fprintf(stderr, "unknown pixel data format\n"); DEBUG_BREAK();
+	logger_to_console("unknown pixel data format\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1495,7 +1494,7 @@ static GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type
 			case DATA_TYPE_R32: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
 		} break;
 	}
-	fprintf(stderr, "unknown pixel data type\n"); DEBUG_BREAK();
+	logger_to_console("unknown pixel data type\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1508,7 +1507,7 @@ static GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t inde
 		case TEXTURE_TYPE_STENCIL:  return GL_STENCIL_ATTACHMENT;
 		case TEXTURE_TYPE_DSTENCIL: return GL_DEPTH_STENCIL_ATTACHMENT;
 	}
-	fprintf(stderr, "unknown attachment point\n"); DEBUG_BREAK();
+	logger_to_console("unknown attachment point\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1579,7 +1578,7 @@ static GLenum gpu_comparison_op(enum Comparison_Op value) {
 		case COMPARISON_OP_LESS_EQUAL: return GL_LEQUAL;
 		case COMPARISON_OP_MORE_EQUAL: return GL_GEQUAL;
 	}
-	fprintf(stderr, "unknown comparison operation\n"); DEBUG_BREAK();
+	logger_to_console("unknown comparison operation\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1590,7 +1589,7 @@ static GLenum gpu_cull_mode(enum Cull_Mode value) {
 		case CULL_MODE_FRONT: return GL_FRONT;
 		case CULL_MODE_BOTH:  return GL_FRONT_AND_BACK;
 	}
-	fprintf(stderr, "unknown cull mode\n"); DEBUG_BREAK();
+	logger_to_console("unknown cull mode\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1599,7 +1598,7 @@ static GLenum gpu_winding_order(enum Winding_Order value) {
 		case WINDING_ORDER_POSITIVE: return GL_CCW;
 		case WINDING_ORDER_NEGATIVE: return GL_CW;
 	}
-	fprintf(stderr, "unknown winding order\n"); DEBUG_BREAK();
+	logger_to_console("unknown winding order\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1614,7 +1613,7 @@ static GLenum gpu_stencil_op(enum Stencil_Op value) {
 		case STENCIL_OP_INCR_WRAP: return GL_INCR_WRAP;
 		case STENCIL_OP_DECR_WRAP: return GL_DECR_WRAP;
 	}
-	fprintf(stderr, "unknown stencil operation\n"); DEBUG_BREAK();
+	logger_to_console("unknown stencil operation\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1627,7 +1626,7 @@ static GLenum gpu_blend_op(enum Blend_Op value) {
 		case BLEND_OP_MAX:         return GL_MAX;
 		case BLEND_OP_REVERSE_SUB: return GL_FUNC_REVERSE_SUBTRACT;
 	}
-	fprintf(stderr, "unknown blend operation\n"); DEBUG_BREAK();
+	logger_to_console("unknown blend operation\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 
@@ -1656,7 +1655,7 @@ static GLenum gpu_blend_factor(enum Blend_Factor value) {
 		case BLEND_FACTOR_ONE_MINUS_SRC1_COLOR:  return GL_ONE_MINUS_SRC1_COLOR;
 		case BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA:  return GL_ONE_MINUS_SRC1_ALPHA;
 	}
-	fprintf(stderr, "unknown blend factor\n"); DEBUG_BREAK();
+	logger_to_console("unknown blend factor\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
 

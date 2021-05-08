@@ -5,13 +5,13 @@
 #include "framework/assets/font.h"
 #include "framework/assets/font_glyph.h"
 #include "framework/memory.h"
+#include "framework/logger.h"
 
 // #include "framework/maths.h"
 uint32_t round_up_to_PO2_u32(uint32_t value);
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 
 struct Font_Image {
@@ -126,7 +126,7 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 		atlas_size_x = round_up_to_PO2_u32(atlas_size_x);
 		if (atlas_size_x > 0x1000) {
 			atlas_size_x = 0x1000;
-			fprintf(stderr, "too many codepoints or symbols are too large\n"); DEBUG_BREAK(); return;
+			logger_to_console("too many codepoints or symbols are too large\n"); DEBUG_BREAK(); return;
 		}
 
 		atlas_size_y = atlas_size_x;
@@ -145,8 +145,8 @@ void font_image_build(struct Font_Image * font_image, uint32_t ranges_count, uin
 				uint32_t const size_x = (uint32_t)(params->rect[2] - params->rect[0]);
 				uint32_t const size_y = (uint32_t)(params->rect[3] - params->rect[1]);
 
-				if (atlas_size_x < size_x) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
-				if (atlas_size_y < size_y) { fprintf(stderr, "atlas's too small\n"); DEBUG_BREAK(); break; }
+				if (atlas_size_x < size_x) { logger_to_console("atlas's too small\n"); DEBUG_BREAK(); break; }
+				if (atlas_size_y < size_y) { logger_to_console("atlas's too small\n"); DEBUG_BREAK(); break; }
 
 				if (line_height == 0) { line_height = size_y; }
 

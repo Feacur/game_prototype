@@ -1,6 +1,5 @@
 #include "framework/maths.h"
-
-#include <stdio.h>
+#include "framework/logger.h"
 
 //
 #include "internal.h"
@@ -10,7 +9,7 @@ uint32_t grow_capacity_value_u32(uint32_t current, uint32_t delta) {
 
 	#if defined(GAME_TARGET_DEBUG)
 	if (target < current) {
-		fprintf(stderr, "requested value is too large\n"); DEBUG_BREAK();
+		logger_to_console("requested value is too large\n"); DEBUG_BREAK();
 		return current;
 	}
 	#endif
@@ -22,7 +21,7 @@ uint32_t grow_capacity_value_u32(uint32_t current, uint32_t delta) {
 
 	#if defined(GAME_TARGET_DEBUG)
 	if (current < target) {
-		fprintf(stderr, "requested value is too large\n"); DEBUG_BREAK();
+		logger_to_console("requested value is too large\n"); DEBUG_BREAK();
 		return target;
 	}
 	#endif
@@ -35,7 +34,7 @@ uint64_t grow_capacity_value_u64(uint64_t current, uint64_t delta) {
 
 	#if defined(GAME_TARGET_DEBUG)
 	if (target < current) {
-		fprintf(stderr, "requested value is too large\n"); DEBUG_BREAK();
+		logger_to_console("requested value is too large\n"); DEBUG_BREAK();
 		return current;
 	}
 	#endif
@@ -47,7 +46,7 @@ uint64_t grow_capacity_value_u64(uint64_t current, uint64_t delta) {
 
 	#if defined(GAME_TARGET_DEBUG)
 	if (current < target) {
-		fprintf(stderr, "requested value is too large\n"); DEBUG_BREAK();
+		logger_to_console("requested value is too large\n"); DEBUG_BREAK();
 		return target;
 	}
 	#endif
@@ -62,7 +61,7 @@ bool should_hash_table_grow(uint32_t capacity, uint32_t count) {
 uint32_t adjust_hash_table_capacity_value(uint32_t value) {
 	#if defined(GAME_TARGET_DEBUG)
 	if (value > 0x80000000) {
-		fprintf(stderr, "requested value is too large\n"); DEBUG_BREAK();
+		logger_to_console("requested value is too large\n"); DEBUG_BREAK();
 		return 0x80000000;
 	}
 	#endif

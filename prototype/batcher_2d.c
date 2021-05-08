@@ -2,6 +2,7 @@
 #include "framework/common.h"
 #include "framework/memory.h"
 #include "framework/unicode.h"
+#include "framework/logger.h"
 
 #include "framework/containers/array_any.h"
 #include "framework/containers/array_float.h"
@@ -19,8 +20,6 @@
 #include "framework/maths.h"
 
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 struct Batcher_2D_Batch {
 	uint32_t offset, length;
@@ -134,7 +133,7 @@ void batcher_2d_push_matrix(struct Batcher_2D * batcher, struct mat4 matrix) {
 void batcher_2d_pop_matrix(struct Batcher_2D * batcher) {
 	struct mat4 const * matrix = array_any_pop(&batcher->matrices);
 	if (matrix != NULL) { batcher->matrix = *matrix; return; }
-	fprintf(stderr, "non-matching matrices\n"); DEBUG_BREAK();
+	logger_to_console("non-matching matrices\n"); DEBUG_BREAK();
 	batcher->matrix = mat4_identity;
 }
 
