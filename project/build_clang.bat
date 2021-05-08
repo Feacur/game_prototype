@@ -1,5 +1,6 @@
 @echo off
-set timeHeader=%time%
+setlocal enabledelayedexpansion
+set timeHeader=!time!
 chcp 65001 > nul
 
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
@@ -70,6 +71,7 @@ set linker=%linker% %libs%
 set warnings=%warnings% -Wno-switch-enum
 set warnings=%warnings% -Wno-float-equal
 set warnings=%warnings% -Wno-reserved-id-macro
+set warnings=%warnings% -Wno-nonportable-system-include-path
 set warnings=%warnings% -Wno-assign-enum
 set warnings=%warnings% -Wno-bad-function-cast
 set warnings=%warnings% -Wno-documentation-unknown-command
@@ -79,26 +81,26 @@ pushd ..
 if not exist bin mkdir bin
 pushd bin
 
-set timeCompile=%time%
+set timeCompile=!time!
 if %build_mode% == normal ( rem |> compile a set of translation units, then link them
 	if not exist temp mkdir temp
 	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem |> for each line %%v in the file
 		clang -std=c99 -c -o"./temp/%%~nv.o" %compiler% %warnings% "../%%v"
 		if errorlevel == 1 goto error
 	)
-	set timeLink=%time%
+	set timeLink=!time!
 	lld-link "./temp/*.o" -out:"%project%.exe" %linker%
 ) else if %build_mode% == unity ( rem |> compile as a unity build, then link separately
 	clang -std=c99 -c -o"./%project%_unity_build.o" %compiler% %warnings% "%project_folder%/%project%_unity_build.c"
-	set timeLink=%time%
+	set timeLink=!time!
 	lld-link "./%project%_unity_build.o" -out:"%project%.exe" %linker%
 ) else if %build_mode% == unity_link ( rem |> compile and link as a unity build
-	set timeLink=%time%
+	set timeLink=!time!
 	clang -std=c99 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%.exe" -Wl,%linker: =,%
 )
 
 :error
-set timeStop=%time%
+set timeStop=!time!
 
 popd
 popd

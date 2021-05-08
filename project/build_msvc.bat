@@ -1,5 +1,6 @@
 @echo off
-set timeHeader=%time%
+setlocal enabledelayedexpansion
+set timeHeader=!time!
 chcp 65001 > nul
 
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
@@ -66,26 +67,26 @@ pushd ..
 if not exist bin mkdir bin
 pushd bin
 
-set timeCompile=%time%
+set timeCompile=!time!
 if %build_mode% == normal ( rem |> compile a set of translation units, then link them
 	if not exist temp mkdir temp
 	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem |> for each line %%v in the file
 		cl -std:c11 -c -Fo"./temp/%%~nv.obj" %compiler% %warnings% "../%%v"
 		if errorlevel == 1 goto error
 	)
-	set timeLink=%time%
+	set timeLink=!time!
 	link "./temp/*.obj" -out:"%project%.exe" %linker%
 ) else if %build_mode% == unity ( rem |> compile as a unity build, then link separately
 	cl -std:c11 -c -Fo"./%project%_unity_build.obj" %compiler% %warnings% "%project_folder%/%project%_unity_build.c"
-	set timeLink=%time%
+	set timeLink=!time!
 	link "./%project%_unity_build.obj" -out:"%project%.exe" %linker%
 ) else if %build_mode% == unity_link ( rem |> compile and link as a unity build
-	set timeLink=%time%
+	set timeLink=!time!
 	cl -std:c11 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -Fe"./%project%.exe" -link %linker%
 )
 
 :error
-set timeStop=%time%
+set timeStop=!time!
 
 popd
 popd

@@ -51,6 +51,8 @@
 #include "prototype/main_sandbox.c"
 
 /*
+Language: C99 or C11
+
 Includes:
 - ".."
 - "../third_party"
@@ -77,13 +79,14 @@ Libs:
   - static:  libucrt.lib, libvcruntime.lib, libcmt.lib
 
 Disable Clang warnings:
-- switch-enum                   (allow partial list of enum cases in switch statements)
-- float-equal                   (allow exact floating point values comparison)
-- reserved-id-macro             (source: third-party libs; `GL`, `KHR`)
-- assign-enum                   (allow enum values have implicit flags cominations)
-- bad-function-cast             (allow casting function results without temporary assignment)
-- documentation-unknown-command (source: clangd; `@note`)
+- switch-enum                     (allow partial list of enum cases in switch statements)
+- float-equal                     (allow exact floating point values comparison)
+- reserved-id-macro               (source: third-party libs; `GL`, `KHR`; is easy to fix)
+- nonportable-system-include-path (source: third-party libs; `GL`; is easy to fix)
+- assign-enum                     (allow enum values have implicit flags cominations)
+- bad-function-cast               (allow casting function results without temporary assignment)
+- documentation-unknown-command   (source: clangd; `@note`; doesn't affect compilation)
 
 Disable MSVC warnings:
-- 5105, macro expansion producing 'defined' has undefined behavior (source: OS; `winbase.h`)
+- 5105, macro expansion producing 'defined' has undefined behavior (source: OS; `winbase.h`; is unfixable)
 */
