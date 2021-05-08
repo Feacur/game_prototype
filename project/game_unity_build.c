@@ -3,6 +3,7 @@
 #include "framework/input.c"
 #include "framework/unicode.c"
 #include "framework/vector_types.c"
+#include "framework/logger.c"
 
 #include "framework/graphics/types.c"
 #include "framework/graphics/material.c"
