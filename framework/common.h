@@ -31,7 +31,7 @@
 #endif
 
 // -- DEBUG_BREAK
-#if defined(GAME_TARGET_DEBUG)
+#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
 	#if defined(__clang__)
 		#define DEBUG_BREAK() __builtin_debugtrap()
 	#elif defined(_MSC_VER)

@@ -7,7 +7,7 @@
 uint32_t grow_capacity_value_u32(uint32_t current, uint32_t delta) {
 	uint32_t target = current + delta;
 
-	#if defined(GAME_TARGET_DEBUG)
+	#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
 	if (target < current) {
 		logger_to_console("requested value is too large\n"); DEBUG_BREAK();
 		return current;
@@ -19,7 +19,7 @@ uint32_t grow_capacity_value_u32(uint32_t current, uint32_t delta) {
 		current = mul_div_u32(current, 3, 2);
 	}
 
-	#if defined(GAME_TARGET_DEBUG)
+	#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
 	if (current < target) {
 		logger_to_console("requested value is too large\n"); DEBUG_BREAK();
 		return target;
@@ -32,7 +32,7 @@ uint32_t grow_capacity_value_u32(uint32_t current, uint32_t delta) {
 uint64_t grow_capacity_value_u64(uint64_t current, uint64_t delta) {
 	uint64_t target = current + delta;
 
-	#if defined(GAME_TARGET_DEBUG)
+	#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
 	if (target < current) {
 		logger_to_console("requested value is too large\n"); DEBUG_BREAK();
 		return current;
@@ -44,7 +44,7 @@ uint64_t grow_capacity_value_u64(uint64_t current, uint64_t delta) {
 		current = mul_div_u64(current, 3, 2);
 	}
 
-	#if defined(GAME_TARGET_DEBUG)
+	#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
 	if (current < target) {
 		logger_to_console("requested value is too large\n"); DEBUG_BREAK();
 		return target;
@@ -59,7 +59,7 @@ bool should_hash_table_grow(uint32_t capacity, uint32_t count) {
 }
 
 uint32_t adjust_hash_table_capacity_value(uint32_t value) {
-	#if defined(GAME_TARGET_DEBUG)
+	#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
 	if (value > 0x80000000) {
 		logger_to_console("requested value is too large\n"); DEBUG_BREAK();
 		return 0x80000000;

@@ -63,9 +63,12 @@ Defines:
 - WIN32_LEAN_AND_MEAN     (Windows OS)
 - NOMINMAX                (Windows OS)
 - UNICODE                 (Windows OS)
+- GAME_TARGET_OPTIMIZED   (this game, optional)
+- GAME_TARGET_DEVELOPMENT (this game, optional)
 - GAME_TARGET_DEBUG       (this game, optional)
 - _MT                     (MSVC, dynamic CRT)
 - _DLL                    (MSVC, dynamic CRT)
+- _DEBUG                  (MSVC, debug CRT)
 
 Features:
 - disable exceptions
@@ -78,6 +81,8 @@ Libs:
 - MSVC CRT:
   - dynamic: ucrt.lib, vcruntime.lib, msvcrt.lib
   - static:  libucrt.lib, libvcruntime.lib, libcmt.lib
+  - dynamic_debug: ucrtd.lib, vcruntimed.lib, msvcrtd.lib
+  - static_debug:  libucrtd.lib, libvcruntimed.lib, libcmtd.lib
 
 Disable Clang warnings:
 - switch-enum                     (allow partial list of enum cases in switch statements)

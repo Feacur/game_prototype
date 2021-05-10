@@ -6,11 +6,11 @@ chcp 65001 > nul
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
 rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
-rem optimized|debug
+rem optimized|development|debug
 set configuration=%1
 if [%configuration%] == [] ( set configuration=optimized )
 
-rem static|dynamic
+rem static|dynamic|static_debug|dynamic_debug
 set runtime_mode=%2
 if [%runtime_mode%] == [] ( set runtime_mode=static )
 
@@ -41,20 +41,31 @@ set compiler=-nologo -diagnostics:caret -EHa- -GR-
 set linker=-nologo -WX -subsystem:console
 
 set linker=%linker% -nodefaultlib
-if %runtime_mode% == dynamic (
+if %runtime_mode% == static (
+	set libs=%libs% libucrt.lib libvcruntime.lib libcmt.lib
+) else if %runtime_mode% == dynamic (
 	set libs=%libs% ucrt.lib vcruntime.lib msvcrt.lib
 	set defines=%defines% -D_MT -D_DLL
-) else (
-	set libs=%libs% libucrt.lib libvcruntime.lib libcmt.lib
+) else if %runtime_mode% == static_debug (
+	set libs=%libs% libucrtd.lib libvcruntimed.lib libcmtd.lib
+	set defines=%defines% -D_DEBUG
+) else if %runtime_mode% == dynamic_debug (
+	set libs=%libs% ucrtd.lib vcruntimed.lib msvcrtd.lib
+	set defines=%defines% -D_MT -D_DLL -D_DEBUG
 )
 
-if %configuration% == debug (
-	set defines=%defines% -DGAME_TARGET_DEBUG
-	set compiler=%compiler% -Od -Zi
-	set linker=%linker% -debug:full
-) else (
+if %configuration% == optimized (
 	set compiler=%compiler% -O2
 	set linker=%linker% -debug:none
+	set defines=%defines% -DGAME_TARGET_OPTIMIZED
+) else if %configuration% == development (
+	set compiler=%compiler% -O2 -Zi
+	set linker=%linker% -debug:full
+	set defines=%defines% -DGAME_TARGET_DEVELOPMENT
+) else if %configuration% == debug (
+	set compiler=%compiler% -Od -Zi
+	set linker=%linker% -debug:full
+	set defines=%defines% -DGAME_TARGET_DEBUG
 )
 
 set compiler=%compiler% %includes% %defines%
