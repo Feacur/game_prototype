@@ -135,7 +135,7 @@ struct Ref gpu_program_init(struct Array_Byte * asset) {
 
 	// a mandatory version header
 	static GLchar glsl_version[20];
-	GLint glsl_version_length = sprintf(
+	GLint glsl_version_length = logger_to_buffer(
 		glsl_version, "#version %d core\n",
 		(ogl_version > 33) ? ogl_version * 10 : 330
 	);
@@ -393,7 +393,7 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image * asset) {
 		);
 	}
 	else if (gpu_texture->parameters.flags & TEXTURE_FLAG_MUTABLE) {
-		printf("WARNING! reallocating a buffer\n"); // DEBUG_BREAK();
+		logger_to_console("WARNING! reallocating a buffer\n"); // DEBUG_BREAK();
 		glBindTexture(GL_TEXTURE_2D, gpu_texture->id);
 		glTexImage2D(
 			GL_TEXTURE_2D, level,
@@ -693,7 +693,7 @@ void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh * asset) {
 			);
 		}
 		else if (parameters->flags & MESH_FLAG_MUTABLE) {
-			printf("WARNING! reallocating a buffer\n"); // DEBUG_BREAK();
+			logger_to_console("WARNING! reallocating a buffer\n"); // DEBUG_BREAK();
 			gpu_mesh->capacities[i] = gpu_mesh->counts[i];
 			glNamedBufferData(
 				gpu_mesh->buffer_ids[i],

@@ -314,7 +314,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 /*
 	char key_name[32];
 	GetKeyNameText((LONG)((scan << 16) | (is_extended << 24)), key_name, sizeof(key_name));
-	printf("%s\n", key_name);
+	logger_to_console("%s\n", key_name);
 */
 }
 

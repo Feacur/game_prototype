@@ -203,7 +203,7 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 	if (input_mouse(MC_LEFT)) {
 		int32_t x, y;
 		input_mouse_delta(&x, &y);
-		printf("delta: %d %d\n", x, y);
+		logger_to_console("delta: %d %d\n", x, y);
 	}
 
 	state.object.transform.rotation = vec4_norm(quat_mul(state.object.transform.rotation, quat_set_radians(

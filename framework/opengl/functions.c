@@ -14,7 +14,7 @@ void glibrary_functions_init(void * (* get)(char const * name)) {
 			glGetIntegerv(GL_MINOR_VERSION, &version_minor); \
 			ogl_version = (uint32_t)(version_major * 10 + version_minor); \
 			\
-			printf( \
+			logger_to_console( \
 				"OpenGL info:" \
 				"\n  - vendor:   %s" \
 				"\n  - renderer: %s" \
