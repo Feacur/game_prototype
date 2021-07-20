@@ -42,7 +42,7 @@ if not %build_mode% == unity_link (
 
 rem |> OPTIONS
 set includes=-I".." -I"../third_party"
-set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE
+set defines=-D_CRT_SECURE_NO_WARNINGS -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE
 set libs=kernel32.lib user32.lib gdi32.lib
 set warnings=-Werror -Weverything
 set compiler=-fno-exceptions -fno-rtti
