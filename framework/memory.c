@@ -6,6 +6,10 @@
 
 // @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
 
+// @todo: put meta right into pointer headers instead of a dictionary? alongside?
+//        keeping at least lightweight hashset allows us to verify pointers we own
+//        but it's just an extra failsafe then
+
 struct Pointer_Data {
 	size_t size;
 	void const * owner;
@@ -22,15 +26,15 @@ static struct Memory_State {
 #include "memory.h"
 
 // void * memory_allocate(void const * owner, char const * source, size_t size) {
-// 	bool const track_allocation = (memory_state.pointers != NULL && memory_state.pointers != owner);
+// 	bool const track_allocation = (&memory_state.pointers != owner);
 // 
 // 	void * result = malloc(size);
-// 	if (result == NULL) { debug_log("'malloc' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+// 	if (result == NULL) { logger_to_console("'malloc' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 // 
 // 	if (track_allocation) {
 // 		memory_state.pointers_count++;
 // 		memory_state.total_bytes += size;
-// 		hash_table_u64_set(memory_state.pointers, (uint64_t)result, &(struct Pointer_Data){
+// 		hash_table_u64_set(&memory_state.pointers, (uint64_t)result, &(struct Pointer_Data){
 // 			.size   = size,
 // 			.owner  = owner,
 // 			.source = source,
@@ -42,13 +46,18 @@ static struct Memory_State {
 
 void * memory_reallocate(void const * owner, char const * source, void * pointer, size_t size) {
 	bool const track_allocation = (&memory_state.pointers != owner);
+
 	struct Pointer_Data const * pointer_data = NULL;
-	if (pointer != NULL && track_allocation) {
+	if (track_allocation && pointer != NULL) {
 		pointer_data = hash_table_u64_get(&memory_state.pointers, (uint64_t)pointer);
 	}
 
 	if (size == 0) {
+		if (pointer == NULL) { return NULL; }
+
+		if (track_allocation && pointer_data == NULL) { logger_to_console("already freed\n"); DEBUG_BREAK(); return NULL; }
 		free(pointer);
+
 		if (pointer_data != NULL) {
 			memory_state.pointers_count--;
 			memory_state.total_bytes -= pointer_data->size;
@@ -80,18 +89,21 @@ void * memory_reallocate(void const * owner, char const * source, void * pointer
 }
 
 // void memory_free(void const * owner, char const * source, void * pointer) {
-// 	bool const track_allocation = (memory_state.pointers != NULL && memory_state.pointers != owner);
+// 	if (pointer == NULL) { return; }
+// 
+// 	bool const track_allocation = (&memory_state.pointers != owner);
 // 	struct Pointer_Data const * pointer_data = NULL;
-// 	if (pointer != NULL && track_allocation) {
-// 		pointer_data = hash_table_u64_get(memory_state.pointers, (uint64_t)pointer);
+// 	if (track_allocation && pointer != NULL) {
+// 		pointer_data = hash_table_u64_get(&memory_state.pointers, (uint64_t)pointer);
 // 	}
 // 
+// 	if (track_allocation && pointer_data == NULL) { logger_to_console("already freed\n"); DEBUG_BREAK(); return; }
 // 	free(pointer);
 // 
 // 	if (pointer_data != NULL) {
 // 		memory_state.pointers_count--;
 // 		memory_state.total_bytes -= pointer_data->size;
-// 		hash_table_u64_del(memory_state.pointers, (uint64_t)pointer);
+// 		hash_table_u64_del(&memory_state.pointers, (uint64_t)pointer);
 // 	}
 // }
 
