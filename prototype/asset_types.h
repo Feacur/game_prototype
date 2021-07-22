@@ -34,6 +34,8 @@ void asset_image_free(void * instance);
 // -- Asset font part
 struct Asset_Font {
 	struct Font * font;
+	// @todo: map font size to buffer and gpu_ref pair?
+	//        put differently sized glyphs onto one atlas?
 	struct Font_Image * buffer;
 	struct Ref gpu_ref;
 };

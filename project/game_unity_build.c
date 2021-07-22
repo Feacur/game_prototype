@@ -19,6 +19,7 @@
 #include "framework/containers/hash_table_any.c"
 #include "framework/containers/hash_table_u32.c"
 #include "framework/containers/hash_table_u64.c"
+#include "framework/containers/hash_set_u32.c"
 #include "framework/containers/ref_table.c"
 #include "framework/containers/strings.c"
 

@@ -19,6 +19,7 @@ framework/containers/array_u64.c
 framework/containers/hash_table_any.c
 framework/containers/hash_table_u32.c
 framework/containers/hash_table_u64.c
+framework/containers/hash_set_u32.c
 framework/containers/ref_table.c
 framework/containers/strings.c
 

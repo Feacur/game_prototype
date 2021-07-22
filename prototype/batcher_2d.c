@@ -4,6 +4,7 @@
 #include "framework/unicode.h"
 #include "framework/logger.h"
 
+#include "framework/containers/hash_set_u32.h"
 #include "framework/containers/array_any.h"
 #include "framework/containers/array_float.h"
 #include "framework/containers/array_u32.h"
@@ -192,29 +193,45 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 	float const line_height = font_image_get_height(font->buffer) + font_image_get_gap(font->buffer);
 	float offset_x = x, offset_y = y;
 
-	font_image_build(font->buffer, 1, (uint32_t[]){' ', '~'});
-	gpu_texture_update(font->gpu_ref, font_image_get_asset(font->buffer));
+	struct Hash_Set_U32 codepoints;
+	hash_set_u32_init(&codepoints);
 
-	//
-	// font_image_reconstruct_start(font);
-	// for (uint32_t i = 0; i < length; /*empty*/) {
-	// 	uint32_t const octets_count = utf8_length(data + i);
-	// 	if (octets_count == 0) { i++; continue; }
-	// 
-	// 	uint32_t codepoint = utf8_decode(data + i, octets_count);
-	// 	if (codepoint == CODEPOINT_EMPTY) { i++; continue; }
-	// 
-	// 	i += octets_count;
-	// 
-	// 	// whitespace
-	// 	switch (codepoint) {
-	// 		case 0xa0: continue; // non-breaking space
-	// 		case 0x200b: continue; // zero-width space
-	// 	}
-	// 
-	// 	if (codepoint <= ' ') { continue; }
-	// }
-	// font_image_reconstruct_end(font);
+	for (uint32_t i = 0; i < length; /*empty*/) {
+		uint32_t const octets_count = utf8_length(data + i);
+		if (octets_count == 0) { i++; continue; }
+	
+		uint32_t codepoint = utf8_decode(data + i, octets_count);
+		if (codepoint == CODEPOINT_EMPTY) { i++; continue; }
+	
+		i += octets_count;
+	
+		// whitespace
+		switch (codepoint) {
+			case 0xa0: continue; // non-breaking space
+			case 0x200b: continue; // zero-width space
+		}
+	
+		if (codepoint < ' ') { continue; }
+
+		hash_set_u32_set(&codepoints, codepoint);
+	}
+
+	struct Array_U32 codepoint_pairs;
+	array_u32_init(&codepoint_pairs);
+	array_u32_resize(&codepoint_pairs, codepoints.count);
+
+	struct Hash_Set_U32_Entry it = {0};
+	while (hash_set_u32_iterate(&codepoints, &it)) {
+		array_u32_push(&codepoint_pairs, it.key_hash);
+		array_u32_push(&codepoint_pairs, it.key_hash);
+	}
+
+	hash_set_u32_free(&codepoints);
+
+	font_image_build(font->buffer, codepoint_pairs.count / 2, codepoint_pairs.data);
+	array_u32_free(&codepoint_pairs);
+
+	gpu_texture_update(font->gpu_ref, font_image_get_asset(font->buffer));
 
 	//
 	struct Font_Glyph const * glyph_space = font_image_get_glyph(font->buffer, ' ');

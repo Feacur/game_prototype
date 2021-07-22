@@ -65,9 +65,6 @@ void asset_image_free(void * instance) {
 void asset_font_init(void * instance, char const * name) {
 	struct Font * font = font_init(name);
 
-	// @todo: allow variable-sized fonts
-	// @todo: dynamically generate glyphs
-	// @todo: multiple buffers and gpu-textures?
 	struct Font_Image * buffer = font_image_init(font, 32);
 
 	struct Asset_Font * asset = instance;

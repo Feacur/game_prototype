@@ -6,7 +6,6 @@
 struct Font_Image;
 struct Image;
 struct Font;
-struct Glyph_Params;
 struct Font_Glyph;
 
 struct Font_Image * font_image_init(struct Font * font, int32_t size);
