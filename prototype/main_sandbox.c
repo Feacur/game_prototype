@@ -297,6 +297,16 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	batcher_2d_set_material(state.batcher, &state.materials.batcher);
 	batcher_2d_set_texture(state.batcher, font_open_sans->gpu_ref);
 
+
+	//
+	char const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
+
+	font_image_clear(font_open_sans->buffer);
+	font_image_add_text(font_open_sans->buffer, text_test->length, text_test->data);
+	font_image_add_text(font_open_sans->buffer, sizeof(test111) / (sizeof(*test111)) - 1, (uint8_t const *)test111);
+
+	font_image_build(font_open_sans->buffer);
+
 	batcher_2d_add_text(
 		state.batcher,
 		font_open_sans,
@@ -304,6 +314,16 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		text_test->data,
 		50, 200
 	);
+
+	batcher_2d_add_text(
+		state.batcher,
+		font_open_sans,
+		sizeof(test111) / (sizeof(*test111)) - 1,
+		(uint8_t const *)test111,
+		600, 200
+	);
+
+	gpu_texture_update(font_open_sans->gpu_ref, font_image_get_asset(font_open_sans->buffer));
 
 	struct Image const * font_image = font_image_get_asset(font_open_sans->buffer);
 	batcher_2d_add_quad(

@@ -193,47 +193,6 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 	float const line_height = font_image_get_height(font->buffer) + font_image_get_gap(font->buffer);
 	float offset_x = x, offset_y = y;
 
-	struct Hash_Set_U32 codepoints;
-	hash_set_u32_init(&codepoints);
-
-	for (uint32_t i = 0; i < length; /*empty*/) {
-		uint32_t const octets_count = utf8_length(data + i);
-		if (octets_count == 0) { i++; continue; }
-	
-		uint32_t codepoint = utf8_decode(data + i, octets_count);
-		if (codepoint == CODEPOINT_EMPTY) { i++; continue; }
-	
-		i += octets_count;
-	
-		// whitespace
-		switch (codepoint) {
-			case 0xa0: continue; // non-breaking space
-			case 0x200b: continue; // zero-width space
-		}
-	
-		if (codepoint < ' ') { continue; }
-
-		hash_set_u32_set(&codepoints, codepoint);
-	}
-
-	struct Array_U32 codepoint_pairs;
-	array_u32_init(&codepoint_pairs);
-	array_u32_resize(&codepoint_pairs, codepoints.count);
-
-	struct Hash_Set_U32_Entry it = {0};
-	while (hash_set_u32_iterate(&codepoints, &it)) {
-		array_u32_push(&codepoint_pairs, it.key_hash);
-		array_u32_push(&codepoint_pairs, it.key_hash);
-	}
-
-	hash_set_u32_free(&codepoints);
-
-	font_image_build(font->buffer, codepoint_pairs.count / 2, codepoint_pairs.data);
-	array_u32_free(&codepoint_pairs);
-
-	gpu_texture_update(font->gpu_ref, font_image_get_asset(font->buffer));
-
-	//
 	struct Font_Glyph const * glyph_space = font_image_get_glyph(font->buffer, ' ');
 	struct Font_Glyph const * glyph_error = font_image_get_glyph(font->buffer, CODEPOINT_EMPTY);
 
@@ -242,16 +201,18 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 
 	uint32_t previous_codepoint = 0;
 	for (uint32_t i = 0; i < length; /*see `continue_loop:`*/) {
-		uint32_t codepoint = 0;
+		uint32_t const codepoint_for_kerning = previous_codepoint;
+		previous_codepoint = 0;
 
 		//
 		uint32_t const octets_count = utf8_length(data + i);
 		if (octets_count == 0) { goto continue_loop; }
 
-		codepoint = utf8_decode(data + i, octets_count);
+		uint32_t const codepoint = utf8_decode(data + i, octets_count);
+		previous_codepoint = codepoint;
 		if (codepoint == CODEPOINT_EMPTY) { goto continue_loop; }
 
-		// whitespace
+		// control
 		switch (codepoint) {
 			case ' ':
 			case 0xa0: // non-breaking space
@@ -262,8 +223,12 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 				offset_x += tab_size;
 				goto continue_loop;
 
+			// case '\r':
+			// 	offset_x = x;
+			// 	goto continue_loop;
+
 			case '\n':
-				offset_x = x;
+				offset_x = x; // @idea: rely on [now outdated?] `\r`?
 				offset_y -= line_height;
 				goto continue_loop;
 
@@ -277,7 +242,7 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 		struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, codepoint);
 		if (glyph == NULL) { glyph = glyph_error; }
 
-		offset_x += font_image_get_kerning(font->buffer, previous_codepoint, codepoint);
+		offset_x += font_image_get_kerning(font->buffer, codepoint_for_kerning, codepoint);
 		batcher_2d_add_quad(
 			batcher,
 			(float[]){
@@ -294,13 +259,12 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 		//
 		continue_loop:
 		i += (octets_count > 0) ? octets_count : 1;
-		previous_codepoint = codepoint;
 	}
 }
 
 void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size_y, struct Ref gpu_target_ref) {
-	uint32_t const texture_id   = graphics_add_uniform("u_Texture");
-	uint32_t const color_id     = graphics_add_uniform("u_Color");
+	uint32_t const texture_id = graphics_add_uniform("u_Texture");
+	uint32_t const color_id   = graphics_add_uniform("u_Color");
 
 	//
 	batcher_2d_update_asset(batcher);
