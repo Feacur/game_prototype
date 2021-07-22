@@ -19,6 +19,8 @@
 #include "framework/graphics/font_image_glyph.h"
 #include "framework/maths.h"
 
+#include "asset_types.h"
+
 #include <string.h>
 
 struct Batcher_2D_Batch {
@@ -186,55 +188,79 @@ void batcher_2d_add_quad(
 	batcher->element_offset += 3 * 2;
 }
 
-void batcher_2d_add_text(struct Batcher_2D * batcher, struct Font_Image * font, uint32_t length, uint8_t const * data, float x, float y) {
-	float const line_height = font_image_get_height(font) + font_image_get_gap(font);
+void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * font, uint32_t length, uint8_t const * data, float x, float y) {
+	float const line_height = font_image_get_height(font->buffer) + font_image_get_gap(font->buffer);
 	float offset_x = x, offset_y = y;
 
-	struct Font_Glyph const * glyph_space = font_image_get_glyph(font, ' ');
-	struct Font_Glyph const * glyph_error = font_image_get_glyph(font, CODEPOINT_EMPTY);
+	font_image_build(font->buffer, 1, (uint32_t[]){' ', '~'});
+	gpu_texture_update(font->gpu_ref, font_image_get_asset(font->buffer));
+
+	//
+	// font_image_reconstruct_start(font);
+	// for (uint32_t i = 0; i < length; /*empty*/) {
+	// 	uint32_t const octets_count = utf8_length(data + i);
+	// 	if (octets_count == 0) { i++; continue; }
+	// 
+	// 	uint32_t codepoint = utf8_decode(data + i, octets_count);
+	// 	if (codepoint == CODEPOINT_EMPTY) { i++; continue; }
+	// 
+	// 	i += octets_count;
+	// 
+	// 	// whitespace
+	// 	switch (codepoint) {
+	// 		case 0xa0: continue; // non-breaking space
+	// 		case 0x200b: continue; // zero-width space
+	// 	}
+	// 
+	// 	if (codepoint <= ' ') { continue; }
+	// }
+	// font_image_reconstruct_end(font);
+
+	//
+	struct Font_Glyph const * glyph_space = font_image_get_glyph(font->buffer, ' ');
+	struct Font_Glyph const * glyph_error = font_image_get_glyph(font->buffer, CODEPOINT_EMPTY);
 
 	float const space_size = (glyph_space != NULL) ? glyph_space->params.full_size_x : 0;
 	float const tab_size = space_size * 4;
 
-	uint32_t codepoint = 0;
-	for (uint32_t i = 0; i < length;) {
-		uint32_t previous_codepoint = codepoint;
+	uint32_t previous_codepoint = 0;
+	for (uint32_t i = 0; i < length; /*see `continue_loop:`*/) {
+		uint32_t codepoint = 0;
 
+		//
 		uint32_t const octets_count = utf8_length(data + i);
-		if (octets_count == 0) { codepoint = 0; i++; continue; }
+		if (octets_count == 0) { goto continue_loop; }
 
 		codepoint = utf8_decode(data + i, octets_count);
-		if (codepoint == CODEPOINT_EMPTY) { i++; continue; }
+		if (codepoint == CODEPOINT_EMPTY) { goto continue_loop; }
 
-		i += octets_count;
-
-		// white space
+		// whitespace
 		switch (codepoint) {
 			case ' ':
 			case 0xa0: // non-breaking space
 				offset_x += space_size;
-				continue;
+				goto continue_loop;
 
 			case '\t':
 				offset_x += tab_size;
-				continue;
+				goto continue_loop;
 
 			case '\n':
 				offset_x = x;
 				offset_y -= line_height;
-				continue;
+				goto continue_loop;
 
 			case 0x200b: // zero-width space
-				continue;
+				goto continue_loop;
 		}
 
-		if (codepoint < ' ') { continue; }
+		if (codepoint < ' ') { goto continue_loop; }
 
 		// possible glyph
-		struct Font_Glyph const * glyph = font_image_get_glyph(font, codepoint);
+		struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, codepoint);
 		if (glyph == NULL) { glyph = glyph_error; }
 
-		offset_x += font_image_get_kerning(font, previous_codepoint, codepoint);
+		offset_x += font_image_get_kerning(font->buffer, previous_codepoint, codepoint);
 		batcher_2d_add_quad(
 			batcher,
 			(float[]){
@@ -247,6 +273,11 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Font_Image * font, 
 		);
 
 		offset_x += glyph->params.full_size_x;
+
+		//
+		continue_loop:
+		i += (octets_count > 0) ? octets_count : 1;
+		previous_codepoint = codepoint;
 	}
 }
 
@@ -284,8 +315,8 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 	array_any_clear(&batcher->batches);
 	array_any_clear(&batcher->vertices);
 	batcher->indices.count  = 0;
-	batcher->vertex_offset   = 0;
-	batcher->element_offset  = 0;
+	batcher->vertex_offset  = 0;
+	batcher->element_offset = 0;
 }
 
 //

@@ -394,6 +394,8 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image * asset) {
 	}
 	else if (gpu_texture->parameters.flags & TEXTURE_FLAG_MUTABLE) {
 		logger_to_console("WARNING! reallocating a buffer\n"); // DEBUG_BREAK();
+		gpu_texture->size_x = asset->size_x;
+		gpu_texture->size_y = asset->size_y;
 		glBindTexture(GL_TEXTURE_2D, gpu_texture->id);
 		glTexImage2D(
 			GL_TEXTURE_2D, level,

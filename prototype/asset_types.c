@@ -69,14 +69,11 @@ void asset_font_init(void * instance, char const * name) {
 	// @todo: dynamically generate glyphs
 	// @todo: multiple buffers and gpu-textures?
 	struct Font_Image * buffer = font_image_init(font, 32);
-	font_image_build(buffer, 1, (uint32_t[]){' ', '~'});
-
-	struct Ref const gpu_ref = gpu_texture_init(font_image_get_asset(buffer));
 
 	struct Asset_Font * asset = instance;
 	asset->font = font;
 	asset->buffer = buffer;
-	asset->gpu_ref = gpu_ref;
+	asset->gpu_ref = gpu_texture_init(font_image_get_asset(buffer));
 }
 
 void asset_font_free(void * instance) {

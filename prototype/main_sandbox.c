@@ -299,7 +299,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	batcher_2d_add_text(
 		state.batcher,
-		font_open_sans->buffer,
+		font_open_sans,
 		text_test->length,
 		text_test->data,
 		50, 200
