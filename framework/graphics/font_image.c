@@ -23,7 +23,7 @@ struct Font_Image {
 	struct Hash_Table_U32 table;
 	struct Hash_Table_U64 kerning;
 	float scale;
-	bool is_rendered;
+	bool rendered;
 };
 
 //
@@ -32,6 +32,10 @@ struct Font_Image {
 struct Font_Symbol {
 	struct Font_Glyph * glyph;
 	uint32_t codepoint;
+};
+
+struct Glyph_Codepoint {
+	uint32_t glyph, codepoint;
 };
 
 struct Font_Image * font_image_init(struct Font * font, int32_t size) {
@@ -83,54 +87,94 @@ struct Image * font_image_get_asset(struct Font_Image * font_image) {
 	return &font_image->buffer;
 }
 
-void font_image_add_range(struct Font_Image * font_image, uint32_t from, uint32_t to) {
+inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t codepoint);
+void font_image_add_glyphs_from_range(struct Font_Image * font_image, uint32_t from, uint32_t to) {
 	for (uint32_t codepoint = from; codepoint <= to; codepoint++) {
-		struct Font_Glyph * glyph = hash_table_u32_get(&font_image->table, codepoint);
-		if (glyph != NULL) { glyph->usage = true; continue; }
-
-		uint32_t const glyph_id = font_get_glyph_id(font_image->font, codepoint);
-		if (glyph_id == 0) { continue; }
-
-		struct Glyph_Params glyph_params;
-		font_get_glyph_parameters(font_image->font, &glyph_params, glyph_id, font_image->scale);
-
-		font_image->is_rendered = false;
-		hash_table_u32_set(&font_image->table, codepoint, &(struct Font_Glyph){
-			.params = glyph_params,
-			.id = glyph_id,
-			.usage = true,
-		});
+		font_image_add_glyph(font_image, codepoint);
 	}
 }
 
-void font_image_add_text(struct Font_Image * font_image, uint32_t length, uint8_t const * data) {
-	for (uint32_t i = 0; i < length; /*see `continue_loop:`*/) {
-		uint32_t const octets_count = utf8_length(data + i);
-		if (octets_count == 0) { goto continue_loop; }
-	
-		uint32_t const codepoint = utf8_decode(data + i, octets_count);
-		if (codepoint == CODEPOINT_EMPTY) { goto continue_loop; }
+void font_image_add_glyphs_from_text(struct Font_Image * font_image, uint32_t length, uint8_t const * data) {
+	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) {
+		switch (it.codepoint) {
+			case CODEPOINT_ZERO_WIDTH_SPACE: break;
 
-		// control
-		switch (codepoint) {
-			case 0x200b: goto continue_loop; // zero-width space
+			case ' ':
+			case CODEPOINT_NON_BREAKING_SPACE:
+				font_image_add_glyph(font_image, ' ');
+				break;
+
+			default: if (it.codepoint > ' ') {
+				font_image_add_glyph(font_image, it.codepoint);
+			} break;
 		}
+	}
+}
 
-		if (codepoint < ' ') { goto continue_loop; }
+inline static void font_image_add_kerning(struct Font_Image * font_image, uint32_t codepoint1, uint32_t codepoint2, uint32_t glyph1, uint32_t glyph2);
+void font_image_add_kerning_from_range(struct Font_Image * font_image, uint32_t from, uint32_t to) {
+	uint32_t * glyphs = MEMORY_ALLOCATE_ARRAY(font_image, uint32_t, to - from + 1);
 
-		switch (codepoint) {
-			case 0xa0: font_image_add_range(font_image, ' ', ' '); continue; // non-breaking space
-			default: font_image_add_range(font_image, codepoint, codepoint); break;
+	uint32_t count = 0;
+	for (uint32_t codepoint = from; codepoint <= to; codepoint++) {
+		uint32_t const glyph_id = font_get_glyph_id(font_image->font, codepoint);
+		if (glyph_id == 0) { continue; }
+		glyphs[count] = glyph_id;
+		count++;
+	}
+
+	for (uint32_t i1 = 0; i1 < count; i1++) {
+		uint32_t const codepoint1 = from + i1;
+		uint32_t const glyph1 = glyphs[i1];
+		for (uint32_t i2 = 0; i2 < count; i2++) {
+			font_image_add_kerning(font_image, codepoint1, from + i2, glyph1, glyphs[i2]);
 		}
+	}
 
-		//
-		continue_loop:
-		i += (octets_count > 0) ? octets_count : 1;
+	MEMORY_FREE(font_image, glyphs);
+}
+
+void font_image_add_kerning_from_text(struct Font_Image * font_image, uint32_t length, uint8_t const * data) {
+	uint32_t codepoints_count = 0;
+	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) { codepoints_count++; }
+
+	struct Glyph_Codepoint * pairs = MEMORY_ALLOCATE_ARRAY(font_image, struct Glyph_Codepoint, codepoints_count);
+
+	uint32_t count = 0;
+	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) {
+		uint32_t const glyph_id = font_get_glyph_id(font_image->font, it.codepoint);
+		if (glyph_id == 0) { continue; }
+		pairs[count] = (struct Glyph_Codepoint){
+			.glyph = glyph_id,
+			.codepoint = it.codepoint,
+		};
+		count++;
+	}
+
+	for (uint32_t i1 = 0; i1 < count; i1++) {
+		struct Glyph_Codepoint const pair1 = pairs[i1];
+		for (uint32_t i2 = 0; i2 < count; i2++) {
+			struct Glyph_Codepoint const pair2 = pairs[i2];
+			font_image_add_kerning(font_image, pair1.codepoint, pair2.codepoint, pair1.glyph, pair2.glyph);
+		}
+	}
+
+	MEMORY_FREE(font_image, pairs);
+}
+
+void font_image_add_kerning_all(struct Font_Image * font_image) {
+	hash_table_u64_clear(&font_image->kerning);
+	for (struct Hash_Table_U32_Entry it1 = {0}; hash_table_u32_iterate(&font_image->table, &it1); /*empty*/) {
+		struct Font_Glyph const * glyph1 = it1.value;
+		for (struct Hash_Table_U32_Entry it2 = {0}; hash_table_u32_iterate(&font_image->table, &it2); /*empty*/) {
+			struct Font_Glyph const * glyph2 = it2.value;
+			font_image_add_kerning(font_image, it1.key_hash, it2.key_hash, glyph1->id, glyph2->id);
+		}
 	}
 }
 
 static int font_image_sort_comparison(void const * v1, void const * v2);
-void font_image_build(struct Font_Image * font_image) {
+void font_image_render(struct Font_Image * font_image) {
 	uint32_t const padding = 1;
 
 	// track glyphs usage
@@ -139,21 +183,29 @@ void font_image_build(struct Font_Image * font_image) {
 		struct Font_Glyph * glyph = it.value;
 
 		if (!glyph->usage) {
+			font_image->rendered = false;
 			hash_table_u32_del_at(&font_image->table, it.current);
-			font_image->is_rendered = false;
 			continue;
 		}
 
 		glyph->usage = false;
 	}
 
-	// @todo: render glyphs more lazily, without sorting
-	//        and clearing atlas until strictly required
-	if (font_image->is_rendered) { return; }
+	if (font_image->rendered) { return; }
+	font_image->rendered = true;
 
 	// collect renderable glyphs
+	uint32_t symbols_to_render_count = 0;
+	for (struct Hash_Table_U32_Entry it = {0}; hash_table_u32_iterate(&font_image->table, &it); /*empty*/) {
+		struct Font_Glyph const * glyph = it.value;
+		if (glyph->params.is_empty) { continue; }
+		symbols_to_render_count++;
+	}
+
+	if (symbols_to_render_count == 0) { return; }
+
 	uint32_t symbols_count = 0;
-	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(font_image, struct Font_Symbol, font_image->table.count);
+	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(font_image, struct Font_Symbol, symbols_to_render_count);
 
 	for (struct Hash_Table_U32_Entry it = {0}; hash_table_u32_iterate(&font_image->table, &it); /*empty*/) {
 		struct Font_Glyph const * glyph = it.value;
@@ -194,6 +246,16 @@ void font_image_build(struct Font_Image * font_image) {
 			atlas_size_y = atlas_size_y / 2;
 		}
 
+		bool const should_grow = (font_image->buffer.size_x < atlas_size_x || font_image->buffer.size_y < atlas_size_y);
+
+		if (atlas_size_x < font_image->buffer.size_x) {
+			atlas_size_x = font_image->buffer.size_x;
+		}
+
+		if (atlas_size_y < font_image->buffer.size_y) {
+			atlas_size_y = font_image->buffer.size_y;
+		}
+
 		// verify estimated atlas dimensions
 		uint32_t line_height = 0;
 		uint32_t offset_x = padding, offset_y = padding;
@@ -222,11 +284,10 @@ void font_image_build(struct Font_Image * font_image) {
 			offset_x += size_x + padding;
 		}
 
-		// @todo: keep the maximum size without shrinking?
-		if (font_image->buffer.size_x != atlas_size_x || font_image->buffer.size_y != atlas_size_y) {
+		if (should_grow) {
+			font_image->buffer.data = MEMORY_REALLOCATE_ARRAY(font_image, font_image->buffer.data, atlas_size_x * atlas_size_y);
 			font_image->buffer.size_x = atlas_size_x;
 			font_image->buffer.size_y = atlas_size_y;
-			font_image->buffer.data = MEMORY_REALLOCATE_ARRAY(font_image, font_image->buffer.data, atlas_size_x * atlas_size_y);
 		}
 	}
 
@@ -286,24 +347,6 @@ void font_image_build(struct Font_Image * font_image) {
 	}
 
 	MEMORY_FREE(font_image, symbols);
-
-	// cache kerning
-	for (struct Hash_Table_U32_Entry it1 = {0}; hash_table_u32_iterate(&font_image->table, &it1); /*empty*/) {
-		if (it1.key_hash == CODEPOINT_EMPTY) { continue; }
-		struct Font_Glyph const * glyph1 = it1.value;
-
-		for (struct Hash_Table_U32_Entry it2 = {0}; hash_table_u32_iterate(&font_image->table, &it2); /*empty*/) {
-			if (it2.key_hash == CODEPOINT_EMPTY) { continue; }
-			struct Font_Glyph const * glyph2 = it2.value;
-
-			int32_t const value = font_get_kerning(font_image->font, glyph1->id, glyph2->id);
-			if (value == 0) { continue; }
-
-			uint64_t const key_hash = ((uint64_t)it2.key_hash << 32) | (uint64_t)it1.key_hash;
-			float const value_float = ((float)value) * font_image->scale;
-			hash_table_u64_set(&font_image->kerning, key_hash, &value_float);
-		}
-	}
 }
 
 struct Font_Glyph const * font_image_get_glyph(struct Font_Image * const font_image, uint32_t codepoint) {
@@ -351,4 +394,33 @@ static int font_image_sort_comparison(void const * v1, void const * v2) {
 	if (size_x_1 > size_x_2) { return -1; }
 
 	return 0;
+}
+
+inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t codepoint) {
+	struct Font_Glyph * glyph = hash_table_u32_get(&font_image->table, codepoint);
+	if (glyph != NULL) { glyph->usage = true; return; }
+
+	uint32_t const glyph_id = font_get_glyph_id(font_image->font, codepoint);
+	if (glyph_id == 0) { return; }
+
+	struct Glyph_Params glyph_params;
+	font_get_glyph_parameters(font_image->font, &glyph_params, glyph_id, font_image->scale);
+
+	font_image->rendered = false;
+	hash_table_u32_set(&font_image->table, codepoint, &(struct Font_Glyph){
+		.params = glyph_params,
+		.id = glyph_id,
+		.usage = true,
+	});
+}
+
+inline static void font_image_add_kerning(struct Font_Image * font_image, uint32_t codepoint1, uint32_t codepoint2, uint32_t glyph1, uint32_t glyph2) {
+	uint64_t const key_hash = ((uint64_t)codepoint2 << 32) | (uint64_t)codepoint1;
+	if (hash_table_u64_get(&font_image->kerning, key_hash) != NULL) { return; }
+
+	int32_t const value = font_get_kerning(font_image->font, glyph1, glyph2);
+	if (value == 0) { return; }
+
+	float const value_float = ((float)value) * font_image->scale;
+	hash_table_u64_set(&font_image->kerning, key_hash, &value_float);
 }

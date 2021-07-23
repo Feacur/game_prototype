@@ -6,7 +6,6 @@
 #include <stdint.h>
 
 #define INDEX_EMPTY UINT32_MAX
-#define CODEPOINT_EMPTY UINT32_MAX
 
 // -- utility
 

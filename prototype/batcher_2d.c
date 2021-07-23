@@ -199,65 +199,49 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 	float const tab_size = space_size * 4;
 
 	uint32_t previous_codepoint = 0;
-	for (uint32_t i = 0; i < length; /*see `continue_loop:`*/) {
-		uint32_t const codepoint_for_kerning = previous_codepoint;
-		previous_codepoint = 0;
+	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) {
+		switch (it.codepoint) {
+			case CODEPOINT_ZERO_WIDTH_SPACE: break;
 
-		//
-		uint32_t const octets_count = utf8_length(data + i);
-		if (octets_count == 0) { goto continue_loop; }
-
-		uint32_t const codepoint = utf8_decode(data + i, octets_count);
-		previous_codepoint = codepoint;
-		if (codepoint == CODEPOINT_EMPTY) { goto continue_loop; }
-
-		// control
-		switch (codepoint) {
 			case ' ':
-			case 0xa0: // non-breaking space
+			case CODEPOINT_NON_BREAKING_SPACE:
 				offset_x += space_size;
-				goto continue_loop;
+				break;
 
 			case '\t':
 				offset_x += tab_size;
-				goto continue_loop;
+				break;
 
 			// case '\r':
 			// 	offset_x = x;
-			// 	goto continue_loop;
+			// 	break;
 
 			case '\n':
 				offset_x = x; // @idea: rely on [now outdated?] `\r`?
 				offset_y -= line_height;
-				goto continue_loop;
+				break;
 
-			case 0x200b: // zero-width space
-				goto continue_loop;
+			default: if (it.codepoint > ' ') {
+				struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, it.codepoint);
+				if (glyph == NULL) { glyph = glyph_error; }
+
+				offset_x += font_image_get_kerning(font->buffer, previous_codepoint, it.codepoint);
+				batcher_2d_add_quad(
+					batcher,
+					(float[]){
+						((float)glyph->params.rect[0]) + offset_x,
+						((float)glyph->params.rect[1]) + offset_y,
+						((float)glyph->params.rect[2]) + offset_x,
+						((float)glyph->params.rect[3]) + offset_y,
+					},
+					glyph->uv
+				);
+
+				offset_x += glyph->params.full_size_x;
+			} break;
 		}
 
-		if (codepoint < ' ') { goto continue_loop; }
-
-		// possible glyph
-		struct Font_Glyph const * glyph = font_image_get_glyph(font->buffer, codepoint);
-		if (glyph == NULL) { glyph = glyph_error; }
-
-		offset_x += font_image_get_kerning(font->buffer, codepoint_for_kerning, codepoint);
-		batcher_2d_add_quad(
-			batcher,
-			(float[]){
-				((float)glyph->params.rect[0]) + offset_x,
-				((float)glyph->params.rect[1]) + offset_y,
-				((float)glyph->params.rect[2]) + offset_x,
-				((float)glyph->params.rect[3]) + offset_y,
-			},
-			glyph->uv
-		);
-
-		offset_x += glyph->params.full_size_x;
-
-		//
-		continue_loop:
-		i += (octets_count > 0) ? octets_count : 1;
+		previous_codepoint = it.codepoint;
 	}
 }
 

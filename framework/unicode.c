@@ -38,3 +38,19 @@ uint32_t utf8_decode(uint8_t const * value, uint32_t length) {
 
 	return codepoint;
 }
+
+bool utf8_iterate(uint32_t length, uint8_t const * data, struct UTF8_Iterator * it) {
+	while (it->next < length) {
+		uint8_t const * value = data + it->next;
+		uint32_t const octets_count = utf8_length(value);
+
+		it->current = it->next;
+		it->next += (octets_count > 0) ? octets_count : 1;
+
+		if (octets_count > 0) {
+			it->codepoint = utf8_decode(value, octets_count);
+			if (it->codepoint != CODEPOINT_EMPTY) { return true; }
+		}
+	}
+	return false;
+}
