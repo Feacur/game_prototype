@@ -186,6 +186,7 @@ void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index) {
 bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Entry * entry) {
 	while (entry->next < ref_table->count) {
 		uint32_t const index = entry->next++;
+		entry->current = index;
 		//
 		uint32_t const ref_id = ref_table->dense[index];
 		entry->ref = (struct Ref){

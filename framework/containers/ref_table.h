@@ -4,7 +4,7 @@
 #include "ref.h"
 
 struct Ref_Table_Entry {
-	uint32_t next;
+	uint32_t current, next;
 	struct Ref ref;
 	void * value;
 };

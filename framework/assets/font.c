@@ -100,6 +100,8 @@ void font_fill_buffer(
 	uint8_t * buffer, uint32_t buffer_rect_width,
 	uint32_t glyph_id, uint32_t glyph_size_x, uint32_t glyph_size_y, float scale
 ) {
+	// @todo: account error glyph size
+	if (glyph_id == 0) { buffer[0] = 0xff; return; }
 	stbtt_MakeGlyphBitmap(
 		&font->font, buffer,
 		(int)glyph_size_x, (int)glyph_size_y, (int)buffer_rect_width,

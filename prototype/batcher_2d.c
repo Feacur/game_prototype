@@ -17,7 +17,6 @@
 #include "framework/graphics/material.h"
 #include "framework/graphics/pass.h"
 #include "framework/graphics/font_image.h"
-#include "framework/graphics/font_image_glyph.h"
 #include "framework/maths.h"
 
 #include "asset_types.h"

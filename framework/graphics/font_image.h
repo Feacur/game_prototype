@@ -1,17 +1,22 @@
 #if !defined(GAME_GRAPHICS_FONT_IMAGE)
 #define GAME_GRAPHICS_FONT_IMAGE
 
-#include "framework/common.h"
+#include "framework/assets/font_glyph.h"
 
 struct Font_Image;
 struct Image;
 struct Font;
-struct Font_Glyph;
+
+struct Font_Glyph {
+	struct Glyph_Params params;
+	float uv[4];
+	uint32_t id;
+	bool usage;
+};
 
 struct Font_Image * font_image_init(struct Font * font, int32_t size);
 void font_image_free(struct Font_Image * font_image);
 
-void font_image_clear(struct Font_Image * font_image);
 struct Image * font_image_get_asset(struct Font_Image * font_image);
 
 void font_image_add_range(struct Font_Image * font_image, uint32_t from, uint32_t to);

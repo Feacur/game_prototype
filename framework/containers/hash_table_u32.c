@@ -111,7 +111,7 @@ bool hash_table_u32_del(struct Hash_Table_U32 * hash_table, uint32_t key_hash) {
 }
 
 void hash_table_u32_del_at(struct Hash_Table_U32 * hash_table, uint32_t key_index) {
-	if (key_index >= hash_table->count) { DEBUG_BREAK(); return; }
+	if (key_index >= hash_table->capacity) { DEBUG_BREAK(); return; }
 	if (hash_table->marks[key_index] != HASH_TABLE_MARK_FULL) { DEBUG_BREAK(); return; }
 	hash_table->marks[key_index] = HASH_TABLE_MARK_SKIP;
 	hash_table->count--;
@@ -120,6 +120,7 @@ void hash_table_u32_del_at(struct Hash_Table_U32 * hash_table, uint32_t key_inde
 bool hash_table_u32_iterate(struct Hash_Table_U32 * hash_table, struct Hash_Table_U32_Entry * entry) {
 	while (entry->next < hash_table->capacity) {
 		uint32_t const index = entry->next++;
+		entry->current = index;
 		//
 		if (hash_table->marks[index] != HASH_TABLE_MARK_FULL) { continue; }
 		entry->key_hash = hash_table->key_hashes[index];

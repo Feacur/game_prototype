@@ -4,7 +4,7 @@
 #include "framework/common.h"
 
 struct Hash_Set_U32_Entry {
-	uint32_t next;
+	uint32_t current, next;
 	uint32_t key_hash;
 };
 

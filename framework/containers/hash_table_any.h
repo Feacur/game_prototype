@@ -4,7 +4,7 @@
 #include "framework/common.h"
 
 struct Hash_Table_Any_Entry {
-	uint32_t next;
+	uint32_t current, next;
 	uint32_t hash;
 	void const * key;
 	void * value;

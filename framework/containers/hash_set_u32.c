@@ -93,7 +93,7 @@ bool hash_set_u32_del(struct Hash_Set_U32 * hash_set, uint32_t key_hash) {
 }
 
 void hash_set_u32_del_at(struct Hash_Set_U32 * hash_set, uint32_t key_index) {
-	if (key_index >= hash_set->count) { DEBUG_BREAK(); return; }
+	if (key_index >= hash_set->capacity) { DEBUG_BREAK(); return; }
 	if (hash_set->marks[key_index] != HASH_TABLE_MARK_FULL) { DEBUG_BREAK(); return; }
 	hash_set->marks[key_index] = HASH_TABLE_MARK_SKIP;
 	hash_set->count--;
@@ -102,6 +102,7 @@ void hash_set_u32_del_at(struct Hash_Set_U32 * hash_set, uint32_t key_index) {
 bool hash_set_u32_iterate(struct Hash_Set_U32 * hash_set, struct Hash_Set_U32_Entry * entry) {
 	while (entry->next < hash_set->capacity) {
 		uint32_t const index = entry->next++;
+		entry->current = index;
 		//
 		if (hash_set->marks[index] != HASH_TABLE_MARK_FULL) { continue; }
 		entry->key_hash = hash_set->key_hashes[index];
