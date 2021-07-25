@@ -230,7 +230,7 @@ void font_image_render(struct Font_Image * font_image) {
 			struct Glyph_Params const * params = &symbol->glyph->params;
 			uint32_t const size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
 			uint32_t const size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
-			minimum_area += (size_x + 1) * (size_y + 1);
+			minimum_area += (size_x + padding) * (size_y + padding);
 		}
 
 		// estimate required atlas dimesions

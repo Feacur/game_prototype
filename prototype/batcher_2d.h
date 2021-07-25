@@ -5,6 +5,8 @@
 #include "framework/containers/ref.h"
 #include "framework/graphics/types.h"
 
+// @todo: rename to `Draw_Commands` or something,
+//        as current name is quite misleading
 struct Batcher_2D;
 
 struct Gfx_Material;

@@ -321,7 +321,7 @@ static struct Ref gpu_texture_allocate(
 
 	switch (parameters->channels) {
 		case 1: {
-			GLint swizzle[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
+			GLint const swizzle[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
 			glTextureParameteriv(texture_id, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
 			break;
 		}

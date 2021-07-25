@@ -4,8 +4,10 @@
     [ ] operate entities and components
 [ ] asset system
 [ ] text rendering
-    [ ] automatically build atlas based on input text?
+    [x] automatically build atlas based on input text?
     [ ] select suitable fonts for different locales
+    [ ] grabage collect glyphs
+    [ ] collect all the relevant glyphs, then update textures AND texture coordinates
 [ ] graphics
     [ ] remove mutable buffers, but recreate immutable ones completely?
     [ ] elaborate the idea of render passes

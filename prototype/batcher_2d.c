@@ -23,6 +23,7 @@
 
 #include <string.h>
 
+// @todo: make it even LESS generic: track commands for the later
 struct Batcher_2D_Batch {
 	uint32_t offset, length;
 	struct Gfx_Material * material;

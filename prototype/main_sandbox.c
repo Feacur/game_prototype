@@ -301,6 +301,9 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	//
 	char const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
 
+	// @todo: track glyphs when issuing the commands
+	//        track kerning at the same point too
+	//        see the `todo` below
 	font_image_add_glyphs_from_text(font_open_sans->buffer, text_test->length, text_test->data);
 	font_image_add_glyphs_from_text(font_open_sans->buffer, sizeof(test111) / (sizeof(*test111)) - 1, (uint8_t const *)test111);
 	font_image_add_kerning_all(font_open_sans->buffer);
@@ -321,6 +324,11 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		(uint8_t const *)test111,
 		600, 200
 	);
+
+	// @todo: update atlases after the commands, just before drawing
+	// font_image_render(font_open_sans->buffer);
+	// ^^^^^ grabage collect glyphs
+	// `batcher_2d_update_text_uvs`: run through all the commands an update uvs
 
 	gpu_texture_update(font_open_sans->gpu_ref, font_image_get_asset(font_open_sans->buffer));
 
