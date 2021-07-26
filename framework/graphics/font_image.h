@@ -11,7 +11,7 @@ struct Font_Glyph {
 	struct Glyph_Params params;
 	float uv[4];
 	uint32_t id;
-	bool usage;
+	uint8_t usage;
 };
 
 struct Font_Image * font_image_init(struct Font * font, int32_t size);

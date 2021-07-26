@@ -39,11 +39,13 @@ void array_u64_push(struct Array_U64 * array, uint64_t value) {
 
 void array_u64_push_many(struct Array_U64 * array, uint32_t count, uint64_t const * value) {
 	array_u64_ensure_capacity(array, array->count + count);
-	memcpy(
-		array->data + array->count,
-		value,
-		sizeof(*array->data) * count
-	);
+	if (value != NULL) {
+		memcpy(
+			array->data + array->count,
+			value,
+			sizeof(*array->data) * count
+		);
+	}
 	array->count += count;
 }
 

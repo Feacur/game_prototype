@@ -39,11 +39,13 @@ void array_byte_push(struct Array_Byte * array, uint8_t value) {
 
 void array_byte_push_many(struct Array_Byte * array, uint64_t count, uint8_t const * value) {
 	array_byte_ensure_capacity(array, array->count + count);
-	memcpy(
-		array->data + array->count,
-		value,
-		sizeof(*array->data) * count
-	);
+	if (value != NULL) {
+		memcpy(
+			array->data + array->count,
+			value,
+			sizeof(*array->data) * count
+		);
+	}
 	array->count += count;
 }
 

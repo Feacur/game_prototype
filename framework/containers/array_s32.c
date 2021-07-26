@@ -39,11 +39,13 @@ void array_s32_push(struct Array_S32 * array, int32_t value) {
 
 void array_s32_push_many(struct Array_S32 * array, uint32_t count, int32_t const * value) {
 	array_s32_ensure_capacity(array, array->count + count);
-	memcpy(
-		array->data + array->count,
-		value,
-		sizeof(*array->data) * count
-	);
+	if (value != NULL) {
+		memcpy(
+			array->data + array->count,
+			value,
+			sizeof(*array->data) * count
+		);
+	}
 	array->count += count;
 }
 

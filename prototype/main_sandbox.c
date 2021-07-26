@@ -299,38 +299,28 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 
 	//
-	char const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
+	uint8_t const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
+	uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
 
-	// @todo: track glyphs when issuing the commands
-	//        track kerning at the same point too
-	//        see the `todo` below
-	font_image_add_glyphs_from_text(font_open_sans->buffer, text_test->length, text_test->data);
-	font_image_add_glyphs_from_text(font_open_sans->buffer, sizeof(test111) / (sizeof(*test111)) - 1, (uint8_t const *)test111);
-	font_image_add_kerning_all(font_open_sans->buffer);
-	font_image_render(font_open_sans->buffer);
-
+	static uint32_t text_length_dynamic = 0;
+	text_length_dynamic = (text_length_dynamic + 1) % text_test->length;
 	batcher_2d_add_text(
 		state.batcher,
 		font_open_sans,
-		text_test->length,
+		text_length_dynamic,
 		text_test->data,
 		50, 200
 	);
 
+	static uint32_t test111_length_dynamic = 0;
+	test111_length_dynamic = (test111_length_dynamic + 1) % test111_length;
 	batcher_2d_add_text(
 		state.batcher,
 		font_open_sans,
-		sizeof(test111) / (sizeof(*test111)) - 1,
-		(uint8_t const *)test111,
+		test111_length_dynamic,
+		test111,
 		600, 200
 	);
-
-	// @todo: update atlases after the commands, just before drawing
-	// font_image_render(font_open_sans->buffer);
-	// ^^^^^ grabage collect glyphs
-	// `batcher_2d_update_text_uvs`: run through all the commands an update uvs
-
-	gpu_texture_update(font_open_sans->gpu_ref, font_image_get_asset(font_open_sans->buffer));
 
 	struct Image const * font_image = font_image_get_asset(font_open_sans->buffer);
 	batcher_2d_add_quad(
@@ -340,6 +330,12 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	);
 	batcher_2d_pop_matrix(state.batcher);
 
+	// late-update texts
+	// @todo: automate, put right into the `batcher_2d_draw`
+	font_image_render(font_open_sans->buffer);
+	gpu_texture_update(font_open_sans->gpu_ref, font_image_get_asset(font_open_sans->buffer));
+	font_image_add_kerning_all(font_open_sans->buffer);
+	batcher_2d_update_text(state.batcher);
 
 	// draw batches
 	graphics_draw(&(struct Render_Pass){

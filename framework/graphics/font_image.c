@@ -68,7 +68,7 @@ struct Font_Image * font_image_init(struct Font * font, int32_t size) {
 			.rect[2] = (int32_t)(size_error_x * scale_error[2]),
 			.rect[3] = (int32_t)(size_error_y * scale_error[3]),
 		},
-		// .usage = true,
+		// .usage = UINT8_MAX,
 	});
 
 	return font_image;
@@ -182,30 +182,21 @@ void font_image_render(struct Font_Image * font_image) {
 		if (it.key_hash == CODEPOINT_EMPTY) { continue; }
 		struct Font_Glyph * glyph = it.value;
 
-		if (!glyph->usage) {
+		if (glyph->usage == 0) {
 			font_image->rendered = false;
 			hash_table_u32_del_at(&font_image->table, it.current);
 			continue;
 		}
 
-		glyph->usage = false;
+		glyph->usage--;
 	}
 
 	if (font_image->rendered) { return; }
 	font_image->rendered = true;
 
 	// collect renderable glyphs
-	uint32_t symbols_to_render_count = 0;
-	for (struct Hash_Table_U32_Entry it = {0}; hash_table_u32_iterate(&font_image->table, &it); /*empty*/) {
-		struct Font_Glyph const * glyph = it.value;
-		if (glyph->params.is_empty) { continue; }
-		symbols_to_render_count++;
-	}
-
-	if (symbols_to_render_count == 0) { return; }
-
 	uint32_t symbols_count = 0;
-	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(font_image, struct Font_Symbol, symbols_to_render_count);
+	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(font_image, struct Font_Symbol, font_image->table.count);
 
 	for (struct Hash_Table_U32_Entry it = {0}; hash_table_u32_iterate(&font_image->table, &it); /*empty*/) {
 		struct Font_Glyph const * glyph = it.value;
@@ -234,40 +225,38 @@ void font_image_render(struct Font_Image * font_image) {
 		}
 
 		// estimate required atlas dimesions
-		uint32_t atlas_size_x = (uint32_t)sqrtf((float)minimum_area);
-		atlas_size_x = round_up_to_PO2_u32(atlas_size_x);
-		if (atlas_size_x > 0x1000) {
-			atlas_size_x = 0x1000;
-			logger_to_console("too many codepoints or symbols are too large\n"); DEBUG_BREAK(); return;
+		uint32_t atlas_size_x;
+		uint32_t atlas_size_y;
+		if (font_image->buffer.size_x == 0 || font_image->buffer.size_y == 0) {
+			atlas_size_x = (uint32_t)sqrtf((float)minimum_area);
+			atlas_size_x = round_up_to_PO2_u32(atlas_size_x);
+
+			atlas_size_y = atlas_size_x;
+			if (atlas_size_x * (atlas_size_y / 2) > minimum_area) {
+				atlas_size_y = atlas_size_y / 2;
+			}
 		}
-
-		uint32_t atlas_size_y = atlas_size_x;
-		if (atlas_size_x * (atlas_size_y / 2) > minimum_area) {
-			atlas_size_y = atlas_size_y / 2;
-		}
-
-		bool const should_grow = (font_image->buffer.size_x < atlas_size_x || font_image->buffer.size_y < atlas_size_y);
-
-		if (atlas_size_x < font_image->buffer.size_x) {
-			atlas_size_x = font_image->buffer.size_x;
-		}
-
-		if (atlas_size_y < font_image->buffer.size_y) {
+		else {
 			atlas_size_y = font_image->buffer.size_y;
+
+			atlas_size_x = minimum_area / atlas_size_y;
+			atlas_size_x = round_up_to_PO2_u32(atlas_size_y);
+			if (atlas_size_x < font_image->buffer.size_x) {
+				atlas_size_x = font_image->buffer.size_x;
+			}
 		}
 
 		// verify estimated atlas dimensions
+		verify_dimensions:
 		uint32_t line_height = 0;
 		uint32_t offset_x = padding, offset_y = padding;
 		for (uint32_t i = 0; i < symbols_count; i++) {
+
 			struct Font_Symbol const * symbol = symbols + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
 
 			uint32_t const size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
 			uint32_t const size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
-
-			if (atlas_size_x < size_x) { logger_to_console("atlas's too small\n"); DEBUG_BREAK(); break; }
-			if (atlas_size_y < size_y) { logger_to_console("atlas's too small\n"); DEBUG_BREAK(); break; }
 
 			if (line_height == 0) { line_height = size_y; }
 
@@ -278,13 +267,19 @@ void font_image_render(struct Font_Image * font_image) {
 			}
 
 			if (offset_y + line_height + padding > atlas_size_y) {
-				atlas_size_y = atlas_size_y * 2; break;
+				if (atlas_size_x > atlas_size_y) {
+					atlas_size_y = atlas_size_y * 2;
+				}
+				else {
+					atlas_size_x = atlas_size_x * 2;
+					goto verify_dimensions;
+				}
 			}
 
 			offset_x += size_x + padding;
 		}
 
-		if (should_grow) {
+		if (font_image->buffer.size_x < atlas_size_x || font_image->buffer.size_y < atlas_size_y) {
 			font_image->buffer.data = MEMORY_REALLOCATE_ARRAY(font_image, font_image->buffer.data, atlas_size_x * atlas_size_y);
 			font_image->buffer.size_x = atlas_size_x;
 			font_image->buffer.size_y = atlas_size_y;
@@ -393,12 +388,15 @@ static int font_image_sort_comparison(void const * v1, void const * v2) {
 	if (size_x_1 < size_x_2) { return  1; }
 	if (size_x_1 > size_x_2) { return -1; }
 
+	if (s1->codepoint < s2->codepoint) { return  1; }
+	if (s1->codepoint > s2->codepoint) { return -1; }
+
 	return 0;
 }
 
 inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t codepoint) {
 	struct Font_Glyph * glyph = hash_table_u32_get(&font_image->table, codepoint);
-	if (glyph != NULL) { glyph->usage = true; return; }
+	if (glyph != NULL) { if (glyph->usage < UINT8_MAX) { glyph->usage++; } return; }
 
 	uint32_t const glyph_id = font_get_glyph_id(font_image->font, codepoint);
 	if (glyph_id == 0) { return; }
@@ -410,7 +408,7 @@ inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t
 	hash_table_u32_set(&font_image->table, codepoint, &(struct Font_Glyph){
 		.params = glyph_params,
 		.id = glyph_id,
-		.usage = true,
+		.usage = UINT8_MAX,
 	});
 }
 

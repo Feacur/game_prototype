@@ -39,11 +39,13 @@ void array_float_push(struct Array_Float * array, float value) {
 
 void array_float_push_many(struct Array_Float * array, uint32_t count, float const * value) {
 	array_float_ensure_capacity(array, array->count + count);
-	memcpy(
-		array->data + array->count,
-		value,
-		sizeof(*array->data) * count
-	);
+	if (value != NULL) {
+		memcpy(
+			array->data + array->count,
+			value,
+			sizeof(*array->data) * count
+		);
+	}
 	array->count += count;
 }
 

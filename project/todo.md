@@ -6,8 +6,10 @@
 [ ] text rendering
     [x] automatically build atlas based on input text?
     [ ] select suitable fonts for different locales
-    [ ] grabage collect glyphs
-    [ ] collect all the relevant glyphs, then update textures AND texture coordinates
+    [x] grabage collect glyphs
+    [x] collect all the relevant glyphs, then update textures AND texture coordinates
+    [ ] decode UTF-8 once into an array?
+    [ ] glyphs GC threshold?
 [ ] graphics
     [ ] remove mutable buffers, but recreate immutable ones completely?
     [ ] elaborate the idea of render passes
@@ -35,6 +37,8 @@
 [ ] try custom sorting algorithms?
 [ ] clean up containers implementation
     [ ] ever need a uint64_t hashes for hash tables?
+    [x] `set` methods for arrays
+    [ ] bound checks?
 [ ] build system
     [ ] streamline build settings switching
 ```

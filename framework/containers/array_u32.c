@@ -39,12 +39,22 @@ void array_u32_push(struct Array_U32 * array, uint32_t value) {
 
 void array_u32_push_many(struct Array_U32 * array, uint32_t count, uint32_t const * value) {
 	array_u32_ensure_capacity(array, array->count + count);
+	if (value != NULL) {
+		memcpy(
+			array->data + array->count,
+			value,
+			sizeof(*array->data) * count
+		);
+	}
+	array->count += count;
+}
+
+void array_u32_set_many(struct Array_U32 * array, uint32_t index, uint32_t count, uint32_t const * value) {
 	memcpy(
-		array->data + array->count,
+		array->data + index,
 		value,
 		sizeof(*array->data) * count
 	);
-	array->count += count;
 }
 
 uint32_t array_u32_pop(struct Array_U32 * array) {

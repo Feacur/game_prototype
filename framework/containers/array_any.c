@@ -46,12 +46,22 @@ void array_any_push(struct Array_Any * array, void const * value) {
 
 void array_any_push_many(struct Array_Any * array, uint32_t count, void const * value) {
 	array_any_ensure_capacity(array, array->count + count);
+	if (value != NULL) {
+		memcpy(
+			array->data + array->value_size * array->count,
+			value,
+			array->value_size * count
+		);
+	}
+	array->count += count;
+}
+
+void array_any_set_many(struct Array_Any * array, uint32_t index, uint32_t count, void const * value) {
 	memcpy(
-		array->data + array->value_size * array->count,
+		array->data + array->value_size * index,
 		value,
 		array->value_size * count
 	);
-	array->count += count;
 }
 
 void * array_any_pop(struct Array_Any * array) {
