@@ -69,7 +69,7 @@
 			"file_regex": "^(.+):(\\d+):(\\d+): (.+)$",
 			"working_dir": "${project_path:${folder}}/../project",
 			"windows": {
-				"cmd": "build_clang.bat debug dynamic",
+				"cmd": "build_clang.bat debug static",
 			},
 			"word_wrap": false,
 		},
@@ -81,7 +81,7 @@
 			"file_regex": "^(.+)\\((\\d+),?(\\d+)?\\): (.+)$",
 			"working_dir": "${project_path:${folder}}/../project",
 			"windows": {
-				"cmd": "build_msvc.bat debug dynamic",
+				"cmd": "build_msvc.bat debug static",
 			},
 			"word_wrap": false,
 		},
