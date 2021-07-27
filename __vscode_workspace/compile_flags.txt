@@ -8,12 +8,15 @@
 -Wno-assign-enum
 -Wno-bad-function-cast
 -Wno-documentation-unknown-command
+-Wno-unused-macros
 
 -I..
 -I../third_party
 
 -DGAME_TARGET_DEBUG
 -D_CRT_SECURE_NO_WARNINGS
+-DSTRICT
+-DVC_EXTRALEAN
 -DWIN32_LEAN_AND_MEAN
 -DNOMINMAX
 -DUNICODE

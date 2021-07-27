@@ -25,7 +25,7 @@
 	"ignored_packages":
 	[
 		"EasyClangComplete",
-		"Vintage"
+		"Vintage",
 	],
 	"index_exclude_patterns":
 	[
@@ -37,5 +37,5 @@
 	"show_panel_on_build": false,
 	"tab_size": 4,
 	"theme": "Adaptive.sublime-theme",
-	"translate_tabs_to_spaces": false
+	"translate_tabs_to_spaces": false,
 }

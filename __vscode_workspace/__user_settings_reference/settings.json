@@ -1,11 +1,13 @@
 // %appdata%/Code/User
 {
 	"search.quickOpen.includeHistory": false,
-	"terminal.integrated.shell.windows": "C:\\WINDOWS\\System32\\cmd.exe",
+	"security.workspace.trust.untrustedFiles": "open",
+	"terminal.integrated.defaultProfile.windows": "Command Prompt",
 	// workbench
 	"workbench.startupEditor": "newUntitledFile",
 	"workbench.sideBar.location": "right",
 	"workbench.commandPalette.history": 0,
+	"workbench.editor.untitled.hint": "hidden",
 	// editor
 	"editor.tabSize": 4,
 	"editor.insertSpaces": false,
