@@ -215,7 +215,8 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	WEAK_PTR(struct Asset_Font const) font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
 	WEAK_PTR(struct Asset_Text const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
 
-	// render to target
+
+	// RENDER to a buffer
 	graphics_draw(&(struct Render_Pass){
 		.target = state.gpu_target_ref,
 		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
@@ -225,7 +226,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		.clear_rgba = 0x303030ff,
 	});
 
-	// --- map to camera coords; draw transformed
+	// --- an object: map to camera coords; draw transformed
 	struct mat4 const test_camera = mat4_mul_mat(
 		mat4_set_projection((struct vec2){0, 0}, (struct vec2){1, (float)target_size_x / (float)target_size_y}, 0.1f, 10, 0),
 		mat4_set_inverse_transformation(state.camera.transform.position, state.camera.transform.scale, state.camera.transform.rotation)
@@ -247,8 +248,17 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	});
 
 
-	// batch a quad with target texture
-	// --- fully fit to normalized device coords; draw at the farthest point
+	// RENDER to the screen
+	graphics_draw(&(struct Render_Pass){
+		.size_x = size_x, .size_y = size_y,
+		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
+		.depth_mode = {.enabled = true, .mask = true},
+		//
+		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
+		.clear_rgba = 0x303030ff,
+	});
+
+	// --- the buffer: fully fit to normalized device coords; draw at the farthest point
 	float const target_scale_x   = (float)target_size_x / (float)size_x;
 	float const target_scale_y   = (float)target_size_y / (float)size_y;
 	float const target_scale_max = max_r32(target_scale_x, target_scale_y);
@@ -271,8 +281,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	);
 	batcher_2d_pop_matrix(state.batcher);
 
-	// batch some text and a texture
-	// --- map to screen buffer coords; draw at the nearest point
+	// --- overlay: map to screen buffer coords; draw at the nearest point
 	batcher_2d_push_matrix(state.batcher, mat4_set_projection(
 		(struct vec2){-1, -1},
 		(struct vec2){2 / (float)size_x, 2 / (float)size_y},
@@ -333,14 +342,6 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	batcher_2d_update_text(state.batcher);
 
 	// draw batches
-	graphics_draw(&(struct Render_Pass){
-		.size_x = size_x, .size_y = size_y,
-		.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-		.depth_mode = {.enabled = true, .mask = true},
-		//
-		.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
-		.clear_rgba = 0x303030ff,
-	});
 	batcher_2d_draw(state.batcher, size_x, size_y, (struct Ref){0});
 }
 
