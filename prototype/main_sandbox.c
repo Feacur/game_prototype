@@ -334,13 +334,6 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	);
 	batcher_2d_pop_matrix(state.batcher);
 
-	// late-update texts
-	// @todo: automate, put right into the `batcher_2d_draw`
-	font_image_render(font_open_sans->buffer);
-	gpu_texture_update(font_open_sans->gpu_ref, font_image_get_asset(font_open_sans->buffer));
-	font_image_add_kerning_all(font_open_sans->buffer);
-	batcher_2d_update_text(state.batcher);
-
 	// draw batches
 	batcher_2d_draw(state.batcher, size_x, size_y, (struct Ref){0});
 }

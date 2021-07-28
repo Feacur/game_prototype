@@ -4,7 +4,7 @@
 #include "framework/unicode.h"
 #include "framework/logger.h"
 
-#include "framework/containers/hash_set_u32.h"
+#include "framework/containers/hash_set_u64.h"
 #include "framework/containers/array_any.h"
 #include "framework/containers/array_float.h"
 #include "framework/containers/array_u32.h"
@@ -332,7 +332,25 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 	uint32_t const texture_id = graphics_add_uniform("u_Texture");
 	uint32_t const color_id   = graphics_add_uniform("u_Color");
 
-	// @todo: automatically update texts
+	{
+		struct Hash_Set_U64 fonts;
+		hash_set_u64_init(&fonts);
+
+		for (uint32_t i = 0; i < batcher->texts.count; i++) {
+			struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
+			hash_set_u64_set(&fonts, (uint64_t)text->font);
+		}
+
+		for (struct Hash_Set_U64_Iterator it = {0}; hash_set_u64_iterate(&fonts, &it); /*empty*/) {
+			struct Asset_Font const * font = (void *)it.key_hash;
+			font_image_render(font->buffer);
+			gpu_texture_update(font->gpu_ref, font_image_get_asset(font->buffer));
+			font_image_add_kerning_all(font->buffer);
+		}
+
+		hash_set_u64_free(&fonts);
+	}
+	batcher_2d_update_text(batcher);
 
 	//
 	batcher_2d_update_asset(batcher);
