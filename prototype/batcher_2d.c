@@ -25,8 +25,8 @@
 
 struct Batcher_2D_Text {
 	uint32_t length;
-	uint8_t const * data;
-	struct Asset_Font const * font;
+	WEAK_PTR(uint8_t const) data;
+	WEAK_PTR(struct Asset_Font const) font; // @todo: use `Asset_Ref` instead?
 	uint32_t vertices_offset, indices_offset;
 	struct mat4 matrix;
 	float x, y;
@@ -34,7 +34,7 @@ struct Batcher_2D_Text {
 
 struct Batcher_2D_Batch {
 	uint32_t offset, length;
-	struct Gfx_Material * material;
+	WEAK_PTR(struct Gfx_Material) material;
 	struct Ref gpu_texture_ref;
 	struct Blend_Mode blend_mode;
 	struct Depth_Mode depth_mode;

@@ -73,31 +73,26 @@ static void game_init(void) {
 		asset_system_map_extension(&state.asset_system, "font",   "otf");
 		asset_system_map_extension(&state.asset_system, "text",   "txt");
 
-		// -- Asset gpu program part
 		asset_system_set_type(&state.asset_system, "shader", (struct Asset_Callbacks){
 			.init = asset_shader_init,
 			.free = asset_shader_free,
 		}, sizeof(struct Asset_Shader));
 
-		// -- Asset mesh part
 		asset_system_set_type(&state.asset_system, "model", (struct Asset_Callbacks){
 			.init = asset_model_init,
 			.free = asset_model_free,
 		}, sizeof(struct Asset_Model));
 
-		// -- Asset texture part
 		asset_system_set_type(&state.asset_system, "image", (struct Asset_Callbacks){
 			.init = asset_image_init,
 			.free = asset_image_free,
 		}, sizeof(struct Asset_Image));
 
-		// -- Asset font part
 		asset_system_set_type(&state.asset_system, "font", (struct Asset_Callbacks){
 			.init = asset_font_init,
 			.free = asset_font_free,
 		}, sizeof(struct Asset_Font));
 
-		// -- Asset text part
 		asset_system_set_type(&state.asset_system, "text", (struct Asset_Callbacks){
 			.init = asset_text_init,
 			.free = asset_text_free,
@@ -126,10 +121,10 @@ static void game_init(void) {
 	// prepare materials
 	{
 		// @todo: make material assets
-		struct Asset_Shader const * gpu_program_test = asset_system_find_instance(&state.asset_system, "assets/shaders/test.glsl");
+		WEAK_PTR(struct Asset_Shader const) gpu_program_test = asset_system_find_instance(&state.asset_system, "assets/shaders/test.glsl");
 		gfx_material_init(&state.materials.test, gpu_program_test->gpu_ref);
 
-		struct Asset_Shader const * gpu_program_batcher = asset_system_find_instance(&state.asset_system, "assets/shaders/batcher_2d.glsl");
+		WEAK_PTR(struct Asset_Shader const) gpu_program_batcher = asset_system_find_instance(&state.asset_system, "assets/shaders/batcher_2d.glsl");
 		gfx_material_init(&state.materials.batcher, gpu_program_batcher->gpu_ref);
 	}
 
@@ -215,10 +210,10 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	uint32_t target_size_x, target_size_y;
 	gpu_target_get_size(state.gpu_target_ref, &target_size_x, &target_size_y);
 
-	struct Asset_Model const * mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
-	struct Asset_Image const * texture_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.png");
-	struct Asset_Font const * font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
-	struct Asset_Text const * text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
+	WEAK_PTR(struct Asset_Model const) mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
+	WEAK_PTR(struct Asset_Image const) texture_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.png");
+	WEAK_PTR(struct Asset_Font const) font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
+	WEAK_PTR(struct Asset_Text const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
 
 	// render to target
 	graphics_draw(&(struct Render_Pass){

@@ -8,7 +8,7 @@
 #include "framework/containers/ref.h"
 
 struct Gfx_Material {
-	struct Ref gpu_program_ref; // weak reference
+	struct Ref gpu_program_ref;
 
 	struct Array_Any textures;
 	struct Array_U32 values_u32;

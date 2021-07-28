@@ -18,6 +18,8 @@
 
 #define SIZE_OF_MEMBER(type, name) sizeof(((type *)0)->name)
 
+#define WEAK_PTR(type) type *
+
 // -- FLEXIBLE_ARRAY
 #if __STDC_VERSION__ >= 199901L
 	#if defined(__clang__)

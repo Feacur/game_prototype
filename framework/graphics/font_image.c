@@ -19,7 +19,7 @@ uint32_t round_up_to_PO2_u32(uint32_t value);
 
 struct Font_Image {
 	struct Image buffer;
-	struct Font * font; // weak reference
+	WEAK_PTR(struct Font) font;
 	struct Hash_Table_U32 table;
 	struct Hash_Table_U64 kerning;
 	float scale;
@@ -30,7 +30,7 @@ struct Font_Image {
 #include "font_image.h"
 
 struct Font_Symbol {
-	struct Font_Glyph * glyph;
+	WEAK_PTR(struct Font_Glyph) glyph;
 	uint32_t codepoint;
 };
 
