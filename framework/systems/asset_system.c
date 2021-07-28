@@ -35,7 +35,7 @@ void asset_system_init(struct Asset_System * system) {
 }
 
 void asset_system_free(struct Asset_System * system) {
-	for (struct Hash_Table_U32_Entry it = {0}; hash_table_u32_iterate(&system->types, &it); /*empty*/) {
+	for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(&system->types, &it); /*empty*/) {
 		struct Asset_Type * asset_type = it.value;
 		asset_system_del_type_internal(system, asset_type);
 	}

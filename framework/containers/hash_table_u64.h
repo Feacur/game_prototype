@@ -3,7 +3,7 @@
 
 #include "framework/common.h"
 
-struct Hash_Table_U64_Entry {
+struct Hash_Table_U64_Iterator {
 	uint32_t current, next;
 	uint64_t key_hash;
 	void * value;
@@ -28,6 +28,6 @@ bool hash_table_u64_set(struct Hash_Table_U64 * hash_table, uint64_t key_hash, v
 bool hash_table_u64_del(struct Hash_Table_U64 * hash_table, uint64_t key_hash);
 void hash_table_u64_del_at(struct Hash_Table_U64 * hash_table, uint32_t key_index);
 
-bool hash_table_u64_iterate(struct Hash_Table_U64 * hash_table, struct Hash_Table_U64_Entry * entry);
+bool hash_table_u64_iterate(struct Hash_Table_U64 * hash_table, struct Hash_Table_U64_Iterator * iterator);
 
 #endif

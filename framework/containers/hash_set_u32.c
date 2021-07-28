@@ -99,13 +99,13 @@ void hash_set_u32_del_at(struct Hash_Set_U32 * hash_set, uint32_t key_index) {
 	hash_set->count--;
 }
 
-bool hash_set_u32_iterate(struct Hash_Set_U32 * hash_set, struct Hash_Set_U32_Iterator * entry) {
-	while (entry->next < hash_set->capacity) {
-		uint32_t const index = entry->next++;
-		entry->current = index;
+bool hash_set_u32_iterate(struct Hash_Set_U32 * hash_set, struct Hash_Set_U32_Iterator * iterator) {
+	while (iterator->next < hash_set->capacity) {
+		uint32_t const index = iterator->next++;
+		iterator->current = index;
 		//
 		if (hash_set->marks[index] != HASH_TABLE_MARK_FULL) { continue; }
-		entry->key_hash = hash_set->key_hashes[index];
+		iterator->key_hash = hash_set->key_hashes[index];
 		return true;
 	}
 	return false;

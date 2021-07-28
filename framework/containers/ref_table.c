@@ -183,17 +183,17 @@ void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index) {
 	return ref_table->values + ref_table->value_size * index;
 }
 
-bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Entry * entry) {
-	while (entry->next < ref_table->count) {
-		uint32_t const index = entry->next++;
-		entry->current = index;
+bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator * iterator) {
+	while (iterator->next < ref_table->count) {
+		uint32_t const index = iterator->next++;
+		iterator->current = index;
 		//
 		uint32_t const ref_id = ref_table->dense[index];
-		entry->ref = (struct Ref){
+		iterator->ref = (struct Ref){
 			.id = ref_id,
 			.gen = ref_table->sparse[ref_id].gen,
 		};
-		entry->value = ref_table->values + ref_table->value_size * index;
+		iterator->value = ref_table->values + ref_table->value_size * index;
 		return true;
 	}
 	return false;

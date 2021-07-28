@@ -25,6 +25,6 @@ bool hash_set_u64_set(struct Hash_Set_U64 * hash_set, uint64_t key_hash);
 bool hash_set_u64_del(struct Hash_Set_U64 * hash_set, uint64_t key_hash);
 void hash_set_u64_del_at(struct Hash_Set_U64 * hash_set, uint32_t key_index);
 
-bool hash_set_u64_iterate(struct Hash_Set_U64 * hash_set, struct Hash_Set_U64_Iterator * entry);
+bool hash_set_u64_iterate(struct Hash_Set_U64 * hash_set, struct Hash_Set_U64_Iterator * iterator);
 
 #endif

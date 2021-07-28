@@ -25,6 +25,6 @@ bool hash_set_u32_set(struct Hash_Set_U32 * hash_set, uint32_t key_hash);
 bool hash_set_u32_del(struct Hash_Set_U32 * hash_set, uint32_t key_hash);
 void hash_set_u32_del_at(struct Hash_Set_U32 * hash_set, uint32_t key_index);
 
-bool hash_set_u32_iterate(struct Hash_Set_U32 * hash_set, struct Hash_Set_U32_Iterator * entry);
+bool hash_set_u32_iterate(struct Hash_Set_U32 * hash_set, struct Hash_Set_U32_Iterator * iterator);
 
 #endif

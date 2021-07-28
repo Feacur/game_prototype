@@ -3,7 +3,7 @@
 
 #include "ref.h"
 
-struct Ref_Table_Entry {
+struct Ref_Table_Iterator {
 	uint32_t current, next;
 	struct Ref ref;
 	void * value;
@@ -37,6 +37,6 @@ uint32_t ref_table_get_count(struct Ref_Table * ref_table);
 struct Ref ref_table_ref_at(struct Ref_Table * ref_table, uint32_t index);
 void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index);
 
-bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Entry * entry);
+bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator * iterator);
 
 #endif

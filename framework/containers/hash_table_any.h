@@ -3,7 +3,7 @@
 
 #include "framework/common.h"
 
-struct Hash_Table_Any_Entry {
+struct Hash_Table_Any_Iterator {
 	uint32_t current, next;
 	uint32_t hash;
 	void const * key;
@@ -31,6 +31,6 @@ bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, ui
 bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash);
 void hash_table_any_del_at(struct Hash_Table_Any * hash_table, uint32_t key_index);
 
-bool hash_table_any_iterate(struct Hash_Table_Any * hash_table, struct Hash_Table_Any_Entry * entry);
+bool hash_table_any_iterate(struct Hash_Table_Any * hash_table, struct Hash_Table_Any_Iterator * iterator);
 
 #endif

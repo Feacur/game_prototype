@@ -117,14 +117,14 @@ void hash_table_u32_del_at(struct Hash_Table_U32 * hash_table, uint32_t key_inde
 	hash_table->count--;
 }
 
-bool hash_table_u32_iterate(struct Hash_Table_U32 * hash_table, struct Hash_Table_U32_Entry * entry) {
-	while (entry->next < hash_table->capacity) {
-		uint32_t const index = entry->next++;
-		entry->current = index;
+bool hash_table_u32_iterate(struct Hash_Table_U32 * hash_table, struct Hash_Table_U32_Iterator * iterator) {
+	while (iterator->next < hash_table->capacity) {
+		uint32_t const index = iterator->next++;
+		iterator->current = index;
 		//
 		if (hash_table->marks[index] != HASH_TABLE_MARK_FULL) { continue; }
-		entry->key_hash = hash_table->key_hashes[index];
-		entry->value    = hash_table->values + hash_table->value_size * index;
+		iterator->key_hash = hash_table->key_hashes[index];
+		iterator->value    = hash_table->values + hash_table->value_size * index;
 		return true;
 	}
 	return false;
