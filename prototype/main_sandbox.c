@@ -71,7 +71,7 @@ static void game_init(void) {
 		asset_system_map_extension(&state.asset_system, "image",  "png");
 		asset_system_map_extension(&state.asset_system, "font",   "ttf");
 		asset_system_map_extension(&state.asset_system, "font",   "otf");
-		asset_system_map_extension(&state.asset_system, "text",   "txt");
+		asset_system_map_extension(&state.asset_system, "bytes",  "txt");
 
 		asset_system_set_type(&state.asset_system, "shader", (struct Asset_Callbacks){
 			.init = asset_shader_init,
@@ -93,10 +93,10 @@ static void game_init(void) {
 			.free = asset_font_free,
 		}, sizeof(struct Asset_Font));
 
-		asset_system_set_type(&state.asset_system, "text", (struct Asset_Callbacks){
-			.init = asset_text_init,
-			.free = asset_text_free,
-		}, sizeof(struct Asset_Text));
+		asset_system_set_type(&state.asset_system, "bytes", (struct Asset_Callbacks){
+			.init = asset_bytes_init,
+			.free = asset_bytes_free,
+		}, sizeof(struct Asset_Bytes));
 	}
 
 	// prefetch some assets
@@ -217,7 +217,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 	WEAK_PTR(struct Asset_Model const) mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
 	WEAK_PTR(struct Asset_Font const) font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
-	WEAK_PTR(struct Asset_Text const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
+	WEAK_PTR(struct Asset_Bytes const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
 
 
 	//

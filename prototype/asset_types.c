@@ -81,18 +81,18 @@ void asset_font_free(void * instance) {
 }
 
 // -- Asset text part
-void asset_text_init(void * instance, char const * name) {
+void asset_bytes_init(void * instance, char const * name) {
 	struct Array_Byte buffer;
 	platform_file_read_entire(name, &buffer);
 	buffer.data[buffer.count] = '\0';
 
 	// @note: memory ownership transfer
-	struct Asset_Text * asset = instance;
+	struct Asset_Bytes * asset = instance;
 	asset->data = buffer.data;
 	asset->length = (uint32_t)buffer.count;
 }
 
-void asset_text_free(void * instance) {
-	struct Asset_Text * asset = instance;
+void asset_bytes_free(void * instance) {
+	struct Asset_Bytes * asset = instance;
 	MEMORY_FREE(instance, asset->data);
 }
