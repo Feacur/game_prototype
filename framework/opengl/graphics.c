@@ -203,11 +203,11 @@ struct Ref gpu_program_init(struct Array_Byte * asset) {
 		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
 
 		if (params[1] > 1) {
-			// @todo: improve reflection/introspection/whatever
-			// simple arrays have names ending with a `[0]`
-			if (memcmp(uniform_name_buffer + name_length - 3, "[0]", 3) == 0) {
-				name_length -= 3;
-			}
+			// @todo: improve reflection/introspection/whatever;
+			//        simple arrays have names ending with a `[0]`;
+			//        more specifically the very first elememnt is tagget such a way
+			if (memcmp(uniform_name_buffer + name_length - 3, "[0]", 3) != 0) { continue; }
+			name_length -= 3;
 		}
 
 		uniforms[i] = (struct Gpu_Program_Field){

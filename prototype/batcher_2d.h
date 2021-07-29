@@ -5,8 +5,10 @@
 #include "framework/containers/ref.h"
 #include "framework/graphics/types.h"
 
-// @todo: rename to `Draw_Commands` or something,
-//        as current name is quite misleading
+// @todo: rename to `Draw_Commands` or something, as current name is quite misleading;
+//        probably that's caused by multiple points of responsibility:
+//        - handling a mesh
+//        - storing, optionally, atomic commands (text only, currently)
 struct Batcher_2D;
 
 struct Gfx_Material;

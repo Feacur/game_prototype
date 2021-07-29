@@ -220,6 +220,17 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 	WEAK_PTR(struct Asset_Bytes const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
 
 
+	// @todo: iterate though cameras
+	//        > sub-iterate through relevant entities (masks, layers?)
+	//        render stuff to buffers or screen (camera settings)
+
+	// @todo: how to batch such entities? an explicit mark?
+	//        text is alway a block; it's ok to reuse batcher
+	//        UI should be batched or split in chunks and batched
+	//        Unity does that through `Canvas` components, which basically
+	//        denotes a batcher
+
+
 	//
 	uint8_t const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
 	uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;

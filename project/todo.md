@@ -9,8 +9,14 @@
     [x] grabage collect glyphs
     [x] collect all the relevant glyphs, then update textures AND texture coordinates
     [ ] decode UTF-8 once into an array?
-    [ ] glyphs GC threshold?
+    [x] glyphs GC threshold
+    [ ] tune/expose glyphs GC
     [x] postpone fonts atlases generation and texts quads creation
+[ ] batch rendering
+    [ ] direct static parts into separate batchers
+        [ ] cache vertices and stuff until changed
+        [ ] warn/fail upon a change
+    [ ] add a 3d batcher?
 [ ] graphics
     [ ] remove mutable buffers, but recreate immutable ones completely?
     [ ] elaborate the idea of render passes
@@ -30,16 +36,15 @@
     [ ] use OS-native allocators
     [ ] mind the alignment
 [ ] organize standard includes?
-[ ] should batch_mesh and font_image belong to some other folder?
-[ ] async file access?
-[ ] reuse mesh vertices at `asset_mesh_obj_repack` function
-[ ] UTF-8 edge cases, different languages, LTR/RTL, etc.
+[ ] async file access? (through OS API)
+[ ] reuse mesh vertices at `mesh_obj_repack` function
+[ ] UTF-8 edge cases, different languages, LTR/RTL, ligatures, etc.
 [ ] make a universal sprite packer?
 [ ] try custom sorting algorithms?
 [ ] clean up containers implementation
     [ ] ever need a uint64_t hashes for hash tables?
     [x] `set` methods for arrays
-    [ ] bound checks?
+    [ ] bound checks? (means, more of them)
 [ ] build system
     [ ] streamline build settings switching
 ```
