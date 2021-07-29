@@ -41,6 +41,7 @@ struct Glyph_Codepoint {
 struct Font_Image * font_image_init(struct Font * font, int32_t size) {
 	struct Font_Image * font_image = MEMORY_ALLOCATE(NULL, struct Font_Image);
 	*font_image = (struct Font_Image){
+		// @todo: provide a contructor?
 		.buffer = {
 			.parameters = {
 				.texture_type = TEXTURE_TYPE_COLOR,
@@ -75,7 +76,7 @@ struct Font_Image * font_image_init(struct Font * font, int32_t size) {
 }
 
 void font_image_free(struct Font_Image * font_image) {
-	MEMORY_FREE(font_image, font_image->buffer.data);
+	image_free(&font_image->buffer);
 	hash_table_u32_free(&font_image->table);
 	hash_table_u64_free(&font_image->kerning);
 
@@ -279,11 +280,13 @@ void font_image_render(struct Font_Image * font_image) {
 			offset_x += size_x + padding;
 		}
 
-		if (font_image->buffer.size_x < atlas_size_x || font_image->buffer.size_y < atlas_size_y) {
+		if (font_image->buffer.capacity < atlas_size_x * atlas_size_y) {
+			// @todo: provide a `resize` method
 			font_image->buffer.data = MEMORY_REALLOCATE_ARRAY(font_image, font_image->buffer.data, atlas_size_x * atlas_size_y);
-			font_image->buffer.size_x = atlas_size_x;
-			font_image->buffer.size_y = atlas_size_y;
+			font_image->buffer.capacity = atlas_size_x * atlas_size_y;
 		}
+		font_image->buffer.size_x = atlas_size_x;
+		font_image->buffer.size_y = atlas_size_y;
 	}
 
 	// render glyphs into the atlas, assuming they shall fit
@@ -300,6 +303,10 @@ void font_image_render(struct Font_Image * font_image) {
 
 			uint32_t const size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
 			uint32_t const size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
+
+			if (font_image->buffer.capacity < ((offset_y + size_y - 1) * font_image->buffer.size_x + offset_x + size_x - 1)) {
+				logger_to_console("can't fit a glyph into the buffer"); DEBUG_BREAK(); continue;
+			}
 
 			if (line_height == 0) { line_height = size_y; }
 
