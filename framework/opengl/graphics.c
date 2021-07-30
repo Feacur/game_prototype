@@ -89,8 +89,8 @@ static struct Graphics_State {
 	struct Strings uniforms;
 
 	struct Ref_Table programs;
-	struct Ref_Table textures;
 	struct Ref_Table targets;
+	struct Ref_Table textures;
 	struct Ref_Table meshes;
 
 	struct Ref active_program_ref;
@@ -1066,13 +1066,13 @@ void graphics_to_glibrary_init(void) {
 
 	// init gpu objects, consider 0 ref.id empty
 	ref_table_init(&graphics_state.programs, sizeof(struct Gpu_Program));
-	ref_table_init(&graphics_state.textures, sizeof(struct Gpu_Texture));
 	ref_table_init(&graphics_state.targets, sizeof(struct Gpu_Target));
+	ref_table_init(&graphics_state.textures, sizeof(struct Gpu_Texture));
 	ref_table_init(&graphics_state.meshes, sizeof(struct Gpu_Mesh));
 
 	ref_table_aquire(&graphics_state.programs, &(struct Gpu_Program){0});
-	ref_table_aquire(&graphics_state.textures, &(struct Gpu_Texture){0});
 	ref_table_aquire(&graphics_state.targets, &(struct Gpu_Target){0});
+	ref_table_aquire(&graphics_state.textures, &(struct Gpu_Texture){0});
 	ref_table_aquire(&graphics_state.meshes, &(struct Gpu_Mesh){0});
 
 	//
@@ -1123,17 +1123,22 @@ void graphics_to_glibrary_init(void) {
 
 void graphics_to_glibrary_free(void) {
 	// @note: consider 0 ref.id empty
-	for (uint32_t i = 1; i < graphics_state.programs.count; i++) {
-		gpu_program_free_internal(ref_table_value_at(&graphics_state.programs, i));
+	if (graphics_state.programs.count > 1) { logger_to_console("dangling programs: %d\n", graphics_state.programs.count - 1); }
+	if (graphics_state.targets.count  > 1) { logger_to_console("dangling targets:  %d\n", graphics_state.targets.count - 1); }
+	if (graphics_state.textures.count > 1) { logger_to_console("dangling textures: %d\n", graphics_state.textures.count - 1); }
+	if (graphics_state.meshes.count   > 1) { logger_to_console("dangling meshes:   %d\n", graphics_state.meshes.count - 1); }
+
+	for (struct Ref_Table_Iterator it = {0}; ref_table_iterate(&graphics_state.programs, &it); /*empty*/) {
+		gpu_program_free_internal(it.value);
 	}
-	for (uint32_t i = 1; i < graphics_state.textures.count; i++) {
-		gpu_texture_free_internal(ref_table_value_at(&graphics_state.textures, i));
+	for (struct Ref_Table_Iterator it = {0}; ref_table_iterate(&graphics_state.targets, &it); /*empty*/) {
+		gpu_target_free_internal(it.value);
 	}
-	for (uint32_t i = 1; i < graphics_state.targets.count; i++) {
-		gpu_target_free_internal(ref_table_value_at(&graphics_state.targets, i));
+	for (struct Ref_Table_Iterator it = {0}; ref_table_iterate(&graphics_state.textures, &it); /*empty*/) {
+		gpu_texture_free_internal(it.value);
 	}
-	for (uint32_t i = 1; i < graphics_state.meshes.count; i++) {
-		gpu_mesh_free_internal(ref_table_value_at(&graphics_state.meshes, i));
+	for (struct Ref_Table_Iterator it = {0}; ref_table_iterate(&graphics_state.meshes, &it); /*empty*/) {
+		gpu_mesh_free_internal(it.value);
 	}
 
 	//
