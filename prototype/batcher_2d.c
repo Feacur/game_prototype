@@ -253,7 +253,7 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 	});
 	font_image_add_glyphs_from_text(font->buffer, length, data);
 
-	//
+	// reserve blanks for the text
 	array_any_push_many(&batcher->vertices, codepoints_count * 4, NULL);
 	array_u32_push_many(&batcher->indices, codepoints_count * 3 * 2, NULL);
 }
@@ -332,6 +332,7 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 	uint32_t const texture_id = graphics_add_uniform("u_Texture");
 	uint32_t const color_id   = graphics_add_uniform("u_Color");
 
+	// render text into the blanks
 	{
 		struct Hash_Set_U64 fonts;
 		hash_set_u64_init(&fonts);
@@ -352,13 +353,15 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 	}
 	batcher_2d_update_text(batcher);
 
-	//
+	// upload the batch mesh
 	batcher_2d_update_asset(batcher);
 	gpu_mesh_update(batcher->gpu_mesh_ref, &batcher->mesh);
 
+	// bake leftovers
 	batcher_2d_bake_pass(batcher);
 	uint32_t passes_count = batcher->batches.count;
 
+	// render all the passes
 	for (uint32_t i = 0; i < passes_count; i++) {
 		struct Batcher_2D_Batch * batch = array_any_at(&batcher->batches, i);
 
