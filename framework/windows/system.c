@@ -65,9 +65,9 @@ bool platform_window_is_running(void) {
 }
 
 void platform_system_update(void) {
-	MSG message;
 	input_to_platform_before_update();
-	while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE)) {
+
+	for (MSG message; PeekMessage(&message, NULL, 0, 0, PM_REMOVE); /*empty*/) {
 		if (message.message == WM_QUIT) {
 			platform_system.should_close = true;
 			DEBUG_BREAK();
@@ -102,12 +102,6 @@ HMODULE system_to_internal_get_module(void) {
 #include <ShellScalingApi.h>
 
 static void system_set_process_dpi_awareness(void) {
-#define FREE_DPI_LIBS() \
-	do { \
-		if (User32_dll != NULL) { FreeLibrary(User32_dll); User32_dll = NULL; } \
-		if (Shcore_dll != NULL) { FreeLibrary(Shcore_dll); Shcore_dll = NULL; } \
-	} while (false) \
-
 	HMODULE User32_dll = LoadLibrary(TEXT("User32.dll"));
 	HMODULE Shcore_dll = LoadLibrary(TEXT("Shcore.dll"));
 
@@ -117,7 +111,7 @@ static void system_set_process_dpi_awareness(void) {
 		set_awareness_func set_awareness = (set_awareness_func)GetProcAddress(User32_dll, "SetProcessDpiAwarenessContext");
 		if (set_awareness != NULL) {
 			set_awareness(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-			FREE_DPI_LIBS();
+			goto free_dpi_libs; // the label is that way vvvvv
 		}
 	}
 
@@ -127,7 +121,7 @@ static void system_set_process_dpi_awareness(void) {
 		set_awareness_func set_awareness = (set_awareness_func)GetProcAddress(Shcore_dll, "SetProcessDpiAwareness");
 		if (set_awareness != NULL) {
 			set_awareness(PROCESS_PER_MONITOR_DPI_AWARE);
-			FREE_DPI_LIBS();
+			goto free_dpi_libs; // the label is that way vvvvv
 		}
 	}
 
@@ -137,15 +131,16 @@ static void system_set_process_dpi_awareness(void) {
 		set_awareness_func set_awareness = (set_awareness_func)GetProcAddress(User32_dll, "SetProcessDPIAware");
 		if (set_awareness != NULL) {
 			set_awareness();
-			FREE_DPI_LIBS();
+			goto free_dpi_libs; // the label is that way vvvvv
 		}
 	}
 
-	FREE_DPI_LIBS();
+	// oh no, a `goto` label, think of the children!
+	free_dpi_libs: // `goto` are this way ^^^^^;
+	if (User32_dll != NULL) { FreeLibrary(User32_dll); User32_dll = NULL; }
+	if (Shcore_dll != NULL) { FreeLibrary(Shcore_dll); Shcore_dll = NULL; }
 
 	// https://docs.microsoft.com/windows/win32/hidpi/setting-the-default-dpi-awareness-for-a-process
-
-#undef FREE_DPI_LIBS
 }
 
 //

@@ -29,7 +29,7 @@ static void mesh_obj_error_at(struct Mesh_Obj_Token * token, char const * messag
 	// if (parser->panic_mode) { return; }
 	// parser->panic_mode = true;
 
-	logger_to_console("[line %d] error", token->line + 1);
+	logger_to_console("[line %u] error", token->line + 1);
 
 	switch (token->type) {
 		case MESH_OBJ_TOKEN_ERROR: break;

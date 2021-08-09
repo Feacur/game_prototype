@@ -1123,10 +1123,10 @@ void graphics_to_glibrary_init(void) {
 
 void graphics_to_glibrary_free(void) {
 	// @note: consider 0 ref.id empty
-	if (graphics_state.programs.count > 1) { logger_to_console("dangling programs: %d\n", graphics_state.programs.count - 1); }
-	if (graphics_state.targets.count  > 1) { logger_to_console("dangling targets:  %d\n", graphics_state.targets.count - 1); }
-	if (graphics_state.textures.count > 1) { logger_to_console("dangling textures: %d\n", graphics_state.textures.count - 1); }
-	if (graphics_state.meshes.count   > 1) { logger_to_console("dangling meshes:   %d\n", graphics_state.meshes.count - 1); }
+	if (graphics_state.programs.count > 1) { logger_to_console("dangling programs: %u\n", graphics_state.programs.count - 1); }
+	if (graphics_state.targets.count  > 1) { logger_to_console("dangling targets:  %u\n", graphics_state.targets.count - 1); }
+	if (graphics_state.textures.count > 1) { logger_to_console("dangling textures: %u\n", graphics_state.textures.count - 1); }
+	if (graphics_state.meshes.count   > 1) { logger_to_console("dangling meshes:   %u\n", graphics_state.meshes.count - 1); }
 
 	for (struct Ref_Table_Iterator it = {0}; ref_table_iterate(&graphics_state.programs, &it); /*empty*/) {
 		gpu_program_free_internal(it.value);

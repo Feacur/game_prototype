@@ -248,7 +248,8 @@ void font_image_render(struct Font_Image * font_image) {
 		}
 
 		// verify estimated atlas dimensions
-		verify_dimensions: // `goto` is this way vvvvv; oh no, a `goto` label, think of the children!
+		// oh no, a `goto` label, think of the children!
+		verify_dimensions: // `goto` is this way vvvvv;
 		uint32_t line_height = 0;
 		uint32_t offset_x = padding, offset_y = padding;
 		for (uint32_t i = 0; i < symbols_count; i++) {
@@ -406,7 +407,7 @@ inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t
 	if (glyph != NULL) { if (glyph->usage < UINT8_MAX) { glyph->usage++; } return; }
 
 	uint32_t const glyph_id = font_get_glyph_id(font_image->font, codepoint);
-	if (glyph_id == 0) { return; }
+	if (glyph_id == 0) { logger_to_console("font misses a glyph for codepoint %u\n", codepoint); DEBUG_BREAK(); return; }
 
 	struct Glyph_Params glyph_params;
 	font_get_glyph_parameters(font_image->font, &glyph_params, glyph_id, font_image->scale);
