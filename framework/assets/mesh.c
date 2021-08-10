@@ -59,13 +59,11 @@ void mesh_init(struct Mesh * mesh, char const * path) {
 }
 
 void mesh_free(struct Mesh * mesh) {
-	for (uint32_t i = 0; i < mesh->count; i++) {
+	for (uint32_t i = 0; i < mesh->capacity; i++) {
 		array_byte_free(mesh->buffers + i);
 	}
-	if (mesh->capacity != 0) {
-		MEMORY_FREE(mesh, mesh->buffers);
-		MEMORY_FREE(mesh, mesh->parameters);
-	}
+	MEMORY_FREE(mesh, mesh->buffers);
+	MEMORY_FREE(mesh, mesh->parameters);
 	memset(mesh, 0, sizeof(*mesh));
 }
 

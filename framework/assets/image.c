@@ -58,8 +58,6 @@ void image_init(struct Image * image, char const * path) {
 }
 
 void image_free(struct Image * image) {
-	if (image->capacity > 0) {
-		MEMORY_FREE(image, image->data);
-	}
+	MEMORY_FREE(image, image->data);
 	memset(image, 0, sizeof(*image));
 }
