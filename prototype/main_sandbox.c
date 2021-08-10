@@ -432,6 +432,9 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 			switch (entity->type) {
 				// --- camera, world coords, transformed
 				case ENTITY_TYPE_MESH: {
+					batcher_2d_draw(state.batcher, size_x, size_y, camera->gpu_target_ref);
+
+					//
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
 
 					//

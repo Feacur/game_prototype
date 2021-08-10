@@ -4,8 +4,8 @@
 #include "common.h"
 
 #define CODEPOINT_EMPTY              UINT32_MAX
-#define CODEPOINT_ZERO_WIDTH_SPACE   0x200b
-#define CODEPOINT_NON_BREAKING_SPACE 0xa0
+#define CODEPOINT_ZERO_WIDTH_SPACE   0x0000200b
+#define CODEPOINT_NON_BREAKING_SPACE 0x000000a0
 
 struct UTF8_Iterator {
 	uint32_t current, next;
