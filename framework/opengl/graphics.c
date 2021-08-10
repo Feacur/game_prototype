@@ -117,7 +117,7 @@ static struct Graphics_State {
 // -- GPU program part
 static void verify_shader(GLuint id, GLenum parameter);
 static void verify_program(GLuint id, GLenum parameter);
-struct Ref gpu_program_init(struct Array_Byte * asset) {
+struct Ref gpu_program_init(struct Array_Byte const * asset) {
 #define ADD_SECTION_HEADER(shader_type, version) \
 	do { \
 		if (strstr((char const *)asset->data, #shader_type)) {\
@@ -339,7 +339,7 @@ static struct Ref gpu_texture_allocate(
 	return ref_table_aquire(&graphics_state.textures, &gpu_texture);
 }
 
-struct Ref gpu_texture_init(struct Image * asset) {
+struct Ref gpu_texture_init(struct Image const * asset) {
 	struct Ref const gpu_texture_ref = gpu_texture_allocate(
 		asset->size_x, asset->size_y, &asset->parameters, &asset->settings, asset->data
 	);
@@ -373,7 +373,7 @@ void gpu_texture_get_size(struct Ref gpu_texture_ref, uint32_t * x, uint32_t * y
 	*y = gpu_texture->size_y;
 }
 
-void gpu_texture_update(struct Ref gpu_texture_ref, struct Image * asset) {
+void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset) {
 	struct Gpu_Texture * gpu_texture = ref_table_get(&graphics_state.textures, gpu_texture_ref);
 
 	// @todo: compare texture and asset parameters?
@@ -636,7 +636,7 @@ static struct Ref gpu_mesh_allocate(
 	return ref_table_aquire(&graphics_state.meshes, &gpu_mesh);
 }
 
-struct Ref gpu_mesh_init(struct Mesh * asset) {
+struct Ref gpu_mesh_init(struct Mesh const * asset) {
 	uint32_t byte_lengths[MAX_MESH_BUFFERS];
 	void * data[MAX_MESH_BUFFERS];
 	for (uint32_t i = 0; i < asset->count; i++) {
@@ -669,7 +669,7 @@ void gpu_mesh_free(struct Ref gpu_mesh_ref) {
 	}
 }
 
-void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh * asset) {
+void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 	struct Gpu_Mesh * gpu_mesh = ref_table_get(&graphics_state.meshes, gpu_mesh_ref);
 	for (uint32_t i = 0; i < gpu_mesh->buffers_count; i++) {
 		// @todo: compare mesh and asset parameters?

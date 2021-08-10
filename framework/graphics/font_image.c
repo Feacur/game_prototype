@@ -19,7 +19,8 @@ uint32_t round_up_to_PO2_u32(uint32_t value);
 
 struct Font_Image {
 	struct Image buffer;
-	WEAK_PTR(struct Font) font;
+	//
+	WEAK_PTR(struct Font const) font;
 	struct Hash_Table_U32 table;
 	struct Hash_Table_U64 kerning;
 	float scale;
@@ -38,7 +39,7 @@ struct Glyph_Codepoint {
 	uint32_t glyph, codepoint;
 };
 
-struct Font_Image * font_image_init(struct Font * font, int32_t size) {
+struct Font_Image * font_image_init(struct Font const * font, int32_t size) {
 	struct Font_Image * font_image = MEMORY_ALLOCATE(NULL, struct Font_Image);
 	*font_image = (struct Font_Image){
 		// @todo: provide a contructor?
@@ -82,10 +83,6 @@ void font_image_free(struct Font_Image * font_image) {
 
 	memset(font_image, 0, sizeof(*font_image));
 	MEMORY_FREE(font_image, font_image);
-}
-
-struct Image * font_image_get_asset(struct Font_Image * font_image) {
-	return &font_image->buffer;
 }
 
 inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t codepoint);
@@ -350,6 +347,10 @@ void font_image_render(struct Font_Image * font_image) {
 	}
 
 	MEMORY_FREE(font_image, symbols);
+}
+
+struct Image const * font_image_get_asset(struct Font_Image * font_image) {
+	return &font_image->buffer;
 }
 
 struct Font_Glyph const * font_image_get_glyph(struct Font_Image * const font_image, uint32_t codepoint) {

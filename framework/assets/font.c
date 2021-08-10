@@ -59,17 +59,11 @@ void font_free(struct Font * font) {
 	MEMORY_FREE(font, font);
 }
 
-float font_get_scale(struct Font * font, float pixels_size) {
-	return (pixels_size > 0)
-		? stbtt_ScaleForPixelHeight(&font->font, pixels_size)
-		: stbtt_ScaleForMappingEmToPixels(&font->font, -pixels_size);
-}
-
-uint32_t font_get_glyph_id(struct Font * font, uint32_t codepoint) {
+uint32_t font_get_glyph_id(struct Font const * font, uint32_t codepoint) {
 	return (uint32_t)stbtt_FindGlyphIndex(&font->font, (int)codepoint);
 }
 
-void font_get_glyph_parameters(struct Font * font, struct Glyph_Params * params, uint32_t glyph_id, float scale) {
+void font_get_glyph_parameters(struct Font const * font, struct Glyph_Params * params, uint32_t glyph_id, float scale) {
 	int advance_width, left_side_bearing;
 	stbtt_GetGlyphHMetrics(&font->font, (int)glyph_id, &advance_width, &left_side_bearing);
 
@@ -96,7 +90,7 @@ void font_get_glyph_parameters(struct Font * font, struct Glyph_Params * params,
 }
 
 void font_fill_buffer(
-	struct Font * font,
+	struct Font const * font,
 	uint8_t * buffer, uint32_t buffer_rect_width,
 	uint32_t glyph_id, uint32_t glyph_size_x, uint32_t glyph_size_y, float scale
 ) {
@@ -110,14 +104,20 @@ void font_fill_buffer(
 	);
 }
 
-int32_t font_get_height(struct Font * font) {
+float font_get_scale(struct Font const * font, float pixels_size) {
+	return (pixels_size > 0)
+		? stbtt_ScaleForPixelHeight(&font->font, pixels_size)
+		: stbtt_ScaleForMappingEmToPixels(&font->font, -pixels_size);
+}
+
+int32_t font_get_height(struct Font const * font) {
 	return (int32_t)(font->ascent - font->descent);
 }
 
-int32_t font_get_gap(struct Font * font) {
+int32_t font_get_gap(struct Font const * font) {
 	return (int32_t)font->line_gap;
 }
 
-int32_t font_get_kerning(struct Font * font, uint32_t glyph_id1, uint32_t glyph_id2) {
+int32_t font_get_kerning(struct Font const * font, uint32_t glyph_id1, uint32_t glyph_id2) {
 	return (int32_t)stbtt_GetGlyphKernAdvance(&font->font, (int)glyph_id1, (int)glyph_id2);
 }
