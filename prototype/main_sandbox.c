@@ -35,15 +35,15 @@
 
 enum Camera_Mode {
 	CAMERA_MODE_NONE,
-	CAMERA_MODE_SCALE,
 	CAMERA_MODE_SCREEN,
+	CAMERA_MODE_ASPECT_X,
+	CAMERA_MODE_ASPECT_Y,
 };
 
 struct Camera {
 	struct Transform_3D transform;
 	//
 	enum Camera_Mode mode;
-	struct vec2 offset_xy, scale_xy;
 	float ncp, fcp;
 	float ortho;
 	//
@@ -123,6 +123,51 @@ static struct Game_State {
 
 static uint8_t const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
 static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
+
+static struct mat4 camera_get_projection(struct Camera const * camera, uint32_t size_x, uint32_t size_y) {
+	if (camera->mode == CAMERA_MODE_NONE) {
+		goto default_projection; // the label is that way vvvvv
+	}
+
+	uint32_t camera_size_x = size_x, camera_size_y = size_y;
+	if (camera->gpu_target_ref.id != 0) {
+		gpu_target_get_size(camera->gpu_target_ref, &camera_size_x, &camera_size_y);
+	}
+
+	switch (camera->mode) {
+		case CAMERA_MODE_NONE: break;
+
+		case CAMERA_MODE_SCREEN:
+			// map left-bottom to (0:0), right-top to (camera_size_x:camera_size_y)
+			return mat4_set_projection(
+				(struct vec2){-1, -1},
+				(struct vec2){2 / (float)camera_size_x, 2 / (float)camera_size_y},
+				camera->ncp, camera->fcp, camera->ortho
+			);
+
+		case CAMERA_MODE_ASPECT_X:
+			// map to frustum
+			return mat4_set_projection(
+				(struct vec2){0, 0},
+				(struct vec2){1, (float)camera_size_x / (float)camera_size_y},
+				camera->ncp, camera->fcp, camera->ortho
+			);
+
+		case CAMERA_MODE_ASPECT_Y:
+			// map to frustum
+			return mat4_set_projection(
+				(struct vec2){0, 0},
+				(struct vec2){(float)camera_size_y / (float)camera_size_x, 1},
+				camera->ncp, camera->fcp, camera->ortho
+			);
+	}
+
+	// oh no, a `goto` label, think of the children!
+	default_projection: // `goto` is this way ^^^^^;
+
+	// map left-bottom to (-1:-1), right-top to (1:1)
+	return mat4_identity; // @note: is quivalent to
+}
 
 static void game_init(void) {
 	// init state
@@ -236,9 +281,7 @@ static void game_init(void) {
 				.rotation = quat_set_radians((struct vec3){MATHS_TAU / 16, 0, 0}),
 			},
 			//
-			.mode = CAMERA_MODE_SCALE,
-			.offset_xy = (struct vec2){0, 0},
-			.scale_xy = (struct vec2){1, 1},
+			.mode = CAMERA_MODE_ASPECT_X,
 			.ncp = 0.1f,
 			.fcp = 10,
 			.ortho = 0,
@@ -255,15 +298,25 @@ static void game_init(void) {
 				.rotation = quat_identity,
 			},
 			//
-			.mode = CAMERA_MODE_SCREEN,
-			.offset_xy = (struct vec2){0, 0},
-			.scale_xy = (struct vec2){1, 1},
+			.mode = CAMERA_MODE_NONE,
 			.ncp = 0,
 			.fcp = 1,
 			.ortho = 1,
 			//
 			.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
 			.clear_rgba = 0x000000ff,
+		});
+
+		array_any_push(&state.cameras, &(struct Camera){
+			.transform = {
+				.scale = (struct vec3){1, 1, 1},
+				.rotation = quat_identity,
+			},
+			//
+			.mode = CAMERA_MODE_SCREEN,
+			.ncp = 0,
+			.fcp = 1,
+			.ortho = 1,
 		});
 
 		// > entities
@@ -290,7 +343,7 @@ static void game_init(void) {
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
-			.camera = 1,
+			.camera = 2,
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
@@ -302,7 +355,7 @@ static void game_init(void) {
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
-			.camera = 1,
+			.camera = 2,
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
@@ -314,7 +367,7 @@ static void game_init(void) {
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
-			.camera = 1,
+			.camera = 2,
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_FONT,
 			.as.font = {
@@ -406,21 +459,8 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		}
 
 		// prepare camera
-		uint32_t camera_size_x = size_x, camera_size_y = size_y;
-		if (camera->gpu_target_ref.id != 0) {
-			gpu_target_get_size(camera->gpu_target_ref, &camera_size_x, &camera_size_y);
-		}
-
-		float const aspect_x = 1;
-		float const aspect_y = (float)camera_size_x / (float)camera_size_y;
-
 		struct mat4 const mat4_camera = mat4_mul_mat(
-			mat4_set_projection(
-				camera->offset_xy,
-				(struct vec2){aspect_x * camera->scale_xy.x, aspect_y * camera->scale_xy.y},
-				camera->ncp, camera->fcp,
-				camera->ortho
-			),
+			camera_get_projection(camera, size_x, size_y),
 			mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation)
 		);
 
@@ -469,11 +509,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 					float const scale_x = target_scale_x / target_scale_max; (void)scale_x;
 					float const scale_y = target_scale_y / target_scale_max; (void)scale_y;
 
-					batcher_2d_push_matrix(state.batcher, mat4_set_projection(
-						(struct vec2){0, 0},
-						(struct vec2){1, 1},
-						0, 1, 1
-					));
+					batcher_2d_push_matrix(state.batcher, mat4_camera);
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){.mask = COLOR_CHANNEL_FULL});
 					batcher_2d_set_depth_mode(state.batcher, (struct Depth_Mode){0});
@@ -497,11 +533,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 					struct Entity_Text const * text = &entity->as.text;
 
 					//
-					batcher_2d_push_matrix(state.batcher, mat4_set_projection(
-						(struct vec2){-1, -1},
-						(struct vec2){2 / (float)size_x, 2 / (float)size_y},
-						0, 1, 1
-					));
+					batcher_2d_push_matrix(state.batcher, mat4_camera);
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){
 						.rgb = {
@@ -532,11 +564,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 					struct Entity_Font const * font = &entity->as.font;
 
 					//
-					batcher_2d_push_matrix(state.batcher, mat4_set_projection(
-						(struct vec2){-1, -1},
-						(struct vec2){2 / (float)size_x, 2 / (float)size_y},
-						0, 1, 1
-					));
+					batcher_2d_push_matrix(state.batcher, mat4_camera);
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){
 						.rgb = {
