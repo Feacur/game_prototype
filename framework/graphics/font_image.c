@@ -192,7 +192,7 @@ void font_image_render(struct Font_Image * font_image) {
 	if (font_image->rendered) { return; }
 	font_image->rendered = true;
 
-	// collect renderable glyphs
+	// collect visible glyphs
 	uint32_t symbols_count = 0;
 	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(font_image, struct Font_Symbol, font_image->table.count);
 
@@ -408,7 +408,7 @@ inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t
 	if (glyph != NULL) { if (glyph->usage < UINT8_MAX) { glyph->usage++; } return; }
 
 	uint32_t const glyph_id = font_get_glyph_id(font_image->font, codepoint);
-	if (glyph_id == 0) { logger_to_console("font misses a glyph for codepoint %u\n", codepoint); DEBUG_BREAK(); return; }
+	if (glyph_id == 0) { logger_to_console("font misses a glyph for codepoint 0x%x\n", codepoint); DEBUG_BREAK(); return; }
 
 	struct Glyph_Params glyph_params;
 	font_get_glyph_parameters(font_image->font, &glyph_params, glyph_id, font_image->scale);

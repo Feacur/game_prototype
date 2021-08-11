@@ -224,7 +224,7 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 
 			case '\t': break;
 
-			// case '\r': break;
+			case '\r': break;
 			case '\n': break;
 
 			default: if (it.codepoint > ' ') {
@@ -246,14 +246,50 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 		.x = x,
 		.y = y,
 	});
-	font_image_add_glyphs_from_text(font->buffer, length, data);
 
 	// reserve blanks for the text
 	array_any_push_many(&batcher->buffer_vertices, codepoints_count * 4, NULL);
 	array_u32_push_many(&batcher->buffer_indices, codepoints_count * 3 * 2, NULL);
 }
 
-void batcher_2d_update_text(struct Batcher_2D * batcher) {
+static void batcher_2d_update_text(struct Batcher_2D * batcher) {
+	if (batcher->texts.count == 0) { return; }
+
+	// add all glyphs
+	for (uint32_t i = 0; i < batcher->texts.count; i++) {
+		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
+		font_image_add_glyphs_from_text(text->font->buffer, text->length, text->data);
+	}
+
+	// render an upload the atlases
+	{
+		struct Hash_Set_U64 fonts;
+		hash_set_u64_init(&fonts);
+
+		for (uint32_t i = 0; i < batcher->texts.count; i++) {
+			struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
+			hash_set_u64_set(&fonts, (uint64_t)text->font);
+		}
+
+		for (struct Hash_Set_U64_Iterator it = {0}; hash_set_u64_iterate(&fonts, &it); /*empty*/) {
+			struct Asset_Font const * font = (void *)it.key_hash;
+			font_image_add_kerning_all(font->buffer);
+		}
+
+		for (struct Hash_Set_U64_Iterator it = {0}; hash_set_u64_iterate(&fonts, &it); /*empty*/) {
+			struct Asset_Font const * font = (void *)it.key_hash;
+			font_image_render(font->buffer);
+		}
+
+		for (struct Hash_Set_U64_Iterator it = {0}; hash_set_u64_iterate(&fonts, &it); /*empty*/) {
+			struct Asset_Font const * font = (void *)it.key_hash;
+			gpu_texture_update(font->gpu_ref, font_image_get_asset(font->buffer));
+		}
+
+		hash_set_u64_free(&fonts);
+	}
+
+	// fill quads
 	for (uint32_t i = 0; i < batcher->texts.count; i++) {
 		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
 		uint32_t vertices_offset = text->vertices_offset;
@@ -266,7 +302,7 @@ void batcher_2d_update_text(struct Batcher_2D * batcher) {
 		struct Font_Glyph const * glyph_error = font_image_get_glyph(text->font->buffer, CODEPOINT_EMPTY);
 
 		float const space_size = (glyph_space != NULL) ? glyph_space->params.full_size_x : 0;
-		float const tab_size = space_size * 4;
+		float const tab_size = space_size * 4; // @todo: expose tab scale
 
 		uint32_t previous_codepoint = 0;
 		for (struct UTF8_Iterator it = {0}; utf8_iterate(text->length, text->data, &it); /*empty*/) {
@@ -282,12 +318,12 @@ void batcher_2d_update_text(struct Batcher_2D * batcher) {
 					offset_x += tab_size;
 					break;
 
-				// case '\r':
-				// 	offset_x = x;
-				// 	break;
+				case '\r':
+					// offset_x = text->x;
+					break;
 
 				case '\n':
-					offset_x = text->x; // @idea: rely on [now outdated?] `\r`?
+					offset_x = text->x; // @note: auto `\r`
 					offset_y -= line_height;
 					break;
 
@@ -295,9 +331,12 @@ void batcher_2d_update_text(struct Batcher_2D * batcher) {
 					struct Font_Glyph const * glyph = font_image_get_glyph(text->font->buffer, it.codepoint);
 					if (glyph == NULL) { glyph = glyph_error; }
 
+					if (glyph->params.is_empty) { logger_to_console("codepoint 0x%x has empty glyph\n", it.codepoint); DEBUG_BREAK(); }
+
+					offset_x += font_image_get_kerning(text->font->buffer, previous_codepoint, it.codepoint);
+
 					// @todo: scale whole block, not only glyphs;
 					//        spaces should be scaled too!
-					offset_x += font_image_get_kerning(text->font->buffer, previous_codepoint, it.codepoint);
 					batcher_2d_fill_quad(
 						batcher,
 						text->matrix,
@@ -310,7 +349,6 @@ void batcher_2d_update_text(struct Batcher_2D * batcher) {
 						},
 						glyph->uv
 					);
-
 					vertices_offset += 4;
 					indices_offset += 3 * 2;
 
@@ -330,26 +368,7 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 	uint32_t const color_id   = graphics_add_uniform("u_Color");
 
 	// render text into the blanks
-	if (batcher->texts.count > 0) {
-		struct Hash_Set_U64 fonts;
-		hash_set_u64_init(&fonts);
-
-		for (uint32_t i = 0; i < batcher->texts.count; i++) {
-			struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
-			hash_set_u64_set(&fonts, (uint64_t)text->font);
-		}
-
-		for (struct Hash_Set_U64_Iterator it = {0}; hash_set_u64_iterate(&fonts, &it); /*empty*/) {
-			struct Asset_Font const * font = (void *)it.key_hash;
-			font_image_render(font->buffer);
-			gpu_texture_update(font->gpu_ref, font_image_get_asset(font->buffer));
-			font_image_add_kerning_all(font->buffer);
-		}
-
-		hash_set_u64_free(&fonts);
-
-		batcher_2d_update_text(batcher);
-	}
+	batcher_2d_update_text(batcher);
 
 	// upload the batch mesh
 	batcher_2d_update_asset(batcher);

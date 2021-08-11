@@ -76,8 +76,21 @@ void font_get_glyph_parameters(struct Font const * font, struct Glyph_Params * p
 		return;
 	}
 
-	int const size_x = rect[2] - rect[0];
-	int const size_y = rect[3] - rect[1];
+	if ((rect[2] <= rect[0]) || (rect[3] <= rect[1])) {
+		*params = (struct Glyph_Params){
+			.full_size_x = ((float)advance_width) * scale,
+			.is_empty = true,
+		};
+		return;
+	}
+
+	if (stbtt_IsGlyphEmpty(&font->font, (int)glyph_id)) {
+		*params = (struct Glyph_Params){
+			.full_size_x = ((float)advance_width) * scale,
+			.is_empty = true,
+		};
+		return;
+	}
 
 	*params = (struct Glyph_Params){
 		.rect[0] = (int32_t)floorf(((float)rect[0]) * scale),
@@ -85,7 +98,6 @@ void font_get_glyph_parameters(struct Font const * font, struct Glyph_Params * p
 		.rect[2] = (int32_t)ceilf (((float)rect[2]) * scale),
 		.rect[3] = (int32_t)ceilf (((float)rect[3]) * scale),
 		.full_size_x = ((float)advance_width) * scale,
-		.is_empty = (size_x > 0) && (size_y > 0) && stbtt_IsGlyphEmpty(&font->font, (int)glyph_id),
 	};
 }
 
