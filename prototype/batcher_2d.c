@@ -361,7 +361,7 @@ static void batcher_2d_update_text(struct Batcher_2D * batcher) {
 	}
 }
 
-void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size_y, struct Ref gpu_target_ref) {
+void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t screen_size_x, uint32_t screen_size_y, struct Ref gpu_target_ref) {
 	if (batcher->batches.count == 0) { return; }
 
 	uint32_t const texture_id = graphics_add_uniform("u_Texture");
@@ -387,7 +387,7 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t size_x, uint32_t size
 		gfx_material_set_float(batch->material, color_id, 4, &(struct vec4){1, 1, 1, 1}.x);
 
 		graphics_draw(&(struct Render_Pass){
-			.size_x = size_x, .size_y = size_y,
+			.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
 			.target = gpu_target_ref,
 			.blend_mode = batch->blend_mode,
 			.depth_mode = batch->depth_mode,

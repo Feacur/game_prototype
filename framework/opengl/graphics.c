@@ -1010,16 +1010,16 @@ void graphics_draw(struct Render_Pass const * pass) {
 		? pass->offset
 		: 0;
 
-	uint32_t size_x = pass->size_x, size_y = pass->size_y;
+	uint32_t viewport_size_x = pass->screen_size_x, viewport_size_y = pass->screen_size_y;
 	if (pass->target.id != 0) {
-		gpu_target_get_size(pass->target, &size_x, &size_y);
+		gpu_target_get_size(pass->target, &viewport_size_x, &viewport_size_y);
 	}
 
 	graphics_select_program(pass->material->gpu_program_ref);
 	graphics_upload_uniforms(pass->material);
 
 	graphics_select_mesh(pass->mesh);
-	glViewport(0, 0, (GLsizei)size_x, (GLsizei)size_y);
+	glViewport(0, 0, (GLsizei)viewport_size_x, (GLsizei)viewport_size_y);
 
 	enum Data_Type const elements_type = mesh->parameters[mesh->elements_index].type;
 	glDrawElements(

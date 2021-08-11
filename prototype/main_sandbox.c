@@ -44,8 +44,7 @@ struct Camera {
 	struct Transform_3D transform;
 	//
 	enum Camera_Mode mode;
-	float ncp, fcp;
-	float ortho;
+	float ncp, fcp, ortho;
 	//
 	struct Ref gpu_target_ref;
 	//
@@ -66,22 +65,26 @@ struct Entity_Mesh {
 	struct Ref gpu_mesh_ref;
 };
 
-struct Entity_Quad {
+struct Entity_Quad { // @note: a fulscreen quad
 	struct Ref gpu_target_ref;
+	enum Texture_Type type;
+	uint32_t index;
 };
 
 struct Entity_Text {
+	struct vec2 position;
+	//
 	// @todo: a separate type for Asset_Bytes?
 	uint32_t visible_length;
 	uint32_t length;
 	uint8_t const * data;
-	struct vec2 position;
 	// @todo: an asset ref
 	struct Asset_Font const * font;
 };
 
 struct Entity_Font {
 	struct vec2 position;
+	//
 	// @todo: an asset ref
 	struct Asset_Font const * font;
 };
@@ -124,25 +127,18 @@ static struct Game_State {
 static uint8_t const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
 static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
 
-static struct mat4 camera_get_projection(struct Camera const * camera, uint32_t size_x, uint32_t size_y) {
-	if (camera->mode == CAMERA_MODE_NONE) {
-		goto default_projection; // the label is that way vvvvv
-	}
-
-	uint32_t camera_size_x = size_x, camera_size_y = size_y;
-	if (camera->gpu_target_ref.id != 0) {
-		gpu_target_get_size(camera->gpu_target_ref, &camera_size_x, &camera_size_y);
-	}
-
-	switch (camera->mode) {
-		case CAMERA_MODE_NONE: break;
+static struct mat4 camera_get_projection(enum Camera_Mode mode, float ncp, float fcp, float ortho, uint32_t camera_size_x, uint32_t camera_size_y) {
+	switch (mode) {
+		case CAMERA_MODE_NONE:
+			// map left-bottom to (-1:-1), right-top to (1:1)
+			return mat4_identity;
 
 		case CAMERA_MODE_SCREEN:
 			// map left-bottom to (0:0), right-top to (camera_size_x:camera_size_y)
 			return mat4_set_projection(
 				(struct vec2){-1, -1},
 				(struct vec2){2 / (float)camera_size_x, 2 / (float)camera_size_y},
-				camera->ncp, camera->fcp, camera->ortho
+				ncp, fcp, ortho
 			);
 
 		case CAMERA_MODE_ASPECT_X:
@@ -150,7 +146,7 @@ static struct mat4 camera_get_projection(struct Camera const * camera, uint32_t 
 			return mat4_set_projection(
 				(struct vec2){0, 0},
 				(struct vec2){1, (float)camera_size_x / (float)camera_size_y},
-				camera->ncp, camera->fcp, camera->ortho
+				ncp, fcp, ortho
 			);
 
 		case CAMERA_MODE_ASPECT_Y:
@@ -158,15 +154,9 @@ static struct mat4 camera_get_projection(struct Camera const * camera, uint32_t 
 			return mat4_set_projection(
 				(struct vec2){0, 0},
 				(struct vec2){(float)camera_size_y / (float)camera_size_x, 1},
-				camera->ncp, camera->fcp, camera->ortho
+				ncp, fcp, ortho
 			);
 	}
-
-	// oh no, a `goto` label, think of the children!
-	default_projection: // `goto` is this way ^^^^^;
-
-	// map left-bottom to (-1:-1), right-top to (1:1)
-	return mat4_identity; // @note: is quivalent to
 }
 
 static void game_init(void) {
@@ -282,9 +272,7 @@ static void game_init(void) {
 			},
 			//
 			.mode = CAMERA_MODE_ASPECT_X,
-			.ncp = 0.1f,
-			.fcp = 10,
-			.ortho = 0,
+			.ncp = 0.1f, .fcp = 10, .ortho = 0,
 			//
 			.gpu_target_ref = gpu_target_ref,
 			//
@@ -298,25 +286,11 @@ static void game_init(void) {
 				.rotation = quat_identity,
 			},
 			//
-			.mode = CAMERA_MODE_NONE,
-			.ncp = 0,
-			.fcp = 1,
-			.ortho = 1,
+			.mode = CAMERA_MODE_SCREEN,
+			.ncp = 0, .fcp = 1, .ortho = 1,
 			//
 			.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
 			.clear_rgba = 0x000000ff,
-		});
-
-		array_any_push(&state.cameras, &(struct Camera){
-			.transform = {
-				.scale = (struct vec3){1, 1, 1},
-				.rotation = quat_identity,
-			},
-			//
-			.mode = CAMERA_MODE_SCREEN,
-			.ncp = 0,
-			.fcp = 1,
-			.ortho = 1,
 		});
 
 		// > entities
@@ -339,11 +313,12 @@ static void game_init(void) {
 			.type = ENTITY_TYPE_QUAD,
 			.as.quad = {
 				.gpu_target_ref = gpu_target_ref,
+				.type = TEXTURE_TYPE_COLOR,
 			}
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
-			.camera = 2,
+			.camera = 1,
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
@@ -355,7 +330,7 @@ static void game_init(void) {
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
-			.camera = 2,
+			.camera = 1,
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
@@ -367,7 +342,7 @@ static void game_init(void) {
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
-			.camera = 2,
+			.camera = 1,
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_FONT,
 			.as.font = {
@@ -432,7 +407,7 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 	}
 }
 
-static void game_render(uint32_t size_x, uint32_t size_y) {
+static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 	// @todo: iterate though cameras
 	//        > sub-iterate through relevant entities (masks, layers?)
 	//        render stuff to buffers or screen (camera settings)
@@ -448,8 +423,8 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 
 		if (camera->clear_mask != TEXTURE_TYPE_NONE) {
 			graphics_draw(&(struct Render_Pass){
+				.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
 				.target = camera->gpu_target_ref,
-				.size_x = size_x, .size_y = size_y,
 				.blend_mode = {.mask = COLOR_CHANNEL_FULL},
 				.depth_mode = {.enabled = true, .mask = true},
 				//
@@ -459,8 +434,13 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 		}
 
 		// prepare camera
+		uint32_t camera_size_x = screen_size_x, camera_size_y = screen_size_y;
+		if (camera->gpu_target_ref.id != 0) {
+			gpu_target_get_size(camera->gpu_target_ref, &camera_size_x, &camera_size_y);
+		}
+
 		struct mat4 const mat4_camera = mat4_mul_mat(
-			camera_get_projection(camera, size_x, size_y),
+			camera_get_projection(camera->mode, camera->ncp, camera->fcp, camera->ortho, camera_size_x, camera_size_y),
 			mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation)
 		);
 
@@ -472,7 +452,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 			switch (entity->type) {
 				// --- camera, world coords, transformed
 				case ENTITY_TYPE_MESH: {
-					batcher_2d_draw(state.batcher, size_x, size_y, camera->gpu_target_ref);
+					batcher_2d_draw(state.batcher, screen_size_x, screen_size_y, camera->gpu_target_ref);
 
 					//
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
@@ -483,8 +463,8 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 					gfx_material_set_float(&entity->material, state.uniforms.camera, 4*4, &mat4_camera.x.x);
 					gfx_material_set_float(&entity->material, state.uniforms.transform, 4*4, &mat4_entity.x.x);
 					graphics_draw(&(struct Render_Pass){
+						.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
 						.target = camera->gpu_target_ref,
-						.size_x = size_x, .size_y = size_y,
 						.blend_mode = {.mask = COLOR_CHANNEL_FULL},
 						.depth_mode = {.enabled = true, .mask = true},
 						//
@@ -497,17 +477,20 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 				case ENTITY_TYPE_QUAD: {
 					struct Entity_Quad const * quad = &entity->as.quad;
 
-					struct Ref texture_ref = gpu_target_get_texture_ref(quad->gpu_target_ref, TEXTURE_TYPE_COLOR, 0);
+					struct Ref texture_ref = gpu_target_get_texture_ref(quad->gpu_target_ref, quad->type, quad->index);
 
 					uint32_t texture_size_x, texture_size_y;
 					gpu_texture_get_size(texture_ref, &texture_size_x, &texture_size_y);
 
-					// @todo: transform into screen coords
-					float const target_scale_x   = (float)texture_size_x / (float)size_x;
-					float const target_scale_y   = (float)texture_size_y / (float)size_y;
-					float const target_scale_max = max_r32(target_scale_x, target_scale_y);
-					float const scale_x = target_scale_x / target_scale_max; (void)scale_x;
-					float const scale_y = target_scale_y / target_scale_max; (void)scale_y;
+					// @note: `(fit_size_N <= camera_size_N) == true`
+					//        `(fit_offset_N >= 0) == true`
+					//        alternatively `fit_axis_is_x` can be calculated as:
+					//        `((float)texture_size_x / (float)camera_size_x > (float)texture_size_y / (float)camera_size_y)`
+					bool const fit_axis_is_x = (texture_size_x * camera_size_y > texture_size_y * camera_size_x);
+					uint32_t const fit_size_x = fit_axis_is_x ? camera_size_x : mul_div_u32(camera_size_y, texture_size_x, texture_size_y);
+					uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(camera_size_x, texture_size_y, texture_size_x) : camera_size_y;
+					uint32_t const fit_offset_x = (camera_size_x - fit_size_x) / 2;
+					uint32_t const fit_offset_y = (camera_size_y - fit_size_y) / 2;
 
 					batcher_2d_push_matrix(state.batcher, mat4_camera);
 
@@ -519,7 +502,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 					batcher_2d_set_texture(state.batcher, texture_ref);
 					batcher_2d_add_quad(
 						state.batcher,
-						(float[]){-scale_x, -scale_y, scale_x, scale_y},
+						(float[]){(float)fit_offset_x, (float)fit_offset_y, (float)(fit_offset_x + fit_size_x), (float)(fit_offset_y + fit_size_y)},
 						(float[]){0,0,1,1}
 					);
 
@@ -597,7 +580,7 @@ static void game_render(uint32_t size_x, uint32_t size_y) {
 			}
 		}
 
-		batcher_2d_draw(state.batcher, size_x, size_y, camera->gpu_target_ref);
+		batcher_2d_draw(state.batcher, screen_size_x, screen_size_y, camera->gpu_target_ref);
 	}
 }
 
