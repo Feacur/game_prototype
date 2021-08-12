@@ -1,4 +1,5 @@
 #include "framework/memory.h"
+#include "framework/logger.h"
 #include "internal.h"
 
 #include <string.h>
@@ -47,6 +48,15 @@ void array_float_push_many(struct Array_Float * array, uint32_t count, float con
 		);
 	}
 	array->count += count;
+}
+
+void array_float_set_many(struct Array_Float * array, uint32_t index, uint32_t count, float const * value) {
+	if (index + count > array->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
+	memcpy(
+		array->data + index,
+		value,
+		sizeof(*array->data) * count
+	);
 }
 
 float array_float_pop(struct Array_Float * array) {

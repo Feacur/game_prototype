@@ -1,3 +1,29 @@
+# 2021, august 12
+```
+[x] asset system
+    [x] text data
+[x] entity system
+    [x] operate [crude] entities for rendering
+    [x] a separate list of camera entities for rendering
+[x] text rendering
+    [x] automatically build atlas based on input text
+    [x] grabage collect glyphs
+    [x] collect all the relevant glyphs, then update textures AND texture coordinates
+    [x] glyphs GC threshold
+    [x] postpone fonts atlases generation and texts quads creation
+[x] clean up containers implementation
+    [x] ever need a uint64_t hashes for hash tables?
+    [x] `set` methods for arrays
+    [x] some bound checks
+    [x] refactor iterators
+[x] build system
+    [x] streamline build settings switching
+[x] substitute `printf` with `stb_sprintf` and `fwrite`
+[x] mark some pointers as weak
+[x] fix leaks
+[x] report a `stb_truetype.h` bug (a duplicate, actually)
+```
+
 # 2021, may 03
 ```
 [>] entity system

@@ -17,6 +17,8 @@ void array_s32_resize(struct Array_S32 * array, uint32_t target_capacity);
 void array_s32_push(struct Array_S32 * array, int32_t value);
 void array_s32_push_many(struct Array_S32 * array, uint32_t count, int32_t const * value);
 
+void array_s32_set_many(struct Array_S32 * array, uint32_t index, uint32_t count, int32_t const * value);
+
 int32_t array_s32_pop(struct Array_S32 * array);
 int32_t array_s32_peek(struct Array_S32 * array, uint32_t offset);
 int32_t array_s32_at(struct Array_S32 * array, uint32_t index);

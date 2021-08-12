@@ -1,4 +1,5 @@
 #include "framework/memory.h"
+#include "framework/logger.h"
 #include "internal.h"
 
 #include <string.h>
@@ -47,6 +48,15 @@ void array_s32_push_many(struct Array_S32 * array, uint32_t count, int32_t const
 		);
 	}
 	array->count += count;
+}
+
+void array_s32_set_many(struct Array_S32 * array, uint32_t index, uint32_t count, int32_t const * value) {
+	if (index + count > array->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
+	memcpy(
+		array->data + index,
+		value,
+		sizeof(*array->data) * count
+	);
 }
 
 int32_t array_s32_pop(struct Array_S32 * array) {
