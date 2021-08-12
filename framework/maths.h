@@ -126,7 +126,7 @@ void        quat_get_axes(struct vec4 q, struct vec3 * x, struct vec3 * y, struc
 // -- matrices
 struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
 struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
-struct mat4 mat4_set_projection(struct vec2 offset_xy, struct vec2 scale_xy, float ncp, float fcp, float ortho);
+struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, float ncp, float fcp, float ortho);
 
 struct mat4 mat4_inverse_transformation(struct mat4 m);
 struct vec4 mat4_mul_vec(struct mat4 m, struct vec4 v);

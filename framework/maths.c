@@ -372,7 +372,7 @@ struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 sc
 	};
 }
 
-struct mat4 mat4_set_projection(struct vec2 offset_xy, struct vec2 scale_xy, float ncp, float fcp, float ortho) {
+struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, float ncp, float fcp, float ortho) {
 	float const NS_NCP = 0, NS_FCP = 1;
 	float const reverse_depth = 1 / (fcp - ncp);
 
@@ -396,8 +396,6 @@ struct mat4 mat4_set_projection(struct vec2 offset_xy, struct vec2 scale_xy, flo
 
 /*
 > inputs
-* offset_xy: shifts normalized-space coordinates by the vector
-* scale_xy:  multiplies world-space coordinates by the vector
 * ncp: world-space near clipping plane
 * fcp: world-space far clipping plane
 * ortho: [0 .. 1], where 0 is perspective mode, 1 is orthographic mode

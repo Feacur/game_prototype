@@ -130,47 +130,34 @@ static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
 static struct mat4 camera_get_projection(enum Camera_Mode mode, float ncp, float fcp, float ortho, uint32_t camera_size_x, uint32_t camera_size_y) {
 	switch (mode) {
 		case CAMERA_MODE_NONE: // @note: basically normalized device coordinates
-			// map left-bottom to (-1:-1), right-top to (1:1)
-			return mat4_identity; // @note: is equivalent of
-			// return mat4_set_projection(
-			// 	(struct vec2){0, 0},
-			// 	(struct vec2){1, 1},
-			// 	0, 1, 1
-			// );
+			// @note: is equivalent of `CAMERA_MODE_ASPECT_X` or `CAMERA_MODE_ASPECT_Y`
+			//        with `camera_size_x == camera_size_y`
+			return mat4_identity;
 
 		case CAMERA_MODE_SCREEN:
-			// map left-bottom to (0:0), right-top to (camera_size_x:camera_size_y)
 			return mat4_set_projection(
-				// map normalized-space left-bottom to (0:0), right top to (2:2)
-				(struct vec2){-1, -1},
-				// map world-space (camera_size_x:camera_size_y) to (2:2)
 				(struct vec2){2 / (float)camera_size_x, 2 / (float)camera_size_y},
-				// at least for `ncp == 0, fcp == 1, ortho == 1`
+				(struct vec2){-1, -1},
 				ncp, fcp, ortho
 			);
 
 		case CAMERA_MODE_ASPECT_X:
-			// @note: map left-bottom to (-1:-camera_aspect_yx), right top to (1:camera_aspect_yx)
 			return mat4_set_projection(
-				// map normalized-space left-bottom to (-1:-1), right top to (1:1)
-				(struct vec2){0, 0},
-				// map world-space (camera_size_x:camera_size_y) to (camera_size_x:camera_size_x)
 				(struct vec2){1, (float)camera_size_x / (float)camera_size_y},
-				// at least for `ncp == 0, fcp == 1, ortho == 1`
+				(struct vec2){0, 0},
 				ncp, fcp, ortho
 			);
 
 		case CAMERA_MODE_ASPECT_Y:
-			// @note: map left-bottom to (-camera_aspect_xy:-1), right top to (camera_aspect_xy:1)
 			return mat4_set_projection(
-				// map normalized-space left-bottom to (-1:-1), right top to (1:1)
-				(struct vec2){0, 0},
-				// map world-space (camera_size_x:camera_size_y) to (camera_size_y:camera_size_y)
 				(struct vec2){(float)camera_size_y / (float)camera_size_x, 1},
-				// at least for `ncp == 0, fcp == 1, ortho == 1`
+				(struct vec2){0, 0},
 				ncp, fcp, ortho
 			);
 	}
+
+	logger_to_console("unknown camera mode"); DEBUG_BREAK();
+	return (struct mat4){0};
 }
 
 static void game_init(void) {
@@ -280,9 +267,9 @@ static void game_init(void) {
 		// > cameras
 		array_any_push(&state.cameras, &(struct Camera){
 			.transform = {
-				.position = (struct vec3){0, 3, -5},
 				.scale = (struct vec3){1, 1, 1},
 				.rotation = quat_set_radians((struct vec3){MATHS_TAU / 16, 0, 0}),
+				.position = (struct vec3){0, 3, -5},
 			},
 			//
 			.mode = CAMERA_MODE_ASPECT_X,
