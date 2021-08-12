@@ -129,31 +129,45 @@ static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
 
 static struct mat4 camera_get_projection(enum Camera_Mode mode, float ncp, float fcp, float ortho, uint32_t camera_size_x, uint32_t camera_size_y) {
 	switch (mode) {
-		case CAMERA_MODE_NONE:
+		case CAMERA_MODE_NONE: // @note: basically normalized device coordinates
 			// map left-bottom to (-1:-1), right-top to (1:1)
-			return mat4_identity;
+			return mat4_identity; // @note: is equivalent of
+			// return mat4_set_projection(
+			// 	(struct vec2){0, 0},
+			// 	(struct vec2){1, 1},
+			// 	0, 1, 1
+			// );
 
 		case CAMERA_MODE_SCREEN:
 			// map left-bottom to (0:0), right-top to (camera_size_x:camera_size_y)
 			return mat4_set_projection(
+				// map normalized-space left-bottom to (0:0), right top to (2:2)
 				(struct vec2){-1, -1},
+				// map world-space (camera_size_x:camera_size_y) to (2:2)
 				(struct vec2){2 / (float)camera_size_x, 2 / (float)camera_size_y},
+				// at least for `ncp == 0, fcp == 1, ortho == 1`
 				ncp, fcp, ortho
 			);
 
 		case CAMERA_MODE_ASPECT_X:
-			// map to frustum
+			// @note: map left-bottom to (-1:-camera_aspect_yx), right top to (1:camera_aspect_yx)
 			return mat4_set_projection(
+				// map normalized-space left-bottom to (-1:-1), right top to (1:1)
 				(struct vec2){0, 0},
+				// map world-space (camera_size_x:camera_size_y) to (camera_size_x:camera_size_x)
 				(struct vec2){1, (float)camera_size_x / (float)camera_size_y},
+				// at least for `ncp == 0, fcp == 1, ortho == 1`
 				ncp, fcp, ortho
 			);
 
 		case CAMERA_MODE_ASPECT_Y:
-			// map to frustum
+			// @note: map left-bottom to (-camera_aspect_xy:-1), right top to (camera_aspect_xy:1)
 			return mat4_set_projection(
+				// map normalized-space left-bottom to (-1:-1), right top to (1:1)
 				(struct vec2){0, 0},
+				// map world-space (camera_size_x:camera_size_y) to (camera_size_y:camera_size_y)
 				(struct vec2){(float)camera_size_y / (float)camera_size_x, 1},
+				// at least for `ncp == 0, fcp == 1, ortho == 1`
 				ncp, fcp, ortho
 			);
 	}

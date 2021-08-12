@@ -829,7 +829,7 @@ static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_progra
 	GLint const location = gpu_program->uniform_locations[uniform_index];
 
 	switch (field->type) {
-		default: break;
+		default: logger_to_console("unsupported field type 0x%x", field->type); DEBUG_BREAK(); break;
 
 		case DATA_TYPE_UNIT: {
 			GLint units[MAX_UNITS_PER_MATERIAL];
@@ -879,8 +879,10 @@ static void graphics_upload_uniforms(struct Gfx_Material const * material) {
 	uint32_t unit_offset = 0, u32_offset = 0, s32_offset = 0, float_offset = 0;
 	for (uint32_t i = 0; i < uniforms_count; i++) {
 		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
-		switch (data_type_get_element_type(uniforms[i].type)) {
-			default: logger_to_console("unknown data type\n"); DEBUG_BREAK(); break;
+
+		enum Data_Type const element_type = data_type_get_element_type(uniforms[i].type);
+		switch (element_type) {
+			default: logger_to_console("unknown element type 0x%x\n", element_type); DEBUG_BREAK(); break;
 
 			case DATA_TYPE_UNIT: {
 				graphics_upload_single_uniform(gpu_program, i, material->textures.data + unit_offset);
