@@ -108,6 +108,8 @@ void font_fill_buffer(
 ) {
 	// @todo: account error glyph size
 	if (glyph_id == 0) { buffer[0] = 0xff; return; }
+	// @note: there's no `stbtt_set_flip_vertically_on_load`
+	//        currently code relies on "emulation" of it
 	stbtt_MakeGlyphBitmap(
 		&font->font, buffer,
 		(int)glyph_size_x, (int)glyph_size_y, (int)buffer_rect_width,

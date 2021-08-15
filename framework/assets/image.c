@@ -33,6 +33,9 @@ void image_init(struct Image * image, char const * path) {
 	platform_file_read_entire(path, &file);
 
 	// @todo: check if it's opengl-specific?
+	//        although, bottom-left corner as zero point is a go for me here.
+	//        text rendering being top-left corner as zero makes sense for LTR;
+	//        here I emulate the common coordinate system for the project
 	stbi_set_flip_vertically_on_load(1);
 
 	int size_x, size_y, channels;

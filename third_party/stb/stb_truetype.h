@@ -3010,7 +3010,10 @@ static void stbtt__rasterize_sorted_edges(stbtt__bitmap *result, stbtt__edge *e,
 
          ++y;
       }
-      STBTT_memcpy(result->pixels + j * result->stride, scanline, result->w);
+      // @note: rasterize bottom-left -> top-right
+      //        emulate `stbtt_set_flip_vertically_on_load`
+      unsigned char * result_pixels = result->pixels + (result->height - j - 1) * result->stride;
+      STBTT_memcpy(result_pixels, scanline, result->w);
       ++j;
    }
 
@@ -3291,6 +3294,9 @@ static void stbtt__rasterize_sorted_edges(stbtt__bitmap *result, stbtt__edge *e,
 
       {
          float sum = 0;
+         // @note: rasterize bottom-left -> top-right
+         //        emulate `stbtt_set_flip_vertically_on_load`
+         unsigned char * result_pixels = result->pixels + (result->h - j - 1) * result->stride;
          for (i=0; i < result->w; ++i) {
             float k;
             int m;
@@ -3299,7 +3305,7 @@ static void stbtt__rasterize_sorted_edges(stbtt__bitmap *result, stbtt__edge *e,
             k = (float) STBTT_fabs(k)*255 + 0.5f;
             m = (int) k;
             if (m > 255) m = 255;
-            result->pixels[j*result->stride + i] = (unsigned char) m;
+            result_pixels[i] = (unsigned char) m;
          }
       }
       // advance all the edges

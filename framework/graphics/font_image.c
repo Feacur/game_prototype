@@ -325,17 +325,17 @@ void font_image_render(struct Font_Image * font_image) {
 				array_byte_resize(&scratch_buffer, size_x * size_y);
 			}
 
-			// @todo: receive an `invert_y` flag?
 			font_fill_buffer(
 				font_image->font,
 				scratch_buffer.data, size_x,
 				symbol->glyph->id, size_x, size_y, font_image->scale
 			);
 
-			for (uint32_t y = 0; y < size_y; y++) {
+			for (uint32_t glyph_y = 0; glyph_y < size_y; glyph_y++) {
+				// @note: expects glyphs to be rendered bottom-left -> top-right
 				memcpy(
-					font_image->buffer.data + ((offset_y + y) * font_image->buffer.size_x + offset_x),
-					scratch_buffer.data + ((size_y - y - 1) * size_x),
+					font_image->buffer.data + ((offset_y + glyph_y) * font_image->buffer.size_x + offset_x),
+					scratch_buffer.data + glyph_y * size_x,
 					sizeof(*scratch_buffer.data) * size_x
 				);
 			}
