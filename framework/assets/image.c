@@ -64,3 +64,9 @@ void image_free(struct Image * image) {
 	MEMORY_FREE(image, image->data);
 	memset(image, 0, sizeof(*image));
 }
+
+void image_resize(struct Image * image, uint32_t size_x, uint32_t size_y) {
+	// @note: obviously, it's lossy
+	image->data = MEMORY_REALLOCATE_ARRAY(image, image->data, size_x * size_y * image->parameters.channels);
+	image->capacity = size_x * size_y;
+}

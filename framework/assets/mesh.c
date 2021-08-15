@@ -98,7 +98,7 @@ static void mesh_obj_repack(
 
 		// @todo: reuse matching vertices instead of copying them
 		//        naive linear search would be quadratically slow,
-		//        so a hashset it is
+		//        so a hash_table it is
 
 		uint32_t attribute_index = 1;
 		if (obj->positions.count > 0) { array_float_push_many(vertices, 3, obj->positions.data + vertex_index[0] * attributes_buffer[attribute_index]); attribute_index += 2; }

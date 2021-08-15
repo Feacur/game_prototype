@@ -31,7 +31,6 @@ struct Batcher_2D_Text {
 	WEAK_PTR(struct Asset_Font const) font; // @todo: use `Asset_Ref` instead?
 	uint32_t vertices_offset, indices_offset;
 	struct mat4 matrix;
-	float x, y;
 };
 
 struct Batcher_2D_Batch {
@@ -211,8 +210,10 @@ void batcher_2d_add_quad(
 	});
 }
 
-void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * font, uint32_t length, uint8_t const * data, float x, float y) {
-	// @todo: do rect bounds check
+void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * font, uint32_t length, uint8_t const * data) {
+	// @todo: introduce rect bounds parameter
+	//        introduce scroll offset parameter
+	//        check bounds, reserve only visible
 	uint32_t codepoints_count = 0;
 	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) {
 		switch (it.codepoint) {
@@ -243,8 +244,6 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 		.vertices_offset = batcher->buffer_vertices.count,
 		.indices_offset  = batcher->buffer_indices.count,
 		.matrix = batcher->matrix,
-		.x = x,
-		.y = y,
 	});
 
 	// reserve blanks for the text
@@ -296,7 +295,7 @@ static void batcher_2d_update_text(struct Batcher_2D * batcher) {
 		uint32_t indices_offset  = text->indices_offset;
 
 		float const line_height = font_image_get_height(text->font->buffer) + font_image_get_gap(text->font->buffer);
-		float offset_x = text->x, offset_y = text->y;
+		float offset_x = 0, offset_y = 0;
 
 		struct Font_Glyph const * glyph_space = font_image_get_glyph(text->font->buffer, ' ');
 		struct Font_Glyph const * glyph_error = font_image_get_glyph(text->font->buffer, CODEPOINT_EMPTY);
@@ -323,7 +322,7 @@ static void batcher_2d_update_text(struct Batcher_2D * batcher) {
 					break;
 
 				case '\n':
-					offset_x = text->x; // @note: auto `\r`
+					offset_x = 0; // @note: auto `\r`
 					offset_y -= line_height;
 					break;
 
@@ -335,8 +334,6 @@ static void batcher_2d_update_text(struct Batcher_2D * batcher) {
 
 					offset_x += font_image_get_kerning(text->font->buffer, previous_codepoint, it.codepoint);
 
-					// @todo: scale whole block, not only glyphs;
-					//        spaces should be scaled too!
 					batcher_2d_fill_quad(
 						batcher,
 						text->matrix,

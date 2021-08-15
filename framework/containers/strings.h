@@ -7,7 +7,7 @@
 // @note: [with a modification] might store arbitrary-sized structs
 //        alignment guarantees are required
 
-// @todo: provide "0 id is empty" guarantee?
+// @idea: provide "0 id is empty" guarantee?
 struct Strings {
 	struct Array_U32 offsets;
 	struct Array_U32 lengths;

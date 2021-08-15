@@ -106,8 +106,13 @@ void font_fill_buffer(
 	uint8_t * buffer, uint32_t buffer_rect_width,
 	uint32_t glyph_id, uint32_t glyph_size_x, uint32_t glyph_size_y, float scale
 ) {
-	// @todo: account error glyph size
-	if (glyph_id == 0) { buffer[0] = 0xff; return; }
+	if (glyph_id == 0) {
+		if (glyph_size_x == 0) { logger_to_console("'glyph_size_x == 0' doesn't make sense\n"); DEBUG_BREAK(); }
+		if (glyph_size_y == 0) { logger_to_console("'glyph_size_y == 0' doesn't make sense\n"); DEBUG_BREAK(); }
+		buffer[0] = 0xff;
+		memset(buffer, 0xff, glyph_size_x * glyph_size_y * sizeof(*buffer));
+		return;
+	}
 	// @note: there's no `stbtt_set_flip_vertically_on_load`
 	//        currently code relies on "emulation" of it
 	stbtt_MakeGlyphBitmap(

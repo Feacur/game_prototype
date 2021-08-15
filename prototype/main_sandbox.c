@@ -60,7 +60,6 @@ enum Entity_Type {
 };
 
 struct Entity_Mesh {
-	struct Transform_3D transform;
 	// @todo: an asset ref? a name?
 	struct Ref gpu_mesh_ref;
 };
@@ -72,8 +71,6 @@ struct Entity_Quad { // @note: a fulscreen quad
 };
 
 struct Entity_Text {
-	struct vec2 position;
-	//
 	// @todo: a separate type for Asset_Bytes?
 	uint32_t visible_length;
 	uint32_t length;
@@ -83,14 +80,13 @@ struct Entity_Text {
 };
 
 struct Entity_Font {
-	struct vec2 position;
-	//
 	// @todo: an asset ref
 	struct Asset_Font const * font;
 };
 
 struct Entity {
 	uint32_t camera;
+	struct Transform_3D transform;
 	//
 	struct Gfx_Material material;
 	//
@@ -297,19 +293,25 @@ static void game_init(void) {
 		// > entities
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 0,
+			.transform = {
+				.scale = (struct vec3){1, 1, 1},
+				.rotation = quat_identity,
+			},
+			//
 			.material = state.materials.test,
 			.type = ENTITY_TYPE_MESH,
 			.as.mesh = {
-				.transform = {
-					.scale = (struct vec3){1, 1, 1},
-					.rotation = quat_identity,
-				},
 				.gpu_mesh_ref = mesh_cube->gpu_ref,
 			}
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
+			.transform = {
+				.scale = (struct vec3){1, 1, 1},
+				.rotation = quat_identity,
+			},
+			//
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_QUAD,
 			.as.quad = {
@@ -320,34 +322,49 @@ static void game_init(void) {
 
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
+			.transform = {
+				.position = (struct vec3){50, 200, 0},
+				.scale = (struct vec3){1, 1, 1},
+				.rotation = quat_identity,
+			},
+			//
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
 				.length = test111_length,
 				.data = test111,
-				.position = (struct vec2){50, 200},
 				.font = font_open_sans,
 			}
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
+			.transform = {
+				.position = (struct vec3){600, 200, 0},
+				.scale = (struct vec3){1, 1, 1},
+				.rotation = quat_identity,
+			},
+			//
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
 				.length = text_test->length,
 				.data = text_test->data,
-				.position = (struct vec2){600, 200},
 				.font = font_open_sans,
 			}
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
+			.transform = {
+				.position = (struct vec3){0, 400, 0},
+				.scale = (struct vec3){1, 1, 1},
+				.rotation = quat_identity,
+			},
+			//
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_FONT,
 			.as.font = {
-				.position = (struct vec2){0, 400},
 				.font = font_open_sans,
 			}
 		});
@@ -387,9 +404,9 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 
 		switch (entity->type) {
 			case ENTITY_TYPE_MESH: {
-				struct Entity_Mesh * mesh = &entity->as.mesh;
+				// struct Entity_Mesh * mesh = &entity->as.mesh;
 
-				mesh->transform.rotation = vec4_norm(quat_mul(mesh->transform.rotation, quat_set_radians(
+				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
 					(struct vec3){0 * delta_time, 1 * delta_time, 0 * delta_time}
 				)));
 			} break;
@@ -450,6 +467,8 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 			struct Entity * entity = array_any_at(&state.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
 
+			struct mat4 const mat4_entity = mat4_set_transformation(entity->transform.position, entity->transform.scale, entity->transform.rotation);
+
 			switch (entity->type) {
 				// --- camera, world coords, transformed
 				case ENTITY_TYPE_MESH: {
@@ -457,9 +476,6 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 
 					//
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
-
-					//
-					struct mat4 const mat4_entity = mat4_set_transformation(mesh->transform.position, mesh->transform.scale, mesh->transform.rotation);
 
 					gfx_material_set_float(&entity->material, state.uniforms.camera, 4*4, &mat4_camera.x.x);
 					gfx_material_set_float(&entity->material, state.uniforms.transform, 4*4, &mat4_entity.x.x);
@@ -493,7 +509,7 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 					uint32_t const fit_offset_x = (camera_size_x - fit_size_x) / 2;
 					uint32_t const fit_offset_y = (camera_size_y - fit_size_y) / 2;
 
-					batcher_2d_push_matrix(state.batcher, mat4_camera);
+					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){.mask = COLOR_CHANNEL_FULL});
 					batcher_2d_set_depth_mode(state.batcher, (struct Depth_Mode){0});
@@ -517,7 +533,7 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 					struct Entity_Text const * text = &entity->as.text;
 
 					//
-					batcher_2d_push_matrix(state.batcher, mat4_camera);
+					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){
 						.rgb = {
@@ -536,8 +552,7 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 						state.batcher,
 						text->font,
 						text->visible_length,
-						text->data,
-						text->position.x, text->position.y
+						text->data
 					);
 
 					batcher_2d_pop_matrix(state.batcher);
@@ -548,7 +563,7 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 					struct Entity_Font const * font = &entity->as.font;
 
 					//
-					batcher_2d_push_matrix(state.batcher, mat4_camera);
+					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){
 						.rgb = {
@@ -568,10 +583,10 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 					batcher_2d_add_quad(
 						state.batcher,
 						(float[]){
-							font->position.x,
-							font->position.y,
-							font->position.x + (float)font_image->size_x,
-							font->position.y + (float)font_image->size_y
+							0,
+							0,
+							(float)font_image->size_x,
+							(float)font_image->size_y
 						},
 						(float[]){0,0,1,1}
 					);

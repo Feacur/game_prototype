@@ -42,7 +42,6 @@ struct Glyph_Codepoint {
 struct Font_Image * font_image_init(struct Font const * font, int32_t size) {
 	struct Font_Image * font_image = MEMORY_ALLOCATE(NULL, struct Font_Image);
 	*font_image = (struct Font_Image){
-		// @todo: provide a contructor?
 		.buffer = {
 			.parameters = {
 				.texture_type = TEXTURE_TYPE_COLOR,
@@ -279,9 +278,7 @@ void font_image_render(struct Font_Image * font_image) {
 		}
 
 		if (font_image->buffer.capacity < atlas_size_x * atlas_size_y) {
-			// @todo: provide a `resize` method
-			font_image->buffer.data = MEMORY_REALLOCATE_ARRAY(font_image, font_image->buffer.data, atlas_size_x * atlas_size_y);
-			font_image->buffer.capacity = atlas_size_x * atlas_size_y;
+			image_resize(&font_image->buffer, atlas_size_x, atlas_size_y);
 		}
 		font_image->buffer.size_x = atlas_size_x;
 		font_image->buffer.size_y = atlas_size_y;

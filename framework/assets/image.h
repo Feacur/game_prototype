@@ -14,4 +14,6 @@ struct Image {
 void image_init(struct Image * image, char const * path);
 void image_free(struct Image * image);
 
+void image_resize(struct Image * image, uint32_t size_x, uint32_t size_y);
+
 #endif
