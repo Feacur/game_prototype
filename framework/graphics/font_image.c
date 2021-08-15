@@ -217,9 +217,9 @@ void font_image_render(struct Font_Image * font_image) {
 		for (uint32_t i = 0; i < symbols_count; i++) {
 			struct Font_Symbol const * symbol = symbols + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
-			uint32_t const size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
-			uint32_t const size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
-			minimum_area += (size_x + padding) * (size_y + padding);
+			uint32_t const glyph_size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
+			uint32_t const glyph_size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
+			minimum_area += (glyph_size_x + padding) * (glyph_size_y + padding);
 		}
 
 		// estimate required atlas dimesions
@@ -254,15 +254,15 @@ void font_image_render(struct Font_Image * font_image) {
 			struct Font_Symbol const * symbol = symbols + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
 
-			uint32_t const size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
-			uint32_t const size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
+			uint32_t const glyph_size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
+			uint32_t const glyph_size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
 
-			if (line_height == 0) { line_height = size_y; }
+			if (line_height == 0) { line_height = glyph_size_y; }
 
-			if (offset_x + size_x + padding > atlas_size_x) {
+			if (offset_x + glyph_size_x + padding > atlas_size_x) {
 				offset_x = padding;
 				offset_y += line_height + padding;
-				line_height = size_y;
+				line_height = glyph_size_y;
 			}
 
 			if (offset_y + line_height + padding > atlas_size_y) {
@@ -275,7 +275,7 @@ void font_image_render(struct Font_Image * font_image) {
 				}
 			}
 
-			offset_x += size_x + padding;
+			offset_x += glyph_size_x + padding;
 		}
 
 		if (font_image->buffer.capacity < atlas_size_x * atlas_size_y) {
@@ -299,48 +299,48 @@ void font_image_render(struct Font_Image * font_image) {
 			struct Font_Symbol const * symbol = symbols + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
 
-			uint32_t const size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
-			uint32_t const size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
+			uint32_t const glyph_size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
+			uint32_t const glyph_size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
 
-			if (font_image->buffer.capacity < ((offset_y + size_y - 1) * font_image->buffer.size_x + offset_x + size_x - 1)) {
+			if (font_image->buffer.capacity < ((offset_y + glyph_size_y - 1) * font_image->buffer.size_x + offset_x + glyph_size_x - 1)) {
 				logger_to_console("can't fit a glyph into the buffer"); DEBUG_BREAK(); continue;
 			}
 
-			if (line_height == 0) { line_height = size_y; }
+			if (line_height == 0) { line_height = glyph_size_y; }
 
-			if (offset_x + size_x + padding > font_image->buffer.size_x) {
+			if (offset_x + glyph_size_x + padding > font_image->buffer.size_x) {
 				offset_x = padding;
 				offset_y += line_height + padding;
-				line_height = size_y;
+				line_height = glyph_size_y;
 			}
 
 			//
 			symbol->glyph->uv[0] = (float)(offset_x)          / (float)font_image->buffer.size_x;
 			symbol->glyph->uv[1] = (float)(offset_y)          / (float)font_image->buffer.size_y;
-			symbol->glyph->uv[2] = (float)(offset_x + size_x) / (float)font_image->buffer.size_x;
-			symbol->glyph->uv[3] = (float)(offset_y + size_y) / (float)font_image->buffer.size_y;
+			symbol->glyph->uv[2] = (float)(offset_x + glyph_size_x) / (float)font_image->buffer.size_x;
+			symbol->glyph->uv[3] = (float)(offset_y + glyph_size_y) / (float)font_image->buffer.size_y;
 
 			//
-			if (scratch_buffer.capacity < size_x * size_y) {
-				array_byte_resize(&scratch_buffer, size_x * size_y);
+			if (scratch_buffer.capacity < glyph_size_x * glyph_size_y) {
+				array_byte_resize(&scratch_buffer, glyph_size_x * glyph_size_y);
 			}
 
 			font_fill_buffer(
 				font_image->font,
-				scratch_buffer.data, size_x,
-				symbol->glyph->id, size_x, size_y, font_image->scale
+				scratch_buffer.data, glyph_size_x,
+				symbol->glyph->id, glyph_size_x, glyph_size_y, font_image->scale
 			);
 
-			for (uint32_t glyph_y = 0; glyph_y < size_y; glyph_y++) {
+			for (uint32_t glyph_y = 0; glyph_y < glyph_size_y; glyph_y++) {
 				// @note: expects glyphs to be rendered bottom-left -> top-right
 				memcpy(
 					font_image->buffer.data + ((offset_y + glyph_y) * font_image->buffer.size_x + offset_x),
-					scratch_buffer.data + glyph_y * size_x,
-					sizeof(*scratch_buffer.data) * size_x
+					scratch_buffer.data + glyph_y * glyph_size_x,
+					sizeof(*scratch_buffer.data) * glyph_size_x
 				);
 			}
 
-			offset_x += size_x + padding;
+			offset_x += glyph_size_x + padding;
 		}
 
 		array_byte_free(&scratch_buffer);
