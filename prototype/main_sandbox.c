@@ -71,6 +71,7 @@ struct Entity_Quad { // @note: a fulscreen quad
 };
 
 struct Entity_Text {
+	struct Rect_Transform rect;
 	// @todo: a separate type for Asset_Bytes?
 	uint32_t visible_length;
 	uint32_t length;
@@ -80,6 +81,7 @@ struct Entity_Text {
 };
 
 struct Entity_Font {
+	struct Rect_Transform rect;
 	// @todo: an asset ref
 	struct Asset_Font const * font;
 };
@@ -323,14 +325,18 @@ static void game_init(void) {
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
 			.transform = {
-				.position = (struct vec3){50, 200, 0},
 				.scale = (struct vec3){1, 1, 1},
 				.rotation = quat_identity,
+				.position = (struct vec3){50, 0, 0},
 			},
 			//
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
+				.rect = (struct Rect_Transform){
+					.relative_min = (struct vec2){0.0f, 0.25f},
+					.relative_max = (struct vec2){0.0f, 0.25f},
+				},
 				.length = test111_length,
 				.data = test111,
 				.font = font_open_sans,
@@ -340,7 +346,6 @@ static void game_init(void) {
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
 			.transform = {
-				.position = (struct vec3){600, 200, 0},
 				.scale = (struct vec3){1, 1, 1},
 				.rotation = quat_identity,
 			},
@@ -348,6 +353,10 @@ static void game_init(void) {
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
+				.rect = (struct Rect_Transform){
+					.relative_min = (struct vec2){0.5f, 0.25f},
+					.relative_max = (struct vec2){0.5f, 0.25f},
+				},
 				.length = text_test->length,
 				.data = text_test->data,
 				.font = font_open_sans,
@@ -357,7 +366,6 @@ static void game_init(void) {
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
 			.transform = {
-				.position = (struct vec3){0, 400, 0},
 				.scale = (struct vec3){1, 1, 1},
 				.rotation = quat_identity,
 			},
@@ -365,6 +373,10 @@ static void game_init(void) {
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_FONT,
 			.as.font = {
+				.rect = (struct Rect_Transform){
+					.relative_min = (struct vec2){0.0f, 0.5f},
+					.relative_max = (struct vec2){0.0f, 0.5f},
+				},
 				.font = font_open_sans,
 			}
 		});
@@ -519,7 +531,12 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 					batcher_2d_set_texture(state.batcher, texture_ref);
 					batcher_2d_add_quad(
 						state.batcher,
-						(float[]){(float)fit_offset_x, (float)fit_offset_y, (float)(fit_offset_x + fit_size_x), (float)(fit_offset_y + fit_size_y)},
+						(float[]){
+							(float)fit_offset_x,
+							(float)fit_offset_y,
+							(float)(fit_offset_x + fit_size_x),
+							(float)(fit_offset_y + fit_size_y)
+						},
 						(float[]){0,0,1,1}
 					);
 
@@ -532,8 +549,18 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 				case ENTITY_TYPE_TEXT: {
 					struct Entity_Text const * text = &entity->as.text;
 
+					float const rect[4] = { // left, bottom, right, top
+						text->rect.relative_min.x * (float)camera_size_x + mat4_entity.w.x,
+						text->rect.relative_min.y * (float)camera_size_y + mat4_entity.w.y,
+						text->rect.relative_max.x * (float)camera_size_x + text->rect.size_delta.x,
+						text->rect.relative_max.y * (float)camera_size_y + text->rect.size_delta.y,
+					};
+					struct mat4 mat4_entity_rect = mat4_entity;
+					mat4_entity_rect.w.x = rect[0];
+					mat4_entity_rect.w.y = rect[3];
+
 					//
-					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
+					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity_rect));
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){
 						.rgb = {
@@ -562,8 +589,18 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 				case ENTITY_TYPE_FONT: {
 					struct Entity_Font const * font = &entity->as.font;
 
+					float const rect[4] = { // left, bottom, right, top
+						font->rect.relative_min.x * (float)camera_size_x + mat4_entity.w.x,
+						font->rect.relative_min.y * (float)camera_size_y + mat4_entity.w.y,
+						font->rect.relative_max.x * (float)camera_size_x + font->rect.size_delta.x,
+						font->rect.relative_max.y * (float)camera_size_y + font->rect.size_delta.y,
+					};
+					struct mat4 mat4_entity_rect = mat4_entity;
+					mat4_entity_rect.w.x = rect[0];
+					mat4_entity_rect.w.y = rect[1];
+
 					//
-					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
+					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity_rect));
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){
 						.rgb = {

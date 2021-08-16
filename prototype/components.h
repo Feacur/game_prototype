@@ -15,4 +15,9 @@ struct Transform_2D {
 	struct vec2 position;
 };
 
+struct Rect_Transform {
+	struct vec2 relative_min, relative_max;
+	struct vec2 size_delta;
+};
+
 #endif
