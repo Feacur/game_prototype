@@ -5,7 +5,14 @@
 
 struct Window;
 
-struct Window * platform_window_init(uint32_t size_x, uint32_t size_y);
+enum Window_Settings {
+	WINDOW_SETTINGS_NONE = 0,
+	WINDOW_SETTINGS_MINIMIZE = (1 << 0),
+	WINDOW_SETTINGS_MAXIMIZE = (2 << 0),
+	WINDOW_SETTINGS_FLEXIBLE = (3 << 0),
+};
+
+struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Window_Settings settings);
 void platform_window_free(struct Window * window);
 
 bool platform_window_exists(struct Window * window);

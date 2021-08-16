@@ -13,6 +13,7 @@ struct Application_Config {
 	} callbacks;
 
 	uint32_t size_x, size_y;
+	bool flexible;
 	int32_t vsync;
 	uint32_t target_refresh_rate, fixed_refresh_rate;
 	uint32_t slow_frames_limit;

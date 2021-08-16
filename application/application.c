@@ -32,7 +32,10 @@ static uint64_t get_target_ticks(int32_t vsync) {
 static void application_init(void) {
 	platform_system_init();
 
-	app.window = platform_window_init(app.config->size_x, app.config->size_y);
+	enum Window_Settings window_settings = WINDOW_SETTINGS_MINIMIZE;
+	if (app.config->flexible) { window_settings |= WINDOW_SETTINGS_FLEXIBLE; }
+
+	app.window = platform_window_init(app.config->size_x, app.config->size_y, window_settings);
 	if (app.window == NULL) { logger_to_console("'platform_window_init' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	platform_window_set_vsync(app.window, app.config->vsync);

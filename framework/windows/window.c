@@ -11,23 +11,32 @@
 #include <string.h>
 #include <stdlib.h>
 
+//
+#include "framework/platform_window.h"
+
 struct Window {
 	HWND handle;
 	HDC private_context;
 	uint32_t size_x, size_y;
+	enum Window_Settings settings;
 
 	// bool is_unicode;
 	struct GInstance * ginstance;
 };
 
-//
-#include "framework/platform_window.h"
-
 static void platform_window_toggle_raw_input(struct Window * window, bool state);
-struct Window * platform_window_init(uint32_t size_x, uint32_t size_y) {
+struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Window_Settings settings) {
 	// @note: initial styles are bound to have some implicit flags
-	DWORD const target_style = WS_CLIPSIBLINGS | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_CAPTION;
+	DWORD target_style = WS_CLIPSIBLINGS | WS_VISIBLE;
 	DWORD const target_ex_style = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
+
+	if (settings & WINDOW_SETTINGS_MINIMIZE) { target_style |= WS_MINIMIZEBOX; }
+	if (settings & WINDOW_SETTINGS_MAXIMIZE) { target_style |= WS_MAXIMIZEBOX; }
+	if (settings & WINDOW_SETTINGS_FLEXIBLE) { target_style |= WS_SIZEBOX; }
+
+	if (settings & (WINDOW_SETTINGS_MINIMIZE | WINDOW_SETTINGS_MAXIMIZE | WINDOW_SETTINGS_FLEXIBLE)) {
+		target_style |= WS_CAPTION | WS_SYSMENU; // header bar + sizing boxes
+	}
 
 	RECT target_rect = {.right  = (LONG)size_x, .bottom = (LONG)size_y};
 	AdjustWindowRectExForDpi(
