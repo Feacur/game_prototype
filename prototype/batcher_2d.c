@@ -144,6 +144,20 @@ void batcher_2d_pop_matrix(struct Batcher_2D * batcher) {
 	batcher->matrix = mat4_identity;
 }
 
+void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material * material) {
+	if (batcher->batch.material != material) {
+		batcher_2d_bake_pass(batcher);
+	}
+	batcher->batch.material = material;
+}
+
+void batcher_2d_set_texture(struct Batcher_2D * batcher, struct Ref gpu_texture_ref) {
+	if (memcmp(&batcher->batch.gpu_texture_ref, &gpu_texture_ref, sizeof(gpu_texture_ref)) != 0) {
+		batcher_2d_bake_pass(batcher);
+	}
+	batcher->batch.gpu_texture_ref = gpu_texture_ref;
+}
+
 void batcher_2d_set_blend_mode(struct Batcher_2D * batcher, struct Blend_Mode blend_mode) {
 	if (memcmp(&batcher->batch.blend_mode, &blend_mode, sizeof(blend_mode)) != 0) {
 		batcher_2d_bake_pass(batcher);
@@ -156,20 +170,6 @@ void batcher_2d_set_depth_mode(struct Batcher_2D * batcher, struct Depth_Mode de
 		batcher_2d_bake_pass(batcher);
 	}
 	batcher->batch.depth_mode = depth_mode;
-}
-
-void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material * material) {
-	if (batcher->batch.material != material) {
-		batcher_2d_bake_pass(batcher);
-	}
-	batcher->batch.material = material;
-}
-
-void batcher_2d_set_texture(struct Batcher_2D * batcher, struct Ref gpu_texture_ref) {
-	if (batcher->batch.gpu_texture_ref.id != gpu_texture_ref.id || batcher->batch.gpu_texture_ref.gen != gpu_texture_ref.gen) {
-		batcher_2d_bake_pass(batcher);
-	}
-	batcher->batch.gpu_texture_ref = gpu_texture_ref;
 }
 
 inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord);
@@ -214,6 +214,9 @@ void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * 
 	// @todo: introduce rect bounds parameter
 	//        introduce scroll offset parameter
 	//        check bounds, reserve only visible
+	//        >
+	//        need to know vertices at this point
+	//        UVs can be postponed
 	uint32_t codepoints_count = 0;
 	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) {
 		switch (it.codepoint) {
