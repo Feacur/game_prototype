@@ -46,6 +46,10 @@ float lerp(float v1, float v2, float t);
 float lerp_stable(float v1, float v2, float t);
 float inverse_lerp(float v1, float v2, float value);
 
+float eerp(float v1, float v2, float t);
+float eerp_stable(float v1, float v2, float t);
+float inverse_eerp(float v1, float v2, float value);
+
 // -- uint32_t vectors
 struct uvec2 uvec2_add(struct uvec2 v1, struct uvec2 v2);
 struct uvec2 uvec2_sub(struct uvec2 v1, struct uvec2 v2);

@@ -1,4 +1,4 @@
-#include <math.h>
+#include <math.h> // @todo: wrap-inline?
 
 //
 #include "maths.h"
@@ -107,6 +107,10 @@ float clamp_r32(float v, float low, float high) { return min_r32(max_r32(v, low)
 float lerp(float v1, float v2, float t) { return v1 + (v2 - v1)*t; }
 float lerp_stable(float v1, float v2, float t) { return v1*(1 - t) + v2*t; }
 float inverse_lerp(float v1, float v2, float value) { return (value - v1) / (v2 - v1); }
+
+float eerp(float v1, float v2, float t) { return v1 * powf(v2 / v1, t); }
+float eerp_stable(float v1, float v2, float t) { return powf(v1, (1 - t)) * powf(v2, t); }
+float inverse_eerp(float v1, float v2, float value) { return logf(value / v1) / logf(v2 / v1); }
 
 /* -- vectors
 
