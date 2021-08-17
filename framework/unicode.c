@@ -1,7 +1,5 @@
 #include "framework/logger.h"
 
-#include <stdlib.h>
-
 //
 #include "unicode.h"
 

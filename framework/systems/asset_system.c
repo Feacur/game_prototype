@@ -1,7 +1,6 @@
 #include "framework/logger.h"
 
 #include <string.h>
-#include <stdlib.h>
 
 //
 #include "asset_system.h"

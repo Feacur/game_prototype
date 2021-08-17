@@ -3,7 +3,6 @@
 #include "framework/graphics/gpu_objects.h"
 
 #include <string.h>
-#include <stdlib.h>
 
 //
 #include "material.h"

@@ -5,7 +5,6 @@
 #include "framework/platform_file.h"
 
 #include <string.h>
-#include <stdlib.h>
 #include <math.h>
 
 // better to compile third-parties as separate units

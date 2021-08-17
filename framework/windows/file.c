@@ -4,8 +4,6 @@
 
 #include <Windows.h>
 
-#include <stdlib.h>
-
 #if defined(UNICODE)
 	static wchar_t * platform_file_allocate_utf8_to_utf16(char const * value);
 #endif
