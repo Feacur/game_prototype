@@ -21,9 +21,4 @@ struct Transform_Rect {
 	struct vec2 pivot;
 };
 
-void transform_rect_calculate(
-	struct Transform_Rect const * transform, uint32_t camera_size_x, uint32_t camera_size_y,
-	struct vec2 * min, struct vec2 * max, struct vec2 * pivot
-);
-
 #endif

@@ -318,8 +318,7 @@ static void game_init(void) {
 				.rotation = quat_identity,
 			},
 			.rect = (struct Transform_Rect){
-				.min_relative = (struct vec2){0, 0},
-				.max_relative = (struct vec2){1, 1}, // @note: not the best default
+				.max_relative = (struct vec2){1, 1}
 			},
 			//
 			.material = state.materials.test,
@@ -334,6 +333,9 @@ static void game_init(void) {
 			.transform = {
 				.scale = (struct vec3){1, 1, 1},
 				.rotation = quat_identity,
+			},
+			.rect = (struct Transform_Rect){
+				.max_relative = (struct vec2){1, 1}
 			},
 			//
 			.material = state.materials.batcher,
