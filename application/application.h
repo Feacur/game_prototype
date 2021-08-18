@@ -9,7 +9,7 @@ struct Application_Config {
 		void (* free)(void);
 		void (* fixed_update)(uint64_t elapsed, uint64_t per_second);
 		void (* update)(uint64_t elapsed, uint64_t per_second);
-		void (* render)(uint32_t size_x, uint32_t size_y);
+		void (* render)(uint64_t elapsed, uint64_t per_second);
 	} callbacks;
 
 	uint32_t size_x, size_y;
@@ -20,5 +20,7 @@ struct Application_Config {
 };
 
 void application_run(struct Application_Config * config);
+
+void application_get_screen_size(uint32_t * size_x, uint32_t * size_y);
 
 #endif

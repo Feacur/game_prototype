@@ -56,7 +56,7 @@ enum Entity_Type {
 	ENTITY_TYPE_MESH,
 	ENTITY_TYPE_QUAD,
 	ENTITY_TYPE_TEXT,
-	ENTITY_TYPE_FONT,
+	ENTITY_TYPE_FONT, // @todo: merge into `ENTITY_TYPE_QUAD`, but keep separate logic
 };
 
 struct Entity_Mesh {
@@ -71,7 +71,6 @@ struct Entity_Quad { // @note: a fulscreen quad
 };
 
 struct Entity_Text {
-	struct Rect_Transform rect;
 	// @todo: a separate type for Asset_Bytes?
 	uint32_t visible_length;
 	uint32_t length;
@@ -81,7 +80,6 @@ struct Entity_Text {
 };
 
 struct Entity_Font {
-	struct Rect_Transform rect;
 	// @todo: an asset ref
 	struct Asset_Font const * font;
 };
@@ -89,6 +87,7 @@ struct Entity_Font {
 struct Entity {
 	uint32_t camera;
 	struct Transform_3D transform;
+	struct Transform_Rect rect;
 	//
 	struct Gfx_Material material;
 	//
@@ -156,6 +155,25 @@ static struct mat4 camera_get_projection(enum Camera_Mode mode, float ncp, float
 
 	logger_to_console("unknown camera mode"); DEBUG_BREAK();
 	return (struct mat4){0};
+}
+
+inline static void entity_get_rect(
+	struct Transform_3D const * transform, struct Transform_Rect const * rect,
+	uint32_t camera_size_x, uint32_t camera_size_y,
+	struct vec2 * min, struct vec2 * max, struct vec2 * pivot
+) {
+	*min = (struct vec2){
+		rect->min_relative.x * (float)camera_size_x + rect->min_absolute.x,
+		rect->min_relative.y * (float)camera_size_y + rect->min_absolute.y,
+	};
+	*max = (struct vec2){
+		rect->max_relative.x * (float)camera_size_x + rect->max_absolute.x,
+		rect->max_relative.y * (float)camera_size_y + rect->max_absolute.y,
+	};
+	*pivot = (struct vec2){
+		.x = lerp(min->x, max->x, rect->pivot.x) + transform->position.x,
+		.y = lerp(min->y, max->y, rect->pivot.y) + transform->position.y,
+	};
 }
 
 static void game_init(void) {
@@ -299,6 +317,10 @@ static void game_init(void) {
 				.scale = (struct vec3){1, 1, 1},
 				.rotation = quat_identity,
 			},
+			.rect = (struct Transform_Rect){
+				.min_relative = (struct vec2){0, 0},
+				.max_relative = (struct vec2){1, 1}, // @note: not the best default
+			},
 			//
 			.material = state.materials.test,
 			.type = ENTITY_TYPE_MESH,
@@ -327,16 +349,18 @@ static void game_init(void) {
 			.transform = {
 				.scale = (struct vec3){1, 1, 1},
 				.rotation = quat_identity,
-				.position = (struct vec3){50, 0, 0},
+			},
+			.rect = (struct Transform_Rect){
+				.min_relative = (struct vec2){0.0f, 0.25f},
+				.min_absolute = (struct vec2){ 50,  50},
+				.max_relative = (struct vec2){0.0f, 0.25f},
+				.max_absolute = (struct vec2){250, 150},
+				.pivot = (struct vec2){0.5f, 0.5f},
 			},
 			//
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
-				.rect = (struct Rect_Transform){
-					.relative_min = (struct vec2){0.0f, 0.25f},
-					.relative_max = (struct vec2){0.0f, 0.25f},
-				},
 				.length = test111_length,
 				.data = test111,
 				.font = font_open_sans,
@@ -349,14 +373,17 @@ static void game_init(void) {
 				.scale = (struct vec3){1, 1, 1},
 				.rotation = quat_identity,
 			},
+			.rect = (struct Transform_Rect){
+				.min_relative = (struct vec2){0.5f, 0.25f},
+				.min_absolute = (struct vec2){ 50,  50},
+				.max_relative = (struct vec2){0.5f, 0.25f},
+				.max_absolute = (struct vec2){250, 150},
+				.pivot = (struct vec2){0.5f, 0.5f},
+			},
 			//
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
-				.rect = (struct Rect_Transform){
-					.relative_min = (struct vec2){0.5f, 0.25f},
-					.relative_max = (struct vec2){0.5f, 0.25f},
-				},
 				.length = text_test->length,
 				.data = text_test->data,
 				.font = font_open_sans,
@@ -369,14 +396,17 @@ static void game_init(void) {
 				.scale = (struct vec3){1, 1, 1},
 				.rotation = quat_identity,
 			},
+			.rect = (struct Transform_Rect){
+				.min_relative = (struct vec2){0.0f, 0.25f},
+				.min_absolute = (struct vec2){ 50, 150},
+				.max_relative = (struct vec2){0.0f, 0.25f},
+				.max_absolute = (struct vec2){250, 350},
+				.pivot = (struct vec2){0.5f, 0.5f},
+			},
 			//
 			.material = state.materials.batcher,
 			.type = ENTITY_TYPE_FONT,
 			.as.font = {
-				.rect = (struct Rect_Transform){
-					.relative_min = (struct vec2){0.0f, 0.5f},
-					.relative_max = (struct vec2){0.0f, 0.5f},
-				},
 				.font = font_open_sans,
 			}
 		});
@@ -405,6 +435,9 @@ static void game_fixed_update(uint64_t elapsed, uint64_t per_second) {
 static void game_update(uint64_t elapsed, uint64_t per_second) {
 	float const delta_time = (float)((double)elapsed / (double)per_second);
 
+	uint32_t screen_size_x, screen_size_y;
+	application_get_screen_size(&screen_size_x, &screen_size_y);
+
 	// if (input_mouse(MC_LEFT)) {
 	// 	int32_t x, y;
 	// 	input_mouse_delta(&x, &y);
@@ -413,14 +446,46 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 
 	for (uint32_t entity_i = 0; entity_i < state.entities.count; entity_i++) {
 		struct Entity * entity = array_any_at(&state.entities, entity_i);
+		struct Camera const * camera = array_any_at(&state.cameras, entity->camera);
+
+		// @todo: precalculate all cameras?
+		uint32_t camera_size_x = screen_size_x, camera_size_y = screen_size_y;
+		if (camera->gpu_target_ref.id != 0) {
+			gpu_target_get_size(camera->gpu_target_ref, &camera_size_x, &camera_size_y);
+		}
 
 		switch (entity->type) {
 			case ENTITY_TYPE_MESH: {
 				// struct Entity_Mesh * mesh = &entity->as.mesh;
 
 				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
-					(struct vec3){0 * delta_time, 1 * delta_time, 0 * delta_time}
+					(struct vec3){0, 1 * delta_time, 0}
 				)));
+			} break;
+
+			case ENTITY_TYPE_QUAD: {
+				struct Entity_Quad * quad = &entity->as.quad;
+
+				struct Ref texture_ref = gpu_target_get_texture_ref(quad->gpu_target_ref, quad->type, quad->index);
+
+				uint32_t texture_size_x, texture_size_y;
+				gpu_texture_get_size(texture_ref, &texture_size_x, &texture_size_y);
+
+				// @note: `(fit_size_N <= camera_size_N) == true`
+				//        `(fit_offset_N >= 0) == true`
+				//        alternatively `fit_axis_is_x` can be calculated as:
+				//        `((float)texture_size_x / (float)camera_size_x > (float)texture_size_y / (float)camera_size_y)`
+				bool const fit_axis_is_x = (texture_size_x * camera_size_y > texture_size_y * camera_size_x);
+				uint32_t const fit_size_x = fit_axis_is_x ? camera_size_x : mul_div_u32(camera_size_y, texture_size_x, texture_size_y);
+				uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(camera_size_x, texture_size_y, texture_size_x) : camera_size_y;
+				uint32_t const fit_offset_x = (camera_size_x - fit_size_x) / 2;
+				uint32_t const fit_offset_y = (camera_size_y - fit_size_y) / 2;
+
+				entity->rect = (struct Transform_Rect){
+					.min_absolute = {(float)fit_offset_x, (float)fit_offset_y},
+					.max_absolute = {(float)(fit_offset_x + fit_size_x), (float)(fit_offset_y + fit_size_y)},
+					.pivot = {0.5f, 0.5f},
+				};
 			} break;
 
 			case ENTITY_TYPE_TEXT: {
@@ -429,15 +494,30 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 				text->visible_length = (text->visible_length + 1) % text->length;
 			} break;
 
-			default: break;
+			case ENTITY_TYPE_FONT: {
+				struct Entity_Font * font = &entity->as.font;
+
+				struct Image const * font_image = font_image_get_asset(font->font->buffer);
+
+				// @note: lags one frame
+				entity->rect.max_relative = entity->rect.min_relative;
+				entity->rect.max_absolute = (struct vec2){
+					.x = entity->rect.min_absolute.x + (float)font_image->size_x,
+					.y = entity->rect.min_absolute.y + (float)font_image->size_y,
+				};
+
+			} break;
 		}
-		if (entity->type != ENTITY_TYPE_MESH) { continue; }
-
-
 	}
 }
 
-static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
+static void game_render(uint64_t elapsed, uint64_t per_second) {
+	// float const delta_time = (float)((double)elapsed / (double)per_second);
+	(void)elapsed; (void)per_second;
+
+	uint32_t screen_size_x, screen_size_y;
+	application_get_screen_size(&screen_size_x, &screen_size_y);
+
 	// @todo: iterate though cameras
 	//        > sub-iterate through relevant entities (masks, layers?)
 	//        render stuff to buffers or screen (camera settings)
@@ -479,11 +559,28 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 			struct Entity * entity = array_any_at(&state.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
 
-			struct mat4 const mat4_entity = mat4_set_transformation(entity->transform.position, entity->transform.scale, entity->transform.rotation);
+			struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
+			entity_get_rect(
+				&entity->transform, &entity->rect,
+				camera_size_x, camera_size_y,
+				&entity_rect_min, &entity_rect_max, &entity_pivot
+			);
+
+			struct mat4 const mat4_entity = mat4_set_transformation(
+				(struct vec3){ // @note: `entity_pivot` includes `entity->transform.position`
+					.x = entity_pivot.x,
+					.y = entity_pivot.y,
+					.z = entity->transform.position.z,
+				},
+				entity->transform.scale,
+				entity->transform.rotation
+			);
 
 			switch (entity->type) {
 				// --- camera, world coords, transformed
 				case ENTITY_TYPE_MESH: {
+					// @todo: make a draw commands buffer?
+					// @note: flush the batcher before drawing a mesh
 					batcher_2d_draw(state.batcher, screen_size_x, screen_size_y, camera->gpu_target_ref);
 
 					//
@@ -508,19 +605,6 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 
 					struct Ref texture_ref = gpu_target_get_texture_ref(quad->gpu_target_ref, quad->type, quad->index);
 
-					uint32_t texture_size_x, texture_size_y;
-					gpu_texture_get_size(texture_ref, &texture_size_x, &texture_size_y);
-
-					// @note: `(fit_size_N <= camera_size_N) == true`
-					//        `(fit_offset_N >= 0) == true`
-					//        alternatively `fit_axis_is_x` can be calculated as:
-					//        `((float)texture_size_x / (float)camera_size_x > (float)texture_size_y / (float)camera_size_y)`
-					bool const fit_axis_is_x = (texture_size_x * camera_size_y > texture_size_y * camera_size_x);
-					uint32_t const fit_size_x = fit_axis_is_x ? camera_size_x : mul_div_u32(camera_size_y, texture_size_x, texture_size_y);
-					uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(camera_size_x, texture_size_y, texture_size_x) : camera_size_y;
-					uint32_t const fit_offset_x = (camera_size_x - fit_size_x) / 2;
-					uint32_t const fit_offset_y = (camera_size_y - fit_size_y) / 2;
-
 					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){.mask = COLOR_CHANNEL_FULL});
@@ -531,12 +615,7 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 					batcher_2d_set_texture(state.batcher, texture_ref);
 					batcher_2d_add_quad(
 						state.batcher,
-						(float[]){
-							(float)fit_offset_x,
-							(float)fit_offset_y,
-							(float)(fit_offset_x + fit_size_x),
-							(float)(fit_offset_y + fit_size_y)
-						},
+						entity_rect_min, entity_rect_max, entity_pivot,
 						(float[]){0,0,1,1}
 					);
 
@@ -549,18 +628,8 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 				case ENTITY_TYPE_TEXT: {
 					struct Entity_Text const * text = &entity->as.text;
 
-					float const rect[4] = { // left, bottom, right, top
-						text->rect.relative_min.x * (float)camera_size_x + mat4_entity.w.x,
-						text->rect.relative_min.y * (float)camera_size_y + mat4_entity.w.y,
-						text->rect.relative_max.x * (float)camera_size_x + text->rect.size_delta.x,
-						text->rect.relative_max.y * (float)camera_size_y + text->rect.size_delta.y,
-					};
-					struct mat4 mat4_entity_rect = mat4_entity;
-					mat4_entity_rect.w.x = rect[0];
-					mat4_entity_rect.w.y = rect[3];
-
 					//
-					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity_rect));
+					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){
 						.rgb = {
@@ -579,7 +648,8 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 						state.batcher,
 						text->font,
 						text->visible_length,
-						text->data
+						text->data,
+						entity_rect_min, entity_rect_max, entity_pivot
 					);
 
 					batcher_2d_pop_matrix(state.batcher);
@@ -589,18 +659,8 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 				case ENTITY_TYPE_FONT: {
 					struct Entity_Font const * font = &entity->as.font;
 
-					float const rect[4] = { // left, bottom, right, top
-						font->rect.relative_min.x * (float)camera_size_x + mat4_entity.w.x,
-						font->rect.relative_min.y * (float)camera_size_y + mat4_entity.w.y,
-						font->rect.relative_max.x * (float)camera_size_x + font->rect.size_delta.x,
-						font->rect.relative_max.y * (float)camera_size_y + font->rect.size_delta.y,
-					};
-					struct mat4 mat4_entity_rect = mat4_entity;
-					mat4_entity_rect.w.x = rect[0];
-					mat4_entity_rect.w.y = rect[1];
-
 					//
-					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity_rect));
+					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
 
 					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){
 						.rgb = {
@@ -612,19 +672,12 @@ static void game_render(uint32_t screen_size_x, uint32_t screen_size_y) {
 					});
 					batcher_2d_set_depth_mode(state.batcher, (struct Depth_Mode){0});
 
-					// > text
-					struct Image const * font_image = font_image_get_asset(font->font->buffer);
-
+					// > quad
 					batcher_2d_set_material(state.batcher, &entity->material);
 					batcher_2d_set_texture(state.batcher, font->font->gpu_ref);
 					batcher_2d_add_quad(
 						state.batcher,
-						(float[]){
-							0,
-							0,
-							(float)font_image->size_x,
-							(float)font_image->size_y
-						},
+						entity_rect_min, entity_rect_max, entity_pivot,
 						(float[]){0,0,1,1}
 					);
 

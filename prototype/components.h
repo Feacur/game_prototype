@@ -15,9 +15,15 @@ struct Transform_2D {
 	struct vec2 position;
 };
 
-struct Rect_Transform {
-	struct vec2 relative_min, relative_max;
-	struct vec2 size_delta;
+struct Transform_Rect {
+	struct vec2 min_relative, min_absolute;
+	struct vec2 max_relative, max_absolute;
+	struct vec2 pivot;
 };
+
+void transform_rect_calculate(
+	struct Transform_Rect const * transform, uint32_t camera_size_x, uint32_t camera_size_y,
+	struct vec2 * min, struct vec2 * max, struct vec2 * pivot
+);
 
 #endif

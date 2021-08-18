@@ -27,10 +27,15 @@ void batcher_2d_set_depth_mode(struct Batcher_2D * batcher, struct Depth_Mode de
 
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
-	float const * rect, float const * uv
+	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot,
+	float const * uv
 );
 
-void batcher_2d_add_text(struct Batcher_2D * batcher, struct Asset_Font const * font, uint32_t length, uint8_t const * data);
+void batcher_2d_add_text(
+	struct Batcher_2D * batcher,
+	struct Asset_Font const * font, uint32_t length, uint8_t const * data,
+	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot
+);
 
 void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t screen_size_x, uint32_t screen_size_y, struct Ref gpu_target_ref);
 

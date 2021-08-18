@@ -124,9 +124,10 @@ static bool application_update(void) {
 	}
 
 	if (app.config->callbacks.render != NULL) {
-		uint32_t size_x, size_y;
-		platform_window_get_size(app.window, &size_x, &size_y);
-		app.config->callbacks.render(size_x, size_y);
+		app.config->callbacks.render(
+			frame_ticks,
+			app.ticks.per_second
+		);
 	}
 
 	// swap buffers / display buffer / might vsync
@@ -142,4 +143,8 @@ void application_run(struct Application_Config * config) {
 	application_init();
 	while (application_update()) { }
 	application_free();
+}
+
+void application_get_screen_size(uint32_t * size_x, uint32_t * size_y) {
+	platform_window_get_size(app.window, size_x, size_y);
 }
