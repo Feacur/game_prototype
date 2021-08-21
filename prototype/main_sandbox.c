@@ -61,9 +61,8 @@ enum Entity_Rect_Mode {
 
 enum Entity_Type {
 	ENTITY_TYPE_MESH,
-	ENTITY_TYPE_QUAD,
-	ENTITY_TYPE_TEXT,
-	ENTITY_TYPE_FONT, // @todo: merge into `ENTITY_TYPE_QUAD`, but keep separate logic
+	ENTITY_TYPE_QUAD_2D,
+	ENTITY_TYPE_TEXT_2D,
 };
 
 struct Entity_Mesh {
@@ -71,10 +70,8 @@ struct Entity_Mesh {
 	struct Ref gpu_mesh_ref;
 };
 
-struct Entity_Quad { // @note: a fulscreen quad
-	struct Ref gpu_target_ref;
-	enum Texture_Type type;
-	uint32_t index;
+struct Entity_Quad {
+	struct Ref gpu_texture_ref;
 };
 
 struct Entity_Text {
@@ -106,7 +103,6 @@ struct Entity {
 		struct Entity_Mesh mesh;
 		struct Entity_Quad quad;
 		struct Entity_Text text;
-		struct Entity_Font font;
 	} as;
 };
 
@@ -196,13 +192,11 @@ inline static struct uvec2 entity_get_content_size(
 			camera_size_y
 		};
 
-		case ENTITY_TYPE_QUAD: {
+		case ENTITY_TYPE_QUAD_2D: {
 			struct Entity_Quad const * quad = &entity->as.quad;
 
-			struct Ref texture_ref = gpu_target_get_texture_ref(quad->gpu_target_ref, quad->type, quad->index);
-
 			uint32_t texture_size_x, texture_size_y;
-			gpu_texture_get_size(texture_ref, &texture_size_x, &texture_size_y);
+			gpu_texture_get_size(quad->gpu_texture_ref, &texture_size_x, &texture_size_y);
 
 			return (struct uvec2){
 				texture_size_x,
@@ -210,7 +204,7 @@ inline static struct uvec2 entity_get_content_size(
 			};
 		} // break;
 
-		case ENTITY_TYPE_TEXT: {
+		case ENTITY_TYPE_TEXT_2D: {
 			int32_t const rect[] = {
 				(int32_t)floorf(entity->rect.min_relative.x * (float)camera_size_x + entity->rect.min_absolute.x),
 				(int32_t)floorf(entity->rect.min_relative.y * (float)camera_size_y + entity->rect.min_absolute.y),
@@ -220,17 +214,6 @@ inline static struct uvec2 entity_get_content_size(
 			return (struct uvec2){ // @idea: invert negatives?
 				(uint32_t)max_s32(rect[2] - rect[0], 0),
 				(uint32_t)max_s32(rect[3] - rect[1], 0),
-			};
-		} // break;
-
-		case ENTITY_TYPE_FONT: {
-			struct Entity_Font const * font = &entity->as.font;
-
-			struct Image const * font_image = font_image_get_asset(font->font->buffer);
-
-			return (struct uvec2){
-				font_image->size_x,
-				font_image->size_y
 			};
 		} // break;
 	}
@@ -343,6 +326,9 @@ static void game_init(void) {
 		WEAK_PTR(struct Asset_Font const) font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
 		WEAK_PTR(struct Asset_Bytes const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
 
+		struct Ref const font_open_sans_texture_ref = font_open_sans->gpu_ref;
+		struct Ref const gpu_target_texture_ref = gpu_target_get_texture_ref(gpu_target_ref, TEXTURE_TYPE_COLOR, 0);
+
 		// > cameras
 		array_any_push(&state.cameras, &(struct Camera){
 			.transform = {
@@ -383,7 +369,7 @@ static void game_init(void) {
 			.type = ENTITY_TYPE_MESH,
 			.as.mesh = {
 				.gpu_mesh_ref = mesh_cube->gpu_ref,
-			}
+			},
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
@@ -395,11 +381,10 @@ static void game_init(void) {
 			.blend_mode = blend_mode_opaque,
 			//
 			.rect_mode = ENTITY_RECT_MODE_FIT,
-			.type = ENTITY_TYPE_QUAD,
+			.type = ENTITY_TYPE_QUAD_2D,
 			.as.quad = {
-				.gpu_target_ref = gpu_target_ref,
-				.type = TEXTURE_TYPE_COLOR,
-			}
+				.gpu_texture_ref = gpu_target_texture_ref,
+			},
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
@@ -416,12 +401,12 @@ static void game_init(void) {
 			.material = state.materials.batcher,
 			.blend_mode = blend_mode_transparent,
 			//
-			.type = ENTITY_TYPE_TEXT,
+			.type = ENTITY_TYPE_TEXT_2D,
 			.as.text = {
 				.length = test111_length,
 				.data = test111,
 				.font = font_open_sans,
-			}
+			},
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
@@ -438,12 +423,12 @@ static void game_init(void) {
 			.material = state.materials.batcher,
 			.blend_mode = blend_mode_transparent,
 			//
-			.type = ENTITY_TYPE_TEXT,
+			.type = ENTITY_TYPE_TEXT_2D,
 			.as.text = {
 				.length = text_test->length,
 				.data = text_test->data,
 				.font = font_open_sans,
-			}
+			},
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
@@ -461,10 +446,10 @@ static void game_init(void) {
 			.blend_mode = blend_mode_transparent,
 			//
 			.rect_mode = ENTITY_RECT_MODE_CONTENT,
-			.type = ENTITY_TYPE_FONT,
-			.as.font = {
-				.font = font_open_sans,
-			}
+			.type = ENTITY_TYPE_QUAD_2D,
+			.as.quad = {
+				.gpu_texture_ref = font_open_sans_texture_ref,
+			},
 		});
 	}
 }
@@ -545,8 +530,7 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 
 		// entity behaviour
 		switch (entity->type) {
-			case ENTITY_TYPE_QUAD: break;
-			case ENTITY_TYPE_FONT: break;
+			case ENTITY_TYPE_QUAD_2D: break;
 
 			case ENTITY_TYPE_MESH: {
 				// struct Entity_Mesh * mesh = &entity->as.mesh;
@@ -556,7 +540,7 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 				)));
 			} break;
 
-			case ENTITY_TYPE_TEXT: {
+			case ENTITY_TYPE_TEXT_2D: {
 				struct Entity_Text * text = &entity->as.text;
 
 				text->visible_length = (text->visible_length + 1) % text->length;
@@ -636,7 +620,6 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 			batcher_2d_set_depth_mode(state.batcher, entity->depth_mode);
 
 			switch (entity->type) {
-				// --- camera, world coords, transformed
 				case ENTITY_TYPE_MESH: {
 					// @todo: make a draw commands buffer?
 					// @note: flush the batcher before drawing a mesh
@@ -658,13 +641,10 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 					});
 				} break;
 
-				// --- overlay, normalized coords, farthest
-				case ENTITY_TYPE_QUAD: {
+				case ENTITY_TYPE_QUAD_2D: {
 					struct Entity_Quad const * quad = &entity->as.quad;
 
-					struct Ref texture_ref = gpu_target_get_texture_ref(quad->gpu_target_ref, quad->type, quad->index);
-
-					batcher_2d_set_texture(state.batcher, texture_ref);
+					batcher_2d_set_texture(state.batcher, quad->gpu_texture_ref);
 					batcher_2d_add_quad(
 						state.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
@@ -672,8 +652,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 					);
 				} break;
 
-				// --- overlay, screen coords, nearest
-				case ENTITY_TYPE_TEXT: {
+				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
 
 					batcher_2d_set_texture(state.batcher, text->font->gpu_ref);
@@ -683,18 +662,6 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 						text->visible_length,
 						text->data,
 						entity_rect_min, entity_rect_max, entity_pivot
-					);
-				} break;
-
-				// --- overlay, screen coords, nearest
-				case ENTITY_TYPE_FONT: {
-					struct Entity_Font const * font = &entity->as.font;
-
-					batcher_2d_set_texture(state.batcher, font->font->gpu_ref);
-					batcher_2d_add_quad(
-						state.batcher,
-						entity_rect_min, entity_rect_max, entity_pivot,
-						(float[]){0,0,1,1}
 					);
 				} break;
 			}
