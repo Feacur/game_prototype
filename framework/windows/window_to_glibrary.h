@@ -1,6 +1,9 @@
 #if !defined(GAME_PLATFORM_WINDOW_TO_GLIBRARY)
 #define GAME_PLATFORM_WINDOW_TO_GLIBRARY
 
+// interface from `window.c` to `glibrary_*.c`
+// - rendering context initialization
+
 #include <Windows.h>
 
 struct Window;

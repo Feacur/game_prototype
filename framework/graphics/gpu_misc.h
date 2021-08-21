@@ -1,13 +1,12 @@
 #if !defined(GAME_GRAPHICS_IMPLEMENTATION)
 #define GAME_GRAPHICS_IMPLEMENTATION
 
-#include "pass.h"
+// interface from `gpu_*/graphics.c` to anywhere
+// - general purpose
 
-struct Render_Pass;
+#include "framework/common.h"
 
 uint32_t graphics_add_uniform(char const * name);
 uint32_t graphics_find_uniform(char const * name);
-
-void graphics_draw(struct Render_Pass const * pass);
 
 #endif

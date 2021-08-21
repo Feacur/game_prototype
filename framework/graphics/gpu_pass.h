@@ -1,6 +1,9 @@
 #if !defined(GAME_GRAPHICS_PASS)
 #define GAME_GRAPHICS_PASS
 
+// interface from `gpu_*/graphics.c` to anywhere
+// - gpu draw call
+
 #include "framework/vector_types.h"
 #include "framework/containers/ref.h"
 
@@ -21,5 +24,7 @@ struct Render_Pass {
 	struct Ref gpu_mesh_ref;
 	uint32_t offset, length;
 };
+
+void graphics_draw(struct Render_Pass const * pass);
 
 #endif

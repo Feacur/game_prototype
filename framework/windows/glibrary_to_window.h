@@ -1,6 +1,9 @@
 #if !defined(GAME_PLATFORM_GINSTANCE)
 #define GAME_PLATFORM_GINSTANCE
 
+// interface from `glibrary_*.c` to `window.c`
+// - rendering context initialization
+
 #include "framework/common.h"
 
 struct Window;

@@ -11,7 +11,6 @@
 
 #include "framework/graphics/types.h"
 #include "framework/graphics/material.h"
-#include "framework/graphics/pass.h"
 
 #include "functions.h"
 
@@ -713,7 +712,7 @@ void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 }
 
 //
-#include "framework/graphics/graphics.h"
+#include "framework/graphics/gpu_misc.h"
 
 uint32_t graphics_add_uniform(char const * name) {
 	return strings_add(&graphics_state.uniforms, (uint32_t)strlen(name), name);
@@ -987,6 +986,9 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 
 	glClear(clear_bitfield);
 }
+
+//
+#include "framework/graphics/gpu_pass.h"
 
 void graphics_draw(struct Render_Pass const * pass) {
 	// @note: consider 0 ref.id empty

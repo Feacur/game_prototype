@@ -3,7 +3,7 @@
 #include "framework/internal/input_to_window.h"
 
 #include "system_to_internal.h"
-#include "ginstance.h"
+#include "glibrary_to_window.h"
 
 #include <Windows.h>
 #include <hidusage.h>

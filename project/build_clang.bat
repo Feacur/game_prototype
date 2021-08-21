@@ -94,6 +94,7 @@ pushd bin
 
 set timeCompile=!time!
 if %build_mode% == normal ( rem |> compile a set of translation units, then link them
+	rem |> @note: the folder may contain outdated objects
 	if not exist temp mkdir temp
 	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem |> for each line %%v in the file
 		clang -std=c99 -c -o"./temp/%%~nv.o" %compiler% %warnings% "../%%v"

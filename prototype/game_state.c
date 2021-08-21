@@ -1,5 +1,5 @@
 #include "framework/graphics/material.h"
-#include "framework/graphics/graphics.h"
+#include "framework/graphics/gpu_misc.h"
 
 #include "batcher_2d.h"
 #include "components.h"

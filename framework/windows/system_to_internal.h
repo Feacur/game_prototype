@@ -1,6 +1,9 @@
 #if !defined(GAME_PLATFORM_SYSTEM_TO_INTERNAL)
 #define GAME_PLATFORM_SYSTEM_TO_INTERNAL
 
+// interface from `system.c` to anywhere
+// - general purpose
+
 #include <Windows.h>
 
 #define APPLICATION_CLASS_NAME "game_prototype"

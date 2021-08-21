@@ -11,11 +11,11 @@
 
 #include "framework/assets/mesh.h"
 
-#include "framework/graphics/gpu_objects.h"
-#include "framework/graphics/graphics.h"
 #include "framework/graphics/material.h"
-#include "framework/graphics/pass.h"
 #include "framework/graphics/font_image.h"
+#include "framework/graphics/gpu_objects.h"
+#include "framework/graphics/gpu_misc.h"
+#include "framework/graphics/gpu_pass.h"
 #include "framework/maths.h"
 
 #include "asset_types.h"

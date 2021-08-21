@@ -1,6 +1,9 @@
 #if !defined(GAME_INPUT_TO_WINDOW)
 #define GAME_INPUT_TO_WINDOW
 
+// interface from `input.c` to `system.c`
+// - framework initialization and manipulation
+
 #include "framework/common.h"
 #include "framework/input_keys.h"
 

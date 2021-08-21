@@ -1,6 +1,9 @@
 #if !defined(GAME_GRAPHICS_FUNCTIONS)
 #define GAME_GRAPHICS_FUNCTIONS
 
+// interface from `functions.c` to `glibrary_opengl.c`
+// - opengl functions initialization
+
 #include <KHR/khrplatform.h>
 #include <GL/glcorearb.h>
 

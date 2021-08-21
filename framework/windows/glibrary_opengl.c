@@ -1,10 +1,11 @@
 #include "framework/memory.h"
-#include "framework/opengl/functions.h"
 #include "framework/logger.h"
 
-#include "framework/windows/system_to_internal.h"
-#include "framework/windows/window_to_glibrary.h"
-#include "framework/opengl/graphics_to_glibrary.h"
+#include "framework/gpu_opengl/functions.h"
+#include "framework/gpu_opengl/graphics_to_glibrary.h"
+
+#include "system_to_internal.h"
+#include "window_to_glibrary.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -39,7 +40,7 @@ static struct GLibrary {
 } glibrary;
 
 //
-#include "framework/windows/glibrary_to_system.h"
+#include "glibrary_to_system.h"
 
 bool contains_full_word(char const * container, char const * value);
 void glibrary_to_system_init(void) {
@@ -141,7 +142,7 @@ void glibrary_to_system_free(void) {
 }
 
 //
-#include "framework/windows/ginstance.h"
+#include "glibrary_to_window.h"
 
 struct Pixel_Format {
 	int id;

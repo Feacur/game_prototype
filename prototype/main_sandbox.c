@@ -7,10 +7,10 @@
 #include "framework/input.h"
 
 #include "framework/graphics/types.h"
-#include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/material.h"
-#include "framework/graphics/pass.h"
-#include "framework/graphics/graphics.h"
+#include "framework/graphics/gpu_objects.h"
+#include "framework/graphics/gpu_misc.h"
+#include "framework/graphics/gpu_pass.h"
 
 #include "application/application.h"
 

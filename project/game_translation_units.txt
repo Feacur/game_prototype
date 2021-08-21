@@ -38,9 +38,9 @@ framework/windows/file.c
 framework/windows/system.c
 framework/windows/window.c
 
-framework/windows/opengl.c
-framework/opengl/functions.c
-framework/opengl/graphics.c
+framework/windows/glibrary_opengl.c
+framework/gpu_opengl/functions.c
+framework/gpu_opengl/graphics.c
 
 application/application.c
 
