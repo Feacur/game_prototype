@@ -407,12 +407,12 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t screen_size_x, uint32
 
 		graphics_draw(&(struct Render_Pass){
 			.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
-			.target = gpu_target_ref,
+			.gpu_target_ref = gpu_target_ref,
 			.blend_mode = batch->blend_mode,
 			.depth_mode = batch->depth_mode,
 			//
 			.material = batch->material,
-			.mesh = batcher->gpu_mesh_ref,
+			.gpu_mesh_ref = batcher->gpu_mesh_ref,
 			.offset = batch->offset, .length = batch->length,
 		});
 	}

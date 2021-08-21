@@ -48,7 +48,6 @@ struct Camera {
 	float ncp, fcp, ortho;
 	//
 	struct Ref gpu_target_ref;
-	//
 	enum Texture_Type clear_mask;
 	uint32_t clear_rgba;
 };
@@ -66,7 +65,6 @@ enum Entity_Type {
 };
 
 struct Entity_Mesh {
-	// @todo: an asset ref? a name?
 	struct Ref gpu_mesh_ref;
 };
 
@@ -122,6 +120,10 @@ static struct Game_State {
 		struct Gfx_Material test;
 		struct Gfx_Material batcher;
 	} materials;
+
+	struct {
+		struct Ref camera0_target;
+	} gpu_objects;
 
 	struct Array_Any cameras;
 	struct Array_Any entities;
@@ -275,10 +277,18 @@ static void game_init(void) {
 		asset_system_aquire(&state.asset_system, "assets/shaders/batcher_2d.glsl");
 		asset_system_aquire(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
 		asset_system_aquire(&state.asset_system, "assets/fonts/JetBrainsMono-Regular.ttf");
-		asset_system_aquire(&state.asset_system, "assets/sandbox/cube.obj");
 		asset_system_aquire(&state.asset_system, "assets/sandbox/test.png");
+		asset_system_aquire(&state.asset_system, "assets/sandbox/cube.obj");
 		asset_system_aquire(&state.asset_system, "assets/sandbox/test.txt");
 	}
+
+	// prepare assets
+	WEAK_PTR(struct Asset_Shader const) gpu_program_test = asset_system_find_instance(&state.asset_system, "assets/shaders/test.glsl");
+	WEAK_PTR(struct Asset_Shader const) gpu_program_batcher = asset_system_find_instance(&state.asset_system, "assets/shaders/batcher_2d.glsl");
+	WEAK_PTR(struct Asset_Font const) font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
+	WEAK_PTR(struct Asset_Image const) texture_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.png");
+	WEAK_PTR(struct Asset_Model const) mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
+	WEAK_PTR(struct Asset_Bytes const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
 
 	// init uniforms ids
 	{
@@ -290,22 +300,17 @@ static void game_init(void) {
 
 	// prepare materials
 	{
-		// @todo: make material assets
-		WEAK_PTR(struct Asset_Shader const) gpu_program_test = asset_system_find_instance(&state.asset_system, "assets/shaders/test.glsl");
 		gfx_material_init(&state.materials.test, gpu_program_test->gpu_ref);
+		gfx_material_init(&state.materials.batcher, gpu_program_batcher->gpu_ref);
 
-		WEAK_PTR(struct Asset_Image const) texture_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.png");
+		// @todo: make material assets
 		gfx_material_set_texture(&state.materials.test, state.uniforms.texture, 1, &texture_test->gpu_ref);
 		gfx_material_set_float(&state.materials.test, state.uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
-
-		//
-		WEAK_PTR(struct Asset_Shader const) gpu_program_batcher = asset_system_find_instance(&state.asset_system, "assets/shaders/batcher_2d.glsl");
-		gfx_material_init(&state.materials.batcher, gpu_program_batcher->gpu_ref);
 	}
 
-	// init objects
-	{ // state is expected to be inited
-		struct Ref const gpu_target_ref = gpu_target_init(
+	// prepare gpu targets
+	{
+		state.gpu_objects.camera0_target = gpu_target_init(
 		320, 180,
 		(struct Texture_Parameters[]){
 			[0] = {
@@ -321,14 +326,10 @@ static void game_init(void) {
 			},
 			2
 		);
+	}
 
-		WEAK_PTR(struct Asset_Model const) mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
-		WEAK_PTR(struct Asset_Font const) font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
-		WEAK_PTR(struct Asset_Bytes const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
-
-		struct Ref const font_open_sans_texture_ref = font_open_sans->gpu_ref;
-		struct Ref const gpu_target_texture_ref = gpu_target_get_texture_ref(gpu_target_ref, TEXTURE_TYPE_COLOR, 0);
-
+	// init objects
+	{
 		// > cameras
 		array_any_push(&state.cameras, &(struct Camera){
 			.transform = {
@@ -340,8 +341,7 @@ static void game_init(void) {
 			.mode = CAMERA_MODE_ASPECT_X,
 			.ncp = 0.1f, .fcp = 10, .ortho = 0,
 			//
-			.gpu_target_ref = gpu_target_ref,
-			//
+			.gpu_target_ref = state.gpu_objects.camera0_target,
 			.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
 			.clear_rgba = 0x303030ff,
 		});
@@ -383,7 +383,7 @@ static void game_init(void) {
 			.rect_mode = ENTITY_RECT_MODE_FIT,
 			.type = ENTITY_TYPE_QUAD_2D,
 			.as.quad = {
-				.gpu_texture_ref = gpu_target_texture_ref,
+				.gpu_texture_ref = gpu_target_get_texture_ref(state.gpu_objects.camera0_target, TEXTURE_TYPE_COLOR, 0),
 			},
 		});
 
@@ -448,7 +448,7 @@ static void game_init(void) {
 			.rect_mode = ENTITY_RECT_MODE_CONTENT,
 			.type = ENTITY_TYPE_QUAD_2D,
 			.as.quad = {
-				.gpu_texture_ref = font_open_sans_texture_ref,
+				.gpu_texture_ref = font_open_sans->gpu_ref,
 			},
 		});
 	}
@@ -572,7 +572,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		if (camera->clear_mask != TEXTURE_TYPE_NONE) {
 			graphics_draw(&(struct Render_Pass){
 				.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
-				.target = camera->gpu_target_ref,
+				.gpu_target_ref = camera->gpu_target_ref,
 				.blend_mode = {.mask = COLOR_CHANNEL_FULL},
 				.depth_mode = {.enabled = true, .mask = true},
 				//
@@ -632,12 +632,12 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 					gfx_material_set_float(&entity->material, state.uniforms.transform, 4*4, &mat4_entity.x.x);
 					graphics_draw(&(struct Render_Pass){
 						.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
-						.target = camera->gpu_target_ref,
+						.gpu_target_ref = camera->gpu_target_ref,
 						.blend_mode = entity->blend_mode,
 						.depth_mode = entity->depth_mode,
 						//
 						.material = &entity->material,
-						.mesh = mesh->gpu_mesh_ref,
+						.gpu_mesh_ref = mesh->gpu_mesh_ref,
 					});
 				} break;
 

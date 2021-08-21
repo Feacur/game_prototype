@@ -50,6 +50,7 @@ struct Gpu_Program {
 	struct Gpu_Program_Field uniforms[MAX_UNIFORMS];
 	GLint uniform_locations[MAX_UNIFORMS];
 	uint32_t uniforms_count;
+	// @idea: add an optional asset source
 };
 
 struct Gpu_Texture {
@@ -57,6 +58,7 @@ struct Gpu_Texture {
 	uint32_t size_x, size_y;
 	struct Texture_Parameters parameters;
 	struct Texture_Settings settings;
+	// @idea: add an optional asset source
 };
 
 struct Gpu_Target {
@@ -76,6 +78,7 @@ struct Gpu_Mesh {
 	uint32_t capacities[MAX_MESH_BUFFERS];
 	uint32_t counts[MAX_MESH_BUFFERS];
 	uint32_t elements_index;
+	// @idea: add an optional asset source
 };
 
 struct Gpu_Unit {
@@ -987,19 +990,19 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 
 void graphics_draw(struct Render_Pass const * pass) {
 	// @note: consider 0 ref.id empty
-	if (pass->target.id == 0 && pass->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
+	if (pass->gpu_target_ref.id == 0 && pass->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
 
 	graphics_set_blend_mode(&pass->blend_mode);
 	graphics_set_depth_mode(&pass->depth_mode);
 
-	graphics_select_target(pass->target);
+	graphics_select_target(pass->gpu_target_ref);
 	graphics_clear(pass->clear_mask, pass->clear_rgba);
 
-	if (pass->mesh.id == 0) { return; }
+	if (pass->gpu_mesh_ref.id == 0) { return; }
 	if (pass->material == NULL) { return; }
 	if (pass->material->gpu_program_ref.id == 0) { return; }
 
-	struct Gpu_Mesh const * mesh = ref_table_get(&graphics_state.meshes, pass->mesh);
+	struct Gpu_Mesh const * mesh = ref_table_get(&graphics_state.meshes, pass->gpu_mesh_ref);
 	if (mesh->elements_index == INDEX_EMPTY) { return; }
 
 	uint32_t const elements_count = (pass->length != 0)
@@ -1012,14 +1015,14 @@ void graphics_draw(struct Render_Pass const * pass) {
 		: 0;
 
 	uint32_t viewport_size_x = pass->screen_size_x, viewport_size_y = pass->screen_size_y;
-	if (pass->target.id != 0) {
-		gpu_target_get_size(pass->target, &viewport_size_x, &viewport_size_y);
+	if (pass->gpu_target_ref.id != 0) {
+		gpu_target_get_size(pass->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 	}
 
 	graphics_select_program(pass->material->gpu_program_ref);
 	graphics_upload_uniforms(pass->material);
 
-	graphics_select_mesh(pass->mesh);
+	graphics_select_mesh(pass->gpu_mesh_ref);
 	glViewport(0, 0, (GLsizei)viewport_size_x, (GLsizei)viewport_size_y);
 
 	enum Data_Type const elements_type = mesh->parameters[mesh->elements_index].type;
