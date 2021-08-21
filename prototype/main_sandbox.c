@@ -26,251 +26,34 @@
 #include "framework/systems/asset_system.h"
 
 #include "application/application.h"
+
+#include "object_camera.h"
+#include "object_entity.h"
+#include "game_state.h"
 #include "components.h"
 #include "batcher_2d.h"
 #include "asset_types.h"
 
-#include <string.h>
 #include <stdlib.h>
-#include <math.h>
 
-enum Camera_Mode {
-	CAMERA_MODE_NONE,
-	CAMERA_MODE_SCREEN,
-	CAMERA_MODE_ASPECT_X,
-	CAMERA_MODE_ASPECT_Y,
-};
-
-struct Camera {
-	struct Transform_3D transform;
-	//
-	enum Camera_Mode mode;
-	float ncp, fcp, ortho;
-	//
-	struct Ref gpu_target_ref;
-	enum Texture_Type clear_mask;
-	uint32_t clear_rgba;
-};
-
-enum Entity_Rect_Mode {
-	ENTITY_RECT_MODE_NONE,
-	ENTITY_RECT_MODE_FIT,
-	ENTITY_RECT_MODE_CONTENT,
-};
-
-enum Entity_Type {
-	ENTITY_TYPE_MESH,
-	ENTITY_TYPE_QUAD_2D,
-	ENTITY_TYPE_TEXT_2D,
-};
-
-struct Entity_Mesh {
-	struct Ref gpu_mesh_ref;
-};
-
-struct Entity_Quad {
-	uint8_t dummy;
-};
-
-struct Entity_Text {
-	// @todo: a separate type for Asset_Bytes?
-	uint32_t visible_length;
-	uint32_t length;
-	uint8_t const * data;
-	// @todo: an asset ref
-	struct Asset_Font const * font;
-};
-
-struct Entity_Font {
-	// @todo: an asset ref
-	struct Asset_Font const * font;
-};
-
-struct Entity {
-	uint32_t material;
+static struct Ref camera0_target;
+static struct {
 	uint32_t camera;
-	struct Transform_3D transform;
-	struct Transform_Rect rect;
-	//
-	struct Blend_Mode blend_mode;
-	struct Depth_Mode depth_mode;
-	//
-	enum Entity_Rect_Mode rect_mode;
-	enum Entity_Type type;
-	union {
-		struct Entity_Mesh mesh;
-		struct Entity_Quad quad;
-		struct Entity_Text text;
-	} as;
-};
-
-static struct Game_State {
-	struct Asset_System asset_system;
-
-	struct Batcher_2D * batcher;
-
-	struct {
-		uint32_t camera;
-		uint32_t color;
-		uint32_t texture;
-		uint32_t transform;
-	} uniforms;
-
-	struct {
-		struct Ref camera0_target;
-	} gpu_objects;
-
-	struct Array_Any materials;
-	struct Array_Any cameras;
-	struct Array_Any entities;
-} state;
+	uint32_t color;
+	uint32_t texture;
+	uint32_t transform;
+} uniforms;
 
 static uint8_t const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
 static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
 
-static struct mat4 camera_get_projection(enum Camera_Mode mode, float ncp, float fcp, float ortho, uint32_t camera_size_x, uint32_t camera_size_y) {
-	switch (mode) {
-		case CAMERA_MODE_NONE: // @note: basically normalized device coordinates
-			// @note: is equivalent of `CAMERA_MODE_ASPECT_X` or `CAMERA_MODE_ASPECT_Y`
-			//        with `camera_size_x == camera_size_y`
-			return mat4_identity;
-
-		case CAMERA_MODE_SCREEN:
-			return mat4_set_projection(
-				(struct vec2){2 / (float)camera_size_x, 2 / (float)camera_size_y},
-				(struct vec2){-1, -1},
-				ncp, fcp, ortho
-			);
-
-		case CAMERA_MODE_ASPECT_X:
-			return mat4_set_projection(
-				(struct vec2){1, (float)camera_size_x / (float)camera_size_y},
-				(struct vec2){0, 0},
-				ncp, fcp, ortho
-			);
-
-		case CAMERA_MODE_ASPECT_Y:
-			return mat4_set_projection(
-				(struct vec2){(float)camera_size_y / (float)camera_size_x, 1},
-				(struct vec2){0, 0},
-				ncp, fcp, ortho
-			);
-	}
-
-	logger_to_console("unknown camera mode"); DEBUG_BREAK();
-	return (struct mat4){0};
-}
-
-inline static void entity_get_rect(
-	struct Transform_3D const * transform, struct Transform_Rect const * rect,
-	uint32_t camera_size_x, uint32_t camera_size_y,
-	struct vec2 * min, struct vec2 * max, struct vec2 * pivot
-) {
-	*min = (struct vec2){
-		rect->min_relative.x * (float)camera_size_x + rect->min_absolute.x,
-		rect->min_relative.y * (float)camera_size_y + rect->min_absolute.y,
-	};
-	*max = (struct vec2){
-		rect->max_relative.x * (float)camera_size_x + rect->max_absolute.x,
-		rect->max_relative.y * (float)camera_size_y + rect->max_absolute.y,
-	};
-	*pivot = (struct vec2){
-		.x = lerp(min->x, max->x, rect->pivot.x) + transform->position.x,
-		.y = lerp(min->y, max->y, rect->pivot.y) + transform->position.y,
-	};
-}
-
-inline static struct uvec2 entity_get_content_size(
-	struct Entity const * entity,
-	uint32_t camera_size_x, uint32_t camera_size_y
-) {
-	struct Gfx_Material * material = array_any_at(&state.materials, entity->material);
-
-	switch (entity->type) {
-		case ENTITY_TYPE_MESH: return (struct uvec2){
-			camera_size_x,
-			camera_size_y
-		};
-
-		case ENTITY_TYPE_QUAD_2D: {
-			// struct Entity_Quad const * quad = &entity->as.quad;
-
-			struct Ref const * gpu_texture_ref = gfx_material_get_texture(material, state.uniforms.texture);
-
-			uint32_t texture_size_x, texture_size_y;
-			gpu_texture_get_size(*gpu_texture_ref, &texture_size_x, &texture_size_y);
-
-			return (struct uvec2){
-				texture_size_x,
-				texture_size_y
-			};
-		} // break;
-
-		case ENTITY_TYPE_TEXT_2D: {
-			int32_t const rect[] = {
-				(int32_t)floorf(entity->rect.min_relative.x * (float)camera_size_x + entity->rect.min_absolute.x),
-				(int32_t)floorf(entity->rect.min_relative.y * (float)camera_size_y + entity->rect.min_absolute.y),
-				(int32_t)ceilf(entity->rect.max_relative.x * (float)camera_size_x + entity->rect.max_absolute.x),
-				(int32_t)ceilf(entity->rect.max_relative.y * (float)camera_size_y + entity->rect.max_absolute.y),
-			};
-			return (struct uvec2){ // @idea: invert negatives?
-				(uint32_t)max_s32(rect[2] - rect[0], 0),
-				(uint32_t)max_s32(rect[3] - rect[1], 0),
-			};
-		} // break;
-	}
-
-	logger_to_console("unknown entity type"); DEBUG_BREAK();
-	return (struct uvec2){0};
-}
-
 static void game_init(void) {
-	// init state
-	{
-		asset_system_init(&state.asset_system);
-		state.batcher = batcher_2d_init();
-		array_any_init(&state.materials, sizeof(struct Gfx_Material));
-		array_any_init(&state.cameras, sizeof(struct Camera));
-		array_any_init(&state.entities, sizeof(struct Entity));
-	}
+	state_init();
 
-	// init asset system
-	{ // state is expected to be inited
-		// > map types
-		asset_system_map_extension(&state.asset_system, "shader", "glsl");
-		asset_system_map_extension(&state.asset_system, "model",  "obj");
-		asset_system_map_extension(&state.asset_system, "model",  "fbx");
-		asset_system_map_extension(&state.asset_system, "image",  "png");
-		asset_system_map_extension(&state.asset_system, "font",   "ttf");
-		asset_system_map_extension(&state.asset_system, "font",   "otf");
-		asset_system_map_extension(&state.asset_system, "bytes",  "txt");
-
-		// > register types
-		asset_system_set_type(&state.asset_system, "shader", (struct Asset_Callbacks){
-			.init = asset_shader_init,
-			.free = asset_shader_free,
-		}, sizeof(struct Asset_Shader));
-
-		asset_system_set_type(&state.asset_system, "model", (struct Asset_Callbacks){
-			.init = asset_model_init,
-			.free = asset_model_free,
-		}, sizeof(struct Asset_Model));
-
-		asset_system_set_type(&state.asset_system, "image", (struct Asset_Callbacks){
-			.init = asset_image_init,
-			.free = asset_image_free,
-		}, sizeof(struct Asset_Image));
-
-		asset_system_set_type(&state.asset_system, "font", (struct Asset_Callbacks){
-			.init = asset_font_init,
-			.free = asset_font_free,
-		}, sizeof(struct Asset_Font));
-
-		asset_system_set_type(&state.asset_system, "bytes", (struct Asset_Callbacks){
-			.init = asset_bytes_init,
-			.free = asset_bytes_free,
-		}, sizeof(struct Asset_Bytes));
-	}
+	uniforms.color = graphics_add_uniform("u_Color");
+	uniforms.texture = graphics_add_uniform("u_Texture");
+	uniforms.camera = graphics_add_uniform("u_Camera");
+	uniforms.transform = graphics_add_uniform("u_Transform");
 
 	// prefetch some assets
 	{ // asset system is expected to be inited
@@ -291,26 +74,18 @@ static void game_init(void) {
 	WEAK_PTR(struct Asset_Model const) mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
 	WEAK_PTR(struct Asset_Bytes const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
 
-	// init uniforms ids
-	{
-		state.uniforms.color = graphics_add_uniform("u_Color");
-		state.uniforms.texture = graphics_add_uniform("u_Texture");
-		state.uniforms.camera = graphics_add_uniform("u_Camera");
-		state.uniforms.transform = graphics_add_uniform("u_Transform");
-	}
-
 	// prepare gpu targets
 	{
-		state.gpu_objects.camera0_target = gpu_target_init(
-		320, 180,
-		(struct Texture_Parameters[]){
-			[0] = {
-				.texture_type = TEXTURE_TYPE_COLOR,
-				.data_type = DATA_TYPE_U8,
-				.channels = 4,
-				.flags = TEXTURE_FLAG_READ
-			},
-			[1] = {
+		camera0_target = gpu_target_init(
+			320, 180,
+			(struct Texture_Parameters[]){
+				[0] = {
+					.texture_type = TEXTURE_TYPE_COLOR,
+					.data_type = DATA_TYPE_U8,
+					.channels = 4,
+					.flags = TEXTURE_FLAG_READ
+				},
+				[1] = {
 					.texture_type = TEXTURE_TYPE_DEPTH,
 					.data_type = DATA_TYPE_R32,
 				},
@@ -327,24 +102,24 @@ static void game_init(void) {
 		array_any_push(&state.materials, &(struct Gfx_Material){0});
 		material = array_any_at(&state.materials, state.materials.count - 1);
 		gfx_material_init(material, gpu_program_test->gpu_ref);
-		gfx_material_set_texture(material, state.uniforms.texture, 1, &texture_test->gpu_ref);
-		gfx_material_set_float(material, state.uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
+		gfx_material_set_texture(material, uniforms.texture, 1, &texture_test->gpu_ref);
+		gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
 
 		array_any_push(&state.materials, &(struct Gfx_Material){0});
 		material = array_any_at(&state.materials, state.materials.count - 1);
 		gfx_material_init(material, gpu_program_batcher->gpu_ref);
-		gfx_material_set_texture(material, state.uniforms.texture, 1, (struct Ref[]){
-			gpu_target_get_texture_ref(state.gpu_objects.camera0_target, TEXTURE_TYPE_COLOR, 0),
+		gfx_material_set_texture(material, uniforms.texture, 1, (struct Ref[]){
+			gpu_target_get_texture_ref(camera0_target, TEXTURE_TYPE_COLOR, 0),
 		});
-		gfx_material_set_float(material, state.uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
+		gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
 
 		array_any_push(&state.materials, &(struct Gfx_Material){0});
 		material = array_any_at(&state.materials, state.materials.count - 1);
 		gfx_material_init(material, gpu_program_batcher->gpu_ref);
-		gfx_material_set_texture(material, state.uniforms.texture, 1, (struct Ref[]){
+		gfx_material_set_texture(material, uniforms.texture, 1, (struct Ref[]){
 			font_open_sans->gpu_ref,
 		});
-		gfx_material_set_float(material, state.uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
+		gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
 
 		// > cameras
 		array_any_push(&state.cameras, &(struct Camera){
@@ -357,7 +132,7 @@ static void game_init(void) {
 			.mode = CAMERA_MODE_ASPECT_X,
 			.ncp = 0.1f, .fcp = 10, .ortho = 0,
 			//
-			.gpu_target_ref = state.gpu_objects.camera0_target,
+			.gpu_target_ref = camera0_target,
 			.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
 			.clear_rgba = 0x303030ff,
 		});
@@ -398,7 +173,9 @@ static void game_init(void) {
 			//
 			.rect_mode = ENTITY_RECT_MODE_FIT,
 			.type = ENTITY_TYPE_QUAD_2D,
-			.as.quad = {0},
+			.as.quad = {
+				.texture_uniform = uniforms.texture,
+			},
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
@@ -461,25 +238,15 @@ static void game_init(void) {
 			//
 			.rect_mode = ENTITY_RECT_MODE_CONTENT,
 			.type = ENTITY_TYPE_QUAD_2D,
-			.as.quad = {0},
+			.as.quad = {
+				.texture_uniform = uniforms.texture,
+			},
 		});
 	}
 }
 
 static void game_free(void) {
-	asset_system_free(&state.asset_system);
-
-	batcher_2d_free(state.batcher);
-
-	for (uint32_t i = 0; i < state.materials.count; i++) {
-		gfx_material_free(array_any_at(&state.materials, i));
-	}
-
-	array_any_free(&state.materials);
-	array_any_free(&state.cameras);
-	array_any_free(&state.entities);
-
-	memset(&state, 0, sizeof(state));
+	state_free();
 }
 
 static void game_fixed_update(uint64_t elapsed, uint64_t per_second) {
@@ -644,8 +411,8 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 					//
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
 
-					gfx_material_set_float(material, state.uniforms.camera, 4*4, &mat4_camera.x.x);
-					gfx_material_set_float(material, state.uniforms.transform, 4*4, &mat4_entity.x.x);
+					gfx_material_set_float(material, uniforms.camera, 4*4, &mat4_camera.x.x);
+					gfx_material_set_float(material, uniforms.transform, 4*4, &mat4_entity.x.x);
 					graphics_draw(&(struct Render_Pass){
 						.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
 						.gpu_target_ref = camera->gpu_target_ref,
