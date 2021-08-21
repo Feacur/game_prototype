@@ -32,6 +32,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 enum Camera_Mode {
 	CAMERA_MODE_NONE,
@@ -50,6 +51,12 @@ struct Camera {
 	//
 	enum Texture_Type clear_mask;
 	uint32_t clear_rgba;
+};
+
+enum Entity_Rect_Mode {
+	ENTITY_RECT_MODE_NONE,
+	ENTITY_RECT_MODE_FIT,
+	ENTITY_RECT_MODE_CONTENT,
 };
 
 enum Entity_Type {
@@ -93,6 +100,7 @@ struct Entity {
 	struct Blend_Mode blend_mode;
 	struct Depth_Mode depth_mode;
 	//
+	enum Entity_Rect_Mode rect_mode;
 	enum Entity_Type type;
 	union {
 		struct Entity_Mesh mesh;
@@ -176,6 +184,59 @@ inline static void entity_get_rect(
 		.x = lerp(min->x, max->x, rect->pivot.x) + transform->position.x,
 		.y = lerp(min->y, max->y, rect->pivot.y) + transform->position.y,
 	};
+}
+
+inline static struct uvec2 entity_get_content_size(
+	struct Entity const * entity,
+	uint32_t camera_size_x, uint32_t camera_size_y
+) {
+	switch (entity->type) {
+		case ENTITY_TYPE_MESH: return (struct uvec2){
+			camera_size_x,
+			camera_size_y
+		};
+
+		case ENTITY_TYPE_QUAD: {
+			struct Entity_Quad const * quad = &entity->as.quad;
+
+			struct Ref texture_ref = gpu_target_get_texture_ref(quad->gpu_target_ref, quad->type, quad->index);
+
+			uint32_t texture_size_x, texture_size_y;
+			gpu_texture_get_size(texture_ref, &texture_size_x, &texture_size_y);
+
+			return (struct uvec2){
+				texture_size_x,
+				texture_size_y
+			};
+		} // break;
+
+		case ENTITY_TYPE_TEXT: {
+			int32_t const rect[] = {
+				(int32_t)floorf(entity->rect.min_relative.x * (float)camera_size_x + entity->rect.min_absolute.x),
+				(int32_t)floorf(entity->rect.min_relative.y * (float)camera_size_y + entity->rect.min_absolute.y),
+				(int32_t)ceilf(entity->rect.max_relative.x * (float)camera_size_x + entity->rect.max_absolute.x),
+				(int32_t)ceilf(entity->rect.max_relative.y * (float)camera_size_y + entity->rect.max_absolute.y),
+			};
+			return (struct uvec2){ // @idea: invert negatives?
+				(uint32_t)max_s32(rect[2] - rect[0], 0),
+				(uint32_t)max_s32(rect[3] - rect[1], 0),
+			};
+		} // break;
+
+		case ENTITY_TYPE_FONT: {
+			struct Entity_Font const * font = &entity->as.font;
+
+			struct Image const * font_image = font_image_get_asset(font->font->buffer);
+
+			return (struct uvec2){
+				font_image->size_x,
+				font_image->size_y
+			};
+		} // break;
+	}
+
+	logger_to_console("unknown entity type"); DEBUG_BREAK();
+	return (struct uvec2){0};
 }
 
 static void game_init(void) {
@@ -333,6 +394,7 @@ static void game_init(void) {
 			.material = state.materials.batcher,
 			.blend_mode = blend_mode_opaque,
 			//
+			.rect_mode = ENTITY_RECT_MODE_FIT,
 			.type = ENTITY_TYPE_QUAD,
 			.as.quad = {
 				.gpu_target_ref = gpu_target_ref,
@@ -398,6 +460,7 @@ static void game_init(void) {
 			.material = state.materials.batcher,
 			.blend_mode = blend_mode_transparent,
 			//
+			.rect_mode = ENTITY_RECT_MODE_CONTENT,
 			.type = ENTITY_TYPE_FONT,
 			.as.font = {
 				.font = font_open_sans,
@@ -447,30 +510,19 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 			gpu_target_get_size(camera->gpu_target_ref, &camera_size_x, &camera_size_y);
 		}
 
-		switch (entity->type) {
-			case ENTITY_TYPE_MESH: {
-				// struct Entity_Mesh * mesh = &entity->as.mesh;
+		// rect behaviour
+		struct uvec2 const entity_content_size = entity_get_content_size(entity, camera_size_x, camera_size_y);
+		switch (entity->rect_mode) {
+			case ENTITY_RECT_MODE_NONE: break;
 
-				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
-					(struct vec3){0, 1 * delta_time, 0}
-				)));
-			} break;
-
-			case ENTITY_TYPE_QUAD: {
-				struct Entity_Quad * quad = &entity->as.quad;
-
-				struct Ref texture_ref = gpu_target_get_texture_ref(quad->gpu_target_ref, quad->type, quad->index);
-
-				uint32_t texture_size_x, texture_size_y;
-				gpu_texture_get_size(texture_ref, &texture_size_x, &texture_size_y);
-
+			case ENTITY_RECT_MODE_FIT: {
 				// @note: `(fit_size_N <= camera_size_N) == true`
 				//        `(fit_offset_N >= 0) == true`
 				//        alternatively `fit_axis_is_x` can be calculated as:
 				//        `((float)texture_size_x / (float)camera_size_x > (float)texture_size_y / (float)camera_size_y)`
-				bool const fit_axis_is_x = (texture_size_x * camera_size_y > texture_size_y * camera_size_x);
-				uint32_t const fit_size_x = fit_axis_is_x ? camera_size_x : mul_div_u32(camera_size_y, texture_size_x, texture_size_y);
-				uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(camera_size_x, texture_size_y, texture_size_x) : camera_size_y;
+				bool const fit_axis_is_x = (entity_content_size.x * camera_size_y > entity_content_size.y * camera_size_x);
+				uint32_t const fit_size_x = fit_axis_is_x ? camera_size_x : mul_div_u32(camera_size_y, entity_content_size.x, entity_content_size.y);
+				uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(camera_size_x, entity_content_size.y, entity_content_size.x) : camera_size_y;
 				uint32_t const fit_offset_x = (camera_size_x - fit_size_x) / 2;
 				uint32_t const fit_offset_y = (camera_size_y - fit_size_y) / 2;
 
@@ -481,24 +533,33 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 				};
 			} break;
 
+			case ENTITY_RECT_MODE_CONTENT: {
+				// @note: lags one frame
+				entity->rect.max_relative = entity->rect.min_relative;
+				entity->rect.max_absolute = (struct vec2){
+					.x = entity->rect.min_absolute.x + (float)entity_content_size.x,
+					.y = entity->rect.min_absolute.y + (float)entity_content_size.y,
+				};
+			} break;
+		}
+
+		// entity behaviour
+		switch (entity->type) {
+			case ENTITY_TYPE_QUAD: break;
+			case ENTITY_TYPE_FONT: break;
+
+			case ENTITY_TYPE_MESH: {
+				// struct Entity_Mesh * mesh = &entity->as.mesh;
+
+				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
+					(struct vec3){0, 1 * delta_time, 0}
+				)));
+			} break;
+
 			case ENTITY_TYPE_TEXT: {
 				struct Entity_Text * text = &entity->as.text;
 
 				text->visible_length = (text->visible_length + 1) % text->length;
-			} break;
-
-			case ENTITY_TYPE_FONT: {
-				struct Entity_Font * font = &entity->as.font;
-
-				struct Image const * font_image = font_image_get_asset(font->font->buffer);
-
-				// @note: lags one frame
-				entity->rect.max_relative = entity->rect.min_relative;
-				entity->rect.max_absolute = (struct vec2){
-					.x = entity->rect.min_absolute.x + (float)font_image->size_x,
-					.y = entity->rect.min_absolute.y + (float)font_image->size_y,
-				};
-
 			} break;
 		}
 	}
