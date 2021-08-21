@@ -207,8 +207,15 @@ struct Mesh_Parameters {
 	uint32_t attributes[MAX_MESH_ATTRIBUTES];
 };
 
+//
+
 enum Data_Type data_type_get_element_type(enum Data_Type value);
 uint32_t data_type_get_count(enum Data_Type value);
 uint32_t data_type_get_size(enum Data_Type value);
+
+//
+
+extern struct Blend_Mode const blend_mode_opaque;
+extern struct Blend_Mode const blend_mode_transparent;
 
 #endif

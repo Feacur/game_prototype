@@ -90,6 +90,8 @@ struct Entity {
 	struct Transform_Rect rect;
 	//
 	struct Gfx_Material material;
+	struct Blend_Mode blend_mode;
+	struct Depth_Mode depth_mode;
 	//
 	enum Entity_Type type;
 	union {
@@ -322,6 +324,9 @@ static void game_init(void) {
 			},
 			//
 			.material = state.materials.test,
+			.blend_mode = blend_mode_opaque,
+			.depth_mode = {.enabled = true, .mask = true},
+			//
 			.type = ENTITY_TYPE_MESH,
 			.as.mesh = {
 				.gpu_mesh_ref = mesh_cube->gpu_ref,
@@ -339,6 +344,8 @@ static void game_init(void) {
 			},
 			//
 			.material = state.materials.batcher,
+			.blend_mode = blend_mode_opaque,
+			//
 			.type = ENTITY_TYPE_QUAD,
 			.as.quad = {
 				.gpu_target_ref = gpu_target_ref,
@@ -361,6 +368,8 @@ static void game_init(void) {
 			},
 			//
 			.material = state.materials.batcher,
+			.blend_mode = blend_mode_transparent,
+			//
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
 				.length = test111_length,
@@ -384,6 +393,8 @@ static void game_init(void) {
 			},
 			//
 			.material = state.materials.batcher,
+			.blend_mode = blend_mode_transparent,
+			//
 			.type = ENTITY_TYPE_TEXT,
 			.as.text = {
 				.length = text_test->length,
@@ -407,6 +418,8 @@ static void game_init(void) {
 			},
 			//
 			.material = state.materials.batcher,
+			.blend_mode = blend_mode_transparent,
+			//
 			.type = ENTITY_TYPE_FONT,
 			.as.font = {
 				.font = font_open_sans,
@@ -578,6 +591,11 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				entity->transform.rotation
 			);
 
+			batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
+			batcher_2d_set_material(state.batcher, &entity->material);
+			batcher_2d_set_blend_mode(state.batcher, entity->blend_mode);
+			batcher_2d_set_depth_mode(state.batcher, entity->depth_mode);
+
 			switch (entity->type) {
 				// --- camera, world coords, transformed
 				case ENTITY_TYPE_MESH: {
@@ -593,8 +611,8 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 					graphics_draw(&(struct Render_Pass){
 						.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
 						.target = camera->gpu_target_ref,
-						.blend_mode = {.mask = COLOR_CHANNEL_FULL},
-						.depth_mode = {.enabled = true, .mask = true},
+						.blend_mode = entity->blend_mode,
+						.depth_mode = entity->depth_mode,
 						//
 						.material = &entity->material,
 						.mesh = mesh->gpu_mesh_ref,
@@ -607,44 +625,18 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 					struct Ref texture_ref = gpu_target_get_texture_ref(quad->gpu_target_ref, quad->type, quad->index);
 
-					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
-
-					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){.mask = COLOR_CHANNEL_FULL});
-					batcher_2d_set_depth_mode(state.batcher, (struct Depth_Mode){0});
-
-					// > the buffer
-					batcher_2d_set_material(state.batcher, &entity->material);
 					batcher_2d_set_texture(state.batcher, texture_ref);
 					batcher_2d_add_quad(
 						state.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
 						(float[]){0,0,1,1}
 					);
-
-					//
-					batcher_2d_pop_matrix(state.batcher);
-
 				} break;
 
 				// --- overlay, screen coords, nearest
 				case ENTITY_TYPE_TEXT: {
 					struct Entity_Text const * text = &entity->as.text;
 
-					//
-					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
-
-					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){
-						.rgb = {
-							.op = BLEND_OP_ADD,
-							.src = BLEND_FACTOR_SRC_ALPHA,
-							.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-						},
-						.mask = COLOR_CHANNEL_FULL
-					});
-					batcher_2d_set_depth_mode(state.batcher, (struct Depth_Mode){0});
-
-					// > text
-					batcher_2d_set_material(state.batcher, &entity->material);
 					batcher_2d_set_texture(state.batcher, text->font->gpu_ref);
 					batcher_2d_add_text(
 						state.batcher,
@@ -653,39 +645,22 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 						text->data,
 						entity_rect_min, entity_rect_max, entity_pivot
 					);
-
-					batcher_2d_pop_matrix(state.batcher);
 				} break;
 
 				// --- overlay, screen coords, nearest
 				case ENTITY_TYPE_FONT: {
 					struct Entity_Font const * font = &entity->as.font;
 
-					//
-					batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
-
-					batcher_2d_set_blend_mode(state.batcher, (struct Blend_Mode){
-						.rgb = {
-							.op = BLEND_OP_ADD,
-							.src = BLEND_FACTOR_SRC_ALPHA,
-							.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-						},
-						.mask = COLOR_CHANNEL_FULL
-					});
-					batcher_2d_set_depth_mode(state.batcher, (struct Depth_Mode){0});
-
-					// > quad
-					batcher_2d_set_material(state.batcher, &entity->material);
 					batcher_2d_set_texture(state.batcher, font->font->gpu_ref);
 					batcher_2d_add_quad(
 						state.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
 						(float[]){0,0,1,1}
 					);
-
-					batcher_2d_pop_matrix(state.batcher);
 				} break;
 			}
+
+			batcher_2d_pop_matrix(state.batcher);
 		}
 
 		batcher_2d_draw(state.batcher, screen_size_x, screen_size_y, camera->gpu_target_ref);

@@ -103,3 +103,19 @@ uint32_t data_type_get_size(enum Data_Type value) {
 	logger_to_console("unknown data type\n"); DEBUG_BREAK();
 	return 0;
 }
+
+
+//
+
+struct Blend_Mode const blend_mode_opaque = {
+	.mask = COLOR_CHANNEL_FULL,
+};
+
+struct Blend_Mode const blend_mode_transparent = {
+	.rgb = {
+		.op = BLEND_OP_ADD,
+		.src = BLEND_FACTOR_SRC_ALPHA,
+		.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	},
+	.mask = COLOR_CHANNEL_FULL,
+};
