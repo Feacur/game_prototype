@@ -44,6 +44,7 @@ framework/opengl/graphics.c
 
 application/application.c
 
+prototype/components.c
 prototype/batcher_2d.c
 prototype/asset_types.c
 prototype/main_sandbox.c

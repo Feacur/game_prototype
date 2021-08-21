@@ -21,4 +21,10 @@ struct Transform_Rect {
 	struct vec2 pivot;
 };
 
+//
+
+extern struct Transform_3D const transform_3d_default;
+extern struct Transform_2D const transform_2d_default;
+extern struct Transform_Rect const transform_rect_default;
+
 #endif

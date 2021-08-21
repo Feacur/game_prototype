@@ -300,10 +300,7 @@ static void game_init(void) {
 		});
 
 		array_any_push(&state.cameras, &(struct Camera){
-			.transform = {
-				.scale = (struct vec3){1, 1, 1},
-				.rotation = quat_identity,
-			},
+			.transform = transform_3d_default,
 			//
 			.mode = CAMERA_MODE_SCREEN,
 			.ncp = 0, .fcp = 1, .ortho = 1,
@@ -315,13 +312,8 @@ static void game_init(void) {
 		// > entities
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 0,
-			.transform = {
-				.scale = (struct vec3){1, 1, 1},
-				.rotation = quat_identity,
-			},
-			.rect = (struct Transform_Rect){
-				.max_relative = (struct vec2){1, 1}
-			},
+			.transform = transform_3d_default,
+			.rect = transform_rect_default,
 			//
 			.material = state.materials.test,
 			.blend_mode = blend_mode_opaque,
@@ -335,13 +327,8 @@ static void game_init(void) {
 
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
-			.transform = {
-				.scale = (struct vec3){1, 1, 1},
-				.rotation = quat_identity,
-			},
-			.rect = (struct Transform_Rect){
-				.max_relative = (struct vec2){1, 1}
-			},
+			.transform = transform_3d_default,
+			.rect = transform_rect_default,
 			//
 			.material = state.materials.batcher,
 			.blend_mode = blend_mode_opaque,
@@ -355,10 +342,7 @@ static void game_init(void) {
 
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
-			.transform = {
-				.scale = (struct vec3){1, 1, 1},
-				.rotation = quat_identity,
-			},
+			.transform = transform_3d_default,
 			.rect = (struct Transform_Rect){
 				.min_relative = (struct vec2){0.0f, 0.25f},
 				.min_absolute = (struct vec2){ 50,  50},
@@ -380,10 +364,7 @@ static void game_init(void) {
 
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
-			.transform = {
-				.scale = (struct vec3){1, 1, 1},
-				.rotation = quat_identity,
-			},
+			.transform = transform_3d_default,
 			.rect = (struct Transform_Rect){
 				.min_relative = (struct vec2){0.5f, 0.25f},
 				.min_absolute = (struct vec2){ 50,  50},
@@ -405,10 +386,7 @@ static void game_init(void) {
 
 		array_any_push(&state.entities, &(struct Entity){
 			.camera = 1,
-			.transform = {
-				.scale = (struct vec3){1, 1, 1},
-				.rotation = quat_identity,
-			},
+			.transform = transform_3d_default,
 			.rect = (struct Transform_Rect){
 				.min_relative = (struct vec2){0.0f, 0.25f},
 				.min_absolute = (struct vec2){ 50, 150},

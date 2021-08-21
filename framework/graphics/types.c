@@ -104,7 +104,6 @@ uint32_t data_type_get_size(enum Data_Type value) {
 	return 0;
 }
 
-
 //
 
 struct Blend_Mode const blend_mode_opaque = {

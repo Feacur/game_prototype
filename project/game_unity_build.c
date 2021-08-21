@@ -49,6 +49,7 @@
 
 #include "application/application.c"
 
+#include "prototype/components.c"
 #include "prototype/batcher_2d.c"
 #include "prototype/asset_types.c"
 #include "prototype/main_sandbox.c"
