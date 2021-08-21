@@ -12,22 +12,36 @@
 //
 #include "object_entity.h"
 
+bool entity_get_is_batched(struct Entity const * entity) {
+	switch (entity->type) {
+		case ENTITY_TYPE_MESH:
+			return false;
+
+		case ENTITY_TYPE_QUAD_2D:
+		case ENTITY_TYPE_TEXT_2D:
+			return true;
+	}
+
+	logger_to_console("unknown entity type"); DEBUG_BREAK();
+	return false;
+}
+
 void entity_get_rect(
-	struct Transform_3D const * transform, struct Transform_Rect const * rect,
+	struct Entity const * entity,
 	uint32_t camera_size_x, uint32_t camera_size_y,
 	struct vec2 * min, struct vec2 * max, struct vec2 * pivot
 ) {
 	*min = (struct vec2){
-		rect->min_relative.x * (float)camera_size_x + rect->min_absolute.x,
-		rect->min_relative.y * (float)camera_size_y + rect->min_absolute.y,
+		entity->rect.min_relative.x * (float)camera_size_x + entity->rect.min_absolute.x,
+		entity->rect.min_relative.y * (float)camera_size_y + entity->rect.min_absolute.y,
 	};
 	*max = (struct vec2){
-		rect->max_relative.x * (float)camera_size_x + rect->max_absolute.x,
-		rect->max_relative.y * (float)camera_size_y + rect->max_absolute.y,
+		entity->rect.max_relative.x * (float)camera_size_x + entity->rect.max_absolute.x,
+		entity->rect.max_relative.y * (float)camera_size_y + entity->rect.max_absolute.y,
 	};
 	*pivot = (struct vec2){
-		.x = lerp(min->x, max->x, rect->pivot.x) + transform->position.x,
-		.y = lerp(min->y, max->y, rect->pivot.y) + transform->position.y,
+		.x = lerp(min->x, max->x, entity->rect.pivot.x) + entity->transform.position.x,
+		.y = lerp(min->y, max->y, entity->rect.pivot.y) + entity->transform.position.y,
 	};
 }
 

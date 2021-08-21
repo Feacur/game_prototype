@@ -382,7 +382,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 			struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
 			entity_get_rect(
-				&entity->transform, &entity->rect,
+				entity,
 				camera_size_x, camera_size_y,
 				&entity_rect_min, &entity_rect_max, &entity_pivot
 			);
@@ -397,10 +397,13 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				entity->transform.rotation
 			);
 
-			batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
-			batcher_2d_set_material(state.batcher, material);
-			batcher_2d_set_blend_mode(state.batcher, entity->blend_mode);
-			batcher_2d_set_depth_mode(state.batcher, entity->depth_mode);
+			bool const entity_is_batched = entity_get_is_batched(entity);
+			if (entity_is_batched) {
+				batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
+				batcher_2d_set_material(state.batcher, material);
+				batcher_2d_set_blend_mode(state.batcher, entity->blend_mode);
+				batcher_2d_set_depth_mode(state.batcher, entity->depth_mode);
+			}
 
 			switch (entity->type) {
 				case ENTITY_TYPE_MESH: {
@@ -447,7 +450,9 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				} break;
 			}
 
-			batcher_2d_pop_matrix(state.batcher);
+			if (entity_is_batched) {
+				batcher_2d_pop_matrix(state.batcher);
+			}
 		}
 
 		batcher_2d_draw(state.batcher, screen_size_x, screen_size_y, camera->gpu_target_ref);

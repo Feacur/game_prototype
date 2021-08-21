@@ -56,8 +56,10 @@ struct Entity {
 
 //
 
+bool entity_get_is_batched(struct Entity const * entity);
+
 void entity_get_rect(
-	struct Transform_3D const * transform, struct Transform_Rect const * rect,
+	struct Entity const * entity,
 	uint32_t camera_size_x, uint32_t camera_size_y,
 	struct vec2 * min, struct vec2 * max, struct vec2 * pivot
 );
