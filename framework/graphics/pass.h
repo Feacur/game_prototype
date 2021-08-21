@@ -17,7 +17,7 @@ struct Render_Pass {
 	enum Texture_Type clear_mask;
 	uint32_t clear_rgba;
 	//
-	struct Gfx_Material * material;
+	struct Gfx_Material const * material;
 	struct Ref gpu_mesh_ref;
 	uint32_t offset, length;
 };

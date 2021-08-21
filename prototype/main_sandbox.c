@@ -69,7 +69,7 @@ struct Entity_Mesh {
 };
 
 struct Entity_Quad {
-	struct Ref gpu_texture_ref;
+	uint8_t dummy;
 };
 
 struct Entity_Text {
@@ -87,11 +87,11 @@ struct Entity_Font {
 };
 
 struct Entity {
+	uint32_t material;
 	uint32_t camera;
 	struct Transform_3D transform;
 	struct Transform_Rect rect;
 	//
-	struct Gfx_Material material;
 	struct Blend_Mode blend_mode;
 	struct Depth_Mode depth_mode;
 	//
@@ -117,14 +117,10 @@ static struct Game_State {
 	} uniforms;
 
 	struct {
-		struct Gfx_Material test;
-		struct Gfx_Material batcher;
-	} materials;
-
-	struct {
 		struct Ref camera0_target;
 	} gpu_objects;
 
+	struct Array_Any materials;
 	struct Array_Any cameras;
 	struct Array_Any entities;
 } state;
@@ -188,6 +184,8 @@ inline static struct uvec2 entity_get_content_size(
 	struct Entity const * entity,
 	uint32_t camera_size_x, uint32_t camera_size_y
 ) {
+	struct Gfx_Material * material = array_any_at(&state.materials, entity->material);
+
 	switch (entity->type) {
 		case ENTITY_TYPE_MESH: return (struct uvec2){
 			camera_size_x,
@@ -195,10 +193,12 @@ inline static struct uvec2 entity_get_content_size(
 		};
 
 		case ENTITY_TYPE_QUAD_2D: {
-			struct Entity_Quad const * quad = &entity->as.quad;
+			// struct Entity_Quad const * quad = &entity->as.quad;
+
+			struct Ref const * gpu_texture_ref = gfx_material_get_texture(material, state.uniforms.texture);
 
 			uint32_t texture_size_x, texture_size_y;
-			gpu_texture_get_size(quad->gpu_texture_ref, &texture_size_x, &texture_size_y);
+			gpu_texture_get_size(*gpu_texture_ref, &texture_size_x, &texture_size_y);
 
 			return (struct uvec2){
 				texture_size_x,
@@ -229,6 +229,7 @@ static void game_init(void) {
 	{
 		asset_system_init(&state.asset_system);
 		state.batcher = batcher_2d_init();
+		array_any_init(&state.materials, sizeof(struct Gfx_Material));
 		array_any_init(&state.cameras, sizeof(struct Camera));
 		array_any_init(&state.entities, sizeof(struct Entity));
 	}
@@ -298,16 +299,6 @@ static void game_init(void) {
 		state.uniforms.transform = graphics_add_uniform("u_Transform");
 	}
 
-	// prepare materials
-	{
-		gfx_material_init(&state.materials.test, gpu_program_test->gpu_ref);
-		gfx_material_init(&state.materials.batcher, gpu_program_batcher->gpu_ref);
-
-		// @todo: make material assets
-		gfx_material_set_texture(&state.materials.test, state.uniforms.texture, 1, &texture_test->gpu_ref);
-		gfx_material_set_float(&state.materials.test, state.uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
-	}
-
 	// prepare gpu targets
 	{
 		state.gpu_objects.camera0_target = gpu_target_init(
@@ -329,7 +320,32 @@ static void game_init(void) {
 	}
 
 	// init objects
-	{
+	{ // @todo: introduce assets
+		// > materials
+		WEAK_PTR(struct Gfx_Material) material;
+
+		array_any_push(&state.materials, &(struct Gfx_Material){0});
+		material = array_any_at(&state.materials, state.materials.count - 1);
+		gfx_material_init(material, gpu_program_test->gpu_ref);
+		gfx_material_set_texture(material, state.uniforms.texture, 1, &texture_test->gpu_ref);
+		gfx_material_set_float(material, state.uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
+
+		array_any_push(&state.materials, &(struct Gfx_Material){0});
+		material = array_any_at(&state.materials, state.materials.count - 1);
+		gfx_material_init(material, gpu_program_batcher->gpu_ref);
+		gfx_material_set_texture(material, state.uniforms.texture, 1, (struct Ref[]){
+			gpu_target_get_texture_ref(state.gpu_objects.camera0_target, TEXTURE_TYPE_COLOR, 0),
+		});
+		gfx_material_set_float(material, state.uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
+
+		array_any_push(&state.materials, &(struct Gfx_Material){0});
+		material = array_any_at(&state.materials, state.materials.count - 1);
+		gfx_material_init(material, gpu_program_batcher->gpu_ref);
+		gfx_material_set_texture(material, state.uniforms.texture, 1, (struct Ref[]){
+			font_open_sans->gpu_ref,
+		});
+		gfx_material_set_float(material, state.uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
+
 		// > cameras
 		array_any_push(&state.cameras, &(struct Camera){
 			.transform = {
@@ -358,11 +374,11 @@ static void game_init(void) {
 
 		// > entities
 		array_any_push(&state.entities, &(struct Entity){
+			.material = 0,
 			.camera = 0,
 			.transform = transform_3d_default,
 			.rect = transform_rect_default,
 			//
-			.material = state.materials.test,
 			.blend_mode = blend_mode_opaque,
 			.depth_mode = {.enabled = true, .mask = true},
 			//
@@ -373,21 +389,20 @@ static void game_init(void) {
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
+			.material = 1,
 			.camera = 1,
 			.transform = transform_3d_default,
 			.rect = transform_rect_default,
 			//
-			.material = state.materials.batcher,
 			.blend_mode = blend_mode_opaque,
 			//
 			.rect_mode = ENTITY_RECT_MODE_FIT,
 			.type = ENTITY_TYPE_QUAD_2D,
-			.as.quad = {
-				.gpu_texture_ref = gpu_target_get_texture_ref(state.gpu_objects.camera0_target, TEXTURE_TYPE_COLOR, 0),
-			},
+			.as.quad = {0},
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
+			.material = 2,
 			.camera = 1,
 			.transform = transform_3d_default,
 			.rect = (struct Transform_Rect){
@@ -398,7 +413,6 @@ static void game_init(void) {
 				.pivot = (struct vec2){0.5f, 0.5f},
 			},
 			//
-			.material = state.materials.batcher,
 			.blend_mode = blend_mode_transparent,
 			//
 			.type = ENTITY_TYPE_TEXT_2D,
@@ -410,6 +424,7 @@ static void game_init(void) {
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
+			.material = 2,
 			.camera = 1,
 			.transform = transform_3d_default,
 			.rect = (struct Transform_Rect){
@@ -420,7 +435,6 @@ static void game_init(void) {
 				.pivot = (struct vec2){0.5f, 0.5f},
 			},
 			//
-			.material = state.materials.batcher,
 			.blend_mode = blend_mode_transparent,
 			//
 			.type = ENTITY_TYPE_TEXT_2D,
@@ -432,6 +446,7 @@ static void game_init(void) {
 		});
 
 		array_any_push(&state.entities, &(struct Entity){
+			.material = 2,
 			.camera = 1,
 			.transform = transform_3d_default,
 			.rect = (struct Transform_Rect){
@@ -442,14 +457,11 @@ static void game_init(void) {
 				.pivot = (struct vec2){0.5f, 0.5f},
 			},
 			//
-			.material = state.materials.batcher,
 			.blend_mode = blend_mode_transparent,
 			//
 			.rect_mode = ENTITY_RECT_MODE_CONTENT,
 			.type = ENTITY_TYPE_QUAD_2D,
-			.as.quad = {
-				.gpu_texture_ref = font_open_sans->gpu_ref,
-			},
+			.as.quad = {0},
 		});
 	}
 }
@@ -459,11 +471,13 @@ static void game_free(void) {
 
 	batcher_2d_free(state.batcher);
 
+	for (uint32_t i = 0; i < state.materials.count; i++) {
+		gfx_material_free(array_any_at(&state.materials, i));
+	}
+
+	array_any_free(&state.materials);
 	array_any_free(&state.cameras);
 	array_any_free(&state.entities);
-
-	gfx_material_free(&state.materials.test);
-	gfx_material_free(&state.materials.batcher);
 
 	memset(&state, 0, sizeof(state));
 }
@@ -597,6 +611,8 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 			struct Entity * entity = array_any_at(&state.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
 
+			struct Gfx_Material * material = array_any_at(&state.materials, entity->material);
+
 			struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
 			entity_get_rect(
 				&entity->transform, &entity->rect,
@@ -615,7 +631,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 			);
 
 			batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
-			batcher_2d_set_material(state.batcher, &entity->material);
+			batcher_2d_set_material(state.batcher, material);
 			batcher_2d_set_blend_mode(state.batcher, entity->blend_mode);
 			batcher_2d_set_depth_mode(state.batcher, entity->depth_mode);
 
@@ -628,23 +644,22 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 					//
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
 
-					gfx_material_set_float(&entity->material, state.uniforms.camera, 4*4, &mat4_camera.x.x);
-					gfx_material_set_float(&entity->material, state.uniforms.transform, 4*4, &mat4_entity.x.x);
+					gfx_material_set_float(material, state.uniforms.camera, 4*4, &mat4_camera.x.x);
+					gfx_material_set_float(material, state.uniforms.transform, 4*4, &mat4_entity.x.x);
 					graphics_draw(&(struct Render_Pass){
 						.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
 						.gpu_target_ref = camera->gpu_target_ref,
 						.blend_mode = entity->blend_mode,
 						.depth_mode = entity->depth_mode,
 						//
-						.material = &entity->material,
+						.material = material,
 						.gpu_mesh_ref = mesh->gpu_mesh_ref,
 					});
 				} break;
 
 				case ENTITY_TYPE_QUAD_2D: {
-					struct Entity_Quad const * quad = &entity->as.quad;
+					// struct Entity_Quad const * quad = &entity->as.quad;
 
-					batcher_2d_set_texture(state.batcher, quad->gpu_texture_ref);
 					batcher_2d_add_quad(
 						state.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
@@ -655,7 +670,6 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
 
-					batcher_2d_set_texture(state.batcher, text->font->gpu_ref);
 					batcher_2d_add_text(
 						state.batcher,
 						text->font,

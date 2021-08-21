@@ -53,48 +53,103 @@ void gfx_material_free(struct Gfx_Material * material) {
 
 static void gfx_material_set_value(
 	struct Gfx_Material * material, uint32_t uniform_id, enum Data_Type type,
-	uint8_t * target,
-	uint32_t values_count, uint32_t value_size, void const * value
+	uint8_t * target, uint32_t value_size,
+	uint32_t values_count, void const * value
 );
 
 void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Ref const * value) {
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_UNIT,
-		(uint8_t *)material->textures.data,
-		count, sizeof(*material->textures.data), value
+		(uint8_t *)material->textures.data, sizeof(*material->textures.data),
+		count, value
 	);
 }
 
 void gfx_material_set_u32(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, uint32_t const * value) {
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_U32,
-		(uint8_t *)material->values_u32.data,
-		count, sizeof(*material->values_u32.data), value
+		(uint8_t *)material->values_u32.data, sizeof(*material->values_u32.data),
+		count, value
 	);
 }
 
 void gfx_material_set_s32(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, int32_t const * value) {
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_S32,
-		(uint8_t *)material->values_s32.data,
-		count, sizeof(*material->values_s32.data), value
+		(uint8_t *)material->values_s32.data, sizeof(*material->values_s32.data),
+		count, value
 	);
 }
 
 void gfx_material_set_float(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, float const * value) {
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_R32,
-		(uint8_t *)material->values_float.data,
-		count, sizeof(*material->values_float.data), value
+		(uint8_t *)material->values_float.data, sizeof(*material->values_float.data),
+		count, value
+	);
+}
+
+static void * gfx_material_get_value(
+	struct Gfx_Material * material, uint32_t uniform_id, enum Data_Type type,
+	uint8_t * target, uint32_t value_size
+);
+
+struct Ref * gfx_material_get_texture(struct Gfx_Material * material, uint32_t uniform_id) {
+	return gfx_material_get_value(
+		material, uniform_id, DATA_TYPE_UNIT,
+		(uint8_t *)material->textures.data, sizeof(*material->textures.data)
+	);
+}
+
+uint32_t * gfx_material_get_u32(struct Gfx_Material * material, uint32_t uniform_id) {
+	return gfx_material_get_value(
+		material, uniform_id, DATA_TYPE_U32,
+		(uint8_t *)material->values_u32.data, sizeof(*material->values_u32.data)
+	);
+}
+
+int32_t * gfx_material_get_s32(struct Gfx_Material * material, uint32_t uniform_id) {
+	return gfx_material_get_value(
+		material, uniform_id, DATA_TYPE_S32,
+		(uint8_t *)material->values_s32.data, sizeof(*material->values_s32.data)
+	);
+}
+
+float * gfx_material_get_float(struct Gfx_Material * material, uint32_t uniform_id) {
+	return gfx_material_get_value(
+		material, uniform_id, DATA_TYPE_R32,
+		(uint8_t *)material->values_float.data, sizeof(*material->values_float.data)
 	);
 }
 
 //
 
+static void * gfx_material_get_value(
+	struct Gfx_Material * material, uint32_t uniform_id, enum Data_Type type,
+	uint8_t * target, uint32_t value_size
+) {
+	uint32_t uniforms_count;
+	struct Gpu_Program_Field const * uniforms;
+	gpu_program_get_uniforms(material->gpu_program_ref, &uniforms_count, &uniforms);
+
+	uint32_t offset = 0;
+	for (uint32_t i = 0; i < uniforms_count; i++) {
+		if (data_type_get_element_type(uniforms[i].type) != type) { continue; }
+
+		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
+		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
+
+		return target + offset * value_size;
+	}
+
+	logger_to_console("material doesn't have such a property\n"); DEBUG_BREAK();
+	return NULL;
+}
+
 static void gfx_material_set_value(
 	struct Gfx_Material * material, uint32_t uniform_id, enum Data_Type type,
-	uint8_t * target,
-	uint32_t values_count, uint32_t value_size, void const * value
+	uint8_t * target, uint32_t value_size,
+	uint32_t values_count, void const * value
 ) {
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;

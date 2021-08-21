@@ -36,8 +36,7 @@ struct Batcher_2D_Text {
 
 struct Batcher_2D_Batch {
 	uint32_t offset, length;
-	WEAK_PTR(struct Gfx_Material) material;
-	struct Ref gpu_texture_ref;
+	WEAK_PTR(struct Gfx_Material const) material;
 	struct Blend_Mode blend_mode;
 	struct Depth_Mode depth_mode;
 };
@@ -150,13 +149,6 @@ void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material * 
 		batcher_2d_bake_pass(batcher);
 	}
 	batcher->batch.material = material;
-}
-
-void batcher_2d_set_texture(struct Batcher_2D * batcher, struct Ref gpu_texture_ref) {
-	if (memcmp(&batcher->batch.gpu_texture_ref, &gpu_texture_ref, sizeof(gpu_texture_ref)) != 0) {
-		batcher_2d_bake_pass(batcher);
-	}
-	batcher->batch.gpu_texture_ref = gpu_texture_ref;
 }
 
 void batcher_2d_set_blend_mode(struct Batcher_2D * batcher, struct Blend_Mode blend_mode) {
@@ -383,9 +375,6 @@ static void batcher_2d_update_text(struct Batcher_2D * batcher) {
 void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t screen_size_x, uint32_t screen_size_y, struct Ref gpu_target_ref) {
 	if (batcher->batches.count == 0) { return; }
 
-	uint32_t const texture_id = graphics_add_uniform("u_Texture");
-	uint32_t const color_id   = graphics_add_uniform("u_Color");
-
 	// render text into the blanks
 	batcher_2d_update_text(batcher);
 
@@ -401,9 +390,6 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t screen_size_x, uint32
 	batcher_2d_bake_pass(batcher);
 	for (uint32_t i = 0; i < batcher->batches.count; i++) {
 		struct Batcher_2D_Batch * batch = array_any_at(&batcher->batches, i);
-
-		gfx_material_set_texture(batch->material, texture_id, 1, &batch->gpu_texture_ref);
-		gfx_material_set_float(batch->material, color_id, 4, &(struct vec4){1, 1, 1, 1}.x);
 
 		graphics_draw(&(struct Render_Pass){
 			.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
