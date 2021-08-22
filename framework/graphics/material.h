@@ -7,6 +7,8 @@
 #include "framework/containers/array_float.h"
 #include "framework/containers/ref.h"
 
+#include "types.h"
+
 struct Gfx_Material {
 	struct Ref gpu_program_ref;
 
@@ -14,9 +16,17 @@ struct Gfx_Material {
 	struct Array_U32 values_u32;
 	struct Array_S32 values_s32;
 	struct Array_Float values_float;
+
+	struct Blend_Mode blend_mode;
+	struct Depth_Mode depth_mode;
 };
 
-void gfx_material_init(struct Gfx_Material * material, struct Ref gpu_program_ref);
+void gfx_material_init(
+	struct Gfx_Material * material,
+	struct Ref gpu_program_ref,
+	struct Blend_Mode const * blend_mode,
+	struct Depth_Mode const * depth_mode
+);
 void gfx_material_free(struct Gfx_Material * material);
 
 void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Ref const * value);

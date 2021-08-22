@@ -11,20 +11,33 @@
 
 struct Gfx_Material;
 
-struct Render_Pass {
-	uint32_t screen_size_x, screen_size_y;
-	struct Ref gpu_target_ref;
-	struct Blend_Mode blend_mode;
-	struct Depth_Mode depth_mode;
-	//
-	enum Texture_Type clear_mask;
-	uint32_t clear_rgba;
-	//
+enum Render_Pass_Type {
+	RENDER_PASS_TYPE_CLEAR,
+	RENDER_PASS_TYPE_DRAW,
+};
+
+struct Render_Pass_Clear {
+	enum Texture_Type mask;
+	uint32_t rgba;
+};
+
+struct Render_Pass_Draw {
 	struct Gfx_Material const * material;
 	struct Ref gpu_mesh_ref;
 	uint32_t offset, length;
 };
 
-void graphics_draw(struct Render_Pass const * pass);
+struct Render_Pass {
+	uint32_t screen_size_x, screen_size_y;
+	struct Ref gpu_target_ref;
+	//
+	enum Render_Pass_Type type;
+	union {
+		struct Render_Pass_Clear clear;
+		struct Render_Pass_Draw draw;
+	} as;
+};
+
+void graphics_process(struct Render_Pass const * pass);
 
 #endif

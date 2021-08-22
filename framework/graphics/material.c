@@ -7,8 +7,16 @@
 //
 #include "material.h"
 
-void gfx_material_init(struct Gfx_Material * material, struct Ref gpu_program_ref) {
+void gfx_material_init(
+	struct Gfx_Material * material,
+	struct Ref gpu_program_ref,
+	struct Blend_Mode const * blend_mode,
+	struct Depth_Mode const * depth_mode
+) {
 	material->gpu_program_ref = gpu_program_ref;
+	material->blend_mode = (blend_mode != NULL) ? *blend_mode : blend_mode_opaque;
+	material->depth_mode = (blend_mode != NULL) ? *depth_mode : (struct Depth_Mode){.enabled = true, .mask = true};
+
 	array_any_init(&material->textures, sizeof(struct Ref));
 	array_u32_init(&material->values_u32);
 	array_s32_init(&material->values_s32);

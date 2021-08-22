@@ -969,42 +969,41 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 //
 #include "framework/graphics/gpu_pass.h"
 
-void graphics_draw(struct Render_Pass const * pass) {
-	// @note: consider 0 ref.id empty
-	if (pass->gpu_target_ref.id == 0 && pass->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
+inline static void graphics_process_clear(struct Render_Pass_Clear const * clear) {
+	if (clear->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
 
-	graphics_set_blend_mode(&pass->blend_mode);
-	graphics_set_depth_mode(&pass->depth_mode);
+	// @todo: ever need variations?
+	graphics_set_blend_mode((struct Blend_Mode[]){blend_mode_opaque});
+	graphics_set_depth_mode(&(struct Depth_Mode){.enabled = true, .mask = true});
 
-	graphics_select_target(pass->gpu_target_ref);
-	graphics_clear(pass->clear_mask, pass->clear_rgba);
+	graphics_clear(clear->mask, clear->rgba);
+}
 
-	if (pass->gpu_mesh_ref.id == 0) { return; }
-	if (pass->material == NULL) { return; }
-	if (pass->material->gpu_program_ref.id == 0) { return; }
+inline static void graphics_process_draw(struct Render_Pass_Draw const * draw) {
+	if (draw->material == NULL) { logger_to_console("material is null"); DEBUG_BREAK(); return; }
+	if (draw->material->gpu_program_ref.id == 0) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
 
-	struct Gpu_Mesh const * mesh = ref_table_get(&graphics_state.meshes, pass->gpu_mesh_ref);
-	if (mesh->elements_index == INDEX_EMPTY) { return; }
+	if (draw->material->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
+	graphics_set_blend_mode(&draw->material->blend_mode);
+	graphics_set_depth_mode(&draw->material->depth_mode);
 
-	uint32_t const elements_count = (pass->length != 0)
-		? pass->length
+	if (draw->gpu_mesh_ref.id == 0) { return; }
+	struct Gpu_Mesh const * mesh = ref_table_get(&graphics_state.meshes, draw->gpu_mesh_ref);
+	if (mesh->elements_index == INDEX_EMPTY) { logger_to_console("mesh has no elements buffer"); DEBUG_BREAK(); return; }
+
+	uint32_t const elements_count = (draw->length != 0)
+		? draw->length
 		: mesh->counts[mesh->elements_index];
 	if (elements_count == 0) { return; }
 
-	size_t const elements_offset = (pass->offset != 0)
-		? pass->offset
+	size_t const elements_offset = (draw->offset != 0)
+		? draw->offset
 		: 0;
 
-	uint32_t viewport_size_x = pass->screen_size_x, viewport_size_y = pass->screen_size_y;
-	if (pass->gpu_target_ref.id != 0) {
-		gpu_target_get_size(pass->gpu_target_ref, &viewport_size_x, &viewport_size_y);
-	}
+	graphics_select_program(draw->material->gpu_program_ref);
+	graphics_upload_uniforms(draw->material);
 
-	graphics_select_program(pass->material->gpu_program_ref);
-	graphics_upload_uniforms(pass->material);
-
-	graphics_select_mesh(pass->gpu_mesh_ref);
-	glViewport(0, 0, (GLsizei)viewport_size_x, (GLsizei)viewport_size_y);
+	graphics_select_mesh(draw->gpu_mesh_ref);
 
 	enum Data_Type const elements_type = mesh->parameters[mesh->elements_index].type;
 	glDrawElements(
@@ -1013,6 +1012,22 @@ void graphics_draw(struct Render_Pass const * pass) {
 		gpu_data_type(elements_type),
 		(void const *)(elements_offset * data_type_get_size(elements_type))
 	);
+}
+
+void graphics_process(struct Render_Pass const * pass) {
+	graphics_select_target(pass->gpu_target_ref);
+
+	uint32_t viewport_size_x = pass->screen_size_x, viewport_size_y = pass->screen_size_y;
+	if (pass->gpu_target_ref.id != 0) {
+		gpu_target_get_size(pass->gpu_target_ref, &viewport_size_x, &viewport_size_y);
+	}
+
+	glViewport(0, 0, (GLsizei)viewport_size_x, (GLsizei)viewport_size_y);
+
+	switch (pass->type) {
+		case RENDER_PASS_TYPE_CLEAR: graphics_process_clear(&pass->as.clear); break;
+		case RENDER_PASS_TYPE_DRAW: graphics_process_draw(&pass->as.draw); break;
+	}
 }
 
 //

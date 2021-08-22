@@ -37,8 +37,6 @@ struct Batcher_2D_Text {
 struct Batcher_2D_Batch {
 	uint32_t offset, length;
 	WEAK_PTR(struct Gfx_Material const) material;
-	struct Blend_Mode blend_mode;
-	struct Depth_Mode depth_mode;
 };
 
 struct Batcher_2D_Vertex {
@@ -149,20 +147,6 @@ void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material * 
 		batcher_2d_bake_pass(batcher);
 	}
 	batcher->batch.material = material;
-}
-
-void batcher_2d_set_blend_mode(struct Batcher_2D * batcher, struct Blend_Mode blend_mode) {
-	if (memcmp(&batcher->batch.blend_mode, &blend_mode, sizeof(blend_mode)) != 0) {
-		batcher_2d_bake_pass(batcher);
-	}
-	batcher->batch.blend_mode = blend_mode;
-}
-
-void batcher_2d_set_depth_mode(struct Batcher_2D * batcher, struct Depth_Mode depth_mode) {
-	if (memcmp(&batcher->batch.depth_mode, &depth_mode, sizeof(depth_mode)) != 0) {
-		batcher_2d_bake_pass(batcher);
-	}
-	batcher->batch.depth_mode = depth_mode;
 }
 
 inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord);
@@ -391,15 +375,16 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t screen_size_x, uint32
 	for (uint32_t i = 0; i < batcher->batches.count; i++) {
 		struct Batcher_2D_Batch * batch = array_any_at(&batcher->batches, i);
 
-		graphics_draw(&(struct Render_Pass){
+		graphics_process(&(struct Render_Pass){
 			.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
 			.gpu_target_ref = gpu_target_ref,
-			.blend_mode = batch->blend_mode,
-			.depth_mode = batch->depth_mode,
 			//
-			.material = batch->material,
-			.gpu_mesh_ref = batcher->gpu_mesh_ref,
-			.offset = batch->offset, .length = batch->length,
+			.type = RENDER_PASS_TYPE_DRAW,
+			.as.draw = {
+				.material = batch->material,
+				.gpu_mesh_ref = batcher->gpu_mesh_ref,
+				.offset = batch->offset, .length = batch->length,
+			},
 		});
 	}
 

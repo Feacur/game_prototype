@@ -40,10 +40,7 @@ struct Entity {
 	uint32_t material;
 	uint32_t camera;
 	struct Transform_3D transform;
-	struct Transform_Rect rect;
-	//
-	struct Blend_Mode blend_mode;
-	struct Depth_Mode depth_mode;
+	struct Transform_Rect rect; // @todo: make it completely optional?
 	//
 	enum Entity_Rect_Mode rect_mode;
 	enum Entity_Type type;
