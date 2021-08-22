@@ -80,7 +80,7 @@ void asset_font_free(void * instance) {
 	gpu_texture_free(asset->gpu_ref);
 }
 
-// -- Asset text part
+// -- Asset bytes part
 void asset_bytes_init(void * instance, char const * name) {
 	struct Array_Byte buffer;
 	platform_file_read_entire(name, &buffer);
