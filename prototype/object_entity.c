@@ -28,16 +28,16 @@ bool entity_get_is_batched(struct Entity const * entity) {
 
 void entity_get_rect(
 	struct Entity const * entity,
-	uint32_t camera_size_x, uint32_t camera_size_y,
+	uint32_t viewport_size_x, uint32_t viewport_size_y,
 	struct vec2 * min, struct vec2 * max, struct vec2 * pivot
 ) {
 	*min = (struct vec2){
-		entity->rect.min_relative.x * (float)camera_size_x + entity->rect.min_absolute.x,
-		entity->rect.min_relative.y * (float)camera_size_y + entity->rect.min_absolute.y,
+		entity->rect.min_relative.x * (float)viewport_size_x + entity->rect.min_absolute.x,
+		entity->rect.min_relative.y * (float)viewport_size_y + entity->rect.min_absolute.y,
 	};
 	*max = (struct vec2){
-		entity->rect.max_relative.x * (float)camera_size_x + entity->rect.max_absolute.x,
-		entity->rect.max_relative.y * (float)camera_size_y + entity->rect.max_absolute.y,
+		entity->rect.max_relative.x * (float)viewport_size_x + entity->rect.max_absolute.x,
+		entity->rect.max_relative.y * (float)viewport_size_y + entity->rect.max_absolute.y,
 	};
 	*pivot = (struct vec2){
 		.x = lerp(min->x, max->x, entity->rect.pivot.x) + entity->transform.position.x,
@@ -47,14 +47,14 @@ void entity_get_rect(
 
 struct uvec2 entity_get_content_size(
 	struct Entity const * entity,
-	uint32_t camera_size_x, uint32_t camera_size_y
+	uint32_t viewport_size_x, uint32_t viewport_size_y
 ) {
 	struct Gfx_Material * material = array_any_at(&state.materials, entity->material);
 
 	switch (entity->type) {
 		case ENTITY_TYPE_MESH: return (struct uvec2){
-			camera_size_x,
-			camera_size_y
+			viewport_size_x,
+			viewport_size_y
 		};
 
 		case ENTITY_TYPE_QUAD_2D: {
@@ -73,10 +73,10 @@ struct uvec2 entity_get_content_size(
 
 		case ENTITY_TYPE_TEXT_2D: {
 			int32_t const rect[] = {
-				(int32_t)floorf(entity->rect.min_relative.x * (float)camera_size_x + entity->rect.min_absolute.x),
-				(int32_t)floorf(entity->rect.min_relative.y * (float)camera_size_y + entity->rect.min_absolute.y),
-				(int32_t)ceilf(entity->rect.max_relative.x * (float)camera_size_x + entity->rect.max_absolute.x),
-				(int32_t)ceilf(entity->rect.max_relative.y * (float)camera_size_y + entity->rect.max_absolute.y),
+				(int32_t)floorf(entity->rect.min_relative.x * (float)viewport_size_x + entity->rect.min_absolute.x),
+				(int32_t)floorf(entity->rect.min_relative.y * (float)viewport_size_y + entity->rect.min_absolute.y),
+				(int32_t)ceilf(entity->rect.max_relative.x * (float)viewport_size_x + entity->rect.max_absolute.x),
+				(int32_t)ceilf(entity->rect.max_relative.y * (float)viewport_size_y + entity->rect.max_absolute.y),
 			};
 			return (struct uvec2){ // @idea: invert negatives?
 				(uint32_t)max_s32(rect[2] - rect[0], 0),

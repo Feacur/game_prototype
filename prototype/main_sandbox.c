@@ -271,26 +271,26 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 		struct Camera const * camera = array_any_at(&state.cameras, entity->camera);
 
 		// @todo: precalculate all cameras?
-		uint32_t camera_size_x = screen_size_x, camera_size_y = screen_size_y;
+		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
 		if (camera->gpu_target_ref.id != 0) {
-			gpu_target_get_size(camera->gpu_target_ref, &camera_size_x, &camera_size_y);
+			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
 		// rect behaviour
-		struct uvec2 const entity_content_size = entity_get_content_size(entity, camera_size_x, camera_size_y);
+		struct uvec2 const entity_content_size = entity_get_content_size(entity, viewport_size_x, viewport_size_y);
 		switch (entity->rect_mode) {
 			case ENTITY_RECT_MODE_NONE: break;
 
 			case ENTITY_RECT_MODE_FIT: {
-				// @note: `(fit_size_N <= camera_size_N) == true`
+				// @note: `(fit_size_N <= viewport_size_N) == true`
 				//        `(fit_offset_N >= 0) == true`
 				//        alternatively `fit_axis_is_x` can be calculated as:
-				//        `((float)texture_size_x / (float)camera_size_x > (float)texture_size_y / (float)camera_size_y)`
-				bool const fit_axis_is_x = (entity_content_size.x * camera_size_y > entity_content_size.y * camera_size_x);
-				uint32_t const fit_size_x = fit_axis_is_x ? camera_size_x : mul_div_u32(camera_size_y, entity_content_size.x, entity_content_size.y);
-				uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(camera_size_x, entity_content_size.y, entity_content_size.x) : camera_size_y;
-				uint32_t const fit_offset_x = (camera_size_x - fit_size_x) / 2;
-				uint32_t const fit_offset_y = (camera_size_y - fit_size_y) / 2;
+				//        `((float)texture_size_x / (float)viewport_size_x > (float)texture_size_y / (float)viewport_size_y)`
+				bool const fit_axis_is_x = (entity_content_size.x * viewport_size_y > entity_content_size.y * viewport_size_x);
+				uint32_t const fit_size_x = fit_axis_is_x ? viewport_size_x : mul_div_u32(viewport_size_y, entity_content_size.x, entity_content_size.y);
+				uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(viewport_size_x, entity_content_size.y, entity_content_size.x) : viewport_size_y;
+				uint32_t const fit_offset_x = (viewport_size_x - fit_size_x) / 2;
+				uint32_t const fit_offset_y = (viewport_size_y - fit_size_y) / 2;
 
 				entity->rect = (struct Transform_Rect){
 					.min_absolute = {(float)fit_offset_x, (float)fit_offset_y},
@@ -363,13 +363,13 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		}
 
 		// prepare camera
-		uint32_t camera_size_x = screen_size_x, camera_size_y = screen_size_y;
+		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
 		if (camera->gpu_target_ref.id != 0) {
-			gpu_target_get_size(camera->gpu_target_ref, &camera_size_x, &camera_size_y);
+			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
 		struct mat4 const mat4_camera = mat4_mul_mat(
-			camera_get_projection(camera, camera_size_x, camera_size_y),
+			camera_get_projection(camera, viewport_size_x, viewport_size_y),
 			mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation)
 		);
 
@@ -383,7 +383,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 			struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
 			entity_get_rect(
 				entity,
-				camera_size_x, camera_size_y,
+				viewport_size_x, viewport_size_y,
 				&entity_rect_min, &entity_rect_max, &entity_pivot
 			);
 

@@ -28,7 +28,7 @@ struct Camera {
 
 struct mat4 camera_get_projection(
 	struct Camera const * camera,
-	uint32_t camera_size_x, uint32_t camera_size_y
+	uint32_t viewport_size_x, uint32_t viewport_size_y
 );
 
 #endif

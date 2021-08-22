@@ -60,13 +60,13 @@ bool entity_get_is_batched(struct Entity const * entity);
 
 void entity_get_rect(
 	struct Entity const * entity,
-	uint32_t camera_size_x, uint32_t camera_size_y,
+	uint32_t viewport_size_x, uint32_t viewport_size_y,
 	struct vec2 * min, struct vec2 * max, struct vec2 * pivot
 );
 
 struct uvec2 entity_get_content_size(
 	struct Entity const * entity,
-	uint32_t camera_size_x, uint32_t camera_size_y
+	uint32_t viewport_size_x, uint32_t viewport_size_y
 );
 
 #endif
