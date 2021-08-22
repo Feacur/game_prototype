@@ -26,6 +26,9 @@ struct Camera {
 
 //
 
-struct mat4 camera_get_projection(enum Camera_Mode mode, float ncp, float fcp, float ortho, uint32_t camera_size_x, uint32_t camera_size_y);
+struct mat4 camera_get_projection(
+	struct Camera const * camera,
+	uint32_t camera_size_x, uint32_t camera_size_y
+);
 
 #endif

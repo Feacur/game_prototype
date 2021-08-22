@@ -369,7 +369,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		}
 
 		struct mat4 const mat4_camera = mat4_mul_mat(
-			camera_get_projection(camera->mode, camera->ncp, camera->fcp, camera->ortho, camera_size_x, camera_size_y),
+			camera_get_projection(camera, camera_size_x, camera_size_y),
 			mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation)
 		);
 
