@@ -21,6 +21,7 @@ if [%build_mode%] == [] ( set build_mode=unity_link )
 rem https://docs.microsoft.com/cpp/build/reference/compiler-options
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
 rem https://docs.microsoft.com/cpp/c-runtime-library
+rem https://docs.microsoft.com/windows-server/administration/windows-commands/for
 
 rem |> PREPARE PROJECT
 set project_folder=%cd%
@@ -83,7 +84,10 @@ if %build_mode% == normal ( rem |> compile a set of translation units, then link
 	rem |> @note: the folder may contain outdated objects
 	if not exist temp mkdir temp
 	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem |> for each line %%v in the file
-		cl -std:c11 -c -Fo"./temp/%%~nv.obj" %compiler% %warnings% "../%%v"
+		set object_file_name=%%~v
+		set object_file_name=!object_file_name:/=_!
+		set object_file_name=!object_file_name:.c=!
+		cl -std:c11 -c -Fo"./temp/!object_file_name!.obj" %compiler% %warnings% "../%%v"
 		if errorlevel == 1 goto error
 	)
 	set timeLink=!time!

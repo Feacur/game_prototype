@@ -25,6 +25,7 @@ rem https://clang.llvm.org/docs/ClangCommandLineReference.html
 rem https://lld.llvm.org/windows_support.html
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
 rem https://docs.microsoft.com/cpp/c-runtime-library
+rem https://docs.microsoft.com/windows-server/administration/windows-commands/for
 
 rem |> PREPARE PROJECT
 set project_folder=%cd%
@@ -97,7 +98,10 @@ if %build_mode% == normal ( rem |> compile a set of translation units, then link
 	rem |> @note: the folder may contain outdated objects
 	if not exist temp mkdir temp
 	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem |> for each line %%v in the file
-		clang -std=c99 -c -o"./temp/%%~nv.o" %compiler% %warnings% "../%%v"
+		set object_file_name=%%~v
+		set object_file_name=!object_file_name:/=_!
+		set object_file_name=!object_file_name:.c=!
+		clang -std=c99 -c -o"./temp/!object_file_name!.o" %compiler% %warnings% "../%%v"
 		if errorlevel == 1 goto error
 	)
 	set timeLink=!time!
