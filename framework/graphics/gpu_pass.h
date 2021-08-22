@@ -12,8 +12,14 @@
 struct Gfx_Material;
 
 enum Render_Pass_Type {
+	RENDER_PASS_TYPE_TARGET,
 	RENDER_PASS_TYPE_CLEAR,
 	RENDER_PASS_TYPE_DRAW,
+};
+
+struct Render_Pass_Target {
+	uint32_t screen_size_x, screen_size_y;
+	struct Ref gpu_ref;
 };
 
 struct Render_Pass_Clear {
@@ -28,11 +34,10 @@ struct Render_Pass_Draw {
 };
 
 struct Render_Pass {
-	uint32_t screen_size_x, screen_size_y;
-	struct Ref gpu_target_ref;
 	//
 	enum Render_Pass_Type type;
 	union {
+		struct Render_Pass_Target target;
 		struct Render_Pass_Clear clear;
 		struct Render_Pass_Draw draw;
 	} as;

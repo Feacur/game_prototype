@@ -34,6 +34,6 @@ void batcher_2d_add_text(
 	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot
 );
 
-void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t screen_size_x, uint32_t screen_size_y, struct Ref gpu_target_ref);
+void batcher_2d_draw(struct Batcher_2D * batcher);
 
 #endif

@@ -348,11 +348,16 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 	for (uint32_t camera_i = 0; camera_i < state.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&state.cameras, camera_i);
 
+		graphics_process(&(struct Render_Pass){
+			.type = RENDER_PASS_TYPE_TARGET,
+			.as.target = {
+				.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
+				.gpu_ref = camera->gpu_target_ref,
+			},
+		});
+
 		if (camera->clear_mask != TEXTURE_TYPE_NONE) {
 			graphics_process(&(struct Render_Pass){
-				.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
-				.gpu_target_ref = camera->gpu_target_ref,
-				//
 				.type = RENDER_PASS_TYPE_CLEAR,
 				.as.clear = {
 					.mask = camera->clear_mask,
@@ -406,7 +411,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				case ENTITY_TYPE_MESH: {
 					// @todo: make a draw commands buffer?
 					// @note: flush the batcher before drawing a mesh
-					batcher_2d_draw(state.batcher, screen_size_x, screen_size_y, camera->gpu_target_ref);
+					batcher_2d_draw(state.batcher);
 
 					//
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
@@ -414,9 +419,6 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 					gfx_material_set_float(material, uniforms.camera, 4*4, &mat4_camera.x.x);
 					gfx_material_set_float(material, uniforms.transform, 4*4, &mat4_entity.x.x);
 					graphics_process(&(struct Render_Pass){
-						.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
-						.gpu_target_ref = camera->gpu_target_ref,
-						//
 						.type = RENDER_PASS_TYPE_DRAW,
 						.as.draw = {
 							.material = material,
@@ -453,7 +455,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 			}
 		}
 
-		batcher_2d_draw(state.batcher, screen_size_x, screen_size_y, camera->gpu_target_ref);
+		batcher_2d_draw(state.batcher);
 	}
 }
 

@@ -356,7 +356,7 @@ static void batcher_2d_update_text(struct Batcher_2D * batcher) {
 	}
 }
 
-void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t screen_size_x, uint32_t screen_size_y, struct Ref gpu_target_ref) {
+void batcher_2d_draw(struct Batcher_2D * batcher) {
 	if (batcher->batches.count == 0) { return; }
 
 	// render text into the blanks
@@ -376,9 +376,6 @@ void batcher_2d_draw(struct Batcher_2D * batcher, uint32_t screen_size_x, uint32
 		struct Batcher_2D_Batch * batch = array_any_at(&batcher->batches, i);
 
 		graphics_process(&(struct Render_Pass){
-			.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
-			.gpu_target_ref = gpu_target_ref,
-			//
 			.type = RENDER_PASS_TYPE_DRAW,
 			.as.draw = {
 				.material = batch->material,

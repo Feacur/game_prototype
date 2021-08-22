@@ -969,6 +969,18 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 //
 #include "framework/graphics/gpu_pass.h"
 
+inline static void graphics_process_target(struct Render_Pass_Target const * target) {
+	graphics_select_target(target->gpu_ref);
+
+	uint32_t viewport_size_x = target->screen_size_x, viewport_size_y = target->screen_size_y;
+	if (target->gpu_ref.id != 0) {
+		gpu_target_get_size(target->gpu_ref, &viewport_size_x, &viewport_size_y);
+	}
+
+	glViewport(0, 0, (GLsizei)viewport_size_x, (GLsizei)viewport_size_y);
+}
+
+
 inline static void graphics_process_clear(struct Render_Pass_Clear const * clear) {
 	if (clear->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
 
@@ -1015,16 +1027,8 @@ inline static void graphics_process_draw(struct Render_Pass_Draw const * draw) {
 }
 
 void graphics_process(struct Render_Pass const * pass) {
-	graphics_select_target(pass->gpu_target_ref);
-
-	uint32_t viewport_size_x = pass->screen_size_x, viewport_size_y = pass->screen_size_y;
-	if (pass->gpu_target_ref.id != 0) {
-		gpu_target_get_size(pass->gpu_target_ref, &viewport_size_x, &viewport_size_y);
-	}
-
-	glViewport(0, 0, (GLsizei)viewport_size_x, (GLsizei)viewport_size_y);
-
 	switch (pass->type) {
+		case RENDER_PASS_TYPE_TARGET: graphics_process_target(&pass->as.target); break;
 		case RENDER_PASS_TYPE_CLEAR: graphics_process_clear(&pass->as.clear); break;
 		case RENDER_PASS_TYPE_DRAW: graphics_process_draw(&pass->as.draw); break;
 	}
