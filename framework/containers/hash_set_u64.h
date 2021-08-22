@@ -1,5 +1,5 @@
-#if !defined(GAME_CONTAINTERS_HASHSET_U64)
-#define GAME_CONTAINTERS_HASHSET_U64
+#if !defined(GAME_CONTAINERS_HASHSET_U64)
+#define GAME_CONTAINERS_HASHSET_U64
 
 #include "framework/common.h"
 

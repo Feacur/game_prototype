@@ -1,5 +1,5 @@
-#if !defined(GAME_PARSING)
-#define GAME_PARSING
+#if !defined(GAME_ASSETS_PARSING)
+#define GAME_ASSETS_PARSING
 
 #include "framework/common.h"
 

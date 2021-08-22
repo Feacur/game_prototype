@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_FUNCTIONS)
-#define GAME_GRAPHICS_FUNCTIONS
+#if !defined(GAME_GPU_FUNCTIONS)
+#define GAME_GPU_FUNCTIONS
 
 // interface from `functions.c` to `glibrary_opengl.c`
 // - opengl functions initialization

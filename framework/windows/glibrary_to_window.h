@@ -1,5 +1,5 @@
-#if !defined(GAME_PLATFORM_GINSTANCE)
-#define GAME_PLATFORM_GINSTANCE
+#if !defined(GAME_PLATFORM_GLIBRARY_TO_WINDOW)
+#define GAME_PLATFORM_GLIBRARY_TO_WINDOW
 
 // interface from `glibrary_*.c` to `window.c`
 // - rendering context initialization

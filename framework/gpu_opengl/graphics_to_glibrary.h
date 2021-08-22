@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_TO_GLIBRARY)
-#define GAME_GRAPHICS_TO_GLIBRARY
+#if !defined(GAME_GPU_GRAPHICS_TO_GLIBRARY)
+#define GAME_GPU_GRAPHICS_TO_GLIBRARY
 
 // interface from `graphics.c` to `glibrary_opengl.c`
 // - opengl graphics initialization

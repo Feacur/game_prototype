@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_PASS)
-#define GAME_GRAPHICS_PASS
+#if !defined(GAME_GRAPHICS_GPU_PASS)
+#define GAME_GRAPHICS_GPU_PASS
 
 // interface from `gpu_*/graphics.c` to anywhere
 // - gpu draw call

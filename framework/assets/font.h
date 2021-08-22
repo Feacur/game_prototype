@@ -1,5 +1,5 @@
-#if !defined(GAME_ASSET_FONT)
-#define GAME_ASSET_FONT
+#if !defined(GAME_ASSETS_FONT)
+#define GAME_ASSETS_FONT
 
 #include "framework/common.h"
 

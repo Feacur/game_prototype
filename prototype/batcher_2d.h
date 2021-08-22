@@ -1,5 +1,5 @@
-#if !defined(GAME_PROTOTYPE_BATCHER)
-#define GAME_PROTOTYPE_BATCHER
+#if !defined(GAME_PROTOTYPE_BATCHER_2D)
+#define GAME_PROTOTYPE_BATCHER_2D
 
 #include "framework/vector_types.h"
 #include "framework/containers/ref.h"

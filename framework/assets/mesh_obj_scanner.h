@@ -1,5 +1,5 @@
-#if !defined(GAME_SCANNER_MESH_OBJ)
-#define GAME_SCANNER_MESH_OBJ
+#if !defined(GAME_ASSETS_MESH_OBJ_SCANNER)
+#define GAME_ASSETS_MESH_OBJ_SCANNER
 
 #include "framework/common.h"
 

@@ -1,5 +1,5 @@
-#if !defined(GAME_PROTOTYPE)
-#define GAME_PROTOTYPE
+#if !defined(GAME_PROTOTYPE_ASSET_TYPES)
+#define GAME_PROTOTYPE_ASSET_TYPES
 
 #include "framework/containers/ref.h"
 #include "framework/graphics/font_image.h"

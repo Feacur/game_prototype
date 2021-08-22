@@ -1,5 +1,5 @@
-#if !defined(GAME_ASSET_MESH)
-#define GAME_ASSET_MESH
+#if !defined(GAME_ASSETS_MESH)
+#define GAME_ASSETS_MESH
 
 #include "framework/containers/array_byte.h"
 

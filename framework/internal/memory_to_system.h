@@ -1,5 +1,5 @@
-#if !defined(GAME_MEMORY_TO_SYSTEM)
-#define GAME_MEMORY_TO_SYSTEM
+#if !defined(GAME_INTERNAL_MEMORY_TO_SYSTEM)
+#define GAME_INTERNAL_MEMORY_TO_SYSTEM
 
 // interface from `memory.c` to `system.c`
 // - framework initialization

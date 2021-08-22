@@ -1,5 +1,5 @@
-#if !defined(GAME_INPUT_TO_SYSTEM)
-#define GAME_INPUT_TO_SYSTEM
+#if !defined(GAME_INTERNAL_INPUT_TO_SYSTEM)
+#define GAME_INTERNAL_INPUT_TO_SYSTEM
 
 // interface from `input.c` to `system.c`
 // - framework initialization and manipulation

@@ -1,5 +1,5 @@
-#if !defined(GAME_PROTOTYPE_STATE)
-#define GAME_PROTOTYPE_STATE
+#if !defined(GAME_PROTOTYPE_GAME_STATE)
+#define GAME_PROTOTYPE_GAME_STATE
 
 #include "framework/containers/array_any.h"
 #include "framework/containers/ref.h"
