@@ -40,6 +40,7 @@ framework/windows/window.c
 
 framework/windows/glibrary_opengl.c
 framework/gpu_opengl/functions.c
+framework/gpu_opengl/types.c
 framework/gpu_opengl/graphics.c
 
 application/application.c

@@ -43,6 +43,7 @@
 	#if defined(GAME_GRAPHICS_IS_OPENGL)
 		#include "framework/windows/glibrary_opengl.c"
 		#include "framework/gpu_opengl/functions.c"
+		#include "framework/gpu_opengl/types.c"
 		#include "framework/gpu_opengl/graphics.c"
 	#endif
 #endif
