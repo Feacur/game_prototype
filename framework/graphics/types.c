@@ -106,6 +106,9 @@ uint32_t data_type_get_size(enum Data_Type value) {
 
 //
 
+// @note: MSVC issues `C2099: initializer is not a constant`
+//        when a designated initializer type is specified
+
 struct Blend_Mode const blend_mode_opaque = {
 	.mask = COLOR_CHANNEL_FULL,
 };
