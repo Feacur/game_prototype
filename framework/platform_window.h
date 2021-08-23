@@ -8,8 +8,8 @@ struct Window;
 enum Window_Settings {
 	WINDOW_SETTINGS_NONE = 0,
 	WINDOW_SETTINGS_MINIMIZE = (1 << 0),
-	WINDOW_SETTINGS_MAXIMIZE = (2 << 0),
-	WINDOW_SETTINGS_FLEXIBLE = (3 << 0),
+	WINDOW_SETTINGS_MAXIMIZE = (1 << 1),
+	WINDOW_SETTINGS_FLEXIBLE = (1 << 2),
 };
 
 struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Window_Settings settings);
