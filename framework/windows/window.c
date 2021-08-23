@@ -178,8 +178,8 @@ void window_to_system_init(void) {
 		.hCursor = LoadCursor(0, IDC_ARROW),
 	});
 	if (atom == 0) { logger_to_console("'RegisterClassEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
-	// https://docs.microsoft.com/en-us/windows/win32/winmsg/about-window-classes
-	// https://docs.microsoft.com/en-us/windows/win32/gdi/private-display-device-contexts
+	// https://docs.microsoft.com/windows/win32/winmsg/about-window-classes
+	// https://docs.microsoft.com/windows/win32/gdi/private-display-device-contexts
 }
 
 void window_to_system_free(void) {
@@ -293,7 +293,7 @@ static void platform_window_toggle_raw_input(struct Window * window, bool state)
 	logger_to_console("'RegisterRawInputDevices' failed\n"); DEBUG_BREAK();
 	previous_state = !previous_state;
 
-	// https://docs.microsoft.com/en-us/windows-hardware/drivers/hid/
+	// https://docs.microsoft.com/windows-hardware/drivers/hid/
 }
 
 static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data) {
@@ -423,7 +423,7 @@ static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, L
 	MEMORY_FREE(window, input);
 
 	return 0;
-	// https://docs.microsoft.com/en-us/windows/win32/inputdev/raw-input
+	// https://docs.microsoft.com/windows/win32/inputdev/raw-input
 }
 
 static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wParam, LPARAM lParam) {
@@ -442,7 +442,7 @@ static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wPar
 	);
 
 	return 0;
-	// https://docs.microsoft.com/en-us/windows/win32/inputdev/keyboard-input
+	// https://docs.microsoft.com/windows/win32/inputdev/keyboard-input
 
 /*
 	// officially, VK_SNAPSHOT gets only WM_KEYUP
@@ -494,7 +494,7 @@ static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam,
 	}
 
 	return 0;
-	// https://docs.microsoft.com/en-us/windows/win32/inputdev/mouse-input
+	// https://docs.microsoft.com/windows/win32/inputdev/mouse-input
 }
 
 static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {

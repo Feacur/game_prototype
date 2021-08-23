@@ -130,7 +130,7 @@ void glibrary_to_system_init(void) {
 	DestroyWindow(hwnd);
 	// UnregisterClass(TEXT(OPENGL_CLASS_NAME), system_to_internal_get_module());
 
-	// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/
+	// https://docs.microsoft.com/windows/win32/api/wingdi/
 	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
 
 #undef OPENGL_CLASS_NAME
