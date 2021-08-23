@@ -60,7 +60,24 @@ void platform_system_free(void) {
 	memset(&platform_system, 0, sizeof(platform_system));
 }
 
-bool platform_window_is_running(void) {
+bool platform_system_is_powered(void) {
+	SYSTEM_POWER_STATUS system_power_status;
+	GetSystemPowerStatus(&system_power_status);
+	/*
+	ACLineStatus: 0 or 1; 255 for unknown
+	BatteryFlag: 1, 2, 4 (> 66%, < 33%, < 5%); 8 for charging; 128 for no battery; 255 for unknown
+	BatteryLifePercent: [0 .. 100]; 255 for unknown
+	SystemStatusFlag: 0 or 1 (power saving is off or on)
+	BatteryLifeTime: seconds of lifetime remaining; -1 for unknown
+	BatteryFullLifeTime: seconds of lifetime total; -1 for unknown
+	*/
+	return system_power_status.ACLineStatus == 1;
+
+	// https://docs.microsoft.com/windows/win32/api/winbase/ns-winbase-system_power_status
+	// https://docs.microsoft.com/windows-hardware/design/component-guidelines/battery-saver
+}
+
+bool platform_system_is_running(void) {
 	return !platform_system.should_close;
 }
 

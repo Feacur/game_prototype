@@ -32,6 +32,8 @@ static uint64_t get_target_ticks(int32_t vsync) {
 static void application_init(void) {
 	platform_system_init();
 
+	logger_to_console("power is %s\n", platform_system_is_powered() ? "on" : "off");
+
 	enum Window_Settings window_settings = WINDOW_SETTINGS_MINIMIZE;
 	if (app.config->flexible) { window_settings |= WINDOW_SETTINGS_FLEXIBLE; }
 
@@ -69,7 +71,7 @@ static void application_free(void) {
 static bool application_update(void) {
 	// application and platform are ready
 	if (app.window == NULL) { return false; }
-	if (!platform_window_is_running()) { return false; }
+	if (!platform_system_is_running()) { return false; }
 
 	// reset per-frame data / poll platform events
 	platform_system_update();
