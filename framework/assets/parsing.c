@@ -1,5 +1,11 @@
 #include <math.h>
 
+#define PARSE_INTEGER(type, value) \
+	while (parse_is_digit(*text)) { \
+		value = value * 10 + (type)(*text - '0'); \
+		text++; \
+	} \
+
 //
 #include "parsing.h"
 
@@ -12,7 +18,8 @@ char const * parse_whitespace(char const * text) {
 				text++;
 				break;
 
-			default: return text;
+			default:
+				return text;
 		}
 	}
 }
@@ -22,32 +29,23 @@ float parse_float_positive(char const * text) {
 	// result = mantissa * 10^exponent
 	uint32_t mantissa = 0;
 	int32_t exponent = 0;
+	PARSE_INTEGER(uint32_t, mantissa)
 
-	while (is_digit(*text)) {
-		mantissa = mantissa * 10 + (uint32_t)(*text - '0');
-		text++;
+	if (*text == '.') { text++;
+		char const * const text_start = text;
+		PARSE_INTEGER(uint32_t, mantissa)
+		exponent += (text_start - text);
 	}
 
-	if (*text == '.') {
-		text++;
-		while (is_digit(*text)) {
-			mantissa = mantissa * 10 + (uint32_t)(*text - '0');
-			exponent--;
-			text++;
-		}
-	}
-
-	if (*text == 'e' || *text == 'E') {
+	if (*text == 'e' || *text == 'E') { text++;
 		bool exp_sign = true;
-		uint32_t exp_value = 0;
-
-		text++;
-		if (*text == '-') { text++; exp_sign = false; }
-		while (is_digit(*text)) {
-			exp_value = exp_value * 10 + (uint32_t)(*text - '0');
-			text++;
+		switch (*text) {
+			case '-': text++; exp_sign = false; break;
+			case '+': text++; exp_sign = true; break;
 		}
 
+		uint32_t exp_value = 0;
+		PARSE_INTEGER(uint32_t, exp_value)
 		exponent += exp_value * (exp_sign * 2 - 1);
 	}
 
@@ -56,12 +54,7 @@ float parse_float_positive(char const * text) {
 
 uint32_t parse_u32(char const * text) {
 	uint32_t value = 0;
-
-	while (is_digit(*text)) {
-		value = value * 10 + (uint32_t)(*text - '0');
-		text++;
-	}
-
+	PARSE_INTEGER(uint32_t, value)
 	return value;
 }
 
@@ -94,3 +87,5 @@ static float make_float(uint32_t mantissa, int32_t exponent_10) {
 	// ldexp(a, b) == a * 2^b
 	return ldexpf((float)mantissa, exponent_2);
 }
+
+#undef PARSE_INTEGER
