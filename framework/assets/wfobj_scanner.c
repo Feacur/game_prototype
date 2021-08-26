@@ -28,12 +28,27 @@ inline static char wfobj_scanner_peek(struct WFObj_Scanner * scanner) {
 	return *scanner->current;
 }
 
-inline static void wfobj_scanner_advance(struct WFObj_Scanner * scanner) {
-	scanner->current++;
+inline static char wfobj_scanner_advance(struct WFObj_Scanner * scanner) {
+	return *(scanner->current++);
 }
 
 #define PEEK() wfobj_scanner_peek(scanner)
 #define ADVANCE() wfobj_scanner_advance(scanner)
+
+static void wfobj_scanner_skip_whitespace(struct WFObj_Scanner * scanner) {
+	for (;;) {
+		switch (PEEK()) {
+			case ' ':
+			case '\t':
+			case '\r':
+				ADVANCE();
+				break;
+
+			default:
+				return;
+		}
+	}
+}
 
 static struct WFObj_Token wfobj_scanner_make_token(struct WFObj_Scanner * scanner, enum WFObj_Token_Type type) {
 	return (struct WFObj_Token){
@@ -101,31 +116,27 @@ static struct WFObj_Token wfobj_scanner_make_identifier_token(struct WFObj_Scann
 }
 
 inline static struct WFObj_Token wfobj_scanner_next_internal(struct WFObj_Scanner * scanner) {
-	scanner->current = parse_whitespace(scanner->current);
+	wfobj_scanner_skip_whitespace(scanner);
 	scanner->start = scanner->current;
 	scanner->line_start = scanner->line_current;
 
-	switch (PEEK()) {
-		case '\0': ADVANCE();
-			return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_EOF);
-
-		case '\n': ADVANCE();
+	char const c = ADVANCE();
+	switch (c) {
+		case '\n':
 			scanner->line_current++;
 			return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_NEW_LINE);
 
-		case '#': ADVANCE();
+		case '#':
 			while (PEEK() != '\0' && PEEK() != '\n') { ADVANCE(); }
 			return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_COMMENT);
 
-		case '-': ADVANCE();
-			return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_MINUS);
-
-		case '/': ADVANCE();
-			return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_SLASH);
+		case '\0': return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_EOF);
+		case '-': return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_MINUS);
+		case '/': return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_SLASH);
 	}
 
-	if (parse_is_alpha(PEEK())) { return wfobj_scanner_make_identifier_token(scanner); }
-	if (parse_is_digit(PEEK())) { return wfobj_scanner_make_number_token(scanner); }
+	if (parse_is_alpha(c)) { return wfobj_scanner_make_identifier_token(scanner); }
+	if (parse_is_digit(c)) { return wfobj_scanner_make_number_token(scanner); }
 
 	return wfobj_scanner_make_error_token(scanner, "unexpected character");
 }

@@ -30,17 +30,17 @@ enum WFObj_Token_Type {
 	WFOBJ_TOKEN_EOF,
 };
 
-struct WFObj_Scanner {
-	char const * start;
-	char const * current;
-	uint32_t line_start, line_current;
-};
-
 struct WFObj_Token {
 	enum WFObj_Token_Type type;
 	char const * start;
 	uint32_t length;
 	uint32_t line;
+};
+
+struct WFObj_Scanner {
+	char const * start;
+	char const * current;
+	uint32_t line_start, line_current;
 };
 
 void wfobj_scanner_init(struct WFObj_Scanner * scanner, char const * text);

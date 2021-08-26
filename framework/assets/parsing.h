@@ -3,7 +3,6 @@
 
 #include "framework/common.h"
 
-char const * parse_whitespace(char const * text);
 float parse_float_positive(char const * text);
 uint32_t parse_u32(char const * text);
 

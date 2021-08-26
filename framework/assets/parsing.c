@@ -9,21 +9,6 @@
 //
 #include "parsing.h"
 
-char const * parse_whitespace(char const * text) {
-	for (;;) {
-		switch (*text) {
-			case ' ':
-			case '\t':
-			case '\r':
-				text++;
-				break;
-
-			default:
-				return text;
-		}
-	}
-}
-
 static float make_float(uint32_t mantissa, int32_t exponent_10);
 float parse_float_positive(char const * text) {
 	// result = mantissa * 10^exponent
