@@ -27,6 +27,8 @@
 #include "framework/assets/parsing.c"
 #include "framework/assets/wfobj_scanner.c"
 #include "framework/assets/wfobj.c"
+#include "framework/assets/json_scanner.c"
+#include "framework/assets/json.c"
 #include "framework/assets/mesh.c"
 #include "framework/assets/image.c"
 #include "framework/assets/font.c"

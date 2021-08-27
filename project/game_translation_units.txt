@@ -27,6 +27,8 @@ framework/containers/strings.c
 framework/assets/parsing.c
 framework/assets/wfobj_scanner.c
 framework/assets/wfobj.c
+framework/assets/json_scanner.c
+framework/assets/json.c
 framework/assets/mesh.c
 framework/assets/image.c
 framework/assets/font.c
