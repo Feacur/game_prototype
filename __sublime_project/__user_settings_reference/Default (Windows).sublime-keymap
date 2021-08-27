@@ -43,23 +43,33 @@
 	{ "keys": ["shift+f12"], "command": "lsp_symbol_references", "context": [{"key": "setting.lsp_active"}] },
 	{ "keys": ["ctrl+."], "command": "lsp_hover", "context": [{"key": "setting.lsp_active"}] },
 	{ "keys": ["f2"], "command": "lsp_symbol_rename", "context": [{"key": "setting.lsp_active"}] },
-	// extensions: BuildX
+	// extensions: ProjectManager
+	{ "keys": ["ctrl+shift+o"], "command": "project_manager",
+		"args": {"action": "switch"},
+	},
+	// project
 	{ "keys": ["ctrl+shift+b"], "command": "build",
 		"args": {"select": true},
 		"context": [
 			{"key": "for_buildx", "operator": "equal", "operand": true},
 		]
 	},
-	// extensions: ProjectManager
-	{ "keys": ["ctrl+shift+o"], "command": "project_manager",
-		"args": {"action": "switch"},
+	{ "keys": ["f7"], "command": "build",
+		"context": [
+			{"key": "for_buildx", "operator": "equal", "operand": true},
+		]
 	},
-	// project
 	{ "keys": ["f5"], "command": "build",
-		"args": { "build_system": "Debug" }
+		"args": { "build_system": "Debug" },
+		"context": [
+			{"key": "for_buildx", "operator": "equal", "operand": true},
+		]
 	},
 	{ "keys": ["shift+f5"], "command": "build",
-		"args": { "build_system": "Run" }
+		"args": { "build_system": "Run" },
+		"context": [
+			{"key": "for_buildx", "operator": "equal", "operand": true},
+		]
 	},
 	{ "keys": ["enter"], "command": "find_results_goto",
 		"context": [

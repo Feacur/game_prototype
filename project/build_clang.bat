@@ -26,6 +26,7 @@ rem https://lld.llvm.org/windows_support.html
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
 rem https://docs.microsoft.com/cpp/c-runtime-library
 rem https://docs.microsoft.com/windows-server/administration/windows-commands/for
+rem https://docs.microsoft.com/windows-server/administration/windows-commands/setlocal
 
 rem |> PREPARE PROJECT
 set project_folder=%cd%
@@ -94,10 +95,10 @@ if not exist bin mkdir bin
 pushd bin
 
 set timeCompile=!time!
-if %build_mode% == normal ( rem |> compile a set of translation units, then link them
-	rem |> @note: the folder may contain outdated objects
+if %build_mode% == normal ( rem compile a set of translation units, then link them
+	rem @note: the folder may contain outdated objects
 	if not exist temp mkdir temp
-	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem |> for each line %%v in the file
+	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem for each line %%v in the file
 		set object_file_name=%%~v
 		set object_file_name=!object_file_name:/=_!
 		set object_file_name=!object_file_name:.c=!
@@ -106,12 +107,13 @@ if %build_mode% == normal ( rem |> compile a set of translation units, then link
 	)
 	set timeLink=!time!
 	lld-link "./temp/*.o" -out:"%project%.exe" %linker%
-) else if %build_mode% == unity ( rem |> compile as a unity build, then link separately
+) else if %build_mode% == unity ( rem compile as a unity build, then link separately
 	clang -std=c99 -c -o"./%project%_unity_build.o" %compiler% %warnings% "%project_folder%/%project%_unity_build.c"
+	if errorlevel == 1 goto error
 	set timeLink=!time!
 	lld-link "./%project%_unity_build.o" -out:"%project%.exe" %linker%
-) else if %build_mode% == unity_link ( rem |> compile and link as a unity build
-	set timeLink=!time!
+) else if %build_mode% == unity_link ( rem compile and link as a unity build
+	set timeLink=unknown
 	clang -std=c99 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%.exe" -Wl,%linker: =,%
 )
 
@@ -122,7 +124,7 @@ popd
 popd
 
 rem |> REPORT
-echo header:  %timeHeader%
-echo compile: %timeCompile%
-echo link:    %timeLink%
-echo stop:    %timeStop%
+echo.header:  %timeHeader%
+echo.compile: %timeCompile%
+echo.link:    %timeLink%
+echo.stop:    %timeStop%

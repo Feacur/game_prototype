@@ -91,6 +91,7 @@
 			"windows": {
 				"cmd": "debug.bat",
 			},
+			"quiet": true,
 		},
 		{
 			"name": "Run",
@@ -98,6 +99,7 @@
 			"windows": {
 				"shell_cmd": "start bin/game.exe",
 			},
+			"quiet": true,
 		},
 	],
 }
