@@ -5,6 +5,9 @@ chcp 65001 > nul
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
 rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
+rem https://docs.microsoft.com/windows-server/administration/windows-commands/tasklist
+rem https://docs.microsoft.com/windows-server/administration/windows-commands/find
+
 rem |> PREPARE PROJECT
 set project_folder=%cd%
 set project=game
