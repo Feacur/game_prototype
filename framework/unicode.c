@@ -3,7 +3,7 @@
 //
 #include "unicode.h"
 
-uint32_t utf8_length(uint8_t const * value) {
+uint32_t utf8_codepoint_length(uint8_t const * value) {
 	uint8_t const octet = value[0];
 	if (octet < 0x80) { return 1; }
 
@@ -19,7 +19,7 @@ uint32_t utf8_length(uint8_t const * value) {
 	return 0;
 }
 
-uint32_t utf8_decode(uint8_t const * value, uint32_t length) {
+uint32_t utf8_codepoint_decode(uint8_t const * value, uint32_t length) {
 	// @note: do range checks or not?
 	static uint8_t const masks[8] = {0x00, 0x7f, 0x1f, 0x0f, 0x07, 0x00, 0x00, 0x00};
 	// if (length >= sizeof(masks) / sizeof(*masks)) { return CODEPOINT_EMPTY; }
@@ -40,13 +40,13 @@ uint32_t utf8_decode(uint8_t const * value, uint32_t length) {
 bool utf8_iterate(uint32_t length, uint8_t const * data, struct UTF8_Iterator * it) {
 	while (it->next < length) {
 		uint8_t const * value = data + it->next;
-		uint32_t const octets_count = utf8_length(value);
+		uint32_t const octets_count = utf8_codepoint_length(value);
 
 		it->current = it->next;
 		it->next += (octets_count > 0) ? octets_count : 1;
 
 		if (octets_count > 0) {
-			it->codepoint = utf8_decode(value, octets_count);
+			it->codepoint = utf8_codepoint_decode(value, octets_count);
 			if (it->codepoint != CODEPOINT_EMPTY) { return true; }
 		}
 	}
