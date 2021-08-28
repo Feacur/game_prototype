@@ -14,7 +14,7 @@ void wfobj_scanner_init(struct WFObj_Scanner * scanner, char const * text) {
 }
 
 void wfobj_scanner_free(struct WFObj_Scanner * scanner) {
-	wfobj_scanner_init(scanner, NULL);
+	memset(scanner, 0, sizeof(*scanner));
 }
 
 inline static struct WFObj_Token wfobj_scanner_next_internal(struct WFObj_Scanner * scanner);
