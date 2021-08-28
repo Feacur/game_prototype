@@ -63,8 +63,8 @@ static void json_scanner_skip_whitespace(struct JSON_Scanner * scanner) {
 static struct JSON_Token json_scanner_make_token(struct JSON_Scanner * scanner, enum JSON_Token_Type type) {
 	return (struct JSON_Token){
 		.type = type,
-		.start = scanner->start,
 		.length = (uint32_t)(scanner->current - scanner->start),
+		.data = scanner->start,
 		.line = scanner->line_start,
 	};
 }
@@ -106,8 +106,8 @@ static enum JSON_Token_Type json_scanner_identifier_type(struct JSON_Scanner * s
 static struct JSON_Token json_scanner_make_error_token(struct JSON_Scanner * scanner, char const * message) {
 	return (struct JSON_Token) {
 		.type = JSON_TOKEN_ERROR,
-		.start = message,
 		.length = (uint32_t)strlen(message),
+		.data = message,
 		.line = scanner->line_start,
 	};
 }

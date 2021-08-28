@@ -29,8 +29,8 @@ enum JSON_Token_Type {
 
 struct JSON_Token {
 	enum JSON_Token_Type type;
-	char const * start;
 	uint32_t length;
+	char const * data;
 	uint32_t line;
 };
 

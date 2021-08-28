@@ -1,5 +1,7 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
+
+#include "wfobj_scanner.h"
 #include "parsing.h"
 
 //
@@ -18,7 +20,6 @@ void wfobj_free(struct WFObj * obj) {
 }
 
 //
-#include "wfobj_scanner.h"
 
 static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 	DEBUG_BREAK();
@@ -31,7 +32,7 @@ static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 		case WFOBJ_TOKEN_ERROR: break;
 		case WFOBJ_TOKEN_EOF: logger_to_console(" at the end of file"); break;
 		case WFOBJ_TOKEN_NEW_LINE: logger_to_console(" at the end of line"); break;
-		default: logger_to_console(" at '%.*s'", token->length, token->start); break;
+		default: logger_to_console(" at '%.*s'", token->length, token->data); break;
 	}
 
 	logger_to_console(": %s\n", message);
@@ -54,7 +55,7 @@ static bool wfobj_consume_float(struct WFObj_Scanner * scanner, struct WFObj_Tok
 
 	if (token->type == WFOBJ_TOKEN_NUMBER) {
 		// *value = strtof(token->start, NULL) * (1 - negative * 2);
-		*value = parse_float_positive(token->start) * (1 - negative * 2);
+		*value = parse_float_positive(token->data) * (1 - negative * 2);
 		ADVANCE();
 		return true;
 	}
@@ -72,7 +73,7 @@ static bool wfobj_consume_s32(struct WFObj_Scanner * scanner, struct WFObj_Token
 
 	if (token->type == WFOBJ_TOKEN_NUMBER) {
 		// *value = (int32_t)strtoul(token->start, NULL, 10) * (1 - negative * 2);
-		*value = (int32_t)parse_u32(token->start) * (1 - negative * 2);
+		*value = (int32_t)parse_u32(token->data) * (1 - negative * 2);
 		ADVANCE();
 		return true;
 	}
@@ -188,6 +189,7 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 		}
 		ADVANCE();
 	}
+	wfobj_scanner_free(&scanner);
 
 	array_float_init(&obj->positions);
 	array_float_init(&obj->texcoords);
@@ -254,6 +256,7 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 		}
 		ADVANCE();
 	}
+	wfobj_scanner_free(&scanner);
 
 	array_u32_free(&scratch_u32);
 

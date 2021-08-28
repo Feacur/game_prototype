@@ -53,8 +53,8 @@ static void wfobj_scanner_skip_whitespace(struct WFObj_Scanner * scanner) {
 static struct WFObj_Token wfobj_scanner_make_token(struct WFObj_Scanner * scanner, enum WFObj_Token_Type type) {
 	return (struct WFObj_Token){
 		.type = type,
-		.start = scanner->start,
 		.length = (uint32_t)(scanner->current - scanner->start),
+		.data = scanner->start,
 		.line = scanner->line_start,
 	};
 }
@@ -104,8 +104,8 @@ static enum WFObj_Token_Type wfobj_scanner_identifier_type(struct WFObj_Scanner 
 static struct WFObj_Token wfobj_scanner_make_error_token(struct WFObj_Scanner * scanner, char const * message) {
 	return (struct WFObj_Token) {
 		.type = WFOBJ_TOKEN_ERROR,
-		.start = message,
 		.length = (uint32_t)strlen(message),
+		.data = message,
 		.line = scanner->line_start,
 	};
 }
