@@ -2,5 +2,14 @@
 
 * text=auto
 
+# code
 *.h text diff=cpp working-tree-encoding=UTF-8
 *.c text diff=cpp working-tree-encoding=UTF-8
+
+# assets
+/assets/**/*.ttf  binary
+/assets/**/*.png  binary
+/assets/**/*.obj  text eol=lf
+/assets/**/*.glsl text eol=lf diff=cpp
+/assets/**/*.txt  text eol=lf working-tree-encoding=UTF-8
+/assets/**/*.json text eol=lf working-tree-encoding=UTF-8
