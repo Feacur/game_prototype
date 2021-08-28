@@ -64,6 +64,7 @@ static void game_init(void) {
 		asset_system_aquire(&state.asset_system, "assets/sandbox/test.png");
 		asset_system_aquire(&state.asset_system, "assets/sandbox/cube.obj");
 		asset_system_aquire(&state.asset_system, "assets/sandbox/test.txt");
+		asset_system_aquire(&state.asset_system, "assets/sandbox/test.json");
 	}
 
 	// prepare assets

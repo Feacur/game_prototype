@@ -6,17 +6,19 @@
 #include "framework/assets/font.h"
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
+#include "framework/assets/json.h"
 
 //
 #include "asset_types.h"
 
 // -- Asset shader part
 void asset_shader_init(void * instance, char const * name) {
-	struct Array_Byte source;
-	platform_file_read_entire(name, &source);
+	struct Array_Byte buffer;
+	platform_file_read_entire(name, &buffer);
+	buffer.data[buffer.count] = '\0';
 
-	struct Ref const gpu_ref = gpu_program_init(&source);
-	array_byte_free(&source);
+	struct Ref const gpu_ref = gpu_program_init(&buffer);
+	array_byte_free(&buffer);
 
 	struct Asset_Shader * asset = instance;
 	asset->gpu_ref = gpu_ref;
@@ -95,4 +97,20 @@ void asset_bytes_init(void * instance, char const * name) {
 void asset_bytes_free(void * instance) {
 	struct Asset_Bytes * asset = instance;
 	MEMORY_FREE(instance, asset->data);
+}
+
+// -- Asset json part
+void asset_json_init(void * instance, char const * name) {
+	struct Array_Byte buffer;
+	platform_file_read_entire(name, &buffer);
+	buffer.data[buffer.count] = '\0';
+
+	(void)instance;
+	json_read((char const *)buffer.data);
+
+	array_byte_free(&buffer);
+}
+
+void asset_json_free(void * instance) {
+	(void)instance;
 }

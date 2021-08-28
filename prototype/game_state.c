@@ -37,6 +37,7 @@ void state_init(void) {
 		asset_system_map_extension(&state.asset_system, "font",   "ttf");
 		asset_system_map_extension(&state.asset_system, "font",   "otf");
 		asset_system_map_extension(&state.asset_system, "bytes",  "txt");
+		asset_system_map_extension(&state.asset_system, "json",   "json");
 
 		// > register types
 		asset_system_set_type(&state.asset_system, "shader", (struct Asset_Callbacks){
@@ -63,6 +64,11 @@ void state_init(void) {
 			.init = asset_bytes_init,
 			.free = asset_bytes_free,
 		}, sizeof(struct Asset_Bytes));
+
+		asset_system_set_type(&state.asset_system, "json", (struct Asset_Callbacks){
+			.init = asset_json_init,
+			.free = asset_json_free,
+		}, sizeof(struct Asset_JSON));
 	}
 }
 

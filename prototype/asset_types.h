@@ -52,4 +52,12 @@ struct Asset_Bytes {
 void asset_bytes_init(void * instance, char const * name);
 void asset_bytes_free(void * instance);
 
+// -- Asset json part
+struct Asset_JSON {
+	uint8_t dummy;
+};
+
+void asset_json_init(void * instance, char const * name);
+void asset_json_free(void * instance);
+
 #endif

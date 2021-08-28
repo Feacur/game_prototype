@@ -1,0 +1,9 @@
+{
+	"hello_array" : [1, 2, 3, 4, 5],
+	"hello_object" : {"child1" : "value1", "child2" : "value2"},
+	"hello_number" : 256,
+	"hello_string" : "world",
+	"hello_true" : true,
+	"hello_false" : false,
+	"hello_null" : null,
+}
