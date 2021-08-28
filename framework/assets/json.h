@@ -9,6 +9,7 @@ enum JSON_Value_Type {
 	JSON_VALUE_ARRAY,
 	JSON_VALUE_STRING,
 	JSON_VALUE_NUMBER,
+	JSON_VALUE_BOOLEAN,
 };
 
 struct JSON_Value_Object {
@@ -20,21 +21,28 @@ struct JSON_Value_Array {
 };
 
 struct JSON_Value_String {
-	uint8_t dummy;
+	char const * value;
 };
 
 struct JSON_Value_Number {
-	uint8_t dummy;
+	double value;
+};
+
+struct JSON_Value_Boolean {
+	bool value;
 };
 
 struct JSON_Value {
 	enum JSON_Value_Type type;
 	union {
-		struct JSON_Value_Object object;
-		struct JSON_Value_Array  array;
-		struct JSON_Value_String string;
-		struct JSON_Value_Number number;
+		struct JSON_Value_Object  object;
+		struct JSON_Value_Array   array;
+		struct JSON_Value_String  string;
+		struct JSON_Value_Number  number;
+		struct JSON_Value_Boolean boolean;
 	} as;
 };
+
+struct JSON_Value json_read(char const * data);
 
 #endif

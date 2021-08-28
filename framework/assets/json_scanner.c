@@ -14,7 +14,7 @@ void json_scanner_init(struct JSON_Scanner * scanner, char const * text) {
 }
 
 void json_scanner_free(struct JSON_Scanner * scanner) {
-	json_scanner_init(scanner, NULL);
+	memset(scanner, 0, sizeof(*scanner));
 }
 
 inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner * scanner);
@@ -142,6 +142,7 @@ inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner *
 		} break;
 
 		case '\0': return json_scanner_make_token(scanner, JSON_TOKEN_EOF);
+		case ':': return json_scanner_make_token(scanner, JSON_TOKEN_COLON);
 		case '{': return json_scanner_make_token(scanner, JSON_TOKEN_LEFT_BRACE);
 		case '}': return json_scanner_make_token(scanner, JSON_TOKEN_RIGHT_BRACE);
 		case '[': return json_scanner_make_token(scanner, JSON_TOKEN_LEFT_SQUARE);
