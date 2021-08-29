@@ -1,0 +1,8 @@
+{
+	"size_x" : 1280,
+	"size_y" : 720,
+	"vsync" : 1,
+	"target_refresh_rate" : 72,
+	"fixed_refresh_rate" : 50,
+	"slow_frames_limit" : 5,
+}

@@ -22,6 +22,7 @@
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
 #include "framework/assets/font.h"
+#include "framework/assets/json.h"
 
 #include "framework/systems/asset_system.h"
 
@@ -47,6 +48,26 @@ static struct {
 static uint8_t const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
 static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
 
+static void game_pre_init(struct Application_Config * config) {
+	struct Array_Byte buffer;
+	platform_file_read_entire("assets/sandbox/application.json", &buffer);
+	buffer.data[buffer.count] = '\0';
+
+	struct JSON * settings = json_init((char const *)buffer.data);
+	array_byte_free(&buffer);
+
+	*config = (struct Application_Config){
+		.size_x = (uint32_t)json_get_number(settings, "size_x", 1280),
+		.size_y = (uint32_t)json_get_number(settings, "size_y", 720),
+		.vsync = (int32_t)json_get_number(settings, "vsync", 1),
+		.target_refresh_rate = (uint32_t)json_get_number(settings, "target_refresh_rate", 72),
+		.fixed_refresh_rate = (uint32_t)json_get_number(settings, "fixed_refresh_rate", 50),
+		.slow_frames_limit = (uint32_t)json_get_number(settings, "slow_frames_limit", 5),
+	};
+
+	json_free(settings);
+}
+
 static void game_init(void) {
 	state_init();
 
@@ -65,6 +86,7 @@ static void game_init(void) {
 		asset_system_aquire(&state.asset_system, "assets/sandbox/cube.obj");
 		asset_system_aquire(&state.asset_system, "assets/sandbox/test.txt");
 		asset_system_aquire(&state.asset_system, "assets/sandbox/test.json");
+		asset_system_aquire(&state.asset_system, "assets/sandbox/application.json");
 	}
 
 	// prepare assets
@@ -464,19 +486,13 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 int main (int argc, char * argv[]) {
 	(void)argc; (void)argv;
-	application_run(&(struct Application_Config){
-		.callbacks = {
-			.init = game_init,
-			.free = game_free,
-			.fixed_update = game_fixed_update,
-			.update = game_update,
-			.render = game_render,
-		},
-		.size_x = 1280, .size_y = 720,
-		.vsync = 1,
-		.target_refresh_rate = 72,
-		.fixed_refresh_rate = 50,
-		.slow_frames_limit = 5,
+	application_run(&(struct Application_Callbacks){
+		.pre_init = game_pre_init,
+		.init = game_init,
+		.free = game_free,
+		.fixed_update = game_fixed_update,
+		.update = game_update,
+		.render = game_render,
 	});
 	return EXIT_SUCCESS;
 }
