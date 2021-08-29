@@ -20,7 +20,7 @@ void array_float_push_many(struct Array_Float * array, uint32_t count, float con
 void array_float_set_many(struct Array_Float * array, uint32_t index, uint32_t count, float const * value);
 
 float array_float_pop(struct Array_Float * array);
-float array_float_peek(struct Array_Float * array, uint32_t offset);
-float array_float_at(struct Array_Float * array, uint32_t index);
+float array_float_peek(struct Array_Float const * array, uint32_t offset);
+float array_float_at(struct Array_Float const * array, uint32_t index);
 
 #endif

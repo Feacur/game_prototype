@@ -20,7 +20,7 @@ void array_byte_push_many(struct Array_Byte * array, uint64_t count, uint8_t con
 void array_byte_set_many(struct Array_Byte * array, uint32_t index, uint32_t count, uint8_t const * value);
 
 uint8_t array_byte_pop(struct Array_Byte * array);
-uint8_t array_byte_peek(struct Array_Byte * array, uint64_t offset);
-uint8_t array_byte_at(struct Array_Byte * array, uint64_t index);
+uint8_t array_byte_peek(struct Array_Byte const * array, uint64_t offset);
+uint8_t array_byte_at(struct Array_Byte const * array, uint64_t index);
 
 #endif

@@ -72,12 +72,12 @@ void * array_any_pop(struct Array_Any * array) {
 	return array->data + array->value_size * array->count;
 }
 
-void * array_any_peek(struct Array_Any * array, uint32_t offset) {
+void * array_any_peek(struct Array_Any const * array, uint32_t offset) {
 	if (offset >= array->count) { return NULL; }
 	return array->data + array->value_size * (array->count - offset - 1);
 }
 
-void * array_any_at(struct Array_Any * array, uint32_t index) {
+void * array_any_at(struct Array_Any const * array, uint32_t index) {
 	if (index >= array->count) { return NULL; }
 	return array->data + array->value_size * index;
 }

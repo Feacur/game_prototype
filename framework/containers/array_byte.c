@@ -64,12 +64,12 @@ uint8_t array_byte_pop(struct Array_Byte * array) {
 	return array->data[--array->count];
 }
 
-uint8_t array_byte_peek(struct Array_Byte * array, uint64_t offset) {
+uint8_t array_byte_peek(struct Array_Byte const * array, uint64_t offset) {
 	if (offset >= array->count) { DEBUG_BREAK(); return 0; }
 	return array->data[array->count - offset - 1];
 }
 
-uint8_t array_byte_at(struct Array_Byte * array, uint64_t index) {
+uint8_t array_byte_at(struct Array_Byte const * array, uint64_t index) {
 	if (index >= array->count) { DEBUG_BREAK(); return 0; }
 	return array->data[index];
 }

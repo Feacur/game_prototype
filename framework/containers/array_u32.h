@@ -20,7 +20,7 @@ void array_u32_push_many(struct Array_U32 * array, uint32_t count, uint32_t cons
 void array_u32_set_many(struct Array_U32 * array, uint32_t index, uint32_t count, uint32_t const * value);
 
 uint32_t array_u32_pop(struct Array_U32 * array);
-uint32_t array_u32_peek(struct Array_U32 * array, uint32_t offset);
-uint32_t array_u32_at(struct Array_U32 * array, uint32_t index);
+uint32_t array_u32_peek(struct Array_U32 const * array, uint32_t offset);
+uint32_t array_u32_at(struct Array_U32 const * array, uint32_t index);
 
 #endif

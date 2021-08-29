@@ -23,7 +23,7 @@ void hash_table_any_free(struct Hash_Table_Any * hash_table) {
 	memset(hash_table, 0, sizeof(*hash_table));
 }
 
-static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash);
+static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any const * hash_table, void const * key, uint32_t hash);
 void hash_table_any_resize(struct Hash_Table_Any * hash_table, uint32_t target_capacity) {
 	if (target_capacity < hash_table->count) {
 		logger_to_console("limiting target resize capacity to the number of elements\n"); DEBUG_BREAK();
@@ -78,7 +78,7 @@ void hash_table_any_clear(struct Hash_Table_Any * hash_table) {
 	memset(hash_table->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 }
 
-void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash) {
+void * hash_table_any_get(struct Hash_Table_Any const * hash_table, void const * key, uint32_t hash) {
 	if (key == NULL) {
 		logger_to_console("hash table key should be non-null\n"); DEBUG_BREAK();
 		return false;
@@ -164,7 +164,7 @@ bool hash_table_any_iterate(struct Hash_Table_Any * hash_table, struct Hash_Tabl
 
 //
 
-static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash) {
+static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any const * hash_table, void const * key, uint32_t hash) {
 	uint32_t empty = INDEX_EMPTY;
 
 	uint32_t const offset = HASH_TABLE_WRAP(hash, hash_table->capacity);

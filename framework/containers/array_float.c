@@ -64,12 +64,12 @@ float array_float_pop(struct Array_Float * array) {
 	return array->data[--array->count];
 }
 
-float array_float_peek(struct Array_Float * array, uint32_t offset) {
+float array_float_peek(struct Array_Float const * array, uint32_t offset) {
 	if (offset >= array->count) { DEBUG_BREAK(); return 0; }
 	return array->data[array->count - offset - 1];
 }
 
-float array_float_at(struct Array_Float * array, uint32_t index) {
+float array_float_at(struct Array_Float const * array, uint32_t index) {
 	if (index >= array->count) { DEBUG_BREAK(); return 0; }
 	return array->data[index];
 }

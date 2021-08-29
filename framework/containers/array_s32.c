@@ -64,12 +64,12 @@ int32_t array_s32_pop(struct Array_S32 * array) {
 	return array->data[--array->count];
 }
 
-int32_t array_s32_peek(struct Array_S32 * array, uint32_t offset) {
+int32_t array_s32_peek(struct Array_S32 const * array, uint32_t offset) {
 	if (offset >= array->count) { DEBUG_BREAK(); return 0; }
 	return array->data[array->count - offset - 1];
 }
 
-int32_t array_s32_at(struct Array_S32 * array, uint32_t index) {
+int32_t array_s32_at(struct Array_S32 const * array, uint32_t index) {
 	if (index >= array->count) { DEBUG_BREAK(); return 0; }
 	return array->data[index];
 }

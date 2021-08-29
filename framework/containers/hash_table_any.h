@@ -26,7 +26,7 @@ void hash_table_any_free(struct Hash_Table_Any * hash_table);
 void hash_table_any_clear(struct Hash_Table_Any * hash_table);
 void hash_table_any_resize(struct Hash_Table_Any * hash_table, uint32_t target_capacity);
 
-void * hash_table_any_get(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash);
+void * hash_table_any_get(struct Hash_Table_Any const * hash_table, void const * key, uint32_t hash);
 bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash, void const * value);
 bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash);
 void hash_table_any_del_at(struct Hash_Table_Any * hash_table, uint32_t key_index);
