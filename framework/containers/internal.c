@@ -15,6 +15,7 @@ uint32_t grow_capacity_value_u32(uint32_t current, uint32_t delta) {
 	#endif
 
 	if (target < 8) { return 8; }
+	if (current < 8) { current = 8; }
 	while (current < target) {
 		current = mul_div_u32(current, 3, 2);
 	}
@@ -40,6 +41,7 @@ uint64_t grow_capacity_value_u64(uint64_t current, uint64_t delta) {
 	#endif
 
 	if (target < 8) { return 8; }
+	if (current < 8) { current = 8; }
 	while (current < target) {
 		current = mul_div_u64(current, 3, 2);
 	}
