@@ -3,46 +3,27 @@
 
 #include "framework/common.h"
 
-enum JSON_Value_Type {
-	JSON_VALUE_NONE,
-	JSON_VALUE_OBJECT,
-	JSON_VALUE_ARRAY,
-	JSON_VALUE_STRING,
-	JSON_VALUE_NUMBER,
-	JSON_VALUE_BOOLEAN,
-};
+struct JSON;
 
-struct JSON_Value_Object {
-	uint8_t dummy;
-};
+struct JSON * json_init(char const * data);
+void json_free(struct JSON * value);
 
-struct JSON_Value_Array {
-	uint8_t dummy;
-};
+bool json_is_null(struct JSON const * value);
+bool json_is_object(struct JSON const * value);
+bool json_is_array(struct JSON const * value);
+bool json_is_string(struct JSON const * value);
+bool json_is_number(struct JSON const * value);
+bool json_is_boolean(struct JSON const * value);
 
-struct JSON_Value_String {
-	char const * value;
-};
+struct JSON const * json_object_get(struct JSON const * value, char const * key);
+struct JSON const * json_array_at(struct JSON const * value, uint32_t index);
 
-struct JSON_Value_Number {
-	double value;
-};
+char const * json_as_string(struct JSON const * value, char const * default_value);
+float json_as_number(struct JSON const * value, float default_value);
+bool json_as_boolean(struct JSON const * value, bool default_value);
 
-struct JSON_Value_Boolean {
-	bool value;
-};
-
-struct JSON_Value {
-	enum JSON_Value_Type type;
-	union {
-		struct JSON_Value_Object  object;
-		struct JSON_Value_Array   array;
-		struct JSON_Value_String  string;
-		struct JSON_Value_Number  number;
-		struct JSON_Value_Boolean boolean;
-	} as;
-};
-
-struct JSON_Value json_read(char const * data);
+char const * json_get_string(struct JSON const * value, char const * key, char const * default_value);
+float json_get_number(struct JSON const * value, char const * key, float default_value);
+bool json_get_boolean(struct JSON const * value, char const * key, bool default_value);
 
 #endif

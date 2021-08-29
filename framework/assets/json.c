@@ -1,9 +1,163 @@
 #include "framework/logger.h"
+#include "framework/memory.h"
+
+#include "framework/containers/array_any.h"
+#include "framework/containers/hash_table_u32.h"
+#include "framework/containers/strings.h"
 
 #include "json_scanner.h"
+#include "parsing.h"
+
+#include <string.h>
+
+//
+#include "framework/internal/json_to_system.h"
+
+static struct JSON_System {
+	struct Strings strings;
+} json_system;
+
+void json_to_system_init(void) {
+	strings_init(&json_system.strings);
+	strings_add(&json_system.strings, 0, "");
+}
+
+void json_to_system_free(void) {
+	strings_free(&json_system.strings);
+}
 
 //
 #include "json.h"
+
+enum JSON_Type {
+	JSON_NONE,
+	JSON_OBJECT,
+	JSON_ARRAY,
+	JSON_STRING,
+	JSON_NUMBER,
+	JSON_BOOLEAN,
+};
+
+struct JSON_Object {
+	struct Hash_Table_U32 value;
+};
+
+struct JSON_Array {
+	struct Array_Any value;
+};
+
+struct JSON_String {
+	uint32_t value;
+};
+
+struct JSON_Number {
+	float value;
+};
+
+struct JSON_Boolean {
+	bool value;
+};
+
+struct JSON {
+	enum JSON_Type type;
+	union {
+		struct JSON_Object  object;
+		struct JSON_Array   array;
+		struct JSON_String  string;
+		struct JSON_Number  number;
+		struct JSON_Boolean boolean;
+	} as;
+};
+
+static struct JSON json_null = {.type = JSON_NONE,};
+
+static void json_parse_internal(char const * data, struct JSON * value);
+struct JSON * json_init(char const * data) {
+	struct JSON * value = MEMORY_ALLOCATE(NULL, struct JSON);
+	json_parse_internal(data, value);
+	return value;
+}
+
+static void json_free_internal(struct JSON * value) {
+	switch (value->type) {
+		case JSON_OBJECT:
+			struct JSON_Object * object = &value->as.object;
+			for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(&object->value, &it); /*empty*/) {
+				json_free_internal(it.value);
+			}
+			hash_table_u32_free(&object->value);
+			break;
+
+		case JSON_ARRAY:
+			struct JSON_Array * array = &value->as.array;
+			for (uint32_t i = 0; i < array->value.count; i++) {
+				json_free_internal(array_any_at(&array->value, i));
+			}
+			array_any_free(&array->value);
+			break;
+
+		default: break;
+	}
+}
+
+void json_free(struct JSON * value) {
+	json_free_internal(value);
+	MEMORY_FREE(value, value);
+}
+
+bool json_is_null(struct JSON const * value)    { return value->type == JSON_NONE; }
+bool json_is_object(struct JSON const * value)  { return value->type == JSON_OBJECT; }
+bool json_is_array(struct JSON const * value)   { return value->type == JSON_ARRAY; }
+bool json_is_string(struct JSON const * value)  { return value->type == JSON_STRING; }
+bool json_is_number(struct JSON const * value)  { return value->type == JSON_NUMBER; }
+bool json_is_boolean(struct JSON const * value) { return value->type == JSON_BOOLEAN; }
+
+struct JSON const * json_object_get(struct JSON const * value, char const * key) {
+	if (value->type != JSON_OBJECT) { return &json_null; }
+	struct JSON_Object const * object = &value->as.object;
+	uint32_t const string_id = strings_find(&json_system.strings, (uint32_t)strlen(key), key);
+	void * result = hash_table_u32_get(&object->value, string_id);
+	return (result != NULL) ? result : &json_null;
+}
+
+struct JSON const * json_array_at(struct JSON const * value, uint32_t index) {
+	if (value->type != JSON_ARRAY) { return &json_null; }
+	struct JSON_Array const * array = &value->as.array;
+	void * result = array_any_at(&array->value, index);
+	return (result != NULL) ? result : &json_null;
+}
+
+char const * json_as_string(struct JSON const * value, char const * default_value) {
+	if (value->type != JSON_STRING) { return default_value; }
+	struct JSON_String const * string = &value->as.string;
+	return strings_get(&json_system.strings, string->value);
+}
+
+float json_as_number(struct JSON const * value, float default_value) {
+	if (value->type != JSON_NUMBER) { return default_value; }
+	struct JSON_Number const * number = &value->as.number;
+	return number->value;
+}
+
+bool json_as_boolean(struct JSON const * value, bool default_value) {
+	if (value->type != JSON_BOOLEAN) { return default_value; }
+	struct JSON_Boolean const * boolean = &value->as.boolean;
+	return boolean->value;
+}
+
+char const * json_get_string(struct JSON const * value, char const * key, char const * default_value) {
+	return json_as_string(json_object_get(value, key), default_value);
+}
+
+float json_get_number(struct JSON const * value, char const * key, float default_value) {
+	return json_as_number(json_object_get(value, key), default_value);
+}
+
+bool json_get_boolean(struct JSON const * value, char const * key, bool default_value) {
+	return json_as_boolean(json_object_get(value, key), default_value);
+}
+
+//
 
 struct JSON_Parser {
 	struct JSON_Scanner scanner;
@@ -11,17 +165,11 @@ struct JSON_Parser {
 	uint32_t depth;
 };
 
-static void json_left_pad(struct JSON_Parser * parser) {
-	logger_to_console("%*s", parser->depth * 4, "");
-}
-
 static void json_consume(struct JSON_Parser * parser) {
 	parser->previous = parser->current;
 	for(;;) {
 		parser->current = json_scanner_next(&parser->scanner);
 		if (parser->current.type != JSON_TOKEN_COMMENT) { break; }
-		json_left_pad(parser);
-		logger_to_console("%.*s\n", parser->current.length - 1, parser->current.data);
 	}
 }
 
@@ -31,32 +179,127 @@ static bool json_match(struct JSON_Parser * parser, enum JSON_Token_Type type) {
 	return true;
 }
 
-static void json_do_value(struct JSON_Parser * parser);
-static void json_do_object(struct JSON_Parser * parser);
-static void json_do_array(struct JSON_Parser * parser);
-static void json_do_string(struct JSON_Parser * parser);
-static void json_do_number(struct JSON_Parser * parser);
-static void json_do_literal(struct JSON_Parser * parser);
+static void json_do_value(struct JSON_Parser * parser, struct JSON * value);
+static void json_do_string(struct JSON_Parser * parser, struct JSON * value);
 
-static void json_do_value(struct JSON_Parser * parser) {
+static void json_do_object(struct JSON_Parser * parser, struct JSON * value) {
+	parser->depth++;
+
+	*value = (struct JSON){.type = JSON_OBJECT,};
+	struct JSON_Object * object = &value->as.object;
+	hash_table_u32_init(&object->value, sizeof(struct JSON));
+
+	while (parser->current.type != JSON_TOKEN_RIGHT_BRACE) {
+		struct JSON entry_key, entry_value;
+
+		if (parser->current.type != JSON_TOKEN_STRING) {
+			logger_to_console("> ERROR: expected a string\n");
+			break;
+		}
+
+		json_do_string(parser, &entry_key);
+		json_consume(parser);
+
+		if (!json_match(parser, JSON_TOKEN_COLON)) {
+			logger_to_console("> ERROR: expected ':'\n");
+			break;
+		}
+
+		json_do_value(parser, &entry_value);
+		hash_table_u32_set(&object->value, entry_key.as.string.value, &entry_value);
+
+		if (parser->current.type == JSON_TOKEN_RIGHT_BRACE) { break; }
+		if (!json_match(parser, JSON_TOKEN_COMMA)) {
+			logger_to_console("> ERROR: expected ','\n");
+		}
+	}
+	if (!json_match(parser, JSON_TOKEN_RIGHT_BRACE)) {
+		logger_to_console("> ERROR: expected '}'\n");
+	}
+
+	parser->depth--;
+}
+
+static void json_do_array(struct JSON_Parser * parser, struct JSON * value) {
+	parser->depth++;
+
+	*value = (struct JSON){.type = JSON_ARRAY,};
+	struct JSON_Array * array = &value->as.array;
+	array_any_init(&array->value, sizeof(struct JSON));
+
+	while (parser->current.type != JSON_TOKEN_RIGHT_SQUARE) {
+		struct JSON entry_value;
+
+		json_do_value(parser, &entry_value);
+		array_any_push(&array->value, &entry_value);
+
+		if (parser->current.type == JSON_TOKEN_RIGHT_SQUARE) { break; }
+		if (!json_match(parser, JSON_TOKEN_COMMA)) {
+			logger_to_console("> ERROR: expected ','\n");
+		}
+	}
+	if (!json_match(parser, JSON_TOKEN_RIGHT_SQUARE)) {
+		logger_to_console("> ERROR: expected ']'\n");
+	}
+
+	parser->depth--;
+}
+
+static void json_do_string(struct JSON_Parser * parser, struct JSON * value) {
+	uint32_t const string_id = strings_add(&json_system.strings, parser->current.length - 2, parser->current.data + 1);
+	*value = (struct JSON){
+		.type = JSON_STRING,
+		.as.string = {.value = string_id,},
+	};
+}
+
+static void json_do_number(struct JSON_Parser * parser, struct JSON * value) {
+	float const number = parse_float(parser->current.data);
+	*value = (struct JSON){
+		.type = JSON_NUMBER,
+		.as.number = {.value = number,},
+	};
+}
+
+static void json_do_literal(struct JSON_Parser * parser, struct JSON * value) {
+	switch (parser->current.type) {
+		case JSON_TOKEN_TRUE: *value = (struct JSON){
+			.type = JSON_BOOLEAN,
+			.as.boolean = {.value = true,},
+		}; break;
+
+		case JSON_TOKEN_FALSE: *value = (struct JSON){
+			.type = JSON_BOOLEAN,
+			.as.boolean = {.value = false,},
+		}; break;
+
+		case JSON_TOKEN_NULL: *value = (struct JSON){
+			.type = JSON_NONE,
+		}; break;
+
+		default: DEBUG_BREAK(); break;
+	}
+}
+
+static void json_do_value(struct JSON_Parser * parser, struct JSON * value) {
 	if (json_match(parser, JSON_TOKEN_LEFT_BRACE)) {
-		json_do_object(parser);
+		json_do_object(parser, value);
 		return;
 	}
 
 	if (json_match(parser, JSON_TOKEN_LEFT_SQUARE)) {
-		json_do_array(parser);
+		json_do_array(parser, value);
 		return;
 	}
 
 	switch (parser->current.type) {
-		case JSON_TOKEN_STRING: json_do_string(parser); break;
-		case JSON_TOKEN_NUMBER: json_do_number(parser); break;
+		case JSON_TOKEN_STRING: json_do_string(parser, value); break;
+		case JSON_TOKEN_NUMBER: json_do_number(parser, value); break;
 
 		case JSON_TOKEN_TRUE:
 		case JSON_TOKEN_FALSE:
 		case JSON_TOKEN_NULL:
-			json_do_literal(parser); break;
+			json_do_literal(parser, value); break;
 
 		default: DEBUG_BREAK(); break;
 	}
@@ -64,103 +307,19 @@ static void json_do_value(struct JSON_Parser * parser) {
 	json_consume(parser);
 }
 
-static void json_do_object(struct JSON_Parser * parser) {
-	logger_to_console("{\n");
-	parser->depth++;
-
-	while (parser->current.type != JSON_TOKEN_RIGHT_BRACE) {
-		if (parser->current.type != JSON_TOKEN_STRING) {
-			logger_to_console("ERROR: expected string key\n");
-			break;
-		}
-
-		json_left_pad(parser);
-		json_do_string(parser);
-		json_consume(parser);
-
-		if (!json_match(parser, JSON_TOKEN_COLON)) {
-			logger_to_console("ERROR: expected ':'\n");
-			break;
-		}
-
-		logger_to_console(":");
-		json_do_value(parser);
-		logger_to_console(",\n");
-
-		if (parser->current.type == JSON_TOKEN_RIGHT_BRACE) { break; }
-		if (!json_match(parser, JSON_TOKEN_COMMA)) {
-			logger_to_console("ERROR: expected ','\n");
-		}
-	}
-	if (!json_match(parser, JSON_TOKEN_RIGHT_BRACE)) {
-		logger_to_console("ERROR: expected '}'\n");
-	}
-
-	parser->depth--;
-	json_left_pad(parser);
-	logger_to_console("}");
-}
-
-static void json_do_array(struct JSON_Parser * parser) {
-	logger_to_console("[\n");
-	parser->depth++;
-
-	while (parser->current.type != JSON_TOKEN_RIGHT_SQUARE) {
-		json_left_pad(parser);
-		json_do_value(parser);
-		logger_to_console(",\n");
-
-		if (parser->current.type == JSON_TOKEN_RIGHT_SQUARE) { break; }
-		if (!json_match(parser, JSON_TOKEN_COMMA)) {
-			logger_to_console("ERROR: expected ','\n");
-		}
-	}
-	if (!json_match(parser, JSON_TOKEN_RIGHT_SQUARE)) {
-		logger_to_console("ERROR: expected ']'\n");
-	}
-
-	parser->depth--;
-	json_left_pad(parser);
-	logger_to_console("]");
-}
-
-static void json_do_string(struct JSON_Parser * parser) {
-	logger_to_console("%.*s", parser->current.length, parser->current.data);
-}
-
-static void json_do_number(struct JSON_Parser * parser) {
-	logger_to_console("%.*s", parser->current.length, parser->current.data);
-}
-
-static void json_do_literal(struct JSON_Parser * parser) {
-	switch (parser->current.type) {
-		case JSON_TOKEN_TRUE: logger_to_console("true"); break;
-		case JSON_TOKEN_FALSE: logger_to_console("false"); break;
-		case JSON_TOKEN_NULL: logger_to_console("null"); break;
-
-		default: DEBUG_BREAK(); break;
-	}
-}
-
-struct JSON_Value json_read(char const * data) {
-	struct JSON_Value value = {0};
-
+static void json_parse_internal(char const * data, struct JSON * value) {
 	struct JSON_Parser parser = {0};
 	json_scanner_init(&parser.scanner, data);
 	json_consume(&parser);
 
 	while (parser.current.type != JSON_TOKEN_EOF) {
-		json_do_value(&parser);
-		logger_to_console(",\n");
-		json_left_pad(&parser);
+		json_do_value(&parser, value);
 
 		if (parser.current.type == JSON_TOKEN_EOF) { break; }
 		if (!json_match(&parser, JSON_TOKEN_COMMA)) {
-			logger_to_console("ERROR: expected ','\n");
+			logger_to_console("> ERROR: expected ','\n");
 		}
 	}
 
 	json_scanner_free(&parser.scanner);
-
-	return value;
 }

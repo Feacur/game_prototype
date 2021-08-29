@@ -1,11 +1,12 @@
-#if !defined(GAME_PROTOTYPE_ASSET_TYPES)
-#define GAME_PROTOTYPE_ASSET_TYPES
+#if !defined(GAME_FRAMEWORK_ASSET_TYPES)
+#define GAME_FRAMEWORK_ASSET_TYPES
 
 #include "framework/containers/ref.h"
 #include "framework/graphics/font_image.h"
 
 struct Font;
 struct Font_Image;
+struct JSON;
 
 // -- Asset shader part
 struct Asset_Shader {
@@ -54,7 +55,7 @@ void asset_bytes_free(void * instance);
 
 // -- Asset json part
 struct Asset_JSON {
-	uint8_t dummy;
+	struct JSON * value;
 };
 
 void asset_json_init(void * instance, char const * name);
