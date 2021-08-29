@@ -10,12 +10,16 @@
 #include "parsing.h"
 
 static float make_float(uint32_t mantissa, int32_t exponent_10);
-float parse_float_positive(char const * text) {
-	// result = mantissa * 10^exponent
+float parse_float(char const * text) {
+	bool positive = true;
+	if (*text == '-') { text++;
+		positive = false;
+	}
+
 	uint32_t mantissa = 0;
-	int32_t exponent = 0;
 	PARSE_INTEGER(uint32_t, mantissa)
 
+	int32_t exponent = 0;
 	if (*text == '.') { text++;
 		char const * const text_start = text;
 		PARSE_INTEGER(uint32_t, mantissa)
@@ -23,24 +27,36 @@ float parse_float_positive(char const * text) {
 	}
 
 	if (*text == 'e' || *text == 'E') { text++;
-		bool exp_sign = true;
+		bool exp_positive = true;
 		switch (*text) {
-			case '-': text++; exp_sign = false; break;
-			case '+': text++; exp_sign = true; break;
+			case '-': text++; exp_positive = false; break;
+			case '+': text++; exp_positive = true; break;
 		}
 
 		uint32_t exp_value = 0;
 		PARSE_INTEGER(uint32_t, exp_value)
-		exponent += exp_value * (exp_sign * 2 - 1);
+		exponent += exp_value * (exp_positive * 2 - 1);
 	}
 
-	return make_float(mantissa, exponent);
+	// result = mantissa * 10^exponent
+	return make_float(mantissa, exponent) * (positive * 2 - 1);
 }
 
 uint32_t parse_u32(char const * text) {
 	uint32_t value = 0;
 	PARSE_INTEGER(uint32_t, value)
 	return value;
+}
+
+int32_t parse_s32(char const * text) {
+	bool positive = true;
+	if (*text == '-') { text++;
+		positive = false;
+	}
+
+	int32_t value = 0;
+	PARSE_INTEGER(int32_t, value)
+	return value * (positive * 2 - 1);
 }
 
 //

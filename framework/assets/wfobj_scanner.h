@@ -9,7 +9,6 @@ enum WFObj_Token_Type {
 	// tokens
 	WFOBJ_TOKEN_NEW_LINE,
 	WFOBJ_TOKEN_COMMENT,
-	WFOBJ_TOKEN_MINUS,
 	WFOBJ_TOKEN_SLASH,
 
 	// literals

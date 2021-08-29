@@ -60,6 +60,7 @@ static struct WFObj_Token wfobj_scanner_make_token(struct WFObj_Scanner * scanne
 }
 
 static struct WFObj_Token wfobj_scanner_make_number_token(struct WFObj_Scanner * scanner) {
+	if (PEEK() == '-') { ADVANCE(); }
 	while (parse_is_digit(PEEK())) { ADVANCE(); }
 
 	if (PEEK() == '.') { ADVANCE();
@@ -131,12 +132,11 @@ inline static struct WFObj_Token wfobj_scanner_next_internal(struct WFObj_Scanne
 			return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_COMMENT);
 
 		case '\0': return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_EOF);
-		case '-': return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_MINUS);
 		case '/': return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_SLASH);
 	}
 
 	if (parse_is_alpha(c)) { return wfobj_scanner_make_identifier_token(scanner); }
-	if (parse_is_digit(c)) { return wfobj_scanner_make_number_token(scanner); }
+	if (c == '-' || parse_is_digit(c)) { return wfobj_scanner_make_number_token(scanner); }
 
 	return wfobj_scanner_make_error_token(scanner, "unexpected character");
 }

@@ -50,12 +50,9 @@ static void wfobj_advance(struct WFObj_Scanner * scanner, struct WFObj_Token * t
 static bool wfobj_consume_float(struct WFObj_Scanner * scanner, struct WFObj_Token * token, float * value) {
 #define ADVANCE() wfobj_advance(scanner, token)
 
-	bool negative = (token->type == WFOBJ_TOKEN_MINUS);
-	if (negative) { ADVANCE(); }
-
 	if (token->type == WFOBJ_TOKEN_NUMBER) {
-		// *value = strtof(token->start, NULL) * (1 - negative * 2);
-		*value = parse_float_positive(token->data) * (1 - negative * 2);
+		// *value = strtof(token->start, NULL);
+		*value = parse_float(token->data);
 		ADVANCE();
 		return true;
 	}
@@ -68,12 +65,10 @@ static bool wfobj_consume_float(struct WFObj_Scanner * scanner, struct WFObj_Tok
 
 static bool wfobj_consume_s32(struct WFObj_Scanner * scanner, struct WFObj_Token * token, int32_t * value) {
 #define ADVANCE() wfobj_advance(scanner, token)
-	bool negative = (token->type == WFOBJ_TOKEN_MINUS);
-	if (negative) { ADVANCE(); }
 
 	if (token->type == WFOBJ_TOKEN_NUMBER) {
-		// *value = (int32_t)strtoul(token->start, NULL, 10) * (1 - negative * 2);
-		*value = (int32_t)parse_u32(token->data) * (1 - negative * 2);
+		// *value = (int32_t)strtoul(token->start, NULL, 10);
+		*value = parse_s32(token->data);
 		ADVANCE();
 		return true;
 	}
