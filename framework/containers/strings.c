@@ -43,9 +43,9 @@ uint32_t strings_add(struct Strings * strings, uint32_t length, void const * val
 	return strings->lengths.count - 1;
 }
 
-void * strings_get(struct Strings * strings, uint32_t id) {
+char const * strings_get(struct Strings * strings, uint32_t id) {
 	if (id >= strings->lengths.count) { return NULL; }
-	return strings->buffer.data + strings->offsets.data[id];
+	return (char const *)(strings->buffer.data + strings->offsets.data[id]);
 }
 
 uint32_t strings_get_length(struct Strings * strings, uint32_t id) {
