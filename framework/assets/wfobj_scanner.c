@@ -121,23 +121,25 @@ inline static struct WFObj_Token wfobj_scanner_next_internal(struct WFObj_Scanne
 	scanner->start = scanner->current;
 	scanner->line_start = scanner->line_current;
 
+	if (PEEK() == '\0') { return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_EOF); }
+
 	char const c = ADVANCE();
 	switch (c) {
-		case '\n':
-			scanner->line_current++;
-			return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_NEW_LINE);
-
 		case '#':
 			while (PEEK() != '\0' && PEEK() != '\n') { ADVANCE(); }
 			return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_COMMENT);
 
-		case '\0': return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_EOF);
 		case '/': return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_SLASH);
+
+		case '\n':
+			scanner->line_current++;
+			return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_NEW_LINE);
 	}
 
 	if (parse_is_alpha(c)) { return wfobj_scanner_make_identifier_token(scanner); }
 	if (c == '-' || parse_is_digit(c)) { return wfobj_scanner_make_number_token(scanner); }
 
+	DEBUG_BREAK();
 	return wfobj_scanner_make_error_token(scanner, "unexpected character");
 }
 

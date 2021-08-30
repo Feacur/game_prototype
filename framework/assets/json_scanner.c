@@ -134,6 +134,8 @@ inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner *
 	scanner->start = scanner->current;
 	scanner->line_start = scanner->line_current;
 
+	if (PEEK() == '\0') { return json_scanner_make_token(scanner, JSON_TOKEN_EOF); }
+
 	char const c = ADVANCE();
 	switch (c) {
 		case '/': if (PEEK() == '/') { ADVANCE();
@@ -141,7 +143,6 @@ inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner *
 			return json_scanner_make_token(scanner, JSON_TOKEN_COMMENT);
 		} break;
 
-		case '\0': return json_scanner_make_token(scanner, JSON_TOKEN_EOF);
 		case ':': return json_scanner_make_token(scanner, JSON_TOKEN_COLON);
 		case '{': return json_scanner_make_token(scanner, JSON_TOKEN_LEFT_BRACE);
 		case '}': return json_scanner_make_token(scanner, JSON_TOKEN_RIGHT_BRACE);
@@ -154,6 +155,7 @@ inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner *
 	if (parse_is_alpha(c)) { return json_scanner_make_identifier_token(scanner); }
 	if (c == '-' || parse_is_digit(c)) { return json_scanner_make_number_token(scanner); }
 
+	DEBUG_BREAK();
 	return json_scanner_make_error_token(scanner, "unexpected character");
 }
 
