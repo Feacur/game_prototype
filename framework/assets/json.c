@@ -1,12 +1,12 @@
 #include "framework/logger.h"
 #include "framework/memory.h"
+#include "framework/parsing.h"
 
 #include "framework/containers/array_any.h"
 #include "framework/containers/hash_table_u32.h"
 #include "framework/containers/strings.h"
 
 #include "json_scanner.h"
-#include "parsing.h"
 
 #include <string.h>
 

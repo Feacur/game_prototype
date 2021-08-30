@@ -1,8 +1,8 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
+#include "framework/parsing.h"
 
 #include "wfobj_scanner.h"
-#include "parsing.h"
 
 //
 #include "wfobj.h"

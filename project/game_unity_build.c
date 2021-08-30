@@ -4,6 +4,7 @@
 #include "framework/unicode.c"
 #include "framework/vector_types.c"
 #include "framework/logger.c"
+#include "framework/parsing.c"
 
 #include "framework/graphics/types.c"
 #include "framework/graphics/material.c"
@@ -24,7 +25,6 @@
 #include "framework/containers/ref_table.c"
 #include "framework/containers/strings.c"
 
-#include "framework/assets/parsing.c"
 #include "framework/assets/wfobj_scanner.c"
 #include "framework/assets/wfobj.c"
 #include "framework/assets/json_scanner.c"
@@ -37,13 +37,13 @@
 
 #define GAME_GRAPHICS_IS_OPENGL
 #if defined(_WIN32) || defined(_WIN64)
-	#include "framework/windows/timer.c"
-	#include "framework/windows/file.c"
-	#include "framework/windows/system.c"
-	#include "framework/windows/window.c"
+	#include "framework/platform_windows/timer.c"
+	#include "framework/platform_windows/file.c"
+	#include "framework/platform_windows/system.c"
+	#include "framework/platform_windows/window.c"
 
 	#if defined(GAME_GRAPHICS_IS_OPENGL)
-		#include "framework/windows/glibrary_opengl.c"
+		#include "framework/platform_windows/glibrary_opengl.c"
 		#include "framework/gpu_opengl/functions.c"
 		#include "framework/gpu_opengl/types.c"
 		#include "framework/gpu_opengl/graphics.c"

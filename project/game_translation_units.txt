@@ -4,6 +4,7 @@ framework/input.c
 framework/unicode.c
 framework/vector_types.c
 framework/logger.c
+framework/parsing.c
 
 framework/graphics/types.c
 framework/graphics/material.c
@@ -24,7 +25,6 @@ framework/containers/hash_set_u64.c
 framework/containers/ref_table.c
 framework/containers/strings.c
 
-framework/assets/parsing.c
 framework/assets/wfobj_scanner.c
 framework/assets/wfobj.c
 framework/assets/json_scanner.c
@@ -35,12 +35,12 @@ framework/assets/font.c
 
 framework/systems/asset_system.c
 
-framework/windows/timer.c
-framework/windows/file.c
-framework/windows/system.c
-framework/windows/window.c
+framework/platform_windows/timer.c
+framework/platform_windows/file.c
+framework/platform_windows/system.c
+framework/platform_windows/window.c
 
-framework/windows/glibrary_opengl.c
+framework/platform_windows/glibrary_opengl.c
 framework/gpu_opengl/functions.c
 framework/gpu_opengl/types.c
 framework/gpu_opengl/graphics.c
