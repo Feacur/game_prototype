@@ -4,8 +4,9 @@
 #include "framework/common.h"
 
 // -- JSON system part
-uint32_t json_system_add_string(char const * value);
-uint32_t json_system_find_string(char const * value);
+uint32_t json_system_add_string_id(char const * value);
+uint32_t json_system_find_string_id(char const * value);
+char const * json_system_get_string_value(uint32_t value);
 
 // -- JSON value part
 struct JSON;
@@ -20,7 +21,7 @@ bool json_is_string(struct JSON const * value);
 bool json_is_number(struct JSON const * value);
 bool json_is_boolean(struct JSON const * value);
 
-struct JSON const * json_object_get(struct JSON const * value, char const * key);
+struct JSON const * json_object_get(struct JSON const * value, uint32_t key_id);
 struct JSON const * json_array_at(struct JSON const * value, uint32_t index);
 
 char const * json_as_string(struct JSON const * value, char const * default_value);
