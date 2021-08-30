@@ -124,7 +124,7 @@ static struct JSON_Token json_scanner_make_string(struct JSON_Scanner * scanner)
 		}
 		ADVANCE();
 	}
-	if (PEEK() != '"') { json_scanner_make_error_token(scanner, "unterminated string"); }
+	if (PEEK() != '"') { return json_scanner_make_error_token(scanner, "unterminated string"); }
 	ADVANCE();
 	return json_scanner_make_token(scanner, JSON_TOKEN_STRING);
 }
@@ -155,7 +155,6 @@ inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner *
 	if (parse_is_alpha(c)) { return json_scanner_make_identifier_token(scanner); }
 	if (c == '-' || parse_is_digit(c)) { return json_scanner_make_number_token(scanner); }
 
-	DEBUG_BREAK();
 	return json_scanner_make_error_token(scanner, "unexpected character");
 }
 
