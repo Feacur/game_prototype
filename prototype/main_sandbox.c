@@ -71,10 +71,10 @@ static void game_pre_init(struct Application_Config * config) {
 static void game_init(void) {
 	state_init();
 
-	uniforms.color = graphics_add_uniform("u_Color");
-	uniforms.texture = graphics_add_uniform("u_Texture");
-	uniforms.camera = graphics_add_uniform("u_Camera");
-	uniforms.transform = graphics_add_uniform("u_Transform");
+	uniforms.color = graphics_add_uniform_id("u_Color");
+	uniforms.texture = graphics_add_uniform_id("u_Texture");
+	uniforms.camera = graphics_add_uniform_id("u_Camera");
+	uniforms.transform = graphics_add_uniform_id("u_Transform");
 
 	// prefetch some assets
 	{ // asset system is expected to be inited

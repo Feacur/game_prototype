@@ -6,7 +6,8 @@
 
 #include "framework/common.h"
 
-uint32_t graphics_add_uniform(char const * name);
-uint32_t graphics_find_uniform(char const * name);
+uint32_t graphics_add_uniform_id(char const * name);
+uint32_t graphics_find_uniform_id(char const * name);
+char const * graphics_get_uniform_value(uint32_t value);
 
 #endif

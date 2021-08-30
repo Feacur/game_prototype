@@ -701,12 +701,16 @@ void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 //
 #include "framework/graphics/gpu_misc.h"
 
-uint32_t graphics_add_uniform(char const * name) {
+uint32_t graphics_add_uniform_id(char const * name) {
 	return strings_add(&graphics_state.uniforms, (uint32_t)strlen(name), name);
 }
 
-uint32_t graphics_find_uniform(char const * name) {
+uint32_t graphics_find_uniform_id(char const * name) {
 	return strings_find(&graphics_state.uniforms, (uint32_t)strlen(name), name);
+}
+
+char const * graphics_get_uniform_value(uint32_t value) {
+	return strings_get(&graphics_state.uniforms, value);
 }
 
 // static void graphics_stencil_test(void) {
