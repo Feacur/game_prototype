@@ -17,11 +17,12 @@ void glibrary_functions_init(void * (* get)(char const * name)) {
 			ogl_version = (uint32_t)(version_major * 10 + version_minor); \
 			\
 			logger_to_console( \
-				"OpenGL info:" \
-				"\n  - vendor:   %s" \
-				"\n  - renderer: %s" \
-				"\n  - version:  %s" \
-				"\n  - shaders:  %s" \
+				"> OpenGL info:" \
+				"\n  vendor:   %s" \
+				"\n  renderer: %s" \
+				"\n  version:  %s" \
+				"\n  shaders:  %s" \
+				"\n" \
 				"\n", \
 				glGetString(GL_VENDOR), \
 				glGetString(GL_RENDERER), \

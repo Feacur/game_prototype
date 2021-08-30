@@ -57,12 +57,12 @@ static void game_pre_init(struct Application_Config * config) {
 	array_byte_free(&buffer);
 
 	*config = (struct Application_Config){
-		.size_x = (uint32_t)json_get_number(settings, "size_x", 1280),
-		.size_y = (uint32_t)json_get_number(settings, "size_y", 720),
-		.vsync = (int32_t)json_get_number(settings, "vsync", 1),
-		.target_refresh_rate = (uint32_t)json_get_number(settings, "target_refresh_rate", 72),
-		.fixed_refresh_rate = (uint32_t)json_get_number(settings, "fixed_refresh_rate", 50),
-		.slow_frames_limit = (uint32_t)json_get_number(settings, "slow_frames_limit", 5),
+		.size_x = (uint32_t)json_get_number(settings, "size_x", 960),
+		.size_y = (uint32_t)json_get_number(settings, "size_y", 540),
+		.vsync = (int32_t)json_get_number(settings, "vsync", 0),
+		.target_refresh_rate = (uint32_t)json_get_number(settings, "target_refresh_rate", 60),
+		.fixed_refresh_rate = (uint32_t)json_get_number(settings, "fixed_refresh_rate", 30),
+		.slow_frames_limit = (uint32_t)json_get_number(settings, "slow_frames_limit", 2),
 	};
 
 	json_free(settings);
@@ -86,7 +86,6 @@ static void game_init(void) {
 		asset_system_aquire(&state.asset_system, "assets/sandbox/cube.obj");
 		asset_system_aquire(&state.asset_system, "assets/sandbox/test.txt");
 		asset_system_aquire(&state.asset_system, "assets/sandbox/test.json");
-		asset_system_aquire(&state.asset_system, "assets/sandbox/application.json");
 	}
 
 	// prepare assets

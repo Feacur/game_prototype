@@ -33,11 +33,29 @@ static uint64_t get_target_ticks(int32_t vsync) {
 static void application_init(void) {
 	platform_system_init();
 
+	logger_to_console("> initialize:\n");
+	logger_to_console("  power is %s\n", platform_system_is_powered() ? "on" : "off");
+	logger_to_console("\n");
+
 	if (app.callbacks.pre_init != NULL) {
 		app.callbacks.pre_init(&app.config);
 	}
 
-	logger_to_console("power is %s\n", platform_system_is_powered() ? "on" : "off");
+	logger_to_console(
+		"> settings:"
+		"\n  size: %u x %u"
+		"\n  vsync: %d"
+		"\n  target refresh rate: %u"
+		"\n  fixed refresh rate:  %u"
+		"\n  slow frames limit:   %u"
+		"\n"
+		"\n",
+		app.config.size_x, app.config.size_y,
+		app.config.vsync,
+		app.config.target_refresh_rate,
+		app.config.fixed_refresh_rate,
+		app.config.slow_frames_limit
+	);
 
 	enum Window_Settings window_settings = WINDOW_SETTINGS_MINIMIZE;
 	if (app.config.flexible) { window_settings |= WINDOW_SETTINGS_FLEXIBLE; }
