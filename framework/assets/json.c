@@ -3,6 +3,7 @@
 #include "framework/parsing.h"
 
 #include "framework/containers/array_any.h"
+#include "framework/containers/array_byte.h"
 #include "framework/containers/hash_table_u32.h"
 #include "framework/containers/strings.h"
 
@@ -29,6 +30,16 @@ void json_to_system_free(void) {
 //
 #include "json.h"
 
+// -- JSON system part
+uint32_t json_system_add_string(char const * value) {
+	return strings_add(&json_system.strings, (uint32_t)strlen(value), value);
+}
+
+uint32_t json_system_find_string(char const * value) {
+	return strings_find(&json_system.strings, (uint32_t)strlen(value), value);
+}
+
+// -- JSON value part
 enum JSON_Type {
 	JSON_NONE,
 	JSON_OBJECT,
@@ -162,7 +173,6 @@ bool json_get_boolean(struct JSON const * value, char const * key, bool default_
 struct JSON_Parser {
 	struct JSON_Scanner scanner;
 	struct JSON_Token previous, current;
-	uint32_t depth;
 };
 
 static void json_consume(struct JSON_Parser * parser) {
@@ -182,67 +192,78 @@ static bool json_match(struct JSON_Parser * parser, enum JSON_Token_Type type) {
 static void json_do_value(struct JSON_Parser * parser, struct JSON * value);
 static void json_do_string(struct JSON_Parser * parser, struct JSON * value);
 
-static void json_do_object(struct JSON_Parser * parser, struct JSON * value) {
-	parser->depth++;
+static bool json_synchronize_to(struct JSON_Parser * parser, enum JSON_Token_Type scope) {
+	logger_to_console("> skip:\n");
+	for (;;) {
+		logger_to_console("  [%d] %.*s\n", parser->current.line, parser->current.length, parser->current.data);
 
+		json_consume(parser);
+		if (parser->current.type == scope) { return false; }
+		if (parser->current.type == JSON_TOKEN_EOF) { return false; }
+
+		if (parser->current.type == JSON_TOKEN_COMMA) {
+			json_consume(parser);
+			return true;
+		}
+	}
+	return false;
+}
+
+static void json_do_object(struct JSON_Parser * parser, struct JSON * value) {
 	*value = (struct JSON){.type = JSON_OBJECT,};
 	struct JSON_Object * object = &value->as.object;
 	hash_table_u32_init(&object->value, sizeof(struct JSON));
 
-	while (parser->current.type != JSON_TOKEN_RIGHT_BRACE) {
-		struct JSON entry_key, entry_value;
-
+	while (parser->current.type != JSON_TOKEN_RIGHT_BRACE && parser->current.type != JSON_TOKEN_EOF) {
 		if (parser->current.type != JSON_TOKEN_STRING) {
-			logger_to_console("> ERROR: expected a string\n");
-			break;
+			logger_to_console("> ERROR: [%d] expected a string\n", parser->current.line);
+			if (!json_synchronize_to(parser, JSON_TOKEN_RIGHT_BRACE)) { break; }
 		}
 
+		if (parser->current.type != JSON_TOKEN_STRING) { DEBUG_BREAK(); }
+		struct JSON entry_key;
 		json_do_string(parser, &entry_key);
 		json_consume(parser);
 
 		if (!json_match(parser, JSON_TOKEN_COLON)) {
-			logger_to_console("> ERROR: expected ':'\n");
-			break;
+			logger_to_console("> ERROR: [%d] expected ':'\n", parser->current.line);
+			if (!json_synchronize_to(parser, JSON_TOKEN_RIGHT_BRACE)) { break; }
 		}
 
+		struct JSON entry_value;
 		json_do_value(parser, &entry_value);
 		hash_table_u32_set(&object->value, entry_key.as.string.value, &entry_value);
 
 		if (parser->current.type == JSON_TOKEN_RIGHT_BRACE) { break; }
 		if (!json_match(parser, JSON_TOKEN_COMMA)) {
-			logger_to_console("> ERROR: expected ','\n");
+			logger_to_console("> ERROR: [%d] expected ','\n", parser->current.line);
+			if (!json_synchronize_to(parser, JSON_TOKEN_RIGHT_BRACE)) { break; }
 		}
 	}
 	if (!json_match(parser, JSON_TOKEN_RIGHT_BRACE)) {
-		logger_to_console("> ERROR: expected '}'\n");
+		logger_to_console("> ERROR: [%d] expected '}'\n", parser->current.line);
 	}
-
-	parser->depth--;
 }
 
 static void json_do_array(struct JSON_Parser * parser, struct JSON * value) {
-	parser->depth++;
-
 	*value = (struct JSON){.type = JSON_ARRAY,};
 	struct JSON_Array * array = &value->as.array;
 	array_any_init(&array->value, sizeof(struct JSON));
 
-	while (parser->current.type != JSON_TOKEN_RIGHT_SQUARE) {
+	while (parser->current.type != JSON_TOKEN_RIGHT_SQUARE && parser->current.type != JSON_TOKEN_EOF) {
 		struct JSON entry_value;
-
 		json_do_value(parser, &entry_value);
 		array_any_push(&array->value, &entry_value);
 
 		if (parser->current.type == JSON_TOKEN_RIGHT_SQUARE) { break; }
 		if (!json_match(parser, JSON_TOKEN_COMMA)) {
-			logger_to_console("> ERROR: expected ','\n");
+			logger_to_console("> ERROR: [%d] expected ','\n", parser->current.line);
+			if (!json_synchronize_to(parser, JSON_TOKEN_RIGHT_SQUARE)) { break; }
 		}
 	}
 	if (!json_match(parser, JSON_TOKEN_RIGHT_SQUARE)) {
-		logger_to_console("> ERROR: expected ']'\n");
+		logger_to_console("> ERROR: [%d] expected ']'\n", parser->current.line);
 	}
-
-	parser->depth--;
 }
 
 static void json_do_string(struct JSON_Parser * parser, struct JSON * value) {
@@ -317,7 +338,7 @@ static void json_parse_internal(char const * data, struct JSON * value) {
 
 		if (parser.current.type == JSON_TOKEN_EOF) { break; }
 		if (!json_match(&parser, JSON_TOKEN_COMMA)) {
-			logger_to_console("> ERROR: expected ','\n");
+			logger_to_console("> ERROR: [%d] expected ','\n", parser.current.line);
 		}
 	}
 

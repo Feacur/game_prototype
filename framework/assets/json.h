@@ -3,6 +3,11 @@
 
 #include "framework/common.h"
 
+// -- JSON system part
+uint32_t json_system_add_string(char const * value);
+uint32_t json_system_find_string(char const * value);
+
+// -- JSON value part
 struct JSON;
 
 struct JSON * json_init(char const * data);
