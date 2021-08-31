@@ -119,9 +119,6 @@ GLint gpu_wrap_mode(enum Wrap_Mode value, bool mirror) {
 GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, uint32_t channels) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
-		case TEXTURE_TYPE_COLOR_DEPTH: break;
-		case TEXTURE_TYPE_COLOR_STENCIL: break;
-		case TEXTURE_TYPE_FULL: break;
 
 		case TEXTURE_TYPE_COLOR: switch (data_type) {
 			default: break;
@@ -180,9 +177,6 @@ GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type 
 GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
-		case TEXTURE_TYPE_COLOR_DEPTH: break;
-		case TEXTURE_TYPE_COLOR_STENCIL: break;
-		case TEXTURE_TYPE_FULL: break;
 
 		case TEXTURE_TYPE_COLOR: switch (channels) {
 			case 1: return GL_RED;
@@ -202,9 +196,6 @@ GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels) 
 GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
-		case TEXTURE_TYPE_COLOR_DEPTH: break;
-		case TEXTURE_TYPE_COLOR_STENCIL: break;
-		case TEXTURE_TYPE_FULL: break;
 
 		case TEXTURE_TYPE_COLOR: switch (data_type) {
 			default: break;
@@ -239,9 +230,6 @@ GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_t
 GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
-		case TEXTURE_TYPE_COLOR_DEPTH: break;
-		case TEXTURE_TYPE_COLOR_STENCIL: break;
-		case TEXTURE_TYPE_FULL: break;
 
 		case TEXTURE_TYPE_COLOR:    return GL_COLOR_ATTACHMENT0 + index;
 		case TEXTURE_TYPE_DEPTH:    return GL_DEPTH_ATTACHMENT;
