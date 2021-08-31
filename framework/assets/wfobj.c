@@ -40,7 +40,7 @@ static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 }
 
 static void wfobj_advance(struct WFObj_Scanner * scanner, struct WFObj_Token * token) {
-	for (;;) {
+	while (token->type != WFOBJ_TOKEN_EOF) {
 		*token = wfobj_scanner_next(scanner);
 		if (token->type != WFOBJ_TOKEN_ERROR) { break; }
 		wfobj_error_at(token, "scan error");
@@ -172,7 +172,8 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 	uint32_t normal_lines = 0;
 	uint32_t face_lines = 0;
 
-	wfobj_scanner_init(&scanner, text); ADVANCE();
+	wfobj_scanner_init(&scanner, text);
+	token = (struct WFObj_Token){0}; ADVANCE();
 	while (token.type != WFOBJ_TOKEN_EOF) {
 		switch (token.type) {
 			default: break;
@@ -201,7 +202,8 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 	array_u32_init(&scratch_u32);
 	array_u32_resize(&scratch_u32, 3 * 4);
 
-	wfobj_scanner_init(&scanner, text); ADVANCE();
+	wfobj_scanner_init(&scanner, text);
+	token = (struct WFObj_Token){0}; ADVANCE();
 	while (token.type != WFOBJ_TOKEN_EOF) {
 		switch (token.type) {
 			// silent
