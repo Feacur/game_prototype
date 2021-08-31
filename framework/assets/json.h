@@ -14,12 +14,13 @@ struct JSON;
 struct JSON * json_init(char const * data);
 void json_free(struct JSON * value);
 
-bool json_is_null(struct JSON const * value);
+bool json_is_none(struct JSON const * value);
 bool json_is_object(struct JSON const * value);
 bool json_is_array(struct JSON const * value);
 bool json_is_string(struct JSON const * value);
 bool json_is_number(struct JSON const * value);
 bool json_is_boolean(struct JSON const * value);
+bool json_is_null(struct JSON const * value);
 
 struct JSON const * json_object_get(struct JSON const * value, uint32_t key_id);
 struct JSON const * json_array_at(struct JSON const * value, uint32_t index);

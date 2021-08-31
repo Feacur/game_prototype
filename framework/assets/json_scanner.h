@@ -15,8 +15,8 @@ enum JSON_Token_Type {
 
 	// literals
 	JSON_TOKEN_IDENTIFIER,
-	JSON_TOKEN_NUMBER,
 	JSON_TOKEN_STRING,
+	JSON_TOKEN_NUMBER,
 
 	// keywords
 	JSON_TOKEN_TRUE,
