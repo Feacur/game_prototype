@@ -57,12 +57,12 @@ static void game_pre_init(struct Application_Config * config) {
 	array_byte_free(&buffer);
 
 	*config = (struct Application_Config){
-		.size_x = (uint32_t)json_get_number(&settings, "size_x", 960),
-		.size_y = (uint32_t)json_get_number(&settings, "size_y", 540),
-		.vsync = (int32_t)json_get_number(&settings, "vsync", 0),
-		.target_refresh_rate = (uint32_t)json_get_number(&settings, "target_refresh_rate", 60),
-		.fixed_refresh_rate = (uint32_t)json_get_number(&settings, "fixed_refresh_rate", 30),
-		.slow_frames_limit = (uint32_t)json_get_number(&settings, "slow_frames_limit", 2),
+		.size_x = (uint32_t)json_as_number(json_object_get(&settings, "size_x"), 960),
+		.size_y = (uint32_t)json_as_number(json_object_get(&settings, "size_y"), 540),
+		.vsync = (int32_t)json_as_number(json_object_get(&settings, "vsync"), 0),
+		.target_refresh_rate = (uint32_t)json_as_number(json_object_get(&settings, "target_refresh_rate"), 60),
+		.fixed_refresh_rate = (uint32_t)json_as_number(json_object_get(&settings, "fixed_refresh_rate"), 30),
+		.slow_frames_limit = (uint32_t)json_as_number(json_object_get(&settings, "slow_frames_limit"), 2),
 	};
 
 	json_free(&settings);
@@ -120,8 +120,8 @@ static void game_init(void) {
 				struct JSON const * buffer = json_array_at(buffers, buffer_i);
 				if (buffer->type != JSON_OBJECT) { continue; }
 
-				uint32_t buffer_type = json_get_string_id(buffer, "type");
-				bool const buffer_read = json_get_boolean(buffer, "read", false);
+				uint32_t buffer_type = json_as_string_id(json_object_get(buffer, "type"));
+				bool const buffer_read = json_as_boolean(json_object_get(buffer, "read"), false);
 
 				if (buffer_type == buffer_type_color_rgba_u8) {
 					array_any_push(&parameters, &(struct Texture_Parameters) {
@@ -142,8 +142,8 @@ static void game_init(void) {
 
 			if (parameters.count == 0) { continue; }
 
-			uint32_t const target_size_x = (uint32_t)json_get_number(target, "size_x", 320);
-			uint32_t const target_size_y = (uint32_t)json_get_number(target, "size_y", 180);
+			uint32_t const target_size_x = (uint32_t)json_as_number(json_object_get(target, "size_x"), 320);
+			uint32_t const target_size_y = (uint32_t)json_as_number(json_object_get(target, "size_y"), 180);
 
 			array_any_push(&state.targets, (struct Ref[]){
 				gpu_target_init(target_size_x, target_size_y, array_any_at(&parameters, 0), parameters.count)

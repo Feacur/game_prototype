@@ -76,7 +76,7 @@ void json_free(struct JSON * value) {
 	// memset(value, 0, sizeof(*value));
 }
 
-// -- JSON complex
+// -- JSON try get element
 struct JSON const * json_object_get(struct JSON const * value, char const * key) {
 	if (value->type != JSON_OBJECT) { return &json_error; }
 	uint32_t const key_id = json_system_find_string_id(key);
@@ -96,7 +96,7 @@ uint32_t json_array_count(struct JSON const * value) {
 	return value->as.array.count;
 }
 
-// -- JSON value to data
+// -- JSON try get data
 uint32_t json_as_string_id(struct JSON const * value) {
 	if (value->type != JSON_STRING) { return INDEX_EMPTY; }
 	return value->as.id;
@@ -115,23 +115,6 @@ float json_as_number(struct JSON const * value, float default_value) {
 bool json_as_boolean(struct JSON const * value, bool default_value) {
 	if (value->type != JSON_BOOLEAN) { return default_value; }
 	return value->as.boolean;
-}
-
-// -- JSON object get data
-uint32_t json_get_string_id(struct JSON const * value, char const * key) {
-	return json_as_string_id(json_object_get(value, key));
-}
-
-char const * json_get_string(struct JSON const * value, char const * key, char const * default_value) {
-	return json_as_string(json_object_get(value, key), default_value);
-}
-
-float json_get_number(struct JSON const * value, char const * key, float default_value) {
-	return json_as_number(json_object_get(value, key), default_value);
-}
-
-bool json_get_boolean(struct JSON const * value, char const * key, bool default_value) {
-	return json_as_boolean(json_object_get(value, key), default_value);
 }
 
 //
