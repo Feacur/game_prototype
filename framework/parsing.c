@@ -23,7 +23,7 @@ float parse_float(char const * text) {
 	if (*text == '.') { text++;
 		char const * const text_start = text;
 		PARSE_INTEGER(uint32_t, mantissa)
-		exponent += (text_start - text);
+		exponent += (uint32_t)(text_start - text);
 	}
 
 	if (*text == 'e' || *text == 'E') { text++;
