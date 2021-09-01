@@ -42,10 +42,10 @@ char const * json_system_get_string_value(uint32_t value) {
 }
 
 // -- JSON value part
-static struct JSON const json_none  = {.type = JSON_NONE,};
-static struct JSON const json_true  = {.type = JSON_BOOLEAN, .as.boolean = {.value = true},};
-static struct JSON const json_false = {.type = JSON_BOOLEAN, .as.boolean = {.value = false},};
+static struct JSON const json_true  = {.type = JSON_BOOLEAN, .as.boolean = true,};
+static struct JSON const json_false = {.type = JSON_BOOLEAN, .as.boolean = false,};
 static struct JSON const json_null  = {.type = JSON_NULL,};
+static struct JSON const json_error = {.type = JSON_ERROR,};
 
 static void json_init_internal(char const * data, struct JSON * value);
 void json_init(struct JSON * value, char const * data) {
@@ -77,13 +77,13 @@ void json_free(struct JSON * value) {
 }
 
 struct JSON const * json_object_get(struct JSON const * value, uint32_t key_id) {
-	if (value->type != JSON_OBJECT) { return &json_none; }
+	if (value->type != JSON_OBJECT) { return &json_error; }
 	void * result = hash_table_u32_get(&value->as.hash_table, key_id);
 	return (result != NULL) ? result : &json_null;
 }
 
 struct JSON const * json_array_at(struct JSON const * value, uint32_t index) {
-	if (value->type != JSON_ARRAY) { return &json_none; }
+	if (value->type != JSON_ARRAY) { return &json_error; }
 	void * result = array_any_at(&value->as.array, index);
 	return (result != NULL) ? result : &json_null;
 }
@@ -227,7 +227,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 
 		struct JSON entry_value;
 		json_parser_do_value(parser, &entry_value);
-		if (entry_value.type == JSON_NONE) {
+		if (entry_value.type == JSON_ERROR) {
 			goto syncronization_point; // the label is that way vvvvv
 		}
 
@@ -262,7 +262,7 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 		// read
 		struct JSON entry_value;
 		json_parser_do_value(parser, &entry_value);
-		if (entry_value.type == JSON_NONE) {
+		if (entry_value.type == JSON_ERROR) {
 			goto syncronization_point; // the label is that way vvvvv
 		}
 
@@ -314,7 +314,7 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 	}
 
 	json_parser_error_current(parser, "expected value");
-	*value = json_none;
+	*value = json_error;
 }
 
 static void json_init_internal(char const * data, struct JSON * value) {
@@ -329,7 +329,7 @@ static void json_init_internal(char const * data, struct JSON * value) {
 
 	if (parser.error) {
 		json_free(value);
-		*value = json_none;
+		*value = json_error;
 		DEBUG_BREAK();
 	}
 

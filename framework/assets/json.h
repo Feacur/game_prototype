@@ -11,12 +11,13 @@ char const * json_system_get_string_value(uint32_t value);
 
 // -- JSON value part
 enum JSON_Type {
-	JSON_NONE,
+	JSON_NULL,
 	JSON_OBJECT,
 	JSON_ARRAY,
 	JSON_STRING,
 	JSON_NUMBER,
 	JSON_BOOLEAN,
+	JSON_ERROR,
 };
 
 struct JSON {
