@@ -1,9 +1,19 @@
 {
-	"hello_array" : [1, 2, 3, 4, 5],
-	"hello_object" : {"child1" : "value1", "child2" : "value2"},
-	"hello_number" : 256,
-	"hello_string" : "world",
-	"hello_true" : true,
-	"hello_false" : false,
-	"hello_null" : null,
+	"targets" : [
+		{
+			"size_x" : 320,
+			"size_y" : 180,
+			"buffers" : [
+				{
+					"type" : "color_rgba_u8",
+					"read" : true,
+				},
+				{
+					"type" : "depth_r32",
+				},
+			]
+		}
+	],
+	"cameras" : [],
+	"entities" : [],
 }

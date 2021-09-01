@@ -1,3 +1,5 @@
+#include "framework/containers/ref.h"
+
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_misc.h"
 
@@ -23,6 +25,7 @@ void state_init(void) {
 		};
 		asset_system_init(&state.asset_system);
 		array_any_init(&state.materials, sizeof(struct Gfx_Material));
+		array_any_init(&state.targets, sizeof(struct Ref));
 		array_any_init(&state.cameras, sizeof(struct Camera));
 		array_any_init(&state.entities, sizeof(struct Entity));
 	}
@@ -82,6 +85,7 @@ void state_free(void) {
 	}
 
 	array_any_free(&state.materials);
+	array_any_free(&state.targets);
 	array_any_free(&state.cameras);
 	array_any_free(&state.entities);
 

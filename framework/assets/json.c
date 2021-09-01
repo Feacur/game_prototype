@@ -76,6 +76,7 @@ void json_free(struct JSON * value) {
 	// memset(value, 0, sizeof(*value));
 }
 
+// -- JSON complex
 struct JSON const * json_object_get(struct JSON const * value, uint32_t key_id) {
 	if (value->type != JSON_OBJECT) { return &json_error; }
 	void * result = hash_table_u32_get(&value->as.table, key_id);
@@ -86,6 +87,22 @@ struct JSON const * json_array_at(struct JSON const * value, uint32_t index) {
 	if (value->type != JSON_ARRAY) { return &json_error; }
 	void * result = array_any_at(&value->as.array, index);
 	return (result != NULL) ? result : &json_null;
+}
+
+// -- JSON value to data
+struct Hash_Table_U32 const * json_as_table(struct JSON const * value, struct Hash_Table_U32 const * default_value) {
+	if (value->type != JSON_OBJECT) { return default_value; }
+	return &value->as.table;
+}
+
+struct Array_Any const * json_as_array(struct JSON const * value, struct Array_Any const * default_value) {
+	if (value->type != JSON_ARRAY) { return default_value; }
+	return &value->as.array;
+}
+
+uint32_t json_as_string_id(struct JSON const * value, uint32_t default_value) {
+	if (value->type != JSON_STRING) { return default_value; }
+	return value->as.id;
 }
 
 char const * json_as_string(struct JSON const * value, char const * default_value) {
@@ -103,19 +120,60 @@ bool json_as_boolean(struct JSON const * value, bool default_value) {
 	return value->as.boolean;
 }
 
-char const * json_get_string(struct JSON const * value, char const * key, char const * default_value) {
-	uint32_t const key_id = json_system_find_string_id(key);
+// -- JSON object get data
+struct Hash_Table_U32 const * json_get_table(struct JSON const * value, uint32_t key_id, struct Hash_Table_U32 const * default_value) {
+	return json_as_table(json_object_get(value, key_id), default_value);
+}
+
+struct Array_Any const * json_get_array(struct JSON const * value, uint32_t key_id, struct Array_Any const * default_value) {
+	return json_as_array(json_object_get(value, key_id), default_value);
+}
+
+uint32_t json_get_string_id(struct JSON const * value, uint32_t key_id, uint32_t default_value) {
+	return json_as_string_id(json_object_get(value, key_id), default_value);
+}
+
+char const * json_get_string(struct JSON const * value, uint32_t key_id, char const * default_value) {
 	return json_as_string(json_object_get(value, key_id), default_value);
 }
 
-float json_get_number(struct JSON const * value, char const * key, float default_value) {
-	uint32_t const key_id = json_system_find_string_id(key);
+float json_get_number(struct JSON const * value, uint32_t key_id, float default_value) {
 	return json_as_number(json_object_get(value, key_id), default_value);
 }
 
-bool json_get_boolean(struct JSON const * value, char const * key, bool default_value) {
-	uint32_t const key_id = json_system_find_string_id(key);
+bool json_get_boolean(struct JSON const * value, uint32_t key_id, bool default_value) {
 	return json_as_boolean(json_object_get(value, key_id), default_value);
+}
+
+// -- JSON object find data
+struct Hash_Table_U32 const * json_find_table(struct JSON const * value, char const * key, struct Hash_Table_U32 const * default_value) {
+	uint32_t const key_id = json_system_find_string_id(key);
+	return json_get_table(value, key_id, default_value);
+}
+
+struct Array_Any const * json_find_array(struct JSON const * value, char const * key, struct Array_Any const * default_value) {
+	uint32_t const key_id = json_system_find_string_id(key);
+	return json_get_array(value, key_id, default_value);
+}
+
+uint32_t json_find_string_id(struct JSON const * value, char const * key, uint32_t default_value) {
+	uint32_t const key_id = json_system_find_string_id(key);
+	return json_get_string_id(value, key_id, default_value);
+}
+
+char const * json_find_string(struct JSON const * value, char const * key, char const * default_value) {
+	uint32_t const key_id = json_system_find_string_id(key);
+	return json_get_string(value, key_id, default_value);
+}
+
+float json_find_number(struct JSON const * value, char const * key, float default_value) {
+	uint32_t const key_id = json_system_find_string_id(key);
+	return json_get_number(value, key_id, default_value);
+}
+
+bool json_find_boolean(struct JSON const * value, char const * key, bool default_value) {
+	uint32_t const key_id = json_system_find_string_id(key);
+	return json_get_boolean(value, key_id, default_value);
 }
 
 //

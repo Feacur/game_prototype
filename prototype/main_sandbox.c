@@ -37,7 +37,6 @@
 
 #include <stdlib.h>
 
-static struct Ref camera0_target;
 static struct {
 	uint32_t camera;
 	uint32_t color;
@@ -58,12 +57,12 @@ static void game_pre_init(struct Application_Config * config) {
 	array_byte_free(&buffer);
 
 	*config = (struct Application_Config){
-		.size_x = (uint32_t)json_get_number(&settings, "size_x", 960),
-		.size_y = (uint32_t)json_get_number(&settings, "size_y", 540),
-		.vsync = (int32_t)json_get_number(&settings, "vsync", 0),
-		.target_refresh_rate = (uint32_t)json_get_number(&settings, "target_refresh_rate", 60),
-		.fixed_refresh_rate = (uint32_t)json_get_number(&settings, "fixed_refresh_rate", 30),
-		.slow_frames_limit = (uint32_t)json_get_number(&settings, "slow_frames_limit", 2),
+		.size_x = (uint32_t)json_find_number(&settings, "size_x", 960),
+		.size_y = (uint32_t)json_find_number(&settings, "size_y", 540),
+		.vsync = (int32_t)json_find_number(&settings, "vsync", 0),
+		.target_refresh_rate = (uint32_t)json_find_number(&settings, "target_refresh_rate", 60),
+		.fixed_refresh_rate = (uint32_t)json_find_number(&settings, "fixed_refresh_rate", 30),
+		.slow_frames_limit = (uint32_t)json_find_number(&settings, "slow_frames_limit", 2),
 	};
 
 	json_free(&settings);
@@ -96,25 +95,65 @@ static void game_init(void) {
 	WEAK_PTR(struct Asset_Image const) texture_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.png");
 	WEAK_PTR(struct Asset_Model const) mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
 	WEAK_PTR(struct Asset_Bytes const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
+	WEAK_PTR(struct Asset_JSON const) json_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.json");
 
 	// prepare gpu targets
-	{
-		camera0_target = gpu_target_init(
-			320, 180,
-			(struct Texture_Parameters[]){
-				[0] = {
-					.texture_type = TEXTURE_TYPE_COLOR,
-					.data_type = DATA_TYPE_U8,
-					.channels = 4,
-					.flags = TEXTURE_FLAG_READ
-				},
-				[1] = {
-					.texture_type = TEXTURE_TYPE_DEPTH,
-					.data_type = DATA_TYPE_R32,
-				},
-			},
-			2
-		);
+	struct Array_Any const * targets = json_find_array(&json_test->value, "targets", NULL);
+	if (targets != NULL) {
+		// uint32_t const tag_targets = json_system_add_string_id("targets");
+		// uint32_t const tag_size_x = json_system_add_string_id("size_x");
+		// uint32_t const tag_size_y = json_system_add_string_id("size_y");
+		// uint32_t const tag_buffers = json_system_add_string_id("buffers");
+		// uint32_t const tag_type = json_system_add_string_id("type");
+		// uint32_t const tag_read = json_system_add_string_id("read");
+		// uint32_t const tag_color_rgba_u8 = json_system_add_string_id("color_rgba_u8");
+		// uint32_t const tag_depth_r32 = json_system_add_string_id("read");
+
+		struct Array_Any parameters;
+		array_any_init(&parameters, sizeof(struct Texture_Parameters));
+
+		for (uint32_t i = 0; i < targets->count; i++) {
+			struct JSON const * target = array_any_at(targets, i);
+			if (target->type != JSON_OBJECT) { continue; }
+
+			parameters.count = 0;
+
+			uint32_t const target_size_x = (uint32_t)json_find_number(target, "size_x", 320);
+			uint32_t const target_size_y = (uint32_t)json_find_number(target, "size_y", 180);
+
+			struct Array_Any const * buffers = json_find_array(target, "buffers", NULL);
+			if (buffers == NULL) { continue; }
+
+			for (uint32_t buffer_i = 0; buffer_i < buffers->count; buffer_i++) {
+				struct JSON const * buffer = array_any_at(buffers, buffer_i);
+				if (buffer->type != JSON_OBJECT) { continue; }
+
+				uint32_t const buffer_type = json_find_string_id(buffer, "type", 0);
+				bool const buffer_read = json_find_boolean(buffer, "read", false);
+
+				if (buffer_type == json_system_find_string_id("color_rgba_u8")) {
+					array_any_push(&parameters, &(struct Texture_Parameters) {
+						.texture_type = TEXTURE_TYPE_COLOR,
+						.data_type = DATA_TYPE_U8,
+						.channels = 4,
+						.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
+					});
+				}
+				else if (buffer_type == json_system_find_string_id("depth_r32")) {
+					array_any_push(&parameters, &(struct Texture_Parameters) {
+						.texture_type = TEXTURE_TYPE_DEPTH,
+						.data_type = DATA_TYPE_R32,
+						.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
+					});
+				}
+			}
+
+			array_any_push(&state.targets, (struct Ref[]){
+				gpu_target_init(target_size_x, target_size_y, array_any_at(&parameters, 0), parameters.count)
+			});
+		}
+
+		array_any_free(&parameters);
 	}
 
 	// init objects
@@ -138,7 +177,7 @@ static void game_init(void) {
 			&blend_mode_opaque, &(struct Depth_Mode){0}
 		);
 		gfx_material_set_texture(material, uniforms.texture, 1, (struct Ref[]){
-			gpu_target_get_texture_ref(camera0_target, TEXTURE_TYPE_COLOR, 0),
+			gpu_target_get_texture_ref(*(struct Ref *)array_any_at(&state.targets, 0), TEXTURE_TYPE_COLOR, 0),
 		});
 		gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
 
@@ -164,7 +203,7 @@ static void game_init(void) {
 			.mode = CAMERA_MODE_ASPECT_X,
 			.ncp = 0.1f, .fcp = 10, .ortho = 0,
 			//
-			.gpu_target_ref = camera0_target,
+			.gpu_target_ref = *(struct Ref *)array_any_at(&state.targets, 0),
 			.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
 			.clear_rgba = 0x303030ff,
 		});

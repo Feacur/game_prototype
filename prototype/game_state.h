@@ -13,6 +13,7 @@ struct Game_State {
 	struct Asset_System asset_system;
 
 	struct Array_Any materials;
+	struct Array_Any targets;
 	struct Array_Any cameras;
 	struct Array_Any entities;
 };
