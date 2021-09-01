@@ -1,7 +1,8 @@
 #if !defined(GAME_ASSETS_JSON)
 #define GAME_ASSETS_JSON
 
-#include "framework/common.h"
+#include "framework/containers/array_any.h"
+#include "framework/containers/hash_table_u32.h"
 
 // -- JSON system part
 uint32_t json_system_add_string_id(char const * value);
@@ -9,18 +10,49 @@ uint32_t json_system_find_string_id(char const * value);
 char const * json_system_get_string_value(uint32_t value);
 
 // -- JSON value part
-struct JSON;
+enum JSON_Type {
+	JSON_NONE,
+	JSON_OBJECT,
+	JSON_ARRAY,
+	JSON_STRING,
+	JSON_NUMBER,
+	JSON_BOOLEAN,
+	JSON_NULL,
+};
 
-struct JSON * json_init(char const * data);
+struct JSON_Object {
+	struct Hash_Table_U32 value;
+};
+
+struct JSON_Array {
+	struct Array_Any value;
+};
+
+struct JSON_String {
+	uint32_t value;
+};
+
+struct JSON_Number {
+	float value;
+};
+
+struct JSON_Boolean {
+	bool value;
+};
+
+struct JSON {
+	enum JSON_Type type;
+	union {
+		struct JSON_Object  object;
+		struct JSON_Array   array;
+		struct JSON_String  string;
+		struct JSON_Number  number;
+		struct JSON_Boolean boolean;
+	} as;
+};
+
+void json_init(struct JSON * value, char const * data);
 void json_free(struct JSON * value);
-
-bool json_is_none(struct JSON const * value);
-bool json_is_object(struct JSON const * value);
-bool json_is_array(struct JSON const * value);
-bool json_is_string(struct JSON const * value);
-bool json_is_number(struct JSON const * value);
-bool json_is_boolean(struct JSON const * value);
-bool json_is_null(struct JSON const * value);
 
 struct JSON const * json_object_get(struct JSON const * value, uint32_t key_id);
 struct JSON const * json_array_at(struct JSON const * value, uint32_t index);

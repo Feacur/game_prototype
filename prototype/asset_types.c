@@ -106,12 +106,12 @@ void asset_json_init(void * instance, char const * name) {
 	buffer.data[buffer.count] = '\0';
 
 	struct Asset_JSON * asset = instance;
-	asset->value = json_init((char const *)buffer.data);
+	json_init(&asset->value, (char const *)buffer.data);
 
 	array_byte_free(&buffer);
 }
 
 void asset_json_free(void * instance) {
 	struct Asset_JSON * asset = instance;
-	json_free(asset->value);
+	json_free(&asset->value);
 }

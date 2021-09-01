@@ -53,19 +53,20 @@ static void game_pre_init(struct Application_Config * config) {
 	platform_file_read_entire("assets/sandbox/application.json", &buffer);
 	buffer.data[buffer.count] = '\0';
 
-	struct JSON * settings = json_init((char const *)buffer.data);
+	struct JSON settings;
+	json_init(&settings, (char const *)buffer.data);
 	array_byte_free(&buffer);
 
 	*config = (struct Application_Config){
-		.size_x = (uint32_t)json_get_number(settings, "size_x", 960),
-		.size_y = (uint32_t)json_get_number(settings, "size_y", 540),
-		.vsync = (int32_t)json_get_number(settings, "vsync", 0),
-		.target_refresh_rate = (uint32_t)json_get_number(settings, "target_refresh_rate", 60),
-		.fixed_refresh_rate = (uint32_t)json_get_number(settings, "fixed_refresh_rate", 30),
-		.slow_frames_limit = (uint32_t)json_get_number(settings, "slow_frames_limit", 2),
+		.size_x = (uint32_t)json_get_number(&settings, "size_x", 960),
+		.size_y = (uint32_t)json_get_number(&settings, "size_y", 540),
+		.vsync = (int32_t)json_get_number(&settings, "vsync", 0),
+		.target_refresh_rate = (uint32_t)json_get_number(&settings, "target_refresh_rate", 60),
+		.fixed_refresh_rate = (uint32_t)json_get_number(&settings, "fixed_refresh_rate", 30),
+		.slow_frames_limit = (uint32_t)json_get_number(&settings, "slow_frames_limit", 2),
 	};
 
-	json_free(settings);
+	json_free(&settings);
 }
 
 static void game_init(void) {

@@ -3,10 +3,10 @@
 
 #include "framework/containers/ref.h"
 #include "framework/graphics/font_image.h"
+#include "framework/assets/json.h"
 
 struct Font;
 struct Font_Image;
-struct JSON;
 
 // -- Asset shader part
 struct Asset_Shader {
@@ -55,7 +55,7 @@ void asset_bytes_free(void * instance);
 
 // -- Asset json part
 struct Asset_JSON {
-	struct JSON * value;
+	struct JSON value;
 };
 
 void asset_json_init(void * instance, char const * name);

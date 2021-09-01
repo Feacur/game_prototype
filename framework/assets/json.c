@@ -1,10 +1,7 @@
 #include "framework/logger.h"
-#include "framework/memory.h"
 #include "framework/parsing.h"
 
-#include "framework/containers/array_any.h"
 #include "framework/containers/array_byte.h"
-#include "framework/containers/hash_table_u32.h"
 #include "framework/containers/strings.h"
 
 #include "json_scanner.h"
@@ -45,93 +42,39 @@ char const * json_system_get_string_value(uint32_t value) {
 }
 
 // -- JSON value part
-enum JSON_Type {
-	JSON_NONE,
-	JSON_OBJECT,
-	JSON_ARRAY,
-	JSON_STRING,
-	JSON_NUMBER,
-	JSON_BOOLEAN,
-	JSON_NULL,
-};
-
-struct JSON_Object {
-	struct Hash_Table_U32 value;
-};
-
-struct JSON_Array {
-	struct Array_Any value;
-};
-
-struct JSON_String {
-	uint32_t value;
-};
-
-struct JSON_Number {
-	float value;
-};
-
-struct JSON_Boolean {
-	bool value;
-};
-
-struct JSON {
-	enum JSON_Type type;
-	union {
-		struct JSON_Object  object;
-		struct JSON_Array   array;
-		struct JSON_String  string;
-		struct JSON_Number  number;
-		struct JSON_Boolean boolean;
-	} as;
-};
-
-static struct JSON json_none  = {.type = JSON_NONE,};
-static struct JSON json_true  = {.type = JSON_BOOLEAN, .as.boolean = {.value = true},};
-static struct JSON json_false = {.type = JSON_BOOLEAN, .as.boolean = {.value = false},};
-static struct JSON json_null  = {.type = JSON_NULL,};
+static struct JSON const json_none  = {.type = JSON_NONE,};
+static struct JSON const json_true  = {.type = JSON_BOOLEAN, .as.boolean = {.value = true},};
+static struct JSON const json_false = {.type = JSON_BOOLEAN, .as.boolean = {.value = false},};
+static struct JSON const json_null  = {.type = JSON_NULL,};
 
 static void json_init_internal(char const * data, struct JSON * value);
-struct JSON * json_init(char const * data) {
-	struct JSON * value = MEMORY_ALLOCATE(NULL, struct JSON);
+void json_init(struct JSON * value, char const * data) {
 	json_init_internal(data, value);
-	return value;
-}
-
-static void json_free_internal(struct JSON * value) {
-	switch (value->type) {
-		case JSON_OBJECT:
-			struct JSON_Object * object = &value->as.object;
-			for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(&object->value, &it); /*empty*/) {
-				json_free_internal(it.value);
-			}
-			hash_table_u32_free(&object->value);
-			break;
-
-		case JSON_ARRAY:
-			struct JSON_Array * array = &value->as.array;
-			for (uint32_t i = 0; i < array->value.count; i++) {
-				json_free_internal(array_any_at(&array->value, i));
-			}
-			array_any_free(&array->value);
-			break;
-
-		default: break;
-	}
 }
 
 void json_free(struct JSON * value) {
-	json_free_internal(value);
-	MEMORY_FREE(value, value);
-}
+	switch (value->type) {
+		case JSON_OBJECT: {
+			struct JSON_Object * object = &value->as.object;
+			for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(&object->value, &it); /*empty*/) {
+				json_free(it.value);
+			}
+			hash_table_u32_free(&object->value);
+		} break;
 
-bool json_is_none(struct JSON const * value)    { return value->type == JSON_NONE; }
-bool json_is_object(struct JSON const * value)  { return value->type == JSON_OBJECT; }
-bool json_is_array(struct JSON const * value)   { return value->type == JSON_ARRAY; }
-bool json_is_string(struct JSON const * value)  { return value->type == JSON_STRING; }
-bool json_is_number(struct JSON const * value)  { return value->type == JSON_NUMBER; }
-bool json_is_boolean(struct JSON const * value) { return value->type == JSON_BOOLEAN; }
-bool json_is_null(struct JSON const * value)    { return value->type == JSON_NULL; }
+		case JSON_ARRAY: {
+			struct JSON_Array * array = &value->as.array;
+			for (uint32_t i = 0; i < array->value.count; i++) {
+				json_free(array_any_at(&array->value, i));
+			}
+			array_any_free(&array->value);
+		} break;
+
+		default: break;
+	}
+	value->type = JSON_NULL;
+	// memset(value, 0, sizeof(*value));
+}
 
 struct JSON const * json_object_get(struct JSON const * value, uint32_t key_id) {
 	if (value->type != JSON_OBJECT) { return &json_none; }
@@ -396,7 +339,7 @@ static void json_init_internal(char const * data, struct JSON * value) {
 	}
 
 	if (parser.error) {
-		json_free_internal(value);
+		json_free(value);
 		*value = json_none;
 		DEBUG_BREAK();
 	}
