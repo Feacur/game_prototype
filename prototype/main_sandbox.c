@@ -57,12 +57,12 @@ static void game_pre_init(struct Application_Config * config) {
 	array_byte_free(&buffer);
 
 	*config = (struct Application_Config){
-		.size_x = (uint32_t)json_find_number(&settings, "size_x", 960),
-		.size_y = (uint32_t)json_find_number(&settings, "size_y", 540),
-		.vsync = (int32_t)json_find_number(&settings, "vsync", 0),
-		.target_refresh_rate = (uint32_t)json_find_number(&settings, "target_refresh_rate", 60),
-		.fixed_refresh_rate = (uint32_t)json_find_number(&settings, "fixed_refresh_rate", 30),
-		.slow_frames_limit = (uint32_t)json_find_number(&settings, "slow_frames_limit", 2),
+		.size_x = (uint32_t)json_get_number(&settings, "size_x", 960),
+		.size_y = (uint32_t)json_get_number(&settings, "size_y", 540),
+		.vsync = (int32_t)json_get_number(&settings, "vsync", 0),
+		.target_refresh_rate = (uint32_t)json_get_number(&settings, "target_refresh_rate", 60),
+		.fixed_refresh_rate = (uint32_t)json_get_number(&settings, "fixed_refresh_rate", 30),
+		.slow_frames_limit = (uint32_t)json_get_number(&settings, "slow_frames_limit", 2),
 	};
 
 	json_free(&settings);
@@ -98,40 +98,32 @@ static void game_init(void) {
 	WEAK_PTR(struct Asset_JSON const) json_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.json");
 
 	// prepare gpu targets
-	struct Array_Any const * targets = json_find_array(&json_test->value, "targets", NULL);
-	if (targets != NULL) {
-		// uint32_t const tag_targets = json_system_add_string_id("targets");
-		// uint32_t const tag_size_x = json_system_add_string_id("size_x");
-		// uint32_t const tag_size_y = json_system_add_string_id("size_y");
-		// uint32_t const tag_buffers = json_system_add_string_id("buffers");
-		// uint32_t const tag_type = json_system_add_string_id("type");
-		// uint32_t const tag_read = json_system_add_string_id("read");
-		// uint32_t const tag_color_rgba_u8 = json_system_add_string_id("color_rgba_u8");
-		// uint32_t const tag_depth_r32 = json_system_add_string_id("read");
+	struct JSON const * targets = json_object_get(&json_test->value, "targets");
+	if (targets->type == JSON_ARRAY) {
+		uint32_t const buffer_type_color_rgba_u8 = json_system_add_string_id("color_rgba_u8");
+		uint32_t const buffer_type_color_depth_r32 = json_system_add_string_id("color_depth_r32");
 
 		struct Array_Any parameters;
 		array_any_init(&parameters, sizeof(struct Texture_Parameters));
 
-		for (uint32_t i = 0; i < targets->count; i++) {
-			struct JSON const * target = array_any_at(targets, i);
+		uint32_t const targets_count = json_array_count(targets);
+		for (uint32_t target_i = 0; target_i < targets_count; target_i++) {
+			struct JSON const * target = json_array_at(targets, target_i);
 			if (target->type != JSON_OBJECT) { continue; }
 
+			struct JSON const * buffers = json_object_get(target, "buffers");
+			if (buffers->type != JSON_ARRAY) { continue; }
+
 			parameters.count = 0;
-
-			uint32_t const target_size_x = (uint32_t)json_find_number(target, "size_x", 320);
-			uint32_t const target_size_y = (uint32_t)json_find_number(target, "size_y", 180);
-
-			struct Array_Any const * buffers = json_find_array(target, "buffers", NULL);
-			if (buffers == NULL) { continue; }
-
-			for (uint32_t buffer_i = 0; buffer_i < buffers->count; buffer_i++) {
-				struct JSON const * buffer = array_any_at(buffers, buffer_i);
+			uint32_t const buffers_count = json_array_count(buffers);
+			for (uint32_t buffer_i = 0; buffer_i < buffers_count; buffer_i++) {
+				struct JSON const * buffer = json_array_at(buffers, buffer_i);
 				if (buffer->type != JSON_OBJECT) { continue; }
 
-				uint32_t const buffer_type = json_find_string_id(buffer, "type", 0);
-				bool const buffer_read = json_find_boolean(buffer, "read", false);
+				uint32_t buffer_type = json_get_string_id(buffer, "type");
+				bool const buffer_read = json_get_boolean(buffer, "read", false);
 
-				if (buffer_type == json_system_find_string_id("color_rgba_u8")) {
+				if (buffer_type == buffer_type_color_rgba_u8) {
 					array_any_push(&parameters, &(struct Texture_Parameters) {
 						.texture_type = TEXTURE_TYPE_COLOR,
 						.data_type = DATA_TYPE_U8,
@@ -139,7 +131,7 @@ static void game_init(void) {
 						.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
 					});
 				}
-				else if (buffer_type == json_system_find_string_id("depth_r32")) {
+				else if (buffer_type == buffer_type_color_depth_r32) {
 					array_any_push(&parameters, &(struct Texture_Parameters) {
 						.texture_type = TEXTURE_TYPE_DEPTH,
 						.data_type = DATA_TYPE_R32,
@@ -147,6 +139,11 @@ static void game_init(void) {
 					});
 				}
 			}
+
+			if (parameters.count == 0) { continue; }
+
+			uint32_t const target_size_x = (uint32_t)json_get_number(target, "size_x", 320);
+			uint32_t const target_size_y = (uint32_t)json_get_number(target, "size_y", 180);
 
 			array_any_push(&state.targets, (struct Ref[]){
 				gpu_target_init(target_size_x, target_size_y, array_any_at(&parameters, 0), parameters.count)
