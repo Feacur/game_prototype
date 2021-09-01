@@ -4,7 +4,7 @@ import re
 import os.path
 
 # %appdata%/Sublime Text 3/Packages/User
-# http://www.sublimetext.com/docs/3/api_reference.html
+# http://www.sublimetext.com/docs/api_reference.html
 
 class FindResultsGotoCommand(sublime_plugin.TextCommand):
 	def run(self, edit):

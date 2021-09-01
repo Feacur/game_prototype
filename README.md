@@ -44,3 +44,4 @@ you are free to use any other IDE, it's just me who didn't supply additional pro
    [PNG](https://www.rfc-editor.org/rfc/rfc2083.txt), (Portable Network Graphics) Specification Version 1.0  
    [DEFLATE](https://www.rfc-editor.org/rfc/rfc1951.txt), Compressed Data Format Specification version 1.3  
    [ZLIB](https://www.rfc-editor.org/rfc/rfc1950.txt), Compressed Data Format Specification version 3.3  
+   [JSON](https://www.rfc-editor.org/rfc/rfc8259.txt), (The JavaScript Object Notation) Data Interchange Format  
