@@ -91,10 +91,10 @@ static struct JSON json_true  = {.type = JSON_BOOLEAN, .as.boolean = {.value = t
 static struct JSON json_false = {.type = JSON_BOOLEAN, .as.boolean = {.value = false},};
 static struct JSON json_null  = {.type = JSON_NULL,};
 
-static void json_parser_do_internal(char const * data, struct JSON * value);
+static void json_init_internal(char const * data, struct JSON * value);
 struct JSON * json_init(char const * data) {
 	struct JSON * value = MEMORY_ALLOCATE(NULL, struct JSON);
-	json_parser_do_internal(data, value);
+	json_init_internal(data, value);
 	return value;
 }
 
@@ -385,7 +385,7 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 	*value = json_none;
 }
 
-static void json_parser_do_internal(char const * data, struct JSON * value) {
+static void json_init_internal(char const * data, struct JSON * value) {
 	struct JSON_Parser parser = {0};
 	json_scanner_init(&parser.scanner, data);
 	json_parser_consume(&parser);
