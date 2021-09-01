@@ -17,37 +17,16 @@ enum JSON_Type {
 	JSON_STRING,
 	JSON_NUMBER,
 	JSON_BOOLEAN,
-	JSON_NULL,
-};
-
-struct JSON_Object {
-	struct Hash_Table_U32 value;
-};
-
-struct JSON_Array {
-	struct Array_Any value;
-};
-
-struct JSON_String {
-	uint32_t value;
-};
-
-struct JSON_Number {
-	float value;
-};
-
-struct JSON_Boolean {
-	bool value;
 };
 
 struct JSON {
 	enum JSON_Type type;
 	union {
-		struct JSON_Object  object;
-		struct JSON_Array   array;
-		struct JSON_String  string;
-		struct JSON_Number  number;
-		struct JSON_Boolean boolean;
+		struct Hash_Table_U32 hash_table;
+		struct Array_Any array;
+		uint32_t id;
+		float number;
+		bool boolean;
 	} as;
 };
 

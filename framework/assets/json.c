@@ -55,19 +55,19 @@ void json_init(struct JSON * value, char const * data) {
 void json_free(struct JSON * value) {
 	switch (value->type) {
 		case JSON_OBJECT: {
-			struct JSON_Object * object = &value->as.object;
-			for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(&object->value, &it); /*empty*/) {
+			struct Hash_Table_U32 * hash_table = &value->as.hash_table;
+			for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(hash_table, &it); /*empty*/) {
 				json_free(it.value);
 			}
-			hash_table_u32_free(&object->value);
+			hash_table_u32_free(hash_table);
 		} break;
 
 		case JSON_ARRAY: {
-			struct JSON_Array * array = &value->as.array;
-			for (uint32_t i = 0; i < array->value.count; i++) {
-				json_free(array_any_at(&array->value, i));
+			struct Array_Any * array = &value->as.array;
+			for (uint32_t i = 0; i < array->count; i++) {
+				json_free(array_any_at(array, i));
 			}
-			array_any_free(&array->value);
+			array_any_free(array);
 		} break;
 
 		default: break;
@@ -78,34 +78,29 @@ void json_free(struct JSON * value) {
 
 struct JSON const * json_object_get(struct JSON const * value, uint32_t key_id) {
 	if (value->type != JSON_OBJECT) { return &json_none; }
-	struct JSON_Object const * object = &value->as.object;
-	void * result = hash_table_u32_get(&object->value, key_id);
+	void * result = hash_table_u32_get(&value->as.hash_table, key_id);
 	return (result != NULL) ? result : &json_null;
 }
 
 struct JSON const * json_array_at(struct JSON const * value, uint32_t index) {
 	if (value->type != JSON_ARRAY) { return &json_none; }
-	struct JSON_Array const * array = &value->as.array;
-	void * result = array_any_at(&array->value, index);
+	void * result = array_any_at(&value->as.array, index);
 	return (result != NULL) ? result : &json_null;
 }
 
 char const * json_as_string(struct JSON const * value, char const * default_value) {
 	if (value->type != JSON_STRING) { return default_value; }
-	struct JSON_String const * string = &value->as.string;
-	return json_system_get_string_value(string->value);
+	return json_system_get_string_value(value->as.id);
 }
 
 float json_as_number(struct JSON const * value, float default_value) {
 	if (value->type != JSON_NUMBER) { return default_value; }
-	struct JSON_Number const * number = &value->as.number;
-	return number->value;
+	return value->as.number;
 }
 
 bool json_as_boolean(struct JSON const * value, bool default_value) {
 	if (value->type != JSON_BOOLEAN) { return default_value; }
-	struct JSON_Boolean const * boolean = &value->as.boolean;
-	return boolean->value;
+	return value->as.boolean;
 }
 
 char const * json_get_string(struct JSON const * value, char const * key, char const * default_value) {
@@ -210,8 +205,8 @@ static void json_parser_synchronize_array(struct JSON_Parser * parser) {
 static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * value);
 static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * value) {
 	*value = (struct JSON){.type = JSON_OBJECT,};
-	struct JSON_Object * object = &value->as.object;
-	hash_table_u32_init(&object->value, sizeof(struct JSON));
+	struct Hash_Table_U32 * hash_table = &value->as.hash_table;
+	hash_table_u32_init(hash_table, sizeof(struct JSON));
 
 	enum JSON_Token_Type const scope = JSON_TOKEN_RIGHT_BRACE;
 	if (parser->current.type == scope) { json_parser_consume(parser); return; }
@@ -237,9 +232,9 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		}
 
 		// add
-		bool const is_new = hash_table_u32_set(&object->value, entry_key.as.string.value, &entry_value);
+		bool const is_new = hash_table_u32_set(hash_table, entry_key.as.id, &entry_value);
 		if (!is_new) {
-			logger_to_console("key duplicate: \"%s\"\n", json_system_get_string_value(entry_key.as.string.value));
+			logger_to_console("key duplicate: \"%s\"\n", json_system_get_string_value(entry_key.as.id));
 			DEBUG_BREAK();
 		}
 
@@ -257,8 +252,8 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 
 static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * value) {
 	*value = (struct JSON){.type = JSON_ARRAY,};
-	struct JSON_Array * array = &value->as.array;
-	array_any_init(&array->value, sizeof(struct JSON));
+	struct Array_Any * array = &value->as.array;
+	array_any_init(array, sizeof(struct JSON));
 
 	enum JSON_Token_Type const scope = JSON_TOKEN_RIGHT_SQUARE;
 	if (parser->current.type == scope) { json_parser_consume(parser); return; }
@@ -272,7 +267,7 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 		}
 
 		// add
-		array_any_push(&array->value, &entry_value);
+		array_any_push(array, &entry_value);
 
 		// finalize
 		bool const is_comma = json_parser_match(parser, JSON_TOKEN_COMMA);
@@ -288,19 +283,13 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 
 static void json_parser_do_string(struct JSON_Parser * parser, struct JSON * value) {
 	uint32_t const string_id = strings_add(&json_system.strings, parser->current.length - 2, parser->current.data + 1);
-	*value = (struct JSON){
-		.type = JSON_STRING,
-		.as.string = {.value = string_id,},
-	};
+	*value = (struct JSON){.type = JSON_STRING, .as.id = string_id,};
 	json_parser_consume(parser);
 }
 
 static void json_parser_do_number(struct JSON_Parser * parser, struct JSON * value) {
 	float const number = parse_float(parser->current.data);
-	*value = (struct JSON){
-		.type = JSON_NUMBER,
-		.as.number = {.value = number,},
-	};
+	*value = (struct JSON){.type = JSON_NUMBER, .as.number = number,};
 	json_parser_consume(parser);
 }
 
