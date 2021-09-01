@@ -23,7 +23,7 @@ enum JSON_Type {
 struct JSON {
 	enum JSON_Type type;
 	union {
-		struct Hash_Table_U32 hash_table;
+		struct Hash_Table_U32 table;
 		struct Array_Any array;
 		uint32_t id;
 		float number;

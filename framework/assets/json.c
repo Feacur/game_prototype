@@ -55,11 +55,11 @@ void json_init(struct JSON * value, char const * data) {
 void json_free(struct JSON * value) {
 	switch (value->type) {
 		case JSON_OBJECT: {
-			struct Hash_Table_U32 * hash_table = &value->as.hash_table;
-			for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(hash_table, &it); /*empty*/) {
+			struct Hash_Table_U32 * table = &value->as.table;
+			for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(table, &it); /*empty*/) {
 				json_free(it.value);
 			}
-			hash_table_u32_free(hash_table);
+			hash_table_u32_free(table);
 		} break;
 
 		case JSON_ARRAY: {
@@ -78,7 +78,7 @@ void json_free(struct JSON * value) {
 
 struct JSON const * json_object_get(struct JSON const * value, uint32_t key_id) {
 	if (value->type != JSON_OBJECT) { return &json_error; }
-	void * result = hash_table_u32_get(&value->as.hash_table, key_id);
+	void * result = hash_table_u32_get(&value->as.table, key_id);
 	return (result != NULL) ? result : &json_null;
 }
 
@@ -205,8 +205,8 @@ static void json_parser_synchronize_array(struct JSON_Parser * parser) {
 static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * value);
 static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * value) {
 	*value = (struct JSON){.type = JSON_OBJECT,};
-	struct Hash_Table_U32 * hash_table = &value->as.hash_table;
-	hash_table_u32_init(hash_table, sizeof(struct JSON));
+	struct Hash_Table_U32 * table = &value->as.table;
+	hash_table_u32_init(table, sizeof(struct JSON));
 
 	enum JSON_Token_Type const scope = JSON_TOKEN_RIGHT_BRACE;
 	if (parser->current.type == scope) { json_parser_consume(parser); return; }
@@ -232,7 +232,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		}
 
 		// add
-		bool const is_new = hash_table_u32_set(hash_table, entry_key.as.id, &entry_value);
+		bool const is_new = hash_table_u32_set(table, entry_key.as.id, &entry_value);
 		if (!is_new) {
 			logger_to_console("key duplicate: \"%s\"\n", json_system_get_string_value(entry_key.as.id));
 			DEBUG_BREAK();
