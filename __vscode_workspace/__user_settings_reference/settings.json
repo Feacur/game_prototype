@@ -9,6 +9,7 @@
 	"workbench.commandPalette.history": 0,
 	"workbench.editor.untitled.hint": "hidden",
 	"workbench.activityBar.visible": false,
+	"workbench.editor.showTabs": true,
 	// editor
 	"editor.tabSize": 4,
 	"editor.insertSpaces": false,

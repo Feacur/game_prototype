@@ -38,4 +38,5 @@
 	"tab_size": 4,
 	"theme": "Adaptive.sublime-theme",
 	"translate_tabs_to_spaces": false,
+	"scroll_past_end": true,
 }
