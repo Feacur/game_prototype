@@ -49,8 +49,8 @@ static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
 
 static void game_pre_init(struct Application_Config * config) {
 	struct Array_Byte buffer;
-	platform_file_read_entire("assets/sandbox/application.json", &buffer);
-	buffer.data[buffer.count] = '\0';
+	bool const read_success = platform_file_read_entire("assets/sandbox/application.json", &buffer);
+	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
 
 	struct JSON settings;
 	json_init(&settings, (char const *)buffer.data);

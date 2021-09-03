@@ -1,6 +1,8 @@
-#include "framework/containers/array_byte.h"
 #include "framework/memory.h"
 #include "framework/logger.h"
+#include "framework/containers/array_byte.h"
+
+#include <string.h>
 
 #include <Windows.h>
 
@@ -16,25 +18,36 @@
 struct File {
 	HANDLE handle;
 	enum File_Mode mode;
+	uint32_t path_length;
+	char * path;
 };
 
 bool platform_file_read_entire(char const * path, struct Array_Byte * buffer) {
 	array_byte_init(buffer);
 
 	struct File * file = platform_file_init(path, FILE_MODE_READ);
-	uint64_t size = platform_file_size(file);
+	if (file == NULL) { return false; }
 
-	if (size == 0) { platform_file_free(file); return true; }
+	uint64_t const size = platform_file_size(file);
+	if (size == 0) {
+		// success: `buffer->count == 0` and `size == 0`
+		goto finalize; // the label is that way vvvvv
+	}
 
-	array_byte_resize(buffer, size + 1);
+	uint64_t const padding = 1;
+	array_byte_resize(buffer, size + padding);
 	buffer->count = platform_file_read(file, buffer->data, size);
+	if (padding > 0) { buffer->data[buffer->count] = '\0'; }
 
+	if (buffer->count != size) {
+		// failure: `buffer->count == 0` and `size > 0`
+		logger_to_console("read failure: %zu / %zu bytes; \"%s\"\n", buffer->count, size, path);
+		array_byte_free(buffer);
+	}
+
+	finalize: // `goto` is this way ^^^^^;
 	platform_file_free(file);
-	if (buffer->count == size) { return true; }
-
-	logger_to_console("'platform_file_read_entire' failed\n"); DEBUG_BREAK();
-	array_byte_free(buffer);
-	return false;
+	return buffer->count == size;
 }
 
 void platform_file_delete(char const * path) {
@@ -85,7 +98,7 @@ struct File * platform_file_init(char const * path, enum File_Mode mode) {
 #endif
 
 	if (handle == INVALID_HANDLE_VALUE) {
-		logger_to_console("'CreateFile' failed\n"); DEBUG_BREAK();
+		logger_to_console("'CreateFile' failed; \"%s\"\n", path);
 		return NULL;
 	}
 
@@ -94,11 +107,17 @@ struct File * platform_file_init(char const * path, enum File_Mode mode) {
 		.handle = handle,
 		.mode = mode,
 	};
+
+	file->path_length = (uint32_t)strlen(path);
+	file->path = MEMORY_ALLOCATE_ARRAY(file, char, file->path_length);
+	memcpy(file->path, path, file->path_length);
+
 	return file;
 }
 
 void platform_file_free(struct File * file) {
 	CloseHandle(file->handle);
+	MEMORY_FREE(file, file->path);
 	memset(file, 0, sizeof(*file));
 	MEMORY_FREE(file, file);
 }
@@ -137,7 +156,7 @@ uint64_t platform_file_read(struct File * file, uint8_t * buffer, uint64_t size)
 	DWORD const max_chunk_size = UINT16_MAX + 1;
 
 	if (!(file->mode & FILE_MODE_READ)) {
-		logger_to_console("'platform_file_read' failed\n"); DEBUG_BREAK();
+		logger_to_console("can't read write-only files; \"%s\"\n", file->path); DEBUG_BREAK();
 		return 0;
 	}
 	
@@ -149,7 +168,7 @@ uint64_t platform_file_read(struct File * file, uint8_t * buffer, uint64_t size)
 
 		DWORD read_chunk_size;
 		if (!ReadFile(file->handle, buffer + read, to_read, &read_chunk_size, NULL)) {
-			logger_to_console("'ReadFile' failed\n"); DEBUG_BREAK();
+			logger_to_console("'ReadFile' failed; \"%s\"\n", file->path); DEBUG_BREAK();
 			break;
 		}
 
@@ -164,7 +183,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 	DWORD const max_chunk_size = UINT16_MAX + 1;
 
 	if (!(file->mode & FILE_MODE_WRITE)) {
-		logger_to_console("'platform_file_write' failed\n"); DEBUG_BREAK();
+		logger_to_console("can't write read-only files; \"%s\"\n", file->path); DEBUG_BREAK();
 		return 0;
 	}
 	
@@ -176,7 +195,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 
 		DWORD read_chunk_size;
 		if (!WriteFile(file->handle, buffer + written, to_write, &read_chunk_size, NULL)) {
-			logger_to_console("'WriteFile' failed\n"); DEBUG_BREAK();
+			logger_to_console("'WriteFile' failed; \"%s\"\n", file->path); DEBUG_BREAK();
 			break;
 		}
 

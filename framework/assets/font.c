@@ -42,7 +42,9 @@ struct Font {
 struct Font * font_init(char const * path) {
 	struct Font * font = MEMORY_ALLOCATE(NULL, struct Font);
 
-	platform_file_read_entire(path, &font->file);
+	bool const read_success = platform_file_read_entire(path, &font->file);
+	if (!read_success || font->file.count == 0) { DEBUG_BREAK(); return font; }
+
 	if (!stbtt_InitFont(&font->font, font->file.data, stbtt_GetFontOffsetForIndex(font->file.data, 0))) {
 		logger_to_console("'stbtt_InitFont' failed\n"); DEBUG_BREAK();
 	}

@@ -1,4 +1,5 @@
 #include "framework/memory.h"
+#include "framework/logger.h"
 #include "framework/platform_file.h"
 #include "framework/containers/array_float.h"
 #include "framework/containers/array_u32.h"
@@ -25,8 +26,8 @@ static void mesh_fill(
 
 void mesh_init(struct Mesh * mesh, char const * path) {
 	struct Array_Byte file;
-	platform_file_read_entire(path, &file);
-	array_byte_push(&file, '\0');
+	bool const read_success = platform_file_read_entire(path, &file);
+	if (!read_success || file.count == 0) { DEBUG_BREAK(); return; }
 
 	struct WFObj wfobj;
 	wfobj_init(&wfobj, (char const *)file.data);

@@ -45,4 +45,10 @@ char const * json_as_string(struct JSON const * value, char const * default_valu
 float json_as_number(struct JSON const * value, float default_value);
 bool json_as_boolean(struct JSON const * value, bool default_value);
 
+//
+extern struct JSON const json_true;
+extern struct JSON const json_false;
+extern struct JSON const json_null;
+extern struct JSON const json_error;
+
 #endif

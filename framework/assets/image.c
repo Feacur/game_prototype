@@ -1,4 +1,5 @@
 #include "framework/memory.h"
+#include "framework/logger.h"
 #include "framework/containers/array_byte.h"
 
 #include "framework/platform_file.h"
@@ -30,7 +31,8 @@
 
 void image_init(struct Image * image, char const * path) {
 	struct Array_Byte file;
-	platform_file_read_entire(path, &file);
+	bool const read_success = platform_file_read_entire(path, &file);
+	if (!read_success || file.count == 0) { DEBUG_BREAK(); return; }
 
 	// @note: ensure image data layout
 	stbi_set_flip_vertically_on_load(1);

@@ -119,8 +119,6 @@ struct Ref gpu_program_init(struct Array_Byte const * asset) {
 		} \
 	} while (false) \
 
-	// array_byte_push(asset, '\0');
-
 	// a mandatory version header
 	static GLchar glsl_version[20];
 	GLint glsl_version_length = (GLint)logger_to_buffer(

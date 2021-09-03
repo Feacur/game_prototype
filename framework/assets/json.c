@@ -42,10 +42,10 @@ char const * json_system_get_string_value(uint32_t value) {
 }
 
 // -- JSON value part
-static struct JSON const json_true  = {.type = JSON_BOOLEAN, .as.boolean = true,};
-static struct JSON const json_false = {.type = JSON_BOOLEAN, .as.boolean = false,};
-static struct JSON const json_null  = {.type = JSON_NULL,};
-static struct JSON const json_error = {.type = JSON_ERROR,};
+struct JSON const json_true  = {.type = JSON_BOOLEAN, .as.boolean = true,};
+struct JSON const json_false = {.type = JSON_BOOLEAN, .as.boolean = false,};
+struct JSON const json_null  = {.type = JSON_NULL,};
+struct JSON const json_error = {.type = JSON_ERROR,};
 
 static void json_init_internal(char const * data, struct JSON * value);
 void json_init(struct JSON * value, char const * data) {
@@ -317,9 +317,16 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 }
 
 static void json_init_internal(char const * data, struct JSON * value) {
+	if (data == NULL) { *value = json_error; return; }
+
 	struct JSON_Parser parser = {0};
 	json_scanner_init(&parser.scanner, data);
 	json_parser_consume(&parser);
+
+	if (parser.current.type == JSON_TOKEN_EOF) {
+		*value = json_null;
+		goto finalize; // the label is that way vvvvv
+	}
 
 	json_parser_do_value(&parser, value);
 	if (parser.current.type != JSON_TOKEN_EOF) {
@@ -332,5 +339,6 @@ static void json_init_internal(char const * data, struct JSON * value) {
 		DEBUG_BREAK();
 	}
 
+	finalize: // `goto` is this way ^^^^^;
 	json_scanner_free(&parser.scanner);
 }
