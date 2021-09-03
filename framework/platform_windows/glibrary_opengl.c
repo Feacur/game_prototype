@@ -186,7 +186,7 @@ void ginstance_free(struct GInstance * ginstance) {
 	MEMORY_FREE(&glibrary, ginstance);
 }
 
-int32_t ginstance_get_vsync(struct GInstance * ginstance) {
+int32_t ginstance_get_vsync(struct GInstance const * ginstance) {
 	return ginstance->vsync;
 }
 
@@ -200,7 +200,7 @@ void ginstance_set_vsync(struct GInstance * ginstance, int32_t value) {
 	}
 }
 
-void ginstance_display(struct GInstance * ginstance) {
+void ginstance_display(struct GInstance const * ginstance) {
 	if (ginstance->pixel_format.double_buffering) {
 		if (SwapBuffers(ginstance->private_device)) { return; }
 	}

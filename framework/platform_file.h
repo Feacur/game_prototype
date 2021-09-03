@@ -22,13 +22,13 @@ void platform_file_delete(char const * path);
 struct File * platform_file_init(char const * path, enum File_Mode mode);
 void platform_file_free(struct File * file);
 
-uint64_t platform_file_size(struct File * file);
-uint64_t platform_file_time(struct File * file);
+uint64_t platform_file_size(struct File const * file);
+uint64_t platform_file_time(struct File const * file);
 
-uint64_t platform_file_position_get(struct File * file);
+uint64_t platform_file_position_get(struct File const * file);
 uint64_t platform_file_position_set(struct File * file, uint64_t position);
 
-uint64_t platform_file_read(struct File * file, uint8_t * buffer, uint64_t size);
+uint64_t platform_file_read(struct File const * file, uint8_t * buffer, uint64_t size);
 uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size);
 
 #endif

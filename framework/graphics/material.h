@@ -34,9 +34,9 @@ void gfx_material_set_u32(struct Gfx_Material * material, uint32_t uniform_id, u
 void gfx_material_set_s32(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, int32_t const * value);
 void gfx_material_set_float(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, float const * value);
 
-struct Ref * gfx_material_get_texture(struct Gfx_Material * material, uint32_t uniform_id);
-uint32_t * gfx_material_get_u32(struct Gfx_Material * material, uint32_t uniform_id);
-int32_t * gfx_material_get_s32(struct Gfx_Material * material, uint32_t uniform_id);
-float * gfx_material_get_float(struct Gfx_Material * material, uint32_t uniform_id);
+struct Ref * gfx_material_get_texture(struct Gfx_Material const * material, uint32_t uniform_id);
+uint32_t * gfx_material_get_u32(struct Gfx_Material const * material, uint32_t uniform_id);
+int32_t * gfx_material_get_s32(struct Gfx_Material const * material, uint32_t uniform_id);
+float * gfx_material_get_float(struct Gfx_Material const * material, uint32_t uniform_id);
 
 #endif

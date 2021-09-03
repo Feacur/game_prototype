@@ -116,15 +116,15 @@ void platform_window_free(struct Window * window) {
 	}
 }
 
-bool platform_window_exists(struct Window * window) {
+bool platform_window_exists(struct Window const * window) {
 	return window->handle != NULL;
 }
 
-void platform_window_update(struct Window * window) {
+void platform_window_update(struct Window const * window) {
 	(void)window;
 }
 
-int32_t platform_window_get_vsync(struct Window * window) {
+int32_t platform_window_get_vsync(struct Window const * window) {
 	return ginstance_get_vsync(window->ginstance);
 }
 
@@ -132,16 +132,16 @@ void platform_window_set_vsync(struct Window * window, int32_t value) {
 	ginstance_set_vsync(window->ginstance, value);
 }
 
-void platform_window_display(struct Window * window) {
+void platform_window_display(struct Window const * window) {
 	ginstance_display(window->ginstance);
 }
 
-void platform_window_get_size(struct Window * window, uint32_t * size_x, uint32_t * size_y) {
+void platform_window_get_size(struct Window const * window, uint32_t * size_x, uint32_t * size_y) {
 	*size_x = window->size_x;
 	*size_y = window->size_y;
 }
 
-uint32_t platform_window_get_refresh_rate(struct Window * window, uint32_t default_value) {
+uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value) {
 	int value = GetDeviceCaps(window->private_context, VREFRESH);
 	return value > 1 ? (uint32_t)value : default_value;
 }

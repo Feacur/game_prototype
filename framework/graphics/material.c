@@ -98,32 +98,32 @@ void gfx_material_set_float(struct Gfx_Material * material, uint32_t uniform_id,
 }
 
 static void * gfx_material_get_value(
-	struct Gfx_Material * material, uint32_t uniform_id, enum Data_Type type,
-	uint8_t * target, uint32_t value_size
+	struct Gfx_Material const * material, uint32_t uniform_id, enum Data_Type type,
+	uint8_t * source, uint32_t value_size
 );
 
-struct Ref * gfx_material_get_texture(struct Gfx_Material * material, uint32_t uniform_id) {
+struct Ref * gfx_material_get_texture(struct Gfx_Material const * material, uint32_t uniform_id) {
 	return gfx_material_get_value(
 		material, uniform_id, DATA_TYPE_UNIT,
 		(uint8_t *)material->textures.data, sizeof(*material->textures.data)
 	);
 }
 
-uint32_t * gfx_material_get_u32(struct Gfx_Material * material, uint32_t uniform_id) {
+uint32_t * gfx_material_get_u32(struct Gfx_Material const * material, uint32_t uniform_id) {
 	return gfx_material_get_value(
 		material, uniform_id, DATA_TYPE_U32,
 		(uint8_t *)material->values_u32.data, sizeof(*material->values_u32.data)
 	);
 }
 
-int32_t * gfx_material_get_s32(struct Gfx_Material * material, uint32_t uniform_id) {
+int32_t * gfx_material_get_s32(struct Gfx_Material const * material, uint32_t uniform_id) {
 	return gfx_material_get_value(
 		material, uniform_id, DATA_TYPE_S32,
 		(uint8_t *)material->values_s32.data, sizeof(*material->values_s32.data)
 	);
 }
 
-float * gfx_material_get_float(struct Gfx_Material * material, uint32_t uniform_id) {
+float * gfx_material_get_float(struct Gfx_Material const * material, uint32_t uniform_id) {
 	return gfx_material_get_value(
 		material, uniform_id, DATA_TYPE_R32,
 		(uint8_t *)material->values_float.data, sizeof(*material->values_float.data)
@@ -133,8 +133,8 @@ float * gfx_material_get_float(struct Gfx_Material * material, uint32_t uniform_
 //
 
 static void * gfx_material_get_value(
-	struct Gfx_Material * material, uint32_t uniform_id, enum Data_Type type,
-	uint8_t * target, uint32_t value_size
+	struct Gfx_Material const * material, uint32_t uniform_id, enum Data_Type type,
+	uint8_t * source, uint32_t value_size
 ) {
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
@@ -147,7 +147,7 @@ static void * gfx_material_get_value(
 		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
 		if (uniforms[i].id != uniform_id) { offset += elements_count; continue; }
 
-		return target + offset * value_size;
+		return source + offset * value_size;
 	}
 
 	logger_to_console("material doesn't have such a property\n"); DEBUG_BREAK();

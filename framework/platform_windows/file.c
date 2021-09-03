@@ -123,13 +123,13 @@ void platform_file_free(struct File * file) {
 	MEMORY_FREE(file, file);
 }
 
-uint64_t platform_file_size(struct File * file) {
+uint64_t platform_file_size(struct File const * file) {
 	LARGE_INTEGER file_size;
 	if (!GetFileSizeEx(file->handle, &file_size)) { return 0; }
 	return (uint64_t)file_size.QuadPart;
 }
 
-uint64_t platform_file_time(struct File * file) {
+uint64_t platform_file_time(struct File const * file) {
 	FILETIME write;
 	if (!GetFileTime(file->handle, NULL, NULL, &write)) { return 0; }
 
@@ -141,7 +141,7 @@ uint64_t platform_file_time(struct File * file) {
 	return (uint64_t)large.QuadPart;
 }
 
-uint64_t platform_file_position_get(struct File * file) {
+uint64_t platform_file_position_get(struct File const * file) {
 	LARGE_INTEGER input = {.QuadPart = 0}, output;
 	if (!SetFilePointerEx(file->handle, input, &output, FILE_CURRENT)) { return 0; }
 	return (uint64_t)output.QuadPart;
@@ -153,7 +153,7 @@ uint64_t platform_file_position_set(struct File * file, uint64_t position) {
 	return (uint64_t)output.QuadPart;
 }
 
-uint64_t platform_file_read(struct File * file, uint8_t * buffer, uint64_t size) {
+uint64_t platform_file_read(struct File const * file, uint8_t * buffer, uint64_t size) {
 	DWORD const max_chunk_size = UINT16_MAX + 1;
 
 	if (!(file->mode & FILE_MODE_READ)) {

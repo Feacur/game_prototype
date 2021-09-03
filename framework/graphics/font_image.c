@@ -347,7 +347,7 @@ void font_image_render(struct Font_Image * font_image) {
 	MEMORY_FREE(font_image, symbols);
 }
 
-struct Image const * font_image_get_asset(struct Font_Image * font_image) {
+struct Image const * font_image_get_asset(struct Font_Image const * font_image) {
 	return &font_image->buffer;
 }
 
@@ -355,17 +355,17 @@ struct Font_Glyph const * font_image_get_glyph(struct Font_Image * const font_im
 	return hash_table_u32_get(&font_image->table, codepoint);
 }
 
-float font_image_get_height(struct Font_Image * font_image) {
+float font_image_get_height(struct Font_Image const * font_image) {
 	int32_t value = font_get_height(font_image->font);
 	return ((float)value) * font_image->scale;
 }
 
-float font_image_get_gap(struct Font_Image * font_image) {
+float font_image_get_gap(struct Font_Image const * font_image) {
 	int32_t value = font_get_gap(font_image->font);
 	return ((float)value) * font_image->scale;
 }
 
-float font_image_get_kerning(struct Font_Image * font_image, uint32_t codepoint1, uint32_t codepoint2) {
+float font_image_get_kerning(struct Font_Image const * font_image, uint32_t codepoint1, uint32_t codepoint2) {
 	uint64_t const key_hash = ((uint64_t)codepoint2 << 32) | (uint64_t)codepoint1;
 	float const * value = hash_table_u64_get(&font_image->kerning, key_hash);
 	return (value != NULL) ? *value : 0;
