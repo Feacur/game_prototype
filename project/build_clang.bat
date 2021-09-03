@@ -48,7 +48,7 @@ set defines=-D_CRT_SECURE_NO_WARNINGS -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_M
 set libs=kernel32.lib user32.lib gdi32.lib
 set warnings=-Werror -Weverything
 set compiler=-fno-exceptions -fno-rtti
-set linker=-nologo -WX -subsystem:console
+set linker=-nologo -WX -subsystem:console -incremental:no
 
 set linker=%linker% -nodefaultlib
 if %runtime_mode% == static (
@@ -68,14 +68,17 @@ if %configuration% == optimized (
 	set compiler=%compiler% -O3
 	set linker=%linker% -debug:none
 	set defines=%defines% -DGAME_TARGET_OPTIMIZED
+	rem [linker] -opt:ref -opt:icf -opt:lbr
 ) else if %configuration% == development (
 	set compiler=%compiler% -O3 -g
 	set linker=%linker% -debug:full
 	set defines=%defines% -DGAME_TARGET_DEVELOPMENT
+	rem [linker] -opt:noref -opt:noicf -opt:nolbr
 ) else if %configuration% == debug (
 	set compiler=%compiler% -O0 -g
 	set linker=%linker% -debug:full
 	set defines=%defines% -DGAME_TARGET_DEBUG
+	rem [linker] -opt:noref -opt:noicf -opt:nolbr
 )
 
 set compiler=%compiler% %includes% %defines%
