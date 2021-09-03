@@ -30,9 +30,25 @@ set project=game
 
 rem |> PREPARE TOOLS
 set VSLANG=1033
-pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
-call "vcvarsall.bat" x64 > nul
-popd
+call :check_msvc_exists && ( call "vcvarsall.bat" x64 > nul ) || (
+	rem @idea: list potential paths in a text file
+	pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
+	call :check_msvc_exists && ( call "vcvarsall.bat" x64 > nul ) || (
+		echo.can't find msvc in the path
+		goto :eof
+	)
+	popd
+)
+
+call :check_compiler_exists || (
+	echo.can't find compiler in the path
+	goto :eof
+)
+
+call :check_linker_exists || (
+	echo.can't find linker in the path
+	goto :eof
+)
 
 rem |> OPTIONS
 set includes=-I".." -I"../third_party"
@@ -117,3 +133,24 @@ echo.header:  %timeHeader%
 echo.compile: %timeCompile%
 echo.link:    %timeLink%
 echo.stop:    %timeStop%
+
+rem |> FUNCTIONS
+goto :eof
+
+:check_msvc_exists
+where -q "vcvarsall.bat"
+rem return is errorlevel == 1 means false; chain with `||`
+rem return is errorlevel != 1 means true;  chain with `&&`
+goto :eof
+
+:check_compiler_exists
+where -q "cl.exe"
+rem return is errorlevel == 1 means false; chain with `||`
+rem return is errorlevel != 1 means true;  chain with `&&`
+goto :eof
+
+:check_linker_exists
+where -q "link.exe"
+rem return is errorlevel == 1 means false; chain with `||`
+rem return is errorlevel != 1 means true;  chain with `&&`
+goto :eof

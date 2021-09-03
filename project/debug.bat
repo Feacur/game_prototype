@@ -12,6 +12,12 @@ rem |> PREPARE PROJECT
 set project_folder=%cd%
 set project=game
 
+rem |> PREPARE TOOLS
+call :check_debugger_exists || (
+	echo.can't find debugger in the path
+	goto :eof
+)
+
 rem |> DO
 pushd ..
 if exist "%project_folder%/%project%.rdbg" (
@@ -29,6 +35,12 @@ if exist "%project_folder%/%project%.rdbg" (
 popd
 
 rem |> FUNCTIONS
+goto :eof
+
+:check_debugger_exists
+where -q "remedybg.exe"
+rem return is errorlevel == 1 means false; chain with `||`
+rem return is errorlevel != 1 means true;  chain with `&&`
 goto :eof
 
 :check_debugger_online
