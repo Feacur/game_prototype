@@ -61,22 +61,22 @@ void glibrary_to_system_init(void) {
 	// ATOM atom = RegisterClassEx(&(WNDCLASSEX){
 	// 	.cbSize = sizeof(WNDCLASSEX),
 	// 	.lpszClassName = TEXT(OPENGL_CLASS_NAME),
-	// 	.hInstance = system_to_internal_get_module(),
+	// 	.hInstance = (HANDLE)system_to_internal_get_module(),
 	// 	.lpfnWndProc = DefWindowProc,
 	// });
 	// if (atom == 0) { logger_console("'RegisterClassEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	// create temporary window
-	HWND hwnd = CreateWindowEx(
+	HWND const hwnd = CreateWindowEx(
 		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
 		TEXT(OPENGL_CLASS_NAME), TEXT(""),
 		WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		0, 0, 1, 1,
-		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
+		HWND_DESKTOP, NULL, (HANDLE)system_to_internal_get_module(), NULL
 	);
 	if (hwnd == NULL) { logger_to_console("'CreateWindowEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
-	HDC hdc = GetDC(hwnd);
+	HDC const hdc = GetDC(hwnd);
 	if (hdc == NULL) { logger_to_console("'GetDC' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
 
 	// create temporary rendering context
@@ -128,7 +128,7 @@ void glibrary_to_system_init(void) {
 
 	// ReleaseDC(hwnd, hdc);
 	DestroyWindow(hwnd);
-	// UnregisterClass(TEXT(OPENGL_CLASS_NAME), system_to_internal_get_module());
+	// UnregisterClass(TEXT(OPENGL_CLASS_NAME), (HANDLE)system_to_internal_get_module());
 
 	// https://docs.microsoft.com/windows/win32/api/wingdi/
 	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
@@ -164,7 +164,7 @@ static void * rlib_get_function(char const * name);
 struct GInstance * ginstance_init(struct Window * window) {
 	struct GInstance * ginstance = MEMORY_ALLOCATE(&glibrary, struct GInstance);
 
-	ginstance->private_device = window_to_glibrary_get_private_device(window);
+	ginstance->private_device = (HDC)window_to_glibrary_get_private_device(window);
 	ginstance->handle = create_context_auto(ginstance->private_device, NULL, &ginstance->pixel_format);
 	glibrary.dll.MakeCurrent(ginstance->private_device , ginstance->handle);
 	ginstance->vsync = 0;

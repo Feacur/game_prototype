@@ -42,10 +42,10 @@ void logger_to_console(char const * format, ...) {
 	va_end(args);
 }
 
-int logger_to_buffer(char * buffer, char const * format, ...) {
+uint32_t logger_to_buffer(char * buffer, char const * format, ...) {
 	va_list args;
 	va_start(args, format);
 	int length = stbsp_vsprintfcb(NULL, NULL, buffer, format, args);
 	va_end(args);
-	return length;
+	return (uint32_t)length;
 }

@@ -123,7 +123,7 @@ struct Ref gpu_program_init(struct Array_Byte const * asset) {
 
 	// a mandatory version header
 	static GLchar glsl_version[20];
-	GLint glsl_version_length = logger_to_buffer(
+	GLint glsl_version_length = (GLint)logger_to_buffer(
 		glsl_version, "#version %d core\n",
 		(ogl_version > 33) ? ogl_version * 10 : 330
 	);

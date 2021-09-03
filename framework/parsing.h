@@ -1,7 +1,7 @@
 #if !defined(GAME_FRAMEWORK_PARSING)
 #define GAME_FRAMEWORK_PARSING
 
-#include "framework/common.h"
+#include "common.h"
 
 float parse_float(char const * text);
 uint32_t parse_u32(char const * text);

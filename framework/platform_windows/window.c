@@ -181,7 +181,7 @@ void window_to_system_free(void) {
 //
 #include "window_to_glibrary.h"
 
-HDC window_to_glibrary_get_private_device(struct Window * window) {
+void * window_to_glibrary_get_private_device(struct Window const * window) {
 	return window->private_context;
 }
 

@@ -4,10 +4,8 @@
 // interface from `window.c` to `glibrary_*.c`
 // - rendering context initialization
 
-#include <Windows.h>
-
 struct Window;
 
-HDC window_to_glibrary_get_private_device(struct Window * window);
+void * window_to_glibrary_get_private_device(struct Window const * window);
 
 #endif

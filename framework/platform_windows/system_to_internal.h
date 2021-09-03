@@ -4,9 +4,7 @@
 // interface from `system.c` to anywhere
 // - general purpose
 
-#include <Windows.h>
-
 #define APPLICATION_CLASS_NAME "game_prototype"
-HMODULE system_to_internal_get_module(void);
+void * system_to_internal_get_module(void);
 
 #endif

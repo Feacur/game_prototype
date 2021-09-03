@@ -4,7 +4,6 @@
 // interface from `gpu_*/graphics.c` to anywhere
 // - gpu objects initialization and manipulation
 
-#include "framework/common.h"
 #include "framework/graphics/types.h"
 
 // @note: texture coordinates

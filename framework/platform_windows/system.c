@@ -113,7 +113,7 @@ void platform_system_sleep(uint32_t millis) {
 //
 #include "system_to_internal.h"
 
-HMODULE system_to_internal_get_module(void) {
+void * system_to_internal_get_module(void) {
 	return platform_system.module;
 }
 
