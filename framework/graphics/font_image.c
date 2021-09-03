@@ -244,7 +244,6 @@ void font_image_render(struct Font_Image * font_image) {
 		}
 
 		// verify estimated atlas dimensions
-		// oh no, a `goto` label, think of the children!
 		verify_dimensions: // `goto` is this way vvvvv;
 		uint32_t line_height = 0;
 		uint32_t offset_x = padding, offset_y = padding;

@@ -243,7 +243,6 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		if (is_comma) { continue; }
 		json_parser_error_previous(parser, "expected ',' or '}'");
 
-		// oh no, a `goto` label, think of the children!
 		syncronization_point: // `goto` are this way ^^^^^;
 		json_parser_synchronize_object(parser);
 	}
@@ -274,7 +273,6 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 		if (is_comma) { continue; }
 		json_parser_error_previous(parser, "expected ',' or ']'");
 
-		// oh no, a `goto` label, think of the children!
 		syncronization_point: // `goto` are this way ^^^^^;
 		json_parser_synchronize_array(parser);
 	}

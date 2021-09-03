@@ -131,7 +131,7 @@ static void system_set_process_dpi_awareness(void) {
 		set_awareness_func set_awareness = (set_awareness_func)GetProcAddress(User32_dll, "SetProcessDpiAwarenessContext");
 		if (set_awareness != NULL) {
 			set_awareness(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-			goto free_dpi_libs; // the label is that way vvvvv
+			goto finalize; // the label is that way vvvvv
 		}
 	}
 
@@ -141,7 +141,7 @@ static void system_set_process_dpi_awareness(void) {
 		set_awareness_func set_awareness = (set_awareness_func)GetProcAddress(Shcore_dll, "SetProcessDpiAwareness");
 		if (set_awareness != NULL) {
 			set_awareness(PROCESS_PER_MONITOR_DPI_AWARE);
-			goto free_dpi_libs; // the label is that way vvvvv
+			goto finalize; // the label is that way vvvvv
 		}
 	}
 
@@ -151,12 +151,11 @@ static void system_set_process_dpi_awareness(void) {
 		set_awareness_func set_awareness = (set_awareness_func)GetProcAddress(User32_dll, "SetProcessDPIAware");
 		if (set_awareness != NULL) {
 			set_awareness();
-			goto free_dpi_libs; // the label is that way vvvvv
+			goto finalize; // the label is that way vvvvv
 		}
 	}
 
-	// oh no, a `goto` label, think of the children!
-	free_dpi_libs: // `goto` are this way ^^^^^;
+	finalize: // `goto` are this way ^^^^^;
 	if (User32_dll != NULL) { FreeLibrary(User32_dll); User32_dll = NULL; }
 	if (Shcore_dll != NULL) { FreeLibrary(Shcore_dll); Shcore_dll = NULL; }
 
