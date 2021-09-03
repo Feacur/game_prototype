@@ -7,6 +7,13 @@
 #include "framework/common.h"
 #include "framework/graphics/types.h"
 
+// @note: texture coordinates
+// +------------+
+// |texture  1,1|
+// |            |
+// |0,0         |
+// +------------+
+
 struct Array_Byte;
 struct Mesh;
 struct Image;

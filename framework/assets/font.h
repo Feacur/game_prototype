@@ -3,6 +3,17 @@
 
 #include "framework/common.h"
 
+// @note: glyph data layout inside an atlas
+// +----------------+
+// |atlas        1,1|
+// |  +----------+  |
+// |  |glyph  1,1|  |
+// |  |          |  |
+// |  |0,0       |  |
+// |  +----------+  |
+// |0,0             |
+// +----------------+
+
 struct Font;
 struct Glyph_Params;
 

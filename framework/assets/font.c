@@ -112,8 +112,10 @@ void font_fill_buffer(
 		memset(buffer, 0xff, glyph_size_x * glyph_size_y * sizeof(*buffer));
 		return;
 	}
-	// @note: there's no `stbtt_set_flip_vertically_on_load`
-	//        currently code relies on "emulation" of it
+
+	// @note: ensure glyphs data layout inside the atlas
+	// stbtt_set_flip_vertically_on_load(1);
+
 	stbtt_MakeGlyphBitmap(
 		&font->font, buffer,
 		(int)glyph_size_x, (int)glyph_size_y, (int)buffer_rect_width,

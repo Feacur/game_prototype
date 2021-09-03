@@ -3,14 +3,36 @@
 
 #include "vector_types.h"
 
-#define MATHS_PI 3.14159265359f
-#define MATHS_TAU 6.28318530718f
-#define FLOAT_NAN convert_bits_u32_r32(0x7fc00000)
+// @note: left-handed
+// Y     
+// |     
+// |  Z  
+// | /   
+// |/    
+// +----X
+// `cross(X, Y) == Z`
+// `cross(Y, Z) == X`
+// `cross(Z, X) == Y`
+
+// @note: expects functional `IEEE 754` float and double
+// half   [sign:1][exponent: 5][mantissa:10] == sign * (1 + mantissa / 2^10) * 2^(exponent -   15)
+// float  [sign:1][exponent: 8][mantissa:23] == sign * (1 + mantissa / 2^23) * 2^(exponent -  127)
+// double [sign:1][exponent:12][mantissa:51] == sign * (1 + mantissa / 2^51) * 2^(exponent - 1023)
+// -----
+// `exponent` is a "window" between powers of two: [0.25 .. 0.5], [0.5 .. 1], [1 .. 2], [2 .. 4]
+// `mantissa` is an "offset" within the window:    [0.5 .. 1] with [mantissa_max / 2] == 0.75
+// thus, each window precision is `(window_max - window_min) / mantissa_max`
+// -----
+
+#define MATHS_PI 3.14159265359f // convert_bits_u32_r32(0x40490fdb)
+#define MATHS_TAU 6.28318530718f // convert_bits_u32_r32(0x40c90fdb)
+#define FLOAT_NAN convert_bits_u32_r32(0x7fc00000) // [0x7f800001 .. 0x7fffffff] and [0xff800001 .. 0xffffffff]
 #define FLOAT_POS_INFINITY convert_bits_u32_r32(0x7f800000)
 #define FLOAT_NEG_INFINITY convert_bits_u32_r32(0xff800000)
-#define FLOAT_MAX convert_bits_u32_r32(0x7f7fffff)
-#define FLOAT_MIN convert_bits_u32_r32(0xff7fffff)
-#define FLOAT_ALMSOST_1 convert_bits_u32_r32(0x3f7fffff)
+#define FLOAT_MAX convert_bits_u32_r32(0x7f7fffff) //  3.4028237e+38
+#define FLOAT_MIN convert_bits_u32_r32(0xff7fffff) // -3.4028237e+38
+#define FLOAT_INT_MIN convert_bits_u32_r32(0xcb800000) // -16777216
+#define FLOAT_INT_MAX convert_bits_u32_r32(0x4b800000) //  16777216
 
 float convert_bits_u32_r32(uint32_t value);
 uint32_t convert_bits_r32_u32(float value);

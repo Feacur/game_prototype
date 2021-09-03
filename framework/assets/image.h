@@ -4,6 +4,12 @@
 #include "framework/common.h"
 #include "framework/graphics/types.h"
 
+// @note: image data layout
+// +----------+
+// |image  1,1|
+// |          |
+// |0,0       |
+// +----------+
 struct Image {
 	uint32_t capacity, size_x, size_y;
 	uint8_t * data;
