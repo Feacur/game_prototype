@@ -2,7 +2,6 @@
 #define GAME_PROTOTYPE_BATCHER_2D
 
 #include "framework/vector_types.h"
-#include "framework/containers/ref.h"
 #include "framework/graphics/types.h"
 
 // @todo: rename to `Draw_Commands` or something, as current name is quite misleading;

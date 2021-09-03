@@ -2,7 +2,6 @@
 #define GAME_PROTOTYPE_GAME_STATE
 
 #include "framework/containers/array_any.h"
-#include "framework/containers/ref.h"
 #include "framework/systems/asset_system.h"
 
 struct Batcher_2D;
