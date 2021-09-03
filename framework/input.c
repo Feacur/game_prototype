@@ -3,6 +3,8 @@
 
 #include <string.h>
 
+// @idea: elaborate raw input
+// @idea: expose Caps Lock and Num Lock toggle states?
 // @idea: use per-frame input states (as it is now; 2021, march 23)
 //        OR rely on the backend sending correct ammount of pushes and releases?
 

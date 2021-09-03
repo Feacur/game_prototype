@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
-// better to compile third-parties as separate units
+// @idea: compile third-parties as separate units
 #if defined(__clang__)
 	#pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Weverything"

@@ -17,6 +17,8 @@ uint32_t round_up_to_PO2_u32(uint32_t value);
 #include <stdlib.h> // qsort
 #include <math.h>
 
+// @idea: custom qsort
+
 struct Font_Image {
 	struct Image buffer;
 	//

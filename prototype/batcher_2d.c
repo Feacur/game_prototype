@@ -22,6 +22,10 @@
 
 #include <string.h>
 
+// @todo: UTF-8 edge cases, different languages, LTR/RTL, ligatures, etc.
+// @idea: static batching option; cache vertices and stuff until changed
+// @idea: add a 3d batcher
+
 #define BATCHER_2D_BUFFERS_COUNT 2
 #define BATCHER_2D_ATTRIBUTES_COUNT 2
 
@@ -206,6 +210,7 @@ void batcher_2d_add_text(
 	//        >
 	//        need to know vertices at this point
 	//        UVs can be postponed
+	// @idea: decode UTF-8 once into an array
 	uint32_t codepoints_count = 0;
 	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) {
 		switch (it.codepoint) {

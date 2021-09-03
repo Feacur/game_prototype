@@ -10,10 +10,11 @@
 	static wchar_t * platform_file_allocate_utf8_to_utf16(char const * value);
 #endif
 
+// @todo: sidestep `MAX_PATH` limit?
+// @idea: async file access through OS API
+
 //
 #include "framework/platform_file.h"
-
-// @todo: sidestep `MAX_PATH` limit?
 
 struct File {
 	HANDLE handle;

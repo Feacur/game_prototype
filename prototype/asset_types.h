@@ -8,7 +8,9 @@
 struct Font;
 struct Font_Image;
 
-// -- Asset shader part
+// ----- ----- ----- ----- -----
+//     Asset shader part
+// ----- ----- ----- ----- -----
 struct Asset_Shader {
 	struct Ref gpu_ref;
 };
@@ -16,7 +18,9 @@ struct Asset_Shader {
 void asset_shader_init(void * instance, char const * name);
 void asset_shader_free(void * instance);
 
-// -- Asset model part
+// ----- ----- ----- ----- -----
+//     Asset model part
+// ----- ----- ----- ----- -----
 struct Asset_Model {
 	struct Ref gpu_ref;
 };
@@ -24,7 +28,9 @@ struct Asset_Model {
 void asset_model_init(void * instance, char const * name);
 void asset_model_free(void * instance);
 
-// -- Asset image part
+// ----- ----- ----- ----- -----
+//     Asset image part
+// ----- ----- ----- ----- -----
 struct Asset_Image {
 	struct Ref gpu_ref;
 };
@@ -32,11 +38,14 @@ struct Asset_Image {
 void asset_image_init(void * instance, char const * name);
 void asset_image_free(void * instance);
 
-// -- Asset font part
+// ----- ----- ----- ----- -----
+//     Asset font part
+// ----- ----- ----- ----- -----
+// @todo: map font size to buffer and gpu_ref pair?
+// @idea: put differently sized glyphs onto one atlas?
+
 struct Asset_Font {
 	struct Font * font;
-	// @todo: map font size to buffer and gpu_ref pair?
-	//        put differently sized glyphs onto one atlas?
 	struct Font_Image * buffer;
 	struct Ref gpu_ref;
 };
@@ -44,7 +53,9 @@ struct Asset_Font {
 void asset_font_init(void * instance, char const * name);
 void asset_font_free(void * instance);
 
-// -- Asset bytes part
+// ----- ----- ----- ----- -----
+//     Asset bytes part
+// ----- ----- ----- ----- -----
 struct Asset_Bytes {
 	uint8_t * data;
 	uint32_t length;

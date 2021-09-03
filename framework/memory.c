@@ -4,11 +4,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-// @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
-
+// @todo: custom specialized allocators
 // @todo: put meta right into pointer headers instead of a dictionary? alongside?
 //        keeping at least lightweight hashset allows us to verify pointers we own
 //        but it's just an extra failsafe then
+// @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
+// @idea: use OS-native allocators instead of CRT's
+// @idea: put metadata into headers?
 
 struct Pointer_Data {
 	size_t size;

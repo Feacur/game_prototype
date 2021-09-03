@@ -3,6 +3,8 @@
 
 #include "framework/assets/font_glyph.h"
 
+// @todo: tune/expose glyphs GC
+
 struct Font_Image;
 struct Image;
 struct Font;

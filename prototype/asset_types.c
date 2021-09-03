@@ -12,7 +12,9 @@
 //
 #include "asset_types.h"
 
-// -- Asset shader part
+// ----- ----- ----- ----- -----
+//     Asset shader part
+// ----- ----- ----- ----- -----
 void asset_shader_init(void * instance, char const * name) {
 	struct Asset_Shader * asset = instance;
 
@@ -32,7 +34,9 @@ void asset_shader_free(void * instance) {
 	gpu_program_free(asset->gpu_ref);
 }
 
-// -- Asset model part
+// ----- ----- ----- ----- -----
+//     Asset model part
+// ----- ----- ----- ----- -----
 void asset_model_init(void * instance, char const * name) {
 	struct Asset_Model * asset = instance;
 
@@ -50,7 +54,9 @@ void asset_model_free(void * instance) {
 	gpu_mesh_free(asset->gpu_ref);
 }
 
-// -- Asset image part
+// ----- ----- ----- ----- -----
+//     Asset image part
+// ----- ----- ----- ----- -----
 void asset_image_init(void * instance, char const * name) {
 	struct Asset_Image * asset = instance;
 
@@ -68,7 +74,9 @@ void asset_image_free(void * instance) {
 	gpu_texture_free(asset->gpu_ref);
 }
 
-// -- Asset font part
+// ----- ----- ----- ----- -----
+//     Asset font part
+// ----- ----- ----- ----- -----
 void asset_font_init(void * instance, char const * name) {
 	struct Asset_Font * asset = instance;
 
@@ -87,7 +95,9 @@ void asset_font_free(void * instance) {
 	gpu_texture_free(asset->gpu_ref);
 }
 
-// -- Asset bytes part
+// ----- ----- ----- ----- -----
+//     Asset bytes part
+// ----- ----- ----- ----- -----
 void asset_bytes_init(void * instance, char const * name) {
 	struct Asset_Bytes * asset = instance;
 
@@ -105,7 +115,9 @@ void asset_bytes_free(void * instance) {
 	MEMORY_FREE(instance, asset->data);
 }
 
-// -- Asset json part
+// ----- ----- ----- ----- -----
+//     Asset json part
+// ----- ----- ----- ----- -----
 void asset_json_init(void * instance, char const * name) {
 	struct Asset_JSON * asset = instance;
 
