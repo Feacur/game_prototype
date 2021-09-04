@@ -1,4 +1,0 @@
-# https://git-scm.com/docs/gitattributes
-
-*.bat text eol=crlf
-*.rdbg binary

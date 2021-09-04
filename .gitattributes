@@ -13,3 +13,9 @@
 /assets/**/*.glsl text eol=lf diff=cpp
 /assets/**/*.txt  text eol=lf working-tree-encoding=UTF-8
 /assets/**/*.json text eol=lf working-tree-encoding=UTF-8
+
+# project
+/project/**/*.rdbg binary
+/project/**/*.bat  text eol=crlf
+/project/**/*.txt  text working-tree-encoding=UTF-8
+/project/**/*.md   text working-tree-encoding=UTF-8
