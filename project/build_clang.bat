@@ -6,16 +6,20 @@ chcp 65001 > nul
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
 rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
+rem [any]
+set project=%1
+if [%project%] == [] ( set project=game )
+
 rem optimized|development|debug
-set configuration=%1
+set configuration=%2
 if [%configuration%] == [] ( set configuration=optimized )
 
 rem static|dynamic|static_debug|dynamic_debug
-set runtime_mode=%2
+set runtime_mode=%3
 if [%runtime_mode%] == [] ( set runtime_mode=static )
 
 rem normal|unity|unity_link
-set build_mode=%3
+set build_mode=%4
 if [%build_mode%] == [] ( set build_mode=unity_link )
 
 rem https://clang.llvm.org/docs/index.html
@@ -30,7 +34,7 @@ rem https://docs.microsoft.com/windows-server/administration/windows-commands/se
 
 rem |> PREPARE PROJECT
 set project_folder=%cd%
-set project=game
+set binary_folder=bin
 
 rem |> PREPARE TOOLS
 if not %build_mode% == unity_link (
@@ -112,8 +116,8 @@ set warnings=%warnings% -Wno-documentation-unknown-command
 
 rem |> COMPILE AND LINK
 pushd ..
-if not exist bin mkdir bin
-pushd bin
+if not exist %binary_folder% mkdir %binary_folder%
+pushd %binary_folder%
 
 set timeCompile=!time!
 if %build_mode% == normal ( rem compile a set of translation units, then link them

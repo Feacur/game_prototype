@@ -5,16 +5,25 @@ chcp 65001 > nul
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
 rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
+rem [any]
+set project=%1
+if [%project%] == [] ( set project=game )
+
 rem https://docs.microsoft.com/windows-server/administration/windows-commands/tasklist
 rem https://docs.microsoft.com/windows-server/administration/windows-commands/find
 
 rem |> PREPARE PROJECT
 set project_folder=%cd%
-set project=game
+set binary_folder=bin
 
 rem |> PREPARE TOOLS
 call :check_debugger_exists || (
 	echo.can't find debugger in the path
+	goto :eof
+)
+
+if not exist "../%binary_folder%/%project%.exe" (
+	echo.can't find target executable
 	goto :eof
 )
 
@@ -28,7 +37,7 @@ if exist "%project_folder%/%project%.rdbg" (
 	)
 	start remedybg start-debugging
 ) else (
-	start remedybg "bin/%project%.exe"
+	start remedybg "%binary_folder%/%project%.exe"
 	rem current working directory should be the root
 	rem that's why I do not launch debugging right away
 )
