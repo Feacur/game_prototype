@@ -8,7 +8,9 @@
 -Wno-assign-enum
 -Wno-bad-function-cast
 -Wno-documentation-unknown-command
+
 -Wno-unused-macros
+-Wno-unused-function
 
 -I..
 -I../third_party

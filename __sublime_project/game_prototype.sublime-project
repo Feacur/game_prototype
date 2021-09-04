@@ -50,6 +50,9 @@
 			"-Wno-nonportable-system-include-path",
 			"-Wno-assign-enum",
 			"-Wno-bad-function-cast",
+			"-Wno-documentation-unknown-command",
+			"-Wno-unused-macros",
+			"-Wno-unused-function",
 			// includes
 			"-I..",
 			"-I../third_party",
