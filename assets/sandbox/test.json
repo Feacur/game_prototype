@@ -1,19 +1,37 @@
 {
-	"targets" : [
+	"targets": [
 		{
-			"size_x" : 320,
-			"size_y" : 180,
-			"buffers" : [
+			"size_x": 320,
+			"size_y": 180,
+			"buffers": [
 				{
-					"type" : "color_rgba_u8",
-					"read" : true,
+					"type": "color_rgba_u8",
+					"read": true,
 				},
 				{
-					"type" : "depth_r32",
+					"type": "depth_r32",
 				},
 			]
 		}
 	],
-	"cameras" : [],
-	"entities" : [],
+	"materials": [
+		{
+			"shader": "assets/shaders/test.glsl",
+			"mode": "opaque", "depth": true,
+			"u_Texture": {"source_type": "image", "path": "assets/sandbox/test.png",},
+			"u_Color": [0.2, 0.6, 1, 1],
+		},
+		{
+			"shader": "assets/shaders/batcher_2d.glsl",
+			"mode": "opaque", "depth": false,
+			"u_Texture": {"source_type": "target", "id": 0, "type": "color",},
+		},
+		{
+			"shader": "assets/shaders/batcher_2d.glsl",
+			"mode": "transparent", "depth": false,
+			"u_Texture": {"source_type": "font", "path": "assets/fonts/OpenSans-Regular.ttf",},
+		}
+	],
+	"cameras": [],
+	"entities": [],
 }

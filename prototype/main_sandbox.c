@@ -76,122 +76,15 @@ static void game_init(void) {
 	uniforms.camera = graphics_add_uniform_id("u_Camera");
 	uniforms.transform = graphics_add_uniform_id("u_Transform");
 
-	// prefetch some assets
-	{ // asset system is expected to be inited
-		asset_system_aquire(&state.asset_system, "assets/shaders/test.glsl");
-		asset_system_aquire(&state.asset_system, "assets/shaders/batcher_2d.glsl");
-		asset_system_aquire(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
-		asset_system_aquire(&state.asset_system, "assets/fonts/JetBrainsMono-Regular.ttf");
-		asset_system_aquire(&state.asset_system, "assets/sandbox/test.png");
-		asset_system_aquire(&state.asset_system, "assets/sandbox/cube.obj");
-		asset_system_aquire(&state.asset_system, "assets/sandbox/test.txt");
-		asset_system_aquire(&state.asset_system, "assets/sandbox/test.json");
-	}
-
-	// prepare assets
-	struct Asset_Shader const * gpu_program_test = asset_system_find_instance(&state.asset_system, "assets/shaders/test.glsl");
-	struct Asset_Shader const * gpu_program_batcher = asset_system_find_instance(&state.asset_system, "assets/shaders/batcher_2d.glsl");
-	struct Asset_Font const * font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
-	struct Asset_Image const * texture_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.png");
-	struct Asset_Model const * mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
-	struct Asset_Bytes const * text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
+	//
 	struct Asset_JSON const * json_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.json");
+	state_read_json(&json_test->value);
 
-	// prepare gpu targets
-	struct JSON const * targets = json_object_get(&json_test->value, "targets");
-	if (targets->type == JSON_ARRAY) {
-		uint32_t const buffer_type_color_rgba_u8 = json_system_add_string_id("color_rgba_u8");
-		uint32_t const buffer_type_color_depth_r32 = json_system_add_string_id("color_depth_r32");
-
-		struct Array_Any parameters;
-		array_any_init(&parameters, sizeof(struct Texture_Parameters));
-
-		uint32_t const targets_count = json_array_count(targets);
-		for (uint32_t target_i = 0; target_i < targets_count; target_i++) {
-			struct JSON const * target = json_array_at(targets, target_i);
-			if (target->type != JSON_OBJECT) { continue; }
-
-			struct JSON const * buffers = json_object_get(target, "buffers");
-			if (buffers->type != JSON_ARRAY) { continue; }
-
-			parameters.count = 0;
-			uint32_t const buffers_count = json_array_count(buffers);
-			for (uint32_t buffer_i = 0; buffer_i < buffers_count; buffer_i++) {
-				struct JSON const * buffer = json_array_at(buffers, buffer_i);
-				if (buffer->type != JSON_OBJECT) { continue; }
-
-				uint32_t buffer_type = json_as_string_id(json_object_get(buffer, "type"));
-				bool const buffer_read = json_as_boolean(json_object_get(buffer, "read"), false);
-
-				if (buffer_type == buffer_type_color_rgba_u8) {
-					array_any_push(&parameters, &(struct Texture_Parameters) {
-						.texture_type = TEXTURE_TYPE_COLOR,
-						.data_type = DATA_TYPE_U8,
-						.channels = 4,
-						.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
-					});
-				}
-				else if (buffer_type == buffer_type_color_depth_r32) {
-					array_any_push(&parameters, &(struct Texture_Parameters) {
-						.texture_type = TEXTURE_TYPE_DEPTH,
-						.data_type = DATA_TYPE_R32,
-						.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
-					});
-				}
-			}
-
-			if (parameters.count == 0) { continue; }
-
-			uint32_t const target_size_x = (uint32_t)json_as_number(json_object_get(target, "size_x"), 320);
-			uint32_t const target_size_y = (uint32_t)json_as_number(json_object_get(target, "size_y"), 180);
-
-			array_any_push(&state.targets, (struct Ref[]){
-				gpu_target_init(target_size_x, target_size_y, array_any_at(&parameters, 0), parameters.count)
-			});
-		}
-
-		array_any_free(&parameters);
-	}
-
-	// init objects
-	{ // @todo: introduce assets
-		// > materials
-		{
-			array_any_push(&state.materials, &(struct Gfx_Material){0});
-			struct Gfx_Material * material = array_any_at(&state.materials, state.materials.count - 1);
-			gfx_material_init(
-				material, gpu_program_test->gpu_ref,
-				&blend_mode_opaque, &(struct Depth_Mode){.enabled = true, .mask = true}
-			);
-			gfx_material_set_texture(material, uniforms.texture, 1, &texture_test->gpu_ref);
-			gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
-		}
-
-		{
-			array_any_push(&state.materials, &(struct Gfx_Material){0});
-			struct Gfx_Material * material = array_any_at(&state.materials, state.materials.count - 1);
-			gfx_material_init(
-				material, gpu_program_batcher->gpu_ref,
-				&blend_mode_opaque, &(struct Depth_Mode){0}
-			);
-			gfx_material_set_texture(material, uniforms.texture, 1, (struct Ref[]){
-				gpu_target_get_texture_ref(*(struct Ref *)array_any_at(&state.targets, 0), TEXTURE_TYPE_COLOR, 0),
-			});
-			gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
-		}
-
-		{
-			array_any_push(&state.materials, &(struct Gfx_Material){0});
-			struct Gfx_Material * material = array_any_at(&state.materials, state.materials.count - 1);
-			gfx_material_init(
-				material, gpu_program_batcher->gpu_ref,
-				&blend_mode_transparent, &(struct Depth_Mode){0}
-			);
-			gfx_material_set_texture(material, uniforms.texture, 1, (struct Ref[]){
-				font_open_sans->gpu_ref,
-			});
-			gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
-		}
+	// objects
+	{
+		struct Asset_Model const * mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
+		struct Asset_Bytes const * text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
+		struct Asset_Font const * asset_font = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
 
 		// > cameras
 		array_any_push(&state.cameras, &(struct Camera){
@@ -261,7 +154,7 @@ static void game_init(void) {
 			.as.text = {
 				.length = test111_length,
 				.data = test111,
-				.font = font_open_sans,
+				.font = asset_font,
 			},
 		});
 
@@ -281,7 +174,7 @@ static void game_init(void) {
 			.as.text = {
 				.length = text_test->length,
 				.data = text_test->data,
-				.font = font_open_sans,
+				.font = asset_font,
 			},
 		});
 
@@ -338,7 +231,10 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 		}
 
 		// rect behaviour
+		// struct uvec2 entity_content_size = {1, 1};
 		struct uvec2 const entity_content_size = entity_get_content_size(entity, viewport_size_x, viewport_size_y);
+		if (entity_content_size.x == 0 || entity_content_size.y == 0) { continue; }
+
 		switch (entity->rect_mode) {
 			case ENTITY_RECT_MODE_NONE: break;
 

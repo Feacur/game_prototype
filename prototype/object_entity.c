@@ -78,9 +78,9 @@ struct uvec2 entity_get_content_size(
 				(int32_t)ceilf(entity->rect.max_relative.x * (float)viewport_size_x + entity->rect.max_absolute.x),
 				(int32_t)ceilf(entity->rect.max_relative.y * (float)viewport_size_y + entity->rect.max_absolute.y),
 			};
-			return (struct uvec2){ // @idea: invert negatives?
-				(uint32_t)max_s32(rect[2] - rect[0], 0),
-				(uint32_t)max_s32(rect[3] - rect[1], 0),
+			return (struct uvec2){
+				(uint32_t)max_s32(rect[2] - rect[0], rect[0] - rect[2]),
+				(uint32_t)max_s32(rect[3] - rect[1], rect[1] - rect[3]),
 			};
 		} // break;
 	}
