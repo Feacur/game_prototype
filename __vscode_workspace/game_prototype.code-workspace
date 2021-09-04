@@ -4,6 +4,10 @@
 			"path": "."
 		},
 		{
+			"name": "root_folder",
+			"path": "..",
+		},
+		{
 			"path": "../framework"
 		},
 		{
@@ -31,6 +35,18 @@
 	"settings": {
 		// editor
 		"editor.insertSpaces": false,
+		// project
+		"files.exclude": { // exclude each subfolder of the root_folder
+			"__sublime_project": true,
+			"__vscode_workspace": true,
+			"application": true,
+			"assets": true,
+			"bin": true,
+			"framework": true,
+			"project": true,
+			"prototype": true,
+			"third_party": true,
+		},
 		// extensions: ms-vscode.cpptools
 		"C_Cpp.formatting": "Disabled",
 		"C_Cpp.preferredPathSeparator": "Forward Slash",
