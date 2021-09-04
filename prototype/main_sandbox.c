@@ -89,13 +89,13 @@ static void game_init(void) {
 	}
 
 	// prepare assets
-	WEAK_PTR(struct Asset_Shader const) gpu_program_test = asset_system_find_instance(&state.asset_system, "assets/shaders/test.glsl");
-	WEAK_PTR(struct Asset_Shader const) gpu_program_batcher = asset_system_find_instance(&state.asset_system, "assets/shaders/batcher_2d.glsl");
-	WEAK_PTR(struct Asset_Font const) font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
-	WEAK_PTR(struct Asset_Image const) texture_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.png");
-	WEAK_PTR(struct Asset_Model const) mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
-	WEAK_PTR(struct Asset_Bytes const) text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
-	WEAK_PTR(struct Asset_JSON const) json_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.json");
+	struct Asset_Shader const * gpu_program_test = asset_system_find_instance(&state.asset_system, "assets/shaders/test.glsl");
+	struct Asset_Shader const * gpu_program_batcher = asset_system_find_instance(&state.asset_system, "assets/shaders/batcher_2d.glsl");
+	struct Asset_Font const * font_open_sans = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
+	struct Asset_Image const * texture_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.png");
+	struct Asset_Model const * mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
+	struct Asset_Bytes const * text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
+	struct Asset_JSON const * json_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.json");
 
 	// prepare gpu targets
 	struct JSON const * targets = json_object_get(&json_test->value, "targets");
@@ -156,38 +156,42 @@ static void game_init(void) {
 	// init objects
 	{ // @todo: introduce assets
 		// > materials
-		WEAK_PTR(struct Gfx_Material) material;
+		{
+			array_any_push(&state.materials, &(struct Gfx_Material){0});
+			struct Gfx_Material * material = array_any_at(&state.materials, state.materials.count - 1);
+			gfx_material_init(
+				material, gpu_program_test->gpu_ref,
+				&blend_mode_opaque, &(struct Depth_Mode){.enabled = true, .mask = true}
+			);
+			gfx_material_set_texture(material, uniforms.texture, 1, &texture_test->gpu_ref);
+			gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
+		}
 
-		array_any_push(&state.materials, &(struct Gfx_Material){0});
-		material = array_any_at(&state.materials, state.materials.count - 1);
-		gfx_material_init(
-			material, gpu_program_test->gpu_ref,
-			&blend_mode_opaque, &(struct Depth_Mode){.enabled = true, .mask = true}
-		);
-		gfx_material_set_texture(material, uniforms.texture, 1, &texture_test->gpu_ref);
-		gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){0.2f, 0.6f, 1, 1}.x);
+		{
+			array_any_push(&state.materials, &(struct Gfx_Material){0});
+			struct Gfx_Material * material = array_any_at(&state.materials, state.materials.count - 1);
+			gfx_material_init(
+				material, gpu_program_batcher->gpu_ref,
+				&blend_mode_opaque, &(struct Depth_Mode){0}
+			);
+			gfx_material_set_texture(material, uniforms.texture, 1, (struct Ref[]){
+				gpu_target_get_texture_ref(*(struct Ref *)array_any_at(&state.targets, 0), TEXTURE_TYPE_COLOR, 0),
+			});
+			gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
+		}
 
-		array_any_push(&state.materials, &(struct Gfx_Material){0});
-		material = array_any_at(&state.materials, state.materials.count - 1);
-		gfx_material_init(
-			material, gpu_program_batcher->gpu_ref,
-			&blend_mode_opaque, &(struct Depth_Mode){0}
-		);
-		gfx_material_set_texture(material, uniforms.texture, 1, (struct Ref[]){
-			gpu_target_get_texture_ref(*(struct Ref *)array_any_at(&state.targets, 0), TEXTURE_TYPE_COLOR, 0),
-		});
-		gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
-
-		array_any_push(&state.materials, &(struct Gfx_Material){0});
-		material = array_any_at(&state.materials, state.materials.count - 1);
-		gfx_material_init(
-			material, gpu_program_batcher->gpu_ref,
-			&blend_mode_transparent, &(struct Depth_Mode){0}
-		);
-		gfx_material_set_texture(material, uniforms.texture, 1, (struct Ref[]){
-			font_open_sans->gpu_ref,
-		});
-		gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
+		{
+			array_any_push(&state.materials, &(struct Gfx_Material){0});
+			struct Gfx_Material * material = array_any_at(&state.materials, state.materials.count - 1);
+			gfx_material_init(
+				material, gpu_program_batcher->gpu_ref,
+				&blend_mode_transparent, &(struct Depth_Mode){0}
+			);
+			gfx_material_set_texture(material, uniforms.texture, 1, (struct Ref[]){
+				font_open_sans->gpu_ref,
+			});
+			gfx_material_set_float(material, uniforms.color, 4, &(struct vec4){1, 1, 1, 1}.x);
+		}
 
 		// > cameras
 		array_any_push(&state.cameras, &(struct Camera){

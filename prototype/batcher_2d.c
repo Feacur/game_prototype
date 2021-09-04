@@ -23,6 +23,7 @@
 #include <string.h>
 
 // @todo: UTF-8 edge cases, different languages, LTR/RTL, ligatures, etc.
+// @idea: point to a `Gfx_Material` with an `Asset_Ref` instead
 // @idea: static batching option; cache vertices and stuff until changed
 // @idea: add a 3d batcher
 
@@ -31,8 +32,8 @@
 
 struct Batcher_2D_Text {
 	uint32_t length;
-	WEAK_PTR(uint8_t const) data;
-	WEAK_PTR(struct Asset_Font const) font; // @todo: use `Asset_Ref` instead?
+	uint8_t const * data;
+	struct Asset_Font const * font; // @idea: use `Asset_Ref` instead
 	uint32_t vertices_offset, indices_offset;
 	struct mat4 matrix;
 	struct vec2 rect_min, rect_max, local_offset;
@@ -40,7 +41,7 @@ struct Batcher_2D_Text {
 
 struct Batcher_2D_Batch {
 	uint32_t offset, length;
-	WEAK_PTR(struct Gfx_Material const) material;
+	struct Gfx_Material const * material; // @idea: internalize materials if async
 };
 
 struct Batcher_2D_Vertex {

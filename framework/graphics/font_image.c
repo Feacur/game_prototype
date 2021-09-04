@@ -22,7 +22,7 @@ uint32_t round_up_to_PO2_u32(uint32_t value);
 struct Font_Image {
 	struct Image buffer;
 	//
-	WEAK_PTR(struct Font const) font;
+	struct Font const * font;
 	struct Hash_Table_U32 table;
 	struct Hash_Table_U64 kerning;
 	float scale;
@@ -33,7 +33,7 @@ struct Font_Image {
 #include "font_image.h"
 
 struct Font_Symbol {
-	WEAK_PTR(struct Font_Glyph) glyph;
+	struct Font_Glyph * glyph; // @note: a short-lived pointer into a `Font_Image` table
 	uint32_t codepoint;
 };
 
@@ -195,13 +195,13 @@ void font_image_render(struct Font_Image * font_image) {
 
 	// collect visible glyphs
 	uint32_t symbols_count = 0;
-	struct Font_Symbol * symbols = MEMORY_ALLOCATE_ARRAY(font_image, struct Font_Symbol, font_image->table.count);
+	struct Font_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(font_image, struct Font_Symbol, font_image->table.count);
 
 	for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(&font_image->table, &it); /*empty*/) {
 		struct Font_Glyph const * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 
-		symbols[symbols_count] = (struct Font_Symbol){
+		symbols_to_render[symbols_count] = (struct Font_Symbol){
 			.glyph = it.value,
 			.codepoint = it.key_hash,
 		};
@@ -209,14 +209,14 @@ void font_image_render(struct Font_Image * font_image) {
 	}
 
 	// sort glyphs by height, then by width
-	qsort(symbols, symbols_count, sizeof(*symbols), font_image_sort_comparison);
+	qsort(symbols_to_render, symbols_count, sizeof(*symbols_to_render), font_image_sort_comparison);
 
 	// resize the atlas
 	{
 		// estimate the very minimum area
 		uint32_t minimum_area = 0;
 		for (uint32_t i = 0; i < symbols_count; i++) {
-			struct Font_Symbol const * symbol = symbols + i;
+			struct Font_Symbol const * symbol = symbols_to_render + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
 			uint32_t const glyph_size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
 			uint32_t const glyph_size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
@@ -251,7 +251,7 @@ void font_image_render(struct Font_Image * font_image) {
 		uint32_t offset_x = padding, offset_y = padding;
 		for (uint32_t i = 0; i < symbols_count; i++) {
 
-			struct Font_Symbol const * symbol = symbols + i;
+			struct Font_Symbol const * symbol = symbols_to_render + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
 
 			uint32_t const glyph_size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
@@ -294,8 +294,9 @@ void font_image_render(struct Font_Image * font_image) {
 		uint32_t line_height = 0;
 		uint32_t offset_x = padding, offset_y = padding;
 		for (uint32_t i = 0; i < symbols_count; i++) {
-			struct Font_Symbol const * symbol = symbols + i;
-			struct Glyph_Params const * params = &symbol->glyph->params;
+			struct Font_Symbol const * symbol = symbols_to_render + i;
+			struct Font_Glyph * glyph = symbol->glyph;
+			struct Glyph_Params const * params = &glyph->params;
 
 			uint32_t const glyph_size_x = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[2] - params->rect[0]) : 1;
 			uint32_t const glyph_size_y = (symbol->codepoint != CODEPOINT_EMPTY) ? (uint32_t)(params->rect[3] - params->rect[1]) : 1;
@@ -313,10 +314,10 @@ void font_image_render(struct Font_Image * font_image) {
 			}
 
 			//
-			symbol->glyph->uv[0] = (float)(offset_x)          / (float)font_image->buffer.size_x;
-			symbol->glyph->uv[1] = (float)(offset_y)          / (float)font_image->buffer.size_y;
-			symbol->glyph->uv[2] = (float)(offset_x + glyph_size_x) / (float)font_image->buffer.size_x;
-			symbol->glyph->uv[3] = (float)(offset_y + glyph_size_y) / (float)font_image->buffer.size_y;
+			glyph->uv[0] = (float)(offset_x)                / (float)font_image->buffer.size_x;
+			glyph->uv[1] = (float)(offset_y)                / (float)font_image->buffer.size_y;
+			glyph->uv[2] = (float)(offset_x + glyph_size_x) / (float)font_image->buffer.size_x;
+			glyph->uv[3] = (float)(offset_y + glyph_size_y) / (float)font_image->buffer.size_y;
 
 			//
 			if (scratch_buffer.capacity < glyph_size_x * glyph_size_y) {
@@ -326,7 +327,7 @@ void font_image_render(struct Font_Image * font_image) {
 			font_fill_buffer(
 				font_image->font,
 				scratch_buffer.data, glyph_size_x,
-				symbol->glyph->id, glyph_size_x, glyph_size_y, font_image->scale
+				glyph->id, glyph_size_x, glyph_size_y, font_image->scale
 			);
 
 			for (uint32_t glyph_y = 0; glyph_y < glyph_size_y; glyph_y++) {
@@ -344,7 +345,7 @@ void font_image_render(struct Font_Image * font_image) {
 		array_byte_free(&scratch_buffer);
 	}
 
-	MEMORY_FREE(font_image, symbols);
+	MEMORY_FREE(font_image, symbols_to_render);
 }
 
 struct Image const * font_image_get_asset(struct Font_Image const * font_image) {
