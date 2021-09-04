@@ -1,8 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
-set timeHeader=!time!
 chcp 65001 > nul
+echo.building with MSVC...
 
+set timeHeader=!time!
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
 rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
