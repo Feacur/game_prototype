@@ -36,6 +36,12 @@ rem |> PREPARE PROJECT
 set project_folder=%cd%
 set binary_folder=bin
 
+call :check_executable_online && (
+	rem @todo: mind potential live reloading; hot reloading is safe, though
+	echo.executable "%project%.exe" is running
+	goto :eof
+)
+
 rem |> PREPARE TOOLS
 if not %build_mode% == unity_link (
 	set VSLANG=1033
@@ -123,6 +129,7 @@ set timeCompile=!time!
 if %build_mode% == normal ( rem compile a set of translation units, then link them
 	rem @note: the folder may contain outdated objects
 	if not exist temp mkdir temp
+	if exist "temp/*.tmp" del "temp\\*.tmp" /q
 	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem for each line %%v in the file
 		set object_file_name=%%~v
 		set object_file_name=!object_file_name:/=_!
@@ -171,6 +178,12 @@ goto :eof
 
 :check_linker_exists
 where -q "lld-link.exe"
+rem return is errorlevel == 1 means false; chain with `||`
+rem return is errorlevel != 1 means true;  chain with `&&`
+goto :eof
+
+:check_executable_online
+tasklist -fi "IMAGENAME eq %project%.exe" -nh | find /i /n "%project%.exe" > nul
 rem return is errorlevel == 1 means false; chain with `||`
 rem return is errorlevel != 1 means true;  chain with `&&`
 goto :eof

@@ -32,6 +32,12 @@ rem |> PREPARE PROJECT
 set project_folder=%cd%
 set binary_folder=bin
 
+call :check_executable_online && (
+	rem @todo: mind potential live reloading; hot reloading is safe, though
+	echo.executable "%project%.exe" is running
+	goto :eof
+)
+
 rem |> PREPARE TOOLS
 set VSLANG=1033
 call :check_msvc_exists && ( call "vcvarsall.bat" x64 > nul ) || (
@@ -155,6 +161,12 @@ goto :eof
 
 :check_linker_exists
 where -q "link.exe"
+rem return is errorlevel == 1 means false; chain with `||`
+rem return is errorlevel != 1 means true;  chain with `&&`
+goto :eof
+
+:check_executable_online
+tasklist -fi "IMAGENAME eq %project%.exe" -nh | find /i /n "%project%.exe" > nul
 rem return is errorlevel == 1 means false; chain with `||`
 rem return is errorlevel != 1 means true;  chain with `&&`
 goto :eof
