@@ -275,6 +275,9 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 	uint32_t screen_size_x, screen_size_y;
 	application_get_screen_size(&screen_size_x, &screen_size_y);
 
+	if (screen_size_x == 0) { return; }
+	if (screen_size_y == 0) { return; }
+
 	// @todo: iterate though cameras
 	//        > sub-iterate through relevant entities (masks, layers?)
 	//        render stuff to buffers or screen (camera settings)
@@ -288,6 +291,18 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 	for (uint32_t camera_i = 0; camera_i < state.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&state.cameras, camera_i);
 
+		// prepare camera
+		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
+		if (camera->gpu_target_ref.id != 0) {
+			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
+		}
+
+		struct mat4 const mat4_camera = mat4_mul_mat(
+			camera_get_projection(camera, viewport_size_x, viewport_size_y),
+			mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation)
+		);
+
+		// process camera
 		graphics_process(&(struct Render_Pass){
 			.type = RENDER_PASS_TYPE_TARGET,
 			.as.target = {
@@ -305,17 +320,6 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				}
 			});
 		}
-
-		// prepare camera
-		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
-		if (camera->gpu_target_ref.id != 0) {
-			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
-		}
-
-		struct mat4 const mat4_camera = mat4_mul_mat(
-			camera_get_projection(camera, viewport_size_x, viewport_size_y),
-			mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation)
-		);
 
 		// draw entities
 		for (uint32_t entity_i = 0; entity_i < state.entities.count; entity_i++) {

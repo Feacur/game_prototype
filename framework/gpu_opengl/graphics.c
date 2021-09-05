@@ -1016,11 +1016,7 @@ inline static void graphics_process_draw(struct Render_Pass_Draw const * draw) {
 	if (draw->material == NULL) { logger_to_console("material is null"); DEBUG_BREAK(); return; }
 	if (draw->material->gpu_program_ref.id == 0) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
 
-	if (draw->material->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
-	graphics_set_blend_mode(&draw->material->blend_mode);
-	graphics_set_depth_mode(&draw->material->depth_mode);
-
-	if (draw->gpu_mesh_ref.id == 0) { return; }
+	if (draw->gpu_mesh_ref.id == 0) { logger_to_console("mesh is null"); DEBUG_BREAK(); return; }
 	struct Gpu_Mesh const * mesh = ref_table_get(&graphics_state.meshes, draw->gpu_mesh_ref);
 	if (mesh->elements_index == INDEX_EMPTY) { logger_to_console("mesh has no elements buffer"); DEBUG_BREAK(); return; }
 
@@ -1032,6 +1028,10 @@ inline static void graphics_process_draw(struct Render_Pass_Draw const * draw) {
 	size_t const elements_offset = (draw->offset != 0)
 		? draw->offset
 		: 0;
+
+	if (draw->material->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
+	graphics_set_blend_mode(&draw->material->blend_mode);
+	graphics_set_depth_mode(&draw->material->depth_mode);
 
 	graphics_select_program(draw->material->gpu_program_ref);
 	graphics_upload_uniforms(draw->material);
