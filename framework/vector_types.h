@@ -21,6 +21,7 @@ struct mat4 { struct vec4 x, y, z, w; };
 
 //
 
+extern struct vec2 const comp_identity;
 extern struct vec4 const quat_identity;
 
 extern struct mat2 const mat2_identity;

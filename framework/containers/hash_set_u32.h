@@ -3,12 +3,12 @@
 
 #include "framework/common.h"
 
-struct Hash_Set_U32_Iterator {
+struct Hash_Set_U32_Iterator { // ZII
 	uint32_t current, next;
 	uint32_t key_hash;
 };
 
-struct Hash_Set_U32 {
+struct Hash_Set_U32 { // ZII
 	uint32_t capacity, count;
 	uint32_t * key_hashes;
 	uint8_t * marks;

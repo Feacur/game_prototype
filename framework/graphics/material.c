@@ -51,12 +51,11 @@ void gfx_material_init(
 }
 
 void gfx_material_free(struct Gfx_Material * material) {
-	// @note: consider ref.id 0 empty
-	material->gpu_program_ref = (struct Ref){0};
 	array_any_free(&material->textures);
 	array_u32_free(&material->values_u32);
 	array_s32_free(&material->values_s32);
 	array_float_free(&material->values_float);
+	memset(material, 0, sizeof(*material));
 }
 
 static void gfx_material_set_value(

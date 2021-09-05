@@ -3,13 +3,13 @@
 
 #include "framework/common.h"
 
-struct Hash_Table_U64_Iterator {
+struct Hash_Table_U64_Iterator { // ZII
 	uint32_t current, next;
 	uint64_t key_hash;
 	void * value;
 };
 
-struct Hash_Table_U64 {
+struct Hash_Table_U64 { // ZII
 	uint32_t value_size;
 	uint32_t capacity, count;
 	uint64_t * key_hashes;

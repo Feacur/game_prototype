@@ -16,7 +16,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-static struct Platform_System {
+static struct Platform_System { // static ZII
 	HMODULE module;
 	bool should_close;
 } platform_system;

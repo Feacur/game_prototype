@@ -3,7 +3,7 @@
 
 #include "framework/common.h"
 
-struct Hash_Table_Any_Iterator {
+struct Hash_Table_Any_Iterator { // ZII
 	uint32_t current, next;
 	uint32_t hash;
 	void const * key;
@@ -11,7 +11,7 @@ struct Hash_Table_Any_Iterator {
 };
 
 // @idea: hash the key automatically as bytes array?
-struct Hash_Table_Any {
+struct Hash_Table_Any { // ZII
 	uint32_t key_size, value_size;
 	uint32_t capacity, count;
 	uint32_t * hashes;

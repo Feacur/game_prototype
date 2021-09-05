@@ -5,17 +5,17 @@
 #include "framework/containers/hash_table_u32.h"
 #include "framework/containers/ref_table.h"
 
-struct Asset_Ref {
+struct Asset_Ref { // ZII
 	struct Ref instance_ref;
 	uint32_t type_id, resource_id;
 };
 
-struct Asset_Callbacks {
+struct Asset_Callbacks { // ZII
 	void (* init)(void * instance, char const * name);
 	void (* free)(void * instance);
 };
 
-struct Asset_System {
+struct Asset_System { // ZII
 	struct Strings strings;
 	struct Hash_Table_U32 types;
 	struct Hash_Table_U32 refs;

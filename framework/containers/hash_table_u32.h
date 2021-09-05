@@ -3,13 +3,13 @@
 
 #include "framework/common.h"
 
-struct Hash_Table_U32_Iterator {
+struct Hash_Table_U32_Iterator { // ZII
 	uint32_t current, next;
 	uint32_t key_hash;
 	void * value;
 };
 
-struct Hash_Table_U32 {
+struct Hash_Table_U32 { // ZII
 	uint32_t value_size;
 	uint32_t capacity, count;
 	uint32_t * key_hashes;

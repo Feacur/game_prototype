@@ -17,23 +17,23 @@ enum Render_Pass_Type {
 	RENDER_PASS_TYPE_DRAW,
 };
 
-struct Render_Pass_Target {
+struct Render_Pass_Target { // ZII
 	uint32_t screen_size_x, screen_size_y;
 	struct Ref gpu_ref;
 };
 
-struct Render_Pass_Clear {
+struct Render_Pass_Clear { // ZII
 	enum Texture_Type mask;
 	uint32_t rgba;
 };
 
-struct Render_Pass_Draw {
+struct Render_Pass_Draw { // ZII
 	struct Gfx_Material const * material;
 	struct Ref gpu_mesh_ref;
 	uint32_t offset, length;
 };
 
-struct Render_Pass {
+struct Render_Pass { // ZII
 	//
 	enum Render_Pass_Type type;
 	union {

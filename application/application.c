@@ -11,7 +11,7 @@
 //
 #include "application.h"
 
-static struct {
+static struct Application { // static ZII
 	struct Application_Callbacks callbacks;
 	struct Application_Config config;
 	struct Window * window;

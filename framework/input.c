@@ -14,12 +14,12 @@
 #define KEYBOARD_KEYS_MAX UINT8_MAX + 1
 #define MOUSE_KEYS_MAX 8
 
-struct Keyboard_State {
+struct Keyboard_State { // ZII
 	uint8_t keys[KEYBOARD_KEYS_MAX];
 	// bool caps_lock, num_lock;
 };
 
-struct Mouse_State {
+struct Mouse_State { // ZII
 	uint8_t keys[MOUSE_KEYS_MAX];
 
 	uint32_t display_x, display_y;
@@ -29,7 +29,7 @@ struct Mouse_State {
 	float wheel_x, wheel_y;
 };
 
-static struct Input_State {
+static struct Input_State { // static ZII
 	struct Keyboard_State keyboard, keyboard_prev;
 	struct Mouse_State mouse, mouse_prev;
 	struct Array_U32 codepoints;
@@ -89,6 +89,7 @@ void input_to_system_init(void) {
 
 void input_to_system_free(void) {
 	array_u32_free(&input_state.codepoints);
+	memset(&input_state, 0, sizeof(input_state));
 }
 
 void input_to_platform_before_update(void) {

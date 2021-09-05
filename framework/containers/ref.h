@@ -3,6 +3,8 @@
 
 #include "framework/common.h"
 
-struct Ref { uint32_t id, gen; };
+struct Ref { // ZII
+	uint32_t id, gen;
+};
 
 #endif

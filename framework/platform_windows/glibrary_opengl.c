@@ -13,7 +13,7 @@
 #include <Windows.h>
 #include <GL/wgl.h>
 
-static struct GLibrary {
+static struct GLibrary { // static ZII
 	HMODULE handle;
 
 	struct {

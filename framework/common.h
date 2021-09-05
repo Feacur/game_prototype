@@ -7,6 +7,8 @@
 
 #define INDEX_EMPTY UINT32_MAX
 
+// @note: ZII == Zero Is Initialization
+
 // -- utility
 
 #define STRINGIFY_A_VALUE(v) #v

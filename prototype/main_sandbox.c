@@ -37,7 +37,7 @@
 
 #include <stdlib.h>
 
-static struct {
+static struct Main_Uniforms {
 	uint32_t camera;
 	uint32_t color;
 	uint32_t texture;

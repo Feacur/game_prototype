@@ -3,7 +3,7 @@
 
 #include "framework/common.h"
 
-struct Array_S32 {
+struct Array_S32 { // ZII
 	uint32_t capacity, count;
 	int32_t * data;
 };

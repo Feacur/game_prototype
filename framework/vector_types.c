@@ -4,6 +4,7 @@
 // @note: MSVC issues `C2099: initializer is not a constant`
 //        when a designated initializer type is specified
 
+struct vec2 const comp_identity = {1,0};
 struct vec4 const quat_identity = {0,0,0,1};
 
 struct mat2 const mat2_identity = {
