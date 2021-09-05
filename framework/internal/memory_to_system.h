@@ -4,7 +4,8 @@
 // interface from `memory.c` to `system.c`
 // - framework initialization
 
-void memory_to_system_init(void);
-void memory_to_system_free(void);
+#include "framework/common.h"
+
+uint32_t memory_to_system_report(void);
 
 #endif
