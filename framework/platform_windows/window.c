@@ -59,7 +59,10 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 		target_rect.right - target_rect.left, target_rect.bottom - target_rect.top,
 		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
-	if (handle == NULL) { logger_to_console("'CreateWindowEx' failed\n"); DEBUG_BREAK(); return NULL; }
+	if (handle == NULL) {
+		logger_to_console("'CreateWindowEx' failed\n"); DEBUG_BREAK();
+		return NULL;
+	}
 
 	// @note: supress OS-defaults, enforce external settings
 	SetWindowLongPtr(handle, GWL_STYLE, target_style);
@@ -72,7 +75,8 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 	HDC const private_context = GetDC(handle);
 	if (private_context == NULL) {
 		logger_to_console("'GetDC' failed\n"); DEBUG_BREAK();
-		DestroyWindow(handle); return NULL;
+		DestroyWindow(handle);
+		return NULL;
 	}
 
 	//
@@ -81,7 +85,9 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 	BOOL prop_is_set = SetProp(handle, TEXT(HANDLE_PROP_WINDOW_NAME), window);
 	if (!prop_is_set) {
 		logger_to_console("'SetProp' failed\n"); DEBUG_BREAK();
-		DestroyWindow(handle); MEMORY_FREE(window, window); return NULL;
+		MEMORY_FREE(window, window);
+		DestroyWindow(handle);
+		return NULL;
 	}
 
 	RECT client_rect;
@@ -161,7 +167,7 @@ void platform_window_toggle_borderless_fullscreen(struct Window * window) {
 static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 void window_to_system_init(void) {
-	ATOM atom = RegisterClassEx(&(WNDCLASSEX){
+	ATOM const atom = RegisterClassEx(&(WNDCLASSEX){
 		.cbSize = sizeof(WNDCLASSEX),
 		.lpszClassName = TEXT(APPLICATION_CLASS_NAME),
 		.hInstance = system_to_internal_get_module(),
@@ -169,7 +175,10 @@ void window_to_system_init(void) {
 		.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
 		.hCursor = LoadCursor(0, IDC_ARROW),
 	});
-	if (atom == 0) { logger_to_console("'RegisterClassEx' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (atom == 0) {
+		logger_to_console("'RegisterClassEx' failed\n"); DEBUG_BREAK();
+		exit(EXIT_FAILURE);
+	}
 	// https://docs.microsoft.com/windows/win32/winmsg/about-window-classes
 	// https://docs.microsoft.com/windows/win32/gdi/private-display-device-contexts
 }

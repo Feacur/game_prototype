@@ -31,7 +31,10 @@ static void system_set_process_dpi_awareness(void);
 static void system_signal_handler(int value);
 void platform_system_init(void) {
 	platform_system.module = GetModuleHandle(NULL);
-	if (platform_system.module == NULL) { logger_to_console("'GetModuleHandle' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (platform_system.module == NULL) {
+		logger_to_console("'GetModuleHandle(NULL)' failed\n"); DEBUG_BREAK();
+		exit(EXIT_FAILURE);
+	}
 
 	// system_cache_paths();
 	system_set_process_dpi_awareness();

@@ -20,7 +20,7 @@ struct Application_Callbacks {
 	void (* render)(uint64_t elapsed, uint64_t per_second);
 };
 
-void application_run(struct Application_Callbacks * callbacks);
+void application_run(struct Application_Callbacks const * callbacks);
 
 void application_get_screen_size(uint32_t * size_x, uint32_t * size_y);
 

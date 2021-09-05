@@ -61,7 +61,10 @@ static void application_init(void) {
 	if (app.config.flexible) { window_settings |= WINDOW_SETTINGS_FLEXIBLE; }
 
 	app.window = platform_window_init(app.config.size_x, app.config.size_y, window_settings);
-	if (app.window == NULL) { logger_to_console("'platform_window_init' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (app.window == NULL) {
+		logger_to_console("failed to create application window"); DEBUG_BREAK();
+		exit(EXIT_FAILURE);
+	}
 
 	platform_window_set_vsync(app.window, app.config.vsync);
 
@@ -157,8 +160,11 @@ static bool application_update(void) {
 	return true;
 }
 
-void application_run(struct Application_Callbacks * callbacks) {
-	if (callbacks == NULL) { logger_to_console("provide an application callbacks\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+void application_run(struct Application_Callbacks const * callbacks) {
+	if (callbacks == NULL) {
+		logger_to_console("provide application callbacks\n"); DEBUG_BREAK();
+		exit(EXIT_FAILURE);
+	}
 	app.callbacks = *callbacks;
 
 	application_init();

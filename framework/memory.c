@@ -31,7 +31,10 @@ static struct Memory_State {
 // 	bool const track_allocation = (&memory_state.pointers != owner);
 // 
 // 	void * result = malloc(size);
-// 	if (result == NULL) { logger_to_console("'malloc' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+// 	if (result == NULL) {
+// 		logger_to_console("'malloc' failed\n"); DEBUG_BREAK();
+// 		exit(EXIT_FAILURE);
+// 	}
 // 
 // 	if (track_allocation) {
 // 		memory_state.pointers_count++;
@@ -69,7 +72,10 @@ void * memory_reallocate(void const * owner, char const * source, void * pointer
 	}
 
 	void * result = realloc(pointer, size);
-	if (result == NULL) { logger_to_console("'realloc' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (result == NULL) {
+		logger_to_console("'realloc' failed\n"); DEBUG_BREAK();
+		exit(EXIT_FAILURE);
+	}
 
 	if (pointer_data != NULL) {
 		memory_state.pointers_count--;
