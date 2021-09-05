@@ -231,7 +231,6 @@ static void gpu_program_free_internal(struct Gpu_Program const * gpu_program) {
 
 void gpu_program_free(struct Ref gpu_program_ref) {
 	if (graphics_state.active_program_ref.id == gpu_program_ref.id && graphics_state.active_program_ref.gen == gpu_program_ref.gen) {
-		// @note: consider 0 ref.id empty
 		graphics_state.active_program_ref = (struct Ref){0};
 	}
 	struct Gpu_Program const * gpu_program = ref_table_get(&graphics_state.programs, gpu_program_ref);
@@ -494,7 +493,6 @@ static void gpu_target_free_internal(struct Gpu_Target const * gpu_target) {
 
 void gpu_target_free(struct Ref gpu_target_ref) {
 	if (graphics_state.active_target_ref.id == gpu_target_ref.id && graphics_state.active_target_ref.gen == gpu_target_ref.gen) {
-		// @note: consider 0 ref.id empty
 		graphics_state.active_target_ref = (struct Ref){0};
 	}
 	struct Gpu_Target const * gpu_target = ref_table_get(&graphics_state.targets, gpu_target_ref);
@@ -521,9 +519,8 @@ struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Ty
 		}
 	}
 
-	// @note: consider 0 ref.id empty
-	logger_to_console("failed to find the attached texture\n"); DEBUG_BREAK();
-	return (struct Ref){0};
+	logger_to_console("failure: target doesn't have requested texture\n"); DEBUG_BREAK();
+	return ref_empty;
 }
 
 // ----- ----- ----- ----- -----
@@ -656,7 +653,6 @@ static void gpu_mesh_free_internal(struct Gpu_Mesh const * gpu_mesh) {
 
 void gpu_mesh_free(struct Ref gpu_mesh_ref) {
 	if (graphics_state.active_mesh_ref.id == gpu_mesh_ref.id && graphics_state.active_mesh_ref.gen == gpu_mesh_ref.gen) {
-		// @note: consider 0 ref.id empty
 		graphics_state.active_mesh_ref = (struct Ref){0};
 	}
 	struct Gpu_Mesh const * gpu_mesh = ref_table_get(&graphics_state.meshes, gpu_mesh_ref);
@@ -751,7 +747,7 @@ char const * graphics_get_uniform_value(uint32_t value) {
 // }
 
 static uint32_t graphics_unit_find(struct Ref gpu_texture_ref) {
-	// @note: consider 0 id empty
+	// @note: consider `id == 0` empty
 	for (uint32_t i = 1; i < graphics_state.units_capacity; i++) {
 		struct Gpu_Unit const * unit = graphics_state.units + i;
 		if (unit->gpu_texture_ref.id != gpu_texture_ref.id) { continue; }
@@ -765,7 +761,6 @@ static uint32_t graphics_unit_init(struct Ref gpu_texture_ref) {
 	uint32_t unit = graphics_unit_find(gpu_texture_ref);
 	if (unit != 0) { return unit; }
 
-	// @note: consider 0 ref.id empty
 	unit = graphics_unit_find((struct Ref){0});
 	if (unit == 0) {
 		logger_to_console("'graphics_unit_find' failed\n"); DEBUG_BREAK();
@@ -1147,7 +1142,7 @@ void graphics_to_glibrary_init(void) {
 }
 
 void graphics_to_glibrary_free(void) {
-	// @note: consider 0 ref.id empty
+	// @note: consider `ref.id == 0` empty
 	if (graphics_state.programs.count > 1) { logger_to_console("dangling programs: %u\n", graphics_state.programs.count - 1); }
 	if (graphics_state.targets.count  > 1) { logger_to_console("dangling targets:  %u\n", graphics_state.targets.count - 1); }
 	if (graphics_state.textures.count > 1) { logger_to_console("dangling textures: %u\n", graphics_state.textures.count - 1); }

@@ -30,8 +30,6 @@ void ref_table_clear(struct Ref_Table * ref_table) {
 			.id = i + 1,
 		};
 	}
-	ref_table_aquire(ref_table, NULL);
-	memset(ref_table->values, 0, ref_table->value_size);
 }
 
 void ref_table_resize(struct Ref_Table * ref_table, uint32_t target_capacity) {
@@ -170,7 +168,7 @@ uint32_t ref_table_get_count(struct Ref_Table * ref_table) {
 }
 
 struct Ref ref_table_ref_at(struct Ref_Table * ref_table, uint32_t index) {
-	if (index >= ref_table->count) { return (struct Ref){.id = INDEX_EMPTY}; }
+	if (index >= ref_table->count) { return ref_empty; }
 	uint32_t const sparse_index = ref_table->dense[index];
 	return (struct Ref){
 		.id = sparse_index,
@@ -198,3 +196,7 @@ bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator *
 	}
 	return false;
 }
+
+//
+
+struct Ref const ref_empty = {.id = INDEX_EMPTY,};

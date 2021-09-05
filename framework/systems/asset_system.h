@@ -36,4 +36,8 @@ void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_r
 void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref asset_ref);
 void * asset_system_find_instance(struct Asset_System * system, char const * name);
 
+//
+
+extern struct Asset_Ref const asset_ref_empty;
+
 #endif

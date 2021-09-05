@@ -26,11 +26,12 @@ void asset_system_init(struct Asset_System * system) {
 	hash_table_u32_init(&system->refs, sizeof(struct Ref));
 	hash_table_u32_init(&system->map, sizeof(uint32_t));
 
-	// @note: consider type_id 0 empty
-	asset_system_set_type(system, "", (struct Asset_Callbacks){0}, 0);
-
-	// @note: consider resource_id 0 empty
-	hash_table_u32_set(&system->refs, 0, &(struct Ref){0});
+	{
+		// @note: consider `type_id == 0` and `resource_id == 0` empty
+		uint32_t const id = strings_add(&system->strings, 0, "");
+		hash_table_u32_set(&system->types, id, &(struct Asset_Type){0});
+		hash_table_u32_set(&system->refs, id, &(struct Ref){0});
+	}
 }
 
 void asset_system_free(struct Asset_System * system) {
@@ -47,7 +48,10 @@ void asset_system_free(struct Asset_System * system) {
 
 void asset_system_map_extension(struct Asset_System * system, char const * type_name, char const * extension) {
 	uint32_t const type_length = (uint32_t)strlen(type_name);
+	if (type_length == INDEX_EMPTY) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
+
 	uint32_t const extension_length = (uint32_t)strlen(extension);
+	if (extension_length == INDEX_EMPTY) { logger_to_console("empty extension"); DEBUG_BREAK(); return; }
 
 	uint32_t const type_id = strings_add(&system->strings, type_length, type_name);
 	uint32_t const extension_id = strings_add(&system->strings, extension_length, extension);
@@ -56,28 +60,30 @@ void asset_system_map_extension(struct Asset_System * system, char const * type_
 }
 
 void asset_system_set_type(struct Asset_System * system, char const * type_name, struct Asset_Callbacks callbacks, uint32_t value_size) {
+	uint32_t const type_length = (uint32_t)strlen(type_name);
+	if (type_length == INDEX_EMPTY) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
+
 	struct Asset_Type asset_type = {
 		.callbacks = callbacks,
 	};
+
 	ref_table_init(&asset_type.instances, SIZE_OF_MEMBER(struct Asset_Entry, header) + value_size);
 
 	{
-		// @note: consider ref.id 0 empty
+		// @note: consider `ref.id == 0` empty
 		ref_table_aquire(&asset_type.instances, NULL);
 	}
 
-	uint32_t const type_length = (uint32_t)strlen(type_name);
 	uint32_t const type_id = strings_add(&system->strings, type_length, type_name);
 	hash_table_u32_set(&system->types, type_id, &asset_type);
 }
 
 void asset_system_del_type(struct Asset_System * system, char const * type_name) {
 	uint32_t const type_length = (uint32_t)strlen(type_name);
+	if (type_length == INDEX_EMPTY) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
+
 	uint32_t const type_id = strings_find(&system->strings, type_length, type_name);
-	if (type_id == INDEX_EMPTY || type_id == 0) {
-		logger_to_console("unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
-		return;
-	}
+	if (type_id == INDEX_EMPTY) { logger_to_console("unknown type: %*s\n", type_length, type_name); DEBUG_BREAK(); return; }
 
 	{
 		struct Asset_Type * asset_type = hash_table_u32_get(&system->types, type_id);
@@ -89,27 +95,25 @@ void asset_system_del_type(struct Asset_System * system, char const * type_name)
 
 struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * name) {
 	uint32_t const name_lenth = (uint32_t)strlen(name);
+	if (name_lenth == INDEX_EMPTY) { logger_to_console("empty name"); DEBUG_BREAK(); return asset_ref_empty; }
 
 	//
 	uint32_t const extension_length = asset_system_get_extension_from_name(name_lenth, name);
-	if (extension_length == 0) {
-		logger_to_console("no extension: %*s\n", name_lenth, name); DEBUG_BREAK();
-		return (struct Asset_Ref){0};
-	}
+	if (extension_length == INDEX_EMPTY) { logger_to_console("empty extension"); DEBUG_BREAK(); return asset_ref_empty; }
 
 	char const * extension_name = name + (name_lenth - extension_length);
 
 	//
 	uint32_t const extension_id = strings_find(&system->strings, extension_length, extension_name);
-	if (extension_id == INDEX_EMPTY || extension_id == 0) {
+	if (extension_id == INDEX_EMPTY) {
 		logger_to_console("unknown extension: %*s\n", extension_length, extension_name); DEBUG_BREAK();
-		return (struct Asset_Ref){0};
+		return asset_ref_empty;
 	}
 
 	uint32_t const * type_id = hash_table_u32_get(&system->map, extension_id);
 	if (type_id == NULL) {
 		logger_to_console("can't infer type from extension: %*s\n", extension_length, extension_name); DEBUG_BREAK();
-		return (struct Asset_Ref){0};
+		return asset_ref_empty;
 	}
 
 	//
@@ -129,7 +133,7 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * 
 		char const * type_name = strings_get(&system->strings, *type_id);
 		uint32_t const type_length = strings_get_length(&system->strings, *type_id);
 		logger_to_console("unknown type: %*s\n", type_length, type_name); DEBUG_BREAK();
-		return (struct Asset_Ref){0};
+		return asset_ref_empty;
 	}
 
 	//
@@ -150,12 +154,14 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * 
 }
 
 void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_ref) {
-	if (asset_ref.type_id == INDEX_EMPTY || asset_ref.type_id == 0) {
-		logger_to_console("unknown type"); DEBUG_BREAK(); return;
+	if (asset_ref.type_id == asset_ref_empty.type_id) {
+		logger_to_console("unknown type"); DEBUG_BREAK();
+		return;
 	}
 
-	if (asset_ref.resource_id == INDEX_EMPTY || asset_ref.resource_id == 0) {
-		logger_to_console("unknown resource"); DEBUG_BREAK(); return;
+	if (asset_ref.resource_id == asset_ref_empty.resource_id) {
+		logger_to_console("unknown resource"); DEBUG_BREAK();
+		return;
 	}
 
 	//
@@ -176,11 +182,11 @@ void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_r
 }
 
 void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref asset_ref) {
-	if (asset_ref.type_id == INDEX_EMPTY || asset_ref.type_id == 0) {
+	if (asset_ref.type_id == asset_ref_empty.type_id) {
 		logger_to_console("unknown type"); DEBUG_BREAK(); return NULL;
 	}
 
-	if (asset_ref.resource_id == INDEX_EMPTY || asset_ref.resource_id == 0) {
+	if (asset_ref.resource_id == asset_ref_empty.resource_id) {
 		logger_to_console("unknown resource"); DEBUG_BREAK(); return NULL;
 	}
 
@@ -205,7 +211,7 @@ void * asset_system_find_instance(struct Asset_System * system, char const * nam
 //
 
 static void asset_system_del_type_internal(struct Asset_System * system, struct Asset_Type * asset_type) {
-	// @note: consider ref.id 0 empty
+	// @note: consider `ref.id == 0` empty
 	for (struct Ref_Table_Iterator it = {.next = 1}; ref_table_iterate(&asset_type->instances, &it); /*empty*/) {
 		struct Asset_Entry * entry = it.value;
 		hash_table_u32_del(&system->refs, entry->header.resource_id);
@@ -226,3 +232,7 @@ static uint32_t asset_system_get_extension_from_name(uint32_t name_lenth, char c
 	}
 	return 0;
 }
+
+//
+
+struct Asset_Ref const asset_ref_empty = {.instance_ref.id = INDEX_EMPTY};

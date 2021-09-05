@@ -9,7 +9,6 @@ struct Ref_Table_Iterator {
 	void * value;
 };
 
-// @idea: provide "0 id is empty" guarantee?
 struct Ref_Table {
 	uint32_t free_sparse_index;
 	uint32_t value_size;
@@ -38,5 +37,9 @@ struct Ref ref_table_ref_at(struct Ref_Table * ref_table, uint32_t index);
 void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index);
 
 bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator * iterator);
+
+//
+
+extern struct Ref const ref_empty;
 
 #endif
