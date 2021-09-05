@@ -404,6 +404,9 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 //
 
 static void main_get_config(struct Application_Config * config) {
+#define JSON_GET(key) json_get(&settings, &strings, key)
+#define JSON_GET_NUMBER(key, type, default_value) (type)json_as_number(JSON_GET(key), default_value)
+
 	struct Array_Byte buffer;
 	bool const read_success = platform_file_read_entire("assets/sandbox/application.json", &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
@@ -416,16 +419,19 @@ static void main_get_config(struct Application_Config * config) {
 	array_byte_free(&buffer);
 
 	*config = (struct Application_Config){
-		.size_x = (uint32_t)json_as_number(json_object_get(&settings, &strings, "size_x"), 960),
-		.size_y = (uint32_t)json_as_number(json_object_get(&settings, &strings, "size_y"), 540),
-		.vsync = (int32_t)json_as_number(json_object_get(&settings, &strings, "vsync"), 0),
-		.target_refresh_rate = (uint32_t)json_as_number(json_object_get(&settings, &strings, "target_refresh_rate"), 60),
-		.fixed_refresh_rate = (uint32_t)json_as_number(json_object_get(&settings, &strings, "fixed_refresh_rate"), 30),
-		.slow_frames_limit = (uint32_t)json_as_number(json_object_get(&settings, &strings, "slow_frames_limit"), 2),
+		.size_x = JSON_GET_NUMBER("size_x", uint32_t, 960),
+		.size_y = JSON_GET_NUMBER("size_y", uint32_t, 540),
+		.vsync = JSON_GET_NUMBER("vsync", int32_t, 0),
+		.target_refresh_rate = JSON_GET_NUMBER("target_refresh_rate", uint32_t, 60),
+		.fixed_refresh_rate = JSON_GET_NUMBER("fixed_refresh_rate", uint32_t, 30),
+		.slow_frames_limit = JSON_GET_NUMBER("slow_frames_limit", uint32_t, 2),
 	};
 
 	json_free(&settings);
 	strings_free(&strings);
+
+#undef JSON_GET
+#undef JSON_GET_NUMBER
 }
 
 #include <stdlib.h>

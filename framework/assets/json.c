@@ -46,7 +46,7 @@ void json_free(struct JSON * value) {
 }
 
 // -- JSON try get element
-struct JSON const * json_object_get(struct JSON const * value, struct Strings const * strings, char const * key) {
+struct JSON const * json_get(struct JSON const * value, struct Strings const * strings, char const * key) {
 	if (value->type != JSON_OBJECT) { return &json_error; }
 	uint32_t const key_id = strings_find(strings, (uint32_t)strlen(key), key);
 	if (key_id == INDEX_EMPTY) { return &json_null; }
@@ -54,19 +54,19 @@ struct JSON const * json_object_get(struct JSON const * value, struct Strings co
 	return (result != NULL) ? result : &json_null;
 }
 
-struct JSON const * json_array_at(struct JSON const * value, uint32_t index) {
+struct JSON const * json_at(struct JSON const * value, uint32_t index) {
 	if (value->type != JSON_ARRAY) { return &json_error; }
 	void * result = array_any_at(&value->as.array, index);
 	return (result != NULL) ? result : &json_null;
 }
 
-uint32_t json_array_count(struct JSON const * value) {
+uint32_t json_count(struct JSON const * value) {
 	if (value->type != JSON_ARRAY) { return 0; }
 	return value->as.array.count;
 }
 
 // -- JSON try get data
-uint32_t json_as_string_id(struct JSON const * value) {
+uint32_t json_as_id(struct JSON const * value) {
 	if (value->type != JSON_STRING) { return INDEX_EMPTY; }
 	return value->as.id;
 }

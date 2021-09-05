@@ -31,12 +31,12 @@ void json_init(struct JSON * value, struct Strings * strings, char const * data)
 void json_free(struct JSON * value);
 
 // -- JSON try get element
-struct JSON const * json_object_get(struct JSON const * value, struct Strings const * strings, char const * key);
-struct JSON const * json_array_at(struct JSON const * value, uint32_t index);
-uint32_t json_array_count(struct JSON const * value);
+struct JSON const * json_get(struct JSON const * value, struct Strings const * strings, char const * key);
+struct JSON const * json_at(struct JSON const * value, uint32_t index);
+uint32_t json_count(struct JSON const * value);
 
 // -- JSON try get data
-uint32_t json_as_string_id(struct JSON const * value);
+uint32_t json_as_id(struct JSON const * value);
 char const * json_as_string(struct JSON const * value, struct Strings const * strings, char const * default_value);
 float json_as_number(struct JSON const * value, float default_value);
 bool json_as_boolean(struct JSON const * value, bool default_value);
