@@ -7,6 +7,7 @@
 
 struct Font;
 struct Font_Image;
+struct Strings;
 
 // ----- ----- ----- ----- -----
 //     Asset shader part
@@ -64,12 +65,19 @@ struct Asset_Bytes {
 void asset_bytes_init(void * instance, char const * name);
 void asset_bytes_free(void * instance);
 
+// ----- ----- ----- ----- -----
 // -- Asset json part
+// ----- ----- ----- ----- -----
 struct Asset_JSON {
 	struct JSON value;
 };
 
+void asset_json_type_init(void);
+void asset_json_type_free(void);
+
 void asset_json_init(void * instance, char const * name);
 void asset_json_free(void * instance);
+
+extern struct Strings * asset_json_strings;
 
 #endif

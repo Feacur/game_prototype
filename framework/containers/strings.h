@@ -14,9 +14,9 @@ struct Strings { // ZII
 void strings_init(struct Strings * strings);
 void strings_free(struct Strings * strings);
 
-uint32_t strings_find(struct Strings * strings, uint32_t length, void const * value);
+uint32_t strings_find(struct Strings const * strings, uint32_t length, void const * value);
 uint32_t strings_add(struct Strings * strings, uint32_t length, void const * value);
-char const * strings_get(struct Strings * strings, uint32_t id);
-uint32_t strings_get_length(struct Strings * strings, uint32_t id);
+char const * strings_get(struct Strings const * strings, uint32_t id);
+uint32_t strings_get_length(struct Strings const * strings, uint32_t id);
 
 #endif

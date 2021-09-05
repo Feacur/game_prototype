@@ -49,7 +49,6 @@ static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
 
 static void game_init(void) {
 	state_init();
-	json_system_init();
 
 	uniforms.color = graphics_add_uniform_id("u_Color");
 	uniforms.texture = graphics_add_uniform_id("u_Texture");
@@ -58,7 +57,7 @@ static void game_init(void) {
 
 	//
 	struct Asset_JSON const * json_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.json");
-	state_read_json(&json_test->value);
+	state_read_json(&json_test->value, asset_json_strings);
 
 	// objects
 	{
@@ -181,7 +180,6 @@ static void game_init(void) {
 
 static void game_free(void) {
 	state_free();
-	json_system_free();
 }
 
 static void game_fixed_update(uint64_t elapsed, uint64_t per_second) {
@@ -406,27 +404,28 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 //
 
 static void main_get_config(struct Application_Config * config) {
-	json_system_init();
-
 	struct Array_Byte buffer;
 	bool const read_success = platform_file_read_entire("assets/sandbox/application.json", &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
 
+	struct Strings strings;
+	strings_init(&strings);
+
 	struct JSON settings;
-	json_init(&settings, (char const *)buffer.data);
+	json_init(&settings, &strings, (char const *)buffer.data);
 	array_byte_free(&buffer);
 
 	*config = (struct Application_Config){
-		.size_x = (uint32_t)json_as_number(json_object_get(&settings, "size_x"), 960),
-		.size_y = (uint32_t)json_as_number(json_object_get(&settings, "size_y"), 540),
-		.vsync = (int32_t)json_as_number(json_object_get(&settings, "vsync"), 0),
-		.target_refresh_rate = (uint32_t)json_as_number(json_object_get(&settings, "target_refresh_rate"), 60),
-		.fixed_refresh_rate = (uint32_t)json_as_number(json_object_get(&settings, "fixed_refresh_rate"), 30),
-		.slow_frames_limit = (uint32_t)json_as_number(json_object_get(&settings, "slow_frames_limit"), 2),
+		.size_x = (uint32_t)json_as_number(json_object_get(&settings, &strings, "size_x"), 960),
+		.size_y = (uint32_t)json_as_number(json_object_get(&settings, &strings, "size_y"), 540),
+		.vsync = (int32_t)json_as_number(json_object_get(&settings, &strings, "vsync"), 0),
+		.target_refresh_rate = (uint32_t)json_as_number(json_object_get(&settings, &strings, "target_refresh_rate"), 60),
+		.fixed_refresh_rate = (uint32_t)json_as_number(json_object_get(&settings, &strings, "fixed_refresh_rate"), 30),
+		.slow_frames_limit = (uint32_t)json_as_number(json_object_get(&settings, &strings, "slow_frames_limit"), 2),
 	};
 
 	json_free(&settings);
-	json_system_free();
+	strings_free(&strings);
 }
 
 #include <stdlib.h>

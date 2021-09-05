@@ -1,5 +1,6 @@
 # -
 [documentation] reorganize
+[system] track memory through a doubly linked list; the memory system is automatically zero-initialized
 
 # 2021, august 12
 ```

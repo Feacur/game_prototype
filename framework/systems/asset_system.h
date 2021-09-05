@@ -11,6 +11,8 @@ struct Asset_Ref { // ZII
 };
 
 struct Asset_Callbacks { // ZII
+	void (* type_init)(void);
+	void (* type_free)(void);
 	void (* init)(void * instance, char const * name);
 	void (* free)(void * instance);
 };

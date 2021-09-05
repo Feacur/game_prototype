@@ -11,43 +11,14 @@
 //
 #include "json.h"
 
-// -- JSON system part
-static struct JSON_System { // static ZII
-	// @idea: separate key and value strings?
-	struct Strings strings;
-} json_system;
-
-void json_system_init(void) {
-	strings_init(&json_system.strings);
-	strings_add(&json_system.strings, 0, "");
-}
-
-void json_system_free(void) {
-	strings_free(&json_system.strings);
-	// memset(&json_system, 0, sizeof(json_system));
-}
-
-uint32_t json_system_add_string_id(char const * value) {
-	return strings_add(&json_system.strings, (uint32_t)strlen(value), value);
-}
-
-uint32_t json_system_find_string_id(char const * value) {
-	return strings_find(&json_system.strings, (uint32_t)strlen(value), value);
-}
-
-char const * json_system_get_string_value(uint32_t value) {
-	return strings_get(&json_system.strings, value);
-}
-
-// -- JSON value part
 struct JSON const json_true  = {.type = JSON_BOOLEAN, .as.boolean = true,};
 struct JSON const json_false = {.type = JSON_BOOLEAN, .as.boolean = false,};
 struct JSON const json_null  = {.type = JSON_NULL,};
 struct JSON const json_error = {.type = JSON_ERROR,};
 
-static void json_init_internal(char const * data, struct JSON * value);
-void json_init(struct JSON * value, char const * data) {
-	json_init_internal(data, value);
+static void json_init_internal(struct JSON * value, struct Strings * strings, char const * data);
+void json_init(struct JSON * value, struct Strings * strings, char const * data) {
+	json_init_internal(value, strings, data);
 }
 
 void json_free(struct JSON * value) {
@@ -75,9 +46,9 @@ void json_free(struct JSON * value) {
 }
 
 // -- JSON try get element
-struct JSON const * json_object_get(struct JSON const * value, char const * key) {
+struct JSON const * json_object_get(struct JSON const * value, struct Strings const * strings, char const * key) {
 	if (value->type != JSON_OBJECT) { return &json_error; }
-	uint32_t const key_id = json_system_find_string_id(key);
+	uint32_t const key_id = strings_find(strings, (uint32_t)strlen(key), key);
 	if (key_id == INDEX_EMPTY) { return &json_null; }
 	void const * result = hash_table_u32_get(&value->as.table, key_id);
 	return (result != NULL) ? result : &json_null;
@@ -100,9 +71,9 @@ uint32_t json_as_string_id(struct JSON const * value) {
 	return value->as.id;
 }
 
-char const * json_as_string(struct JSON const * value, char const * default_value) {
+char const * json_as_string(struct JSON const * value, struct Strings const * strings, char const * default_value) {
 	if (value->type != JSON_STRING) { return default_value; }
-	return json_system_get_string_value(value->as.id);
+	return strings_get(strings, value->as.id);
 }
 
 float json_as_number(struct JSON const * value, float default_value) {
@@ -118,6 +89,7 @@ bool json_as_boolean(struct JSON const * value, bool default_value) {
 //
 
 struct JSON_Parser {
+	struct Strings * strings;
 	struct JSON_Scanner scanner;
 	struct JSON_Token previous, current;
 	bool error, panic;
@@ -231,7 +203,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		// add
 		bool const is_new = hash_table_u32_set(table, entry_key.as.id, &entry_value);
 		if (!is_new) {
-			logger_to_console("key duplicate: \"%s\"\n", json_system_get_string_value(entry_key.as.id));
+			logger_to_console("key duplicate: \"%s\"\n", strings_get(parser->strings, entry_key.as.id));
 			DEBUG_BREAK();
 		}
 
@@ -277,7 +249,7 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 }
 
 static void json_parser_do_string(struct JSON_Parser * parser, struct JSON * value) {
-	uint32_t const string_id = strings_add(&json_system.strings, parser->current.length - 2, parser->current.data + 1);
+	uint32_t const string_id = strings_add(parser->strings, parser->current.length - 2, parser->current.data + 1);
 	*value = (struct JSON){.type = JSON_STRING, .as.id = string_id,};
 	json_parser_consume(parser);
 }
@@ -312,10 +284,12 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 	*value = json_error;
 }
 
-static void json_init_internal(char const * data, struct JSON * value) {
+static void json_init_internal(struct JSON * value, struct Strings * strings, char const * data) {
 	if (data == NULL) { *value = json_error; return; }
 
-	struct JSON_Parser parser = {0};
+	struct JSON_Parser parser = {
+		.strings = strings,
+	};
 	json_scanner_init(&parser.scanner, data);
 	json_parser_consume(&parser);
 

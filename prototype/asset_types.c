@@ -2,6 +2,7 @@
 #include "framework/logger.h"
 #include "framework/platform_file.h"
 #include "framework/containers/array_byte.h"
+#include "framework/containers/strings.h"
 #include "framework/graphics/gpu_objects.h"
 
 #include "framework/assets/font.h"
@@ -118,6 +119,18 @@ void asset_bytes_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset json part
 // ----- ----- ----- ----- -----
+static struct Strings asset_json_strings_internal;
+
+void asset_json_type_init(void) {
+	strings_init(&asset_json_strings_internal);
+	asset_json_strings = &asset_json_strings_internal;
+}
+
+void asset_json_type_free(void) {
+	asset_json_strings = NULL;
+	strings_free(&asset_json_strings_internal);
+}
+
 void asset_json_init(void * instance, char const * name) {
 	struct Asset_JSON * asset = instance;
 
@@ -125,7 +138,7 @@ void asset_json_init(void * instance, char const * name) {
 	bool const read_success = platform_file_read_entire(name, &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
 
-	json_init(&asset->value, (char const *)buffer.data);
+	json_init(&asset->value, &asset_json_strings_internal, (char const *)buffer.data);
 
 	array_byte_free(&buffer);
 }
@@ -134,3 +147,5 @@ void asset_json_free(void * instance) {
 	struct Asset_JSON * asset = instance;
 	json_free(&asset->value);
 }
+
+struct Strings * asset_json_strings = NULL;

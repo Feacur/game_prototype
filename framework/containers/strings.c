@@ -15,7 +15,7 @@ void strings_free(struct Strings * strings) {
 	array_byte_free(&strings->buffer);
 }
 
-uint32_t strings_find(struct Strings * strings, uint32_t length, void const * value) {
+uint32_t strings_find(struct Strings const * strings, uint32_t length, void const * value) {
 	uint32_t offset = 0;
 	for (uint32_t i = 0; i < strings->lengths.count; i++) {
 		if (length == strings->lengths.data[i]) {
@@ -43,12 +43,12 @@ uint32_t strings_add(struct Strings * strings, uint32_t length, void const * val
 	return strings->lengths.count - 1;
 }
 
-char const * strings_get(struct Strings * strings, uint32_t id) {
+char const * strings_get(struct Strings const * strings, uint32_t id) {
 	if (id >= strings->lengths.count) { return NULL; }
 	return (char const *)(strings->buffer.data + strings->offsets.data[id]);
 }
 
-uint32_t strings_get_length(struct Strings * strings, uint32_t id) {
+uint32_t strings_get_length(struct Strings const * strings, uint32_t id) {
 	if (id >= strings->lengths.count) { return 0; }
 	return strings->lengths.data[id];
 }

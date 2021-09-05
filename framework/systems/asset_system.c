@@ -63,6 +63,10 @@ void asset_system_set_type(struct Asset_System * system, char const * type_name,
 	uint32_t const type_length = (uint32_t)strlen(type_name);
 	if (type_length == INDEX_EMPTY) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
 
+	if (callbacks.type_init != NULL) {
+		callbacks.type_init();
+	}
+
 	struct Asset_Type asset_type = {
 		.callbacks = callbacks,
 	};
@@ -221,6 +225,9 @@ static void asset_system_del_type_internal(struct Asset_System * system, struct 
 	}
 
 	ref_table_free(&asset_type->instances);
+	if (asset_type->callbacks.type_free != NULL) {
+		asset_type->callbacks.type_free();
+	}
 }
 
 static uint32_t asset_system_get_extension_from_name(uint32_t name_lenth, char const * name) {

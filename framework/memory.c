@@ -9,7 +9,6 @@
 //        but it's just an extra failsafe then
 // @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
 // @idea: use OS-native allocators instead of CRT's
-// @idea: put metadata into headers?
 
 struct Memory_Header {
 	size_t checksum, size;

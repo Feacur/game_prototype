@@ -4,15 +4,8 @@
 #include "framework/containers/array_any.h"
 #include "framework/containers/hash_table_u32.h"
 
-// -- JSON system part
-void json_system_init(void);
-void json_system_free(void);
+struct Strings;
 
-uint32_t json_system_add_string_id(char const * value);
-uint32_t json_system_find_string_id(char const * value);
-char const * json_system_get_string_value(uint32_t value);
-
-// -- JSON value part
 enum JSON_Type {
 	JSON_NULL,
 	JSON_OBJECT,
@@ -34,17 +27,17 @@ struct JSON {
 	} as;
 };
 
-void json_init(struct JSON * value, char const * data);
+void json_init(struct JSON * value, struct Strings * strings, char const * data);
 void json_free(struct JSON * value);
 
 // -- JSON try get element
-struct JSON const * json_object_get(struct JSON const * value, char const * key);
+struct JSON const * json_object_get(struct JSON const * value, struct Strings const * strings, char const * key);
 struct JSON const * json_array_at(struct JSON const * value, uint32_t index);
 uint32_t json_array_count(struct JSON const * value);
 
 // -- JSON try get data
 uint32_t json_as_string_id(struct JSON const * value);
-char const * json_as_string(struct JSON const * value, char const * default_value);
+char const * json_as_string(struct JSON const * value, struct Strings const * strings, char const * default_value);
 float json_as_number(struct JSON const * value, float default_value);
 bool json_as_boolean(struct JSON const * value, bool default_value);
 
