@@ -5,6 +5,9 @@
 #include "framework/containers/hash_table_u32.h"
 
 // -- JSON system part
+void json_system_init(void);
+void json_system_free(void);
+
 uint32_t json_system_add_string_id(char const * value);
 uint32_t json_system_find_string_id(char const * value);
 char const * json_system_get_string_value(uint32_t value);

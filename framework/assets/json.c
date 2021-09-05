@@ -9,26 +9,24 @@
 #include <string.h>
 
 //
-#include "framework/internal/json_to_system.h"
+#include "json.h"
 
-static struct JSON_System {
+// -- JSON system part
+static struct JSON_System { // static ZII
 	// @idea: separate key and value strings?
 	struct Strings strings;
 } json_system;
 
-void json_to_system_init(void) {
+void json_system_init(void) {
 	strings_init(&json_system.strings);
 	strings_add(&json_system.strings, 0, "");
 }
 
-void json_to_system_free(void) {
+void json_system_free(void) {
 	strings_free(&json_system.strings);
+	// memset(&json_system, 0, sizeof(json_system));
 }
 
-//
-#include "json.h"
-
-// -- JSON system part
 uint32_t json_system_add_string_id(char const * value) {
 	return strings_add(&json_system.strings, (uint32_t)strlen(value), value);
 }

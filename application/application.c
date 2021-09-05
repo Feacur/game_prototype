@@ -37,10 +37,6 @@ static void application_init(void) {
 	logger_to_console("  power is %s\n", platform_system_is_powered() ? "on" : "off");
 	logger_to_console("\n");
 
-	if (app.callbacks.pre_init != NULL) {
-		app.callbacks.pre_init(&app.config);
-	}
-
 	logger_to_console(
 		"> settings:"
 		"\n  size: %u x %u"
@@ -160,13 +156,9 @@ static bool application_update(void) {
 	return true;
 }
 
-void application_run(struct Application_Callbacks const * callbacks) {
-	if (callbacks == NULL) {
-		logger_to_console("provide application callbacks\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
-	}
-	app.callbacks = *callbacks;
-
+void application_run(struct Application_Config config, struct Application_Callbacks callbacks) {
+	app.config = config;
+	app.callbacks = callbacks;
 	application_init();
 	while (application_update()) { }
 	application_free();

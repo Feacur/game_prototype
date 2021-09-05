@@ -1,4 +1,3 @@
-#include "framework/internal/json_to_system.h"
 #include "framework/internal/input_to_system.h"
 #include "framework/internal/memory_to_system.h"
 #include "framework/containers/array_byte.h"
@@ -52,11 +51,9 @@ void platform_system_init(void) {
 	window_to_system_init();
 	glibrary_to_system_init();
 	input_to_system_init();
-	json_to_system_init();
 }
 
 void platform_system_free(void) {
-	json_to_system_free();
 	input_to_system_free();
 	glibrary_to_system_free();
 	window_to_system_free();
