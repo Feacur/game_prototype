@@ -763,7 +763,7 @@ static uint32_t graphics_unit_init(struct Ref gpu_texture_ref) {
 
 	unit = graphics_unit_find((struct Ref){0});
 	if (unit == 0) {
-		logger_to_console("'graphics_unit_find' failed\n"); DEBUG_BREAK();
+		logger_to_console("failure: no spare texture/sampler units\n"); DEBUG_BREAK();
 		return unit;
 	}
 
@@ -780,10 +780,7 @@ static uint32_t graphics_unit_init(struct Ref gpu_texture_ref) {
 // static void graphics_unit_free(struct Gpu_Texture * gpu_texture) {
 // 	if (ogl_version > 0) {
 // 		uint32_t unit = graphics_unit_find(gpu_texture);
-// 		if (unit == 0) {
-// 			logger_console("'graphics_unit_find' failed\n"); DEBUG_BREAK();
-// 			return;
-// 		}
+// 		if (unit == 0) { return; }
 // 
 // 		graphics_state.units[unit] = (struct Gpu_Unit){
 // 			.gpu_texture = NULL,
@@ -831,14 +828,12 @@ static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_progra
 			GLint units[MAX_UNITS_PER_MATERIAL];
 			uint32_t units_count = 0;
 
+			// @todo: automatically rebind in a circular buffer manner
 			struct Ref const * gpu_texture_refs = (struct Ref const *)data;
 			for (uint32_t i = 0; i < field->array_size; i++) {
 				uint32_t unit = graphics_unit_find(gpu_texture_refs[i]);
 				if (unit == 0) {
 					unit = graphics_unit_init(gpu_texture_refs[i]);
-					if (unit == 0) {
-						logger_to_console("failed to find a vacant texture/sampler unit\n"); DEBUG_BREAK();
-					}
 				}
 				units[units_count++] = (GLint)unit;
 			}

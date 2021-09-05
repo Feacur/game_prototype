@@ -46,7 +46,7 @@ struct Font * font_init(char const * path) {
 	if (!read_success || font->file.count == 0) { DEBUG_BREAK(); return font; }
 
 	if (!stbtt_InitFont(&font->font, font->file.data, stbtt_GetFontOffsetForIndex(font->file.data, 0))) {
-		logger_to_console("'stbtt_InitFont' failed\n"); DEBUG_BREAK();
+		logger_to_console("failure: can't read font file\n"); DEBUG_BREAK();
 	}
 
 	stbtt_GetFontVMetrics(&font->font, &font->ascent, &font->descent, &font->line_gap);
