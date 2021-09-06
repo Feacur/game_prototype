@@ -1106,6 +1106,28 @@ void graphics_to_glibrary_init(void) {
 	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,            &max_elements_vertices);
 	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,             &max_elements_indices);
 
+	logger_to_console(
+		"\n"
+		"> OpenGL limits:\n"
+		"  units ......... %d\n"
+		"  - FS .......... %d\n"
+		"  - VS .......... %d\n"
+		"  - CS .......... %d\n"
+		"  texture size .. %d\n"
+		"  target size ... %d\n"
+		"  vertices ...... %d\n"
+		"  indices ....... %d\n"
+		"",
+		max_units,
+		max_units_fragment_shader,
+		max_units_vertex_shader,
+		max_units_compute_shader,
+		max_texture_size,
+		max_renderbuffer_size,
+		max_elements_vertices,
+		max_elements_indices
+	);
+
 	graphics_state.max_units_vertex_shader   = (uint32_t)max_units_vertex_shader;
 	graphics_state.max_units_fragment_shader = (uint32_t)max_units_fragment_shader;
 	graphics_state.max_units_compute_shader  = (uint32_t)max_units_compute_shader;
