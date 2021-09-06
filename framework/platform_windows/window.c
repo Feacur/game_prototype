@@ -306,7 +306,7 @@ static enum Key_Code translate_virtual_key_to_application(uint8_t scan, uint8_t 
 	return KC_ERROR;
 }
 
-static struct Window * raw_input_window = NULL;
+static struct Window * raw_input_window = NULL; // @note: global state
 static void platform_window_internal_toggle_raw_input(struct Window * window, bool state) {
 	static bool previous_state = false;
 

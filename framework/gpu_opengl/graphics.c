@@ -100,7 +100,7 @@ static struct Graphics_State {
 	uint32_t max_renderbuffer_size;
 	uint32_t max_elements_vertices;
 	uint32_t max_elements_indices;
-} graphics_state;
+} graphics_state; // @note: global state
 
 //
 #include "framework/graphics/gpu_objects.h"

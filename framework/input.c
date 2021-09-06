@@ -34,7 +34,7 @@ static struct Input_State { // static ZII
 	struct Mouse_State mouse, mouse_prev;
 	struct Array_U32 codepoints;
 	bool track_codepoints;
-} input_state;
+} input_state; // @note: global state
 
 bool input_key(enum Key_Code key) {
 	return input_state.keyboard.keys[key];

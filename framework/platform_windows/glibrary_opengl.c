@@ -37,7 +37,7 @@ static struct GLibrary { // static ZII
 		char const * extensions;
 		bool has_extension_swap_control;
 	} ext;
-} glibrary;
+} glibrary; // @note: global state
 
 //
 #include "glibrary_to_system.h"

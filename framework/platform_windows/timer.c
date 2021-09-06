@@ -8,7 +8,7 @@
 
 static struct Platform_Timer { // static ZII
 	LARGE_INTEGER ticks_per_second;
-} platform_timer;
+} platform_timer; // @note: global state
 
 //
 #include "framework/platform_timer.h"

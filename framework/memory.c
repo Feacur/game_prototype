@@ -21,7 +21,7 @@ static struct Memory_State { // static ZII
 	struct Memory_Header * root;
 	uint32_t count;
 	size_t bytes;
-} memory_state;
+} memory_state; // @note: global state
 
 //
 #include "memory.h"

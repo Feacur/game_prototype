@@ -119,7 +119,7 @@ void asset_bytes_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset json part
 // ----- ----- ----- ----- -----
-static struct Strings asset_json_strings;
+static struct Strings asset_json_strings; // @note: global state
 
 void asset_json_type_init(void) {
 	strings_init(&asset_json_strings);

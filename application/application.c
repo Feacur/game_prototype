@@ -20,7 +20,7 @@ static struct Application { // static ZII
 		uint64_t frame_start, per_second;
 		uint64_t fixed_accumulator;
 	} ticks;
-} app;
+} app; // @note: global state
 
 static uint64_t get_target_ticks(int32_t vsync) {
 	uint32_t const vsync_factor = (vsync > 0) ? (uint32_t)vsync : 1;

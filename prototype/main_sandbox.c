@@ -42,7 +42,7 @@ static struct Main_Uniforms {
 	uint32_t color;
 	uint32_t texture;
 	uint32_t transform;
-} uniforms;
+} uniforms; // @note: global state
 
 static uint8_t const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
 static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;

@@ -19,7 +19,7 @@
 static struct Platform_System { // static ZII
 	HMODULE module;
 	bool should_close;
-} platform_system;
+} platform_system; // @note: global state
 
 //
 #include "framework/platform_system.h"
