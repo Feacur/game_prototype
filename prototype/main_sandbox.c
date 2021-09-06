@@ -57,7 +57,7 @@ static void game_init(void) {
 
 	//
 	struct Asset_JSON const * json_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.json");
-	state_read_json(&json_test->value, asset_json_strings);
+	state_read_json(&json_test->value, json_test->strings);
 
 	// objects
 	{

@@ -70,6 +70,7 @@ void asset_bytes_free(void * instance);
 // ----- ----- ----- ----- -----
 struct Asset_JSON {
 	struct JSON value;
+	struct Strings * strings;
 };
 
 void asset_json_type_init(void);
@@ -77,7 +78,5 @@ void asset_json_type_free(void);
 
 void asset_json_init(void * instance, char const * name);
 void asset_json_free(void * instance);
-
-extern struct Strings * asset_json_strings;
 
 #endif
