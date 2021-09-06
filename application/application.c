@@ -34,18 +34,17 @@ static void application_init(void) {
 	platform_system_init();
 
 	logger_to_console("> initialize:\n");
-	logger_to_console("  power is %s\n", platform_system_is_powered() ? "on" : "off");
-	logger_to_console("\n");
+	logger_to_console("  power .. %s\n", platform_system_is_powered() ? "on" : "off");
 
 	logger_to_console(
-		"> settings:"
-		"\n  size: %u x %u"
-		"\n  vsync: %d"
-		"\n  target refresh rate: %u"
-		"\n  fixed refresh rate:  %u"
-		"\n  slow frames limit:   %u"
 		"\n"
-		"\n",
+		"> settings:\n"
+		"  size ......... %u x %u\n"
+		"  vsync ........ %d\n"
+		"  target rate .. %u\n"
+		"  fixed rate ... %u\n"
+		"  slow frames .. %u\n"
+		"",
 		app.config.size_x, app.config.size_y,
 		app.config.vsync,
 		app.config.target_refresh_rate,

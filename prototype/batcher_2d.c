@@ -334,7 +334,7 @@ static void batcher_2d_update_text(struct Batcher_2D * batcher) {
 					struct Font_Glyph const * glyph = font_image_get_glyph(text->font->buffer, it.codepoint);
 					if (glyph == NULL) { glyph = glyph_error; }
 
-					if (glyph->params.is_empty) { logger_to_console("codepoint 0x%x has empty glyph\n", it.codepoint); DEBUG_BREAK(); }
+					if (glyph->params.is_empty) { logger_to_console("codepoint '0x%x' has empty glyph\n", it.codepoint); DEBUG_BREAK(); }
 
 					offset_x += font_image_get_kerning(text->font->buffer, previous_codepoint, it.codepoint);
 
