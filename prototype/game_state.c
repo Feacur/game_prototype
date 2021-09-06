@@ -35,42 +35,42 @@ void state_init(void) {
 	// init asset system
 	{ // state is expected to be inited
 		// > map types
-		asset_system_map_extension(&state.asset_system, "shader", "glsl");
-		asset_system_map_extension(&state.asset_system, "model",  "obj");
-		asset_system_map_extension(&state.asset_system, "model",  "fbx");
-		asset_system_map_extension(&state.asset_system, "image",  "png");
-		asset_system_map_extension(&state.asset_system, "font",   "ttf");
-		asset_system_map_extension(&state.asset_system, "font",   "otf");
-		asset_system_map_extension(&state.asset_system, "bytes",  "txt");
-		asset_system_map_extension(&state.asset_system, "json",   "json");
+		asset_system_map_extension(&state.asset_system, S_("shader"), S_("glsl"));
+		asset_system_map_extension(&state.asset_system, S_("model"),  S_("obj"));
+		asset_system_map_extension(&state.asset_system, S_("model"),  S_("fbx"));
+		asset_system_map_extension(&state.asset_system, S_("image"),  S_("png"));
+		asset_system_map_extension(&state.asset_system, S_("font"),   S_("ttf"));
+		asset_system_map_extension(&state.asset_system, S_("font"),   S_("otf"));
+		asset_system_map_extension(&state.asset_system, S_("bytes"),  S_("txt"));
+		asset_system_map_extension(&state.asset_system, S_("json"),   S_("json"));
 
 		// > register types
-		asset_system_set_type(&state.asset_system, "shader", (struct Asset_Callbacks){
+		asset_system_set_type(&state.asset_system, S_("shader"), (struct Asset_Callbacks){
 			.init = asset_shader_init,
 			.free = asset_shader_free,
 		}, sizeof(struct Asset_Shader));
 
-		asset_system_set_type(&state.asset_system, "model", (struct Asset_Callbacks){
+		asset_system_set_type(&state.asset_system, S_("model"), (struct Asset_Callbacks){
 			.init = asset_model_init,
 			.free = asset_model_free,
 		}, sizeof(struct Asset_Model));
 
-		asset_system_set_type(&state.asset_system, "image", (struct Asset_Callbacks){
+		asset_system_set_type(&state.asset_system, S_("image"), (struct Asset_Callbacks){
 			.init = asset_image_init,
 			.free = asset_image_free,
 		}, sizeof(struct Asset_Image));
 
-		asset_system_set_type(&state.asset_system, "font", (struct Asset_Callbacks){
+		asset_system_set_type(&state.asset_system, S_("font"), (struct Asset_Callbacks){
 			.init = asset_font_init,
 			.free = asset_font_free,
 		}, sizeof(struct Asset_Font));
 
-		asset_system_set_type(&state.asset_system, "bytes", (struct Asset_Callbacks){
+		asset_system_set_type(&state.asset_system, S_("bytes"), (struct Asset_Callbacks){
 			.init = asset_bytes_init,
 			.free = asset_bytes_free,
 		}, sizeof(struct Asset_Bytes));
 
-		asset_system_set_type(&state.asset_system, "json", (struct Asset_Callbacks){
+		asset_system_set_type(&state.asset_system, S_("json"), (struct Asset_Callbacks){
 			.type_init = asset_json_type_init,
 			.type_free = asset_json_type_free,
 			.init = asset_json_init,
@@ -96,25 +96,18 @@ void state_free(void) {
 	memset(&state, 0, sizeof(state));
 }
 
-#define JSON_GET(key) json_get(json, strings, key)
-#define JSON_GET_ID(key) json_as_id(JSON_GET(key))
-#define JSON_GET_STRING(key, default_value) json_as_string(JSON_GET(key), strings, default_value)
-#define JSON_GET_NUMBER(key, type, default_value) (type)json_as_number(JSON_GET(key), default_value)
-#define JSON_GET_BOOLEAN(key, default_value) json_as_boolean(JSON_GET(key), default_value)
-#define JSON_NUMBER_AT(index, type, default_value) (type)json_as_number(json_at(json, index), default_value)
+static void state_read_json_init(struct JSON const * json);
+static void state_read_json_targets(struct JSON const * json);
+static void state_read_json_materials(struct JSON const * json);
 
-static void state_read_json_init(struct Strings * strings);
-static void state_read_json_targets(struct JSON const * json, struct Strings * strings);
-static void state_read_json_materials(struct JSON const * json, struct Strings * strings);
+void state_read_json(struct JSON const * json) {
+	state_read_json_init(json);
 
-void state_read_json(struct JSON const * json, struct Strings * strings) {
-	state_read_json_init(strings);
+	struct JSON const * targets_json = json_get(json, S_("targets"));
+	state_read_json_targets(targets_json);
 
-	struct JSON const * targets_json = JSON_GET("targets");
-	state_read_json_targets(targets_json, strings);
-
-	struct JSON const * materials_json = JSON_GET("materials");
-	state_read_json_materials(materials_json, strings);
+	struct JSON const * materials_json = json_get(json, S_("materials"));
+	state_read_json_materials(materials_json);
 }
 
 //
@@ -131,31 +124,27 @@ static uint32_t id_color;
 static uint32_t uniforms_color;
 static uint32_t uniforms_texture;
 
-static uint32_t json_system_add_string_id(struct Strings * strings, char const * name) {
-	return strings_add(strings, (uint32_t)strlen(name), name);
+static void state_read_json_init(struct JSON const * json) {
+	id_color_rgba_u8 = json_find_id(json, S_("color_rgba_u8"));
+	id_color_depth_r32 = json_find_id(json, S_("color_depth_r32"));
+	id_image = json_find_id(json, S_("image"));
+	id_target = json_find_id(json, S_("target"));
+	id_font = json_find_id(json, S_("font"));
+	id_opaque = json_find_id(json, S_("opaque"));
+	id_transparent = json_find_id(json, S_("transparent"));
+	id_color = json_find_id(json, S_("color"));
+
+	uniforms_color = graphics_add_uniform_id(S_("u_Color"));
+	uniforms_texture = graphics_add_uniform_id(S_("u_Texture"));
 }
 
-static void state_read_json_init(struct Strings * strings) {
-	id_color_rgba_u8 = json_system_add_string_id(strings, "color_rgba_u8");
-	id_color_depth_r32 = json_system_add_string_id(strings, "color_depth_r32");
-	id_image = json_system_add_string_id(strings, "image");
-	id_target = json_system_add_string_id(strings, "target");
-	id_font = json_system_add_string_id(strings, "font");
-	id_opaque = json_system_add_string_id(strings, "opaque");
-	id_transparent = json_system_add_string_id(strings, "transparent");
-	id_color = json_system_add_string_id(strings, "color");
-
-	uniforms_color = graphics_add_uniform_id("u_Color");
-	uniforms_texture = graphics_add_uniform_id("u_Texture");
-}
-
-static void state_read_json_target_buffer(struct JSON const * json, struct Strings * strings, struct Array_Any * parameters) {
+static void state_read_json_target_buffer(struct JSON const * json, struct Array_Any * parameters) {
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
-	uint32_t const type_id = JSON_GET_ID("type");
+	uint32_t const type_id = json_get_id(json, S_("type"));
 	if (type_id == INDEX_EMPTY) { DEBUG_BREAK(); return; }
 
-	bool const buffer_read = JSON_GET_BOOLEAN("read", false);
+	bool const buffer_read = json_get_boolean(json, S_("read"), false);
 
 	if (type_id == id_color_rgba_u8) {
 		array_any_push(parameters, &(struct Texture_Parameters) {
@@ -177,23 +166,23 @@ static void state_read_json_target_buffer(struct JSON const * json, struct Strin
 	}
 }
 
-static void state_read_json_target(struct JSON const * json, struct Strings * strings, struct Array_Any * parameters) {
+static void state_read_json_target(struct JSON const * json, struct Array_Any * parameters) {
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
-	struct JSON const * buffers_json = JSON_GET("buffers");
+	struct JSON const * buffers_json = json_get(json, S_("buffers"));
 	if (buffers_json->type != JSON_ARRAY) { DEBUG_BREAK(); return; }
 
 	parameters->count = 0;
 	uint32_t const buffers_count = json_count(buffers_json);
 	for (uint32_t i = 0; i < buffers_count; i++) {
 		struct JSON const * buffer_json = json_at(buffers_json, i);
-		state_read_json_target_buffer(buffer_json, strings, parameters);
+		state_read_json_target_buffer(buffer_json, parameters);
 	}
 
 	if (parameters->count == 0) { DEBUG_BREAK(); return; }
 
-	uint32_t const size_x = JSON_GET_NUMBER("size_x", uint32_t, 320);
-	uint32_t const size_y = JSON_GET_NUMBER("size_y", uint32_t, 180);
+	uint32_t const size_x = (uint32_t)json_get_number(json, S_("size_x"), 320);
+	uint32_t const size_y = (uint32_t)json_get_number(json, S_("size_y"), 180);
 
 	array_any_push(&state.targets, (struct Ref[]){
 		gpu_target_init(size_x, size_y, array_any_at(parameters, 0), parameters->count)
@@ -202,24 +191,26 @@ static void state_read_json_target(struct JSON const * json, struct Strings * st
 
 //
 
-static void state_read_json_material_color(struct JSON const * json, struct Strings * strings, struct Gfx_Material * material) {
-	(void)strings;
-	// if (uniform_json->type != JSON_ARRAY) { DEBUG_BREAK(); return; }
+static void state_read_json_material_color(struct JSON const * json, struct Gfx_Material * material) {
+	if (json->type != JSON_ARRAY) {
+		gfx_material_set_float(material, uniforms_color, 4, (float[]){1, 1, 1, 1});
+		return;
+	}
 
 	float const color[4] = {
-		JSON_NUMBER_AT(0, float, 1),
-		JSON_NUMBER_AT(1, float, 1),
-		JSON_NUMBER_AT(2, float, 1),
-		JSON_NUMBER_AT(3, float, 1),
+		json_at_number(json, 0, 1),
+		json_at_number(json, 1, 1),
+		json_at_number(json, 2, 1),
+		json_at_number(json, 3, 1),
 	};
 	gfx_material_set_float(material, uniforms_color, 4, color);
 }
 
-static void state_read_json_uniform_image(struct JSON const * json, struct Strings * strings, struct Gfx_Material * material) {
+static void state_read_json_uniform_image(struct JSON const * json, struct Gfx_Material * material) {
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
-	char const * path = JSON_GET_STRING("path", NULL);
-	if (path == NULL) { DEBUG_BREAK(); return; }
+	struct CString const path = json_get_string(json, S_("path"), S_NULL);
+	if (path.data == NULL) { DEBUG_BREAK(); return; }
 
 	struct Asset_Image const * asset = asset_system_find_instance(&state.asset_system, path);
 	if (asset == NULL) { DEBUG_BREAK(); return; }
@@ -227,16 +218,16 @@ static void state_read_json_uniform_image(struct JSON const * json, struct Strin
 	gfx_material_set_texture(material, uniforms_texture, 1, &asset->gpu_ref);
 }
 
-static void state_read_json_uniform_target(struct JSON const * json, struct Strings * strings, struct Gfx_Material * material) {
+static void state_read_json_uniform_target(struct JSON const * json, struct Gfx_Material * material) {
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
-	uint32_t const id = JSON_GET_NUMBER("id", uint32_t, UINT16_MAX);
+	uint32_t const id = (uint32_t)json_get_number(json, S_("id"), UINT16_MAX);
 	if (id == UINT16_MAX) { DEBUG_BREAK(); return; }
 
 	struct Ref const * gpu_target = array_any_at(&state.targets, id);
 	if (gpu_target == NULL) { DEBUG_BREAK(); return; }
 
-	uint32_t const buffer_type_id = JSON_GET_ID("buffer_type");
+	uint32_t const buffer_type_id = json_get_id(json, S_("buffer_type"));
 	if (buffer_type_id == INDEX_EMPTY) { DEBUG_BREAK(); return; }
 
 	if (buffer_type_id == id_color) {
@@ -250,11 +241,11 @@ static void state_read_json_uniform_target(struct JSON const * json, struct Stri
 	DEBUG_BREAK();
 }
 
-static void state_read_json_uniform_font(struct JSON const * json, struct Strings * strings, struct Gfx_Material * material) {
+static void state_read_json_uniform_font(struct JSON const * json, struct Gfx_Material * material) {
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
-	char const * path = JSON_GET_STRING("path", NULL);
-	if (path == NULL) { DEBUG_BREAK(); return; }
+	struct CString const path = json_get_string(json, S_("path"), S_NULL);
+	if (path.data == NULL) { DEBUG_BREAK(); return; }
 
 	struct Asset_Font const * asset = asset_system_find_instance(&state.asset_system, path);
 	if (asset == NULL) { DEBUG_BREAK(); return; }
@@ -262,33 +253,33 @@ static void state_read_json_uniform_font(struct JSON const * json, struct String
 	gfx_material_set_texture(material, uniforms_texture, 1, &asset->gpu_ref);
 }
 
-static void state_read_json_uniform_texture(struct JSON const * json, struct Strings * strings, struct Gfx_Material * material) {
+static void state_read_json_uniform_texture(struct JSON const * json, struct Gfx_Material * material) {
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
-	uint32_t const type_id = JSON_GET_ID("type");
+	uint32_t const type_id = json_get_id(json, S_("type"));
 	if (type_id == INDEX_EMPTY) { DEBUG_BREAK(); return; }
 
 	if (type_id == id_image) {
-		state_read_json_uniform_image(json, strings, material);
+		state_read_json_uniform_image(json, material);
 		return;
 	}
 
 	if (type_id == id_target) {
-		state_read_json_uniform_target(json, strings, material);
+		state_read_json_uniform_target(json, material);
 		return;
 	}
 
 	if (type_id == id_font) {
-		state_read_json_uniform_font(json, strings, material);
+		state_read_json_uniform_font(json, material);
 		return;
 	}
 }
 
-static void state_read_json_material(struct JSON const * json, struct Strings * strings) {
+static void state_read_json_material(struct JSON const * json) {
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
-	char const * path = JSON_GET_STRING("shader", NULL);
-	if (path == NULL) { DEBUG_BREAK(); return; }
+	struct CString const path = json_get_string(json, S_("shader"), S_NULL);
+	if (path.data == NULL) { DEBUG_BREAK(); return; }
 
 	struct Asset_Shader const * asset = asset_system_find_instance(&state.asset_system, path);
 	if (asset == NULL) { DEBUG_BREAK(); return; }
@@ -296,7 +287,7 @@ static void state_read_json_material(struct JSON const * json, struct Strings * 
 	array_any_push(&state.materials, &(struct Gfx_Material){0});
 	struct Gfx_Material * material = array_any_at(&state.materials, state.materials.count - 1);
 
-	uint32_t const mode_id = JSON_GET_ID("mode");
+	uint32_t const mode_id = json_get_id(json, S_("mode"));
 	if (mode_id == INDEX_EMPTY) { DEBUG_BREAK(); return; }
 
 	struct Blend_Mode blend_mode;
@@ -310,7 +301,7 @@ static void state_read_json_material(struct JSON const * json, struct Strings * 
 		blend_mode = blend_mode_opaque;
 	}
 
-	bool const depth_write = JSON_GET_BOOLEAN("depth", true);
+	bool const depth_write = json_get_boolean(json, S_("depth"), true);
 
 	struct Depth_Mode depth_mode;
 	if (depth_write) {
@@ -327,19 +318,19 @@ static void state_read_json_material(struct JSON const * json, struct Strings * 
 
 	// @todo: cycle through shader uniforms
 	{
-		struct JSON const * uniform_json = JSON_GET("u_Color");
-		state_read_json_material_color(uniform_json, strings, material);
+		struct JSON const * uniform_json = json_get(json, S_("u_Color"));
+		state_read_json_material_color(uniform_json, material);
 	}
 
 	{
-		struct JSON const * uniform_json = JSON_GET("u_Texture");
-		state_read_json_uniform_texture(uniform_json, strings, material);
+		struct JSON const * uniform_json = json_get(json, S_("u_Texture"));
+		state_read_json_uniform_texture(uniform_json, material);
 	}
 }
 
 //
 
-static void state_read_json_targets(struct JSON const * json, struct Strings * strings) {
+static void state_read_json_targets(struct JSON const * json) {
 	if (json->type != JSON_ARRAY) { DEBUG_BREAK(); return; }
 
 	struct Array_Any parameters;
@@ -348,25 +339,18 @@ static void state_read_json_targets(struct JSON const * json, struct Strings * s
 	uint32_t const targets_count = json_count(json);
 	for (uint32_t i = 0; i < targets_count; i++) {
 		struct JSON const * target_json = json_at(json, i);
-		state_read_json_target(target_json, strings, &parameters);
+		state_read_json_target(target_json, &parameters);
 	}
 
 	array_any_free(&parameters);
 }
 
-static void state_read_json_materials(struct JSON const * json, struct Strings * strings) {
+static void state_read_json_materials(struct JSON const * json) {
 	if (json->type != JSON_ARRAY) { DEBUG_BREAK(); return; }
 
 	uint32_t const materials_count = json_count(json);
 	for (uint32_t i = 0; i < materials_count; i++) {
 		struct JSON const * material_json = json_at(json, i);
-		state_read_json_material(material_json, strings);
+		state_read_json_material(material_json);
 	}
 }
-
-#undef JSON_GET
-#undef JSON_GET_ID
-#undef JSON_GET_STRING
-#undef JSON_GET_NUMBER
-#undef JSON_GET_BOOLEAN
-#undef JSON_NUMBER_AT

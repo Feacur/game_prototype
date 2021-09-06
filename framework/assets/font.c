@@ -39,7 +39,7 @@ struct Font {
 	int ascent, descent, line_gap;
 };
 
-struct Font * font_init(char const * path) {
+struct Font * font_init(struct CString path) {
 	struct Font * font = MEMORY_ALLOCATE(NULL, struct Font);
 
 	bool const read_success = platform_file_read_entire(path, &font->file);

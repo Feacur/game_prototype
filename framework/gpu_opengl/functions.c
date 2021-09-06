@@ -7,7 +7,7 @@
 
 uint32_t ogl_version = 0;
 
-void glibrary_functions_init(void * (* get)(char const * name)) {
+void glibrary_functions_init(void * (* get)(struct CString name)) {
 	#define XMACRO_INIT() \
 		do { \
 			GLint version_major; \
@@ -31,7 +31,7 @@ void glibrary_functions_init(void * (* get)(char const * name)) {
 			); \
 		} while (false); \
 
-	#define XMACRO(type, name) gl ## name = (type)get("gl" #name);
+	#define XMACRO(type, name) gl ## name = (type)get(S_("gl" #name));
 	#include "xmacro.h"
 }
 

@@ -29,7 +29,7 @@
 //
 #include "image.h"
 
-void image_init(struct Image * image, char const * path) {
+void image_init(struct Image * image, struct CString path) {
 	struct Array_Byte file;
 	bool const read_success = platform_file_read_entire(path, &file);
 	if (!read_success || file.count == 0) { DEBUG_BREAK(); return; }

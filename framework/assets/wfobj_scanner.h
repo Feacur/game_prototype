@@ -31,14 +31,12 @@ enum WFObj_Token_Type {
 
 struct WFObj_Token {
 	enum WFObj_Token_Type type;
-	uint32_t length;
-	char const * data;
+	struct CString text;
 	uint32_t line;
 };
 
-struct WFObj_Scanner {
-	char const * start;
-	char const * current;
+struct WFObj_Scanner { // ZII
+	char const * start, * current;
 	uint32_t line_start, line_current;
 };
 

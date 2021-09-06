@@ -6,7 +6,6 @@
 #include "framework/maths.h"
 #include "framework/input.h"
 
-#include "framework/graphics/types.h"
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
@@ -14,17 +13,12 @@
 
 #include "application/application.h"
 
-#include "framework/containers/array_byte.h"
-#include "framework/containers/ref_table.h"
-#include "framework/containers/strings.h"
 #include "framework/containers/hash_table_any.h"
 
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
 #include "framework/assets/font.h"
 #include "framework/assets/json.h"
-
-#include "framework/systems/asset_system.h"
 
 #include "application/application.h"
 
@@ -50,20 +44,20 @@ static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
 static void game_init(void) {
 	state_init();
 
-	uniforms.color = graphics_add_uniform_id("u_Color");
-	uniforms.texture = graphics_add_uniform_id("u_Texture");
-	uniforms.camera = graphics_add_uniform_id("u_Camera");
-	uniforms.transform = graphics_add_uniform_id("u_Transform");
+	uniforms.color = graphics_add_uniform_id(S_("u_Color"));
+	uniforms.texture = graphics_add_uniform_id(S_("u_Texture"));
+	uniforms.camera = graphics_add_uniform_id(S_("u_Camera"));
+	uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
 
 	//
-	struct Asset_JSON const * json_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.json");
-	state_read_json(&json_test->value, json_test->strings);
+	struct Asset_JSON const * json_test = asset_system_find_instance(&state.asset_system, S_("assets/sandbox/test.json"));
+	state_read_json(&json_test->value);
 
 	// objects
 	{
-		struct Asset_Model const * mesh_cube = asset_system_find_instance(&state.asset_system, "assets/sandbox/cube.obj");
-		struct Asset_Bytes const * text_test = asset_system_find_instance(&state.asset_system, "assets/sandbox/test.txt");
-		struct Asset_Font const * asset_font = asset_system_find_instance(&state.asset_system, "assets/fonts/OpenSans-Regular.ttf");
+		struct Asset_Model const * mesh_cube = asset_system_find_instance(&state.asset_system, S_("assets/sandbox/cube.obj"));
+		struct Asset_Bytes const * text_test = asset_system_find_instance(&state.asset_system, S_("assets/sandbox/test.txt"));
+		struct Asset_Font const * asset_font = asset_system_find_instance(&state.asset_system, S_("assets/fonts/OpenSans-Regular.ttf"));
 
 		// > cameras
 		array_any_push(&state.cameras, &(struct Camera){
@@ -404,11 +398,8 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 //
 
 static void main_get_config(struct Application_Config * config) {
-#define JSON_GET(key) json_get(&settings, &strings, key)
-#define JSON_GET_NUMBER(key, type, default_value) (type)json_as_number(JSON_GET(key), default_value)
-
 	struct Array_Byte buffer;
-	bool const read_success = platform_file_read_entire("assets/sandbox/application.json", &buffer);
+	bool const read_success = platform_file_read_entire(S_("assets/sandbox/application.json"), &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
 
 	struct Strings strings;
@@ -419,12 +410,12 @@ static void main_get_config(struct Application_Config * config) {
 	array_byte_free(&buffer);
 
 	*config = (struct Application_Config){
-		.size_x = JSON_GET_NUMBER("size_x", uint32_t, 960),
-		.size_y = JSON_GET_NUMBER("size_y", uint32_t, 540),
-		.vsync = JSON_GET_NUMBER("vsync", int32_t, 0),
-		.target_refresh_rate = JSON_GET_NUMBER("target_refresh_rate", uint32_t, 60),
-		.fixed_refresh_rate = JSON_GET_NUMBER("fixed_refresh_rate", uint32_t, 30),
-		.slow_frames_limit = JSON_GET_NUMBER("slow_frames_limit", uint32_t, 2),
+		.size_x = (uint32_t)json_get_number(&settings, S_("size_x"), 960),
+		.size_y = (uint32_t)json_get_number(&settings, S_("size_y"), 540),
+		.vsync = (int32_t)json_get_number(&settings, S_("vsync"), 0),
+		.target_refresh_rate = (uint32_t)json_get_number(&settings, S_("target_refresh_rate"), 60),
+		.fixed_refresh_rate = (uint32_t)json_get_number(&settings, S_("fixed_refresh_rate"), 30),
+		.slow_frames_limit = (uint32_t)json_get_number(&settings, S_("slow_frames_limit"), 2),
 	};
 
 	json_free(&settings);

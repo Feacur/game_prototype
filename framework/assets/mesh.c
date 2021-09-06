@@ -24,7 +24,7 @@ static void mesh_fill(
 	struct Array_U32 const * indices
 );
 
-void mesh_init(struct Mesh * mesh, char const * path) {
+void mesh_init(struct Mesh * mesh, struct CString path) {
 	struct Array_Byte file;
 	bool const read_success = platform_file_read_entire(path, &file);
 	if (!read_success || file.count == 0) { DEBUG_BREAK(); return; }

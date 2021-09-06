@@ -6,7 +6,6 @@
 
 struct Batcher_2D;
 struct JSON;
-struct Strings;
 
 struct Game_State {
 	struct Batcher_2D * batcher;
@@ -26,6 +25,6 @@ extern struct Game_State state;
 void state_init(void);
 void state_free(void);
 
-void state_read_json(struct JSON const * json, struct Strings * strings);
+void state_read_json(struct JSON const * json);
 
 #endif

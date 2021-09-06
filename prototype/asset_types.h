@@ -7,7 +7,6 @@
 
 struct Font;
 struct Font_Image;
-struct Strings;
 
 // ----- ----- ----- ----- -----
 //     Asset shader part
@@ -16,7 +15,7 @@ struct Asset_Shader {
 	struct Ref gpu_ref;
 };
 
-void asset_shader_init(void * instance, char const * name);
+void asset_shader_init(void * instance, struct CString name);
 void asset_shader_free(void * instance);
 
 // ----- ----- ----- ----- -----
@@ -26,7 +25,7 @@ struct Asset_Model {
 	struct Ref gpu_ref;
 };
 
-void asset_model_init(void * instance, char const * name);
+void asset_model_init(void * instance, struct CString name);
 void asset_model_free(void * instance);
 
 // ----- ----- ----- ----- -----
@@ -36,7 +35,7 @@ struct Asset_Image {
 	struct Ref gpu_ref;
 };
 
-void asset_image_init(void * instance, char const * name);
+void asset_image_init(void * instance, struct CString name);
 void asset_image_free(void * instance);
 
 // ----- ----- ----- ----- -----
@@ -51,7 +50,7 @@ struct Asset_Font {
 	struct Ref gpu_ref;
 };
 
-void asset_font_init(void * instance, char const * name);
+void asset_font_init(void * instance, struct CString name);
 void asset_font_free(void * instance);
 
 // ----- ----- ----- ----- -----
@@ -62,7 +61,7 @@ struct Asset_Bytes {
 	uint32_t length;
 };
 
-void asset_bytes_init(void * instance, char const * name);
+void asset_bytes_init(void * instance, struct CString name);
 void asset_bytes_free(void * instance);
 
 // ----- ----- ----- ----- -----
@@ -70,13 +69,12 @@ void asset_bytes_free(void * instance);
 // ----- ----- ----- ----- -----
 struct Asset_JSON {
 	struct JSON value;
-	struct Strings * strings;
 };
 
 void asset_json_type_init(void);
 void asset_json_type_free(void);
 
-void asset_json_init(void * instance, char const * name);
+void asset_json_init(void * instance, struct CString name);
 void asset_json_free(void * instance);
 
 #endif

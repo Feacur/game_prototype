@@ -45,17 +45,24 @@ void json_free(struct JSON * value) {
 	// memset(value, 0, sizeof(*value));
 }
 
-// -- JSON try get element
-struct JSON const * json_get(struct JSON const * value, struct Strings const * strings, char const * key) {
-	if (value->type != JSON_OBJECT) { return &json_error; }
-	uint32_t const key_id = strings_find(strings, (uint32_t)strlen(key), key);
+// -- JSON find id
+uint32_t json_find_id(struct JSON const * value, struct CString text) {
+	if (value->strings == NULL) { DEBUG_BREAK(); return INDEX_EMPTY; }
+	return strings_find(value->strings, text);
+}
+
+// -- JSON get/at element
+struct JSON const * json_get(struct JSON const * value, struct CString key) {
+	if (value->type != JSON_OBJECT) { DEBUG_BREAK(); return &json_error; }
+	if (value->strings == NULL) { DEBUG_BREAK(); return &json_error; }
+	uint32_t const key_id = strings_find(value->strings, key);
 	if (key_id == INDEX_EMPTY) { return &json_null; }
 	void const * result = hash_table_u32_get(&value->as.table, key_id);
 	return (result != NULL) ? result : &json_null;
 }
 
 struct JSON const * json_at(struct JSON const * value, uint32_t index) {
-	if (value->type != JSON_ARRAY) { return &json_error; }
+	if (value->type != JSON_ARRAY) { DEBUG_BREAK(); return &json_error; }
 	void * result = array_any_at(&value->as.array, index);
 	return (result != NULL) ? result : &json_null;
 }
@@ -65,15 +72,15 @@ uint32_t json_count(struct JSON const * value) {
 	return value->as.array.count;
 }
 
-// -- JSON try get data
+// -- JSON as data
 uint32_t json_as_id(struct JSON const * value) {
 	if (value->type != JSON_STRING) { return INDEX_EMPTY; }
 	return value->as.id;
 }
 
-char const * json_as_string(struct JSON const * value, struct Strings const * strings, char const * default_value) {
+struct CString json_as_string(struct JSON const * value, struct CString default_value) {
 	if (value->type != JSON_STRING) { return default_value; }
-	return strings_get(strings, value->as.id);
+	return strings_get(value->strings, value->as.id);
 }
 
 float json_as_number(struct JSON const * value, float default_value) {
@@ -84,6 +91,40 @@ float json_as_number(struct JSON const * value, float default_value) {
 bool json_as_boolean(struct JSON const * value, bool default_value) {
 	if (value->type != JSON_BOOLEAN) { return default_value; }
 	return value->as.boolean;
+}
+
+// -- JSON get data
+uint32_t json_get_id(struct JSON const * value, struct CString key) {
+	return json_as_id(json_get(value, key));
+}
+
+struct CString json_get_string(struct JSON const * value, struct CString key, struct CString default_value) {
+	return json_as_string(json_get(value, key), default_value);
+}
+
+float json_get_number(struct JSON const * value, struct CString key, float default_value) {
+	return json_as_number(json_get(value, key), default_value);
+}
+
+bool json_get_boolean(struct JSON const * value, struct CString key, bool default_value) {
+	return json_as_boolean(json_get(value, key), default_value);
+}
+
+// -- JSON at data
+uint32_t json_at_id(struct JSON const * value, uint32_t index) {
+	return json_as_id(json_at(value, index));
+}
+
+struct CString json_at_string(struct JSON const * value, uint32_t index, struct CString default_value) {
+	return json_as_string(json_at(value, index), default_value);
+}
+
+float json_at_number(struct JSON const * value, uint32_t index, float default_value) {
+	return json_as_number(json_at(value, index), default_value);
+}
+
+bool json_at_boolean(struct JSON const * value, uint32_t index, bool default_value) {
+	return json_as_boolean(json_at(value, index), default_value);
 }
 
 //
@@ -108,11 +149,11 @@ static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token 
 			break;
 
 		case JSON_TOKEN_ERROR:
-			logger_to_console("[context: \"%.*s\"]", token->length, token->data);
+			logger_to_console("[context: \"%.*s\"]", token->text.length, token->text.data);
 			break;
 
 		default:
-			logger_to_console("[context: %.*s]", token->length, token->data);
+			logger_to_console("[context: %.*s]", token->text.length, token->text.data);
 			break;
 	}
 	if (message != NULL) { logger_to_console(": %s", message); }
@@ -173,7 +214,7 @@ static void json_parser_synchronize_array(struct JSON_Parser * parser) {
 
 static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * value);
 static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * value) {
-	*value = (struct JSON){.type = JSON_OBJECT,};
+	*value = (struct JSON){.strings = parser->strings, .type = JSON_OBJECT,};
 	struct Hash_Table_U32 * table = &value->as.table;
 	hash_table_u32_init(table, sizeof(struct JSON));
 
@@ -203,7 +244,8 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		// add
 		bool const is_new = hash_table_u32_set(table, entry_key.as.id, &entry_value);
 		if (!is_new) {
-			logger_to_console("key duplicate: \"%s\"\n", strings_get(parser->strings, entry_key.as.id));
+			struct CString const key = strings_get(parser->strings, entry_key.as.id);
+			logger_to_console("key duplicate: \"%.*s\"\n", key.length, key.data);
 			DEBUG_BREAK();
 		}
 
@@ -219,7 +261,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 }
 
 static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * value) {
-	*value = (struct JSON){.type = JSON_ARRAY,};
+	*value = (struct JSON){.strings = parser->strings, .type = JSON_ARRAY,};
 	struct Array_Any * array = &value->as.array;
 	array_any_init(array, sizeof(struct JSON));
 
@@ -249,14 +291,18 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 }
 
 static void json_parser_do_string(struct JSON_Parser * parser, struct JSON * value) {
-	uint32_t const string_id = strings_add(parser->strings, parser->current.length - 2, parser->current.data + 1);
-	*value = (struct JSON){.type = JSON_STRING, .as.id = string_id,};
+	struct CString const cstring = (struct CString){
+		.length = parser->current.text.length - 2,
+		.data = parser->current.text.data + 1,
+	};
+	uint32_t const string_id = strings_add(parser->strings, cstring);
+	*value = (struct JSON){.strings = parser->strings, .type = JSON_STRING, .as.id = string_id,};
 	json_parser_consume(parser);
 }
 
 static void json_parser_do_number(struct JSON_Parser * parser, struct JSON * value) {
-	float const number = parse_float(parser->current.data);
-	*value = (struct JSON){.type = JSON_NUMBER, .as.number = number,};
+	float const number = parse_float(parser->current.text.data);
+	*value = (struct JSON){.strings = parser->strings, .type = JSON_NUMBER, .as.number = number,};
 	json_parser_consume(parser);
 }
 
@@ -285,6 +331,7 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 }
 
 static void json_init_internal(struct JSON * value, struct Strings * strings, char const * data) {
+	if (strings == NULL) { *value = json_error; return; }
 	if (data == NULL) { *value = json_error; return; }
 
 	struct JSON_Parser parser = {

@@ -71,11 +71,11 @@ struct Gpu_Mesh {
 	// @idea: add an optional asset source
 };
 
-struct Gpu_Unit {
+struct Gpu_Unit { // ZII
 	struct Ref gpu_texture_ref;
 };
 
-static struct Graphics_State {
+static struct Graphics_State { // static ZII
 	char * extensions;
 
 	struct Strings uniforms;
@@ -116,11 +116,9 @@ struct Ref gpu_program_init(struct Array_Byte const * asset) {
 	do { \
 		if (strstr((char const *)asset->data, #shader_type)) {\
 			if (ogl_version < (version)) { logger_to_console("'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); break; } \
-			static char const header_text[] = "#define " #shader_type "\n"; \
 			headers[headers_count++] = (struct Section_Header){ \
 				.type = GL_ ## shader_type, \
-				.length = (sizeof(header_text) / sizeof(*header_text)) - 1, \
-				.data = header_text, \
+				.text = S_("#define " #shader_type "\n"), \
 			}; \
 		} \
 	} while (false) \
@@ -135,8 +133,7 @@ struct Ref gpu_program_init(struct Array_Byte const * asset) {
 	// section headers, per shader type
 	struct Section_Header {
 		GLenum type;
-		GLchar const * data;
-		GLint length;
+		struct CString text;
 	};
 
 	uint32_t headers_count = 0;
@@ -149,8 +146,8 @@ struct Ref gpu_program_init(struct Array_Byte const * asset) {
 	// compile shader objects
 	GLuint shader_ids[4];
 	for (uint32_t i = 0; i < headers_count; i++) {
-		GLchar const * code[]   = {glsl_version,        headers[i].data,   (GLchar *)asset->data};
-		GLint          length[] = {glsl_version_length, headers[i].length, (GLint)asset->count};
+		GLchar const * code[]   = {glsl_version,        headers[i].text.data,          (GLchar *)asset->data};
+		GLint const    length[] = {glsl_version_length, (GLint)headers[i].text.length, (GLint)asset->count};
 
 		GLuint shader_id = glCreateShader(headers[i].type);
 		glShaderSource(shader_id, sizeof(code) / sizeof(*code), code, length);
@@ -203,7 +200,10 @@ struct Ref gpu_program_init(struct Array_Byte const * asset) {
 		}
 
 		uniforms[i] = (struct Gpu_Program_Field){
-			.id = strings_add(&graphics_state.uniforms, (uint32_t)name_length, uniform_name_buffer),
+			.id = strings_add(&graphics_state.uniforms, (struct CString){
+				.length = (uint32_t)name_length,
+				.data = uniform_name_buffer,
+			}),
 			.type = interpret_gl_type(params[0]),
 			.array_size = (uint32_t)params[1],
 		};
@@ -707,15 +707,15 @@ void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 //
 #include "framework/graphics/gpu_misc.h"
 
-uint32_t graphics_add_uniform_id(char const * name) {
-	return strings_add(&graphics_state.uniforms, (uint32_t)strlen(name), name);
+uint32_t graphics_add_uniform_id(struct CString name) {
+	return strings_add(&graphics_state.uniforms, name);
 }
 
-uint32_t graphics_find_uniform_id(char const * name) {
-	return strings_find(&graphics_state.uniforms, (uint32_t)strlen(name), name);
+uint32_t graphics_find_uniform_id(struct CString name) {
+	return strings_find(&graphics_state.uniforms, name);
 }
 
-char const * graphics_get_uniform_value(uint32_t value) {
+struct CString graphics_get_uniform_value(uint32_t value) {
 	return strings_get(&graphics_state.uniforms, value);
 }
 
@@ -1059,7 +1059,7 @@ static void __stdcall opengl_debug_message_callback(
 	const void *userParam
 );
 
-bool contains_full_word(char const * container, char const * value);
+bool contains_full_word(char const * container, struct CString value);
 static char * allocate_extensions_string(void);
 void graphics_to_glibrary_init(void) {
 	// setup debug
@@ -1078,7 +1078,7 @@ void graphics_to_glibrary_init(void) {
 
 	// init uniforms strings, consider 0 id empty
 	strings_init(&graphics_state.uniforms);
-	strings_add(&graphics_state.uniforms, 0, "");
+	strings_add(&graphics_state.uniforms, S_(""));
 
 	// init gpu objects, consider 0 ref.id empty
 	ref_table_init(&graphics_state.programs, sizeof(struct Gpu_Program));
@@ -1141,7 +1141,7 @@ void graphics_to_glibrary_init(void) {
 	memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
 
 	// (ns_ncp > ns_fcp) == reverse Z
-	bool const supports_reverse_z = (ogl_version >= 45) || contains_full_word(graphics_state.extensions, "GL_ARB_clip_control");
+	bool const supports_reverse_z = (ogl_version >= 45) || contains_full_word(graphics_state.extensions, S_("GL_ARB_clip_control"));
 	if (supports_reverse_z) { glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); }
 
 	graphics_state.clip_space[0] =                             0.0f; // origin X

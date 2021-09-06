@@ -7,7 +7,7 @@
 #include <Windows.h>
 
 #if defined(UNICODE)
-	static wchar_t * platform_file_allocate_utf8_to_utf16(char const * value);
+	static wchar_t * platform_file_allocate_utf8_to_utf16(struct CString value);
 #endif
 
 // @todo: sidestep `MAX_PATH` limit?
@@ -23,7 +23,7 @@ struct File {
 	char * path;
 };
 
-bool platform_file_read_entire(char const * path, struct Array_Byte * buffer) {
+bool platform_file_read_entire(struct CString path, struct Array_Byte * buffer) {
 	array_byte_init(buffer);
 
 	struct File * file = platform_file_init(path, FILE_MODE_READ);
@@ -42,7 +42,7 @@ bool platform_file_read_entire(char const * path, struct Array_Byte * buffer) {
 
 	if (buffer->count != size) {
 		// failure: `buffer->count == 0` and `size > 0`
-		logger_to_console("read failure: %zu / %zu bytes; \"%s\"\n", buffer->count, size, path);
+		logger_to_console("read failure: %zu / %zu bytes; \"%.*s\"\n", buffer->count, size, path.length, path.data);
 		array_byte_free(buffer);
 	}
 
@@ -51,11 +51,11 @@ bool platform_file_read_entire(char const * path, struct Array_Byte * buffer) {
 	return buffer->count == size;
 }
 
-void platform_file_delete(char const * path) {
+void platform_file_delete(struct CString path) {
 #if defined(UNICODE)
 	wchar_t * path_valid = platform_file_allocate_utf8_to_utf16(path);
 #else
-	char const * path_valid = path;
+	char const * path_valid = path.data;
 #endif
 
 	DeleteFile(path_valid);
@@ -65,7 +65,7 @@ void platform_file_delete(char const * path) {
 #endif
 }
 
-struct File * platform_file_init(char const * path, enum File_Mode mode) {
+struct File * platform_file_init(struct CString path, enum File_Mode mode) {
 	DWORD access = 0, share = 0, creation = OPEN_EXISTING;
 	if (mode & FILE_MODE_READ) {
 		access |= GENERIC_READ;
@@ -85,7 +85,7 @@ struct File * platform_file_init(char const * path, enum File_Mode mode) {
 #if defined(UNICODE)
 	wchar_t * path_valid = platform_file_allocate_utf8_to_utf16(path);
 #else
-	char const * path_valid = path;
+	char const * path_valid = path.data;
 #endif
 
 	HANDLE handle = CreateFile(
@@ -99,7 +99,7 @@ struct File * platform_file_init(char const * path, enum File_Mode mode) {
 #endif
 
 	if (handle == INVALID_HANDLE_VALUE) {
-		logger_to_console("'CreateFile' failed; \"%s\"\n", path);
+		logger_to_console("'CreateFile' failed; \"%.*s\"\n", path.length, path.data);
 		return NULL;
 	}
 
@@ -109,9 +109,9 @@ struct File * platform_file_init(char const * path, enum File_Mode mode) {
 		.mode = mode,
 	};
 
-	file->path_length = (uint32_t)strlen(path);
-	file->path = MEMORY_ALLOCATE_ARRAY(file, char, file->path_length);
-	memcpy(file->path, path, file->path_length);
+	file->path_length = path.length;
+	file->path = MEMORY_ALLOCATE_ARRAY(file, char, path.length);
+	memcpy(file->path, path.data, file->path_length);
 
 	return file;
 }
@@ -157,7 +157,7 @@ uint64_t platform_file_read(struct File const * file, uint8_t * buffer, uint64_t
 	DWORD const max_chunk_size = UINT16_MAX + 1;
 
 	if (!(file->mode & FILE_MODE_READ)) {
-		logger_to_console("can't read write-only files; \"%s\"\n", file->path); DEBUG_BREAK();
+		logger_to_console("can't read write-only files; \"%.*s\"\n", file->path_length, file->path); DEBUG_BREAK();
 		return 0;
 	}
 	
@@ -169,7 +169,7 @@ uint64_t platform_file_read(struct File const * file, uint8_t * buffer, uint64_t
 
 		DWORD read_chunk_size;
 		if (!ReadFile(file->handle, buffer + read, to_read, &read_chunk_size, NULL)) {
-			logger_to_console("'ReadFile' failed; \"%s\"\n", file->path); DEBUG_BREAK();
+			logger_to_console("'ReadFile' failed; \"%.*s\"\n", file->path_length, file->path); DEBUG_BREAK();
 			break;
 		}
 
@@ -184,7 +184,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 	DWORD const max_chunk_size = UINT16_MAX + 1;
 
 	if (!(file->mode & FILE_MODE_WRITE)) {
-		logger_to_console("can't write read-only files; \"%s\"\n", file->path); DEBUG_BREAK();
+		logger_to_console("can't write read-only files; \"%.*s\"\n", file->path_length, file->path); DEBUG_BREAK();
 		return 0;
 	}
 	
@@ -196,7 +196,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 
 		DWORD read_chunk_size;
 		if (!WriteFile(file->handle, buffer + written, to_write, &read_chunk_size, NULL)) {
-			logger_to_console("'WriteFile' failed; \"%s\"\n", file->path); DEBUG_BREAK();
+			logger_to_console("'WriteFile' failed; \"%.*s\"\n", file->path_length, file->path); DEBUG_BREAK();
 			break;
 		}
 
@@ -210,11 +210,11 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 //
 
 #if defined(UNICODE)
-	static wchar_t * platform_file_allocate_utf8_to_utf16(char const * value) {
+	static wchar_t * platform_file_allocate_utf8_to_utf16(struct CString value) {
 		// @todo: use scratch buffer
-		const int length = MultiByteToWideChar(CP_UTF8, 0, value, -1, NULL, 0);
+		const int length = MultiByteToWideChar(CP_UTF8, 0, value.data, -1, NULL, 0);
 		wchar_t * buffer = MEMORY_ALLOCATE_ARRAY(NULL, wchar_t, length);
-		MultiByteToWideChar(CP_UTF8, 0, value, -1, buffer, length);
+		MultiByteToWideChar(CP_UTF8, 0, value.data, -1, buffer, length);
 		return buffer;
 	}
 #endif

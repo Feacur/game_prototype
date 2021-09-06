@@ -5,13 +5,13 @@
 
 #include "framework/graphics/types.h"
 
-struct Mesh {
+struct Mesh { // ZII
 	uint32_t capacity, count;
 	struct Array_Byte * buffers;
 	struct Mesh_Parameters * parameters;
 };
 
-void mesh_init(struct Mesh * mesh, char const * path);
+void mesh_init(struct Mesh * mesh, struct CString path);
 void mesh_free(struct Mesh * mesh);
 
 #endif

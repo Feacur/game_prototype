@@ -32,7 +32,7 @@ static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 		case WFOBJ_TOKEN_ERROR: break;
 		case WFOBJ_TOKEN_EOF: logger_to_console(" at the end of file"); break;
 		case WFOBJ_TOKEN_NEW_LINE: logger_to_console(" at the end of line"); break;
-		default: logger_to_console(" at '%.*s'", token->length, token->data); break;
+		default: logger_to_console(" at '%.*s'", token->text.length, token->text.data); break;
 	}
 
 	logger_to_console(": %s\n", message);
@@ -52,7 +52,7 @@ static bool wfobj_consume_float(struct WFObj_Scanner * scanner, struct WFObj_Tok
 
 	if (token->type == WFOBJ_TOKEN_NUMBER) {
 		// *value = strtof(token->start, NULL);
-		*value = parse_float(token->data);
+		*value = parse_float(token->text.data);
 		ADVANCE();
 		return true;
 	}
@@ -68,7 +68,7 @@ static bool wfobj_consume_s32(struct WFObj_Scanner * scanner, struct WFObj_Token
 
 	if (token->type == WFOBJ_TOKEN_NUMBER) {
 		// *value = (int32_t)strtoul(token->start, NULL, 10);
-		*value = parse_s32(token->data);
+		*value = parse_s32(token->text.data);
 		ADVANCE();
 		return true;
 	}

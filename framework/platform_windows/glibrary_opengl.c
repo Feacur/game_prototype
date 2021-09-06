@@ -42,7 +42,7 @@ static struct GLibrary { // static ZII
 //
 #include "glibrary_to_system.h"
 
-bool contains_full_word(char const * container, char const * value);
+bool contains_full_word(char const * container, struct CString value);
 void glibrary_to_system_init(void) {
 // #define OPENGL_CLASS_NAME "temporary_opengl_class"
 #define OPENGL_CLASS_NAME APPLICATION_CLASS_NAME
@@ -139,7 +139,7 @@ void glibrary_to_system_init(void) {
 	glibrary.arb.extensions = glibrary.arb.GetExtensionsString(hdc);
 	glibrary.ext.extensions = glibrary.ext.GetExtensionsString();
 
-#define HAS_EXT(name) contains_full_word(glibrary.ext.extensions, "WGL_EXT_" # name)
+#define HAS_EXT(name) contains_full_word(glibrary.ext.extensions, S_("WGL_EXT_" # name))
 	glibrary.ext.has_extension_swap_control = HAS_EXT(swap_control);
 #undef HAS_EXT
 
@@ -181,7 +181,7 @@ struct GInstance {
 };
 
 static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format);
-static void * rlib_get_function(char const * name);
+static void * glibrary_get_function(struct CString name);
 struct GInstance * ginstance_init(struct Window * window) {
 	struct GInstance * ginstance = MEMORY_ALLOCATE(&glibrary, struct GInstance);
 
@@ -190,7 +190,7 @@ struct GInstance * ginstance_init(struct Window * window) {
 	glibrary.dll.MakeCurrent(ginstance->private_device , ginstance->handle);
 	ginstance->vsync = 0;
 
-	glibrary_functions_init(rlib_get_function);
+	glibrary_functions_init(glibrary_get_function);
 	graphics_to_glibrary_init();
 
 	return ginstance;
@@ -231,11 +231,9 @@ void ginstance_display(struct GInstance const * ginstance) {
 
 //
 
-bool contains_full_word(char const * container, char const * value) {
-	if (container == NULL) { return false; }
-	if (value == NULL)     { return false; }
-
-	size_t value_size = strlen(value);
+bool contains_full_word(char const * container, struct CString value) {
+	if (container == NULL)  { return false; }
+	if (value.data == NULL) { return false; }
 
 	for (char const * start = container, * end = container; *start; start = end) {
 		while (*start == ' ') { start++; }
@@ -243,8 +241,8 @@ bool contains_full_word(char const * container, char const * value) {
 		end = strchr(start, ' ');
 		if (end == NULL) { end = container + strlen(container); }
 
-		if ((size_t)(end - start) != value_size) { continue; }
-		if (strncmp(start, value, value_size) == 0) { return true; }
+		if ((size_t)(end - start) != value.length) { continue; }
+		if (strncmp(start, value.data, value.length) == 0) { return true; }
 	}
 
 	return false;
@@ -258,8 +256,8 @@ static int dictionary_int_int_get_value(int const * keys, int const * vals, int 
 }
 
 static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
-#define HAS_ARB(name) contains_full_word(glibrary.arb.extensions, "WGL_ARB_" # name)
-#define HAS_EXT(name) contains_full_word(glibrary.ext.extensions, "WGL_EXT_" # name)
+#define HAS_ARB(name) contains_full_word(glibrary.arb.extensions, S_("WGL_ARB_" # name))
+#define HAS_EXT(name) contains_full_word(glibrary.ext.extensions, S_("WGL_EXT_" # name))
 #define KEYS_COUNT (sizeof(request_keys) / sizeof(*request_keys))
 #define GET_VALUE(key) dictionary_int_int_get_value(request_keys, request_vals, key)
 
@@ -426,7 +424,7 @@ struct Context_Format {
 };
 
 static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format context_format) {
-#define HAS_ARB(name) contains_full_word(glibrary.arb.extensions, "WGL_ARB_" # name)
+#define HAS_ARB(name) contains_full_word(glibrary.arb.extensions, S_("WGL_ARB_" # name))
 #define ADD_ATTRIBUTE(key, value) \
 	do { \
 		attributes[attributes_count++] = key; \
@@ -562,13 +560,13 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 
 //
 
-static void * rlib_get_function(char const * name) {
-	if (name == NULL) { return NULL; }
+static void * glibrary_get_function(struct CString name) {
+	if (name.data == NULL) { return NULL; }
 
-	PROC ogl_address = glibrary.dll.GetProcAddress(name);
+	PROC ogl_address = glibrary.dll.GetProcAddress(name.data);
 	if (ogl_address != NULL) { return (void *)ogl_address; }
 
-	FARPROC dll_address = GetProcAddress(glibrary.handle, name);
+	FARPROC dll_address = GetProcAddress(glibrary.handle, name.data);
 	if (dll_address != NULL) { return (void *)dll_address; }
 
 	return NULL;

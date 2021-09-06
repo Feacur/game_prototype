@@ -63,8 +63,10 @@ static void json_scanner_skip_whitespace(struct JSON_Scanner * scanner) {
 static struct JSON_Token json_scanner_make_token(struct JSON_Scanner * scanner, enum JSON_Token_Type type) {
 	return (struct JSON_Token){
 		.type = type,
-		.length = (uint32_t)(scanner->current - scanner->start),
-		.data = scanner->start,
+		.text = {
+			.length = (uint32_t)(scanner->current - scanner->start),
+			.data = scanner->start,
+		},
 		.line = scanner->line_start,
 	};
 }
@@ -88,26 +90,25 @@ static struct JSON_Token json_scanner_make_number_token(struct JSON_Scanner * sc
 	return json_scanner_make_token(scanner, JSON_TOKEN_NUMBER);
 }
 
-static enum JSON_Token_Type json_scanner_check_keyword(struct JSON_Scanner * scanner, uint32_t start, uint32_t length, char const * rest, enum JSON_Token_Type type) {
-	if (scanner->current - scanner->start != start + length) { return JSON_TOKEN_IDENTIFIER; }
-	if (memcmp(scanner->start + start, rest, length) != 0) { return JSON_TOKEN_IDENTIFIER; }
+static enum JSON_Token_Type json_scanner_check_keyword(struct JSON_Scanner * scanner, uint32_t start, struct CString rest, enum JSON_Token_Type type) {
+	if (scanner->current - scanner->start != start + rest.length) { return JSON_TOKEN_IDENTIFIER; }
+	if (memcmp(scanner->start + start, rest.data, rest.length) != 0) { return JSON_TOKEN_IDENTIFIER; }
 	return type;
 }
 
 static enum JSON_Token_Type json_scanner_identifier_type(struct JSON_Scanner * scanner) {
 	switch (scanner->start[0]) {
-		case 't': return json_scanner_check_keyword(scanner, 1, 3, "rue", JSON_TOKEN_TRUE);
-		case 'f': return json_scanner_check_keyword(scanner, 1, 4, "alse", JSON_TOKEN_FALSE);
-		case 'n': return json_scanner_check_keyword(scanner, 1, 3, "ull", JSON_TOKEN_NULL);
+		case 't': return json_scanner_check_keyword(scanner, 1, S_("rue"), JSON_TOKEN_TRUE);
+		case 'f': return json_scanner_check_keyword(scanner, 1, S_("alse"), JSON_TOKEN_FALSE);
+		case 'n': return json_scanner_check_keyword(scanner, 1, S_("ull"), JSON_TOKEN_NULL);
 	}
 	return JSON_TOKEN_IDENTIFIER;
 }
 
-static struct JSON_Token json_scanner_make_error_token(struct JSON_Scanner * scanner, char const * message) {
+static struct JSON_Token json_scanner_make_error_token(struct JSON_Scanner * scanner, struct CString message) {
 	return (struct JSON_Token) {
 		.type = JSON_TOKEN_ERROR,
-		.length = (uint32_t)strlen(message),
-		.data = message,
+		.text = message,
 		.line = scanner->line_start,
 	};
 }
@@ -124,7 +125,7 @@ static struct JSON_Token json_scanner_make_string(struct JSON_Scanner * scanner)
 		}
 		ADVANCE();
 	}
-	if (PEEK() != '"') { return json_scanner_make_error_token(scanner, "unterminated string"); }
+	if (PEEK() != '"') { return json_scanner_make_error_token(scanner, S_("unterminated string")); }
 	ADVANCE();
 	return json_scanner_make_token(scanner, JSON_TOKEN_STRING);
 }
@@ -155,7 +156,7 @@ inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner *
 	if (parse_is_alpha(c)) { return json_scanner_make_identifier_token(scanner); }
 	if (c == '-' || parse_is_digit(c)) { return json_scanner_make_number_token(scanner); }
 
-	return json_scanner_make_error_token(scanner, "unexpected character");
+	return json_scanner_make_error_token(scanner, S_("unexpected character"));
 }
 
 #undef PEEK

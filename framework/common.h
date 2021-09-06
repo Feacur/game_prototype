@@ -5,6 +5,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+struct CString { // ZII
+	uint32_t length;
+	char const * data;
+};
+
 #define INDEX_EMPTY UINT32_MAX
 
 // @note: ZII == Zero Is Initialization
@@ -16,7 +21,11 @@
 #define TOKENIZE_A_VALUE(v1, v2) v1 ## v2
 #define TOKENIZE_A_MACRO(m1, m2) TOKENIZE_A_VALUE(m1, m2)
 
+#define S_(value) (struct CString){.length = sizeof("" value) - 1, .data = value,}
+#define S_NULL (struct CString){0}
+
 #define FILE_AND_LINE __FILE__ ":" STRINGIFY_A_MACRO(__LINE__)
+#define S_FILE_AND_LINE S_(FILE_AND_LINE)
 
 #define SIZE_OF_MEMBER(type, name) sizeof(((type *)0)->name)
 

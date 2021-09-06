@@ -16,10 +16,10 @@ enum File_Mode {
 	FILE_MODE_DELETE = (1 << 2),
 };
 
-bool platform_file_read_entire(char const * path, struct Array_Byte * buffer);
-void platform_file_delete(char const * path);
+bool platform_file_read_entire(struct CString path, struct Array_Byte * buffer);
+void platform_file_delete(struct CString path);
 
-struct File * platform_file_init(char const * path, enum File_Mode mode);
+struct File * platform_file_init(struct CString path, enum File_Mode mode);
 void platform_file_free(struct File * file);
 
 uint64_t platform_file_size(struct File const * file);

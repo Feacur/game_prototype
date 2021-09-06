@@ -17,7 +17,7 @@
 struct Font;
 struct Glyph_Params;
 
-struct Font * font_init(char const * path);
+struct Font * font_init(struct CString path);
 void font_free(struct Font * font);
 
 uint32_t font_get_glyph_id(struct Font const * font, uint32_t codepoint);

@@ -33,7 +33,7 @@ struct Render_Pass_Draw { // ZII
 	uint32_t offset, length;
 };
 
-struct Render_Pass { // ZII
+struct Render_Pass {
 	//
 	enum Render_Pass_Type type;
 	union {

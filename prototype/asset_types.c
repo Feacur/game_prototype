@@ -16,7 +16,7 @@
 // ----- ----- ----- ----- -----
 //     Asset shader part
 // ----- ----- ----- ----- -----
-void asset_shader_init(void * instance, char const * name) {
+void asset_shader_init(void * instance, struct CString name) {
 	struct Asset_Shader * asset = instance;
 
 	struct Array_Byte buffer;
@@ -38,7 +38,7 @@ void asset_shader_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset model part
 // ----- ----- ----- ----- -----
-void asset_model_init(void * instance, char const * name) {
+void asset_model_init(void * instance, struct CString name) {
 	struct Asset_Model * asset = instance;
 
 	struct Mesh mesh;
@@ -58,7 +58,7 @@ void asset_model_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset image part
 // ----- ----- ----- ----- -----
-void asset_image_init(void * instance, char const * name) {
+void asset_image_init(void * instance, struct CString name) {
 	struct Asset_Image * asset = instance;
 
 	struct Image image;
@@ -78,7 +78,7 @@ void asset_image_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset font part
 // ----- ----- ----- ----- -----
-void asset_font_init(void * instance, char const * name) {
+void asset_font_init(void * instance, struct CString name) {
 	struct Asset_Font * asset = instance;
 
 	struct Font * font = font_init(name);
@@ -99,7 +99,7 @@ void asset_font_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset bytes part
 // ----- ----- ----- ----- -----
-void asset_bytes_init(void * instance, char const * name) {
+void asset_bytes_init(void * instance, struct CString name) {
 	struct Asset_Bytes * asset = instance;
 
 	struct Array_Byte buffer;
@@ -129,7 +129,7 @@ void asset_json_type_free(void) {
 	strings_free(&asset_json_strings);
 }
 
-void asset_json_init(void * instance, char const * name) {
+void asset_json_init(void * instance, struct CString name) {
 	struct Asset_JSON * asset = instance;
 
 	struct Array_Byte buffer;
@@ -137,7 +137,6 @@ void asset_json_init(void * instance, char const * name) {
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
 
 	json_init(&asset->value, &asset_json_strings, (char const *)buffer.data);
-	asset->strings = &asset_json_strings;
 
 	array_byte_free(&buffer);
 }

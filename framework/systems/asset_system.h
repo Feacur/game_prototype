@@ -13,7 +13,7 @@ struct Asset_Ref { // ZII
 struct Asset_Callbacks { // ZII
 	void (* type_init)(void);
 	void (* type_free)(void);
-	void (* init)(void * instance, char const * name);
+	void (* init)(void * instance, struct CString name);
 	void (* free)(void * instance);
 };
 
@@ -27,16 +27,16 @@ struct Asset_System { // ZII
 void asset_system_init(struct Asset_System * system);
 void asset_system_free(struct Asset_System * system);
 
-void asset_system_map_extension(struct Asset_System * system, char const * type_name, char const * extension);
+void asset_system_map_extension(struct Asset_System * system, struct CString type_name, struct CString extension);
 
-void asset_system_set_type(struct Asset_System * system, char const * type_name, struct Asset_Callbacks callbacks, uint32_t value_size);
-void asset_system_del_type(struct Asset_System * system, char const * type_name);
+void asset_system_set_type(struct Asset_System * system, struct CString type, struct Asset_Callbacks callbacks, uint32_t value_size);
+void asset_system_del_type(struct Asset_System * system, struct CString type);
 
-struct Asset_Ref asset_system_aquire(struct Asset_System * system, char const * name);
+struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CString name);
 void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_ref);
 
 void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref asset_ref);
-void * asset_system_find_instance(struct Asset_System * system, char const * name);
+void * asset_system_find_instance(struct Asset_System * system, struct CString name);
 
 //
 

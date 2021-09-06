@@ -53,8 +53,10 @@ static void wfobj_scanner_skip_whitespace(struct WFObj_Scanner * scanner) {
 static struct WFObj_Token wfobj_scanner_make_token(struct WFObj_Scanner * scanner, enum WFObj_Token_Type type) {
 	return (struct WFObj_Token){
 		.type = type,
-		.length = (uint32_t)(scanner->current - scanner->start),
-		.data = scanner->start,
+		.text = {
+			.length = (uint32_t)(scanner->current - scanner->start),
+			.data = scanner->start,
+		},
 		.line = scanner->line_start,
 	};
 }
@@ -78,35 +80,34 @@ static struct WFObj_Token wfobj_scanner_make_number_token(struct WFObj_Scanner *
 	return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_NUMBER);
 }
 
-static enum WFObj_Token_Type wfobj_scanner_check_keyword(struct WFObj_Scanner * scanner, uint32_t start, uint32_t length, char const * rest, enum WFObj_Token_Type type) {
-	if (scanner->current - scanner->start != start + length) { return WFOBJ_TOKEN_IDENTIFIER; }
-	if (memcmp(scanner->start + start, rest, length) != 0) { return WFOBJ_TOKEN_IDENTIFIER; }
+static enum WFObj_Token_Type wfobj_scanner_check_keyword(struct WFObj_Scanner * scanner, uint32_t start, struct CString rest, enum WFObj_Token_Type type) {
+	if (scanner->current - scanner->start != start + rest.length) { return WFOBJ_TOKEN_IDENTIFIER; }
+	if (memcmp(scanner->start + start, rest.data, rest.length) != 0) { return WFOBJ_TOKEN_IDENTIFIER; }
 	return type;
 }
 
 static enum WFObj_Token_Type wfobj_scanner_identifier_type(struct WFObj_Scanner * scanner) {
 	switch (scanner->start[0]) {
-		case 'f': return wfobj_scanner_check_keyword(scanner, 1, 0, "", WFOBJ_TOKEN_FACE);
-		case 'g': return wfobj_scanner_check_keyword(scanner, 1, 0, "", WFOBJ_TOKEN_GROUP);
-		case 'o': return wfobj_scanner_check_keyword(scanner, 1, 0, "", WFOBJ_TOKEN_OBJECT);
-		case 's': return wfobj_scanner_check_keyword(scanner, 1, 0, "", WFOBJ_TOKEN_SMOOTH);
+		case 'f': return wfobj_scanner_check_keyword(scanner, 1, S_(""), WFOBJ_TOKEN_FACE);
+		case 'g': return wfobj_scanner_check_keyword(scanner, 1, S_(""), WFOBJ_TOKEN_GROUP);
+		case 'o': return wfobj_scanner_check_keyword(scanner, 1, S_(""), WFOBJ_TOKEN_OBJECT);
+		case 's': return wfobj_scanner_check_keyword(scanner, 1, S_(""), WFOBJ_TOKEN_SMOOTH);
 		case 'v':
 			if (scanner->current - scanner->start > 1) {
 				switch (scanner->start[1]) {
-					case 't': return wfobj_scanner_check_keyword(scanner, 2, 0, "", WFOBJ_TOKEN_TEXCOORD);
-					case 'n': return wfobj_scanner_check_keyword(scanner, 2, 0, "", WFOBJ_TOKEN_NORMAL);
+					case 't': return wfobj_scanner_check_keyword(scanner, 2, S_(""), WFOBJ_TOKEN_TEXCOORD);
+					case 'n': return wfobj_scanner_check_keyword(scanner, 2, S_(""), WFOBJ_TOKEN_NORMAL);
 				}
 			}
-			return wfobj_scanner_check_keyword(scanner, 1, 0, "", WFOBJ_TOKEN_POSITION);
+			return wfobj_scanner_check_keyword(scanner, 1, S_(""), WFOBJ_TOKEN_POSITION);
 	}
 	return WFOBJ_TOKEN_IDENTIFIER;
 }
 
-static struct WFObj_Token wfobj_scanner_make_error_token(struct WFObj_Scanner * scanner, char const * message) {
+static struct WFObj_Token wfobj_scanner_make_error_token(struct WFObj_Scanner * scanner, struct CString message) {
 	return (struct WFObj_Token) {
 		.type = WFOBJ_TOKEN_ERROR,
-		.length = (uint32_t)strlen(message),
-		.data = message,
+		.text = message,
 		.line = scanner->line_start,
 	};
 }
@@ -140,7 +141,7 @@ inline static struct WFObj_Token wfobj_scanner_next_internal(struct WFObj_Scanne
 	if (c == '-' || parse_is_digit(c)) { return wfobj_scanner_make_number_token(scanner); }
 
 	DEBUG_BREAK();
-	return wfobj_scanner_make_error_token(scanner, "unexpected character");
+	return wfobj_scanner_make_error_token(scanner, S_("unexpected character"));
 }
 
 #undef PEEK

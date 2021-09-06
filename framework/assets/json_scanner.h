@@ -30,14 +30,12 @@ enum JSON_Token_Type {
 
 struct JSON_Token {
 	enum JSON_Token_Type type;
-	uint32_t length;
-	char const * data;
+	struct CString text;
 	uint32_t line;
 };
 
-struct JSON_Scanner {
-	char const * start;
-	char const * current;
+struct JSON_Scanner { // ZII
+	char const * start, * current;
 	uint32_t line_start, line_current;
 };
 

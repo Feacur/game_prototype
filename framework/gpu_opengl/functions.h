@@ -4,10 +4,12 @@
 // interface from `functions.c` to `glibrary_opengl.c`
 // - opengl functions initialization
 
+#include "framework/common.h"
+
 #include <KHR/khrplatform.h>
 #include <GL/glcorearb.h>
 
-void glibrary_functions_init(void * (* get)(char const * name));
+void glibrary_functions_init(void * (* get)(struct CString name));
 void glibrary_functions_free(void);
 
 #define XMACRO(type, name) extern type gl ## name;

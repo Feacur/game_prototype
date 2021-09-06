@@ -10,11 +10,14 @@
 // @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
 // @idea: use OS-native allocators instead of CRT's
 
+//
+#include "memory.h"
+
 struct Memory_Header {
 	size_t checksum, size;
 	struct Memory_Header * prev, * next;
 	void const * owner;
-	char const * source;
+	struct CString source;
 };
 
 static struct Memory_State { // static ZII
@@ -23,10 +26,7 @@ static struct Memory_State { // static ZII
 	size_t bytes;
 } memory_state; // @note: global state
 
-//
-#include "memory.h"
-
-void * memory_reallocate(void const * owner, char const * source, void * pointer, size_t size) {
+void * memory_reallocate(void const * owner, struct CString source, void * pointer, size_t size) {
 	struct Memory_Header * pointer_header = (pointer != NULL)
 		? (struct Memory_Header *)pointer - 1
 		: NULL;
@@ -53,7 +53,7 @@ void * memory_reallocate(void const * owner, char const * source, void * pointer
 
 	struct Memory_Header * reallocated_header = realloc(pointer_header, sizeof(*pointer_header) + size);
 	if (reallocated_header == NULL) {
-		logger_to_console("'realloc' failed: \"%s\"\n", source); DEBUG_BREAK();
+		logger_to_console("'realloc' failed: \"%.*s\"\n", source.length, source.data); DEBUG_BREAK();
 		exit(EXIT_FAILURE);
 	}
 
@@ -83,7 +83,7 @@ uint32_t memory_to_system_report(void) {
 	uint32_t count = 0;
 	for (struct Memory_Header * it = memory_state.root; it != NULL; it = it->next) {
 		count++;
-		logger_to_console("  0x%zx: '%s' (bytes: %zu)\n", (size_t)(it + sizeof(*it)), it->source, it->size);
+		logger_to_console("  0x%zx: '%.*s' (bytes: %zu)\n", (size_t)(it + sizeof(*it)), it->source.length, it->source.data, it->size);
 	}
 	return count;
 }
