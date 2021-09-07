@@ -9,19 +9,19 @@ rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\
 
 rem [any]
 set project=%1
-if [%project%] == [] ( set project=game )
+if [%project%] == [] ( set "project=game" )
 
 rem optimized|development|debug
 set configuration=%2
-if [%configuration%] == [] ( set configuration=optimized )
+if [%configuration%] == [] ( set "configuration=optimized" )
 
 rem static|dynamic|static_debug|dynamic_debug
 set runtime_mode=%3
-if [%runtime_mode%] == [] ( set runtime_mode=static )
+if [%runtime_mode%] == [] ( set "runtime_mode=static" )
 
 rem normal|unity|unity_link
 set build_mode=%4
-if [%build_mode%] == [] ( set build_mode=unity )
+if [%build_mode%] == [] ( set "build_mode=unity" )
 
 rem https://clang.llvm.org/docs/index.html
 rem https://clang.llvm.org/docs/CommandGuide/clang.html
