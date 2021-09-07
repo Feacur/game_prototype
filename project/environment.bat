@@ -16,7 +16,7 @@ rem |> MSVC
 set VSLANG=1033
 call :check_msvc || (
 	call :check_vcvarsall && ( call "vcvarsall.bat" x64 > nul ) || (
-		pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
+		pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/"
 		call :check_vcvarsall && ( call "vcvarsall.bat" x64 > nul ) || (
 			echo.can't find MSVC's vcvarsall
 			goto :eof
@@ -27,7 +27,7 @@ call :check_msvc || (
 
 rem |> Clang
 call :check_clang || (
-	set "PATH=%PATH%;C:/Program Files/LLVM/bin"
+	set "PATH=%PATH%;C:/Program Files/LLVM/bin/"
 	call :check_clang || (
 		echo.can't find Clang's compiler/linker
 		goto :eof
