@@ -1,6 +1,6 @@
 @echo off
-setlocal enabledelayedexpansion
 chcp 65001 > nul
+setlocal enabledelayedexpansion
 echo.debugging with RemedyBG...
 
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
@@ -48,13 +48,13 @@ rem |> FUNCTIONS
 goto :eof
 
 :check_debugger_exists
-where -q "remedybg.exe"
-rem return is errorlevel == 1 means false; chain with `||`
-rem return is errorlevel != 1 means true;  chain with `&&`
+	where -q "remedybg.exe"
+	rem return is errorlevel == 1 means false; chain with `||`
+	rem return is errorlevel != 1 means true;  chain with `&&`
 goto :eof
 
 :check_debugger_online
-tasklist -fi "IMAGENAME eq remedybg.exe" -nh | find /i /n "remedybg.exe" > nul
-rem return is errorlevel == 1 means false; chain with `||`
-rem return is errorlevel != 1 means true;  chain with `&&`
+	tasklist -fi "IMAGENAME eq remedybg.exe" -nh | find /i /n "remedybg.exe" > nul
+	rem return is errorlevel == 1 means false; chain with `||`
+	rem return is errorlevel != 1 means true;  chain with `&&`
 goto :eof

@@ -1,9 +1,9 @@
 @echo off
-setlocal enabledelayedexpansion
 chcp 65001 > nul
+setlocal enabledelayedexpansion
 echo.building with MSVC...
 
-set timeHeader=!time!
+call :get_millis time_prep
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
 rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
@@ -21,7 +21,7 @@ if [%runtime_mode%] == [] ( set runtime_mode=static )
 
 rem normal|unity|unity_link
 set build_mode=%4
-if [%build_mode%] == [] ( set build_mode=unity_link )
+if [%build_mode%] == [] ( set build_mode=unity )
 
 rem https://docs.microsoft.com/cpp/build/reference/compiler-options
 rem https://docs.microsoft.com/cpp/build/reference/linker-options
@@ -40,26 +40,7 @@ call :check_executable_online && (
 )
 
 rem |> PREPARE TOOLS
-set VSLANG=1033
-call :check_msvc_exists && ( call "vcvarsall.bat" x64 > nul ) || (
-	rem @idea: list potential paths in a text file
-	pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
-	call :check_msvc_exists && ( call "vcvarsall.bat" x64 > nul ) || (
-		echo.can't find msvc in the path
-		goto :eof
-	)
-	popd
-)
-
-call :check_compiler_exists || (
-	echo.can't find compiler in the path
-	goto :eof
-)
-
-call :check_linker_exists || (
-	echo.can't find linker in the path
-	goto :eof
-)
+call "environment.bat" || ( goto :eof )
 
 rem |> OPTIONS
 set includes=-I".." -I"../third_party"
@@ -110,7 +91,7 @@ pushd ..
 if not exist %binary_folder% mkdir %binary_folder%
 pushd %binary_folder%
 
-set timeCompile=!time!
+call :get_millis time_comp
 if %build_mode% == normal ( rem compile a set of translation units, then link them
 	rem @note: the folder may contain outdated objects
 	if not exist temp mkdir temp
@@ -121,53 +102,67 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 		cl -std:c11 -c -Fo"./temp/!object_file_name!.obj" %compiler% %warnings% "../%%v"
 		if errorlevel == 1 goto error
 	)
-	set timeLink=!time!
+	call :get_millis time_link
 	link "./temp/*.obj" -out:"%project%.exe" %linker%
 ) else if %build_mode% == unity ( rem compile as a unity build, then link separately
 	cl -std:c11 -c -Fo"./%project%_unity_build.obj" %compiler% %warnings% "%project_folder%/%project%_unity_build.c"
 	if errorlevel == 1 goto error
-	set timeLink=!time!
+	call :get_millis time_link
 	link "./%project%_unity_build.obj" -out:"%project%.exe" %linker%
 ) else if %build_mode% == unity_link ( rem compile and link as a unity build
-	set timeLink=unknown
+	call :get_millis time_link
 	cl -std:c11 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -Fe"./%project%.exe" -link %linker%
 )
 
 :error
-set timeStop=!time!
+call :get_millis time_stop
 
 popd
 popd
 
 rem |> REPORT
-echo.header:  %timeHeader%
-echo.compile: %timeCompile%
-echo.link:    %timeLink%
-echo.stop:    %timeStop%
+call :report_millis_delta "prep .." time_prep time_comp "ms"
+call :report_millis_delta "comp .." time_comp time_link "ms"
+call :report_millis_delta "link .." time_link time_stop "ms"
 
 rem |> FUNCTIONS
 goto :eof
 
-:check_msvc_exists
-where -q "vcvarsall.bat"
-rem return is errorlevel == 1 means false; chain with `||`
-rem return is errorlevel != 1 means true;  chain with `&&`
-goto :eof
-
-:check_compiler_exists
-where -q "cl.exe"
-rem return is errorlevel == 1 means false; chain with `||`
-rem return is errorlevel != 1 means true;  chain with `&&`
-goto :eof
-
-:check_linker_exists
-where -q "link.exe"
-rem return is errorlevel == 1 means false; chain with `||`
-rem return is errorlevel != 1 means true;  chain with `&&`
-goto :eof
-
 :check_executable_online
-tasklist -fi "IMAGENAME eq %project%.exe" -nh | find /i /n "%project%.exe" > nul
-rem return is errorlevel == 1 means false; chain with `||`
-rem return is errorlevel != 1 means true;  chain with `&&`
+	tasklist -fi "IMAGENAME eq %project%.exe" -nh | find /i /n "%project%.exe" > nul
+	rem return is errorlevel == 1 means false; chain with `||`
+	rem return is errorlevel != 1 means true;  chain with `&&`
+goto :eof
+
+:get_millis
+	rem @note: `time` is locale-dependent and can have leading space
+	set local_time=%time: =%
+
+	rem @note: the format could have been customized
+	for /F "tokens=1-3 delims=0123456789" %%a in ("%local_time%") do ( set "delims=%%a%%b%%c" )
+
+	rem @note: hours, minutes, seconds, centiseconds
+	for /F "tokens=1-4 delims=%delims%" %%a in ("%local_time%") do (
+		rem @note: force a leading zero, which anyway occur some of the times;
+		rem        later, they'll be erased by prepending with 1 and subtracting 100
+		if 1%%a lss 20 ( set "hh=0%%a" ) else ( set "hh=%%a" )
+		if 1%%b lss 20 ( set "mm=0%%b" ) else ( set "mm=%%b" )
+		if 1%%c lss 20 ( set "ss=0%%c" ) else ( set "ss=%%c" )
+		if 1%%d lss 20 ( set "cc=0%%d" ) else ( set "cc=%%d" )
+	)
+
+	set /a millis = 0
+	set /a millis = millis *  24 + "(1%hh% - 100)"
+	set /a millis = millis *  60 + "(1%mm% - 100)"
+	set /a millis = millis *  60 + "(1%ss% - 100)"
+	set /a millis = millis * 100 + "(1%cc% - 100)"
+	set /a millis = millis * 10
+
+	rem put result into the argument
+	set "%~1=%millis%"
+goto :eof
+
+:report_millis_delta
+	set /a delta = (86400000 + %~3 - %~2) %% 86400000
+	echo.%~1 %delta% %~4
 goto :eof
