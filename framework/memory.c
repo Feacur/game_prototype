@@ -77,13 +77,38 @@ void * memory_reallocate(void const * owner, struct CString source, void * point
 #include "framework/internal/memory_to_system.h"
 
 uint32_t memory_to_system_report(void) {
-	logger_to_console("> memory report (count: %u, bytes: %zu):", memory_state.count, memory_state.bytes);
-	if (memory_state.root == NULL) { logger_to_console("  empty"); return 0; }
+	uint32_t const pointer_digits_count = 12;
 
+	uint32_t bytes_digits_count = 0;
+	for (size_t v = memory_state.bytes; v > 0; v = v / 10) {
+		bytes_digits_count++;
+	}
+
+	logger_to_console(
+		"\n"
+		"> memory report%*s(bytes: %-*zu | count: %u):\n"
+		"",
+		((pointer_digits_count >= 8) ? (pointer_digits_count - 8) : 0), "",
+		bytes_digits_count,
+		memory_state.bytes,
+		memory_state.count
+	);
 	uint32_t count = 0;
-	for (struct Memory_Header * it = memory_state.root; it != NULL; it = it->next) {
-		count++;
-		logger_to_console("  0x%zx: '%.*s' (bytes: %zu)\n", (size_t)(it + sizeof(*it)), it->source.length, it->source.data, it->size);
+	if (memory_state.root != NULL) {
+		for (struct Memory_Header * it = memory_state.root; it != NULL; it = it->next) {
+			logger_to_console(
+				"  [0x%0*zx] (bytes: %-*.zu | owner: 0x%0*zx) at '%.*s'\n",
+				pointer_digits_count,
+				(size_t)(it + 1),
+				bytes_digits_count,
+				it->size,
+				pointer_digits_count,
+				(size_t)it->owner,
+				it->source.length,
+				it->source.data
+			);
+			count++;
+		}
 	}
 	return count;
 }

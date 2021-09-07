@@ -84,7 +84,7 @@ void asset_system_del_type(struct Asset_System * system, struct CString type) {
 	if (type.length == 0) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
 
 	uint32_t const type_id = strings_find(&system->strings, type);
-	if (type_id == INDEX_EMPTY) { logger_to_console("unknown type: %*s\n", type.length, type.data); DEBUG_BREAK(); return; }
+	if (type_id == INDEX_EMPTY) { logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK(); return; }
 
 	{
 		struct Asset_Type * asset_type = hash_table_u32_get(&system->types, type_id);
@@ -109,13 +109,13 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 		.data = extension_name,
 	});
 	if (extension_id == INDEX_EMPTY) {
-		logger_to_console("unknown extension: %*s\n", extension_length, extension_name); DEBUG_BREAK();
+		logger_to_console("unknown extension: %.*s\n", extension_length, extension_name); DEBUG_BREAK();
 		return asset_ref_empty;
 	}
 
 	uint32_t const * type_id = hash_table_u32_get(&system->map, extension_id);
 	if (type_id == NULL) {
-		logger_to_console("can't infer type from extension: %*s\n", extension_length, extension_name); DEBUG_BREAK();
+		logger_to_console("can't infer type from extension: %.*s\n", extension_length, extension_name); DEBUG_BREAK();
 		return asset_ref_empty;
 	}
 
@@ -134,7 +134,7 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, *type_id);
 	if (asset_type == NULL) {
 		struct CString const type = strings_get(&system->strings, *type_id);
-		logger_to_console("unknown type: %*s\n", type.length, type.data); DEBUG_BREAK();
+		logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK();
 		return asset_ref_empty;
 	}
 
@@ -170,7 +170,7 @@ void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_r
 	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, asset_ref.type_id);
 	if (asset_type == NULL) {
 		struct CString const type = strings_get(&system->strings, asset_ref.type_id);
-		logger_to_console("unknown type: %*s\n", type.length, type.data); DEBUG_BREAK();
+		logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK();
 	}
 
 	//
@@ -195,7 +195,7 @@ void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref 
 	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, asset_ref.type_id);
 	if (asset_type == NULL) {
 		struct CString const type = strings_get(&system->strings, asset_ref.type_id);
-		logger_to_console("unknown type: %*s\n", type.length, type.data); DEBUG_BREAK();
+		logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK();
 	}
 
 	//
