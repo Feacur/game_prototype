@@ -7,8 +7,6 @@
 
 #include "game_state.h"
 
-#include <math.h>
-
 //
 #include "object_entity.h"
 
@@ -73,10 +71,10 @@ struct uvec2 entity_get_content_size(
 
 		case ENTITY_TYPE_TEXT_2D: {
 			int32_t const rect[] = {
-				(int32_t)floorf(entity->rect.min_relative.x * (float)viewport_size_x + entity->rect.min_absolute.x),
-				(int32_t)floorf(entity->rect.min_relative.y * (float)viewport_size_y + entity->rect.min_absolute.y),
-				(int32_t)ceilf(entity->rect.max_relative.x * (float)viewport_size_x + entity->rect.max_absolute.x),
-				(int32_t)ceilf(entity->rect.max_relative.y * (float)viewport_size_y + entity->rect.max_absolute.y),
+				(int32_t)maths_floor(entity->rect.min_relative.x * (float)viewport_size_x + entity->rect.min_absolute.x),
+				(int32_t)maths_floor(entity->rect.min_relative.y * (float)viewport_size_y + entity->rect.min_absolute.y),
+				(int32_t)maths_ceil (entity->rect.max_relative.x * (float)viewport_size_x + entity->rect.max_absolute.x),
+				(int32_t)maths_ceil (entity->rect.max_relative.y * (float)viewport_size_y + entity->rect.max_absolute.y),
 			};
 			return (struct uvec2){
 				(uint32_t)max_s32(rect[2] - rect[0], rect[0] - rect[2]),

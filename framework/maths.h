@@ -72,6 +72,14 @@ float eerp(float v1, float v2, float t);
 float eerp_stable(float v1, float v2, float t);
 float inverse_eerp(float v1, float v2, float value);
 
+bool  maths_isinf(float value);
+float maths_floor(float value);
+float maths_ceil(float value);
+float maths_sqrt(float value);
+float maths_sin(float value);
+float maths_cos(float value);
+float maths_ldexp(float factor, int32_t power); // @note: `ldexp(a, b) == a * 2^b`
+
 // -- uint32_t vectors
 struct uvec2 uvec2_add(struct uvec2 v1, struct uvec2 v2);
 struct uvec2 uvec2_sub(struct uvec2 v1, struct uvec2 v2);

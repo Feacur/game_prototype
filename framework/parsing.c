@@ -1,4 +1,4 @@
-#include <math.h>
+#include "maths.h"
 
 #define PARSE_INTEGER(type, value) \
 	while (parse_is_digit(*text)) { \
@@ -85,8 +85,7 @@ static float make_float(uint32_t mantissa, int32_t exponent_10) {
 		mantissa /= 5; ++exponent_10;
 	}
 
-	// ldexp(a, b) == a * 2^b
-	return ldexpf((float)mantissa, exponent_2);
+	return maths_ldexp((float)mantissa, exponent_2);
 }
 
 #undef PARSE_INTEGER

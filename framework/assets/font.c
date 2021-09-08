@@ -1,10 +1,10 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
+#include "framework/maths.h"
 #include "framework/containers/array_byte.h"
 
 #include "framework/platform_file.h"
 
-#include <math.h>
 
 // @idea: compile third-parties as separate units
 #if defined(__clang__)
@@ -93,10 +93,10 @@ void font_get_glyph_parameters(struct Font const * font, struct Glyph_Params * p
 	}
 
 	*params = (struct Glyph_Params){
-		.rect[0] = (int32_t)floorf(((float)rect[0]) * scale),
-		.rect[1] = (int32_t)floorf(((float)rect[1]) * scale),
-		.rect[2] = (int32_t)ceilf (((float)rect[2]) * scale),
-		.rect[3] = (int32_t)ceilf (((float)rect[3]) * scale),
+		.rect[0] = (int32_t)maths_floor(((float)rect[0]) * scale),
+		.rect[1] = (int32_t)maths_floor(((float)rect[1]) * scale),
+		.rect[2] = (int32_t)maths_ceil (((float)rect[2]) * scale),
+		.rect[3] = (int32_t)maths_ceil (((float)rect[3]) * scale),
 		.full_size_x = ((float)advance_width) * scale,
 	};
 }

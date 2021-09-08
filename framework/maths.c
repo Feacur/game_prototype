@@ -1,4 +1,4 @@
-#include <math.h> // @todo: wrap-inline?
+#include <math.h>
 
 //
 #include "maths.h"
@@ -111,6 +111,14 @@ float inverse_lerp(float v1, float v2, float value) { return (value - v1) / (v2 
 float eerp(float v1, float v2, float t) { return v1 * powf(v2 / v1, t); }
 float eerp_stable(float v1, float v2, float t) { return powf(v1, (1 - t)) * powf(v2, t); }
 float inverse_eerp(float v1, float v2, float value) { return logf(value / v1) / logf(v2 / v1); }
+
+bool  maths_isinf(float value) { return isinf(value); }
+float maths_floor(float value) { return floorf(value); }
+float maths_ceil(float value) { return ceilf(value); }
+float maths_sqrt(float value) { return sqrtf(value); }
+float maths_sin(float value) { return sinf(value); }
+float maths_cos(float value) { return cosf(value); }
+float maths_ldexp(float factor, int32_t power) { return ldexpf(factor, power); }
 
 /* -- vectors
 
@@ -265,15 +273,15 @@ struct vec4 vec4_norm(struct vec4 v) {
 
 struct vec4 quat_set_axis(struct vec3 axis, float radians) {
 	float const r = radians * 0.5f;
-	float const s = sinf(r);
-	float const c = cosf(r);
+	float const s = maths_sin(r);
+	float const c = maths_cos(r);
 	return (struct vec4){axis.x * s, axis.y * s, axis.z * s, c};
 }
 
 struct vec4 quat_set_radians(struct vec3 radians) {
 	struct vec3 const r = vec3_mul(radians, (struct vec3){0.5f, 0.5f, 0.5f});
-	struct vec3 const s = (struct vec3){sinf(r.x), sinf(r.y), sinf(r.z)};
-	struct vec3 const c = (struct vec3){cosf(r.x), cosf(r.y), cosf(r.z)};
+	struct vec3 const s = (struct vec3){maths_sin(r.x), maths_sin(r.y), maths_sin(r.z)};
+	struct vec3 const c = (struct vec3){maths_cos(r.x), maths_cos(r.y), maths_cos(r.z)};
 	float const sy_cx = s.y*c.x; float const cy_sx = c.y*s.x;
 	float const cy_cx = c.y*c.x; float const sy_sx = s.y*s.x;
 	return (struct vec4){
@@ -380,11 +388,11 @@ struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, flo
 	float const NS_NCP = 0, NS_FCP = 1;
 	float const reverse_depth = 1 / (fcp - ncp);
 
-	float const persp_scale_z  = isinf(fcp) ? 1                         : (reverse_depth * (NS_FCP * fcp - NS_NCP * ncp));
-	float const persp_offset_z = isinf(fcp) ? ((NS_NCP - NS_FCP) * ncp) : (reverse_depth * (NS_NCP - NS_FCP) * ncp * fcp);
+	float const persp_scale_z  = maths_isinf(fcp) ? 1                         : (reverse_depth * (NS_FCP * fcp - NS_NCP * ncp));
+	float const persp_offset_z = maths_isinf(fcp) ? ((NS_NCP - NS_FCP) * ncp) : (reverse_depth * (NS_NCP - NS_FCP) * ncp * fcp);
 
-	float const ortho_scale_z  = isinf(fcp) ? 0      : (reverse_depth * (NS_FCP - NS_NCP));
-	float const ortho_offset_z = isinf(fcp) ? NS_NCP : (reverse_depth * (NS_NCP * fcp - NS_FCP * ncp));
+	float const ortho_scale_z  = maths_isinf(fcp) ? 0      : (reverse_depth * (NS_FCP - NS_NCP));
+	float const ortho_offset_z = maths_isinf(fcp) ? NS_NCP : (reverse_depth * (NS_NCP * fcp - NS_FCP * ncp));
 
 	float const scale_z  = lerp(persp_scale_z, ortho_scale_z, ortho);
 	float const offset_z = lerp(persp_offset_z, ortho_offset_z, ortho);

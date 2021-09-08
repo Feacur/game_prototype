@@ -1,3 +1,5 @@
+#include "framework/maths.h"
+
 #include "framework/containers/array_byte.h"
 #include "framework/containers/hash_table_u32.h"
 #include "framework/containers/hash_table_u64.h"
@@ -9,11 +11,6 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
 #include "framework/unicode.h"
-
-// #include "framework/maths.h"
-uint32_t round_up_to_PO2_u32(uint32_t value);
-
-#include <math.h>
 
 struct Font_Image {
 	struct Image buffer;
@@ -223,7 +220,7 @@ void font_image_render(struct Font_Image * font_image) {
 		uint32_t atlas_size_x;
 		uint32_t atlas_size_y;
 		if (font_image->buffer.size_x == 0 || font_image->buffer.size_y == 0) {
-			atlas_size_x = (uint32_t)sqrtf((float)minimum_area);
+			atlas_size_x = (uint32_t)maths_sqrt((float)minimum_area);
 			atlas_size_x = round_up_to_PO2_u32(atlas_size_x);
 
 			atlas_size_y = atlas_size_x;
