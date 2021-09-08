@@ -17,7 +17,7 @@
 // @note: expects functional `IEEE 754` float and double
 // half   [sign:1][exponent: 5][mantissa:10] == sign * (1 + mantissa / 2^10) * 2^(exponent -   15)
 // float  [sign:1][exponent: 8][mantissa:23] == sign * (1 + mantissa / 2^23) * 2^(exponent -  127)
-// double [sign:1][exponent:12][mantissa:51] == sign * (1 + mantissa / 2^51) * 2^(exponent - 1023)
+// double [sign:1][exponent:11][mantissa:52] == sign * (1 + mantissa / 2^52) * 2^(exponent - 1023)
 // -----
 // `exponent` is a "window" between powers of two: [0.25 .. 0.5], [0.5 .. 1], [1 .. 2], [2 .. 4]
 // `mantissa` is an "offset" within the window:    [0.5 .. 1] with [mantissa_max / 2] == 0.75
