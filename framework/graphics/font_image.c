@@ -14,10 +14,7 @@
 uint32_t round_up_to_PO2_u32(uint32_t value);
 
 #include <string.h>
-#include <stdlib.h> // qsort
 #include <math.h>
-
-// @idea: custom qsort
 
 struct Font_Image {
 	struct Image buffer;
@@ -209,7 +206,7 @@ void font_image_render(struct Font_Image * font_image) {
 	}
 
 	// sort glyphs by height, then by width
-	qsort(symbols_to_render, symbols_count, sizeof(*symbols_to_render), font_image_sort_comparison);
+	common_qsort(symbols_to_render, symbols_count, sizeof(*symbols_to_render), font_image_sort_comparison);
 
 	// resize the atlas
 	{

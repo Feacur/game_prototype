@@ -9,7 +9,6 @@
 #include <hidusage.h>
 
 #include <string.h>
-#include <stdlib.h>
 
 #define HANDLE_PROP_WINDOW_NAME "prop_window"
 
@@ -177,7 +176,7 @@ void window_to_system_init(void) {
 	});
 	if (atom == 0) {
 		logger_to_console("'RegisterClassEx' failed\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 	// https://docs.microsoft.com/windows/win32/winmsg/about-window-classes
 	// https://docs.microsoft.com/windows/win32/gdi/private-display-device-contexts

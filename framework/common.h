@@ -5,10 +5,21 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// #if defined(__clang__)
+// #define NORETURN_POSTFIX __attribute__((noreturn))
+// #else
+// #define NORETURN_POSTFIX
+// #endif
+
 struct CString {
 	uint32_t length;
 	char const * data;
 };
+
+__declspec(noreturn)
+void common_exit_failure(void);
+
+void common_qsort(void * data, size_t count, size_t value_size, int (* compare)(void const * v1, void const * v2));
 
 #define INDEX_EMPTY UINT32_MAX
 

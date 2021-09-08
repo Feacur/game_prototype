@@ -6,7 +6,6 @@
 #include "framework/logger.h"
 
 #include <string.h>
-#include <stdlib.h>
 
 //
 #include "application.h"
@@ -58,7 +57,7 @@ static void application_init(void) {
 	app.window = platform_window_init(app.config.size_x, app.config.size_y, window_settings);
 	if (app.window == NULL) {
 		logger_to_console("failed to create application window"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	platform_window_set_vsync(app.window, app.config.vsync);

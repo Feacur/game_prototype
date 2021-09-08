@@ -1,7 +1,7 @@
 #include "framework/logger.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 // @todo: custom specialized allocators
 // @todo: put meta right into pointer headers instead of a dictionary? alongside?
@@ -54,7 +54,7 @@ void * memory_reallocate(void const * owner, struct CString source, void * point
 	struct Memory_Header * reallocated_header = realloc(pointer_header, sizeof(*pointer_header) + size);
 	if (reallocated_header == NULL) {
 		logger_to_console("'realloc' failed: \"%.*s\"\n", source.length, source.data); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	memory_state.count++;

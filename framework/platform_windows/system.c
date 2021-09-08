@@ -14,7 +14,6 @@
 #include <signal.h>
 
 #include <string.h>
-#include <stdlib.h>
 
 static struct Platform_System {
 	HMODULE module;
@@ -32,7 +31,7 @@ void platform_system_init(void) {
 	platform_system.module = GetModuleHandle(NULL);
 	if (platform_system.module == NULL) {
 		logger_to_console("'GetModuleHandle(NULL)' failed\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	// system_cache_paths();

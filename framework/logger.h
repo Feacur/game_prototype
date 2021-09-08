@@ -3,14 +3,16 @@
 
 #include "common.h"
 
-#if defined(__clang__) // clang: argument 1 of 2 is a printf-like format literal
-__attribute__((format(printf, 1, 2)))
+#if defined(__clang__)
+#define PRINTF_LIKE(position, count) __attribute__((format(printf, position, count)))
+#else
+#define PRINTF_LIKE(position, count)
 #endif // __clang__
+
+PRINTF_LIKE(1, 2)
 void logger_to_console(char const * format, ...);
 
-#if defined(__clang__) // clang: argument 2 of 3 is a printf-like format literal
-__attribute__((format(printf, 2, 3)))
-#endif // __clang__
+PRINTF_LIKE(2, 3)
 uint32_t logger_to_buffer(char * buffer, char const * format, ...);
 
 #endif

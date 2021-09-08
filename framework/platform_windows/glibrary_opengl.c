@@ -8,7 +8,6 @@
 #include "window_to_glibrary.h"
 
 #include <string.h>
-#include <stdlib.h>
 
 #include <Windows.h>
 #include <GL/wgl.h>
@@ -50,7 +49,7 @@ void glibrary_to_system_init(void) {
 	glibrary.handle = LoadLibrary(TEXT("opengl32.dll"));
 	if (glibrary.handle == NULL) {
 		logger_to_console("'LoadLibrary(\"opengl32.dll\")' failed\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	// fetch basic DLL functions
@@ -69,7 +68,7 @@ void glibrary_to_system_init(void) {
 	// });
 	// if (atom == 0) {
 	// 	logger_console("'RegisterClassEx' failed\n"); DEBUG_BREAK();
-	// 	exit(EXIT_FAILURE);
+	// 	common_exit_failure();
 	// }
 
 	// create temporary window
@@ -82,13 +81,13 @@ void glibrary_to_system_init(void) {
 	);
 	if (hwnd == NULL) {
 		logger_to_console("'CreateWindowEx' failed\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	HDC const hdc = GetDC(hwnd);
 	if (hdc == NULL) {
 		logger_to_console("'GetDC' failed\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	// create temporary rendering context
@@ -106,27 +105,27 @@ void glibrary_to_system_init(void) {
 	int pfd_id = ChoosePixelFormat(hdc, &pfd_hint);
 	if (pfd_id == 0) {
 		logger_to_console("'ChoosePixelFormat' failed\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	PIXELFORMATDESCRIPTOR pfd;
 	int formats_count = DescribePixelFormat(hdc, pfd_id, sizeof(pfd), &pfd);
 	if (formats_count == 0) {
 		logger_to_console("'DescribePixelFormat' failed\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	BOOL pfd_found = SetPixelFormat(hdc, pfd_id, &pfd);
 	if (!pfd_found) {
 		logger_to_console("'SetPixelFormat' failed\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	HGLRC rc_handle = glibrary.dll.CreateContext(hdc);
-	if (rc_handle == NULL) { logger_to_console("'CreateContext' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (rc_handle == NULL) { logger_to_console("'CreateContext' failed\n"); DEBUG_BREAK(); common_exit_failure(); }
 
 	BOOL rc_is_current = glibrary.dll.MakeCurrent(hdc, rc_handle);
-	if (!rc_is_current) { logger_to_console("'MakeCurrent' failed\n"); DEBUG_BREAK(); exit(EXIT_FAILURE); }
+	if (!rc_is_current) { logger_to_console("'MakeCurrent' failed\n"); DEBUG_BREAK(); common_exit_failure(); }
 
 	// fetch extensions
 	glibrary.arb.GetExtensionsString    = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   glibrary.dll.GetProcAddress("wglGetExtensionsStringARB");
@@ -529,7 +528,7 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 	struct Pixel_Format pixel_format = choose_pixel_format(pixel_formats, hint);
 	if (pixel_format.id == 0) {
 		logger_to_console("failed to choose format\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	MEMORY_FREE(&glibrary, pixel_formats);
@@ -538,20 +537,20 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 	int formats_count = DescribePixelFormat(device, pixel_format.id, sizeof(pfd), &pfd);
 	if (formats_count == 0) {
 		logger_to_console("failed to describe format\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	BOOL pfd_found = SetPixelFormat(device, pixel_format.id, &pfd);
 	if (!pfd_found) {
 		logger_to_console("'SetPixelFormat' failed\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	HGLRC result = create_context_arb(device, shared, settings);
 	if (result == NULL) { result = create_context_legacy(device, shared); }
 	if (result == NULL) {
 		logger_to_console("failed to create context\n"); DEBUG_BREAK();
-		exit(EXIT_FAILURE);
+		common_exit_failure();
 	}
 
 	*selected_pixel_format = pixel_format;

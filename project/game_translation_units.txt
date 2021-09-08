@@ -1,3 +1,4 @@
+framework/common.c
 framework/maths.c
 framework/memory.c
 framework/input.c
