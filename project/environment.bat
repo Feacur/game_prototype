@@ -17,13 +17,16 @@ if not [%environment_is_ready%] == [] (
 
 rem |> Environment
 set VSLANG=1033
-call :check_environment && ( call "vcvarsall.bat" x64 > nul ) || (
-	pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/"
-	call :check_environment && ( call "vcvarsall.bat" x64 > nul & popd ) || ( popd
-		echo.can't find MSVC's environment
-		goto :eof
-	)
+call :check_environment && ( call "vcvarsall.bat" x64 > nul & goto msvc_found )
+
+pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/" && (
+	call :check_environment && ( call "vcvarsall.bat" x64 > nul & popd & goto msvc_found ) || popd
 )
+
+echo.can't find MSVC's environment
+goto :eof
+
+:msvc_found
 
 rem |> MSVC
 call :check_msvc || (

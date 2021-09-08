@@ -28,7 +28,9 @@ you are free to use any other IDE, it's just me who didn't supply additional pro
    N.B. code expects `assets` folder right at the current working directory
 
 > IDE:
-1) open ST4 or VSCode
+1) open ST4 or VSCode  
+   tip: it's best to prepare environment beforehand, rather than at each build  
+   to do so launch `open_sublime.bat` or `open_vscode.bat`
 2) launch one of the build/debug/run commands  
    N.B. debugging in Sublime Text relies on [RemedyBG](https://remedybg.itch.io/remedybg)
 

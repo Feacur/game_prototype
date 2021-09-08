@@ -69,15 +69,17 @@ Includes:
 
 Defines:
 - _CRT_SECURE_NO_WARNINGS
+- STRICT                  (Windows OS)
+- VC_EXTRALEAN            (Windows OS)
 - WIN32_LEAN_AND_MEAN     (Windows OS)
 - NOMINMAX                (Windows OS)
 - UNICODE                 (Windows OS)
-- GAME_TARGET_OPTIMIZED   (this game, optional)
-- GAME_TARGET_DEVELOPMENT (this game, optional)
-- GAME_TARGET_DEBUG       (this game, optional)
 - _MT                     (MSVC, dynamic CRT)
 - _DLL                    (MSVC, dynamic CRT)
 - _DEBUG                  (MSVC, debug CRT)
+- GAME_TARGET_OPTIMIZED   (this game, optional)
+- GAME_TARGET_DEVELOPMENT (this game, optional)
+- GAME_TARGET_DEBUG       (this game, optional)
 
 Features:
 - disable exceptions
