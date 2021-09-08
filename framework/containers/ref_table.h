@@ -3,13 +3,13 @@
 
 #include "ref.h"
 
-struct Ref_Table_Iterator { // ZII
+struct Ref_Table_Iterator {
 	uint32_t current, next;
 	struct Ref ref;
 	void * value;
 };
 
-struct Ref_Table { // ZII
+struct Ref_Table {
 	uint32_t free_sparse_index;
 	uint32_t value_size;
 	uint32_t capacity, count;

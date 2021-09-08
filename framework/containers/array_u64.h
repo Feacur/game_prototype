@@ -3,7 +3,7 @@
 
 #include "framework/common.h"
 
-struct Array_U64 { // ZII
+struct Array_U64 {
 	uint32_t capacity, count;
 	uint64_t * data;
 };

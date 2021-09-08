@@ -3,7 +3,7 @@
 
 #include "framework/common.h"
 
-struct Array_Any { // ZII
+struct Array_Any {
 	uint32_t value_size;
 	uint32_t capacity, count;
 	uint8_t * data;

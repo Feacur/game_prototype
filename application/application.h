@@ -11,7 +11,7 @@ struct Application_Config {
 	uint32_t slow_frames_limit;
 };
 
-struct Application_Callbacks { // ZII
+struct Application_Callbacks {
 	void (* init)(void);
 	void (* free)(void);
 	void (* fixed_update)(uint64_t elapsed, uint64_t per_second);

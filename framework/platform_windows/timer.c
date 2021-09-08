@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-static struct Platform_Timer { // static ZII
+static struct Platform_Timer {
 	LARGE_INTEGER ticks_per_second;
 } platform_timer; // @note: global state
 

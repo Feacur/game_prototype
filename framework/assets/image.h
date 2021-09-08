@@ -10,7 +10,7 @@
 // |          |
 // |0,0       |
 // +----------+
-struct Image { // ZII
+struct Image {
 	uint32_t capacity, size_x, size_y;
 	uint8_t * data;
 	struct Texture_Parameters parameters;

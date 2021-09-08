@@ -34,7 +34,7 @@ struct JSON_Token {
 	uint32_t line;
 };
 
-struct JSON_Scanner { // ZII
+struct JSON_Scanner {
 	char const * start, * current;
 	uint32_t line_start, line_current;
 };

@@ -5,7 +5,7 @@
 #include "framework/containers/array_u32.h"
 
 // @note: strings interning structure
-struct Strings { // ZII
+struct Strings {
 	struct Array_U32 offsets;
 	struct Array_U32 lengths;
 	struct Array_Byte buffer;

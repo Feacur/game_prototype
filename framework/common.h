@@ -5,17 +5,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct CString { // ZII
+struct CString {
 	uint32_t length;
 	char const * data;
 };
 
 #define INDEX_EMPTY UINT32_MAX
 
-// @note: ZII == Zero Is Initialization
-
 // -- utility
-
 #define STRINGIFY_A_VALUE(v) #v
 #define STRINGIFY_A_MACRO(m) STRINGIFY_A_VALUE(m)
 #define TOKENIZE_A_VALUE(v1, v2) v1 ## v2

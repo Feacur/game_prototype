@@ -4,7 +4,7 @@
 #include "framework/containers/array_float.h"
 #include "framework/containers/array_u32.h"
 
-struct WFObj { // ZII
+struct WFObj {
 	struct Array_Float positions;
 	struct Array_Float texcoords;
 	struct Array_Float normals;

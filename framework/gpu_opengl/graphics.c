@@ -71,11 +71,11 @@ struct Gpu_Mesh {
 	// @idea: add an optional asset source
 };
 
-struct Gpu_Unit { // ZII
+struct Gpu_Unit {
 	struct Ref gpu_texture_ref;
 };
 
-static struct Graphics_State { // static ZII
+static struct Graphics_State {
 	char * extensions;
 
 	struct Strings uniforms;

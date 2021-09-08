@@ -20,7 +20,7 @@ struct Memory_Header {
 	struct CString source;
 };
 
-static struct Memory_State { // static ZII
+static struct Memory_State {
 	struct Memory_Header * root;
 	uint32_t count;
 	size_t bytes;

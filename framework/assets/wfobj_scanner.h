@@ -35,7 +35,7 @@ struct WFObj_Token {
 	uint32_t line;
 };
 
-struct WFObj_Scanner { // ZII
+struct WFObj_Scanner {
 	char const * start, * current;
 	uint32_t line_start, line_current;
 };

@@ -3,7 +3,7 @@
 
 #include "framework/common.h"
 
-struct Array_Float { // ZII
+struct Array_Float {
 	uint32_t capacity, count;
 	float * data;
 };

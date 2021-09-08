@@ -5,7 +5,7 @@
 
 #include "framework/graphics/types.h"
 
-struct Mesh { // ZII
+struct Mesh {
 	uint32_t capacity, count;
 	struct Array_Byte * buffers;
 	struct Mesh_Parameters * parameters;

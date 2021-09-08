@@ -3,7 +3,7 @@
 
 #include "framework/common.h"
 
-struct Array_Byte { // ZII
+struct Array_Byte {
 	uint64_t capacity, count;
 	uint8_t * data;
 };
