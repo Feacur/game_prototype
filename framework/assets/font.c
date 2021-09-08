@@ -4,7 +4,6 @@
 
 #include "framework/platform_file.h"
 
-#include <string.h>
 #include <math.h>
 
 // @idea: compile third-parties as separate units
@@ -56,7 +55,7 @@ struct Font * font_init(struct CString path) {
 
 void font_free(struct Font * font) {
 	array_byte_free(&font->file);
-	memset(font, 0, sizeof(*font));
+	common_memset(font, 0, sizeof(*font));
 	MEMORY_FREE(font, font);
 }
 
@@ -111,7 +110,7 @@ void font_fill_buffer(
 		if (glyph_size_x == 0) { logger_to_console("'glyph_size_x == 0' doesn't make sense\n"); DEBUG_BREAK(); }
 		if (glyph_size_y == 0) { logger_to_console("'glyph_size_y == 0' doesn't make sense\n"); DEBUG_BREAK(); }
 		buffer[0] = 0xff;
-		memset(buffer, 0xff, glyph_size_x * glyph_size_y * sizeof(*buffer));
+		common_memset(buffer, 0xff, glyph_size_x * glyph_size_y * sizeof(*buffer));
 		return;
 	}
 

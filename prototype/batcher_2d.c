@@ -20,8 +20,6 @@
 
 #include "asset_types.h"
 
-#include <string.h>
-
 // @todo: UTF-8 edge cases, different languages, LTR/RTL, ligatures, etc.
 // @idea: point to a `Gfx_Material` with an `Asset_Ref` instead
 // @idea: static batching option; cache vertices and stuff until changed
@@ -120,7 +118,7 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	array_any_free(&batcher->buffer_vertices);
 	array_u32_free(&batcher->buffer_indices);
 	//
-	memset(batcher, 0, sizeof(*batcher));
+	common_memset(batcher, 0, sizeof(*batcher));
 	MEMORY_FREE(batcher, batcher);
 }
 
@@ -392,7 +390,7 @@ void batcher_2d_draw(struct Batcher_2D * batcher) {
 	}
 
 	//
-	memset(&batcher->batch, 0, sizeof(batcher->batch));
+	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
 	array_any_clear(&batcher->batches);
 	array_any_clear(&batcher->texts);
 	array_any_clear(&batcher->buffer_vertices);

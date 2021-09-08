@@ -5,8 +5,6 @@
 #include "framework/containers/array_u32.h"
 #include "wfobj.h"
 
-#include <string.h>
-
 //
 #include "mesh.h"
 
@@ -51,7 +49,7 @@ void mesh_free(struct Mesh * mesh) {
 	}
 	MEMORY_FREE(mesh, mesh->buffers);
 	MEMORY_FREE(mesh, mesh->parameters);
-	memset(mesh, 0, sizeof(*mesh));
+	common_memset(mesh, 0, sizeof(*mesh));
 }
 
 //
@@ -131,5 +129,5 @@ static void mesh_fill(
 		.type = DATA_TYPE_U32,
 		.flags = MESH_FLAG_INDEX,
 	};
-	memcpy(mesh->parameters[0].attributes, attributes->data, sizeof(*attributes->data) * attributes->count);
+	common_memcpy(mesh->parameters[0].attributes, attributes->data, sizeof(*attributes->data) * attributes->count);
 }

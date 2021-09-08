@@ -2,8 +2,6 @@
 #include "framework/logger.h"
 #include "internal.h"
 
-#include <string.h>
-
 //
 #include "ref_table.h"
 
@@ -18,7 +16,7 @@ void ref_table_free(struct Ref_Table * ref_table) {
 	MEMORY_FREE(ref_table, ref_table->dense);
 	MEMORY_FREE(ref_table, ref_table->sparse);
 
-	memset(ref_table, 0, sizeof(*ref_table));
+	common_memset(ref_table, 0, sizeof(*ref_table));
 }
 
 void ref_table_clear(struct Ref_Table * ref_table) {
@@ -80,7 +78,7 @@ struct Ref ref_table_aquire(struct Ref_Table * ref_table, void const * value) {
 	entry->id = ref_table->count;
 	ref_table->dense[ref_table->count] = ref_id;
 	if (value != NULL) {
-		memcpy(
+		common_memcpy(
 			ref_table->values + ref_table->value_size * ref_table->count,
 			value,
 			ref_table->value_size
@@ -117,7 +115,7 @@ void ref_table_discard(struct Ref_Table * ref_table, struct Ref ref) {
 		ref_table->dense[entry->id] = replacement_sparse_index;
 		ref_table->dense[ref_table->count] = INDEX_EMPTY;
 
-		memcpy(
+		common_memcpy(
 			ref_table->values + ref_table->value_size * entry->id,
 			ref_table->values + ref_table->value_size * ref_table->count,
 			ref_table->value_size
@@ -146,7 +144,7 @@ void ref_table_set(struct Ref_Table * ref_table, struct Ref ref, void const * va
 	if (ref.id  != ref_table->dense[entry->id]) { DEBUG_BREAK(); return; }
 	if (ref.gen != entry->gen)                  { DEBUG_BREAK(); return; }
 
-	memcpy(
+	common_memcpy(
 		ref_table->values + ref_table->value_size * entry->id,
 		value,
 		ref_table->value_size

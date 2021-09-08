@@ -11,8 +11,6 @@
 #include "object_entity.h"
 #include "asset_types.h"
 
-#include <string.h>
-
 //
 #include "game_state.h"
 
@@ -93,7 +91,7 @@ void state_free(void) {
 	array_any_free(&state.cameras);
 	array_any_free(&state.entities);
 
-	memset(&state, 0, sizeof(state));
+	common_memset(&state, 0, sizeof(state));
 }
 
 static void state_read_json_init(struct JSON const * json);

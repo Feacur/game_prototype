@@ -1,5 +1,3 @@
-#include <string.h>
-
 //
 #include "strings.h"
 
@@ -19,7 +17,7 @@ uint32_t strings_find(struct Strings const * strings, struct CString value) {
 	uint32_t offset = 0;
 	for (uint32_t i = 0; i < strings->lengths.count; i++) {
 		if (value.length == strings->lengths.data[i]) {
-			if (memcmp(value.data, strings->buffer.data + offset, value.length) == 0) { return i; }
+			if (common_memcmp(value.data, strings->buffer.data + offset, value.length) == 0) { return i; }
 		}
 		offset += strings->lengths.data[i] + 1;
 	}
@@ -30,7 +28,7 @@ uint32_t strings_add(struct Strings * strings, struct CString value) {
 	uint32_t offset = 0;
 	for (uint32_t i = 0; i < strings->lengths.count; i++) {
 		if (value.length == strings->lengths.data[i]) {
-			if (memcmp(value.data, strings->buffer.data + offset, value.length) == 0) { return i; }
+			if (common_memcmp(value.data, strings->buffer.data + offset, value.length) == 0) { return i; }
 		}
 		offset += strings->lengths.data[i] + 1;
 	}

@@ -1,8 +1,6 @@
 #include "framework/memory.h"
 #include "framework/parsing.h"
 
-#include <string.h>
-
 //
 #include "json_scanner.h"
 
@@ -14,7 +12,7 @@ void json_scanner_init(struct JSON_Scanner * scanner, char const * text) {
 }
 
 void json_scanner_free(struct JSON_Scanner * scanner) {
-	memset(scanner, 0, sizeof(*scanner));
+	common_memset(scanner, 0, sizeof(*scanner));
 }
 
 inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner * scanner);
@@ -92,7 +90,7 @@ static struct JSON_Token json_scanner_make_number_token(struct JSON_Scanner * sc
 
 static enum JSON_Token_Type json_scanner_check_keyword(struct JSON_Scanner * scanner, uint32_t start, struct CString rest, enum JSON_Token_Type type) {
 	if (scanner->current - scanner->start != start + rest.length) { return JSON_TOKEN_IDENTIFIER; }
-	if (memcmp(scanner->start + start, rest.data, rest.length) != 0) { return JSON_TOKEN_IDENTIFIER; }
+	if (common_memcmp(scanner->start + start, rest.data, rest.length) != 0) { return JSON_TOKEN_IDENTIFIER; }
 	return type;
 }
 

@@ -13,7 +13,6 @@
 // #include "framework/maths.h"
 uint32_t round_up_to_PO2_u32(uint32_t value);
 
-#include <string.h>
 #include <math.h>
 
 struct Font_Image {
@@ -79,7 +78,7 @@ void font_image_free(struct Font_Image * font_image) {
 	hash_table_u32_free(&font_image->table);
 	hash_table_u64_free(&font_image->kerning);
 
-	memset(font_image, 0, sizeof(*font_image));
+	common_memset(font_image, 0, sizeof(*font_image));
 	MEMORY_FREE(font_image, font_image);
 }
 
@@ -283,7 +282,7 @@ void font_image_render(struct Font_Image * font_image) {
 	}
 
 	// render glyphs into the atlas, assuming they shall fit
-	memset(font_image->buffer.data, 0, sizeof(*font_image->buffer.data) * font_image->buffer.size_x * font_image->buffer.size_y);
+	common_memset(font_image->buffer.data, 0, sizeof(*font_image->buffer.data) * font_image->buffer.size_x * font_image->buffer.size_y);
 	{
 		struct Array_Byte scratch_buffer;
 		array_byte_init(&scratch_buffer);
@@ -329,7 +328,7 @@ void font_image_render(struct Font_Image * font_image) {
 
 			for (uint32_t glyph_y = 0; glyph_y < glyph_size_y; glyph_y++) {
 				// @note: expects glyphs to be rendered bottom-left -> top-right
-				memcpy(
+				common_memcpy(
 					font_image->buffer.data + ((offset_y + glyph_y) * font_image->buffer.size_x + offset_x),
 					scratch_buffer.data + glyph_y * glyph_size_x,
 					sizeof(*scratch_buffer.data) * glyph_size_x

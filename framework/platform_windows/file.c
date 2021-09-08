@@ -2,8 +2,6 @@
 #include "framework/logger.h"
 #include "framework/containers/array_byte.h"
 
-#include <string.h>
-
 #include <Windows.h>
 
 #if defined(UNICODE)

@@ -2,8 +2,6 @@
 #include "framework/logger.h"
 #include "internal.h"
 
-#include <string.h>
-
 //
 #include "array_u32.h"
 
@@ -13,7 +11,7 @@ void array_u32_init(struct Array_U32 * array) {
 
 void array_u32_free(struct Array_U32 * array) {
 	MEMORY_FREE(array, array->data);
-	memset(array, 0, sizeof(*array));
+	common_memset(array, 0, sizeof(*array));
 }
 
 void array_u32_clear(struct Array_U32 * array) {
@@ -41,7 +39,7 @@ void array_u32_push(struct Array_U32 * array, uint32_t value) {
 void array_u32_push_many(struct Array_U32 * array, uint32_t count, uint32_t const * value) {
 	array_u32_ensure_capacity(array, array->count + count);
 	if (value != NULL) {
-		memcpy(
+		common_memcpy(
 			array->data + array->count,
 			value,
 			sizeof(*array->data) * count
@@ -52,7 +50,7 @@ void array_u32_push_many(struct Array_U32 * array, uint32_t count, uint32_t cons
 
 void array_u32_set_many(struct Array_U32 * array, uint32_t index, uint32_t count, uint32_t const * value) {
 	if (index + count > array->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
-	memcpy(
+	common_memcpy(
 		array->data + index,
 		value,
 		sizeof(*array->data) * count

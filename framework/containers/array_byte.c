@@ -2,8 +2,6 @@
 #include "framework/logger.h"
 #include "internal.h"
 
-#include <string.h>
-
 //
 #include "array_byte.h"
 
@@ -13,7 +11,7 @@ void array_byte_init(struct Array_Byte * array) {
 
 void array_byte_free(struct Array_Byte * array) {
 	MEMORY_FREE(array, array->data);
-	memset(array, 0, sizeof(*array));
+	common_memset(array, 0, sizeof(*array));
 }
 
 void array_byte_clear(struct Array_Byte * array) {
@@ -41,7 +39,7 @@ void array_byte_push(struct Array_Byte * array, uint8_t value) {
 void array_byte_push_many(struct Array_Byte * array, uint64_t count, uint8_t const * value) {
 	array_byte_ensure_capacity(array, array->count + count);
 	if (value != NULL) {
-		memcpy(
+		common_memcpy(
 			array->data + array->count,
 			value,
 			sizeof(*array->data) * count
@@ -52,7 +50,7 @@ void array_byte_push_many(struct Array_Byte * array, uint64_t count, uint8_t con
 
 void array_byte_set_many(struct Array_Byte * array, uint32_t index, uint32_t count, uint8_t const * value) {
 	if (index + count > array->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
-	memcpy(
+	common_memcpy(
 		array->data + index,
 		value,
 		sizeof(*array->data) * count

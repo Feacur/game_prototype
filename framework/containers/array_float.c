@@ -2,8 +2,6 @@
 #include "framework/logger.h"
 #include "internal.h"
 
-#include <string.h>
-
 //
 #include "array_float.h"
 
@@ -13,7 +11,7 @@ void array_float_init(struct Array_Float * array) {
 
 void array_float_free(struct Array_Float * array) {
 	MEMORY_FREE(array, array->data);
-	memset(array, 0, sizeof(*array));
+	common_memset(array, 0, sizeof(*array));
 }
 
 void array_float_clear(struct Array_Float * array) {
@@ -41,7 +39,7 @@ void array_float_push(struct Array_Float * array, float value) {
 void array_float_push_many(struct Array_Float * array, uint32_t count, float const * value) {
 	array_float_ensure_capacity(array, array->count + count);
 	if (value != NULL) {
-		memcpy(
+		common_memcpy(
 			array->data + array->count,
 			value,
 			sizeof(*array->data) * count
@@ -52,7 +50,7 @@ void array_float_push_many(struct Array_Float * array, uint32_t count, float con
 
 void array_float_set_many(struct Array_Float * array, uint32_t index, uint32_t count, float const * value) {
 	if (index + count > array->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
-	memcpy(
+	common_memcpy(
 		array->data + index,
 		value,
 		sizeof(*array->data) * count

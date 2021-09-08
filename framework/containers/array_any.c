@@ -2,8 +2,6 @@
 #include "framework/logger.h"
 #include "internal.h"
 
-#include <string.h>
-
 //
 #include "array_any.h"
 
@@ -15,7 +13,7 @@ void array_any_init(struct Array_Any * array, uint32_t value_size) {
 
 void array_any_free(struct Array_Any * array) {
 	MEMORY_FREE(array, array->data);
-	memset(array, 0, sizeof(*array));
+	common_memset(array, 0, sizeof(*array));
 }
 
 void array_any_clear(struct Array_Any * array) {
@@ -37,7 +35,7 @@ static void array_any_ensure_capacity(struct Array_Any * array, uint32_t target_
 
 void array_any_push(struct Array_Any * array, void const * value) {
 	array_any_ensure_capacity(array, array->count + 1);
-	memcpy(
+	common_memcpy(
 		array->data + array->value_size * array->count,
 		value,
 		array->value_size
@@ -48,7 +46,7 @@ void array_any_push(struct Array_Any * array, void const * value) {
 void array_any_push_many(struct Array_Any * array, uint32_t count, void const * value) {
 	array_any_ensure_capacity(array, array->count + count);
 	if (value != NULL) {
-		memcpy(
+		common_memcpy(
 			array->data + array->value_size * array->count,
 			value,
 			array->value_size * count
@@ -59,7 +57,7 @@ void array_any_push_many(struct Array_Any * array, uint32_t count, void const * 
 
 void array_any_set_many(struct Array_Any * array, uint32_t index, uint32_t count, void const * value) {
 	if (index + count > array->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
-	memcpy(
+	common_memcpy(
 		array->data + array->value_size * index,
 		value,
 		array->value_size * count

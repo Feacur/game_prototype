@@ -2,8 +2,6 @@
 #include "framework/logger.h"
 #include "internal.h"
 
-#include <string.h>
-
 //
 #include "hash_set_u64.h"
 
@@ -15,7 +13,7 @@ void hash_set_u64_free(struct Hash_Set_U64 * hash_set) {
 	MEMORY_FREE(hash_set, hash_set->key_hashes);
 	MEMORY_FREE(hash_set, hash_set->marks);
 
-	memset(hash_set, 0, sizeof(*hash_set));
+	common_memset(hash_set, 0, sizeof(*hash_set));
 }
 
 static uint32_t hash_set_u64_find_key_index(struct Hash_Set_U64 * hash_set, uint64_t key_hash);
@@ -33,7 +31,7 @@ void hash_set_u64_resize(struct Hash_Set_U64 * hash_set, uint32_t target_capacit
 	hash_set->key_hashes = MEMORY_ALLOCATE_ARRAY(hash_set, uint64_t, hash_set->capacity);
 	hash_set->marks      = MEMORY_ALLOCATE_ARRAY(hash_set, uint8_t, hash_set->capacity);
 
-	memset(hash_set->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_set->marks) * hash_set->capacity);
+	common_memset(hash_set->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_set->marks) * hash_set->capacity);
 
 	// @note: `hash_set->count` remains as is
 	for (uint32_t i = 0; i < capacity; i++) {
@@ -53,7 +51,7 @@ void hash_set_u64_resize(struct Hash_Set_U64 * hash_set, uint32_t target_capacit
 
 void hash_set_u64_clear(struct Hash_Set_U64 * hash_set) {
 	hash_set->count = 0;
-	memset(hash_set->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_set->marks) * hash_set->capacity);
+	common_memset(hash_set->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_set->marks) * hash_set->capacity);
 }
 
 bool hash_set_u64_get(struct Hash_Set_U64 * hash_set, uint64_t key_hash) {

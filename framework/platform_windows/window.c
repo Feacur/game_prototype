@@ -8,8 +8,6 @@
 #include <Windows.h>
 #include <hidusage.h>
 
-#include <string.h>
-
 #define HANDLE_PROP_WINDOW_NAME "prop_window"
 
 // @note: `WM_KILLFOCUS` is sent immediately

@@ -19,6 +19,9 @@ struct CString {
 __declspec(noreturn)
 void common_exit_failure(void);
 
+void common_memset(void * target, uint8_t value, size_t size);
+void common_memcpy(void * target, void const * source, size_t size);
+int common_memcmp(void const * buffer_1, void const * buffer_2, size_t size);
 void common_qsort(void * data, size_t count, size_t value_size, int (* compare)(void const * v1, void const * v2));
 
 #define INDEX_EMPTY UINT32_MAX

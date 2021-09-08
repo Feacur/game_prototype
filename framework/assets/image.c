@@ -4,8 +4,6 @@
 
 #include "framework/platform_file.h"
 
-#include <string.h>
-
 // @idea: compile third-parties as separate units
 #if defined(__clang__)
 	#pragma clang diagnostic push
@@ -61,7 +59,7 @@ void image_init(struct Image * image, struct CString path) {
 
 void image_free(struct Image * image) {
 	MEMORY_FREE(image, image->data);
-	memset(image, 0, sizeof(*image));
+	common_memset(image, 0, sizeof(*image));
 }
 
 void image_resize(struct Image * image, uint32_t size_x, uint32_t size_y) {

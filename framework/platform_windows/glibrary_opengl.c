@@ -7,8 +7,6 @@
 #include "system_to_internal.h"
 #include "window_to_glibrary.h"
 
-#include <string.h>
-
 #include <Windows.h>
 #include <GL/wgl.h>
 

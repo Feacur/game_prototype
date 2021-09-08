@@ -13,8 +13,6 @@
 #include <Windows.h>
 #include <signal.h>
 
-#include <string.h>
-
 static struct Platform_System {
 	HMODULE module;
 	bool should_close;

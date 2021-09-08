@@ -1,7 +1,6 @@
 #include "framework/logger.h"
 
 #include <stdlib.h>
-#include <string.h>
 
 // @todo: custom specialized allocators
 // @todo: put meta right into pointer headers instead of a dictionary? alongside?
@@ -46,7 +45,7 @@ void * memory_reallocate(void const * owner, struct CString source, void * point
 		if (pointer_header == NULL) { return NULL; }
 		memory_state.count--;
 		memory_state.bytes -= pointer_header->size;
-		memset(pointer_header, 0, sizeof(*pointer_header));
+		common_memset(pointer_header, 0, sizeof(*pointer_header));
 		free(pointer_header);
 		return NULL;
 	}

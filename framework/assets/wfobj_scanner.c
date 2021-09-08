@@ -1,8 +1,6 @@
 #include "framework/memory.h"
 #include "framework/parsing.h"
 
-#include <string.h>
-
 //
 #include "wfobj_scanner.h"
 
@@ -14,7 +12,7 @@ void wfobj_scanner_init(struct WFObj_Scanner * scanner, char const * text) {
 }
 
 void wfobj_scanner_free(struct WFObj_Scanner * scanner) {
-	memset(scanner, 0, sizeof(*scanner));
+	common_memset(scanner, 0, sizeof(*scanner));
 }
 
 inline static struct WFObj_Token wfobj_scanner_next_internal(struct WFObj_Scanner * scanner);
@@ -82,7 +80,7 @@ static struct WFObj_Token wfobj_scanner_make_number_token(struct WFObj_Scanner *
 
 static enum WFObj_Token_Type wfobj_scanner_check_keyword(struct WFObj_Scanner * scanner, uint32_t start, struct CString rest, enum WFObj_Token_Type type) {
 	if (scanner->current - scanner->start != start + rest.length) { return WFOBJ_TOKEN_IDENTIFIER; }
-	if (memcmp(scanner->start + start, rest.data, rest.length) != 0) { return WFOBJ_TOKEN_IDENTIFIER; }
+	if (common_memcmp(scanner->start + start, rest.data, rest.length) != 0) { return WFOBJ_TOKEN_IDENTIFIER; }
 	return type;
 }
 

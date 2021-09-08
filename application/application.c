@@ -5,8 +5,6 @@
 #include "framework/input.h"
 #include "framework/logger.h"
 
-#include <string.h>
-
 //
 #include "application.h"
 
@@ -80,7 +78,7 @@ static void application_free(void) {
 	}
 	platform_system_free();
 
-	memset(&app, 0, sizeof(app));
+	common_memset(&app, 0, sizeof(app));
 }
 
 static bool application_update(void) {

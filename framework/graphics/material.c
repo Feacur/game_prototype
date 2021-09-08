@@ -2,8 +2,6 @@
 #include "framework/graphics/types.h"
 #include "framework/graphics/gpu_objects.h"
 
-#include <string.h>
-
 //
 #include "material.h"
 
@@ -44,10 +42,10 @@ void gfx_material_init(
 	array_s32_resize(&material->values_s32, s32_count);
 	array_float_resize(&material->values_float, float_count);
 
-	array_any_resize(&material->textures,       unit_count);  memset(material->textures.data,     0, sizeof(struct Ref) * unit_count);
-	array_u32_resize(&material->values_u32,     u32_count);   memset(material->values_u32.data,   0, sizeof(uint32_t) * u32_count);
-	array_s32_resize(&material->values_s32,     s32_count);   memset(material->values_s32.data,   0, sizeof(int32_t) * s32_count);
-	array_float_resize(&material->values_float, float_count); memset(material->values_float.data, 0, sizeof(float) * float_count);
+	array_any_resize(&material->textures,       unit_count);  common_memset(material->textures.data,     0, sizeof(struct Ref) * unit_count);
+	array_u32_resize(&material->values_u32,     u32_count);   common_memset(material->values_u32.data,   0, sizeof(uint32_t) * u32_count);
+	array_s32_resize(&material->values_s32,     s32_count);   common_memset(material->values_s32.data,   0, sizeof(int32_t) * s32_count);
+	array_float_resize(&material->values_float, float_count); common_memset(material->values_float.data, 0, sizeof(float) * float_count);
 }
 
 void gfx_material_free(struct Gfx_Material * material) {
@@ -55,7 +53,7 @@ void gfx_material_free(struct Gfx_Material * material) {
 	array_u32_free(&material->values_u32);
 	array_s32_free(&material->values_s32);
 	array_float_free(&material->values_float);
-	memset(material, 0, sizeof(*material));
+	common_memset(material, 0, sizeof(*material));
 }
 
 static void gfx_material_set_value(
@@ -174,7 +172,7 @@ static void gfx_material_set_value(
 			return;
 		}
 
-		memcpy(target + offset * value_size, value, value_size * values_count);
+		common_memcpy(target + offset * value_size, value, value_size * values_count);
 		return;
 	}
 

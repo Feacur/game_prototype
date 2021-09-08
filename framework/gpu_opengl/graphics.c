@@ -14,8 +14,6 @@
 #include "functions.h"
 #include "types.h"
 
-#include <string.h>
-
 // @todo: GPU scissor test
 // @todo: expose screen buffer settings, as well as OpenGL's
 // @idea: use dedicated samplers instead of texture defaults

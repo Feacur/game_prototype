@@ -2,8 +2,6 @@
 #include "framework/logger.h"
 #include "internal.h"
 
-#include <string.h>
-
 //
 #include "hash_table_any.h"
 
@@ -20,7 +18,7 @@ void hash_table_any_free(struct Hash_Table_Any * hash_table) {
 	MEMORY_FREE(hash_table, hash_table->values);
 	MEMORY_FREE(hash_table, hash_table->marks);
 
-	memset(hash_table, 0, sizeof(*hash_table));
+	common_memset(hash_table, 0, sizeof(*hash_table));
 }
 
 static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any const * hash_table, void const * key, uint32_t hash);
@@ -42,7 +40,7 @@ void hash_table_any_resize(struct Hash_Table_Any * hash_table, uint32_t target_c
 	hash_table->values   = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->value_size * hash_table->capacity);
 	hash_table->marks    = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity);
 
-	memset(hash_table->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
+	common_memset(hash_table->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 
 	// @note: `hash_table->count` remains as is
 	for (uint32_t i = 0; i < capacity; i++) {
@@ -54,12 +52,12 @@ void hash_table_any_resize(struct Hash_Table_Any * hash_table, uint32_t target_c
 		// if (key_index >= hash_table->capacity) { DEBUG_BREAK(); continue; }
 
 		hash_table->hashes[key_index] = hashes[i];
-		memcpy(
+		common_memcpy(
 			hash_table->keys + hash_table->key_size * key_index,
 			ht_key,
 			hash_table->key_size
 		);
-		memcpy(
+		common_memcpy(
 			hash_table->values + hash_table->value_size * key_index,
 			values + hash_table->value_size * i,
 			hash_table->value_size
@@ -75,7 +73,7 @@ void hash_table_any_resize(struct Hash_Table_Any * hash_table, uint32_t target_c
 
 void hash_table_any_clear(struct Hash_Table_Any * hash_table) {
 	hash_table->count = 0;
-	memset(hash_table->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
+	common_memset(hash_table->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 }
 
 void * hash_table_any_get(struct Hash_Table_Any const * hash_table, void const * key, uint32_t hash) {
@@ -109,13 +107,13 @@ bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, ui
 	if (is_new) { hash_table->count++; }
 
 	hash_table->hashes[key_index] = hash;
-	memcpy(
+	common_memcpy(
 		hash_table->keys + hash_table->key_size * key_index,
 		key,
 		hash_table->key_size
 	);
 	if (value != NULL) {
-		memcpy(
+		common_memcpy(
 			hash_table->values + hash_table->value_size * key_index,
 			value,
 			hash_table->value_size
@@ -184,7 +182,7 @@ static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any const * hash
 		if (hash_table->hashes[index] != hash) { continue; }
 
 		void const * ht_key = hash_table->keys + hash_table->key_size * index;
-		if (memcmp(ht_key, key, hash_table->key_size) == 0) { return index; }
+		if (common_memcmp(ht_key, key, hash_table->key_size) == 0) { return index; }
 	}
 
 	return empty;

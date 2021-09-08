@@ -3,8 +3,6 @@
 
 #include <Windows.h>
 
-#include <string.h>
-
 static struct Platform_Timer {
 	LARGE_INTEGER ticks_per_second;
 } platform_timer; // @note: global state

@@ -6,8 +6,6 @@
 
 #include "json_scanner.h"
 
-#include <string.h>
-
 //
 #include "json.h"
 
@@ -42,7 +40,7 @@ void json_free(struct JSON * value) {
 		default: break;
 	}
 	value->type = JSON_NULL;
-	// memset(value, 0, sizeof(*value));
+	// common_memset(value, 0, sizeof(*value));
 }
 
 // -- JSON find id

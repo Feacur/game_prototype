@@ -1,8 +1,6 @@
 #include "framework/logger.h"
 #include "framework/containers/array_u32.h"
 
-#include <string.h>
-
 // @idea: elaborate raw input
 // @idea: expose Caps Lock and Num Lock toggle states?
 // @idea: use per-frame input states (as it is now; 2021, march 23)
@@ -89,13 +87,13 @@ void input_to_system_init(void) {
 
 void input_to_system_free(void) {
 	array_u32_free(&input_state.codepoints);
-	memset(&input_state, 0, sizeof(input_state));
+	common_memset(&input_state, 0, sizeof(input_state));
 }
 
 void input_to_platform_before_update(void) {
 	// track input transitions
-	memcpy(&input_state.keyboard_prev, &input_state.keyboard, sizeof(input_state.keyboard));
-	memcpy(&input_state.mouse_prev, &input_state.mouse, sizeof(input_state.mouse));
+	common_memcpy(&input_state.keyboard_prev, &input_state.keyboard, sizeof(input_state.keyboard));
+	common_memcpy(&input_state.mouse_prev, &input_state.mouse, sizeof(input_state.mouse));
 
 	// reset per-frame data
 	input_state.mouse.delta_x = 0;
@@ -113,7 +111,7 @@ void input_to_platform_after_update(void) {
 		input_state.keyboard.keys[(uint8_t)remap_dst[i]] = input_state.keyboard.keys[(uint8_t)remap_src[i]];
 	}
 
-	memcpy(
+	common_memcpy(
 		input_state.keyboard.keys + (uint8_t)'A',
 		input_state.keyboard.keys + (uint8_t)'a',
 		sizeof(*input_state.keyboard.keys) * (1 + 'Z' - 'A')
@@ -135,10 +133,10 @@ void input_to_platform_after_update(void) {
 #include "framework/internal/input_to_window.h"
 
 void input_to_platform_reset(void) {
-	memset(&input_state.keyboard, 0, sizeof(input_state.keyboard));
-	memset(&input_state.keyboard_prev, 0, sizeof(input_state.keyboard_prev));
-	memset(&input_state.mouse, 0, sizeof(input_state.mouse));
-	memset(&input_state.mouse_prev, 0, sizeof(input_state.mouse_prev));
+	common_memset(&input_state.keyboard, 0, sizeof(input_state.keyboard));
+	common_memset(&input_state.keyboard_prev, 0, sizeof(input_state.keyboard_prev));
+	common_memset(&input_state.mouse, 0, sizeof(input_state.mouse));
+	common_memset(&input_state.mouse_prev, 0, sizeof(input_state.mouse_prev));
 }
 
 void input_to_platform_on_key(enum Key_Code key, bool is_down) {
