@@ -112,7 +112,18 @@ float eerp(float v1, float v2, float t) { return v1 * powf(v2 / v1, t); }
 float eerp_stable(float v1, float v2, float t) { return powf(v1, (1 - t)) * powf(v2, t); }
 float inverse_eerp(float v1, float v2, float value) { return logf(value / v1) / logf(v2 / v1); }
 
-bool  maths_isinf(float value) { return isinf(value); }
+bool maths_isinf(float value) {
+	// @note: check all exponent bits and no mantissa bits are set
+	// uint32_t const bits = convert_bits_r32_u32(value);
+	// return (bits & 0x7fffffffu) == 0x7f800000u;
+	return isinf(value);
+}
+bool maths_isnan(float value) {
+	// @note: check all exponent bits and some mantissa bits are set
+	// uint32_t const bits = convert_bits_r32_u32(value);
+	// return (bits & 0x7f800000u) == 0x7f800000u && (bits & 0x7fffffffu) != 0x7f800000u;
+	return isnan(value);
+}
 float maths_floor(float value) { return floorf(value); }
 float maths_ceil(float value) { return ceilf(value); }
 float maths_sqrt(float value) { return sqrtf(value); }

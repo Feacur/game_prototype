@@ -24,21 +24,21 @@
 // thus, each window precision is `(window_max - window_min) / mantissa_max`
 // -----
 
-#define MATHS_PI 3.14159265359f // convert_bits_u32_r32(0x40490fdb)
-#define MATHS_TAU 6.28318530718f // convert_bits_u32_r32(0x40c90fdb)
-#define FLOAT_NAN convert_bits_u32_r32(0x7fc00000) // [0x7f800001 .. 0x7fffffff] and [0xff800001 .. 0xffffffff]
-#define FLOAT_POS_INFINITY convert_bits_u32_r32(0x7f800000)
-#define FLOAT_NEG_INFINITY convert_bits_u32_r32(0xff800000)
-#define FLOAT_MAX convert_bits_u32_r32(0x7f7fffff) //  3.4028237e+38
-#define FLOAT_MIN convert_bits_u32_r32(0xff7fffff) // -3.4028237e+38
-#define FLOAT_INT_MIN convert_bits_u32_r32(0xcb800000) // -16777216
-#define FLOAT_INT_MAX convert_bits_u32_r32(0x4b800000) //  16777216
+#define MATHS_PI 3.14159265359f // convert_bits_u32_r32(0x40490fdbu)
+#define MATHS_TAU 6.28318530718f // convert_bits_u32_r32(0x40c90fdbu)
+#define FLOAT_NAN convert_bits_u32_r32(0x7fc00000u) // [0x7f800001u .. 0x7fffffffu] and [0xff800001u .. 0xffffffffu]
+#define FLOAT_POS_INFINITY convert_bits_u32_r32(0x7f800000u)
+#define FLOAT_NEG_INFINITY convert_bits_u32_r32(0xff800000u)
+#define FLOAT_MAX convert_bits_u32_r32(0x7f7fffffu) //  3.4028237e+38
+#define FLOAT_MIN convert_bits_u32_r32(0xff7fffffu) // -3.4028237e+38
+#define FLOAT_INT_MIN convert_bits_u32_r32(0xcb800000u) // -16777216
+#define FLOAT_INT_MAX convert_bits_u32_r32(0x4b800000u) //  16777216
 
 float convert_bits_u32_r32(uint32_t value);
 uint32_t convert_bits_r32_u32(float value);
 
-#define U32_TO_R32_12(value) convert_bits_u32_r32(0x3f800000 | (value >> 9))
-#define U32_TO_R32_24(value) convert_bits_u32_r32(0x40000000 | (value >> 9))
+#define U32_TO_R32_12(value) convert_bits_u32_r32(0x3f800000u | (value >> 9))
+#define U32_TO_R32_24(value) convert_bits_u32_r32(0x40000000u | (value >> 9))
 
 uint32_t hash_u32_bytes_fnv1(uint8_t const * value, uint64_t length);
 uint32_t hash_u32_xorshift(uint32_t value);
@@ -73,6 +73,7 @@ float eerp_stable(float v1, float v2, float t);
 float inverse_eerp(float v1, float v2, float value);
 
 bool  maths_isinf(float value);
+bool  maths_isnan(float value);
 float maths_floor(float value);
 float maths_ceil(float value);
 float maths_sqrt(float value);
