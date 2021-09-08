@@ -420,12 +420,7 @@ static void main_get_config(struct Application_Config * config) {
 
 	json_free(&settings);
 	strings_free(&strings);
-
-#undef JSON_GET
-#undef JSON_GET_NUMBER
 }
-
-#include <stdlib.h>
 
 int main (int argc, char * argv[]) {
 	(void)argc; (void)argv;

@@ -3,7 +3,7 @@ chcp 65001 > nul
 setlocal enabledelayedexpansion
 echo.building with Clang...
 
-call :get_millis time_prep
+call :get_millis time_zero
 
 rem [any]
 set project=%1
@@ -110,31 +110,30 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 		set object_file_name=%%~v
 		set object_file_name=!object_file_name:/=_!
 		set object_file_name=!object_file_name:.c=!
-		clang -std=c99 -c -o"./temp/!object_file_name!.o" %compiler% %warnings% "../%%v"
-		if errorlevel == 1 goto error
+		clang -std=c99 -c %compiler% %warnings% "../%%v" -o"./temp/!object_file_name!.o" || goto error
 	)
 	call :get_millis time_link
-	lld-link "./temp/*.o" -out:"%project%.exe" %linker%
+	lld-link "./temp/*.o" %linker% -out:"%project%.exe" || goto error
 ) else if %build_mode% == unity ( rem compile as a unity build, then link separately
-	clang -std=c99 -c -o"./%project%_unity_build.o" %compiler% %warnings% "%project_folder%/%project%_unity_build.c"
-	if errorlevel == 1 goto error
+	if exist "./*.tmp" del ".\\*.tmp" /q
+	clang -std=c99 -c %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%_unity_build.o" || goto error
 	call :get_millis time_link
-	lld-link "./%project%_unity_build.o" -out:"%project%.exe" %linker%
+	lld-link "./%project%_unity_build.o" %linker% -out:"%project%.exe" || goto error
 ) else if %build_mode% == unity_link ( rem compile and link as a unity build
 	call :get_millis time_link
-	clang -std=c99 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%.exe" -Wl,%linker: =,%
+	clang -std=c99 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%.exe" -Wl,%linker: =,% || goto error
 )
 
 :error
-call :get_millis time_stop
-
 popd
 popd
 
 rem |> REPORT
-call :report_millis_delta "prep .." time_prep time_comp "ms"
+call :get_millis time_done
+if [%time_link%] == [] ( set time_link=%time_done% )
+call :report_millis_delta "prep .." time_zero time_comp "ms"
 call :report_millis_delta "comp .." time_comp time_link "ms"
-call :report_millis_delta "link .." time_link time_stop "ms"
+call :report_millis_delta "link .." time_link time_done "ms"
 
 rem |> FUNCTIONS
 goto :eof
