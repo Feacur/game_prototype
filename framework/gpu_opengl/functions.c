@@ -1,7 +1,5 @@
 #include "framework/logger.h"
 
-#include <stdbool.h>
-
 //
 #include "functions.h"
 

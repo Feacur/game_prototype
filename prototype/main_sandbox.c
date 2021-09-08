@@ -29,8 +29,6 @@
 #include "batcher_2d.h"
 #include "asset_types.h"
 
-#include <stdlib.h>
-
 static struct Main_Uniforms {
 	uint32_t camera;
 	uint32_t color;
@@ -436,5 +434,5 @@ int main (int argc, char * argv[]) {
 		.render = game_render,
 	});
 
-	return EXIT_SUCCESS;
+	return 0;
 }
