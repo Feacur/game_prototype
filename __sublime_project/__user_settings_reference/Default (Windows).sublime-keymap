@@ -1,4 +1,4 @@
-// %appdata%/Sublime Text 3/Packages/User
+// %appdata%/Sublime Text/Packages/User
 [
 	// editor: input navigation
 	{ "keys": ["ctrl+alt+left"], "command": "jump_back" },

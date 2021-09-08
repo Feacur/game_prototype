@@ -20,6 +20,5 @@ goto :eof
 
 :check_editor
 	where -q "subl.exe"
-	rem return is errorlevel == 1 means false; chain with `||`
-	rem return is errorlevel != 1 means true;  chain with `&&`
+	rem return: `errorlevel`
 goto :eof

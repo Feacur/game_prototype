@@ -3,7 +3,7 @@ import sublime_plugin
 import re
 import os.path
 
-# %appdata%/Sublime Text 3/Packages/User
+# %appdata%/Sublime Text/Packages/User
 # http://www.sublimetext.com/docs/api_reference.html
 
 class FindResultsGotoCommand(sublime_plugin.TextCommand):

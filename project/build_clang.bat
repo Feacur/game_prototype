@@ -4,8 +4,6 @@ setlocal enabledelayedexpansion
 echo.building with Clang...
 
 call :get_millis time_prep
-rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
-rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`
 
 rem [any]
 set project=%1
@@ -143,8 +141,7 @@ goto :eof
 
 :check_executable_online
 	tasklist -fi "IMAGENAME eq %project%.exe" -nh | find /i /n "%project%.exe" > nul
-	rem return is errorlevel == 1 means false; chain with `||`
-	rem return is errorlevel != 1 means true;  chain with `&&`
+	rem return: `errorlevel`
 goto :eof
 
 :get_millis
@@ -171,7 +168,7 @@ goto :eof
 	set /a millis = millis * 100 + "(1%cc% - 100)"
 	set /a millis = millis * 10
 
-	rem put result into the argument
+	rem return: argunement `%~1`
 	set "%~1=%millis%"
 goto :eof
 
