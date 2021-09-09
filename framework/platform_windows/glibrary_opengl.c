@@ -156,7 +156,7 @@ void glibrary_to_system_init(void) {
 
 void glibrary_to_system_free(void) {
 	FreeLibrary(glibrary.handle);
-	memset(&glibrary, 0, sizeof(glibrary));
+	common_memset(&glibrary, 0, sizeof(glibrary));
 }
 
 //
@@ -200,7 +200,7 @@ void ginstance_free(struct GInstance * ginstance) {
 	glibrary.dll.MakeCurrent(NULL, NULL);
 	glibrary.dll.DeleteContext(ginstance->handle);
 
-	memset(ginstance, 0, sizeof(*ginstance));
+	common_memset(ginstance, 0, sizeof(*ginstance));
 	MEMORY_FREE(&glibrary, ginstance);
 }
 
@@ -239,7 +239,7 @@ bool contains_full_word(char const * container, struct CString value) {
 		if (end == NULL) { end = container + strlen(container); }
 
 		if ((size_t)(end - start) != value.length) { continue; }
-		if (strncmp(start, value.data, value.length) == 0) { return true; }
+		if (common_memcmp(start, value.data, value.length) == 0) { return true; }
 	}
 
 	return false;

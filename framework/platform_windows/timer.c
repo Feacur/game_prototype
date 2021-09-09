@@ -34,5 +34,5 @@ void timer_to_system_init(void) {
 }
 
 void timer_to_system_free(void) {
-	memset(&platform_timer, 0, sizeof(platform_timer));
+	common_memset(&platform_timer, 0, sizeof(platform_timer));
 }

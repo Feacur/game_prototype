@@ -618,7 +618,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			if (raw_input_window == window) {
 				platform_window_internal_toggle_raw_input(window, false);
 			}
-			memset(window, 0, sizeof(*window));
+			common_memset(window, 0, sizeof(*window));
 			if (should_free) { MEMORY_FREE(window, window); }
 			return 0;
 		}

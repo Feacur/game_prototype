@@ -109,7 +109,7 @@ struct File * platform_file_init(struct CString path, enum File_Mode mode) {
 
 	file->path_length = path.length;
 	file->path = MEMORY_ALLOCATE_ARRAY(file, char, path.length);
-	memcpy(file->path, path.data, file->path_length);
+	common_memcpy(file->path, path.data, file->path_length);
 
 	return file;
 }
@@ -117,7 +117,7 @@ struct File * platform_file_init(struct CString path, enum File_Mode mode) {
 void platform_file_free(struct File * file) {
 	CloseHandle(file->handle);
 	MEMORY_FREE(file, file->path);
-	memset(file, 0, sizeof(*file));
+	common_memset(file, 0, sizeof(*file));
 	MEMORY_FREE(file, file);
 }
 

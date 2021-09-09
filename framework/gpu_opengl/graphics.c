@@ -112,7 +112,7 @@ static void verify_program(GLuint id, GLenum parameter);
 struct Ref gpu_program_init(struct Array_Byte const * asset) {
 #define ADD_SECTION_HEADER(shader_type, version) \
 	do { \
-		if (strstr((char const *)asset->data, #shader_type)) {\
+		if (common_strstr((char const *)asset->data, #shader_type)) {\
 			if (ogl_version < (version)) { logger_to_console("'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); break; } \
 			headers[headers_count++] = (struct Section_Header){ \
 				.type = GL_ ## shader_type, \
@@ -193,7 +193,7 @@ struct Ref gpu_program_init(struct Array_Byte const * asset) {
 			// @todo: improve reflection/introspection/whatever;
 			//        simple arrays have names ending with a `[0]`;
 			//        more specifically the very first elememnt is tagget such a way
-			if (memcmp(uniform_name_buffer + name_length - 3, "[0]", 3) != 0) { continue; }
+			if (common_memcmp(uniform_name_buffer + name_length - 3, "[0]", 3) != 0) { continue; }
 			name_length -= 3;
 		}
 
@@ -215,8 +215,8 @@ struct Ref gpu_program_init(struct Array_Byte const * asset) {
 		.id = program_id,
 		.uniforms_count = (uint32_t)uniforms_count,
 	};
-	memcpy(gpu_program.uniforms, uniforms, sizeof(*uniforms) * (size_t)uniforms_count);
-	memcpy(gpu_program.uniform_locations, uniform_locations, sizeof(*uniform_locations) * (size_t)uniforms_count);
+	common_memcpy(gpu_program.uniforms, uniforms, sizeof(*uniforms) * (size_t)uniforms_count);
+	common_memcpy(gpu_program.uniform_locations, uniform_locations, sizeof(*uniform_locations) * (size_t)uniforms_count);
 
 	return ref_table_aquire(&graphics_state.programs, &gpu_program);
 	// https://www.khronos.org/opengl/wiki/Program_Introspection
@@ -474,8 +474,8 @@ struct Ref gpu_target_init(
 		.textures_count = textures_count,
 		.buffers_count = buffers_count,
 	};
-	memcpy(gpu_target.texture_refs, texture_refs, sizeof(*texture_refs) * textures_count);
-	memcpy(gpu_target.buffers, buffers, sizeof(*buffers) * buffers_count);
+	common_memcpy(gpu_target.texture_refs, texture_refs, sizeof(*texture_refs) * textures_count);
+	common_memcpy(gpu_target.buffers, buffers, sizeof(*buffers) * buffers_count);
 
 	return ref_table_aquire(&graphics_state.targets, &gpu_target);
 }
@@ -619,9 +619,9 @@ static struct Ref gpu_mesh_allocate(
 		.buffers_count = buffers_count,
 		.elements_index = elements_index,
 	};
-	memcpy(gpu_mesh.buffer_ids, buffer_ids,     sizeof(*buffer_ids) * buffers_count);
-	memcpy(gpu_mesh.parameters, parameters_set, sizeof(*parameters_set) * buffers_count);
-	memcpy(gpu_mesh.capacities, capacities,     sizeof(*capacities) * buffers_count);
+	common_memcpy(gpu_mesh.buffer_ids, buffer_ids,     sizeof(*buffer_ids) * buffers_count);
+	common_memcpy(gpu_mesh.parameters, parameters_set, sizeof(*parameters_set) * buffers_count);
+	common_memcpy(gpu_mesh.capacities, capacities,     sizeof(*capacities) * buffers_count);
 	for (uint32_t i = 0; i < buffers_count; i++) {
 		gpu_mesh.counts[i] = (data[i] != NULL) ? capacities[i] : 0;
 	}
@@ -1071,7 +1071,7 @@ void graphics_to_glibrary_init(void) {
 	}
 
 	//
-	memset(&graphics_state, 0, sizeof(graphics_state));
+	common_memset(&graphics_state, 0, sizeof(graphics_state));
 	graphics_state.extensions = allocate_extensions_string();
 
 	// init uniforms strings, consider 0 id empty
@@ -1136,7 +1136,7 @@ void graphics_to_glibrary_init(void) {
 
 	graphics_state.units_capacity = (uint32_t)max_units;
 	graphics_state.units = MEMORY_ALLOCATE_ARRAY(&graphics_state, struct Gpu_Unit, max_units);
-	memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
+	common_memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
 
 	// (ns_ncp > ns_fcp) == reverse Z
 	bool const supports_reverse_z = (ogl_version >= 45) || contains_full_word(graphics_state.extensions, S_("GL_ARB_clip_control"));
@@ -1187,7 +1187,7 @@ void graphics_to_glibrary_free(void) {
 	strings_free(&graphics_state.uniforms);
 	MEMORY_FREE(&graphics_state, graphics_state.extensions);
 	MEMORY_FREE(&graphics_state, graphics_state.units);
-	memset(&graphics_state, 0, sizeof(graphics_state));
+	common_memset(&graphics_state, 0, sizeof(graphics_state));
 
 	(void)gpu_stencil_op;
 }

@@ -56,7 +56,7 @@ void platform_system_free(void) {
 	window_to_system_free();
 	timer_to_system_free();
 	if (memory_to_system_report() > 0) { DEBUG_BREAK(); }
-	memset(&platform_system, 0, sizeof(platform_system));
+	common_memset(&platform_system, 0, sizeof(platform_system));
 }
 
 bool platform_system_is_powered(void) {
