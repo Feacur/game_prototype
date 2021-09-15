@@ -1,3 +1,5 @@
+#include "framework/logger.h"
+
 #include <math.h>
 
 //
@@ -56,6 +58,13 @@ uint64_t hash_u64_xorshift(uint64_t value) {
 }
 
 uint32_t round_up_to_PO2_u32(uint32_t value) {
+#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
+	if (value > 0x80000000u) {
+		logger_to_console("value is over the largest power of two: %u\n", value); DEBUG_BREAK();
+		return 0x80000000u;
+	}
+#endif
+
 	value--;
 	value |= value >>  1;
 	value |= value >>  2;
@@ -67,6 +76,13 @@ uint32_t round_up_to_PO2_u32(uint32_t value) {
 }
 
 uint64_t round_up_to_PO2_u64(uint64_t value) {
+#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
+	if (value > 0x8000000000000000ull) {
+		logger_to_console("value is over the largest power of two: %llu\n", value); DEBUG_BREAK();
+		return 0x8000000000000000ull;
+	}
+#endif
+
 	value--;
 	value |= value >>  1;
 	value |= value >>  2;
@@ -79,14 +95,18 @@ uint64_t round_up_to_PO2_u64(uint64_t value) {
 }
 
 uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator) {
-	// @note: overflow-protected version of `value * numerator / denominator`
+	// @note: same as `value * numerator / denominator`, but protected
+	//        against intermediate overflow and loss of significance
+	//        N.B. result overflow is still possible with `numerator > denominator`
 	uint32_t a = value / denominator;
 	uint32_t b = value % denominator;
 	return a * numerator + b * numerator / denominator;
 }
 
 uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator) {
-	// @note: overflow-protected version of `value * numerator / denominator`
+	// @note: same as `value * numerator / denominator`, but protected
+	//        against intermediate overflow and loss of significance
+	//        N.B. result overflow is still possible with `numerator > denominator`
 	uint64_t a = value / denominator;
 	uint64_t b = value % denominator;
 	return a * numerator + b * numerator / denominator;

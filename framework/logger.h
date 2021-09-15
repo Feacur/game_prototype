@@ -4,9 +4,9 @@
 #include "common.h"
 
 #if defined(__clang__)
-#define PRINTF_LIKE(position, count) __attribute__((format(printf, position, count)))
+	#define PRINTF_LIKE(position, count) __attribute__((format(printf, position, count)))
 #else
-#define PRINTF_LIKE(position, count)
+	#define PRINTF_LIKE(position, count)
 #endif // __clang__
 
 PRINTF_LIKE(1, 2)

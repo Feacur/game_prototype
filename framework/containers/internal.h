@@ -5,12 +5,6 @@
 
 #define HASH_TABLE_PO2
 
-#if defined(HASH_TABLE_PO2)
-	#define HASH_TABLE_WRAP(value, range) ((value) & ((range) - 1))
-#else
-	#define HASH_TABLE_WRAP(value, range) ((value) % (range))
-#endif
-
 //
 
 enum Hash_Table_Mark {
@@ -26,5 +20,13 @@ uint64_t grow_capacity_value_u64(uint64_t current, uint64_t delta);
 
 bool should_hash_table_grow(uint32_t capacity, uint32_t count);
 uint32_t adjust_hash_table_capacity_value(uint32_t value);
+
+//
+
+#if defined(HASH_TABLE_PO2)
+	#define HASH_TABLE_WRAP(value, range) ((value) & ((range) - 1))
+#else
+	#define HASH_TABLE_WRAP(value, range) ((value) % (range))
+#endif
 
 #endif
