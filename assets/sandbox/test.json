@@ -25,11 +25,13 @@
 			"shader": "assets/shaders/batcher_2d.glsl",
 			"mode": "opaque", "depth": false,
 			"u_Texture": {"type": "target", "id": 0, "buffer_type": "color",},
+			"u_Color": [1, 1, 1, 1],
 		},
 		{
 			"shader": "assets/shaders/batcher_2d.glsl",
 			"mode": "transparent", "depth": false,
 			"u_Texture": {"type": "font", "path": "assets/fonts/OpenSans-Regular.ttf",},
+			"u_Color": [1, 1, 1, 1],
 		}
 	],
 	"cameras": [],

@@ -1,6 +1,8 @@
-#include "framework/containers/ref.h"
+#include "framework/logger.h"
 
+#include "framework/containers/ref.h"
 #include "framework/containers/strings.h"
+
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/gpu_objects.h"
@@ -94,13 +96,10 @@ void state_free(void) {
 	common_memset(&state, 0, sizeof(state));
 }
 
-static void state_read_json_init(struct JSON const * json);
 static void state_read_json_targets(struct JSON const * json);
 static void state_read_json_materials(struct JSON const * json);
 
 void state_read_json(struct JSON const * json) {
-	state_read_json_init(json);
-
 	struct JSON const * targets_json = json_get(json, S_("targets"));
 	state_read_json_targets(targets_json);
 
@@ -110,32 +109,6 @@ void state_read_json(struct JSON const * json) {
 
 //
 
-static uint32_t id_color_rgba_u8;
-static uint32_t id_color_depth_r32;
-static uint32_t id_image;
-static uint32_t id_target;
-static uint32_t id_font;
-static uint32_t id_opaque;
-static uint32_t id_transparent;
-static uint32_t id_color;
-
-static uint32_t uniforms_color;
-static uint32_t uniforms_texture;
-
-static void state_read_json_init(struct JSON const * json) {
-	id_color_rgba_u8 = json_find_id(json, S_("color_rgba_u8"));
-	id_color_depth_r32 = json_find_id(json, S_("color_depth_r32"));
-	id_image = json_find_id(json, S_("image"));
-	id_target = json_find_id(json, S_("target"));
-	id_font = json_find_id(json, S_("font"));
-	id_opaque = json_find_id(json, S_("opaque"));
-	id_transparent = json_find_id(json, S_("transparent"));
-	id_color = json_find_id(json, S_("color"));
-
-	uniforms_color = graphics_add_uniform_id(S_("u_Color"));
-	uniforms_texture = graphics_add_uniform_id(S_("u_Texture"));
-}
-
 static void state_read_json_target_buffer(struct JSON const * json, struct Array_Any * parameters) {
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
@@ -144,7 +117,7 @@ static void state_read_json_target_buffer(struct JSON const * json, struct Array
 
 	bool const buffer_read = json_get_boolean(json, S_("read"), false);
 
-	if (type_id == id_color_rgba_u8) {
+	if (type_id == json_find_id(json, S_("color_rgba_u8"))) {
 		array_any_push(parameters, &(struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_COLOR,
 			.data_type = DATA_TYPE_U8,
@@ -154,7 +127,7 @@ static void state_read_json_target_buffer(struct JSON const * json, struct Array
 		return;
 	}
 
-	if (type_id == id_color_depth_r32) {
+	if (type_id == json_find_id(json, S_("color_depth_r32"))) {
 		array_any_push(parameters, &(struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_DEPTH,
 			.data_type = DATA_TYPE_R32,
@@ -189,88 +162,73 @@ static void state_read_json_target(struct JSON const * json, struct Array_Any * 
 
 //
 
-static void state_read_json_material_color(struct JSON const * json, struct Gfx_Material * material) {
-	if (json->type != JSON_ARRAY) {
-		gfx_material_set_float(material, uniforms_color, 4, (float[]){1, 1, 1, 1});
-		return;
-	}
-
-	float const color[4] = {
-		json_at_number(json, 0, 1),
-		json_at_number(json, 1, 1),
-		json_at_number(json, 2, 1),
-		json_at_number(json, 3, 1),
-	};
-	gfx_material_set_float(material, uniforms_color, 4, color);
-}
-
-static void state_read_json_uniform_image(struct JSON const * json, struct Gfx_Material * material) {
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
+static struct Ref state_read_json_uniform_image(struct JSON const * json) {
+	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return ref_empty; }
 
 	struct CString const path = json_get_string(json, S_("path"), S_NULL);
-	if (path.data == NULL) { DEBUG_BREAK(); return; }
+	if (path.data == NULL) { DEBUG_BREAK(); return ref_empty; }
 
 	struct Asset_Image const * asset = asset_system_find_instance(&state.asset_system, path);
-	if (asset == NULL) { DEBUG_BREAK(); return; }
+	if (asset == NULL) { DEBUG_BREAK(); return ref_empty; }
 
-	gfx_material_set_texture(material, uniforms_texture, 1, &asset->gpu_ref);
+	return asset->gpu_ref;
 }
 
-static void state_read_json_uniform_target(struct JSON const * json, struct Gfx_Material * material) {
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
+static struct Ref state_read_json_uniform_target(struct JSON const * json) {
+	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return ref_empty; }
 
 	uint32_t const id = (uint32_t)json_get_number(json, S_("id"), UINT16_MAX);
-	if (id == UINT16_MAX) { DEBUG_BREAK(); return; }
+	if (id == UINT16_MAX) { DEBUG_BREAK(); return ref_empty; }
 
 	struct Ref const * gpu_target = array_any_at(&state.targets, id);
-	if (gpu_target == NULL) { DEBUG_BREAK(); return; }
+	if (gpu_target == NULL) { DEBUG_BREAK(); return ref_empty; }
 
 	uint32_t const buffer_type_id = json_get_id(json, S_("buffer_type"));
-	if (buffer_type_id == INDEX_EMPTY) { DEBUG_BREAK(); return; }
+	if (buffer_type_id == INDEX_EMPTY) { DEBUG_BREAK(); return ref_empty; }
 
-	if (buffer_type_id == id_color) {
-		struct Ref const texture_ref = gpu_target_get_texture_ref(*gpu_target, TEXTURE_TYPE_COLOR, 0);
-		if (texture_ref.id == ref_empty.id) { DEBUG_BREAK(); }
+	if (buffer_type_id == json_find_id(json, S_("color"))) {
+		return gpu_target_get_texture_ref(*gpu_target, TEXTURE_TYPE_COLOR, 0);
+	}
 
-		gfx_material_set_texture(material, uniforms_texture, 1, &texture_ref);
-		return;
+	if (buffer_type_id == json_find_id(json, S_("depth"))) {
+		return gpu_target_get_texture_ref(*gpu_target, TEXTURE_TYPE_DEPTH, 0);
 	}
 
 	DEBUG_BREAK();
+	return ref_empty;
 }
 
-static void state_read_json_uniform_font(struct JSON const * json, struct Gfx_Material * material) {
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
+static struct Ref state_read_json_uniform_font(struct JSON const * json) {
+	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return ref_empty; }
 
 	struct CString const path = json_get_string(json, S_("path"), S_NULL);
-	if (path.data == NULL) { DEBUG_BREAK(); return; }
+	if (path.data == NULL) { DEBUG_BREAK(); return ref_empty; }
 
 	struct Asset_Font const * asset = asset_system_find_instance(&state.asset_system, path);
-	if (asset == NULL) { DEBUG_BREAK(); return; }
+	if (asset == NULL) { DEBUG_BREAK(); return ref_empty; }
 
-	gfx_material_set_texture(material, uniforms_texture, 1, &asset->gpu_ref);
+	return asset->gpu_ref;
 }
 
-static void state_read_json_uniform_texture(struct JSON const * json, struct Gfx_Material * material) {
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
+static struct Ref state_read_json_uniform_texture(struct JSON const * json) {
+	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return ref_empty; }
 
 	uint32_t const type_id = json_get_id(json, S_("type"));
-	if (type_id == INDEX_EMPTY) { DEBUG_BREAK(); return; }
+	if (type_id == INDEX_EMPTY) { DEBUG_BREAK(); return ref_empty; }
 
-	if (type_id == id_image) {
-		state_read_json_uniform_image(json, material);
-		return;
+	if (type_id == json_find_id(json, S_("image"))) {
+		return state_read_json_uniform_image(json);
 	}
 
-	if (type_id == id_target) {
-		state_read_json_uniform_target(json, material);
-		return;
+	if (type_id == json_find_id(json, S_("target"))) {
+		return state_read_json_uniform_target(json);
 	}
 
-	if (type_id == id_font) {
-		state_read_json_uniform_font(json, material);
-		return;
+	if (type_id == json_find_id(json, S_("font"))) {
+		return state_read_json_uniform_font(json);
 	}
+
+	return ref_empty;
 }
 
 static void state_read_json_material(struct JSON const * json) {
@@ -289,10 +247,11 @@ static void state_read_json_material(struct JSON const * json) {
 	if (mode_id == INDEX_EMPTY) { DEBUG_BREAK(); return; }
 
 	struct Blend_Mode blend_mode;
-	if (mode_id == id_opaque) {
+
+	if (mode_id == json_find_id(json, S_("opaque"))) {
 		blend_mode = blend_mode_opaque;
 	}
-	else if (mode_id == id_transparent) {
+	else if (mode_id == json_find_id(json, S_("transparent"))) {
 		blend_mode = blend_mode_transparent;
 	}
 	else {
@@ -314,16 +273,96 @@ static void state_read_json_material(struct JSON const * json) {
 		&blend_mode, &depth_mode
 	);
 
-	// @todo: cycle through shader uniforms
-	{
-		struct JSON const * uniform_json = json_get(json, S_("u_Color"));
-		state_read_json_material_color(uniform_json, material);
+	uint32_t uniforms_count;
+	struct Gpu_Program_Field const * uniforms;
+	gpu_program_get_uniforms(material->gpu_program_ref, &uniforms_count, &uniforms);
+
+	struct Array_Byte uniforms_buffer;
+	array_byte_init(&uniforms_buffer);
+	array_byte_resize(&uniforms_buffer, 4 * sizeof(float));
+
+	for (uint32_t i = 0; i < uniforms_count; i++) {
+		struct CString const uniform_name = graphics_get_uniform_value(uniforms[i].id);
+		struct JSON const * uniform_json = json_get(json, uniform_name);
+
+		if (uniform_json->type == JSON_NULL) { continue; }
+
+		if (uniform_json->type == JSON_ERROR) {
+			logger_to_console("uniform '%.*s' is error\n", uniform_name.length, uniform_name.data); DEBUG_BREAK();
+			continue;
+		}
+
+		uint32_t const elements_bytes = data_type_get_size(uniforms[i].type) * uniforms[i].array_size;
+		if (uniforms_buffer.capacity < elements_bytes) {
+			array_byte_resize(&uniforms_buffer, elements_bytes);
+		}
+
+		if (uniform_json->type == JSON_ARRAY) {
+			uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
+			switch (data_type_get_element_type(uniforms[i].type)) {
+				default: logger_to_console("unknown data type\n"); DEBUG_BREAK(); break;
+
+				case DATA_TYPE_UNIT: {
+					for (uint32_t element_index = 0; element_index < elements_count; element_index++) {
+						struct Ref * data = (void *)uniforms_buffer.data;
+						data[element_index] = state_read_json_uniform_texture(json_at(uniform_json, element_index));
+					}
+					gfx_material_set_texture(material, uniforms[i].id, elements_count, (void *)uniforms_buffer.data);
+				} break;
+
+				case DATA_TYPE_U32: {
+					for (uint32_t element_index = 0; element_index < elements_count; element_index++) {
+						uint32_t * data = (void *)uniforms_buffer.data;
+						data[element_index] = (uint32_t)json_at_number(uniform_json, element_index, 0);
+					}
+					gfx_material_set_u32(material, uniforms[i].id, elements_count, (void *)uniforms_buffer.data);
+				} break;
+
+				case DATA_TYPE_S32: {
+					for (uint32_t element_index = 0; element_index < elements_count; element_index++) {
+						int32_t * data = (void *)uniforms_buffer.data;
+						data[element_index] = (int32_t)json_at_number(uniform_json, element_index, 0);
+					}
+					gfx_material_set_s32(material, uniforms[i].id, elements_count, (void *)uniforms_buffer.data);
+				} break;
+
+				case DATA_TYPE_R32: {
+					for (uint32_t element_index = 0; element_index < elements_count; element_index++) {
+						float * data = (void *)uniforms_buffer.data;
+						data[element_index] = json_at_number(uniform_json, element_index, 0);
+					}
+					gfx_material_set_float(material, uniforms[i].id, elements_count, (void *)uniforms_buffer.data);
+				} break;
+			}
+		}
+		else {
+			switch (data_type_get_element_type(uniforms[i].type)) {
+				default: logger_to_console("unknown data type\n"); DEBUG_BREAK(); break;
+
+				case DATA_TYPE_UNIT: {
+					struct Ref const data = state_read_json_uniform_texture(uniform_json);
+					gfx_material_set_texture(material, uniforms[i].id, 1, &data);
+				} break;
+
+				case DATA_TYPE_U32: {
+						uint32_t const data = (uint32_t)json_as_number(uniform_json, 0);
+					gfx_material_set_u32(material, uniforms[i].id, 1, &data);
+				} break;
+
+				case DATA_TYPE_S32: {
+					int32_t const data = (int32_t)json_as_number(uniform_json, 0);
+					gfx_material_set_s32(material, uniforms[i].id, 1, &data);
+				} break;
+
+				case DATA_TYPE_R32: {
+					float const data = json_as_number(uniform_json, 0);
+					gfx_material_set_float(material, uniforms[i].id, 1, &data);
+				} break;
+			}
+		}
 	}
 
-	{
-		struct JSON const * uniform_json = json_get(json, S_("u_Texture"));
-		state_read_json_uniform_texture(uniform_json, material);
-	}
+	array_byte_free(&uniforms_buffer);
 }
 
 //
