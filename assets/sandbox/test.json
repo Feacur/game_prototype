@@ -24,7 +24,7 @@
 		{
 			"shader": "assets/shaders/batcher_2d.glsl",
 			"mode": "opaque", "depth": false,
-			"u_Texture": {"type": "target", "id": 0, "buffer_type": "color",},
+			"u_Texture": {"type": "target", "uid": 1, "buffer_type": "color",},
 			"u_Color": [1, 1, 1, 1],
 		},
 		{
