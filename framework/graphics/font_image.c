@@ -281,6 +281,7 @@ void font_image_render(struct Font_Image * font_image) {
 	// render glyphs into the atlas, assuming they shall fit
 	common_memset(font_image->buffer.data, 0, sizeof(*font_image->buffer.data) * font_image->buffer.size_x * font_image->buffer.size_y);
 	{
+		// @todo: arena/stack allocator
 		struct Array_Byte scratch_buffer;
 		array_byte_init(&scratch_buffer);
 

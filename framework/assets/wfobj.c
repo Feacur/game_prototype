@@ -198,6 +198,7 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 	array_u32_resize(&obj->triangles, face_lines * 3 * 2);
 
 	//
+	// @todo: arena/stack allocator
 	struct Array_U32 scratch_u32;
 	array_u32_init(&scratch_u32);
 	array_u32_resize(&scratch_u32, 3 * 4);

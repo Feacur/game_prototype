@@ -1223,7 +1223,7 @@ static void verify_shader(GLuint id, GLenum parameter) {
 	glGetShaderiv(id, GL_INFO_LOG_LENGTH, &max_length);
 
 	if (max_length > 0) {
-		// @todo: use scratch buffer
+		// @todo: arena/stack allocator
 		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(&graphics_state, GLchar, max_length);
 		glGetShaderInfoLog(id, max_length, &max_length, buffer);
 		logger_to_console("%s\n", buffer);
@@ -1242,7 +1242,7 @@ static void verify_program(GLuint id, GLenum parameter) {
 	glGetProgramiv(id, GL_INFO_LOG_LENGTH, &max_length);
 
 	if (max_length > 0) {
-		// @todo: use scratch buffer
+		// @todo: arena/stack allocator
 		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(&graphics_state, GLchar, max_length);
 		glGetProgramInfoLog(id, max_length, &max_length, buffer);
 		logger_to_console("%s\n", buffer);

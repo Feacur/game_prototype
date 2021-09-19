@@ -209,7 +209,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 
 #if defined(UNICODE)
 	static wchar_t * platform_file_allocate_utf8_to_utf16(struct CString value) {
-		// @todo: use scratch buffer
+		// @todo: arena/stack allocator
 		const int length = MultiByteToWideChar(CP_UTF8, 0, value.data, -1, NULL, 0);
 		wchar_t * buffer = MEMORY_ALLOCATE_ARRAY(NULL, wchar_t, length);
 		MultiByteToWideChar(CP_UTF8, 0, value.data, -1, buffer, length);
