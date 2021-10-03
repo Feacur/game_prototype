@@ -131,6 +131,10 @@
 		"key": "ctrl+shift+alt+right",
 		"command": "workbench.action.moveEditorToRightGroup"
 	},
+	{
+		"key": "ctrl+shift+r",
+		"command": "workbench.view.extension.references-view"
+	},
 	// editor: edit
 	{
 		"key": "ctrl+shift+down",
