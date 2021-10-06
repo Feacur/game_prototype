@@ -23,7 +23,7 @@ void array_any_clear(struct Array_Any * array) {
 void array_any_resize(struct Array_Any * array, uint32_t target_capacity) {
 	array->capacity = target_capacity;
 	if (array->count > target_capacity) { array->count = target_capacity; }
-	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, array->value_size * target_capacity);
+	array->data = MEMORY_REALLOCATE_SIZE(array, array->data, array->value_size * target_capacity);
 }
 
 static void array_any_ensure_capacity(struct Array_Any * array, uint32_t target_count) {
@@ -36,7 +36,7 @@ static void array_any_ensure_capacity(struct Array_Any * array, uint32_t target_
 void array_any_push(struct Array_Any * array, void const * value) {
 	array_any_ensure_capacity(array, array->count + 1);
 	common_memcpy(
-		array->data + array->value_size * array->count,
+		(uint8_t *)array->data + array->value_size * array->count,
 		value,
 		array->value_size
 	);
@@ -47,7 +47,7 @@ void array_any_push_many(struct Array_Any * array, uint32_t count, void const * 
 	array_any_ensure_capacity(array, array->count + count);
 	if (value != NULL) {
 		common_memcpy(
-			array->data + array->value_size * array->count,
+			(uint8_t *)array->data + array->value_size * array->count,
 			value,
 			array->value_size * count
 		);
@@ -58,7 +58,7 @@ void array_any_push_many(struct Array_Any * array, uint32_t count, void const * 
 void array_any_set_many(struct Array_Any * array, uint32_t index, uint32_t count, void const * value) {
 	if (index + count > array->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
 	common_memcpy(
-		array->data + array->value_size * index,
+		(uint8_t *)array->data + array->value_size * index,
 		value,
 		array->value_size * count
 	);
@@ -67,15 +67,15 @@ void array_any_set_many(struct Array_Any * array, uint32_t index, uint32_t count
 void * array_any_pop(struct Array_Any * array) {
 	if (array->count == 0) { return NULL; }
 	array->count--;
-	return array->data + array->value_size * array->count;
+	return (uint8_t *)array->data + array->value_size * array->count;
 }
 
 void * array_any_peek(struct Array_Any const * array, uint32_t offset) {
 	if (offset >= array->count) { return NULL; }
-	return array->data + array->value_size * (array->count - offset - 1);
+	return (uint8_t *)array->data + array->value_size * (array->count - offset - 1);
 }
 
 void * array_any_at(struct Array_Any const * array, uint32_t index) {
 	if (index >= array->count) { return NULL; }
-	return array->data + array->value_size * index;
+	return (uint8_t *)array->data + array->value_size * index;
 }

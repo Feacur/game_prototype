@@ -15,8 +15,8 @@ struct Hash_Table_Any {
 	uint32_t key_size, value_size;
 	uint32_t capacity, count;
 	uint32_t * hashes;
-	uint8_t * keys;
-	uint8_t * values;
+	void * keys;
+	void * values;
 	uint8_t * marks;
 };
 

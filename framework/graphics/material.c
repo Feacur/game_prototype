@@ -65,7 +65,7 @@ static void gfx_material_set_value(
 void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Ref const * value) {
 	gfx_material_set_value(
 		material, uniform_id, DATA_TYPE_UNIT,
-		(uint8_t *)material->textures.data, sizeof(*material->textures.data),
+		(uint8_t *)material->textures.data, material->textures.value_size,
 		count, value
 	);
 }
@@ -102,7 +102,7 @@ static void * gfx_material_get_value(
 struct Ref * gfx_material_get_texture(struct Gfx_Material const * material, uint32_t uniform_id) {
 	return gfx_material_get_value(
 		material, uniform_id, DATA_TYPE_UNIT,
-		(uint8_t *)material->textures.data, sizeof(*material->textures.data)
+		(uint8_t *)material->textures.data, sizeof(struct Ref)
 	);
 }
 

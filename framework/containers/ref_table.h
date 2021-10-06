@@ -15,7 +15,7 @@ struct Ref_Table {
 	uint32_t capacity, count;
 	struct Ref * sparse;
 	uint32_t * dense;
-	uint8_t * values;
+	void * values;
 };
 
 void ref_table_init(struct Ref_Table * ref_table, uint32_t value_size);

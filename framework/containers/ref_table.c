@@ -46,7 +46,7 @@ void ref_table_resize(struct Ref_Table * ref_table, uint32_t target_capacity) {
 	uint32_t const capacity = ref_table->capacity;
 
 	ref_table->capacity = target_capacity;
-	ref_table->values   = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->values, ref_table->value_size * ref_table->capacity);
+	ref_table->values   = MEMORY_REALLOCATE_SIZE(ref_table, ref_table->values, ref_table->value_size * ref_table->capacity);
 	ref_table->dense    = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->dense, ref_table->capacity);
 	ref_table->sparse   = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->sparse, ref_table->capacity);
 
@@ -79,7 +79,7 @@ struct Ref ref_table_aquire(struct Ref_Table * ref_table, void const * value) {
 	ref_table->dense[ref_table->count] = ref_id;
 	if (value != NULL) {
 		common_memcpy(
-			ref_table->values + ref_table->value_size * ref_table->count,
+			(uint8_t *)ref_table->values + ref_table->value_size * ref_table->count,
 			value,
 			ref_table->value_size
 		);
@@ -116,8 +116,8 @@ void ref_table_discard(struct Ref_Table * ref_table, struct Ref ref) {
 		ref_table->dense[ref_table->count] = INDEX_EMPTY;
 
 		common_memcpy(
-			ref_table->values + ref_table->value_size * entry->id,
-			ref_table->values + ref_table->value_size * ref_table->count,
+			(uint8_t *)ref_table->values + ref_table->value_size * entry->id,
+			(uint8_t *)ref_table->values + ref_table->value_size * ref_table->count,
 			ref_table->value_size
 		);
 	}
@@ -134,7 +134,7 @@ void * ref_table_get(struct Ref_Table * ref_table, struct Ref ref) {
 	if (ref.id  != ref_table->dense[entry->id]) { return NULL; }
 	if (ref.gen != entry->gen)                  { return NULL; }
 
-	return ref_table->values + ref_table->value_size * entry->id;
+	return (uint8_t *)ref_table->values + ref_table->value_size * entry->id;
 }
 
 void ref_table_set(struct Ref_Table * ref_table, struct Ref ref, void const * value) {
@@ -145,7 +145,7 @@ void ref_table_set(struct Ref_Table * ref_table, struct Ref ref, void const * va
 	if (ref.gen != entry->gen)                  { DEBUG_BREAK(); return; }
 
 	common_memcpy(
-		ref_table->values + ref_table->value_size * entry->id,
+		(uint8_t *)ref_table->values + ref_table->value_size * entry->id,
 		value,
 		ref_table->value_size
 	);
@@ -176,7 +176,7 @@ struct Ref ref_table_ref_at(struct Ref_Table * ref_table, uint32_t index) {
 
 void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index) {
 	if (index >= ref_table->count) { return NULL; }
-	return ref_table->values + ref_table->value_size * index;
+	return (uint8_t *)ref_table->values + ref_table->value_size * index;
 }
 
 bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator * iterator) {
@@ -189,7 +189,7 @@ bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator *
 			.id = ref_id,
 			.gen = ref_table->sparse[ref_id].gen,
 		};
-		iterator->value = ref_table->values + ref_table->value_size * index;
+		iterator->value = (uint8_t *)ref_table->values + ref_table->value_size * index;
 		return true;
 	}
 	return false;

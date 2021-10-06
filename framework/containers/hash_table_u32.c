@@ -48,7 +48,7 @@ void hash_table_u32_resize(struct Hash_Table_U32 * hash_table, uint32_t target_c
 
 		hash_table->key_hashes[key_index] = key_hashes[i];
 		common_memcpy(
-			hash_table->values + hash_table->value_size * key_index,
+			(uint8_t *)hash_table->values + hash_table->value_size * key_index,
 			values + hash_table->value_size * i,
 			hash_table->value_size
 		);
@@ -70,7 +70,7 @@ void * hash_table_u32_get(struct Hash_Table_U32 const * hash_table, uint32_t key
 	uint32_t const key_index = hash_table_u32_find_key_index(hash_table, key_hash);
 	// if (key_index == INDEX_EMPTY) { return NULL; }
 	if (hash_table->marks[key_index] != HASH_TABLE_MARK_FULL) { return NULL; }
-	return hash_table->values + hash_table->value_size * key_index;
+	return (uint8_t *)hash_table->values + hash_table->value_size * key_index;
 }
 
 bool hash_table_u32_set(struct Hash_Table_U32 * hash_table, uint32_t key_hash, void const * value) {
@@ -88,7 +88,7 @@ bool hash_table_u32_set(struct Hash_Table_U32 * hash_table, uint32_t key_hash, v
 	hash_table->key_hashes[key_index] = key_hash;
 	if (value != NULL) {
 		common_memcpy(
-			hash_table->values + hash_table->value_size * key_index,
+			(uint8_t *)hash_table->values + hash_table->value_size * key_index,
 			value,
 			hash_table->value_size
 		);
@@ -122,7 +122,7 @@ bool hash_table_u32_iterate(struct Hash_Table_U32 * hash_table, struct Hash_Tabl
 		//
 		if (hash_table->marks[index] != HASH_TABLE_MARK_FULL) { continue; }
 		iterator->key_hash = hash_table->key_hashes[index];
-		iterator->value    = hash_table->values + hash_table->value_size * index;
+		iterator->value    = (uint8_t *)hash_table->values + hash_table->value_size * index;
 		return true;
 	}
 	return false;

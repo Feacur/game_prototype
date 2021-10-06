@@ -875,7 +875,7 @@ static void graphics_upload_uniforms(struct Gfx_Material const * material) {
 			default: logger_to_console("unknown element type '0x%x'\n", element_type); DEBUG_BREAK(); break;
 
 			case DATA_TYPE_UNIT: {
-				graphics_upload_single_uniform(gpu_program, i, material->textures.data + unit_offset);
+				graphics_upload_single_uniform(gpu_program, i, (struct Ref *)material->textures.data + unit_offset);
 				unit_offset += elements_count;
 				break;
 			}

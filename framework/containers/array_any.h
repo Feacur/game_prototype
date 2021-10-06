@@ -6,7 +6,7 @@
 struct Array_Any {
 	uint32_t value_size;
 	uint32_t capacity, count;
-	uint8_t * data;
+	void * data;
 };
 
 void array_any_init(struct Array_Any * array, uint32_t value_size);

@@ -13,7 +13,7 @@ struct Hash_Table_U64 {
 	uint32_t value_size;
 	uint32_t capacity, count;
 	uint64_t * key_hashes;
-	uint8_t * values;
+	void * values;
 	uint8_t * marks;
 };
 

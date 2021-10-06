@@ -53,12 +53,12 @@ void hash_table_any_resize(struct Hash_Table_Any * hash_table, uint32_t target_c
 
 		hash_table->hashes[key_index] = hashes[i];
 		common_memcpy(
-			hash_table->keys + hash_table->key_size * key_index,
+			(uint8_t *)hash_table->keys + hash_table->key_size * key_index,
 			ht_key,
 			hash_table->key_size
 		);
 		common_memcpy(
-			hash_table->values + hash_table->value_size * key_index,
+			(uint8_t *)hash_table->values + hash_table->value_size * key_index,
 			values + hash_table->value_size * i,
 			hash_table->value_size
 		);
@@ -86,7 +86,7 @@ void * hash_table_any_get(struct Hash_Table_Any const * hash_table, void const *
 	uint32_t const key_index = hash_table_any_find_key_index(hash_table, key, hash);
 	// if (key_index == INDEX_EMPTY) { return NULL; }
 	if (hash_table->marks[key_index] != HASH_TABLE_MARK_FULL) { return NULL; }
-	return hash_table->values + hash_table->value_size * key_index;
+	return (uint8_t *)hash_table->values + hash_table->value_size * key_index;
 }
 
 bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash, void const * value) {
@@ -108,13 +108,13 @@ bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, ui
 
 	hash_table->hashes[key_index] = hash;
 	common_memcpy(
-		hash_table->keys + hash_table->key_size * key_index,
+		(uint8_t *)hash_table->keys + hash_table->key_size * key_index,
 		key,
 		hash_table->key_size
 	);
 	if (value != NULL) {
 		common_memcpy(
-			hash_table->values + hash_table->value_size * key_index,
+			(uint8_t *)hash_table->values + hash_table->value_size * key_index,
 			value,
 			hash_table->value_size
 		);
@@ -153,8 +153,8 @@ bool hash_table_any_iterate(struct Hash_Table_Any * hash_table, struct Hash_Tabl
 		//
 		if (hash_table->marks[index] != HASH_TABLE_MARK_FULL) { continue; }
 		iterator->hash  = hash_table->hashes[index];
-		iterator->key   = hash_table->keys   + hash_table->key_size * index;
-		iterator->value = hash_table->values + hash_table->value_size * index;
+		iterator->key   = (uint8_t *)hash_table->keys   + hash_table->key_size * index;
+		iterator->value = (uint8_t *)hash_table->values + hash_table->value_size * index;
 		return true;
 	}
 	return false;
@@ -181,7 +181,7 @@ static uint32_t hash_table_any_find_key_index(struct Hash_Table_Any const * hash
 
 		if (hash_table->hashes[index] != hash) { continue; }
 
-		void const * ht_key = hash_table->keys + hash_table->key_size * index;
+		void const * ht_key = (uint8_t *)hash_table->keys + hash_table->key_size * index;
 		if (common_memcmp(ht_key, key, hash_table->key_size) == 0) { return index; }
 	}
 
