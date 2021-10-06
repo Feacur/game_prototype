@@ -11,6 +11,8 @@
 	email = mail@for.commits
 [gui]
 	encoding = utf-8
+[pull]
+	ff = only
 [core]
 	autocrlf = true
 	editor = code --wait # VS Code as default editor
