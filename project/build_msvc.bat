@@ -84,7 +84,7 @@ set linker=%linker% %libs%
 
 set warnings=%warnings% -wd5105
 
-rem |> COMPILE AND LINK
+rem |> BUILD
 pushd ..
 if not exist %binary_folder% mkdir %binary_folder%
 pushd %binary_folder%
@@ -97,17 +97,17 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 		set object_file_name=%%~v
 		set object_file_name=!object_file_name:/=_!
 		set object_file_name=!object_file_name:.c=!
-		cl -std:c11 -c %compiler% %warnings% "../%%v" -Fo"./temp/!object_file_name!.obj" || goto error
+		cl -std:c11 -c %compiler% %warnings% "../%%v" -Fo"./temp/!object_file_name!.obj" || ( goto error )
 	)
 	call :get_millis time_link
-	link "./temp/*.obj" %linker% -out:"%project%.exe" || goto error
+	link "./temp/*.obj" %linker% -out:"%project%.exe" || ( goto error )
 ) else if %build_mode% == unity ( rem compile as a unity build, then link separately
-	cl -std:c11 -c %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -Fo"./%project%_unity_build.obj" || goto error
+	cl -std:c11 -c %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -Fo"./%project%_unity_build.obj" || ( goto error )
 	call :get_millis time_link
-	link "./%project%_unity_build.obj" %linker% -out:"%project%.exe" || goto error
+	link "./%project%_unity_build.obj" %linker% -out:"%project%.exe" || ( goto error )
 ) else if %build_mode% == unity_link ( rem compile and link as a unity build
 	call :get_millis time_link
-	cl -std:c11 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -Fe"./%project%.exe" -link %linker% || goto error
+	cl -std:c11 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -Fe"./%project%.exe" -link %linker% || ( goto error )
 )
 
 :error

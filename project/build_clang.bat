@@ -96,7 +96,7 @@ set warnings=%warnings% -Wno-documentation-unknown-command
 rem [editor-only] -Wno-unused-macros
 rem [editor-only] -Wno-unused-function
 
-rem |> COMPILE AND LINK
+rem |> BUILD
 pushd ..
 if not exist %binary_folder% mkdir %binary_folder%
 pushd %binary_folder%
@@ -110,18 +110,18 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 		set object_file_name=%%~v
 		set object_file_name=!object_file_name:/=_!
 		set object_file_name=!object_file_name:.c=!
-		clang -std=c99 -c %compiler% %warnings% "../%%v" -o"./temp/!object_file_name!.o" || goto error
+		clang -std=c99 -c %compiler% %warnings% "../%%v" -o"./temp/!object_file_name!.o" || ( goto error )
 	)
 	call :get_millis time_link
-	lld-link "./temp/*.o" %linker% -out:"%project%.exe" || goto error
+	lld-link "./temp/*.o" %linker% -out:"%project%.exe" || ( goto error )
 ) else if %build_mode% == unity ( rem compile as a unity build, then link separately
 	if exist "./*.tmp" del ".\\*.tmp" /q
-	clang -std=c99 -c %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%_unity_build.o" || goto error
+	clang -std=c99 -c %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%_unity_build.o" || ( goto error )
 	call :get_millis time_link
-	lld-link "./%project%_unity_build.o" %linker% -out:"%project%.exe" || goto error
+	lld-link "./%project%_unity_build.o" %linker% -out:"%project%.exe" || ( goto error )
 ) else if %build_mode% == unity_link ( rem compile and link as a unity build
 	call :get_millis time_link
-	clang -std=c99 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%.exe" -Wl,%linker: =,% || goto error
+	clang -std=c99 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%.exe" -Wl,%linker: =,% || ( goto error )
 )
 
 :error

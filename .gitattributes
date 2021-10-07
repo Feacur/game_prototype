@@ -2,15 +2,17 @@
 
 * text=auto
 
-*.md text working-tree-encoding=UTF-8
+# common
+*.bat  text eol=crlf
+*.h    text working-tree-encoding=UTF-8 diff=cpp
+*.c    text working-tree-encoding=UTF-8 diff=cpp
+*.json text working-tree-encoding=UTF-8
+*.txt  text working-tree-encoding=UTF-8
+*.md   text working-tree-encoding=UTF-8
+*.ttf  binary
+*.png  binary
 
-# code
-*.h text diff=cpp working-tree-encoding=UTF-8
-*.c text diff=cpp working-tree-encoding=UTF-8
-
-# assets
-/assets/**/*.ttf  binary
-/assets/**/*.png  binary
+# project assets
 /assets/**/*.obj  text eol=lf
 /assets/**/*.glsl text eol=lf diff=cpp
 /assets/**/*.txt  text eol=lf working-tree-encoding=UTF-8
@@ -18,6 +20,3 @@
 
 # project
 /project/**/*.rdbg binary
-/project/**/*.bat  text eol=crlf
-/project/**/*.txt  text working-tree-encoding=UTF-8
-/project/**/*.md   text working-tree-encoding=UTF-8

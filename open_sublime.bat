@@ -11,8 +11,9 @@ call :check_editor || (
 	)
 )
 
-rem |> DO
 call "project/environment.bat" || ( goto :eof )
+
+rem |> DO
 call subl "__sublime_project/game_prototype.sublime-project"
 
 rem |> FUNCTIONS

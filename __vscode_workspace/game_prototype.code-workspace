@@ -69,8 +69,10 @@
 			// c, c++
 			"ms-vscode.cpptools",
 			"vadimcn.vscode-lldb",
-			"ms-vscode.hexeditor",
 			// "llvm-vs-code-extensions.vscode-clangd",
+			// misc
+			"ms-vscode.hexeditor",
+			"slevesque.shader",
 		]
 	}
 }
