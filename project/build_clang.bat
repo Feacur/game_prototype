@@ -89,6 +89,7 @@ set linker=%linker% %libs%
 set warnings=%warnings% -Wno-switch-enum
 set warnings=%warnings% -Wno-float-equal
 set warnings=%warnings% -Wno-reserved-id-macro
+set warnings=%warnings% -Wno-reserved-identifier
 set warnings=%warnings% -Wno-nonportable-system-include-path
 set warnings=%warnings% -Wno-assign-enum
 set warnings=%warnings% -Wno-bad-function-cast

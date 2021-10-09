@@ -14,6 +14,7 @@
 		"-Wno-switch-enum",
 		"-Wno-float-equal",
 		"-Wno-reserved-id-macro",
+		"-Wno-reserved-identifier",
 		"-Wno-nonportable-system-include-path",
 		"-Wno-assign-enum",
 		"-Wno-bad-function-cast",

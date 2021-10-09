@@ -51,11 +51,11 @@ void glibrary_to_system_init(void) {
 	}
 
 	// fetch basic DLL functions
-	glibrary.dll.GetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(glibrary.handle, "wglGetProcAddress");
-	glibrary.dll.CreateContext  = (PFNWGLCREATECONTEXTPROC) GetProcAddress(glibrary.handle, "wglCreateContext");
-	glibrary.dll.DeleteContext  = (PFNWGLDELETECONTEXTPROC) GetProcAddress(glibrary.handle, "wglDeleteContext");
-	glibrary.dll.MakeCurrent    = (PFNWGLMAKECURRENTPROC)   GetProcAddress(glibrary.handle, "wglMakeCurrent");
-	glibrary.dll.ShareLists     = (PFNWGLSHARELISTSPROC)    GetProcAddress(glibrary.handle, "wglShareLists");
+	glibrary.dll.GetProcAddress = (PFNWGLGETPROCADDRESSPROC)(void *)GetProcAddress(glibrary.handle, "wglGetProcAddress");
+	glibrary.dll.CreateContext  = (PFNWGLCREATECONTEXTPROC) (void *)GetProcAddress(glibrary.handle, "wglCreateContext");
+	glibrary.dll.DeleteContext  = (PFNWGLDELETECONTEXTPROC) (void *)GetProcAddress(glibrary.handle, "wglDeleteContext");
+	glibrary.dll.MakeCurrent    = (PFNWGLMAKECURRENTPROC)   (void *)GetProcAddress(glibrary.handle, "wglMakeCurrent");
+	glibrary.dll.ShareLists     = (PFNWGLSHARELISTSPROC)    (void *)GetProcAddress(glibrary.handle, "wglShareLists");
 
 	// create temporary class
 	// ATOM atom = RegisterClassEx(&(WNDCLASSEX){
@@ -126,12 +126,12 @@ void glibrary_to_system_init(void) {
 	if (!rc_is_current) { logger_to_console("'MakeCurrent' failed\n"); DEBUG_BREAK(); common_exit_failure(); }
 
 	// fetch extensions
-	glibrary.arb.GetExtensionsString    = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   glibrary.dll.GetProcAddress("wglGetExtensionsStringARB");
-	glibrary.arb.GetPixelFormatAttribiv = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)glibrary.dll.GetProcAddress("wglGetPixelFormatAttribivARB");
-	glibrary.arb.CreateContextAttribs   = (PFNWGLCREATECONTEXTATTRIBSARBPROC)  glibrary.dll.GetProcAddress("wglCreateContextAttribsARB");
+	glibrary.arb.GetExtensionsString    = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   (void *)glibrary.dll.GetProcAddress("wglGetExtensionsStringARB");
+	glibrary.arb.GetPixelFormatAttribiv = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)(void *)glibrary.dll.GetProcAddress("wglGetPixelFormatAttribivARB");
+	glibrary.arb.CreateContextAttribs   = (PFNWGLCREATECONTEXTATTRIBSARBPROC)  (void *)glibrary.dll.GetProcAddress("wglCreateContextAttribsARB");
 
-	glibrary.ext.GetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)glibrary.dll.GetProcAddress("wglGetExtensionsStringEXT");
-	glibrary.ext.SwapInterval        = (PFNWGLSWAPINTERVALEXTPROC)       glibrary.dll.GetProcAddress("wglSwapIntervalEXT");
+	glibrary.ext.GetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)(void *)glibrary.dll.GetProcAddress("wglGetExtensionsStringEXT");
+	glibrary.ext.SwapInterval        = (PFNWGLSWAPINTERVALEXTPROC)       (void *)glibrary.dll.GetProcAddress("wglSwapIntervalEXT");
 
 	glibrary.arb.extensions = glibrary.arb.GetExtensionsString(hdc);
 	glibrary.ext.extensions = glibrary.ext.GetExtensionsString();

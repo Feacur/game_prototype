@@ -124,7 +124,7 @@ static void system_set_process_dpi_awareness(void) {
 	// Windows 10, version 1607
 	if (User32_dll != NULL) {
 		typedef BOOL (WINAPI * set_awareness_func)(DPI_AWARENESS_CONTEXT);
-		set_awareness_func set_awareness = (set_awareness_func)GetProcAddress(User32_dll, "SetProcessDpiAwarenessContext");
+		set_awareness_func set_awareness = (set_awareness_func)(void *)GetProcAddress(User32_dll, "SetProcessDpiAwarenessContext");
 		if (set_awareness != NULL) {
 			set_awareness(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 			goto finalize; // the label is that way vvvvv
@@ -134,7 +134,7 @@ static void system_set_process_dpi_awareness(void) {
 	// Windows 8.1
 	if (Shcore_dll != NULL) {
 		typedef BOOL (WINAPI * set_awareness_func)(PROCESS_DPI_AWARENESS);
-		set_awareness_func set_awareness = (set_awareness_func)GetProcAddress(Shcore_dll, "SetProcessDpiAwareness");
+		set_awareness_func set_awareness = (set_awareness_func)(void *)GetProcAddress(Shcore_dll, "SetProcessDpiAwareness");
 		if (set_awareness != NULL) {
 			set_awareness(PROCESS_PER_MONITOR_DPI_AWARE);
 			goto finalize; // the label is that way vvvvv
@@ -144,7 +144,7 @@ static void system_set_process_dpi_awareness(void) {
 	// Windows Vista
 	if (User32_dll != NULL) {
 		typedef BOOL (WINAPI * set_awareness_func)(VOID);
-		set_awareness_func set_awareness = (set_awareness_func)GetProcAddress(User32_dll, "SetProcessDPIAware");
+		set_awareness_func set_awareness = (set_awareness_func)(void *)GetProcAddress(User32_dll, "SetProcessDPIAware");
 		if (set_awareness != NULL) {
 			set_awareness();
 			goto finalize; // the label is that way vvvvv
