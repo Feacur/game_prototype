@@ -3,26 +3,28 @@
 
 #include "vector_types.h"
 
+/*
 // @note: left-handed
-// Y     
-// |     
-// |  Z  
-// | /   
-// |/    
-// +----X
-// `cross(X, Y) == Z`
-// `cross(Y, Z) == X`
-// `cross(Z, X) == Y`
+Y     
+|     
+|  Z  
+| /   
+|/    
++----X
+`cross(X, Y) == Z`
+`cross(Y, Z) == X`
+`cross(Z, X) == Y`
 
 // @note: expects functional `IEEE 754` float and double
-// half   [sign:1][exponent: 5][mantissa:10] == sign * (1 + mantissa / 2^10) * 2^(exponent -   15)
-// float  [sign:1][exponent: 8][mantissa:23] == sign * (1 + mantissa / 2^23) * 2^(exponent -  127)
-// double [sign:1][exponent:11][mantissa:52] == sign * (1 + mantissa / 2^52) * 2^(exponent - 1023)
-// -----
-// `exponent` is a "window" between powers of two: [0.25 .. 0.5], [0.5 .. 1], [1 .. 2], [2 .. 4]
-// `mantissa` is an "offset" within the window:    [0.5 .. 1] with [mantissa_max / 2] == 0.75
-// thus, each window precision is `(window_max - window_min) / mantissa_max`
-// -----
+half   [sign:1][exponent: 5][mantissa:10] == sign * (1 + mantissa / 2^10) * 2^(exponent -   15)
+float  [sign:1][exponent: 8][mantissa:23] == sign * (1 + mantissa / 2^23) * 2^(exponent -  127)
+double [sign:1][exponent:11][mantissa:52] == sign * (1 + mantissa / 2^52) * 2^(exponent - 1023)
+-----
+`exponent` is a "window" between powers of two: [0.25 .. 0.5], [0.5 .. 1], [1 .. 2], [2 .. 4]
+`mantissa` is an "offset" within the window:    [0.5 .. 1] with [mantissa_max / 2] == 0.75
+thus, each window precision is `(window_max - window_min) / mantissa_max`
+-----
+*/
 
 #define MATHS_PI 3.14159265359f // convert_bits_u32_r32(0x40490fdbu)
 #define MATHS_TAU 6.28318530718f // convert_bits_u32_r32(0x40c90fdbu)
@@ -81,7 +83,9 @@ float maths_sin(float value);
 float maths_cos(float value);
 float maths_ldexp(float factor, int32_t power); // @note: `ldexp(a, b) == a * 2^b`
 
-// -- uint32_t vectors
+// ----- ----- ----- ----- -----
+//     uint32_t vectors
+// ----- ----- ----- ----- -----
 struct uvec2 uvec2_add(struct uvec2 v1, struct uvec2 v2);
 struct uvec2 uvec2_sub(struct uvec2 v1, struct uvec2 v2);
 struct uvec2 uvec2_mul(struct uvec2 v1, struct uvec2 v2);
@@ -102,7 +106,9 @@ uint32_t     uvec4_dot(struct uvec4 v1, struct uvec4 v2);
 
 struct uvec3 uvec3_cross(struct uvec3 v1, struct uvec3 v2);
 
-// -- int32_t vectors
+// ----- ----- ----- ----- -----
+//     int32_t vectors
+// ----- ----- ----- ----- -----
 struct svec2 svec2_add(struct svec2 v1, struct svec2 v2);
 struct svec2 svec2_sub(struct svec2 v1, struct svec2 v2);
 struct svec2 svec2_mul(struct svec2 v1, struct svec2 v2);
@@ -123,7 +129,9 @@ int32_t      svec4_dot(struct svec4 v1, struct svec4 v2);
 
 struct svec3 svec3_cross(struct svec3 v1, struct svec3 v2);
 
-// -- float vectors
+// ----- ----- ----- ----- -----
+//     float vectors
+// ----- ----- ----- ----- -----
 struct vec2 vec2_add(struct vec2 v1, struct vec2 v2);
 struct vec2 vec2_sub(struct vec2 v1, struct vec2 v2);
 struct vec2 vec2_mul(struct vec2 v1, struct vec2 v2);
@@ -148,7 +156,9 @@ struct vec2 vec2_norm(struct vec2 v);
 struct vec3 vec3_norm(struct vec3 v);
 struct vec4 vec4_norm(struct vec4 v);
 
-// -- quaternions
+// ----- ----- ----- ----- -----
+//     quaternions
+// ----- ----- ----- ----- -----
 struct vec4 quat_set_axis(struct vec3 axis, float radians);
 struct vec4 quat_set_radians(struct vec3 radians);
 struct vec4 quat_mul(struct vec4 q1, struct vec4 q2);
@@ -158,7 +168,9 @@ struct vec4 quat_reciprocal(struct vec4 q);
 struct vec3 quat_transform(struct vec4 q, struct vec3 v);
 void        quat_get_axes(struct vec4 q, struct vec3 * x, struct vec3 * y, struct vec3 * z);
 
-// -- matrices
+// ----- ----- ----- ----- -----
+//     matrices
+// ----- ----- ----- ----- -----
 struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
 struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
 struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, float ncp, float fcp, float ortho);

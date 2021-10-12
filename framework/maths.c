@@ -151,8 +151,11 @@ float maths_sin(float value) { return sinf(value); }
 float maths_cos(float value) { return cosf(value); }
 float maths_ldexp(float factor, int32_t power) { return ldexpf(factor, power); }
 
-/* -- vectors
+// ----- ----- ----- ----- -----
+//     any vectors
+// ----- ----- ----- ----- -----
 
+/* -- vectors
 i = jk = -kj
 j = ki = -ik
 k = ij = -ji
@@ -165,10 +168,11 @@ ii = jj = kk = ijk =  1 == cos(0)
 
 > quaternions multiplication
 ii = jj = kk = ijk = -1 == cos(90 + 90)
-
 */
 
-// -- uint32_t vectors
+// ----- ----- ----- ----- -----
+//     uint32_t vectors
+// ----- ----- ----- ----- -----
 struct uvec2 uvec2_add(struct uvec2 v1, struct uvec2 v2) { return (struct uvec2){v1.x + v2.x, v1.y + v2.y}; }
 struct uvec2 uvec2_sub(struct uvec2 v1, struct uvec2 v2) { return (struct uvec2){v1.x - v2.x, v1.y - v2.y}; }
 struct uvec2 uvec2_mul(struct uvec2 v1, struct uvec2 v2) { return (struct uvec2){v1.x * v2.x, v1.y * v2.y}; }
@@ -195,7 +199,9 @@ struct uvec3 uvec3_cross(struct uvec3 v1, struct uvec3 v2) {
 	};
 }
 
-// -- int32_t vectors
+// ----- ----- ----- ----- -----
+//     int32_t vectors
+// ----- ----- ----- ----- -----
 struct svec2 svec2_add(struct svec2 v1, struct svec2 v2) { return (struct svec2){v1.x + v2.x, v1.y + v2.y}; }
 struct svec2 svec2_sub(struct svec2 v1, struct svec2 v2) { return (struct svec2){v1.x - v2.x, v1.y - v2.y}; }
 struct svec2 svec2_mul(struct svec2 v1, struct svec2 v2) { return (struct svec2){v1.x * v2.x, v1.y * v2.y}; }
@@ -222,7 +228,9 @@ struct svec3 svec3_cross(struct svec3 v1, struct svec3 v2) {
 	};
 }
 
-// -- float vectors
+// ----- ----- ----- ----- -----
+//     float vectors
+// ----- ----- ----- ----- -----
 struct vec2 vec2_add(struct vec2 v1, struct vec2 v2) { return (struct vec2){v1.x + v2.x, v1.y + v2.y}; }
 struct vec2 vec2_sub(struct vec2 v1, struct vec2 v2) { return (struct vec2){v1.x - v2.x, v1.y - v2.y}; }
 struct vec2 vec2_mul(struct vec2 v1, struct vec2 v2) { return (struct vec2){v1.x * v2.x, v1.y * v2.y}; }
@@ -264,8 +272,11 @@ struct vec4 vec4_norm(struct vec4 v) {
 	return (struct vec4){v.x * rm, v.y * rm, v.z * rm, v.w * rm};
 }
 
-/* -- quaternions
+// ----- ----- ----- ----- -----
+//     quaternions
+// ----- ----- ----- ----- -----
 
+/*
 --- representations
     vector          + scalar
     x*i + y*j + z*k + w
@@ -290,10 +301,10 @@ struct vec4 vec4_norm(struct vec4 v) {
 
 --- transform it into the quaternion form
     V_rotated = sin(angle) * (axis x V_perp) + cos(angle) * V_perp + V_para
-              = (sin(angle)*axis + cos(angle)) * V_perp + V_para
-              = e^(axis * angle) * V_perp + V_para
-              = e^(axis * a/2) * e^(-axis * a/2) * V_para + e^(axis * a/2) * e^(axis * a/2) * V_perp
-              = e^(axis * a/2) * V_para * e^(-axis * a/2) + e^(axis * a/2) * V_perp * e^(axis * a/2)
+              = (sin(angle)*axis + cos(angle))  * V_perp  +                                    V_para
+              = e^(axis * angle)                * V_perp  +                                    V_para
+              = e^(axis * a/2) * e^(axis * a/2) * V_perp  + e^(axis * a/2) * e^(-axis * a/2) * V_para
+              = e^(axis * a/2) * V_perp * e^(-axis * a/2) + e^(axis * a/2) * V_para * e^(-axis * a/2)
               = e^(axis * a/2) * (V_para + V_perp) * e^(-axis * a/2)
               = e^(axis * a/2) * V * e^(-axis * a/2)
 
@@ -323,9 +334,9 @@ struct vec4 quat_set_radians(struct vec3 radians) {
 	};
 
 /*
-	result = quat_set_axis({0,1,0}, radians.y)
-	       * quat_set_axis({1,0,0}, radians.x)
-	       * quat_set_axis({0,0,1}, radians.z)
+result = quat_set_axis({0,1,0}, radians.y)
+       * quat_set_axis({1,0,0}, radians.x)
+       * quat_set_axis({0,0,1}, radians.z)
 */
 }
 
@@ -338,8 +349,8 @@ struct vec4 quat_mul(struct vec4 q1, struct vec4 q2) {
 	};
 
 /*
-	result = (q1.x*i + q1.y*j + q1.z*k + q1.w)
-	       * (q2.x*i + q2.y*j + q2.z*k + q2.w)
+result = (q1.x*i + q1.y*j + q1.z*k + q1.w)
+       * (q2.x*i + q2.y*j + q2.z*k + q2.w)
 */
 }
 
@@ -360,7 +371,7 @@ struct vec3 quat_transform(struct vec4 q, struct vec3 v) {
 	};
 
 /*
-	result = q * {vector, 0} * q_reciprocal
+result = q * {vector, 0} * q_reciprocal
 */
 }
 
@@ -373,15 +384,15 @@ void quat_get_axes(struct vec4 q, struct vec3 * x, struct vec3 * y, struct vec3 
 	*z = (struct vec3){(yw + xz) * 2,       (yz - wx) * 2,        (-xx - yy + ww + zz)};
 
 /*
-	x = quat_transform(q, {1,0,0})
-	y = quat_transform(q, {0,1,0})
-	z = quat_transform(q, {0,0,1})
+x = quat_transform(q, {1,0,0})
+y = quat_transform(q, {0,1,0})
+z = quat_transform(q, {0,0,1})
 */
 }
 
-/* -- matrices
-*/
-
+// ----- ----- ----- ----- -----
+//     matrices
+// ----- ----- ----- ----- -----
 struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation) {
 	struct vec3 axis_x, axis_y, axis_z;
 	quat_get_axes(rotation, &axis_x, &axis_y, &axis_z);
@@ -483,6 +494,15 @@ struct vec4 mat4_mul_vec(struct mat4 m, struct vec4 v) {
 		vec4_dot((struct vec4){m.x.z, m.y.z, m.z.z, m.w.z}, v),
 		vec4_dot((struct vec4){m.x.w, m.y.w, m.z.w, m.w.w}, v),
 	};
+
+/*
++---------------+    +---+
+|x_x|y_x|z_x|w_x|    |v_x|
+|x_y|y_y|z_y|w_y| \/ |v_y|
+|x_z|y_z|z_z|w_z| /\ |v_z|
+|x_w|y_w|z_w|w_w|    |v_w|
++---------------+    +---+
+*/
 }
 
 struct mat4 mat4_mul_mat(struct mat4 m1, struct mat4 m2) {
