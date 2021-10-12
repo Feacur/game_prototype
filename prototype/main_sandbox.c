@@ -42,6 +42,14 @@ static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
 static void game_init(void) {
 	state_init();
 
+	graphics_process(&(struct Render_Pass){
+		.type = RENDER_PASS_TYPE_CULL,
+		.as.cull = {
+			.mode = CULL_MODE_BACK,
+			.order = WINDING_ORDER_POSITIVE,
+		},
+	});
+
 	uniforms.color = graphics_add_uniform_id(S_("u_Color"));
 	uniforms.texture = graphics_add_uniform_id(S_("u_Texture"));
 	uniforms.camera = graphics_add_uniform_id(S_("u_Camera"));

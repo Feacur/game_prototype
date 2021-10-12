@@ -979,6 +979,17 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 //
 #include "framework/graphics/gpu_pass.h"
 
+inline static void graphics_process_cull(struct Render_Pass_Cull const * cull) {
+	if (cull->mode == CULL_MODE_NONE) {
+		glDisable(GL_CULL_FACE);
+	}
+	else {
+		glEnable(GL_CULL_FACE);
+		glCullFace(gpu_cull_mode(cull->mode));
+		glFrontFace(gpu_winding_order(cull->order));
+	}
+}
+
 inline static void graphics_process_target(struct Render_Pass_Target const * target) {
 	graphics_select_target(target->gpu_ref);
 
@@ -1038,9 +1049,10 @@ inline static void graphics_process_draw(struct Render_Pass_Draw const * draw) {
 
 void graphics_process(struct Render_Pass const * pass) {
 	switch (pass->type) {
+		case RENDER_PASS_TYPE_CULL:   graphics_process_cull(&pass->as.cull);     break;
 		case RENDER_PASS_TYPE_TARGET: graphics_process_target(&pass->as.target); break;
-		case RENDER_PASS_TYPE_CLEAR: graphics_process_clear(&pass->as.clear); break;
-		case RENDER_PASS_TYPE_DRAW: graphics_process_draw(&pass->as.draw); break;
+		case RENDER_PASS_TYPE_CLEAR:  graphics_process_clear(&pass->as.clear);   break;
+		case RENDER_PASS_TYPE_DRAW:   graphics_process_draw(&pass->as.draw);     break;
 	}
 }
 
@@ -1138,7 +1150,7 @@ void graphics_to_glibrary_init(void) {
 	graphics_state.units = MEMORY_ALLOCATE_ARRAY(&graphics_state, struct Gpu_Unit, max_units);
 	common_memset(graphics_state.units, 0, sizeof(* graphics_state.units) * (size_t)max_units);
 
-	// (ns_ncp > ns_fcp) == reverse Z
+	// @note: manage OpenGL's clip space instead of ours
 	bool const supports_reverse_z = (ogl_version >= 45) || contains_full_word(graphics_state.extensions, S_("GL_ARB_clip_control"));
 	if (supports_reverse_z) { glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); }
 
@@ -1150,11 +1162,6 @@ void graphics_to_glibrary_init(void) {
 	glDepthRangef(graphics_state.clip_space[2], graphics_state.clip_space[3]);
 	glClearDepthf(graphics_state.clip_space[3]);
 	glDepthFunc(gpu_comparison_op((graphics_state.clip_space[2] > graphics_state.clip_space[3]) ? COMPARISON_OP_MORE : COMPARISON_OP_LESS));
-
-	//
-	glEnable(GL_CULL_FACE);
-	glCullFace(gpu_cull_mode(CULL_MODE_BACK));
-	glFrontFace(gpu_winding_order(WINDING_ORDER_POSITIVE));
 }
 
 void graphics_to_glibrary_free(void) {

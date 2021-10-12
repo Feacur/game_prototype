@@ -12,9 +12,15 @@
 struct Gfx_Material;
 
 enum Render_Pass_Type {
+	RENDER_PASS_TYPE_CULL,
 	RENDER_PASS_TYPE_TARGET,
 	RENDER_PASS_TYPE_CLEAR,
 	RENDER_PASS_TYPE_DRAW,
+};
+
+struct Render_Pass_Cull {
+	enum Cull_Mode mode;
+	enum Winding_Order order;
 };
 
 struct Render_Pass_Target {
@@ -37,9 +43,10 @@ struct Render_Pass {
 	//
 	enum Render_Pass_Type type;
 	union {
+		struct Render_Pass_Cull   cull;
 		struct Render_Pass_Target target;
-		struct Render_Pass_Clear clear;
-		struct Render_Pass_Draw draw;
+		struct Render_Pass_Clear  clear;
+		struct Render_Pass_Draw   draw;
 	} as;
 };
 

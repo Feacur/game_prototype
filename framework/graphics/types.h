@@ -88,15 +88,16 @@ enum Comparison_Op {
 };
 
 enum Cull_Mode {
-	CULL_MODE_NONE,
-	CULL_MODE_BACK,
-	CULL_MODE_FRONT,
-	CULL_MODE_BOTH,
+	CULL_MODE_NONE  = 0,
+	CULL_MODE_BACK  = (1 << 0),
+	CULL_MODE_FRONT = (1 << 1),
+	// shorthands
+	CULL_MODE_BOTH = CULL_MODE_BACK | CULL_MODE_FRONT,
 };
 
 enum Winding_Order {
-	WINDING_ORDER_NEGATIVE,
 	WINDING_ORDER_POSITIVE,
+	WINDING_ORDER_NEGATIVE,
 };
 
 enum Stencil_Op {
