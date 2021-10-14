@@ -1,5 +1,6 @@
 #include "framework/logger.h"
 #include "framework/maths.h"
+#include "framework/parsing.h"
 
 #include "framework/containers/ref.h"
 #include "framework/containers/strings.h"
@@ -99,6 +100,8 @@ void state_free(void) {
 
 static void state_read_json_targets(struct JSON const * json);
 static void state_read_json_materials(struct JSON const * json);
+static void state_read_json_cameras(struct JSON const * json);
+static void state_read_json_entities(struct JSON const * json);
 
 void state_read_json(struct JSON const * json) {
 	struct JSON const * targets_json = json_get(json, S_("targets"));
@@ -106,6 +109,12 @@ void state_read_json(struct JSON const * json) {
 
 	struct JSON const * materials_json = json_get(json, S_("materials"));
 	state_read_json_materials(materials_json);
+
+	struct JSON const * cameras_json = json_get(json, S_("cameras"));
+	state_read_json_cameras(cameras_json);
+
+	struct JSON const * entities_json = json_get(json, S_("entities"));
+	state_read_json_entities(entities_json);
 }
 
 // ----- ----- ----- ----- -----
@@ -421,4 +430,120 @@ static void state_read_json_materials(struct JSON const * json) {
 	}
 
 	array_byte_free(&uniform_data_buffer);
+}
+
+// ----- ----- ----- ----- -----
+//     Cameras part
+// ----- ----- ----- ----- -----
+
+static void state_read_json_camera(struct JSON const * json, struct Camera * camera) {
+	(void)json; (void)camera;
+
+	struct JSON const * scale_json    = json_get(json, S_("scale"));
+	struct JSON const * rotation_json = json_get(json, S_("rotation"));
+	struct JSON const * position_json = json_get(json, S_("position"));
+
+	float scale[3] = {1, 1, 1};
+	if (scale_json->type == JSON_ARRAY) {
+		for (uint32_t i = 0; i < 3; i++) {
+			scale[i] = json_at_number(scale_json, i, 1);
+		}
+	}
+	camera->transform.scale = (struct vec3){scale[0], scale[1], scale[2]};
+
+	float rotation[3] = {0, 0, 0};
+	if (rotation_json->type == JSON_ARRAY) {
+		for (uint32_t i = 0; i < 3; i++) {
+			rotation[i] = json_at_number(rotation_json, i, 0);
+		}
+	}
+	camera->transform.rotation = quat_set_radians((struct vec3){rotation[0], rotation[1], rotation[2]});
+
+	float position[3] = {0, 0, 0};
+	if (position_json->type == JSON_ARRAY) {
+		for (uint32_t i = 0; i < 3; i++) {
+			position[i] = json_at_number(position_json, i, 0);
+		}
+	}
+	camera->transform.position = (struct vec3){position[0], position[1], position[2]};
+
+	camera->mode = CAMERA_MODE_NONE;
+	uint32_t const mode_id = json_get_id(json, S_("mode"));
+	if (mode_id == json_find_id(json, S_("screen"))) {
+		camera->mode = CAMERA_MODE_SCREEN;
+	}
+	else if (mode_id == json_find_id(json, S_("aspect_x"))) {
+		camera->mode = CAMERA_MODE_ASPECT_X;
+	}
+	else if (mode_id == json_find_id(json, S_("aspect_y"))) {
+		camera->mode = CAMERA_MODE_ASPECT_Y;
+	}
+
+	camera->ncp   = json_get_number(json, S_("ncp"),   0);
+	camera->fcp   = json_get_number(json, S_("fcp"),   0);
+	camera->ortho = json_get_number(json, S_("ortho"), 0);
+
+	camera->gpu_target_ref = (struct Ref){0};
+	uint32_t const target_uid = (uint32_t)json_get_number(json, S_("target"), 0);
+	if (target_uid != 0) {
+		struct Ref const * gpu_target = array_any_at(&state.targets, target_uid - 1);
+		if (gpu_target != NULL) { camera->gpu_target_ref = *gpu_target; }
+	}
+
+	camera->clear_mask = TEXTURE_TYPE_NONE;
+	struct JSON const * clear_masks = json_get(json, S_("clear_mask"));
+	if (clear_masks->type == JSON_ARRAY) {
+		uint32_t const clear_masks_count = json_count(clear_masks);
+		for (uint32_t i = 0; i < clear_masks_count; i++) {
+			uint32_t const clear_mask_id = json_at_id(clear_masks, i);
+			if (clear_mask_id == json_find_id(json, S_("color"))) {
+				camera->clear_mask |= TEXTURE_TYPE_COLOR;
+			}
+			else if (clear_mask_id == json_find_id(json, S_("depth"))) {
+				camera->clear_mask |= TEXTURE_TYPE_DEPTH;
+			}
+			else if (clear_mask_id == json_find_id(json, S_("stencil"))) {
+				camera->clear_mask |= TEXTURE_TYPE_STENCIL;
+			}
+		}
+	}
+
+	struct CString const clear_rgba = json_get_string(json, S_("clear_rgba"), S_(""));
+	camera->clear_rgba = parse_hex_u32(clear_rgba.data);
+}
+
+static void state_read_json_cameras(struct JSON const * json) {
+	if (json->type != JSON_ARRAY) { DEBUG_BREAK(); return; }
+
+	uint32_t const cameras_count = json_count(json);
+	for (uint32_t i = 0; i < cameras_count; i++) {
+		struct JSON const * camera_json = json_at(json, i);
+
+		struct Camera camera;
+		state_read_json_camera(camera_json, &camera);
+
+		array_any_push(&state.cameras, &camera);
+	}
+}
+
+// ----- ----- ----- ----- -----
+//     Entities part
+// ----- ----- ----- ----- -----
+
+static void state_read_json_entity(struct JSON const * json, struct Entity * entity) {
+	(void)json; (void)entity;
+}
+
+static void state_read_json_entities(struct JSON const * json) {
+	if (json->type != JSON_ARRAY) { DEBUG_BREAK(); return; }
+
+	uint32_t const entities_count = json_count(json);
+	for (uint32_t i = 0; i < entities_count; i++) {
+		struct JSON const * entity_json = json_at(json, i);
+
+		struct Entity entity;
+		state_read_json_entity(entity_json, &entity);
+
+		array_any_push(&state.entities, &entity);
+	}
 }

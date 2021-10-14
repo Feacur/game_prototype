@@ -34,6 +34,22 @@
 			"u_Color": [1, 1, 1, 1],
 		}
 	],
-	"cameras": [],
+	"cameras": [
+		{
+			"rotation": [0.3926990817, 0, 0],
+			"position": [0, 3, -5],
+			"mode": "aspect_x",
+			"ncp": 0.1, "fcp": 10,
+			"target": 1,
+			"clear_mask": ["color", "depth"],
+			"clear_rgba": "303030ff",
+		},
+		{
+			"mode": "screen",
+			"ncp": 0, "fcp": 1, "ortho": 1,
+			"clear_mask": ["color", "depth"],
+			"clear_rgba": "000000ff",
+		},
+	],
 	"entities": [],
 }

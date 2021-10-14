@@ -65,32 +65,6 @@ static void game_init(void) {
 		struct Asset_Bytes const * text_test = asset_system_find_instance(&state.asset_system, S_("assets/sandbox/test.txt"));
 		struct Asset_Font const * asset_font = asset_system_find_instance(&state.asset_system, S_("assets/fonts/OpenSans-Regular.ttf"));
 
-		// > cameras
-		array_any_push(&state.cameras, &(struct Camera){
-			.transform = {
-				.scale = (struct vec3){1, 1, 1},
-				.rotation = quat_set_radians((struct vec3){MATHS_TAU / 16, 0, 0}),
-				.position = (struct vec3){0, 3, -5},
-			},
-			//
-			.mode = CAMERA_MODE_ASPECT_X,
-			.ncp = 0.1f, .fcp = 10, .ortho = 0,
-			//
-			.gpu_target_ref = *(struct Ref *)array_any_at(&state.targets, 0),
-			.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
-			.clear_rgba = 0x303030ff,
-		});
-
-		array_any_push(&state.cameras, &(struct Camera){
-			.transform = transform_3d_default,
-			//
-			.mode = CAMERA_MODE_SCREEN,
-			.ncp = 0, .fcp = 1, .ortho = 1,
-			//
-			.clear_mask = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH,
-			.clear_rgba = 0x000000ff,
-		});
-
 		// > entities
 		array_any_push(&state.entities, &(struct Entity){
 			.material = 0,
