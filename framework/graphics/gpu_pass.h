@@ -40,7 +40,6 @@ struct Render_Pass_Draw {
 };
 
 struct Render_Pass {
-	//
 	enum Render_Pass_Type type;
 	union {
 		struct Render_Pass_Cull   cull;

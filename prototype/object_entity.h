@@ -13,6 +13,7 @@ enum Entity_Rect_Mode {
 };
 
 enum Entity_Type {
+	ENTITY_TYPE_NONE,
 	ENTITY_TYPE_MESH,
 	ENTITY_TYPE_QUAD_2D,
 	ENTITY_TYPE_TEXT_2D,

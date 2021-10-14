@@ -16,6 +16,9 @@ struct CString {
 	char const * data;
 };
 
+// ----- ----- ----- ----- -----
+//     standard
+// ----- ----- ----- ----- -----
 __declspec(noreturn)
 void common_exit_failure(void);
 
@@ -23,12 +26,14 @@ void common_memset(void * target, uint8_t value, size_t size);
 void common_memcpy(void * target, void const * source, size_t size);
 int common_memcmp(void const * buffer_1, void const * buffer_2, size_t size);
 void common_qsort(void * data, size_t count, size_t value_size, int (* compare)(void const * v1, void const * v2));
-char const *  common_strstr(char const * buffer, char const * value);
+char const * common_strstr(char const * buffer, char const * value);
 int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size);
 
 #define INDEX_EMPTY UINT32_MAX
 
-// -- utility
+// ----- ----- ----- ----- -----
+//     utilities
+// ----- ----- ----- ----- -----
 #define STRINGIFY_A_VALUE(v) #v
 #define STRINGIFY_A_MACRO(m) STRINGIFY_A_VALUE(m)
 #define TOKENIZE_A_VALUE(v1, v2) v1 ## v2
@@ -36,13 +41,16 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 
 #define S_(value) (struct CString){.length = sizeof("" value) - 1, .data = value,}
 #define S_NULL (struct CString){0}
+#define S_EMPTY S_("")
 
 #define FILE_AND_LINE __FILE__ ":" STRINGIFY_A_MACRO(__LINE__)
 #define S_FILE_AND_LINE S_(FILE_AND_LINE)
 
 #define SIZE_OF_MEMBER(type, name) sizeof(((type *)0)->name)
 
-// -- FLEXIBLE_ARRAY
+// ----- ----- ----- ----- -----
+//     flexible array
+// ----- ----- ----- ----- -----
 #if __STDC_VERSION__ >= 199901L
 	#if defined(__clang__)
 		#define FLEXIBLE_ARRAY
@@ -53,7 +61,9 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 	#define FLEXIBLE_ARRAY 1
 #endif
 
-// -- DEBUG_BREAK
+// ----- ----- ----- ----- -----
+//     debug break
+// ----- ----- ----- ----- -----
 #if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
 	#if defined(__clang__)
 		#define DEBUG_BREAK() __builtin_debugtrap()

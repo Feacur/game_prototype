@@ -36,9 +36,6 @@ static struct Main_Uniforms {
 	uint32_t transform;
 } uniforms; // @note: global state
 
-static uint8_t const test111[] = "abcdefghigklmnopqrstuvwxyz\n0123456789\nABCDEFGHIGKLMNOPQRSTUVWXYZ";
-static uint32_t const test111_length = sizeof(test111) / (sizeof(*test111)) - 1;
-
 static void game_init(void) {
 	state_init();
 
@@ -61,56 +58,10 @@ static void game_init(void) {
 
 	// objects
 	{
-		struct Asset_Model const * mesh_cube = asset_system_find_instance(&state.asset_system, S_("assets/sandbox/cube.obj"));
 		struct Asset_Bytes const * text_test = asset_system_find_instance(&state.asset_system, S_("assets/sandbox/test.txt"));
 		struct Asset_Font const * asset_font = asset_system_find_instance(&state.asset_system, S_("assets/fonts/OpenSans-Regular.ttf"));
 
 		// > entities
-		array_any_push(&state.entities, &(struct Entity){
-			.material = 0,
-			.camera = 0,
-			.transform = transform_3d_default,
-			.rect = transform_rect_default,
-			//
-			.type = ENTITY_TYPE_MESH,
-			.as.mesh = {
-				.gpu_mesh_ref = mesh_cube->gpu_ref,
-			},
-		});
-
-		array_any_push(&state.entities, &(struct Entity){
-			.material = 1,
-			.camera = 1,
-			.transform = transform_3d_default,
-			.rect = transform_rect_default,
-			//
-			.rect_mode = ENTITY_RECT_MODE_FIT,
-			.type = ENTITY_TYPE_QUAD_2D,
-			.as.quad = {
-				.texture_uniform = uniforms.texture,
-			},
-		});
-
-		array_any_push(&state.entities, &(struct Entity){
-			.material = 2,
-			.camera = 1,
-			.transform = transform_3d_default,
-			.rect = (struct Transform_Rect){
-				.min_relative = (struct vec2){0.0f, 0.25f},
-				.min_absolute = (struct vec2){ 50,  50},
-				.max_relative = (struct vec2){0.0f, 0.25f},
-				.max_absolute = (struct vec2){250, 150},
-				.pivot = (struct vec2){0.5f, 0.5f},
-			},
-			//
-			.type = ENTITY_TYPE_TEXT_2D,
-			.as.text = {
-				.length = test111_length,
-				.data = test111,
-				.font = asset_font,
-			},
-		});
-
 		array_any_push(&state.entities, &(struct Entity){
 			.material = 2,
 			.camera = 1,
@@ -179,7 +130,7 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 
 		// @todo: precalculate all cameras?
 		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
-		if (camera->gpu_target_ref.id != 0) {
+		if (camera->gpu_target_ref.id != 0 && camera->gpu_target_ref.id != ref_empty.id) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
@@ -221,6 +172,8 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 
 		// entity behaviour
 		switch (entity->type) {
+			case ENTITY_TYPE_NONE: break;
+
 			case ENTITY_TYPE_QUAD_2D: break;
 
 			case ENTITY_TYPE_MESH: {
@@ -265,7 +218,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 		// prepare camera
 		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
-		if (camera->gpu_target_ref.id != 0) {
+		if (camera->gpu_target_ref.id != 0 && camera->gpu_target_ref.id != ref_empty.id) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
@@ -324,6 +277,8 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 			}
 
 			switch (entity->type) {
+				case ENTITY_TYPE_NONE: break;
+
 				case ENTITY_TYPE_MESH: {
 					// @todo: make a draw commands buffer?
 					// @note: flush the batcher before drawing a mesh

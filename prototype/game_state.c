@@ -117,6 +117,56 @@ void state_read_json(struct JSON const * json) {
 	state_read_json_entities(entities_json);
 }
 
+static void state_read_json_float_n(struct JSON const * json, uint32_t length, float * data) {
+	if (json->type == JSON_ARRAY) {
+		for (uint32_t i = 0; i < length; i++) {
+			data[i] = json_at_number(json, i, data[i]);
+		}
+	}
+}
+
+static void state_read_json_transform_3d(struct JSON const * json, struct Transform_3D * transform) {
+	struct vec3 scale    = {1, 1, 1};
+	struct vec3 rotation = {0, 0, 0};
+	struct vec3 position = {0, 0, 0};
+
+	if (json->type == JSON_OBJECT) {
+		state_read_json_float_n(json_get(json, S_("scale")),    3, &scale.x);
+		state_read_json_float_n(json_get(json, S_("rotation")), 3, &rotation.x);
+		state_read_json_float_n(json_get(json, S_("position")), 3, &position.x);
+	}
+
+	*transform = (struct Transform_3D){
+		.scale = scale,
+		.rotation = quat_set_radians(rotation),
+		.position = position,
+	};
+}
+
+static void state_read_json_transform_rect(struct JSON const * json, struct Transform_Rect * transform) {
+	struct vec2 min_relative = {0, 0};
+	struct vec2 min_absolute = {0, 0};
+	struct vec2 max_relative = {1, 1};
+	struct vec2 max_absolute = {0, 0};
+	struct vec2 pivot        = {0, 0};
+
+	if (json->type == JSON_OBJECT) {
+		state_read_json_float_n(json_get(json, S_("min_relative")), 2, &min_relative.x);
+		state_read_json_float_n(json_get(json, S_("min_absolute")), 2, &min_absolute.x);
+		state_read_json_float_n(json_get(json, S_("max_relative")), 2, &max_relative.x);
+		state_read_json_float_n(json_get(json, S_("max_absolute")), 2, &max_absolute.x);
+		state_read_json_float_n(json_get(json, S_("pivot")),        2, &pivot.x);
+	}
+
+	*transform = (struct Transform_Rect){
+		.min_relative = min_relative,
+		.min_absolute = min_absolute,
+		.max_relative = max_relative,
+		.max_absolute = max_absolute,
+		.pivot        = pivot,
+	};
+}
+
 // ----- ----- ----- ----- -----
 //     Targets part
 // ----- ----- ----- ----- -----
@@ -437,35 +487,7 @@ static void state_read_json_materials(struct JSON const * json) {
 // ----- ----- ----- ----- -----
 
 static void state_read_json_camera(struct JSON const * json, struct Camera * camera) {
-	(void)json; (void)camera;
-
-	struct JSON const * scale_json    = json_get(json, S_("scale"));
-	struct JSON const * rotation_json = json_get(json, S_("rotation"));
-	struct JSON const * position_json = json_get(json, S_("position"));
-
-	float scale[3] = {1, 1, 1};
-	if (scale_json->type == JSON_ARRAY) {
-		for (uint32_t i = 0; i < 3; i++) {
-			scale[i] = json_at_number(scale_json, i, 1);
-		}
-	}
-	camera->transform.scale = (struct vec3){scale[0], scale[1], scale[2]};
-
-	float rotation[3] = {0, 0, 0};
-	if (rotation_json->type == JSON_ARRAY) {
-		for (uint32_t i = 0; i < 3; i++) {
-			rotation[i] = json_at_number(rotation_json, i, 0);
-		}
-	}
-	camera->transform.rotation = quat_set_radians((struct vec3){rotation[0], rotation[1], rotation[2]});
-
-	float position[3] = {0, 0, 0};
-	if (position_json->type == JSON_ARRAY) {
-		for (uint32_t i = 0; i < 3; i++) {
-			position[i] = json_at_number(position_json, i, 0);
-		}
-	}
-	camera->transform.position = (struct vec3){position[0], position[1], position[2]};
+	state_read_json_transform_3d(json, &camera->transform);
 
 	camera->mode = CAMERA_MODE_NONE;
 	uint32_t const mode_id = json_get_id(json, S_("mode"));
@@ -483,8 +505,8 @@ static void state_read_json_camera(struct JSON const * json, struct Camera * cam
 	camera->fcp   = json_get_number(json, S_("fcp"),   0);
 	camera->ortho = json_get_number(json, S_("ortho"), 0);
 
-	camera->gpu_target_ref = (struct Ref){0};
-	uint32_t const target_uid = (uint32_t)json_get_number(json, S_("target"), 0);
+	camera->gpu_target_ref = ref_empty;
+	uint32_t const target_uid = (uint32_t)json_get_number(json, S_("target_uid"), 0);
 	if (target_uid != 0) {
 		struct Ref const * gpu_target = array_any_at(&state.targets, target_uid - 1);
 		if (gpu_target != NULL) { camera->gpu_target_ref = *gpu_target; }
@@ -508,8 +530,11 @@ static void state_read_json_camera(struct JSON const * json, struct Camera * cam
 		}
 	}
 
-	struct CString const clear_rgba = json_get_string(json, S_("clear_rgba"), S_(""));
-	camera->clear_rgba = parse_hex_u32(clear_rgba.data);
+	struct CString const clear_rgba = json_get_string(json, S_("clear_rgba"), S_EMPTY);
+	if (clear_rgba.length > 2 && clear_rgba.data[0] == '0' && clear_rgba.data[1] == 'x')
+	{
+		camera->clear_rgba = parse_hex_u32(clear_rgba.data + 2);
+	}
 }
 
 static void state_read_json_cameras(struct JSON const * json) {
@@ -531,7 +556,61 @@ static void state_read_json_cameras(struct JSON const * json) {
 // ----- ----- ----- ----- -----
 
 static void state_read_json_entity(struct JSON const * json, struct Entity * entity) {
-	(void)json; (void)entity;
+	state_read_json_transform_3d(json, &entity->transform);
+	state_read_json_transform_rect(json_get(json, S_("rect")), &entity->rect);
+
+	uint32_t const material_uid = (uint32_t)json_get_number(json, S_("material_uid"), 0);
+	if (material_uid  != 0) {
+		entity->material = material_uid - 1;
+	}
+	else { DEBUG_BREAK(); }
+
+	uint32_t const camera_uid = (uint32_t)json_get_number(json, S_("camera_uid"), 0);
+	if (camera_uid  != 0) {
+		entity->camera = camera_uid - 1;
+	}
+	else { DEBUG_BREAK(); }
+
+	entity->rect_mode = ENTITY_RECT_MODE_NONE;
+	uint32_t const rect_mode_id = json_get_id(json, S_("rect_mode"));
+	if (rect_mode_id == json_find_id(json, S_("fit"))) {
+		entity->rect_mode = ENTITY_RECT_MODE_FIT;
+	}
+	else if (rect_mode_id == json_find_id(json, S_("content"))) {
+		entity->rect_mode = ENTITY_RECT_MODE_CONTENT;
+	}
+
+	entity->type = ENTITY_TYPE_NONE;
+	uint32_t const type_id = json_get_id(json, S_("type"));
+	if (type_id == json_find_id(json, S_("mesh"))) {
+		entity->type = ENTITY_TYPE_MESH;
+	}
+	else if (type_id == json_find_id(json, S_("quad_2d"))) {
+		entity->type = ENTITY_TYPE_QUAD_2D;
+	}
+	else if (type_id == json_find_id(json, S_("text_2d"))) {
+		entity->type = ENTITY_TYPE_TEXT_2D;
+	}
+
+	switch (entity->type) {
+		case ENTITY_TYPE_NONE: break;
+
+		case ENTITY_TYPE_MESH: {
+			struct CString const model_path = json_get_string(json, S_("model"), S_NULL);
+			struct Asset_Model const * model = asset_system_find_instance(&state.asset_system, model_path);
+			entity->as.mesh = (struct Entity_Mesh){
+				.gpu_mesh_ref = (model != NULL) ? model->gpu_ref : ref_empty,
+			};
+		} break;
+
+		case ENTITY_TYPE_QUAD_2D:
+			struct CString const uniform = json_get_string(json, S_("uniform"), S_NULL);
+			entity->as.quad.texture_uniform = graphics_add_uniform_id(uniform);
+			break;
+
+		case ENTITY_TYPE_TEXT_2D:
+			break;
+	}
 }
 
 static void state_read_json_entities(struct JSON const * json) {

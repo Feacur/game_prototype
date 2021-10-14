@@ -26,7 +26,7 @@ void asset_system_init(struct Asset_System * system) {
 
 	{
 		// @note: consider `type_id == 0` and `resource_id == 0` empty
-		uint32_t const id = strings_add(&system->strings, S_(""));
+		uint32_t const id = strings_add(&system->strings, S_EMPTY);
 		hash_table_u32_set(&system->types, id, &(struct Asset_Type){0});
 		hash_table_u32_set(&system->refs, id, &(struct Ref){0});
 	}

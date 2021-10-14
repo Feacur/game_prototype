@@ -12,6 +12,8 @@
 
 bool entity_get_is_batched(struct Entity const * entity) {
 	switch (entity->type) {
+		case ENTITY_TYPE_NONE: return false;
+
 		case ENTITY_TYPE_MESH:
 			return false;
 
@@ -50,6 +52,8 @@ struct uvec2 entity_get_content_size(
 	struct Gfx_Material * material = array_any_at(&state.materials, entity->material);
 
 	switch (entity->type) {
+		case ENTITY_TYPE_NONE: break;
+
 		case ENTITY_TYPE_MESH: return (struct uvec2){
 			viewport_size_x,
 			viewport_size_y

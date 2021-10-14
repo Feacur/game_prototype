@@ -994,7 +994,7 @@ inline static void graphics_process_target(struct Render_Pass_Target const * tar
 	graphics_select_target(target->gpu_ref);
 
 	uint32_t viewport_size_x = target->screen_size_x, viewport_size_y = target->screen_size_y;
-	if (target->gpu_ref.id != 0) {
+	if (target->gpu_ref.id != 0 && target->gpu_ref.id != ref_empty.id) {
 		gpu_target_get_size(target->gpu_ref, &viewport_size_x, &viewport_size_y);
 	}
 
@@ -1088,7 +1088,7 @@ void graphics_to_glibrary_init(void) {
 
 	// init uniforms strings, consider 0 id empty
 	strings_init(&graphics_state.uniforms);
-	strings_add(&graphics_state.uniforms, S_(""));
+	strings_add(&graphics_state.uniforms, S_EMPTY);
 
 	// init gpu objects, consider 0 ref.id empty
 	ref_table_init(&graphics_state.programs, sizeof(struct Gpu_Program));
