@@ -2,7 +2,9 @@
 
 #define PARSE_INTEGER(type, value) \
 	while (parse_is_digit(*text)) { \
-		value = value * 10 + (type)(*text - '0'); \
+		type const next_value = value * 10 + (type)(*text - '0'); \
+		if (next_value < value) { DEBUG_BREAK(); } \
+		value = next_value; \
 		text++; \
 	} \
 
@@ -82,7 +84,9 @@ uint32_t parse_hex_u32(char const * text) {
 	for(;;) {
 		uint8_t const digit = table_hex[*(uint8_t const *)text];
 		if (digit < 16) {
-			value = (value << 4) | digit;
+			uint32_t const next_value = (value << 4) | digit;
+			if (next_value < value) { DEBUG_BREAK(); }
+			value = next_value;
 			text++;
 		}
 		else { break; }
