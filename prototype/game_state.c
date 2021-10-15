@@ -117,54 +117,174 @@ void state_read_json(struct JSON const * json) {
 	state_read_json_entities(entities_json);
 }
 
-static void state_read_json_float_n(struct JSON const * json, uint32_t length, float * data) {
+static void state_read_json_float_n(struct JSON const * json, float * data) {
 	if (json->type == JSON_ARRAY) {
-		for (uint32_t i = 0; i < length; i++) {
+		uint32_t const count = json_count(json);
+		for (uint32_t i = 0; i < count; i++) {
 			data[i] = json_at_number(json, i, data[i]);
 		}
+	}
+	else {
+		data[0] = json_as_number(json, data[0]);
+	}
+}
+
+static void state_read_json_u32_n(struct JSON const * json, uint32_t * data) {
+	if (json->type == JSON_ARRAY) {
+		uint32_t const count = json_count(json);
+		for (uint32_t i = 0; i < count; i++) {
+			data[i] = (uint32_t)json_at_number(json, i, (float)data[i]);
+		}
+	}
+	else {
+		data[0] = (uint32_t)json_as_number(json, (float)data[0]);
+	}
+}
+
+static void state_read_json_s32_n(struct JSON const * json, int32_t * data) {
+	if (json->type == JSON_ARRAY) {
+		uint32_t const count = json_count(json);
+		for (uint32_t i = 0; i < count; i++) {
+			data[i] = (int32_t)json_at_number(json, i, (float)data[i]);
+		}
+	}
+	else {
+		data[0] = (int32_t)json_as_number(json, (float)data[0]);
 	}
 }
 
 static void state_read_json_transform_3d(struct JSON const * json, struct Transform_3D * transform) {
-	struct vec3 scale    = {1, 1, 1};
-	struct vec3 rotation = {0, 0, 0};
-	struct vec3 position = {0, 0, 0};
-
+	*transform = transform_3d_default;
 	if (json->type == JSON_OBJECT) {
-		state_read_json_float_n(json_get(json, S_("scale")),    3, &scale.x);
-		state_read_json_float_n(json_get(json, S_("rotation")), 3, &rotation.x);
-		state_read_json_float_n(json_get(json, S_("position")), 3, &position.x);
-	}
+		struct vec3 euler = {0, 0, 0};
+		state_read_json_float_n(json_get(json, S_("euler")), &euler.x);
+		transform->rotation = quat_set_radians(euler);
 
-	*transform = (struct Transform_3D){
-		.scale = scale,
-		.rotation = quat_set_radians(rotation),
-		.position = position,
-	};
+		state_read_json_float_n(json_get(json, S_("pos")),   &transform->position.x);
+		state_read_json_float_n(json_get(json, S_("quat")),  &transform->rotation.x);
+		state_read_json_float_n(json_get(json, S_("scale")), &transform->scale.x);
+	}
 }
 
 static void state_read_json_transform_rect(struct JSON const * json, struct Transform_Rect * transform) {
-	struct vec2 min_relative = {0, 0};
-	struct vec2 min_absolute = {0, 0};
-	struct vec2 max_relative = {1, 1};
-	struct vec2 max_absolute = {0, 0};
-	struct vec2 pivot        = {0, 0};
-
+	*transform = transform_rect_default;
 	if (json->type == JSON_OBJECT) {
-		state_read_json_float_n(json_get(json, S_("min_relative")), 2, &min_relative.x);
-		state_read_json_float_n(json_get(json, S_("min_absolute")), 2, &min_absolute.x);
-		state_read_json_float_n(json_get(json, S_("max_relative")), 2, &max_relative.x);
-		state_read_json_float_n(json_get(json, S_("max_absolute")), 2, &max_absolute.x);
-		state_read_json_float_n(json_get(json, S_("pivot")),        2, &pivot.x);
+		state_read_json_float_n(json_get(json, S_("min_rel")), &transform->min_relative.x);
+		state_read_json_float_n(json_get(json, S_("min_abs")), &transform->min_absolute.x);
+		state_read_json_float_n(json_get(json, S_("max_rel")), &transform->max_relative.x);
+		state_read_json_float_n(json_get(json, S_("max_abs")), &transform->max_absolute.x);
+		state_read_json_float_n(json_get(json, S_("pivot")),   &transform->pivot.x);
+	}
+}
+
+static enum Texture_Type state_read_json_texture_type(struct JSON const * json) {
+	enum Texture_Type texture_type = TEXTURE_TYPE_NONE;
+	if (json->type == JSON_ARRAY) {
+		uint32_t const count = json_count(json);
+		for (uint32_t i = 0; i < count; i++) {
+			uint32_t const id = json_at_id(json, i);
+			if (id == json_find_id(json, S_("color"))) {
+				texture_type |= TEXTURE_TYPE_COLOR;
+			}
+			else if (id == json_find_id(json, S_("depth"))) {
+				texture_type |= TEXTURE_TYPE_DEPTH;
+			}
+			else if (id == json_find_id(json, S_("stencil"))) {
+				texture_type |= TEXTURE_TYPE_STENCIL;
+			}
+		}
+	}
+	return texture_type;
+}
+
+static enum Camera_Mode state_read_json_camera_mode(struct JSON const * json) {
+	if (json->type == JSON_STRING) {
+		uint32_t const id = json_as_id(json);
+		if (id == json_find_id(json, S_("screen"))) {
+			return CAMERA_MODE_SCREEN;
+		}
+		if (id == json_find_id(json, S_("aspect_x"))) {
+			return CAMERA_MODE_ASPECT_X;
+		}
+		if (id == json_find_id(json, S_("aspect_y"))) {
+			return CAMERA_MODE_ASPECT_Y;
+		}
+	}
+	return CAMERA_MODE_NONE;
+}
+
+static enum Entity_Rect_Mode state_read_json_entity_rect_mode(struct JSON const * json) {
+	if (json->type == JSON_STRING) {
+		uint32_t const id = json_as_id(json);
+		if (id == json_find_id(json, S_("fit"))) {
+			return ENTITY_RECT_MODE_FIT;
+		}
+		if (id == json_find_id(json, S_("content"))) {
+			return ENTITY_RECT_MODE_CONTENT;
+		}
+	}
+	return ENTITY_RECT_MODE_NONE;
+}
+
+static enum Entity_Type state_read_json_entity_type(struct JSON const * json) {
+	if (json->type == JSON_STRING) {
+		uint32_t const id = json_as_id(json);
+		if (id == json_find_id(json, S_("mesh"))) {
+			return ENTITY_TYPE_MESH;
+		}
+		if (id == json_find_id(json, S_("quad_2d"))) {
+			return ENTITY_TYPE_QUAD_2D;
+		}
+		if (id == json_find_id(json, S_("text_2d"))) {
+			return ENTITY_TYPE_TEXT_2D;
+		}
+	}
+	return ENTITY_TYPE_NONE;
+}
+
+static uint32_t state_read_json_hex(struct JSON const * json) {
+	struct CString const value = json_as_string(json, S_EMPTY);
+	if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x')
+	{
+		return parse_hex_u32(value.data + 2);
+	}
+	return 0;
+}
+
+static struct Ref state_read_json_get_target_ref(struct JSON const * json) {
+	uint32_t const target_uid = (uint32_t)json_as_number(json, 0);
+	if (target_uid != 0) {
+		struct Ref const * gpu_target = array_any_at(&state.targets, target_uid - 1);
+		if (gpu_target != NULL) { return *gpu_target; }
+	}
+	return ref_empty;
+}
+
+static void state_read_json_blend_mode(struct JSON const * json, struct Blend_Mode * blend_mode) {
+	uint32_t const mode_id = json_get_id(json, S_("mode"));
+
+	if (mode_id == json_find_id(json, S_("opaque"))) {
+		*blend_mode = blend_mode_opaque;
+		return;
 	}
 
-	*transform = (struct Transform_Rect){
-		.min_relative = min_relative,
-		.min_absolute = min_absolute,
-		.max_relative = max_relative,
-		.max_absolute = max_absolute,
-		.pivot        = pivot,
-	};
+	if (mode_id == json_find_id(json, S_("transparent"))) {
+		*blend_mode = blend_mode_transparent;
+		return;
+	}
+
+	*blend_mode = blend_mode_opaque;
+}
+
+static void state_read_json_depth_mode(struct JSON const * json, struct Depth_Mode * depth_mode) {
+	bool const depth_write = json_get_boolean(json, S_("depth"), false);
+
+	if (depth_write) {
+		*depth_mode = (struct Depth_Mode){.enabled = true, .mask = true};
+		return;
+	}
+
+	*depth_mode = (struct Depth_Mode){0};
 }
 
 // ----- ----- ----- ----- -----
@@ -245,120 +365,53 @@ static void state_read_json_targets(struct JSON const * json) {
 // ----- ----- ----- ----- -----
 
 static struct Ref state_read_json_uniform_image(struct JSON const * json) {
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return ref_empty; }
-
-	struct CString const path = json_get_string(json, S_("path"), S_NULL);
-	if (path.data == NULL) { DEBUG_BREAK(); return ref_empty; }
-
-	struct Asset_Image const * asset = asset_system_find_instance(&state.asset_system, path);
-	if (asset == NULL) { DEBUG_BREAK(); return ref_empty; }
-
-	return asset->gpu_ref;
+	if (json->type == JSON_OBJECT) {
+		struct CString     const   path  = json_get_string(json, S_("path"), S_NULL);
+		struct Asset_Image const * asset = asset_system_find_instance(&state.asset_system, path);
+		if (asset != NULL) { return asset->gpu_ref; }
+	}
+	return ref_empty;
 }
 
 static struct Ref state_read_json_uniform_target(struct JSON const * json) {
-	if (json->type == JSON_NULL) { return ref_empty; }
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return ref_empty; }
-
-	uint32_t const buffer_type_id = json_get_id(json, S_("buffer_type"));
-	if (buffer_type_id == INDEX_EMPTY) { DEBUG_BREAK(); return ref_empty; }
-
-	uint32_t const target_uid = (uint32_t)json_get_number(json, S_("uid"), 0);
-	if (target_uid == 0) { DEBUG_BREAK(); return ref_empty; }
-
-	struct Ref const * gpu_target = array_any_at(&state.targets, target_uid - 1);
-	if (gpu_target == NULL) { DEBUG_BREAK(); return ref_empty; }
-
-	uint32_t const index = (uint32_t)json_get_number(json, S_("index"), 0);
-
-	if (buffer_type_id == json_find_id(json, S_("color"))) {
-		return gpu_target_get_texture_ref(*gpu_target, TEXTURE_TYPE_COLOR, index);
+	if (json->type == JSON_OBJECT) {
+		struct Ref        const gpu_target   = state_read_json_get_target_ref(json_get(json, S_("uid")));
+		enum Texture_Type const texture_type = state_read_json_texture_type(json_get(json, S_("buffer_type")));
+		uint32_t          const index        = (uint32_t)json_get_number(json, S_("index"), 0);
+		return gpu_target_get_texture_ref(gpu_target, texture_type, index);
 	}
-
-	if (buffer_type_id == json_find_id(json, S_("depth"))) {
-		return gpu_target_get_texture_ref(*gpu_target, TEXTURE_TYPE_DEPTH, index);
-	}
-
-	if (buffer_type_id == json_find_id(json, S_("stencil"))) {
-		return gpu_target_get_texture_ref(*gpu_target, TEXTURE_TYPE_STENCIL, index);
-	}
-
-	if (buffer_type_id == json_find_id(json, S_("dstencil"))) {
-		return gpu_target_get_texture_ref(*gpu_target, TEXTURE_TYPE_DSTENCIL, index);
-	}
-
-	DEBUG_BREAK();
 	return ref_empty;
 }
 
 static struct Ref state_read_json_uniform_font(struct JSON const * json) {
-	if (json->type == JSON_NULL) { return ref_empty; }
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return ref_empty; }
-
-	struct CString const path = json_get_string(json, S_("path"), S_NULL);
-	if (path.data == NULL) { DEBUG_BREAK(); return ref_empty; }
-
-	struct Asset_Font const * asset = asset_system_find_instance(&state.asset_system, path);
-	if (asset == NULL) { DEBUG_BREAK(); return ref_empty; }
-
-	return asset->gpu_ref;
-}
-
-static struct Ref state_read_json_uniform_texture(struct JSON const * json) {
-	if (json->type == JSON_NULL) { return ref_empty; }
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return ref_empty; }
-
-	uint32_t const type_id = json_get_id(json, S_("type"));
-	if (type_id == INDEX_EMPTY) { DEBUG_BREAK(); return ref_empty; }
-
-	if (type_id == json_find_id(json, S_("image"))) {
-		return state_read_json_uniform_image(json);
+	if (json->type == JSON_OBJECT) {
+		struct CString    const   path  = json_get_string(json, S_("path"), S_NULL);
+		struct Asset_Font const * asset = asset_system_find_instance(&state.asset_system, path);
+		if (asset != NULL) { return asset->gpu_ref; }
 	}
-
-	if (type_id == json_find_id(json, S_("target"))) {
-		return state_read_json_uniform_target(json);
-	}
-
-	if (type_id == json_find_id(json, S_("font"))) {
-		return state_read_json_uniform_font(json);
-	}
-
 	return ref_empty;
 }
 
-static void state_read_json_blend_mode(struct JSON const * json, struct Blend_Mode * blend_mode) {
-	uint32_t const mode_id = json_get_id(json, S_("mode"));
-
-	if (mode_id == json_find_id(json, S_("opaque"))) {
-		*blend_mode = blend_mode_opaque;
-		return;
+static struct Ref state_read_json_uniform_texture(struct JSON const * json) {
+	if (json->type == JSON_OBJECT) {
+		uint32_t const type_id = json_get_id(json, S_("type"));
+		if (type_id == json_find_id(json, S_("image"))) {
+			return state_read_json_uniform_image(json);
+		}
+		if (type_id == json_find_id(json, S_("target"))) {
+			return state_read_json_uniform_target(json);
+		}
+		if (type_id == json_find_id(json, S_("font"))) {
+			return state_read_json_uniform_font(json);
+		}
 	}
-
-	if (mode_id == json_find_id(json, S_("transparent"))) {
-		*blend_mode = blend_mode_transparent;
-		return;
-	}
-
-	*blend_mode = blend_mode_opaque;
+	return ref_empty;
 }
 
-static void state_read_json_depth_mode(struct JSON const * json, struct Depth_Mode * depth_mode) {
-	bool const depth_write = json_get_boolean(json, S_("depth"), false);
-
-	if (depth_write) {
-		*depth_mode = (struct Depth_Mode){.enabled = true, .mask = true};
-		return;
-	}
-
-	*depth_mode = (struct Depth_Mode){0};
-}
-
-static void state_read_json_material(struct JSON const * json, struct Gfx_Material * material, struct Array_Byte * uniform_data_buffer) {
+static void state_read_json_material(struct JSON const * json, struct Gfx_Material * material, struct Array_Any * uniform_data_buffer) {
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
-	struct CString const path = json_get_string(json, S_("shader"), S_NULL);
-	if (path.data == NULL) { DEBUG_BREAK(); return; }
-
+	struct CString      const   path  = json_get_string(json, S_("shader"), S_NULL);
 	struct Asset_Shader const * asset = asset_system_find_instance(&state.asset_system, path);
 	if (asset == NULL) { DEBUG_BREAK(); return; }
 
@@ -388,7 +441,7 @@ static void state_read_json_material(struct JSON const * json, struct Gfx_Materi
 
 		uint32_t const uniform_bytes = data_type_get_size(uniforms[i].type) * uniforms[i].array_size;
 		if (uniform_data_buffer->capacity < uniform_bytes) {
-			array_byte_resize(uniform_data_buffer, uniform_bytes);
+			array_any_resize(uniform_data_buffer, uniform_bytes);
 		}
 
 		uint32_t const json_elements_count = max_u32(1, json_count(uniform_json));
@@ -406,57 +459,30 @@ static void state_read_json_material(struct JSON const * json, struct Gfx_Materi
 			case DATA_TYPE_UNIT: {
 				if (uniform_json->type == JSON_ARRAY) {
 					for (uint32_t element_index = 0; element_index < uniform_elements_count; element_index++) {
-						struct Ref * data = (void *)uniform_data_buffer->data;
+						struct Ref * data = uniform_data_buffer->data;
 						data[element_index] = state_read_json_uniform_texture(json_at(uniform_json, element_index));
 					}
 				}
 				else {
-					struct Ref * data = (void *)uniform_data_buffer->data;
+					struct Ref * data = uniform_data_buffer->data;
 					data[0] = state_read_json_uniform_texture(uniform_json);
 				}
-				gfx_material_set_texture(material, uniforms[i].id, uniform_elements_count, (void *)uniform_data_buffer->data);
+				gfx_material_set_texture(material, uniforms[i].id, uniform_elements_count, uniform_data_buffer->data);
 			} break;
 
 			case DATA_TYPE_U32: {
-				if (uniform_json->type == JSON_ARRAY) {
-					for (uint32_t element_index = 0; element_index < uniform_elements_count; element_index++) {
-						uint32_t * data = (void *)uniform_data_buffer->data;
-						data[element_index] = (uint32_t)json_at_number(uniform_json, element_index, 0);
-					}
-				}
-				else {
-					uint32_t * data = (void *)uniform_data_buffer->data;
-					data[0] = (uint32_t)json_as_number(uniform_json, 0);
-				}
-				gfx_material_set_u32(material, uniforms[i].id, uniform_elements_count, (void *)uniform_data_buffer->data);
+				state_read_json_u32_n(uniform_json, uniform_data_buffer->data);
+				gfx_material_set_u32(material, uniforms[i].id, uniform_elements_count, uniform_data_buffer->data);
 			} break;
 
 			case DATA_TYPE_S32: {
-				if (uniform_json->type == JSON_ARRAY) {
-					for (uint32_t element_index = 0; element_index < uniform_elements_count; element_index++) {
-						int32_t * data = (void *)uniform_data_buffer->data;
-						data[element_index] = (int32_t)json_at_number(uniform_json, element_index, 0);
-					}
-				}
-				else {
-					int32_t * data = (void *)uniform_data_buffer->data;
-					data[0] = (int32_t)json_as_number(uniform_json, 0);
-				}
-				gfx_material_set_s32(material, uniforms[i].id, uniform_elements_count, (void *)uniform_data_buffer->data);
+				state_read_json_s32_n(uniform_json, uniform_data_buffer->data);
+				gfx_material_set_s32(material, uniforms[i].id, uniform_elements_count, uniform_data_buffer->data);
 			} break;
 
 			case DATA_TYPE_R32: {
-				if (uniform_json->type == JSON_ARRAY) {
-					for (uint32_t element_index = 0; element_index < uniform_elements_count; element_index++) {
-						float * data = (void *)uniform_data_buffer->data;
-						data[element_index] = json_at_number(uniform_json, element_index, 0);
-					}
-				}
-				else {
-					float * data = (void *)uniform_data_buffer->data;
-					data[0] = json_as_number(uniform_json, 0);
-				}
-				gfx_material_set_float(material, uniforms[i].id, uniform_elements_count, (void *)uniform_data_buffer->data);
+				state_read_json_float_n(uniform_json, uniform_data_buffer->data);
+				gfx_material_set_float(material, uniforms[i].id, uniform_elements_count, uniform_data_buffer->data);
 			} break;
 		}
 	}
@@ -466,8 +492,8 @@ static void state_read_json_materials(struct JSON const * json) {
 	if (json->type != JSON_ARRAY) { DEBUG_BREAK(); return; }
 
 	// @todo: arena/stack allocator
-	struct Array_Byte uniform_data_buffer;
-	array_byte_init(&uniform_data_buffer);
+	struct Array_Any uniform_data_buffer;
+	array_any_init(&uniform_data_buffer, sizeof(uint8_t));
 
 	uint32_t const materials_count = json_count(json);
 	for (uint32_t i = 0; i < materials_count; i++) {
@@ -479,7 +505,7 @@ static void state_read_json_materials(struct JSON const * json) {
 		array_any_push(&state.materials, &material);
 	}
 
-	array_byte_free(&uniform_data_buffer);
+	array_any_free(&uniform_data_buffer);
 }
 
 // ----- ----- ----- ----- -----
@@ -487,54 +513,17 @@ static void state_read_json_materials(struct JSON const * json) {
 // ----- ----- ----- ----- -----
 
 static void state_read_json_camera(struct JSON const * json, struct Camera * camera) {
-	state_read_json_transform_3d(json, &camera->transform);
+	state_read_json_transform_3d(json_get(json, S_("transform")), &camera->transform);
 
-	camera->mode = CAMERA_MODE_NONE;
-	uint32_t const mode_id = json_get_id(json, S_("mode"));
-	if (mode_id == json_find_id(json, S_("screen"))) {
-		camera->mode = CAMERA_MODE_SCREEN;
-	}
-	else if (mode_id == json_find_id(json, S_("aspect_x"))) {
-		camera->mode = CAMERA_MODE_ASPECT_X;
-	}
-	else if (mode_id == json_find_id(json, S_("aspect_y"))) {
-		camera->mode = CAMERA_MODE_ASPECT_Y;
-	}
+	camera->mode  = state_read_json_camera_mode(json_get(json, S_("mode")));
 
 	camera->ncp   = json_get_number(json, S_("ncp"),   0);
 	camera->fcp   = json_get_number(json, S_("fcp"),   0);
 	camera->ortho = json_get_number(json, S_("ortho"), 0);
 
-	camera->gpu_target_ref = ref_empty;
-	uint32_t const target_uid = (uint32_t)json_get_number(json, S_("target_uid"), 0);
-	if (target_uid != 0) {
-		struct Ref const * gpu_target = array_any_at(&state.targets, target_uid - 1);
-		if (gpu_target != NULL) { camera->gpu_target_ref = *gpu_target; }
-	}
-
-	camera->clear_mask = TEXTURE_TYPE_NONE;
-	struct JSON const * clear_masks = json_get(json, S_("clear_mask"));
-	if (clear_masks->type == JSON_ARRAY) {
-		uint32_t const clear_masks_count = json_count(clear_masks);
-		for (uint32_t i = 0; i < clear_masks_count; i++) {
-			uint32_t const clear_mask_id = json_at_id(clear_masks, i);
-			if (clear_mask_id == json_find_id(json, S_("color"))) {
-				camera->clear_mask |= TEXTURE_TYPE_COLOR;
-			}
-			else if (clear_mask_id == json_find_id(json, S_("depth"))) {
-				camera->clear_mask |= TEXTURE_TYPE_DEPTH;
-			}
-			else if (clear_mask_id == json_find_id(json, S_("stencil"))) {
-				camera->clear_mask |= TEXTURE_TYPE_STENCIL;
-			}
-		}
-	}
-
-	struct CString const clear_rgba = json_get_string(json, S_("clear_rgba"), S_EMPTY);
-	if (clear_rgba.length > 2 && clear_rgba.data[0] == '0' && clear_rgba.data[1] == 'x')
-	{
-		camera->clear_rgba = parse_hex_u32(clear_rgba.data + 2);
-	}
+	camera->gpu_target_ref = state_read_json_get_target_ref(json_get(json, S_("target_uid")));
+	camera->clear_mask = state_read_json_texture_type(json_get(json, S_("clear_mask")));
+	camera->clear_rgba = state_read_json_hex(json_get(json, S_("clear_rgba")));
 }
 
 static void state_read_json_cameras(struct JSON const * json) {
@@ -556,42 +545,15 @@ static void state_read_json_cameras(struct JSON const * json) {
 // ----- ----- ----- ----- -----
 
 static void state_read_json_entity(struct JSON const * json, struct Entity * entity) {
-	state_read_json_transform_3d(json, &entity->transform);
+	state_read_json_transform_3d(json_get(json, S_("transform")), &entity->transform);
 	state_read_json_transform_rect(json_get(json, S_("rect")), &entity->rect);
 
-	uint32_t const material_uid = (uint32_t)json_get_number(json, S_("material_uid"), 0);
-	if (material_uid  != 0) {
-		entity->material = material_uid - 1;
-	}
-	else { DEBUG_BREAK(); }
+	entity->rect_mode = state_read_json_entity_rect_mode(json_get(json, S_("rect_mode")));
 
-	uint32_t const camera_uid = (uint32_t)json_get_number(json, S_("camera_uid"), 0);
-	if (camera_uid  != 0) {
-		entity->camera = camera_uid - 1;
-	}
-	else { DEBUG_BREAK(); }
+	entity->material = (uint32_t)json_get_number(json, S_("material_uid"), 0) - 1;
+	entity->camera   = (uint32_t)json_get_number(json, S_("camera_uid"), 0) - 1;
 
-	entity->rect_mode = ENTITY_RECT_MODE_NONE;
-	uint32_t const rect_mode_id = json_get_id(json, S_("rect_mode"));
-	if (rect_mode_id == json_find_id(json, S_("fit"))) {
-		entity->rect_mode = ENTITY_RECT_MODE_FIT;
-	}
-	else if (rect_mode_id == json_find_id(json, S_("content"))) {
-		entity->rect_mode = ENTITY_RECT_MODE_CONTENT;
-	}
-
-	entity->type = ENTITY_TYPE_NONE;
-	uint32_t const type_id = json_get_id(json, S_("type"));
-	if (type_id == json_find_id(json, S_("mesh"))) {
-		entity->type = ENTITY_TYPE_MESH;
-	}
-	else if (type_id == json_find_id(json, S_("quad_2d"))) {
-		entity->type = ENTITY_TYPE_QUAD_2D;
-	}
-	else if (type_id == json_find_id(json, S_("text_2d"))) {
-		entity->type = ENTITY_TYPE_TEXT_2D;
-	}
-
+	entity->type = state_read_json_entity_type(json_get(json, S_("type")));
 	switch (entity->type) {
 		case ENTITY_TYPE_NONE: break;
 

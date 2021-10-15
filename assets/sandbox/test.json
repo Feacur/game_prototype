@@ -24,7 +24,7 @@
 		{
 			"shader": "assets/shaders/batcher_2d.glsl",
 			"mode": "opaque", "depth": false,
-			"u_Texture": {"type": "target", "uid": 1, "buffer_type": "color",},
+			"u_Texture": {"type": "target", "uid": 1, "buffer_type": ["color"],},
 			"u_Color": [1, 1, 1, 1],
 		},
 		{
@@ -36,8 +36,10 @@
 	],
 	"cameras": [
 		{
-			"rotation": [0.3926990817, 0, 0],
-			"position": [0, 3, -5],
+			"transform": {
+				"pos": [0, 3, -5],
+				"euler": [0.3926990817, 0, 0],
+			},
 			"mode": "aspect_x",
 			"ncp": 0.1, "fcp": 10,
 			"target_uid": 1,

@@ -4,15 +4,15 @@
 #include "framework/vector_types.h"
 
 struct Transform_3D {
-	struct vec3 scale;    // vec3_one
-	struct vec4 rotation; // quat_identity
 	struct vec3 position;
+	struct vec4 rotation; // quat_identity
+	struct vec3 scale;    // vec3_one
 };
 
 struct Transform_2D {
-	struct vec2 scale;    // vec2_one
-	struct vec2 rotation; // comp_identity
 	struct vec2 position;
+	struct vec2 rotation; // comp_identity
+	struct vec2 scale;    // vec2_one
 };
 
 struct Transform_Rect {
