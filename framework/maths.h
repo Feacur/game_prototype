@@ -86,6 +86,7 @@ float maths_ldexp(float factor, int32_t power); // @note: `ldexp(a, b) == a * 2^
 // ----- ----- ----- ----- -----
 //     uint32_t vectors
 // ----- ----- ----- ----- -----
+
 struct uvec2 uvec2_add(struct uvec2 v1, struct uvec2 v2);
 struct uvec2 uvec2_sub(struct uvec2 v1, struct uvec2 v2);
 struct uvec2 uvec2_mul(struct uvec2 v1, struct uvec2 v2);
@@ -109,6 +110,7 @@ struct uvec3 uvec3_cross(struct uvec3 v1, struct uvec3 v2);
 // ----- ----- ----- ----- -----
 //     int32_t vectors
 // ----- ----- ----- ----- -----
+
 struct svec2 svec2_add(struct svec2 v1, struct svec2 v2);
 struct svec2 svec2_sub(struct svec2 v1, struct svec2 v2);
 struct svec2 svec2_mul(struct svec2 v1, struct svec2 v2);
@@ -132,6 +134,7 @@ struct svec3 svec3_cross(struct svec3 v1, struct svec3 v2);
 // ----- ----- ----- ----- -----
 //     float vectors
 // ----- ----- ----- ----- -----
+
 struct vec2 vec2_add(struct vec2 v1, struct vec2 v2);
 struct vec2 vec2_sub(struct vec2 v1, struct vec2 v2);
 struct vec2 vec2_mul(struct vec2 v1, struct vec2 v2);
@@ -159,6 +162,7 @@ struct vec4 vec4_norm(struct vec4 v);
 // ----- ----- ----- ----- -----
 //     quaternions
 // ----- ----- ----- ----- -----
+
 struct vec4 quat_set_axis(struct vec3 axis, float radians);
 struct vec4 quat_set_radians(struct vec3 radians);
 struct vec4 quat_mul(struct vec4 q1, struct vec4 q2);
@@ -171,6 +175,7 @@ void        quat_get_axes(struct vec4 q, struct vec3 * x, struct vec3 * y, struc
 // ----- ----- ----- ----- -----
 //     matrices
 // ----- ----- ----- ----- -----
+
 struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
 struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
 struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, float ncp, float fcp, float ortho);

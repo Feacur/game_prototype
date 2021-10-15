@@ -173,6 +173,7 @@ ii = jj = kk = ijk = -1 == cos(90 + 90)
 // ----- ----- ----- ----- -----
 //     uint32_t vectors
 // ----- ----- ----- ----- -----
+
 struct uvec2 uvec2_add(struct uvec2 v1, struct uvec2 v2) { return (struct uvec2){v1.x + v2.x, v1.y + v2.y}; }
 struct uvec2 uvec2_sub(struct uvec2 v1, struct uvec2 v2) { return (struct uvec2){v1.x - v2.x, v1.y - v2.y}; }
 struct uvec2 uvec2_mul(struct uvec2 v1, struct uvec2 v2) { return (struct uvec2){v1.x * v2.x, v1.y * v2.y}; }
@@ -202,6 +203,7 @@ struct uvec3 uvec3_cross(struct uvec3 v1, struct uvec3 v2) {
 // ----- ----- ----- ----- -----
 //     int32_t vectors
 // ----- ----- ----- ----- -----
+
 struct svec2 svec2_add(struct svec2 v1, struct svec2 v2) { return (struct svec2){v1.x + v2.x, v1.y + v2.y}; }
 struct svec2 svec2_sub(struct svec2 v1, struct svec2 v2) { return (struct svec2){v1.x - v2.x, v1.y - v2.y}; }
 struct svec2 svec2_mul(struct svec2 v1, struct svec2 v2) { return (struct svec2){v1.x * v2.x, v1.y * v2.y}; }
@@ -231,6 +233,7 @@ struct svec3 svec3_cross(struct svec3 v1, struct svec3 v2) {
 // ----- ----- ----- ----- -----
 //     float vectors
 // ----- ----- ----- ----- -----
+
 struct vec2 vec2_add(struct vec2 v1, struct vec2 v2) { return (struct vec2){v1.x + v2.x, v1.y + v2.y}; }
 struct vec2 vec2_sub(struct vec2 v1, struct vec2 v2) { return (struct vec2){v1.x - v2.x, v1.y - v2.y}; }
 struct vec2 vec2_mul(struct vec2 v1, struct vec2 v2) { return (struct vec2){v1.x * v2.x, v1.y * v2.y}; }
@@ -393,6 +396,7 @@ z = quat_transform(q, {0,0,1})
 // ----- ----- ----- ----- -----
 //     matrices
 // ----- ----- ----- ----- -----
+
 struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation) {
 	struct vec3 axis_x, axis_y, axis_z;
 	quat_get_axes(rotation, &axis_x, &axis_y, &axis_z);

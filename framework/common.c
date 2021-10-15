@@ -7,6 +7,7 @@
 // ----- ----- ----- ----- -----
 //     standard
 // ----- ----- ----- ----- -----
+
 void common_exit_failure(void) {
 	exit(EXIT_FAILURE);
 }

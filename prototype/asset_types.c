@@ -16,6 +16,7 @@
 // ----- ----- ----- ----- -----
 //     Asset shader part
 // ----- ----- ----- ----- -----
+
 void asset_shader_init(void * instance, struct CString name) {
 	struct Asset_Shader * asset = instance;
 
@@ -38,6 +39,7 @@ void asset_shader_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset model part
 // ----- ----- ----- ----- -----
+
 void asset_model_init(void * instance, struct CString name) {
 	struct Asset_Model * asset = instance;
 
@@ -58,6 +60,7 @@ void asset_model_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset image part
 // ----- ----- ----- ----- -----
+
 void asset_image_init(void * instance, struct CString name) {
 	struct Asset_Image * asset = instance;
 
@@ -78,6 +81,7 @@ void asset_image_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset font part
 // ----- ----- ----- ----- -----
+
 void asset_font_init(void * instance, struct CString name) {
 	struct Asset_Font * asset = instance;
 
@@ -99,6 +103,7 @@ void asset_font_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset bytes part
 // ----- ----- ----- ----- -----
+
 void asset_bytes_init(void * instance, struct CString name) {
 	struct Asset_Bytes * asset = instance;
 
@@ -119,6 +124,7 @@ void asset_bytes_free(void * instance) {
 // ----- ----- ----- ----- -----
 //     Asset json part
 // ----- ----- ----- ----- -----
+
 static struct Strings asset_json_strings; // @note: global state
 
 void asset_json_type_init(void) {

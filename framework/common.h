@@ -19,6 +19,7 @@ struct CString {
 // ----- ----- ----- ----- -----
 //     standard
 // ----- ----- ----- ----- -----
+
 __declspec(noreturn)
 void common_exit_failure(void);
 
@@ -34,6 +35,7 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 // ----- ----- ----- ----- -----
 //     utilities
 // ----- ----- ----- ----- -----
+
 #define STRINGIFY_A_VALUE(v) #v
 #define STRINGIFY_A_MACRO(m) STRINGIFY_A_VALUE(m)
 #define TOKENIZE_A_VALUE(v1, v2) v1 ## v2
@@ -51,6 +53,7 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 // ----- ----- ----- ----- -----
 //     flexible array
 // ----- ----- ----- ----- -----
+
 #if __STDC_VERSION__ >= 199901L
 	#if defined(__clang__)
 		#define FLEXIBLE_ARRAY
@@ -64,6 +67,7 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 // ----- ----- ----- ----- -----
 //     debug break
 // ----- ----- ----- ----- -----
+
 #if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
 	#if defined(__clang__)
 		#define DEBUG_BREAK() __builtin_debugtrap()

@@ -107,6 +107,7 @@ static struct Graphics_State {
 // ----- ----- ----- ----- -----
 //     GPU program part
 // ----- ----- ----- ----- -----
+
 static void verify_shader(GLuint id, GLenum parameter);
 static void verify_program(GLuint id, GLenum parameter);
 struct Ref gpu_program_init(struct Array_Byte const * asset) {
@@ -248,6 +249,7 @@ void gpu_program_get_uniforms(struct Ref gpu_program_ref, uint32_t * count, stru
 // ----- ----- ----- ----- -----
 //     GPU texture part
 // ----- ----- ----- ----- -----
+
 static struct Ref gpu_texture_allocate(
 	uint32_t size_x, uint32_t size_y,
 	struct Texture_Parameters const * parameters,
@@ -406,6 +408,7 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset) 
 // ----- ----- ----- ----- -----
 //     GPU target part
 // ----- ----- ----- ----- -----
+
 struct Ref gpu_target_init(
 	uint32_t size_x, uint32_t size_y,
 	struct Texture_Parameters const * parameters,
@@ -525,6 +528,7 @@ struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Ty
 // ----- ----- ----- ----- -----
 //     GPU mesh part
 // ----- ----- ----- ----- -----
+
 static struct Ref gpu_mesh_allocate(
 	uint32_t buffers_count,
 	uint32_t * byte_lengths,

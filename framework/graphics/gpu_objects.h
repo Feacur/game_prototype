@@ -20,6 +20,7 @@ struct Image;
 // ----- ----- ----- ----- -----
 //     GPU program part
 // ----- ----- ----- ----- -----
+
 struct Gpu_Program_Field;
 struct Ref gpu_program_init(struct Array_Byte const * asset);
 void gpu_program_free(struct Ref gpu_program_ref);
@@ -28,6 +29,7 @@ void gpu_program_get_uniforms(struct Ref gpu_program_ref, uint32_t * count, stru
 // ----- ----- ----- ----- -----
 //     GPU texture part
 // ----- ----- ----- ----- -----
+
 struct Ref gpu_texture_init(struct Image const * asset);
 void gpu_texture_free(struct Ref gpu_texture_ref);
 
@@ -38,6 +40,7 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset);
 // ----- ----- ----- ----- -----
 //     GPU target part
 // ----- ----- ----- ----- -----
+
 struct Ref gpu_target_init(
 	uint32_t size_x, uint32_t size_y,
 	struct Texture_Parameters const * parameters,
@@ -51,6 +54,7 @@ struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Ty
 // ----- ----- ----- ----- -----
 //     GPU mesh part
 // ----- ----- ----- ----- -----
+
 struct Ref gpu_mesh_init(struct Mesh const * asset);
 void gpu_mesh_free(struct Ref gpu_mesh_ref);
 
