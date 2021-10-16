@@ -213,13 +213,11 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 	//        Unity does that through `Canvas` components, which basically
 	//        denotes a batcher
 
-	// @todo: arena/stack allocator
-	//        or put into `Game_State`?
-	struct Array_Any commands;
-	array_any_init(&commands, sizeof(struct GPU_Command));
-	array_any_resize(&commands, state.cameras.count * 2 + state.entities.count);
+	uint32_t const gpu_commands_count_estimate = state.cameras.count * 2 + state.entities.count;
+	if (state.gpu_commands.capacity < gpu_commands_count_estimate) {
+		array_any_resize(&state.gpu_commands, gpu_commands_count_estimate);
+	}
 
-	batcher_2d_set_available(state.batcher);
 	for (uint32_t camera_i = 0; camera_i < state.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&state.cameras, camera_i);
 
@@ -235,7 +233,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		);
 
 		// process camera
-		array_any_push(&commands, &(struct GPU_Command){
+		array_any_push(&state.gpu_commands, &(struct GPU_Command){
 			.type = RENDER_PASS_TYPE_TARGET,
 			.as.target = {
 				.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
@@ -244,7 +242,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		});
 
 		if (camera->clear_mask != TEXTURE_TYPE_NONE) {
-			array_any_push(&commands, &(struct GPU_Command){
+			array_any_push(&state.gpu_commands, &(struct GPU_Command){
 				.type = RENDER_PASS_TYPE_CLEAR,
 				.as.clear = {
 					.mask = camera->clear_mask,
@@ -289,16 +287,10 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				case ENTITY_TYPE_NONE: break;
 
 				case ENTITY_TYPE_MESH: {
-					// @todo: make a draw commands buffer?
-					// @note: flush the batcher before drawing a mesh
-					batcher_2d_draw(state.batcher, &commands);
-
-					//
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
-
 					gfx_material_set_float(material, uniforms.camera, 4*4, &mat4_camera.x.x);
 					gfx_material_set_float(material, uniforms.transform, 4*4, &mat4_entity.x.x);
-					array_any_push(&commands, &(struct GPU_Command){
+					array_any_push(&state.gpu_commands, &(struct GPU_Command){
 						.type = RENDER_PASS_TYPE_DRAW,
 						.as.draw = {
 							.material = material,
@@ -309,7 +301,6 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_QUAD_2D: {
 					// struct Entity_Quad const * quad = &entity->as.quad;
-
 					batcher_2d_add_quad(
 						state.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
@@ -319,7 +310,6 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
-
 					batcher_2d_add_text(
 						state.batcher,
 						text->font,
@@ -334,14 +324,11 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				batcher_2d_pop_matrix(state.batcher);
 			}
 		}
-
-		batcher_2d_draw(state.batcher, &commands);
 	}
 
-	// @todo: postpone batch data uploading until here
-	gpu_execute(commands.count, commands.data);
-
-	array_any_free(&commands);
+	batcher_2d_bake(state.batcher, &state.gpu_commands);
+	gpu_execute(state.gpu_commands.count, state.gpu_commands.data);
+	array_any_clear(&state.gpu_commands);
 }
 
 //

@@ -47,8 +47,6 @@ struct Batcher_2D_Vertex {
 };
 
 struct Batcher_2D {
-	bool available;
-	//
 	struct Batcher_2D_Batch batch;
 	struct Array_Byte strings;
 	struct Array_Any batches;
@@ -371,24 +369,8 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 	}
 }
 
-void batcher_2d_set_available(struct Batcher_2D * batcher) {
-	batcher->available = true;
-	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
-	array_byte_clear(&batcher->strings);
-	array_any_clear(&batcher->batches);
-	array_any_clear(&batcher->texts);
-	array_any_clear(&batcher->buffer_vertices);
-	array_u32_clear(&batcher->buffer_indices);
-}
-
-void batcher_2d_draw(struct Batcher_2D * batcher, struct Array_Any * commands) {
+void batcher_2d_bake(struct Batcher_2D * batcher, struct Array_Any * gpu_commands) {
 	if (batcher->batches.count == 0) { return; }
-	if (!batcher->available) {
-		logger_to_console("this batcher is unavailable. please, reorder commands"); DEBUG_BREAK();
-		return;
-	}
-
-	batcher->available = false;
 
 	batcher_2d_bake_texts(batcher);
 	batcher_2d_bake_asset(batcher);
@@ -402,7 +384,7 @@ void batcher_2d_draw(struct Batcher_2D * batcher, struct Array_Any * commands) {
 	for (uint32_t i = 0; i < batcher->batches.count; i++) {
 		struct Batcher_2D_Batch const * batch = array_any_at(&batcher->batches, i);
 
-		array_any_push(commands, &(struct GPU_Command){
+		array_any_push(gpu_commands, &(struct GPU_Command){
 			.type = RENDER_PASS_TYPE_DRAW,
 			.as.draw = {
 				.material = batch->material,
@@ -411,6 +393,13 @@ void batcher_2d_draw(struct Batcher_2D * batcher, struct Array_Any * commands) {
 			},
 		});
 	}
+
+	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
+	array_byte_clear(&batcher->strings);
+	array_any_clear(&batcher->batches);
+	array_any_clear(&batcher->texts);
+	array_any_clear(&batcher->buffer_vertices);
+	array_u32_clear(&batcher->buffer_indices);
 }
 
 //
