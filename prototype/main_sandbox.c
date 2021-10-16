@@ -39,7 +39,7 @@ static struct Main_Uniforms {
 static void game_init(void) {
 	state_init();
 
-	graphics_process(&(struct Render_Pass){
+	graphics_process(1, &(struct Render_Pass){
 		.type = RENDER_PASS_TYPE_CULL,
 		.as.cull = {
 			.mode = CULL_MODE_BACK,
@@ -213,6 +213,9 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 	//        Unity does that through `Canvas` components, which basically
 	//        denotes a batcher
 
+	struct Array_Any commands;
+	array_any_init(&commands, sizeof(struct Render_Pass));
+
 	for (uint32_t camera_i = 0; camera_i < state.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&state.cameras, camera_i);
 
@@ -228,7 +231,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		);
 
 		// process camera
-		graphics_process(&(struct Render_Pass){
+		array_any_push(&commands, &(struct Render_Pass){
 			.type = RENDER_PASS_TYPE_TARGET,
 			.as.target = {
 				.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
@@ -237,7 +240,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		});
 
 		if (camera->clear_mask != TEXTURE_TYPE_NONE) {
-			graphics_process(&(struct Render_Pass){
+			array_any_push(&commands, &(struct Render_Pass){
 				.type = RENDER_PASS_TYPE_CLEAR,
 				.as.clear = {
 					.mask = camera->clear_mask,
@@ -282,14 +285,14 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				case ENTITY_TYPE_MESH: {
 					// @todo: make a draw commands buffer?
 					// @note: flush the batcher before drawing a mesh
-					batcher_2d_draw(state.batcher);
+					batcher_2d_draw(state.batcher, &commands);
 
 					//
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
 
 					gfx_material_set_float(material, uniforms.camera, 4*4, &mat4_camera.x.x);
 					gfx_material_set_float(material, uniforms.transform, 4*4, &mat4_entity.x.x);
-					graphics_process(&(struct Render_Pass){
+					array_any_push(&commands, &(struct Render_Pass){
 						.type = RENDER_PASS_TYPE_DRAW,
 						.as.draw = {
 							.material = material,
@@ -326,8 +329,12 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 			}
 		}
 
-		batcher_2d_draw(state.batcher);
+		batcher_2d_draw(state.batcher, &commands);
 	}
+
+	graphics_process(commands.count, commands.data);
+
+	array_any_free(&commands);
 }
 
 //

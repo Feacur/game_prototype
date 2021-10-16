@@ -1051,12 +1051,15 @@ inline static void graphics_process_draw(struct Render_Pass_Draw const * draw) {
 	);
 }
 
-void graphics_process(struct Render_Pass const * pass) {
-	switch (pass->type) {
-		case RENDER_PASS_TYPE_CULL:   graphics_process_cull(&pass->as.cull);     break;
-		case RENDER_PASS_TYPE_TARGET: graphics_process_target(&pass->as.target); break;
-		case RENDER_PASS_TYPE_CLEAR:  graphics_process_clear(&pass->as.clear);   break;
-		case RENDER_PASS_TYPE_DRAW:   graphics_process_draw(&pass->as.draw);     break;
+void graphics_process(uint32_t length, struct Render_Pass const * commands) {
+	for (uint32_t i = 0; i < length; i++) {
+		struct Render_Pass const * pass = commands + i;
+		switch (pass->type) {
+			case RENDER_PASS_TYPE_CULL:   graphics_process_cull(&pass->as.cull);     break;
+			case RENDER_PASS_TYPE_TARGET: graphics_process_target(&pass->as.target); break;
+			case RENDER_PASS_TYPE_CLEAR:  graphics_process_clear(&pass->as.clear);   break;
+			case RENDER_PASS_TYPE_DRAW:   graphics_process_draw(&pass->as.draw);     break;
+		}
 	}
 }
 

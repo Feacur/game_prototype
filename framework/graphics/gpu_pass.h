@@ -49,6 +49,6 @@ struct Render_Pass {
 	} as;
 };
 
-void graphics_process(struct Render_Pass const * pass);
+void graphics_process(uint32_t length, struct Render_Pass const * commands);
 
 #endif

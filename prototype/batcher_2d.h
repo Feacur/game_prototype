@@ -12,6 +12,7 @@ struct Batcher_2D;
 
 struct Gfx_Material;
 struct Asset_Font;
+struct Array_Any;
 
 struct Batcher_2D * batcher_2d_init(void);
 void batcher_2d_free(struct Batcher_2D * batcher);
@@ -33,6 +34,6 @@ void batcher_2d_add_text(
 	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot
 );
 
-void batcher_2d_draw(struct Batcher_2D * batcher);
+void batcher_2d_draw(struct Batcher_2D * batcher, struct Array_Any * commands);
 
 #endif
