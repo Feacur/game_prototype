@@ -34,6 +34,7 @@ void batcher_2d_add_text(
 	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot
 );
 
+void batcher_2d_set_available(struct Batcher_2D * batcher);
 void batcher_2d_draw(struct Batcher_2D * batcher, struct Array_Any * commands);
 
 #endif

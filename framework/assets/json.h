@@ -17,6 +17,7 @@ enum JSON_Type {
 };
 
 struct JSON {
+	// @note: the same `strings` pointer is meant to be shared throughout the entire JSON tree
 	struct Strings const * strings;
 	enum JSON_Type type;
 	union {

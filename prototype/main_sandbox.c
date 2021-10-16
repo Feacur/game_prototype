@@ -213,9 +213,13 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 	//        Unity does that through `Canvas` components, which basically
 	//        denotes a batcher
 
+	// @todo: arena/stack allocator
+	//        or put into `Game_State`?
 	struct Array_Any commands;
 	array_any_init(&commands, sizeof(struct GPU_Command));
+	array_any_resize(&commands, state.cameras.count * 2 + state.entities.count);
 
+	batcher_2d_set_available(state.batcher);
 	for (uint32_t camera_i = 0; camera_i < state.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&state.cameras, camera_i);
 
@@ -256,6 +260,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 			struct Gfx_Material * material = array_any_at(&state.materials, entity->material);
 
+			// @todo: fix 2d positioning
 			struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
 			entity_get_rect(
 				entity,
@@ -263,6 +268,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				&entity_rect_min, &entity_rect_max, &entity_pivot
 			);
 
+			// @todo: untangle 3d from 2d
 			struct mat4 const mat4_entity = mat4_set_transformation(
 				(struct vec3){ // @note: `entity_pivot` includes `entity->transform.position`
 					.x = entity_pivot.x,
@@ -332,6 +338,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		batcher_2d_draw(state.batcher, &commands);
 	}
 
+	// @todo: postpone batch data uploading until here
 	gpu_execute(commands.count, commands.data);
 
 	array_any_free(&commands);

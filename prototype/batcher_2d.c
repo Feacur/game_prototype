@@ -29,8 +29,7 @@
 #define BATCHER_2D_ATTRIBUTES_COUNT 2
 
 struct Batcher_2D_Text {
-	uint32_t length;
-	uint8_t const * data;
+	uint32_t length, strings_offset;
 	struct Asset_Font const * font; // @idea: use `Asset_Ref` instead
 	uint32_t vertices_offset, indices_offset;
 	struct mat4 matrix;
@@ -48,7 +47,10 @@ struct Batcher_2D_Vertex {
 };
 
 struct Batcher_2D {
+	bool available;
+	//
 	struct Batcher_2D_Batch batch;
+	struct Array_Byte strings;
 	struct Array_Any batches;
 	struct Array_Any texts;
 	//
@@ -63,7 +65,7 @@ struct Batcher_2D {
 	struct Ref gpu_mesh_ref;
 };
 
-static void batcher_2d_update_asset(struct Batcher_2D * batcher);
+static void batcher_2d_bake_asset(struct Batcher_2D * batcher);
 
 //
 #include "batcher_2d.h"
@@ -73,6 +75,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 	*batcher = (struct Batcher_2D){
 		.matrix = mat4_identity,
 	};
+	array_byte_init(&batcher->strings);
 	array_any_init(&batcher->batches,  sizeof(struct Batcher_2D_Batch));
 	array_any_init(&batcher->texts,    sizeof(struct Batcher_2D_Text));
 	array_any_init(&batcher->matrices, sizeof(struct mat4));
@@ -99,7 +102,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 	};
 
 	//
-	batcher_2d_update_asset(batcher);
+	batcher_2d_bake_asset(batcher);
 	batcher->gpu_mesh_ref = gpu_mesh_init(&(struct Mesh){
 		.count      = BATCHER_2D_BUFFERS_COUNT,
 		.buffers    = batcher->mesh_buffers,
@@ -112,6 +115,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 void batcher_2d_free(struct Batcher_2D * batcher) {
 	gpu_mesh_free(batcher->gpu_mesh_ref);
 	//
+	array_byte_free(&batcher->strings);
 	array_any_free(&batcher->batches);
 	array_any_free(&batcher->texts);
 	array_any_free(&batcher->matrices);
@@ -233,9 +237,13 @@ void batcher_2d_add_text(
 	if (codepoints_count == 0) { return; }
 
 	//
+
+	uint32_t const strings_offset = (uint32_t)batcher->strings.count;
+	array_byte_push_many(&batcher->strings, length + 1, data);
+
 	array_any_push(&batcher->texts, &(struct Batcher_2D_Text) {
 		.length = length,
-		.data = data,
+		.strings_offset = strings_offset,
 		.font = font,
 		.vertices_offset = batcher->buffer_vertices.count,
 		.indices_offset  = batcher->buffer_indices.count,
@@ -252,13 +260,14 @@ void batcher_2d_add_text(
 	array_u32_push_many(&batcher->buffer_indices, codepoints_count * 3 * 2, NULL);
 }
 
-static void batcher_2d_update_text(struct Batcher_2D * batcher) {
+static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 	if (batcher->texts.count == 0) { return; }
 
 	// add all glyphs
 	for (uint32_t i = 0; i < batcher->texts.count; i++) {
 		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
-		font_image_add_glyphs_from_text(text->font->buffer, text->length, text->data);
+		uint8_t const * text_data = batcher->strings.data + text->strings_offset;
+		font_image_add_glyphs_from_text(text->font->buffer, text->length, text_data);
 	}
 
 	// render an upload the atlases
@@ -292,6 +301,8 @@ static void batcher_2d_update_text(struct Batcher_2D * batcher) {
 	// fill quads
 	for (uint32_t i = 0; i < batcher->texts.count; i++) {
 		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
+		uint8_t const * text_data = batcher->strings.data + text->strings_offset;
+
 		uint32_t vertices_offset = text->vertices_offset;
 		uint32_t indices_offset  = text->indices_offset;
 
@@ -306,7 +317,7 @@ static void batcher_2d_update_text(struct Batcher_2D * batcher) {
 		float const tab_size = space_size * 4; // @todo: expose tab scale
 
 		uint32_t previous_codepoint = 0;
-		for (struct UTF8_Iterator it = {0}; utf8_iterate(text->length, text->data, &it); /*empty*/) {
+		for (struct UTF8_Iterator it = {0}; utf8_iterate(text->length, text_data, &it); /*empty*/) {
 			switch (it.codepoint) {
 				case CODEPOINT_ZERO_WIDTH_SPACE: break;
 
@@ -360,24 +371,36 @@ static void batcher_2d_update_text(struct Batcher_2D * batcher) {
 	}
 }
 
+void batcher_2d_set_available(struct Batcher_2D * batcher) {
+	batcher->available = true;
+	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
+	array_byte_clear(&batcher->strings);
+	array_any_clear(&batcher->batches);
+	array_any_clear(&batcher->texts);
+	array_any_clear(&batcher->buffer_vertices);
+	array_u32_clear(&batcher->buffer_indices);
+}
+
 void batcher_2d_draw(struct Batcher_2D * batcher, struct Array_Any * commands) {
 	if (batcher->batches.count == 0) { return; }
+	if (!batcher->available) {
+		logger_to_console("this batcher is unavailable. please, reorder commands"); DEBUG_BREAK();
+		return;
+	}
 
-	// render text into the blanks
-	batcher_2d_update_text(batcher);
+	batcher->available = false;
 
-	// upload the batch mesh
-	batcher_2d_update_asset(batcher);
+	batcher_2d_bake_texts(batcher);
+	batcher_2d_bake_asset(batcher);
 	gpu_mesh_update(batcher->gpu_mesh_ref, &(struct Mesh){
 		.count      = BATCHER_2D_BUFFERS_COUNT,
 		.buffers    = batcher->mesh_buffers,
 		.parameters = batcher->mesh_parameters,
 	});
 
-	// render all the passes
 	batcher_2d_bake_pass(batcher);
 	for (uint32_t i = 0; i < batcher->batches.count; i++) {
-		struct Batcher_2D_Batch * batch = array_any_at(&batcher->batches, i);
+		struct Batcher_2D_Batch const * batch = array_any_at(&batcher->batches, i);
 
 		array_any_push(commands, &(struct GPU_Command){
 			.type = RENDER_PASS_TYPE_DRAW,
@@ -388,13 +411,6 @@ void batcher_2d_draw(struct Batcher_2D * batcher, struct Array_Any * commands) {
 			},
 		});
 	}
-
-	//
-	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
-	array_any_clear(&batcher->batches);
-	array_any_clear(&batcher->texts);
-	array_any_clear(&batcher->buffer_vertices);
-	array_u32_clear(&batcher->buffer_indices);
 }
 
 //
@@ -409,7 +425,7 @@ inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, str
 	};
 }
 
-static void batcher_2d_update_asset(struct Batcher_2D * batcher) {
+static void batcher_2d_bake_asset(struct Batcher_2D * batcher) {
 	batcher->mesh_buffers[0] = (struct Array_Byte){
 		.data = batcher->buffer_vertices.data,
 		.count = sizeof(struct Batcher_2D_Vertex) * batcher->buffer_vertices.count,
