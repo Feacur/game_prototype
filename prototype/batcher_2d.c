@@ -15,7 +15,7 @@
 #include "framework/graphics/font_image.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
-#include "framework/graphics/gpu_pass.h"
+#include "framework/graphics/gpu_command.h"
 #include "framework/maths.h"
 
 #include "asset_types.h"
@@ -379,7 +379,7 @@ void batcher_2d_draw(struct Batcher_2D * batcher, struct Array_Any * commands) {
 	for (uint32_t i = 0; i < batcher->batches.count; i++) {
 		struct Batcher_2D_Batch * batch = array_any_at(&batcher->batches, i);
 
-		array_any_push(commands, &(struct Render_Pass){
+		array_any_push(commands, &(struct GPU_Command){
 			.type = RENDER_PASS_TYPE_DRAW,
 			.as.draw = {
 				.material = batch->material,

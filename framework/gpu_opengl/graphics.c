@@ -981,9 +981,9 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 }
 
 //
-#include "framework/graphics/gpu_pass.h"
+#include "framework/graphics/gpu_command.h"
 
-inline static void graphics_process_cull(struct Render_Pass_Cull const * cull) {
+inline static void gpu_execute_cull(struct GPU_Command_Cull const * cull) {
 	if (cull->mode == CULL_MODE_NONE) {
 		glDisable(GL_CULL_FACE);
 	}
@@ -994,7 +994,7 @@ inline static void graphics_process_cull(struct Render_Pass_Cull const * cull) {
 	}
 }
 
-inline static void graphics_process_target(struct Render_Pass_Target const * target) {
+inline static void gpu_execute_target(struct GPU_Command_Target const * target) {
 	graphics_select_target(target->gpu_ref);
 
 	uint32_t viewport_size_x = target->screen_size_x, viewport_size_y = target->screen_size_y;
@@ -1006,7 +1006,7 @@ inline static void graphics_process_target(struct Render_Pass_Target const * tar
 }
 
 
-inline static void graphics_process_clear(struct Render_Pass_Clear const * clear) {
+inline static void gpu_execute_clear(struct GPU_Command_Clear const * clear) {
 	if (clear->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
 
 	// @todo: ever need variations?
@@ -1016,7 +1016,7 @@ inline static void graphics_process_clear(struct Render_Pass_Clear const * clear
 	graphics_clear(clear->mask, clear->rgba);
 }
 
-inline static void graphics_process_draw(struct Render_Pass_Draw const * draw) {
+inline static void gpu_execute_draw(struct GPU_Command_Draw const * draw) {
 	if (draw->material == NULL) { logger_to_console("material is null"); DEBUG_BREAK(); return; }
 	if (draw->material->gpu_program_ref.id == 0) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
 
@@ -1051,14 +1051,14 @@ inline static void graphics_process_draw(struct Render_Pass_Draw const * draw) {
 	);
 }
 
-void graphics_process(uint32_t length, struct Render_Pass const * commands) {
+void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 	for (uint32_t i = 0; i < length; i++) {
-		struct Render_Pass const * pass = commands + i;
+		struct GPU_Command const * pass = commands + i;
 		switch (pass->type) {
-			case RENDER_PASS_TYPE_CULL:   graphics_process_cull(&pass->as.cull);     break;
-			case RENDER_PASS_TYPE_TARGET: graphics_process_target(&pass->as.target); break;
-			case RENDER_PASS_TYPE_CLEAR:  graphics_process_clear(&pass->as.clear);   break;
-			case RENDER_PASS_TYPE_DRAW:   graphics_process_draw(&pass->as.draw);     break;
+			case RENDER_PASS_TYPE_CULL:   gpu_execute_cull(&pass->as.cull);     break;
+			case RENDER_PASS_TYPE_TARGET: gpu_execute_target(&pass->as.target); break;
+			case RENDER_PASS_TYPE_CLEAR:  gpu_execute_clear(&pass->as.clear);   break;
+			case RENDER_PASS_TYPE_DRAW:   gpu_execute_draw(&pass->as.draw);     break;
 		}
 	}
 }

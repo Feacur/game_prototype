@@ -9,7 +9,7 @@
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
-#include "framework/graphics/gpu_pass.h"
+#include "framework/graphics/gpu_command.h"
 
 #include "application/application.h"
 
@@ -39,7 +39,7 @@ static struct Main_Uniforms {
 static void game_init(void) {
 	state_init();
 
-	graphics_process(1, &(struct Render_Pass){
+	gpu_execute(1, &(struct GPU_Command){
 		.type = RENDER_PASS_TYPE_CULL,
 		.as.cull = {
 			.mode = CULL_MODE_BACK,
@@ -214,7 +214,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 	//        denotes a batcher
 
 	struct Array_Any commands;
-	array_any_init(&commands, sizeof(struct Render_Pass));
+	array_any_init(&commands, sizeof(struct GPU_Command));
 
 	for (uint32_t camera_i = 0; camera_i < state.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&state.cameras, camera_i);
@@ -231,7 +231,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		);
 
 		// process camera
-		array_any_push(&commands, &(struct Render_Pass){
+		array_any_push(&commands, &(struct GPU_Command){
 			.type = RENDER_PASS_TYPE_TARGET,
 			.as.target = {
 				.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
@@ -240,7 +240,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		});
 
 		if (camera->clear_mask != TEXTURE_TYPE_NONE) {
-			array_any_push(&commands, &(struct Render_Pass){
+			array_any_push(&commands, &(struct GPU_Command){
 				.type = RENDER_PASS_TYPE_CLEAR,
 				.as.clear = {
 					.mask = camera->clear_mask,
@@ -292,7 +292,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 					gfx_material_set_float(material, uniforms.camera, 4*4, &mat4_camera.x.x);
 					gfx_material_set_float(material, uniforms.transform, 4*4, &mat4_entity.x.x);
-					array_any_push(&commands, &(struct Render_Pass){
+					array_any_push(&commands, &(struct GPU_Command){
 						.type = RENDER_PASS_TYPE_DRAW,
 						.as.draw = {
 							.material = material,
@@ -332,7 +332,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 		batcher_2d_draw(state.batcher, &commands);
 	}
 
-	graphics_process(commands.count, commands.data);
+	gpu_execute(commands.count, commands.data);
 
 	array_any_free(&commands);
 }
