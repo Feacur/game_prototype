@@ -48,7 +48,9 @@ struct Font * font_init(struct CString path) {
 		logger_to_console("failure: can't read font file\n"); DEBUG_BREAK();
 	}
 
-	stbtt_GetFontVMetrics(&font->font, &font->ascent, &font->descent, &font->line_gap);
+	if (!stbtt_GetFontVMetricsOS2(&font->font, &font->ascent, &font->descent, &font->line_gap)) {
+		stbtt_GetFontVMetrics(&font->font, &font->ascent, &font->descent, &font->line_gap);
+	}
 
 	return font;
 }
@@ -126,7 +128,7 @@ void font_fill_buffer(
 }
 
 float font_get_scale(struct Font const * font, float pixels_size) {
-	return (pixels_size > 0)
+	return (pixels_size >= 0)
 		? stbtt_ScaleForPixelHeight(&font->font, pixels_size)
 		: stbtt_ScaleForMappingEmToPixels(&font->font, -pixels_size);
 }
