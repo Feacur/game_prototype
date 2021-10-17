@@ -107,22 +107,15 @@ static void state_read_json_cameras(struct JSON const * json);
 static void state_read_json_entities(struct JSON const * json);
 
 void state_read_json(struct JSON const * json) {
-	struct JSON const * targets_json = json_get(json, S_("targets"));
-	state_read_json_targets(targets_json);
-
-	struct JSON const * materials_json = json_get(json, S_("materials"));
-	state_read_json_materials(materials_json);
-
-	struct JSON const * cameras_json = json_get(json, S_("cameras"));
-	state_read_json_cameras(cameras_json);
-
-	struct JSON const * entities_json = json_get(json, S_("entities"));
-	state_read_json_entities(entities_json);
+	state_read_json_targets(json_get(json, S_("targets")));
+	state_read_json_materials(json_get(json, S_("materials")));
+	state_read_json_cameras(json_get(json, S_("cameras")));
+	state_read_json_entities(json_get(json, S_("entities")));
 }
 
-static void state_read_json_float_n(struct JSON const * json, float * data) {
+static void state_read_json_float_n(struct JSON const * json, uint32_t length, float * data) {
 	if (json->type == JSON_ARRAY) {
-		uint32_t const count = json_count(json);
+		uint32_t const count = min_u32(length, json_count(json));
 		for (uint32_t i = 0; i < count; i++) {
 			data[i] = json_at_number(json, i, data[i]);
 		}
@@ -132,9 +125,9 @@ static void state_read_json_float_n(struct JSON const * json, float * data) {
 	}
 }
 
-static void state_read_json_u32_n(struct JSON const * json, uint32_t * data) {
+static void state_read_json_u32_n(struct JSON const * json, uint32_t length, uint32_t * data) {
 	if (json->type == JSON_ARRAY) {
-		uint32_t const count = json_count(json);
+		uint32_t const count = min_u32(length, json_count(json));
 		for (uint32_t i = 0; i < count; i++) {
 			data[i] = (uint32_t)json_at_number(json, i, (float)data[i]);
 		}
@@ -144,9 +137,9 @@ static void state_read_json_u32_n(struct JSON const * json, uint32_t * data) {
 	}
 }
 
-static void state_read_json_s32_n(struct JSON const * json, int32_t * data) {
+static void state_read_json_s32_n(struct JSON const * json, uint32_t length, int32_t * data) {
 	if (json->type == JSON_ARRAY) {
-		uint32_t const count = json_count(json);
+		uint32_t const count = min_u32(length, json_count(json));
 		for (uint32_t i = 0; i < count; i++) {
 			data[i] = (int32_t)json_at_number(json, i, (float)data[i]);
 		}
@@ -160,23 +153,23 @@ static void state_read_json_transform_3d(struct JSON const * json, struct Transf
 	*transform = transform_3d_default;
 	if (json->type == JSON_OBJECT) {
 		struct vec3 euler = {0, 0, 0};
-		state_read_json_float_n(json_get(json, S_("euler")), &euler.x);
+		state_read_json_float_n(json_get(json, S_("euler")), 3, &euler.x);
 		transform->rotation = quat_set_radians(euler);
 
-		state_read_json_float_n(json_get(json, S_("pos")),   &transform->position.x);
-		state_read_json_float_n(json_get(json, S_("quat")),  &transform->rotation.x);
-		state_read_json_float_n(json_get(json, S_("scale")), &transform->scale.x);
+		state_read_json_float_n(json_get(json, S_("pos")),   3, &transform->position.x);
+		state_read_json_float_n(json_get(json, S_("quat")),  4, &transform->rotation.x);
+		state_read_json_float_n(json_get(json, S_("scale")), 3, &transform->scale.x);
 	}
 }
 
 static void state_read_json_transform_rect(struct JSON const * json, struct Transform_Rect * transform) {
 	*transform = transform_rect_default;
 	if (json->type == JSON_OBJECT) {
-		state_read_json_float_n(json_get(json, S_("min_rel")), &transform->min_relative.x);
-		state_read_json_float_n(json_get(json, S_("min_abs")), &transform->min_absolute.x);
-		state_read_json_float_n(json_get(json, S_("max_rel")), &transform->max_relative.x);
-		state_read_json_float_n(json_get(json, S_("max_abs")), &transform->max_absolute.x);
-		state_read_json_float_n(json_get(json, S_("pivot")),   &transform->pivot.x);
+		state_read_json_float_n(json_get(json, S_("min_rel")), 2, &transform->min_relative.x);
+		state_read_json_float_n(json_get(json, S_("min_abs")), 2, &transform->min_absolute.x);
+		state_read_json_float_n(json_get(json, S_("max_rel")), 2, &transform->max_relative.x);
+		state_read_json_float_n(json_get(json, S_("max_abs")), 2, &transform->max_absolute.x);
+		state_read_json_float_n(json_get(json, S_("pivot")),   2, &transform->pivot.x);
 	}
 }
 
@@ -458,7 +451,8 @@ static void state_read_json_material(struct JSON const * json, struct Gfx_Materi
 
 			case DATA_TYPE_UNIT: {
 				if (uniform_json->type == JSON_ARRAY) {
-					for (uint32_t element_index = 0; element_index < uniform_elements_count; element_index++) {
+					uint32_t const count = min_u32(uniform_elements_count, json_count(uniform_json));
+					for (uint32_t element_index = 0; element_index < count; element_index++) {
 						struct Ref * data = uniform_data_buffer->data;
 						data[element_index] = state_read_json_uniform_texture(json_at(uniform_json, element_index));
 					}
@@ -471,17 +465,17 @@ static void state_read_json_material(struct JSON const * json, struct Gfx_Materi
 			} break;
 
 			case DATA_TYPE_U32: {
-				state_read_json_u32_n(uniform_json, uniform_data_buffer->data);
+				state_read_json_u32_n(uniform_json, uniform_elements_count, uniform_data_buffer->data);
 				gfx_material_set_u32(material, uniforms[i].id, uniform_elements_count, uniform_data_buffer->data);
 			} break;
 
 			case DATA_TYPE_S32: {
-				state_read_json_s32_n(uniform_json, uniform_data_buffer->data);
+				state_read_json_s32_n(uniform_json,uniform_elements_count,  uniform_data_buffer->data);
 				gfx_material_set_s32(material, uniforms[i].id, uniform_elements_count, uniform_data_buffer->data);
 			} break;
 
 			case DATA_TYPE_R32: {
-				state_read_json_float_n(uniform_json, uniform_data_buffer->data);
+				state_read_json_float_n(uniform_json, uniform_elements_count, uniform_data_buffer->data);
 				gfx_material_set_float(material, uniforms[i].id, uniform_elements_count, uniform_data_buffer->data);
 			} break;
 		}
