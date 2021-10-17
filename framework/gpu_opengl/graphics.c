@@ -1005,7 +1005,6 @@ inline static void gpu_execute_target(struct GPU_Command_Target const * target) 
 	glViewport(0, 0, (GLsizei)viewport_size_x, (GLsizei)viewport_size_y);
 }
 
-
 inline static void gpu_execute_clear(struct GPU_Command_Clear const * clear) {
 	if (clear->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
 
@@ -1014,6 +1013,11 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * clear) {
 	graphics_set_depth_mode(&(struct Depth_Mode){.enabled = true, .mask = true});
 
 	graphics_clear(clear->mask, clear->rgba);
+}
+
+inline static void gpu_execute_matrix(struct GPU_Command_Uniform const * uniform) {
+	uint32_t const limit = sizeof(uniform->as.array_r32);
+	gfx_material_set_float(uniform->material, uniform->id, min(uniform->length, limit), uniform->as.array_r32);
 }
 
 inline static void gpu_execute_draw(struct GPU_Command_Draw const * draw) {
@@ -1055,10 +1059,11 @@ void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 	for (uint32_t i = 0; i < length; i++) {
 		struct GPU_Command const * pass = commands + i;
 		switch (pass->type) {
-			case GPU_COMMAND_TYPE_CULL:   gpu_execute_cull(&pass->as.cull);     break;
-			case GPU_COMMAND_TYPE_TARGET: gpu_execute_target(&pass->as.target); break;
-			case GPU_COMMAND_TYPE_CLEAR:  gpu_execute_clear(&pass->as.clear);   break;
-			case GPU_COMMAND_TYPE_DRAW:   gpu_execute_draw(&pass->as.draw);     break;
+			case GPU_COMMAND_TYPE_CULL:    gpu_execute_cull(&pass->as.cull);      break;
+			case GPU_COMMAND_TYPE_TARGET:  gpu_execute_target(&pass->as.target);  break;
+			case GPU_COMMAND_TYPE_CLEAR:   gpu_execute_clear(&pass->as.clear);    break;
+			case GPU_COMMAND_TYPE_UNIFORM: gpu_execute_matrix(&pass->as.uniform); break;
+			case GPU_COMMAND_TYPE_DRAW:    gpu_execute_draw(&pass->as.draw);      break;
 		}
 	}
 }

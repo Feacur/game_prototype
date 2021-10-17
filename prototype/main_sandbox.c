@@ -292,13 +292,31 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_MESH: {
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
-					gfx_material_set_float(material, uniforms.camera, 4*4, &mat4_camera.x.x);
-					gfx_material_set_float(material, uniforms.transform, 4*4, &mat4_entity.x.x);
-					array_any_push(&state.gpu_commands, &(struct GPU_Command){
-						.type = GPU_COMMAND_TYPE_DRAW,
-						.as.draw = {
-							.material = material,
-							.gpu_mesh_ref = mesh->gpu_mesh_ref,
+					array_any_push_many(&state.gpu_commands, 3, (struct GPU_Command[]){
+						{
+							.type = GPU_COMMAND_TYPE_UNIFORM,
+							.as.uniform = {
+								.material = material,
+								.id = uniforms.camera,
+								.length = sizeof(mat4_camera) / sizeof(float),
+								.as.mat4 = mat4_camera,
+							},
+						},
+						{
+							.type = GPU_COMMAND_TYPE_UNIFORM,
+							.as.uniform = {
+								.material = material,
+								.id = uniforms.transform,
+								.length = sizeof(mat4_entity) / sizeof(float),
+								.as.mat4 = mat4_entity,
+							},
+						},
+						{
+							.type = GPU_COMMAND_TYPE_DRAW,
+							.as.draw = {
+								.material = material,
+								.gpu_mesh_ref = mesh->gpu_mesh_ref,
+							},
 						},
 					});
 				} break;
