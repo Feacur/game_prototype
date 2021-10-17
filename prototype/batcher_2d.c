@@ -382,7 +382,7 @@ void batcher_2d_bake(struct Batcher_2D * batcher, struct Array_Any * gpu_command
 		struct Batcher_2D_Batch const * batch = array_any_at(&batcher->batches, i);
 
 		array_any_push(gpu_commands, &(struct GPU_Command){
-			.type = RENDER_PASS_TYPE_DRAW,
+			.type = GPU_COMMAND_TYPE_DRAW,
 			.as.draw = {
 				.material = batch->material,
 				.gpu_mesh_ref = batcher->gpu_mesh_ref,

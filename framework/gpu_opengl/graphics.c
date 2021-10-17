@@ -1055,10 +1055,10 @@ void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 	for (uint32_t i = 0; i < length; i++) {
 		struct GPU_Command const * pass = commands + i;
 		switch (pass->type) {
-			case RENDER_PASS_TYPE_CULL:   gpu_execute_cull(&pass->as.cull);     break;
-			case RENDER_PASS_TYPE_TARGET: gpu_execute_target(&pass->as.target); break;
-			case RENDER_PASS_TYPE_CLEAR:  gpu_execute_clear(&pass->as.clear);   break;
-			case RENDER_PASS_TYPE_DRAW:   gpu_execute_draw(&pass->as.draw);     break;
+			case GPU_COMMAND_TYPE_CULL:   gpu_execute_cull(&pass->as.cull);     break;
+			case GPU_COMMAND_TYPE_TARGET: gpu_execute_target(&pass->as.target); break;
+			case GPU_COMMAND_TYPE_CLEAR:  gpu_execute_clear(&pass->as.clear);   break;
+			case GPU_COMMAND_TYPE_DRAW:   gpu_execute_draw(&pass->as.draw);     break;
 		}
 	}
 }

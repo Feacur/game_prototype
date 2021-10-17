@@ -40,7 +40,7 @@ static void game_init(void) {
 	state_init();
 
 	gpu_execute(1, &(struct GPU_Command){
-		.type = RENDER_PASS_TYPE_CULL,
+		.type = GPU_COMMAND_TYPE_CULL,
 		.as.cull = {
 			.mode = CULL_MODE_BACK,
 			.order = WINDING_ORDER_POSITIVE,
@@ -240,7 +240,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 		// process camera
 		array_any_push(&state.gpu_commands, &(struct GPU_Command){
-			.type = RENDER_PASS_TYPE_TARGET,
+			.type = GPU_COMMAND_TYPE_TARGET,
 			.as.target = {
 				.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
 				.gpu_ref = camera->gpu_target_ref,
@@ -249,7 +249,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 		if (camera->clear_mask != TEXTURE_TYPE_NONE) {
 			array_any_push(&state.gpu_commands, &(struct GPU_Command){
-				.type = RENDER_PASS_TYPE_CLEAR,
+				.type = GPU_COMMAND_TYPE_CLEAR,
 				.as.clear = {
 					.mask = camera->clear_mask,
 					.rgba = camera->clear_rgba,
@@ -295,7 +295,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 					gfx_material_set_float(material, uniforms.camera, 4*4, &mat4_camera.x.x);
 					gfx_material_set_float(material, uniforms.transform, 4*4, &mat4_entity.x.x);
 					array_any_push(&state.gpu_commands, &(struct GPU_Command){
-						.type = RENDER_PASS_TYPE_DRAW,
+						.type = GPU_COMMAND_TYPE_DRAW,
 						.as.draw = {
 							.material = material,
 							.gpu_mesh_ref = mesh->gpu_mesh_ref,
