@@ -37,15 +37,20 @@ void gfx_material_init(
 		}
 	}
 
-	array_any_resize(&material->textures, unit_count);
-	array_u32_resize(&material->values_u32, u32_count);
-	array_s32_resize(&material->values_s32, s32_count);
+	array_any_resize(&material->textures,       unit_count);
+	array_u32_resize(&material->values_u32,     u32_count);
+	array_s32_resize(&material->values_s32,     s32_count);
 	array_float_resize(&material->values_float, float_count);
 
 	array_any_resize(&material->textures,       unit_count);  common_memset(material->textures.data,     0, sizeof(struct Ref) * unit_count);
 	array_u32_resize(&material->values_u32,     u32_count);   common_memset(material->values_u32.data,   0, sizeof(uint32_t) * u32_count);
 	array_s32_resize(&material->values_s32,     s32_count);   common_memset(material->values_s32.data,   0, sizeof(int32_t) * s32_count);
 	array_float_resize(&material->values_float, float_count); common_memset(material->values_float.data, 0, sizeof(float) * float_count);
+
+	material->textures.count     = unit_count;
+	material->values_u32.count   = u32_count;
+	material->values_s32.count   = s32_count;
+	material->values_float.count = float_count;
 }
 
 void gfx_material_free(struct Gfx_Material * material) {

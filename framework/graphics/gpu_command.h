@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_GPU_PASS)
-#define GAME_GRAPHICS_GPU_PASS
+#if !defined(GAME_GRAPHICS_GPU_COMMAND)
+#define GAME_GRAPHICS_GPU_COMMAND
 
 // interface from `gpu_*/graphics.c` to anywhere
 // - gpu draw call
@@ -8,14 +8,15 @@
 #include "framework/containers/ref.h"
 
 #include "types.h"
+#include "material_override.h"
 
 struct Gfx_Material;
 
 enum GPU_Command_Type {
+	GPU_COMMAND_TYPE_NONE,
 	GPU_COMMAND_TYPE_CULL,
 	GPU_COMMAND_TYPE_TARGET,
 	GPU_COMMAND_TYPE_CLEAR,
-	GPU_COMMAND_TYPE_UNIFORM,
 	GPU_COMMAND_TYPE_DRAW,
 };
 
@@ -34,22 +35,12 @@ struct GPU_Command_Clear {
 	uint32_t rgba;
 };
 
-struct GPU_Command_Uniform {
-	struct Gfx_Material * material;
-	uint32_t id;
-	uint32_t length;
-	union {
-		struct mat4 mat4;
-		uint32_t array_u32[16];
-		int32_t  array_s32[16];
-		float    array_r32[16];
-	} as;
-};
-
 struct GPU_Command_Draw {
 	struct Gfx_Material const * material;
 	struct Ref gpu_mesh_ref;
 	uint32_t offset, length;
+	uint32_t overrides_count;
+	struct Gfx_Material_Override overrides[GFX_MATERIAL_OVERRIDES_LIMIT];
 };
 
 struct GPU_Command {
@@ -58,7 +49,6 @@ struct GPU_Command {
 		struct GPU_Command_Cull    cull;
 		struct GPU_Command_Target  target;
 		struct GPU_Command_Clear   clear;
-		struct GPU_Command_Uniform uniform;
 		struct GPU_Command_Draw    draw;
 	} as;
 };

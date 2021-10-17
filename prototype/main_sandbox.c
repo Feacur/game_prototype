@@ -7,6 +7,7 @@
 #include "framework/input.h"
 
 #include "framework/graphics/material.h"
+#include "framework/graphics/material_override.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/gpu_command.h"
@@ -209,15 +210,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 	batcher_2d_clear(state.batcher);
 	array_any_clear(&state.gpu_commands);
 
-	// @todo: iterate though cameras
-	//        > sub-iterate through relevant entities (masks, layers?)
-	//        render stuff to buffers or screen (camera settings)
-
-	// @todo: how to batch such entities? an explicit mark?
-	//        text is alway a block; it's ok to reuse batcher
-	//        UI should be batched or split in chunks and batched
-	//        Unity does that through `Canvas` components, which basically
-	//        denotes a batcher
+	// @todo: override material params per shader or material where possible
 
 	uint32_t const gpu_commands_count_estimate = state.cameras.count * 2 + state.entities.count;
 	if (state.gpu_commands.capacity < gpu_commands_count_estimate) {
@@ -292,31 +285,24 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_MESH: {
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
-					array_any_push_many(&state.gpu_commands, 3, (struct GPU_Command[]){
-						{
-							.type = GPU_COMMAND_TYPE_UNIFORM,
-							.as.uniform = {
-								.material = material,
-								.id = uniforms.camera,
-								.length = sizeof(mat4_camera) / sizeof(float),
-								.as.mat4 = mat4_camera,
-							},
-						},
-						{
-							.type = GPU_COMMAND_TYPE_UNIFORM,
-							.as.uniform = {
-								.material = material,
-								.id = uniforms.transform,
-								.length = sizeof(mat4_entity) / sizeof(float),
-								.as.mat4 = mat4_entity,
-							},
-						},
-						{
-							.type = GPU_COMMAND_TYPE_DRAW,
-							.as.draw = {
-								.material = material,
-								.gpu_mesh_ref = mesh->gpu_mesh_ref,
-							},
+					array_any_push(&state.gpu_commands, &(struct GPU_Command){
+						.type = GPU_COMMAND_TYPE_DRAW,
+						.as.draw = {
+							.material = material,
+							.gpu_mesh_ref = mesh->gpu_mesh_ref,
+							.overrides_count = 2,
+							.overrides = {
+								[0] = {
+									.id = uniforms.camera,
+									.length = sizeof(mat4_camera) / sizeof(float),
+									.as.mat4 = mat4_camera,
+								},
+								[1] = {
+									.id = uniforms.transform,
+									.length = sizeof(mat4_entity) / sizeof(float),
+									.as.mat4 = mat4_entity,
+								},
+							}
 						},
 					});
 				} break;

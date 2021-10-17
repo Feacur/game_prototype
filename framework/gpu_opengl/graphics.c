@@ -10,6 +10,7 @@
 
 #include "framework/graphics/types.h"
 #include "framework/graphics/material.h"
+#include "framework/graphics/material_override.h"
 
 #include "functions.h"
 #include "types.h"
@@ -865,43 +866,60 @@ static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_progra
 	}
 }
 
-static void graphics_upload_uniforms(struct Gfx_Material const * material) {
+// struct Material_Override;
+static void graphics_upload_uniforms(struct Gfx_Material const * material, uint32_t overrides_count, struct Gfx_Material_Override const * overrides) {
 	struct Gpu_Program const * gpu_program = ref_table_get(&graphics_state.programs, material->gpu_program_ref);
 	uint32_t const uniforms_count = gpu_program->uniforms_count;
-	struct Gpu_Program_Field const * uniforms = gpu_program->uniforms;
+
+	if (overrides_count > GFX_MATERIAL_OVERRIDES_LIMIT) {
+		logger_to_console("too many overrides"); DEBUG_BREAK();
+		overrides_count = GFX_MATERIAL_OVERRIDES_LIMIT;
+	}
 
 	uint32_t unit_offset = 0, u32_offset = 0, s32_offset = 0, float_offset = 0;
 	for (uint32_t i = 0; i < uniforms_count; i++) {
-		uint32_t const elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
+		struct Gpu_Program_Field const * field = gpu_program->uniforms + i;
 
-		enum Data_Type const element_type = data_type_get_element_type(uniforms[i].type);
+		void const * data = NULL;
+		for (uint32_t override_i = 0; override_i < overrides_count; override_i++) {
+			struct Gfx_Material_Override const * override = overrides + override_i;
+			if (override->id == field->id) {
+				data = &override->as;
+				break;
+			}
+		}
+
+		enum Data_Type const element_type   = data_type_get_element_type(field->type);
+		uint32_t       const elements_count = data_type_get_count(field->type) * field->array_size;
 		switch (element_type) {
 			default: logger_to_console("unknown element type '0x%x'\n", element_type); DEBUG_BREAK(); break;
 
 			case DATA_TYPE_UNIT: {
-				graphics_upload_single_uniform(gpu_program, i, (struct Ref *)material->textures.data + unit_offset);
+				if (data == NULL) { data = array_any_at(&material->textures, unit_offset); }
 				unit_offset += elements_count;
 				break;
 			}
 
 			case DATA_TYPE_U32: {
-				graphics_upload_single_uniform(gpu_program, i, material->values_u32.data + u32_offset);
+				if (data == NULL) { data = material->values_u32.data + u32_offset; }
 				u32_offset += elements_count;
 				break;
 			}
 
 			case DATA_TYPE_S32: {
-				graphics_upload_single_uniform(gpu_program, i, material->values_s32.data + s32_offset);
+				if (data == NULL) { data = material->values_s32.data + s32_offset; }
 				s32_offset += elements_count;
 				break;
 			}
 
 			case DATA_TYPE_R32: {
-				graphics_upload_single_uniform(gpu_program, i, material->values_float.data + float_offset);
+				if (data == NULL) { data = material->values_float.data + float_offset; }
 				float_offset += elements_count;
 				break;
 			}
 		}
+
+		if (data != NULL) { graphics_upload_single_uniform(gpu_program, i, data); }
 	}
 }
 
@@ -983,68 +1001,63 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 //
 #include "framework/graphics/gpu_command.h"
 
-inline static void gpu_execute_cull(struct GPU_Command_Cull const * cull) {
-	if (cull->mode == CULL_MODE_NONE) {
+inline static void gpu_execute_cull(struct GPU_Command_Cull const * command) {
+	if (command->mode == CULL_MODE_NONE) {
 		glDisable(GL_CULL_FACE);
 	}
 	else {
 		glEnable(GL_CULL_FACE);
-		glCullFace(gpu_cull_mode(cull->mode));
-		glFrontFace(gpu_winding_order(cull->order));
+		glCullFace(gpu_cull_mode(command->mode));
+		glFrontFace(gpu_winding_order(command->order));
 	}
 }
 
-inline static void gpu_execute_target(struct GPU_Command_Target const * target) {
-	graphics_select_target(target->gpu_ref);
+inline static void gpu_execute_target(struct GPU_Command_Target const * command) {
+	graphics_select_target(command->gpu_ref);
 
-	uint32_t viewport_size_x = target->screen_size_x, viewport_size_y = target->screen_size_y;
-	if (target->gpu_ref.id != 0 && target->gpu_ref.id != ref_empty.id) {
-		gpu_target_get_size(target->gpu_ref, &viewport_size_x, &viewport_size_y);
+	uint32_t viewport_size_x = command->screen_size_x, viewport_size_y = command->screen_size_y;
+	if (command->gpu_ref.id != 0 && command->gpu_ref.id != ref_empty.id) {
+		gpu_target_get_size(command->gpu_ref, &viewport_size_x, &viewport_size_y);
 	}
 
 	glViewport(0, 0, (GLsizei)viewport_size_x, (GLsizei)viewport_size_y);
 }
 
-inline static void gpu_execute_clear(struct GPU_Command_Clear const * clear) {
-	if (clear->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
+inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
+	if (command->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
 
 	// @todo: ever need variations?
 	graphics_set_blend_mode((struct Blend_Mode[]){blend_mode_opaque});
 	graphics_set_depth_mode(&(struct Depth_Mode){.enabled = true, .mask = true});
 
-	graphics_clear(clear->mask, clear->rgba);
+	graphics_clear(command->mask, command->rgba);
 }
 
-inline static void gpu_execute_matrix(struct GPU_Command_Uniform const * uniform) {
-	uint32_t const limit = sizeof(uniform->as.array_r32);
-	gfx_material_set_float(uniform->material, uniform->id, min(uniform->length, limit), uniform->as.array_r32);
-}
+inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
+	if (command->material == NULL) { logger_to_console("material is null"); DEBUG_BREAK(); return; }
+	if (command->material->gpu_program_ref.id == 0) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
 
-inline static void gpu_execute_draw(struct GPU_Command_Draw const * draw) {
-	if (draw->material == NULL) { logger_to_console("material is null"); DEBUG_BREAK(); return; }
-	if (draw->material->gpu_program_ref.id == 0) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
-
-	if (draw->gpu_mesh_ref.id == 0) { logger_to_console("mesh is null"); DEBUG_BREAK(); return; }
-	struct Gpu_Mesh const * mesh = ref_table_get(&graphics_state.meshes, draw->gpu_mesh_ref);
+	if (command->gpu_mesh_ref.id == 0) { logger_to_console("mesh is null"); DEBUG_BREAK(); return; }
+	struct Gpu_Mesh const * mesh = ref_table_get(&graphics_state.meshes, command->gpu_mesh_ref);
 	if (mesh->elements_index == INDEX_EMPTY) { logger_to_console("mesh has no elements buffer"); DEBUG_BREAK(); return; }
 
-	uint32_t const elements_count = (draw->length != 0)
-		? draw->length
+	uint32_t const elements_count = (command->length != 0)
+		? command->length
 		: mesh->counts[mesh->elements_index];
 	if (elements_count == 0) { return; }
 
-	size_t const elements_offset = (draw->offset != 0)
-		? draw->offset
+	size_t const elements_offset = (command->offset != 0)
+		? command->offset
 		: 0;
 
-	if (draw->material->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
-	graphics_set_blend_mode(&draw->material->blend_mode);
-	graphics_set_depth_mode(&draw->material->depth_mode);
+	if (command->material->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
+	graphics_set_blend_mode(&command->material->blend_mode);
+	graphics_set_depth_mode(&command->material->depth_mode);
 
-	graphics_select_program(draw->material->gpu_program_ref);
-	graphics_upload_uniforms(draw->material);
+	graphics_select_program(command->material->gpu_program_ref);
+	graphics_upload_uniforms(command->material, command->overrides_count, command->overrides);
 
-	graphics_select_mesh(draw->gpu_mesh_ref);
+	graphics_select_mesh(command->gpu_mesh_ref);
 
 	enum Data_Type const elements_type = mesh->parameters[mesh->elements_index].type;
 	glDrawElements(
@@ -1057,13 +1070,13 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * draw) {
 
 void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 	for (uint32_t i = 0; i < length; i++) {
-		struct GPU_Command const * pass = commands + i;
-		switch (pass->type) {
-			case GPU_COMMAND_TYPE_CULL:    gpu_execute_cull(&pass->as.cull);      break;
-			case GPU_COMMAND_TYPE_TARGET:  gpu_execute_target(&pass->as.target);  break;
-			case GPU_COMMAND_TYPE_CLEAR:   gpu_execute_clear(&pass->as.clear);    break;
-			case GPU_COMMAND_TYPE_UNIFORM: gpu_execute_matrix(&pass->as.uniform); break;
-			case GPU_COMMAND_TYPE_DRAW:    gpu_execute_draw(&pass->as.draw);      break;
+		struct GPU_Command const * command = commands + i;
+		switch (command->type) {
+			default:                      logger_to_console("unknown command"); DEBUG_BREAK(); break;
+			case GPU_COMMAND_TYPE_CULL:   gpu_execute_cull(&command->as.cull);     break;
+			case GPU_COMMAND_TYPE_TARGET: gpu_execute_target(&command->as.target); break;
+			case GPU_COMMAND_TYPE_CLEAR:  gpu_execute_clear(&command->as.clear);   break;
+			case GPU_COMMAND_TYPE_DRAW:   gpu_execute_draw(&command->as.draw);     break;
 		}
 	}
 }
@@ -1273,6 +1286,43 @@ static void verify_program(GLuint id, GLenum parameter) {
 
 //
 
+static char const * debug_get_source(GLenum value) {
+	switch (value) {
+		case GL_DEBUG_SOURCE_API:             return "API";
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   return "window system";
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "shader compiler";
+		case GL_DEBUG_SOURCE_THIRD_PARTY:     return "thirdparty";
+		case GL_DEBUG_SOURCE_APPLICATION:     return "application";
+		case GL_DEBUG_SOURCE_OTHER:           return "other";
+	}
+	return "unknown";
+}
+
+static char const * debug_get_type(GLenum value) {
+	switch (value) {
+		case GL_DEBUG_TYPE_ERROR:               return "error";
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "deprecated behavior";
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  return "undefined behavior";
+		case GL_DEBUG_TYPE_PORTABILITY:         return "portability";
+		case GL_DEBUG_TYPE_PERFORMANCE:         return "performance";
+		case GL_DEBUG_TYPE_MARKER:              return "marker";
+		case GL_DEBUG_TYPE_PUSH_GROUP:          return "push group";
+		case GL_DEBUG_TYPE_POP_GROUP:           return "pop group";
+		case GL_DEBUG_TYPE_OTHER:               return "other";
+	}
+	return "unknown";
+}
+
+static char const * debug_get_severity(GLenum value) {
+	switch (value) {
+		case GL_DEBUG_SEVERITY_HIGH:         return "[crt]"; // All OpenGL Errors, shader compilation/linking errors, or highly-dangerous undefined behavior
+		case GL_DEBUG_SEVERITY_MEDIUM:       return "[err]"; // Major performance warnings, shader compilation/linking warnings, or the use of deprecated functionality
+		case GL_DEBUG_SEVERITY_LOW:          return "[wrn]"; // Redundant state change performance warning, or unimportant undefined behavior
+		case GL_DEBUG_SEVERITY_NOTIFICATION: return "[trc]"; // Anything that isn't an error or performance issue.
+	}
+	return "[???]";
+}
+
 static void __stdcall opengl_debug_message_callback(
 	GLenum source,
 	GLenum type,
@@ -1282,55 +1332,20 @@ static void __stdcall opengl_debug_message_callback(
 	const GLchar *message,
 	const void *userParam
 ) {
-	(void)length; (void)userParam;
-
-	char const * source_string = NULL;
-	switch (source) {
-		case GL_DEBUG_SOURCE_API:             source_string = "API";             break;
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   source_string = "window system";   break;
-		case GL_DEBUG_SOURCE_SHADER_COMPILER: source_string = "shader compiler"; break;
-		case GL_DEBUG_SOURCE_THIRD_PARTY:     source_string = "thirdparty";      break;
-		case GL_DEBUG_SOURCE_APPLICATION:     source_string = "application";     break;
-		case GL_DEBUG_SOURCE_OTHER:           source_string = "other";           break;
-		default:                              source_string = "unknown";         break;
-	}
-
-	char const * type_string = NULL;
-	switch (type) {
-		case GL_DEBUG_TYPE_ERROR:               type_string = "error";               break;
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: type_string = "deprecated behavior"; break;
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  type_string = "undefined behavior";  break;
-		case GL_DEBUG_TYPE_PORTABILITY:         type_string = "portability";         break;
-		case GL_DEBUG_TYPE_PERFORMANCE:         type_string = "performance";         break;
-		case GL_DEBUG_TYPE_MARKER:              type_string = "marker";              break;
-		case GL_DEBUG_TYPE_PUSH_GROUP:          type_string = "push group";          break;
-		case GL_DEBUG_TYPE_POP_GROUP:           type_string = "pop group";           break;
-		case GL_DEBUG_TYPE_OTHER:               type_string = "other";               break;
-		default:                                type_string = "unknown";             break;
-	}
-
-	char const * severity_string = NULL;
-	switch (severity) {
-		case GL_DEBUG_SEVERITY_HIGH:         severity_string = "[crt]"; break; // All OpenGL Errors, shader compilation/linking errors, or highly-dangerous undefined behavior
-		case GL_DEBUG_SEVERITY_MEDIUM:       severity_string = "[err]"; break; // Major performance warnings, shader compilation/linking warnings, or the use of deprecated functionality
-		case GL_DEBUG_SEVERITY_LOW:          severity_string = "[wrn]"; break; // Redundant state change performance warning, or unimportant undefined behavior
-		case GL_DEBUG_SEVERITY_NOTIFICATION: severity_string = "[trc]"; break; // Anything that isn't an error or performance issue.
-		default:                             severity_string = "[???]"; break; // ?
-	}
-
+	(void)userParam;
 	logger_to_console(
 		"\n"
 		"> OpenGL message '0x%x'\n"
-		"  message:  %s\n"
+		"  message:  %.*s\n"
 		"  severity: %s\n"
 		"  type:     %s\n"
 		"  source:   %s\n"
 		"",
 		id,
-		message,
-		severity_string,
-		type_string,
-		source_string
+		length, message,
+		debug_get_severity(severity),
+		debug_get_type(type),
+		debug_get_source(source)
 	);
 
 	DEBUG_BREAK();

@@ -9,6 +9,8 @@
 
 #include "types.h"
 
+// @idea: converge data into a single array
+
 struct Gfx_Material {
 	struct Ref gpu_program_ref;
 
