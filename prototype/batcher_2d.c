@@ -53,7 +53,6 @@ struct Batcher_2D {
 	struct Array_Any texts;
 	//
 	struct mat4 matrix;
-	struct Array_Any matrices;
 	//
 	struct Array_Any buffer_vertices;
 	struct Array_U32 buffer_indices;
@@ -63,7 +62,8 @@ struct Batcher_2D {
 	struct Ref gpu_mesh_ref;
 };
 
-static void batcher_2d_bake_asset(struct Batcher_2D * batcher);
+static void batcher_2d_bake_mesh(struct Batcher_2D * batcher);
+static void batcher_2d_bake_pass(struct Batcher_2D * batcher);
 
 //
 #include "batcher_2d.h"
@@ -72,11 +72,28 @@ struct Batcher_2D * batcher_2d_init(void) {
 	struct Batcher_2D * batcher = MEMORY_ALLOCATE(NULL, struct Batcher_2D);
 	*batcher = (struct Batcher_2D){
 		.matrix = mat4_identity,
+		.mesh_parameters = {
+			[0] = (struct Mesh_Parameters){
+				.type = DATA_TYPE_R32,
+				.flags = MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
+				.attributes_count = BATCHER_2D_ATTRIBUTES_COUNT,
+				.attributes = {
+					[0] = ATTRIBUTE_TYPE_POSITION,
+					[1] = SIZE_OF_MEMBER(struct Batcher_2D_Vertex, position) / sizeof(float),
+					[2] = ATTRIBUTE_TYPE_TEXCOORD,
+					[3] = SIZE_OF_MEMBER(struct Batcher_2D_Vertex, tex_coord) / sizeof(float),
+				},
+			},
+			[1] = (struct Mesh_Parameters){
+				.type = DATA_TYPE_U32,
+				.flags = MESH_FLAG_INDEX | MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
+			},
+		},
 	};
+
 	array_byte_init(&batcher->strings);
-	array_any_init(&batcher->batches,  sizeof(struct Batcher_2D_Batch));
-	array_any_init(&batcher->texts,    sizeof(struct Batcher_2D_Text));
-	array_any_init(&batcher->matrices, sizeof(struct mat4));
+	array_any_init(&batcher->batches,         sizeof(struct Batcher_2D_Batch));
+	array_any_init(&batcher->texts,           sizeof(struct Batcher_2D_Text));
 	array_any_init(&batcher->buffer_vertices, sizeof(struct Batcher_2D_Vertex));
 	array_u32_init(&batcher->buffer_indices);
 
@@ -85,22 +102,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 	}
 
 	//
-	batcher->mesh_parameters[0] = (struct Mesh_Parameters){
-		.type = DATA_TYPE_R32,
-		.flags = MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
-		.attributes_count = BATCHER_2D_ATTRIBUTES_COUNT,
-		.attributes[0] = ATTRIBUTE_TYPE_POSITION,
-		.attributes[1] = SIZE_OF_MEMBER(struct Batcher_2D_Vertex, position) / sizeof(float),
-		.attributes[2] = ATTRIBUTE_TYPE_TEXCOORD,
-		.attributes[3] = SIZE_OF_MEMBER(struct Batcher_2D_Vertex, tex_coord) / sizeof(float),
-	};
-	batcher->mesh_parameters[1] = (struct Mesh_Parameters){
-		.type = DATA_TYPE_U32,
-		.flags = MESH_FLAG_INDEX | MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
-	};
-
-	//
-	batcher_2d_bake_asset(batcher);
+	batcher_2d_bake_mesh(batcher);
 	batcher->gpu_mesh_ref = gpu_mesh_init(&(struct Mesh){
 		.count      = BATCHER_2D_BUFFERS_COUNT,
 		.buffers    = batcher->mesh_buffers,
@@ -116,7 +118,6 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	array_byte_free(&batcher->strings);
 	array_any_free(&batcher->batches);
 	array_any_free(&batcher->texts);
-	array_any_free(&batcher->matrices);
 	array_any_free(&batcher->buffer_vertices);
 	array_u32_free(&batcher->buffer_indices);
 	//
@@ -124,30 +125,11 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	MEMORY_FREE(batcher, batcher);
 }
 
-static void batcher_2d_bake_pass(struct Batcher_2D * batcher) {
-	uint32_t const offset = batcher->buffer_indices.count;
-	if (batcher->batch.offset < offset) {
-		batcher->batch.length = offset - batcher->batch.offset;
-		array_any_push(&batcher->batches, &batcher->batch);
-
-		batcher->batch.offset = offset;
-		batcher->batch.length = 0;
-	}
+void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const * matrix) {
+	batcher->matrix = (matrix != NULL) ? *matrix : mat4_identity;
 }
 
-void batcher_2d_push_matrix(struct Batcher_2D * batcher, struct mat4 matrix) {
-	array_any_push(&batcher->matrices, &batcher->matrix);
-	batcher->matrix = matrix;
-}
-
-void batcher_2d_pop_matrix(struct Batcher_2D * batcher) {
-	struct mat4 const * matrix = array_any_pop(&batcher->matrices);
-	if (matrix != NULL) { batcher->matrix = *matrix; return; }
-	logger_to_console("non-matching matrices\n"); DEBUG_BREAK();
-	batcher->matrix = mat4_identity;
-}
-
-void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material * material) {
+void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material const * material) {
 	if (batcher->batch.material != material) {
 		batcher_2d_bake_pass(batcher);
 	}
@@ -202,8 +184,8 @@ void batcher_2d_add_quad(
 
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
-	struct Asset_Font const * font, uint32_t length, uint8_t const * data,
-	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot
+	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot,
+	struct Asset_Font const * font, uint32_t length, uint8_t const * data
 ) {
 	// @todo: introduce rect bounds parameter
 	//        introduce scroll offset parameter
@@ -375,11 +357,20 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 	}
 }
 
+void batcher_2d_clear(struct Batcher_2D * batcher) {
+	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
+	array_byte_clear(&batcher->strings);
+	array_any_clear(&batcher->batches);
+	array_any_clear(&batcher->texts);
+	array_any_clear(&batcher->buffer_vertices);
+	array_u32_clear(&batcher->buffer_indices);
+}
+
 void batcher_2d_bake(struct Batcher_2D * batcher, struct Array_Any * gpu_commands) {
 	if (batcher->batches.count == 0) { return; }
 
 	batcher_2d_bake_texts(batcher);
-	batcher_2d_bake_asset(batcher);
+	batcher_2d_bake_mesh(batcher);
 	gpu_mesh_update(batcher->gpu_mesh_ref, &(struct Mesh){
 		.count      = BATCHER_2D_BUFFERS_COUNT,
 		.buffers    = batcher->mesh_buffers,
@@ -399,13 +390,6 @@ void batcher_2d_bake(struct Batcher_2D * batcher, struct Array_Any * gpu_command
 			},
 		});
 	}
-
-	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
-	array_byte_clear(&batcher->strings);
-	array_any_clear(&batcher->batches);
-	array_any_clear(&batcher->texts);
-	array_any_clear(&batcher->buffer_vertices);
-	array_u32_clear(&batcher->buffer_indices);
 }
 
 //
@@ -420,7 +404,18 @@ inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, str
 	};
 }
 
-static void batcher_2d_bake_asset(struct Batcher_2D * batcher) {
+static void batcher_2d_bake_pass(struct Batcher_2D * batcher) {
+	uint32_t const offset = batcher->buffer_indices.count;
+	if (batcher->batch.offset < offset) {
+		batcher->batch.length = offset - batcher->batch.offset;
+		array_any_push(&batcher->batches, &batcher->batch);
+
+		batcher->batch.offset = offset;
+		batcher->batch.length = 0;
+	}
+}
+
+static void batcher_2d_bake_mesh(struct Batcher_2D * batcher) {
 	batcher->mesh_buffers[0] = (struct Array_Byte){
 		.data = batcher->buffer_vertices.data,
 		.count = sizeof(struct Batcher_2D_Vertex) * batcher->buffer_vertices.count,

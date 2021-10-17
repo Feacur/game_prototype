@@ -216,17 +216,14 @@ static enum Camera_Mode state_read_json_camera_mode(struct JSON const * json) {
 	return CAMERA_MODE_NONE;
 }
 
-static enum Entity_Rect_Mode state_read_json_entity_rect_mode(struct JSON const * json) {
+static enum Entity_Rect_Behaviour state_read_json_entity_rect_behaviour(struct JSON const * json) {
 	if (json->type == JSON_STRING) {
 		uint32_t const id = json_as_id(json);
 		if (id == json_find_id(json, S_("fit"))) {
-			return ENTITY_RECT_MODE_FIT;
-		}
-		if (id == json_find_id(json, S_("content"))) {
-			return ENTITY_RECT_MODE_CONTENT;
+			return ENTITY_RECT_BEHAVIOUR_FIT;
 		}
 	}
-	return ENTITY_RECT_MODE_NONE;
+	return ENTITY_RECT_BEHAVIOUR_NONE;
 }
 
 static enum Entity_Type state_read_json_entity_type(struct JSON const * json) {
@@ -551,7 +548,7 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 	state_read_json_transform_3d(json_get(json, S_("transform")), &entity->transform);
 	state_read_json_transform_rect(json_get(json, S_("rect")), &entity->rect);
 
-	entity->rect_mode = state_read_json_entity_rect_mode(json_get(json, S_("rect_mode")));
+	entity->rect_behaviour = state_read_json_entity_rect_behaviour(json_get(json, S_("rect_auto")));
 
 	entity->material = (uint32_t)json_get_number(json, S_("material_uid"), 0) - 1;
 	entity->camera   = (uint32_t)json_get_number(json, S_("camera_uid"), 0) - 1;

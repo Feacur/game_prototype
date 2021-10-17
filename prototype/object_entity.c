@@ -10,6 +10,22 @@
 //
 #include "object_entity.h"
 
+bool entity_get_is_screen_space(struct Entity const * entity) {
+	switch (entity->type) {
+		case ENTITY_TYPE_NONE: return false;
+
+		case ENTITY_TYPE_MESH:
+			return false;
+
+		case ENTITY_TYPE_QUAD_2D:
+		case ENTITY_TYPE_TEXT_2D:
+			return true;
+	}
+
+	logger_to_console("unknown entity type"); DEBUG_BREAK();
+	return false;
+}
+
 bool entity_get_is_batched(struct Entity const * entity) {
 	switch (entity->type) {
 		case ENTITY_TYPE_NONE: return false;
@@ -52,7 +68,7 @@ struct uvec2 entity_get_content_size(
 	struct Gfx_Material * material = array_any_at(&state.materials, entity->material);
 
 	switch (entity->type) {
-		case ENTITY_TYPE_NONE: break;
+		case ENTITY_TYPE_NONE: return (struct uvec2){0, 0};
 
 		case ENTITY_TYPE_MESH: return (struct uvec2){
 			viewport_size_x,

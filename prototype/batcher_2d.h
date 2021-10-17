@@ -17,10 +17,8 @@ struct Array_Any;
 struct Batcher_2D * batcher_2d_init(void);
 void batcher_2d_free(struct Batcher_2D * batcher);
 
-void batcher_2d_push_matrix(struct Batcher_2D * batcher, struct mat4 matrix);
-void batcher_2d_pop_matrix(struct Batcher_2D * batcher);
-
-void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material * material);
+void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const * matrix);
+void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material const * material);
 
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
@@ -30,10 +28,11 @@ void batcher_2d_add_quad(
 
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
-	struct Asset_Font const * font, uint32_t length, uint8_t const * data,
-	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot
+	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot,
+	struct Asset_Font const * font, uint32_t length, uint8_t const * data
 );
 
+void batcher_2d_clear(struct Batcher_2D * batcher);
 void batcher_2d_bake(struct Batcher_2D * batcher, struct Array_Any * commands);
 
 #endif

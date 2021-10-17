@@ -63,12 +63,43 @@ static void game_init(void) {
 
 		// > entities
 		array_any_push(&state.entities, &(struct Entity){
+			.material = 3,
+			.camera = 1,
+			.transform = transform_3d_default,
+			.rect = (struct Transform_Rect){
+				.min_relative = (struct vec2){0.5f, 0.25f},
+				.max_relative = (struct vec2){0.5f, 0.25f},
+				.max_absolute = (struct vec2){250, 150},
+				.pivot = (struct vec2){0.5f, 0.5f},
+			},
+			//
+			.type = ENTITY_TYPE_QUAD_2D,
+			.as.quad = {
+				.texture_uniform = uniforms.texture,
+			},
+		});
+
+		array_any_push(&state.entities, &(struct Entity){
+			.material = 3,
+			.camera = 1,
+			.transform = transform_3d_default,
+			.rect = (struct Transform_Rect){
+				.max_relative = (struct vec2){0.5f, 0.25f},
+				.pivot = (struct vec2){0.5f, 0.5f},
+			},
+			//
+			.type = ENTITY_TYPE_QUAD_2D,
+			.as.quad = {
+				.texture_uniform = uniforms.texture,
+			},
+		});
+
+		array_any_push(&state.entities, &(struct Entity){
 			.material = 2,
 			.camera = 1,
 			.transform = transform_3d_default,
 			.rect = (struct Transform_Rect){
 				.min_relative = (struct vec2){0.5f, 0.25f},
-				.min_absolute = (struct vec2){ 50,  50},
 				.max_relative = (struct vec2){0.5f, 0.25f},
 				.max_absolute = (struct vec2){250, 150},
 				.pivot = (struct vec2){0.5f, 0.5f},
@@ -79,25 +110,6 @@ static void game_init(void) {
 				.length = text_test->length,
 				.data = text_test->data,
 				.font = asset_font,
-			},
-		});
-
-		array_any_push(&state.entities, &(struct Entity){
-			.material = 2,
-			.camera = 1,
-			.transform = transform_3d_default,
-			.rect = (struct Transform_Rect){
-				.min_relative = (struct vec2){0.0f, 0.25f},
-				.min_absolute = (struct vec2){ 50, 150},
-				.max_relative = (struct vec2){0.0f, 0.25f},
-				.max_absolute = (struct vec2){250, 350},
-				.pivot = (struct vec2){0.5f, 0.5f},
-			},
-			//
-			.rect_mode = ENTITY_RECT_MODE_CONTENT,
-			.type = ENTITY_TYPE_QUAD_2D,
-			.as.quad = {
-				.texture_uniform = uniforms.texture,
 			},
 		});
 	}
@@ -135,38 +147,29 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 		}
 
 		// rect behaviour
-		// struct uvec2 entity_content_size = {1, 1};
-		struct uvec2 const entity_content_size = entity_get_content_size(entity, viewport_size_x, viewport_size_y);
-		if (entity_content_size.x == 0 || entity_content_size.y == 0) { continue; }
+		switch (entity->rect_behaviour) {
+			case ENTITY_RECT_BEHAVIOUR_NONE: break;
 
-		switch (entity->rect_mode) {
-			case ENTITY_RECT_MODE_NONE: break;
+			case ENTITY_RECT_BEHAVIOUR_FIT: {
+				struct uvec2 const entity_content_size = entity_get_content_size(entity, viewport_size_x, viewport_size_y);
+				if (entity_content_size.x != 0 && entity_content_size.y != 0)  {
+					// @note: `(fit_size_N <= viewport_size_N) == true`
+					//        `(fit_offset_N >= 0) == true`
+					//        alternatively `fit_axis_is_x` can be calculated as:
+					//        `((float)texture_size_x / (float)viewport_size_x > (float)texture_size_y / (float)viewport_size_y)`
+					bool const fit_axis_is_x = (entity_content_size.x * viewport_size_y > entity_content_size.y * viewport_size_x);
+					uint32_t const fit_size_x = fit_axis_is_x ? viewport_size_x : mul_div_u32(viewport_size_y, entity_content_size.x, entity_content_size.y);
+					uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(viewport_size_x, entity_content_size.y, entity_content_size.x) : viewport_size_y;
+					uint32_t const fit_offset_x = (viewport_size_x - fit_size_x) / 2;
+					uint32_t const fit_offset_y = (viewport_size_y - fit_size_y) / 2;
 
-			case ENTITY_RECT_MODE_FIT: {
-				// @note: `(fit_size_N <= viewport_size_N) == true`
-				//        `(fit_offset_N >= 0) == true`
-				//        alternatively `fit_axis_is_x` can be calculated as:
-				//        `((float)texture_size_x / (float)viewport_size_x > (float)texture_size_y / (float)viewport_size_y)`
-				bool const fit_axis_is_x = (entity_content_size.x * viewport_size_y > entity_content_size.y * viewport_size_x);
-				uint32_t const fit_size_x = fit_axis_is_x ? viewport_size_x : mul_div_u32(viewport_size_y, entity_content_size.x, entity_content_size.y);
-				uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(viewport_size_x, entity_content_size.y, entity_content_size.x) : viewport_size_y;
-				uint32_t const fit_offset_x = (viewport_size_x - fit_size_x) / 2;
-				uint32_t const fit_offset_y = (viewport_size_y - fit_size_y) / 2;
-
-				entity->rect = (struct Transform_Rect){
-					.min_absolute = {(float)fit_offset_x, (float)fit_offset_y},
-					.max_absolute = {(float)(fit_offset_x + fit_size_x), (float)(fit_offset_y + fit_size_y)},
-					.pivot = {0.5f, 0.5f},
-				};
-			} break;
-
-			case ENTITY_RECT_MODE_CONTENT: {
-				// @note: lags one frame
-				entity->rect.max_relative = entity->rect.min_relative;
-				entity->rect.max_absolute = (struct vec2){
-					.x = entity->rect.min_absolute.x + (float)entity_content_size.x,
-					.y = entity->rect.min_absolute.y + (float)entity_content_size.y,
-				};
+					entity->rect = (struct Transform_Rect){
+						.min_absolute = {(float)fit_offset_x, (float)fit_offset_y},
+						.max_absolute = {(float)(fit_offset_x + fit_size_x), (float)(fit_offset_y + fit_size_y)},
+						.pivot = {0.5f, 0.5f},
+					};
+				}
+				else { entity->rect = transform_rect_default; }
 			} break;
 		}
 
@@ -202,6 +205,9 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 	if (screen_size_x == 0) { return; }
 	if (screen_size_y == 0) { return; }
+
+	batcher_2d_clear(state.batcher);
+	array_any_clear(&state.gpu_commands);
 
 	// @todo: iterate though cameras
 	//        > sub-iterate through relevant entities (masks, layers?)
@@ -258,17 +264,14 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 			struct Gfx_Material * material = array_any_at(&state.materials, entity->material);
 
-			// @todo: fix 2d positioning
 			struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
 			entity_get_rect(
 				entity,
 				viewport_size_x, viewport_size_y,
 				&entity_rect_min, &entity_rect_max, &entity_pivot
 			);
-
-			// @todo: untangle 3d from 2d
 			struct mat4 const mat4_entity = mat4_set_transformation(
-				(struct vec3){ // @note: `entity_pivot` includes `entity->transform.position`
+				(struct vec3){
 					.x = entity_pivot.x,
 					.y = entity_pivot.y,
 					.z = entity->transform.position.z,
@@ -277,9 +280,10 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 				entity->transform.rotation
 			);
 
-			bool const entity_is_batched = entity_get_is_batched(entity);
-			if (entity_is_batched) {
-				batcher_2d_push_matrix(state.batcher, mat4_mul_mat(mat4_camera, mat4_entity));
+			if (entity_get_is_batched(entity)) {
+				batcher_2d_set_matrix(state.batcher, (struct mat4[]){
+					mat4_mul_mat(mat4_camera, mat4_entity)
+				});
 				batcher_2d_set_material(state.batcher, material);
 			}
 
@@ -312,23 +316,18 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 					struct Entity_Text const * text = &entity->as.text;
 					batcher_2d_add_text(
 						state.batcher,
+						entity_rect_min, entity_rect_max, entity_pivot,
 						text->font,
 						text->visible_length,
-						text->data,
-						entity_rect_min, entity_rect_max, entity_pivot
+						text->data
 					);
 				} break;
-			}
-
-			if (entity_is_batched) {
-				batcher_2d_pop_matrix(state.batcher);
 			}
 		}
 	}
 
 	batcher_2d_bake(state.batcher, &state.gpu_commands);
 	gpu_execute(state.gpu_commands.count, state.gpu_commands.data);
-	array_any_clear(&state.gpu_commands);
 }
 
 //

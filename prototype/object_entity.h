@@ -6,10 +6,9 @@
 
 #include "components.h"
 
-enum Entity_Rect_Mode {
-	ENTITY_RECT_MODE_NONE,
-	ENTITY_RECT_MODE_FIT,
-	ENTITY_RECT_MODE_CONTENT,
+enum Entity_Rect_Behaviour {
+	ENTITY_RECT_BEHAVIOUR_NONE,
+	ENTITY_RECT_BEHAVIOUR_FIT,
 };
 
 enum Entity_Type {
@@ -40,10 +39,11 @@ struct Entity_Text {
 struct Entity {
 	uint32_t material;
 	uint32_t camera;
+	//
 	struct Transform_3D transform;
 	struct Transform_Rect rect; // @todo: make it completely optional?
+	enum Entity_Rect_Behaviour rect_behaviour;
 	//
-	enum Entity_Rect_Mode rect_mode;
 	enum Entity_Type type;
 	union {
 		struct Entity_Mesh mesh;
@@ -54,6 +54,7 @@ struct Entity {
 
 //
 
+bool entity_get_is_screen_space(struct Entity const * entity);
 bool entity_get_is_batched(struct Entity const * entity);
 
 void entity_get_rect(
