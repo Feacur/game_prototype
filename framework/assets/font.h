@@ -29,7 +29,8 @@ void font_fill_buffer(
 );
 
 float font_get_scale(struct Font const * font, float pixels_size);
-int32_t font_get_height(struct Font const * font);
+int32_t font_get_ascent(struct Font const * font);
+int32_t font_get_descent(struct Font const * font);
 int32_t font_get_gap(struct Font const * font);
 int32_t font_get_kerning(struct Font const * font, uint32_t glyph_id1, uint32_t glyph_id2);
 

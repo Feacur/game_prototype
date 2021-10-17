@@ -29,7 +29,8 @@ void font_image_render(struct Font_Image * font_image);
 struct Image const * font_image_get_asset(struct Font_Image const * font_image);
 struct Font_Glyph const * font_image_get_glyph(struct Font_Image * const font_image, uint32_t codepoint);
 
-float font_image_get_height(struct Font_Image const * font_image);
+float font_image_get_ascent(struct Font_Image const * font_image);
+float font_image_get_descent(struct Font_Image const * font_image);
 float font_image_get_gap(struct Font_Image const * font_image);
 float font_image_get_kerning(struct Font_Image const * font_image, uint32_t codepoint1, uint32_t codepoint2);
 

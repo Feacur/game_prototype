@@ -304,9 +304,15 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 		uint32_t vertices_offset = text->vertices_offset;
 		uint32_t indices_offset  = text->indices_offset;
 
-		float const line_height = font_image_get_height(text->font->buffer) + font_image_get_gap(text->font->buffer);
-		float offset_x = text->local_offset.x;
-		float offset_y = text->local_offset.y - line_height;
+		float const font_ascent  = font_image_get_ascent(text->font->buffer);
+		float const font_descent = font_image_get_descent(text->font->buffer);
+		float const line_gap     = font_image_get_gap(text->font->buffer);
+		float const line_height  = font_ascent - font_descent + line_gap;
+
+		struct vec2 offset = (struct vec2){
+			text->local_offset.x,
+			text->local_offset.y - font_ascent,
+		};
 
 		struct Font_Glyph const * glyph_space = font_image_get_glyph(text->font->buffer, ' ');
 		struct Font_Glyph const * glyph_error = font_image_get_glyph(text->font->buffer, CODEPOINT_EMPTY);
@@ -321,20 +327,20 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 				case ' ':
 				case CODEPOINT_NON_BREAKING_SPACE:
-					offset_x += space_size;
+					offset.x += space_size;
 					break;
 
 				case '\t':
-					offset_x += tab_size;
+					offset.x += tab_size;
 					break;
 
 				case '\r':
-					// offset_x = text->offset.x;
+					// offset.x = text->offset.x;
 					break;
 
 				case '\n':
-					offset_x = text->local_offset.x; // @note: auto `\r`
-					offset_y -= line_height;
+					offset.x = text->local_offset.x; // @note: auto `\r`
+					offset.y -= line_height;
 					break;
 
 				default: if (it.codepoint > ' ') {
@@ -343,24 +349,24 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 					if (glyph->params.is_empty) { logger_to_console("codepoint '0x%x' has empty glyph\n", it.codepoint); DEBUG_BREAK(); }
 
-					offset_x += font_image_get_kerning(text->font->buffer, previous_codepoint, it.codepoint);
+					offset.x += font_image_get_kerning(text->font->buffer, previous_codepoint, it.codepoint);
 
 					batcher_2d_fill_quad(
 						batcher,
 						text->matrix,
 						vertices_offset, indices_offset,
 						(float[]){
-							((float)glyph->params.rect[0]) + offset_x,
-							((float)glyph->params.rect[1]) + offset_y,
-							((float)glyph->params.rect[2]) + offset_x,
-							((float)glyph->params.rect[3]) + offset_y,
+							((float)glyph->params.rect[0]) + offset.x,
+							((float)glyph->params.rect[1]) + offset.y,
+							((float)glyph->params.rect[2]) + offset.x,
+							((float)glyph->params.rect[3]) + offset.y,
 						},
 						glyph->uv
 					);
 					vertices_offset += 4;
 					indices_offset += 3 * 2;
 
-					offset_x += glyph->params.full_size_x;
+					offset.x += glyph->params.full_size_x;
 				} break;
 			}
 

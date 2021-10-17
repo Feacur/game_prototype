@@ -52,9 +52,9 @@ struct Font_Image * font_image_init(struct Font const * font, int32_t size) {
 	hash_table_u64_init(&font_image->kerning, sizeof(float));
 
 	// setup an error glyph
-	float const size_error_y = font_image_get_height(font_image);
+	float const size_error_y = font_image_get_ascent(font_image);
 	float const size_error_x = size_error_y / 2;
-	float const scale_error[] = {0.1f, 0.0f, 0.9f, 0.7f};
+	float const scale_error[] = {0.2f, 0.0f, 0.9f, 0.8f};
 
 	hash_table_u32_set(&font_image->table, CODEPOINT_EMPTY, &(struct Font_Glyph){
 		.params = (struct Glyph_Params){
@@ -350,13 +350,18 @@ struct Font_Glyph const * font_image_get_glyph(struct Font_Image * const font_im
 	return hash_table_u32_get(&font_image->table, codepoint);
 }
 
-float font_image_get_height(struct Font_Image const * font_image) {
-	int32_t value = font_get_height(font_image->font);
+float font_image_get_ascent(struct Font_Image const * font_image) {
+	int32_t const value = font_get_ascent(font_image->font);
+	return ((float)value) * font_image->scale;
+}
+
+float font_image_get_descent(struct Font_Image const * font_image) {
+	int32_t const value = font_get_descent(font_image->font);
 	return ((float)value) * font_image->scale;
 }
 
 float font_image_get_gap(struct Font_Image const * font_image) {
-	int32_t value = font_get_gap(font_image->font);
+	int32_t const value = font_get_gap(font_image->font);
 	return ((float)value) * font_image->scale;
 }
 

@@ -95,10 +95,12 @@ void font_get_glyph_parameters(struct Font const * font, struct Glyph_Params * p
 	}
 
 	*params = (struct Glyph_Params){
-		.rect[0] = (int32_t)maths_floor(((float)rect[0]) * scale),
-		.rect[1] = (int32_t)maths_floor(((float)rect[1]) * scale),
-		.rect[2] = (int32_t)maths_ceil (((float)rect[2]) * scale),
-		.rect[3] = (int32_t)maths_ceil (((float)rect[3]) * scale),
+		.rect = {
+			[0] = (int32_t)maths_floor(((float)rect[0]) * scale),
+			[1] = (int32_t)maths_floor(((float)rect[1]) * scale),
+			[2] = (int32_t)maths_ceil (((float)rect[2]) * scale),
+			[3] = (int32_t)maths_ceil (((float)rect[3]) * scale),
+		},
 		.full_size_x = ((float)advance_width) * scale,
 	};
 }
@@ -133,8 +135,12 @@ float font_get_scale(struct Font const * font, float pixels_size) {
 		: stbtt_ScaleForMappingEmToPixels(&font->font, -pixels_size);
 }
 
-int32_t font_get_height(struct Font const * font) {
-	return (int32_t)(font->ascent - font->descent);
+int32_t font_get_ascent(struct Font const * font) {
+	return (int32_t)font->ascent;
+}
+
+int32_t font_get_descent(struct Font const * font) {
+	return (int32_t)font->descent;
 }
 
 int32_t font_get_gap(struct Font const * font) {
