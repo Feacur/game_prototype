@@ -6,6 +6,8 @@
 
 #include "json_scanner.h"
 
+// @note: JSON is based off of rfc8259
+
 //
 #include "json.h"
 
