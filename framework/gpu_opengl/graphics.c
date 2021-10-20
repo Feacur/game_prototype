@@ -884,7 +884,10 @@ static void graphics_upload_uniforms(struct Gfx_Material const * material, uint3
 		for (uint32_t override_i = 0; override_i < overrides_count; override_i++) {
 			struct Gfx_Material_Override const * override = overrides + override_i;
 			if (override->id == field->id) {
-				data = &override->as;
+				if (field->array_size == 1) {
+					data = &override->as;
+				}
+				else { logger_to_console("not implemented"); DEBUG_BREAK(); }
 				break;
 			}
 		}
@@ -984,15 +987,15 @@ static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
 	if (mask == TEXTURE_TYPE_NONE) { return; }
 
 	GLbitfield clear_bitfield = 0;
-	if (mask & TEXTURE_TYPE_COLOR) { clear_bitfield |= GL_COLOR_BUFFER_BIT; }
-	if (mask & TEXTURE_TYPE_DEPTH) { clear_bitfield |= GL_DEPTH_BUFFER_BIT; }
+	if (mask & TEXTURE_TYPE_COLOR)   { clear_bitfield |= GL_COLOR_BUFFER_BIT; }
+	if (mask & TEXTURE_TYPE_DEPTH)   { clear_bitfield |= GL_DEPTH_BUFFER_BIT; }
 	if (mask & TEXTURE_TYPE_STENCIL) { clear_bitfield |= GL_STENCIL_BUFFER_BIT; }
 
 	glClearColor(
 		((rgba >> 24) & 0xff) / 255.0f,
 		((rgba >> 16) & 0xff) / 255.0f,
-		((rgba >> 8) & 0xff) / 255.0f,
-		((rgba >> 0) & 0xff) / 255.0f
+		((rgba >>  8) & 0xff) / 255.0f,
+		((rgba >>  0) & 0xff) / 255.0f
 	);
 
 	glClear(clear_bitfield);
