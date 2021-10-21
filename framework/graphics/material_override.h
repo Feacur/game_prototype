@@ -1,7 +1,7 @@
 #if !defined(GAME_GRAPHICS_MATERIAL_OVERRIDE)
 #define GAME_GRAPHICS_MATERIAL_OVERRIDE
 
-#include "framework/vector_types.h"
+#include "framework/containers/array_byte.h"
 
 struct Gfx_Material_Override_Entry {
 	struct {
@@ -15,5 +15,7 @@ struct Gfx_Material_Override {
 	struct Array_Byte const * buffer;
 	uint32_t offset, count;
 };
+
+void const * gfx_material_override_find(struct Gfx_Material_Override const * override, uint32_t id, uint32_t size);
 
 #endif

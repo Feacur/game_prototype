@@ -9,6 +9,7 @@ framework/parsing.c
 
 framework/graphics/types.c
 framework/graphics/material.c
+framework/graphics/material_override.c
 framework/graphics/font_image.c
 
 framework/containers/internal.c
