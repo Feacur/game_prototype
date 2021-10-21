@@ -29,6 +29,7 @@ void state_init(void) {
 			.batcher = batcher_2d_init(),
 		};
 		asset_system_init(&state.asset_system);
+		array_byte_init(&state.buffer);
 		array_any_init(&state.gpu_commands, sizeof(struct GPU_Command));
 		array_any_init(&state.targets, sizeof(struct Ref));
 		array_any_init(&state.materials, sizeof(struct Gfx_Material));
@@ -92,6 +93,7 @@ void state_free(void) {
 		gfx_material_free(array_any_at(&state.materials, i));
 	}
 
+	array_byte_free(&state.buffer);
 	array_any_free(&state.gpu_commands);
 	array_any_free(&state.targets);
 	array_any_free(&state.materials);

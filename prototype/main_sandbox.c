@@ -208,6 +208,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 	if (screen_size_y == 0) { return; }
 
 	batcher_2d_clear(state.batcher);
+	array_byte_clear(&state.buffer);
 	array_any_clear(&state.gpu_commands);
 
 	// @todo: override material params per shader or material where possible
@@ -285,23 +286,31 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_MESH: {
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
+
+					uint32_t const override_offset = (uint32_t)state.buffer.count;
+
+					array_byte_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
+						.header.id = uniforms.camera,
+						.header.size = sizeof(mat4_camera),
+					});
+					array_byte_push_many(&state.buffer, sizeof(mat4_camera), (void const *)&mat4_camera);
+					array_byte_align(&state.buffer);
+
+					array_byte_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
+						.header.id = uniforms.transform,
+						.header.size = sizeof(mat4_entity),
+					});
+					array_byte_push_many(&state.buffer, sizeof(mat4_entity), (void const *)&mat4_entity);
+					array_byte_align(&state.buffer);
+
 					array_any_push(&state.gpu_commands, &(struct GPU_Command){
 						.type = GPU_COMMAND_TYPE_DRAW,
 						.as.draw = {
 							.material = material,
 							.gpu_mesh_ref = mesh->gpu_mesh_ref,
-							.overrides_count = 2,
-							.overrides = {
-								[0] = {
-									.id = uniforms.camera,
-									.length = sizeof(mat4_camera) / sizeof(float),
-									.as.mat4 = mat4_camera,
-								},
-								[1] = {
-									.id = uniforms.transform,
-									.length = sizeof(mat4_entity) / sizeof(float),
-									.as.mat4 = mat4_entity,
-								},
+							.override = {
+								.buffer = &state.buffer,
+								.offset = override_offset, .count = 2,
 							}
 						},
 					});

@@ -3,14 +3,17 @@
 
 #include "framework/vector_types.h"
 
-// @todo: make it flexible and able to contain multiple uniforms
-#define GFX_MATERIAL_OVERRIDES_LIMIT 2
+struct Gfx_Material_Override_Entry {
+	struct {
+		uint32_t id;
+		uint32_t size;
+	} header;
+	uint8_t payload[FLEXIBLE_ARRAY];
+};
+
 struct Gfx_Material_Override {
-	uint32_t id;
-	uint32_t length;
-	union {
-		struct mat4 mat4;
-	} as;
+	struct Array_Byte const * buffer;
+	uint32_t offset, count;
 };
 
 #endif

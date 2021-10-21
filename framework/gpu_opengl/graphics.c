@@ -867,29 +867,26 @@ static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_progra
 }
 
 // struct Material_Override;
-static void graphics_upload_uniforms(struct Gfx_Material const * material, uint32_t overrides_count, struct Gfx_Material_Override const * overrides) {
+static void graphics_upload_uniforms(struct Gfx_Material const * material, struct Gfx_Material_Override const * override) {
 	struct Gpu_Program const * gpu_program = ref_table_get(&graphics_state.programs, material->gpu_program_ref);
 	uint32_t const uniforms_count = gpu_program->uniforms_count;
-
-	if (overrides_count > GFX_MATERIAL_OVERRIDES_LIMIT) {
-		logger_to_console("too many overrides"); DEBUG_BREAK();
-		overrides_count = GFX_MATERIAL_OVERRIDES_LIMIT;
-	}
 
 	uint32_t unit_offset = 0, u32_offset = 0, s32_offset = 0, float_offset = 0;
 	for (uint32_t i = 0; i < uniforms_count; i++) {
 		struct Gpu_Program_Field const * field = gpu_program->uniforms + i;
 
 		void const * data = NULL;
-		for (uint32_t override_i = 0; override_i < overrides_count; override_i++) {
-			struct Gfx_Material_Override const * override = overrides + override_i;
-			if (override->id == field->id) {
-				if (field->array_size == 1) {
-					data = &override->as;
+		for (uint32_t override_i = 0, offset = override->offset; override_i < override->count; override_i++) {
+			struct Gfx_Material_Override_Entry const * oentry = (void *)(override->buffer->data + offset);
+			if (oentry->header.id == field->id) {
+				if (oentry->header.size == data_type_get_size(field->type) * field->array_size) {
+					data = (void const *)oentry->payload;
 				}
-				else { logger_to_console("not implemented"); DEBUG_BREAK(); }
+				else { logger_to_console("uniform size mismatch\n"); DEBUG_BREAK(); }
 				break;
 			}
+			offset += sizeof(oentry->header) + oentry->header.size;
+			offset = align_u32(offset);
 		}
 
 		enum Data_Type const element_type   = data_type_get_element_type(field->type);
@@ -1058,7 +1055,7 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 	graphics_set_depth_mode(&command->material->depth_mode);
 
 	graphics_select_program(command->material->gpu_program_ref);
-	graphics_upload_uniforms(command->material, command->overrides_count, command->overrides);
+	graphics_upload_uniforms(command->material, &command->override);
 
 	graphics_select_mesh(command->gpu_mesh_ref);
 

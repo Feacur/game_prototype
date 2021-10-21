@@ -50,6 +50,9 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 
 #define SIZE_OF_MEMBER(type, name) sizeof(((type *)0)->name)
 
+uint32_t align_u32(uint32_t value);
+uint64_t align_u64(uint64_t value);
+
 // ----- ----- ----- ----- -----
 //     flexible array
 // ----- ----- ----- ----- -----

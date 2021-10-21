@@ -39,8 +39,7 @@ struct GPU_Command_Draw {
 	struct Gfx_Material const * material;
 	struct Ref gpu_mesh_ref;
 	uint32_t offset, length;
-	uint32_t overrides_count;
-	struct Gfx_Material_Override overrides[GFX_MATERIAL_OVERRIDES_LIMIT];
+	struct Gfx_Material_Override override;
 };
 
 struct GPU_Command {

@@ -48,6 +48,12 @@ void array_byte_push_many(struct Array_Byte * array, uint64_t count, uint8_t con
 	array->count += count;
 }
 
+void array_byte_align(struct Array_Byte * array) {
+	uint64_t const target_count = align_u64(array->count);
+	array_byte_ensure_capacity(array, target_count);
+	array->count = target_count;
+}
+
 void array_byte_set_many(struct Array_Byte * array, uint64_t index, uint64_t count, uint8_t const * value) {
 	if (index + count > array->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
 	common_memcpy(

@@ -17,6 +17,8 @@ void array_byte_resize(struct Array_Byte * array, uint64_t target_capacity);
 void array_byte_push(struct Array_Byte * array, uint8_t value);
 void array_byte_push_many(struct Array_Byte * array, uint64_t count, uint8_t const * value);
 
+void array_byte_align(struct Array_Byte * array);
+
 void array_byte_set_many(struct Array_Byte * array, uint64_t index, uint64_t count, uint8_t const * value);
 
 uint8_t array_byte_pop(struct Array_Byte * array);

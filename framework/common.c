@@ -35,3 +35,17 @@ char const * common_strstr(char const * buffer, char const * value) {
 int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size) {
 	return strncmp(buffer_1, buffer_2, size);
 }
+
+// ----- ----- ----- ----- -----
+//     utilities
+// ----- ----- ----- ----- -----
+
+uint32_t align_u32(uint32_t value) {
+	uint32_t const alignment = 8 - 1;
+	return ((value | alignment) & ~alignment);
+}
+
+uint64_t align_u64(uint64_t value) {
+	uint64_t const alignment = 8 - 1;
+	return ((value | alignment) & ~alignment);
+}
