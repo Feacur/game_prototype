@@ -1,6 +1,6 @@
 #include "framework/internal/input_to_system.h"
 #include "framework/internal/memory_to_system.h"
-#include "framework/containers/array_byte.h"
+#include "framework/containers/buffer.h"
 #include "framework/memory.h"
 #include "framework/unicode.h"
 #include "framework/input_keys.h"
@@ -184,9 +184,9 @@ static void system_set_process_dpi_awareness(void) {
 // 	uint32_t length_utf16 = 0;
 // 	while (buffer_utf16[length_utf16] != 0) { length_utf16++; }
 // 	
-// 	struct Array_Byte buffer_utf8;
-// 	array_byte_init(&buffer_utf8);
-// 	array_byte_resize(&buffer_utf8, length_utf16 * 4);
+// 	struct Buffer buffer_utf8;
+// 	buffer_init(&buffer_utf8);
+// 	buffer_resize(&buffer_utf8, length_utf16 * 4);
 // 
 // 	uint32_t utf16_high_surrogate = 0;
 // 	for (uint16_t const * ptr = buffer_utf16; *ptr != 0; ptr++) {
@@ -207,29 +207,29 @@ static void system_set_process_dpi_awareness(void) {
 // 
 // 		// UTF-32 -> UTF-8
 // 		if (value <= 0x0000007F) {
-// 			array_byte_push(&buffer_utf8, (uint8_t)value);
+// 			buffer_push(&buffer_utf8, (uint8_t)value);
 // 		}
 // 		else  if (0x00000080 <= value && value <= 0x000007FF) {
-// 			array_byte_push(&buffer_utf8, (uint8_t)((value >> 8) & 0x1f) | 0xc0);
-// 			array_byte_push(&buffer_utf8, (uint8_t)(value        & 0x3f) | 0x80);
+// 			buffer_push(&buffer_utf8, (uint8_t)((value >> 8) & 0x1f) | 0xc0);
+// 			buffer_push(&buffer_utf8, (uint8_t)(value        & 0x3f) | 0x80);
 // 		}
 // 		else if (0x00000800 <= value && value <= 0x0000FFFF) {
-// 			array_byte_push(&buffer_utf8, (uint8_t)((value >> 16) & 0x0f) | 0xe0);
-// 			array_byte_push(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
-// 			array_byte_push(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
+// 			buffer_push(&buffer_utf8, (uint8_t)((value >> 16) & 0x0f) | 0xe0);
+// 			buffer_push(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
+// 			buffer_push(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
 // 		}
 // 		else if (0x00010000 <= value && value <= 0x0010FFFF) {
-// 			array_byte_push(&buffer_utf8, (uint8_t)((value >> 24) & 0x07) | 0xf0);
-// 			array_byte_push(&buffer_utf8, (uint8_t)((value >> 16) & 0x3f) | 0x80);
-// 			array_byte_push(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
-// 			array_byte_push(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
+// 			buffer_push(&buffer_utf8, (uint8_t)((value >> 24) & 0x07) | 0xf0);
+// 			buffer_push(&buffer_utf8, (uint8_t)((value >> 16) & 0x3f) | 0x80);
+// 			buffer_push(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
+// 			buffer_push(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
 // 		}
 // 		// else { logger_console("UTF-32 sequence is malformed\n"); DEBUG_BREAK(); }
 // 	}
 // 
 // 	buffer_utf8.data[buffer_utf8.count] = '\0';
-// 	array_byte_resize(&buffer_utf8, buffer_utf8.count + 1);
-// 	array_byte_free(&buffer_utf8);
+// 	buffer_resize(&buffer_utf8, buffer_utf8.count + 1);
+// 	buffer_free(&buffer_utf8);
 // 
 // 	CoTaskMemFree(buffer_utf16);
 // }

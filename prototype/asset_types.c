@@ -1,7 +1,7 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
 #include "framework/platform_file.h"
-#include "framework/containers/array_byte.h"
+#include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
 #include "framework/graphics/gpu_objects.h"
 
@@ -20,13 +20,13 @@
 void asset_shader_init(void * instance, struct CString name) {
 	struct Asset_Shader * asset = instance;
 
-	struct Array_Byte buffer;
+	struct Buffer buffer;
 	bool const read_success = platform_file_read_entire(name, &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); return; }
 	// @todo: return error shader?
 
 	struct Ref const gpu_ref = gpu_program_init(&buffer);
-	array_byte_free(&buffer);
+	buffer_free(&buffer);
 
 	asset->gpu_ref = gpu_ref;
 }
@@ -107,7 +107,7 @@ void asset_font_free(void * instance) {
 void asset_bytes_init(void * instance, struct CString name) {
 	struct Asset_Bytes * asset = instance;
 
-	struct Array_Byte buffer;
+	struct Buffer buffer;
 	bool const read_success = platform_file_read_entire(name, &buffer);
 	if (!read_success) { DEBUG_BREAK(); }
 
@@ -138,13 +138,13 @@ void asset_json_type_free(void) {
 void asset_json_init(void * instance, struct CString name) {
 	struct Asset_JSON * asset = instance;
 
-	struct Array_Byte buffer;
+	struct Buffer buffer;
 	bool const read_success = platform_file_read_entire(name, &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
 
 	json_init(&asset->value, &asset_json_strings, (char const *)buffer.data);
 
-	array_byte_free(&buffer);
+	buffer_free(&buffer);
 }
 
 void asset_json_free(void * instance) {

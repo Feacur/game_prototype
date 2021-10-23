@@ -13,8 +13,8 @@ framework/graphics/material_override.c
 framework/graphics/font_image.c
 
 framework/containers/internal.c
+framework/containers/buffer.c
 framework/containers/array_any.c
-framework/containers/array_byte.c
 framework/containers/array_float.c
 framework/containers/array_s32.c
 framework/containers/array_u32.c

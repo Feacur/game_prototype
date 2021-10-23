@@ -1,6 +1,6 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
-#include "framework/containers/array_byte.h"
+#include "framework/containers/buffer.h"
 
 #include <Windows.h>
 
@@ -21,8 +21,8 @@ struct File {
 	char * path;
 };
 
-bool platform_file_read_entire(struct CString path, struct Array_Byte * buffer) {
-	array_byte_init(buffer);
+bool platform_file_read_entire(struct CString path, struct Buffer * buffer) {
+	buffer_init(buffer);
 
 	struct File * file = platform_file_init(path, FILE_MODE_READ);
 	if (file == NULL) { return false; }
@@ -34,14 +34,14 @@ bool platform_file_read_entire(struct CString path, struct Array_Byte * buffer) 
 	}
 
 	uint64_t const padding = 1;
-	array_byte_resize(buffer, size + padding);
+	buffer_resize(buffer, size + padding);
 	buffer->count = platform_file_read(file, buffer->data, size);
 	if (padding > 0) { buffer->data[buffer->count] = '\0'; }
 
 	if (buffer->count != size) {
 		// failure: `buffer->count == 0` and `size > 0`
 		logger_to_console("read failure: %zu / %zu bytes; \"%.*s\"\n", buffer->count, size, path.length, path.data);
-		array_byte_free(buffer);
+		buffer_free(buffer);
 	}
 
 	finalize: // `goto` is this way ^^^^^;

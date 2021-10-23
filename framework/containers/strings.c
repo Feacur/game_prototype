@@ -4,13 +4,13 @@
 void strings_init(struct Strings * strings) {
 	array_u32_init(&strings->offsets);
 	array_u32_init(&strings->lengths);
-	array_byte_init(&strings->buffer);
+	buffer_init(&strings->buffer);
 }
 
 void strings_free(struct Strings * strings) {
 	array_u32_free(&strings->offsets);
 	array_u32_free(&strings->lengths);
-	array_byte_free(&strings->buffer);
+	buffer_free(&strings->buffer);
 }
 
 uint32_t strings_find(struct Strings const * strings, struct CString value) {
@@ -35,8 +35,8 @@ uint32_t strings_add(struct Strings * strings, struct CString value) {
 
 	array_u32_push(&strings->offsets, offset);
 	array_u32_push(&strings->lengths, value.length);
-	array_byte_push_many(&strings->buffer, value.length, (uint8_t const *)value.data);
-	array_byte_push(&strings->buffer, '\0');
+	buffer_push_many(&strings->buffer, value.length, (uint8_t const *)value.data);
+	buffer_push(&strings->buffer, '\0');
 
 	return strings->lengths.count - 1;
 }

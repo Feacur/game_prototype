@@ -1,6 +1,6 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
-#include "framework/containers/array_byte.h"
+#include "framework/containers/buffer.h"
 
 #include "framework/platform_file.h"
 
@@ -28,7 +28,7 @@
 #include "image.h"
 
 void image_init(struct Image * image, struct CString path) {
-	struct Array_Byte file;
+	struct Buffer file;
 	bool const read_success = platform_file_read_entire(path, &file);
 	if (!read_success || file.count == 0) { DEBUG_BREAK(); return; }
 
@@ -38,7 +38,7 @@ void image_init(struct Image * image, struct CString path) {
 	int size_x, size_y, channels;
 	uint8_t * image_bytes = (uint8_t *)stbi_load_from_memory(file.data, (int)file.count, &size_x, &size_y, &channels, 0);
 
-	array_byte_free(&file);
+	buffer_free(&file);
 
 	*image = (struct Image){
 		.capacity = (uint32_t)(size_x * size_y),

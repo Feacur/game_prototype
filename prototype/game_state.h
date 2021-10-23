@@ -9,7 +9,7 @@ struct JSON;
 
 struct Game_State {
 	struct Batcher_2D * batcher;
-	struct Array_Byte buffer;
+	struct Buffer buffer;
 	struct Array_Any gpu_commands;
 
 	struct Asset_System asset_system;

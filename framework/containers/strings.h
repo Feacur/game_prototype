@@ -1,14 +1,14 @@
 #if !defined(GAME_CONTAINERS_STRINGS)
 #define GAME_CONTAINERS_STRINGS
 
-#include "framework/containers/array_byte.h"
+#include "framework/containers/buffer.h"
 #include "framework/containers/array_u32.h"
 
 // @note: strings interning structure
 struct Strings {
 	struct Array_U32 offsets;
 	struct Array_U32 lengths;
-	struct Array_Byte buffer;
+	struct Buffer buffer;
 };
 
 void strings_init(struct Strings * strings);

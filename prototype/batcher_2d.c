@@ -48,7 +48,7 @@ struct Batcher_2D_Vertex {
 
 struct Batcher_2D {
 	struct Batcher_2D_Batch batch;
-	struct Array_Byte strings;
+	struct Buffer strings;
 	struct Array_Any batches;
 	struct Array_Any texts;
 	//
@@ -57,7 +57,7 @@ struct Batcher_2D {
 	struct Array_Any buffer_vertices;
 	struct Array_U32 buffer_indices;
 	//
-	struct Array_Byte      mesh_buffers[BATCHER_2D_BUFFERS_COUNT];
+	struct Buffer      mesh_buffers[BATCHER_2D_BUFFERS_COUNT];
 	struct Mesh_Parameters mesh_parameters[BATCHER_2D_BUFFERS_COUNT];
 	struct Ref gpu_mesh_ref;
 };
@@ -91,14 +91,14 @@ struct Batcher_2D * batcher_2d_init(void) {
 		},
 	};
 
-	array_byte_init(&batcher->strings);
+	buffer_init(&batcher->strings);
 	array_any_init(&batcher->batches,         sizeof(struct Batcher_2D_Batch));
 	array_any_init(&batcher->texts,           sizeof(struct Batcher_2D_Text));
 	array_any_init(&batcher->buffer_vertices, sizeof(struct Batcher_2D_Vertex));
 	array_u32_init(&batcher->buffer_indices);
 
 	for (uint32_t i = 0; i < BATCHER_2D_BUFFERS_COUNT; i++) {
-		array_byte_init(batcher->mesh_buffers + i);
+		buffer_init(batcher->mesh_buffers + i);
 	}
 
 	//
@@ -115,7 +115,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 void batcher_2d_free(struct Batcher_2D * batcher) {
 	gpu_mesh_free(batcher->gpu_mesh_ref);
 	//
-	array_byte_free(&batcher->strings);
+	buffer_free(&batcher->strings);
 	array_any_free(&batcher->batches);
 	array_any_free(&batcher->texts);
 	array_any_free(&batcher->buffer_vertices);
@@ -219,7 +219,7 @@ void batcher_2d_add_text(
 	//
 
 	uint32_t const strings_offset = (uint32_t)batcher->strings.count;
-	array_byte_push_many(&batcher->strings, length + 1, data);
+	buffer_push_many(&batcher->strings, length + 1, data);
 
 	array_any_push(&batcher->texts, &(struct Batcher_2D_Text) {
 		.length = length,
@@ -359,7 +359,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 void batcher_2d_clear(struct Batcher_2D * batcher) {
 	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
-	array_byte_clear(&batcher->strings);
+	buffer_clear(&batcher->strings);
 	array_any_clear(&batcher->batches);
 	array_any_clear(&batcher->texts);
 	array_any_clear(&batcher->buffer_vertices);
@@ -416,11 +416,11 @@ static void batcher_2d_bake_pass(struct Batcher_2D * batcher) {
 }
 
 static void batcher_2d_bake_mesh(struct Batcher_2D * batcher) {
-	batcher->mesh_buffers[0] = (struct Array_Byte){
+	batcher->mesh_buffers[0] = (struct Buffer){
 		.data = batcher->buffer_vertices.data,
 		.count = sizeof(struct Batcher_2D_Vertex) * batcher->buffer_vertices.count,
 	};
-	batcher->mesh_buffers[1] = (struct Array_Byte){
+	batcher->mesh_buffers[1] = (struct Buffer){
 		.data = (uint8_t *)batcher->buffer_indices.data,
 		.count = sizeof(*batcher->buffer_indices.data) * batcher->buffer_indices.count,
 	};

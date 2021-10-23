@@ -1,7 +1,7 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
 #include "framework/maths.h"
-#include "framework/containers/array_byte.h"
+#include "framework/containers/buffer.h"
 
 #include "framework/platform_file.h"
 
@@ -33,7 +33,7 @@
 
 // @idea: cache here basic metrics, without scaling?
 struct Font {
-	struct Array_Byte file;
+	struct Buffer file;
 	stbtt_fontinfo font;
 	int ascent, descent, line_gap;
 };
@@ -56,7 +56,7 @@ struct Font * font_init(struct CString path) {
 }
 
 void font_free(struct Font * font) {
-	array_byte_free(&font->file);
+	buffer_free(&font->file);
 	common_memset(font, 0, sizeof(*font));
 	MEMORY_FREE(font, font);
 }

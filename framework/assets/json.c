@@ -1,7 +1,7 @@
 #include "framework/logger.h"
 #include "framework/parsing.h"
 
-#include "framework/containers/array_byte.h"
+#include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
 
 #include "json_scanner.h"

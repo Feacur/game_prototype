@@ -208,7 +208,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 	if (screen_size_y == 0) { return; }
 
 	batcher_2d_clear(state.batcher);
-	array_byte_clear(&state.buffer);
+	buffer_clear(&state.buffer);
 	array_any_clear(&state.gpu_commands);
 
 	// @todo: override material params per shader or material where possible
@@ -289,19 +289,19 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 
 					uint32_t const override_offset = (uint32_t)state.buffer.count;
 
-					array_byte_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
+					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
 						.header.id = uniforms.camera,
 						.header.size = sizeof(mat4_camera),
 					});
-					array_byte_push_many(&state.buffer, sizeof(mat4_camera), (void const *)&mat4_camera);
-					array_byte_align(&state.buffer);
+					buffer_push_many(&state.buffer, sizeof(mat4_camera), (void const *)&mat4_camera);
+					buffer_align(&state.buffer);
 
-					array_byte_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
+					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
 						.header.id = uniforms.transform,
 						.header.size = sizeof(mat4_entity),
 					});
-					array_byte_push_many(&state.buffer, sizeof(mat4_entity), (void const *)&mat4_entity);
-					array_byte_align(&state.buffer);
+					buffer_push_many(&state.buffer, sizeof(mat4_entity), (void const *)&mat4_entity);
+					buffer_align(&state.buffer);
 
 					array_any_push(&state.gpu_commands, &(struct GPU_Command){
 						.type = GPU_COMMAND_TYPE_DRAW,
@@ -346,7 +346,7 @@ static void game_render(uint64_t elapsed, uint64_t per_second) {
 //
 
 static void main_get_config(struct Application_Config * config) {
-	struct Array_Byte buffer;
+	struct Buffer buffer;
 	bool const read_success = platform_file_read_entire(S_("assets/sandbox/application.json"), &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
 
@@ -355,7 +355,7 @@ static void main_get_config(struct Application_Config * config) {
 
 	struct JSON settings;
 	json_init(&settings, &strings, (char const *)buffer.data);
-	array_byte_free(&buffer);
+	buffer_free(&buffer);
 
 	*config = (struct Application_Config){
 		.size_x = (uint32_t)json_get_number(&settings, S_("size_x"), 960),

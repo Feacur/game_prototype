@@ -1,6 +1,6 @@
 #include "framework/maths.h"
 
-#include "framework/containers/array_byte.h"
+#include "framework/containers/buffer.h"
 #include "framework/containers/hash_table_u32.h"
 #include "framework/containers/hash_table_u64.h"
 
@@ -282,8 +282,8 @@ void font_image_render(struct Font_Image * font_image) {
 	common_memset(font_image->buffer.data, 0, sizeof(*font_image->buffer.data) * font_image->buffer.size_x * font_image->buffer.size_y);
 	{
 		// @todo: arena/stack allocator
-		struct Array_Byte scratch_buffer;
-		array_byte_init(&scratch_buffer);
+		struct Buffer scratch_buffer;
+		buffer_init(&scratch_buffer);
 
 		uint32_t line_height = 0;
 		uint32_t offset_x = padding, offset_y = padding;
@@ -315,7 +315,7 @@ void font_image_render(struct Font_Image * font_image) {
 
 			//
 			if (scratch_buffer.capacity < glyph_size_x * glyph_size_y) {
-				array_byte_resize(&scratch_buffer, glyph_size_x * glyph_size_y);
+				buffer_resize(&scratch_buffer, glyph_size_x * glyph_size_y);
 			}
 
 			font_fill_buffer(
@@ -336,7 +336,7 @@ void font_image_render(struct Font_Image * font_image) {
 			offset_x += glyph_size_x + padding;
 		}
 
-		array_byte_free(&scratch_buffer);
+		buffer_free(&scratch_buffer);
 	}
 
 	MEMORY_FREE(font_image, symbols_to_render);

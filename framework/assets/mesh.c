@@ -23,13 +23,13 @@ static void mesh_fill(
 );
 
 void mesh_init(struct Mesh * mesh, struct CString path) {
-	struct Array_Byte file;
+	struct Buffer file;
 	bool const read_success = platform_file_read_entire(path, &file);
 	if (!read_success || file.count == 0) { DEBUG_BREAK(); return; }
 
 	struct WFObj wfobj;
 	wfobj_init(&wfobj, (char const *)file.data);
-	array_byte_free(&file);
+	buffer_free(&file);
 
 	//
 	struct Array_Float vertices;
@@ -45,7 +45,7 @@ void mesh_init(struct Mesh * mesh, struct CString path) {
 
 void mesh_free(struct Mesh * mesh) {
 	for (uint32_t i = 0; i < mesh->capacity; i++) {
-		array_byte_free(mesh->buffers + i);
+		buffer_free(mesh->buffers + i);
 	}
 	MEMORY_FREE(mesh, mesh->buffers);
 	MEMORY_FREE(mesh, mesh->parameters);
@@ -107,15 +107,15 @@ static void mesh_fill(
 	uint32_t const count = 2;
 	mesh->capacity = count;
 	mesh->count = count;
-	mesh->buffers    = MEMORY_ALLOCATE_ARRAY(mesh, struct Array_Byte, count);
+	mesh->buffers    = MEMORY_ALLOCATE_ARRAY(mesh, struct Buffer, count);
 	mesh->parameters = MEMORY_ALLOCATE_ARRAY(mesh, struct Mesh_Parameters, count);
 
-	mesh->buffers[0] = (struct Array_Byte){
+	mesh->buffers[0] = (struct Buffer){
 		.data = (uint8_t *)vertices->data,
 		.count = sizeof(float) * vertices->count,
 		.capacity = sizeof(float) * vertices->capacity,
 	};
-	mesh->buffers[1] = (struct Array_Byte){
+	mesh->buffers[1] = (struct Buffer){
 		.data = (uint8_t *)indices->data,
 		.count = sizeof(uint32_t) * indices->count,
 		.capacity = sizeof(uint32_t) * indices->capacity,

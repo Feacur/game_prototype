@@ -2,7 +2,7 @@
 #include "framework/logger.h"
 
 #include "framework/containers/strings.h"
-#include "framework/containers/array_byte.h"
+#include "framework/containers/buffer.h"
 #include "framework/containers/ref_table.h"
 
 #include "framework/assets/mesh.h"
@@ -111,7 +111,7 @@ static struct Graphics_State {
 
 static void verify_shader(GLuint id, GLenum parameter);
 static void verify_program(GLuint id, GLenum parameter);
-struct Ref gpu_program_init(struct Array_Byte const * asset) {
+struct Ref gpu_program_init(struct Buffer const * asset) {
 #define ADD_SECTION_HEADER(shader_type, version) \
 	do { \
 		if (common_strstr((char const *)asset->data, #shader_type)) {\
@@ -676,7 +676,7 @@ void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 		if (!(parameters->flags & MESH_FLAG_WRITE)) { continue; }
 		gpu_mesh->counts[i] = 0;
 
-		struct Array_Byte const * buffer = asset->buffers + i;
+		struct Buffer const * buffer = asset->buffers + i;
 		if (buffer->count == 0) { continue; }
 		if (buffer->data == NULL) { continue; }
 
@@ -1214,19 +1214,19 @@ void graphics_to_glibrary_free(void) {
 //
 
 static char * allocate_extensions_string(void) {
-	struct Array_Byte string;
-	array_byte_init(&string);
+	struct Buffer string;
+	buffer_init(&string);
 
 	GLint extensions_count = 0;
 	glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);
 
-	array_byte_resize(&string, (uint32_t)(extensions_count * 26));
+	buffer_resize(&string, (uint32_t)(extensions_count * 26));
 	for(GLint i = 0; i < extensions_count; i++) {
 		GLubyte const * value = glGetStringi(GL_EXTENSIONS, (GLuint)i);
-		array_byte_push_many(&string, (uint32_t)strlen((char const *)value), value);
-		array_byte_push(&string, ' ');
+		buffer_push_many(&string, (uint32_t)strlen((char const *)value), value);
+		buffer_push(&string, ' ');
 	}
-	array_byte_push(&string, '\0');
+	buffer_push(&string, '\0');
 
 	return (char *)string.data;
 }

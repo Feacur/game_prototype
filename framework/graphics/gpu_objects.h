@@ -13,7 +13,7 @@
 // |0,0         |
 // +------------+
 
-struct Array_Byte;
+struct Buffer;
 struct Mesh;
 struct Image;
 
@@ -22,7 +22,7 @@ struct Image;
 // ----- ----- ----- ----- -----
 
 struct Gpu_Program_Field;
-struct Ref gpu_program_init(struct Array_Byte const * asset);
+struct Ref gpu_program_init(struct Buffer const * asset);
 void gpu_program_free(struct Ref gpu_program_ref);
 void gpu_program_get_uniforms(struct Ref gpu_program_ref, uint32_t * count, struct Gpu_Program_Field const ** values);
 
