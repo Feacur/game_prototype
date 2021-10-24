@@ -39,4 +39,7 @@
 	"theme": "Adaptive.sublime-theme",
 	"translate_tabs_to_spaces": false,
 	"scroll_past_end": true,
+	"word_wrap": false,
+	"word_width": 0,
 }
+

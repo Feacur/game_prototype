@@ -31,6 +31,13 @@
 	{ "keys": ["ctrl+alt+shift+]"], "command": "new_pane" },
 	{ "keys": ["ctrl+alt+shift+left"], "command": "move_to_neighboring_group", "args": {"forward": false} },
 	{ "keys": ["ctrl+alt+shift+right"], "command": "move_to_neighboring_group" },
+	{ "keys": ["alt+c"], "command": "toggle_case_sensitive" },
+	{ "keys": ["alt+r"], "command": "toggle_regex" },
+	{ "keys": ["alt+w"], "command": "toggle_whole_word" },
+	{ "keys": ["alt+a"], "command": "toggle_preserve_case" },
+	{ "keys": ["alt+z"], "command": "toggle_setting",
+		"args": { "setting": "word_wrap" }
+	},
 	// editor: utils
 	{ "keys": ["ctrl+f12"], "command": "goto_definition" },
 	{ "keys": ["ctrl+shift+f12"], "command": "goto_reference" },
