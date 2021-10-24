@@ -125,7 +125,7 @@ static void game_fixed_update(uint64_t elapsed, uint64_t per_second) {
 	(void)delta_time;
 }
 
-static void game_update(uint64_t elapsed, uint64_t per_second) {
+static void game_frame_update(uint64_t elapsed, uint64_t per_second) {
 	float const delta_time = (float)((double)elapsed / (double)per_second);
 
 	uint32_t screen_size_x, screen_size_y;
@@ -197,7 +197,7 @@ static void game_update(uint64_t elapsed, uint64_t per_second) {
 	}
 }
 
-static void game_render(uint64_t elapsed, uint64_t per_second) {
+static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 	// float const delta_time = (float)((double)elapsed / (double)per_second);
 	(void)elapsed; (void)per_second;
 
@@ -380,8 +380,8 @@ int main (int argc, char * argv[]) {
 		.init = game_init,
 		.free = game_free,
 		.fixed_update = game_fixed_update,
-		.update = game_update,
-		.render = game_render,
+		.frame_update = game_frame_update,
+		.draw_update  = game_draw_update,
 	});
 
 	return 0;

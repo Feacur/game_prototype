@@ -15,8 +15,8 @@ struct Application_Callbacks {
 	void (* init)(void);
 	void (* free)(void);
 	void (* fixed_update)(uint64_t elapsed, uint64_t per_second);
-	void (* update)(uint64_t elapsed, uint64_t per_second);
-	void (* render)(uint64_t elapsed, uint64_t per_second);
+	void (* frame_update)(uint64_t elapsed, uint64_t per_second);
+	void (* draw_update)(uint64_t elapsed, uint64_t per_second);
 };
 
 void application_run(struct Application_Config config, struct Application_Callbacks callbacks);

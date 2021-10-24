@@ -14,14 +14,14 @@ static struct Application {
 	struct Window * window;
 
 	struct {
-		uint64_t frame_start, per_second;
+		uint64_t per_second, frame_start;
 		uint64_t fixed_accumulator;
 	} ticks;
 } app; // @note: global state
 
-static uint64_t get_target_ticks(int32_t vsync) {
-	uint32_t const vsync_factor = (vsync > 0) ? (uint32_t)vsync : 1;
-	uint32_t refresh_rate = (vsync != 0) || (app.config.target_refresh_rate == 0)
+static uint64_t get_target_ticks(int32_t vsync_mode) {
+	uint32_t const vsync_factor = (vsync_mode > 0) ? (uint32_t)vsync_mode : 1;
+	uint32_t refresh_rate = (vsync_mode != 0) || (app.config.target_refresh_rate == 0)
 		? platform_window_get_refresh_rate(app.window, app.config.target_refresh_rate)
 		: app.config.target_refresh_rate;
 	return app.ticks.per_second * vsync_factor / refresh_rate;
@@ -30,12 +30,17 @@ static uint64_t get_target_ticks(int32_t vsync) {
 static void application_init(void) {
 	platform_system_init();
 
-	logger_to_console("> initialize:\n");
-	logger_to_console("  power .. %s\n", platform_system_is_powered() ? "on" : "off");
+	logger_to_console(
+		"\n"
+		"> system status:\n"
+		"  power .. %s\n"
+		"",
+		platform_system_is_powered() ? "on" : "off"
+	);
 
 	logger_to_console(
 		"\n"
-		"> settings:\n"
+		"> application settings:\n"
 		"  size ......... %u x %u\n"
 		"  vsync ........ %d\n"
 		"  target rate .. %u\n"
@@ -49,6 +54,7 @@ static void application_init(void) {
 		app.config.slow_frames_limit
 	);
 
+	// setup window
 	enum Window_Settings window_settings = WINDOW_SETTINGS_MINIMIZE;
 	if (app.config.flexible) { window_settings |= WINDOW_SETTINGS_FLEXIBLE; }
 
@@ -60,9 +66,11 @@ static void application_init(void) {
 
 	platform_window_set_vsync(app.window, app.config.vsync);
 
-	app.ticks.frame_start = platform_timer_get_ticks();
-	app.ticks.per_second = platform_timer_get_ticks_per_second();
+	// setup timer, rewind it one frame
+	app.ticks.per_second  = platform_timer_get_ticks_per_second();
+	app.ticks.frame_start = platform_timer_get_ticks() - get_target_ticks(platform_window_get_vsync(app.window));
 
+	//
 	if (app.callbacks.init != NULL) {
 		app.callbacks.init();
 	}
@@ -93,6 +101,7 @@ static bool application_update(void) {
 	if (!platform_window_exists(app.window)) { return false; }
 	platform_window_update(app.window);
 
+	// process application-side input
 	if (input_key(KC_ALT)) {
 		if (input_key_transition(KC_F4, true)) { return false; }
 		if (input_key_transition(KC_ENTER, true)) {
@@ -100,31 +109,25 @@ static bool application_update(void) {
 		}
 	}
 
-	// track frame time
-	int32_t const vsync = platform_window_get_vsync(app.window);
-	uint64_t const target_ticks = get_target_ticks(vsync);
-	uint64_t const fixed_ticks = app.ticks.per_second / app.config.fixed_refresh_rate;
+	// track frame time, limit in case of heavy stutters or debug steps
+	uint64_t const timer_ticks  = platform_timer_get_ticks();
+	int32_t  const vsync_mode   = platform_window_get_vsync(app.window);
+	uint64_t const target_ticks = get_target_ticks(vsync_mode);
+	uint64_t const fixed_ticks  = app.ticks.per_second / app.config.fixed_refresh_rate;
 
-	if (vsync == 0) {
-		uint64_t const frame_end_ticks = app.ticks.frame_start + target_ticks;
-		while (platform_timer_get_ticks() < frame_end_ticks) {
-			platform_system_sleep(0);
-		}
-	}
+	uint64_t frame_ticks = timer_ticks - app.ticks.frame_start;
+	app.ticks.frame_start = timer_ticks;
 
-	uint64_t frame_ticks = platform_timer_get_ticks() - app.ticks.frame_start;
-	app.ticks.frame_start = platform_timer_get_ticks();
-
-	// limit elapsed time in case of stutters or debug steps
 	if (app.config.slow_frames_limit > 0 && frame_ticks > target_ticks * app.config.slow_frames_limit) {
 		frame_ticks = target_ticks * app.config.slow_frames_limit;
 	}
 
-	// fixed update / update / render
-	if (app.callbacks.fixed_update != NULL) {
-		app.ticks.fixed_accumulator += frame_ticks;
-		while (app.ticks.fixed_accumulator > fixed_ticks) {
-			app.ticks.fixed_accumulator -= fixed_ticks;
+	app.ticks.fixed_accumulator += frame_ticks;
+
+	// fixed update / frame update / render
+	while (app.ticks.fixed_accumulator > fixed_ticks) {
+		app.ticks.fixed_accumulator -= fixed_ticks;
+		if (app.callbacks.fixed_update != NULL) {
 			app.callbacks.fixed_update(
 				fixed_ticks,
 				app.ticks.per_second
@@ -132,15 +135,15 @@ static bool application_update(void) {
 		}
 	}
 
-	if (app.callbacks.update != NULL) {
-		app.callbacks.update(
+	if (app.callbacks.frame_update != NULL) {
+		app.callbacks.frame_update(
 			frame_ticks,
 			app.ticks.per_second
 		);
 	}
 
-	if (app.callbacks.render != NULL) {
-		app.callbacks.render(
+	if (app.callbacks.draw_update != NULL) {
+		app.callbacks.draw_update(
 			frame_ticks,
 			app.ticks.per_second
 		);
@@ -148,6 +151,13 @@ static bool application_update(void) {
 
 	// swap buffers / display buffer / might vsync
 	platform_window_display(app.window);
+
+	if (vsync_mode == 0) {
+		uint64_t const frame_end_ticks = app.ticks.frame_start + target_ticks;
+		while (platform_timer_get_ticks() < frame_end_ticks) {
+			platform_system_sleep(0);
+		}
+	}
 
 	return true;
 }
