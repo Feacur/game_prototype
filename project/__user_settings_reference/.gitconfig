@@ -6,30 +6,32 @@
 
 # on Windows [during git submodules initialization] you might want to force https over ssh
 
+[gui]
+	encoding = utf-8
 [user]
 	name = name for commits
 	email = mail@for.commits
-[gui]
-	encoding = utf-8
-[pull]
-	ff = only
+[credential]
+	helper = manager
 [core]
 	autocrlf = true
 	editor = code --wait # VS Code as default editor
-# VS Code as default diff tool
+[pull]
+	ff = only
+# diff and merge options
 [diff]
-	tool = vscode
+	tool = vscode # VS Code as default diff tool
+[merge]
+	tool = vscode # VS Code as default merge tool
+	conflictstyle = diff3
+	commit = no
+	ff = no
+# diff and merge tools settings
 [difftool "vscode"]
 	cmd = code --wait --diff $LOCAL $REMOTE
-# VS Code as default merge tool
-[merge]
-	conflictstyle = diff3
-	tool = vscode
 [mergetool "vscode"]
 	cmd = code --wait $MERGED
-# credential
-[credential]
-	helper = manager
+# miscellaneous
 # [url "https://github.com/"] # force https over ssh
 # 	insteadOf = git@github.com:
 #
