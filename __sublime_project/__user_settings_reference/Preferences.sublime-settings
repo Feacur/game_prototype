@@ -21,6 +21,7 @@
 	"folder_exclude_patterns":
 	[
 	],
+	"font_face": "Consolas",
 	"font_size": 11,
 	"ignored_packages":
 	[

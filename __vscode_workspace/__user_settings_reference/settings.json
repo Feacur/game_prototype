@@ -11,6 +11,8 @@
 	"workbench.activityBar.visible": false,
 	"workbench.editor.showTabs": true,
 	// editor
+	"editor.fontFamily": "Consolas, 'Courier New', monospace",
+	"editor.fontSize": 14,
 	"editor.tabSize": 4,
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": false,
