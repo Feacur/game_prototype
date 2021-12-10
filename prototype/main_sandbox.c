@@ -31,9 +31,10 @@
 #include "asset_types.h"
 
 static struct Main_Uniforms {
-	uint32_t camera;
 	uint32_t color;
 	uint32_t texture;
+	uint32_t projection;
+	uint32_t inverse_camera;
 	uint32_t transform;
 } uniforms; // @note: global state
 
@@ -50,7 +51,8 @@ static void game_init(void) {
 
 	uniforms.color = graphics_add_uniform_id(S_("u_Color"));
 	uniforms.texture = graphics_add_uniform_id(S_("u_Texture"));
-	uniforms.camera = graphics_add_uniform_id(S_("u_Camera"));
+	uniforms.projection = graphics_add_uniform_id(S_("u_Projection"));
+	uniforms.inverse_camera = graphics_add_uniform_id(S_("u_InverseCamera"));
 	uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
 
 	//
@@ -227,10 +229,9 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
-		struct mat4 const mat4_camera = mat4_mul_mat(
-			camera_get_projection(camera, viewport_size_x, viewport_size_y),
-			mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation)
-		);
+		struct mat4 const mat4_projection = camera_get_projection(camera, viewport_size_x, viewport_size_y);
+		struct mat4 const mat4_inverse_camera = mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
+		struct mat4 const mat4_camera = mat4_mul_mat(mat4_projection, mat4_inverse_camera);
 
 		// process camera
 		array_any_push(&state.gpu_commands, &(struct GPU_Command){
@@ -288,14 +289,28 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
 
 					uint32_t const override_offset = (uint32_t)state.buffer.count;
+					uint32_t override_count = 0;
 
+					//
+					override_count++;
 					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = uniforms.camera,
-						.header.size = sizeof(mat4_camera),
+						.header.id = uniforms.projection,
+						.header.size = sizeof(mat4_projection),
 					});
-					buffer_push_many(&state.buffer, sizeof(mat4_camera), (void const *)&mat4_camera);
+					buffer_push_many(&state.buffer, sizeof(mat4_projection), (void const *)&mat4_projection);
 					buffer_align(&state.buffer);
 
+					//
+					override_count++;
+					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
+						.header.id = uniforms.inverse_camera,
+						.header.size = sizeof(mat4_inverse_camera),
+					});
+					buffer_push_many(&state.buffer, sizeof(mat4_inverse_camera), (void const *)&mat4_inverse_camera);
+					buffer_align(&state.buffer);
+
+					//
+					override_count++;
 					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
 						.header.id = uniforms.transform,
 						.header.size = sizeof(mat4_entity),
@@ -303,6 +318,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 					buffer_push_many(&state.buffer, sizeof(mat4_entity), (void const *)&mat4_entity);
 					buffer_align(&state.buffer);
 
+					//
 					array_any_push(&state.gpu_commands, &(struct GPU_Command){
 						.type = GPU_COMMAND_TYPE_DRAW,
 						.as.draw = {
@@ -310,7 +326,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 							.gpu_mesh_ref = mesh->gpu_mesh_ref,
 							.override = {
 								.buffer = &state.buffer,
-								.offset = override_offset, .count = 2,
+								.offset = override_offset, .count = override_count,
 							}
 						},
 					});
