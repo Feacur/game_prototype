@@ -873,6 +873,7 @@ static void graphics_upload_uniforms(struct Gfx_Material const * material, struc
 	uint32_t unit_offset = 0, u32_offset = 0, s32_offset = 0, float_offset = 0;
 	for (uint32_t i = 0; i < uniforms_count; i++) {
 		struct Gpu_Program_Field const * field = gpu_program->uniforms + i;
+		// struct CString const field_name = graphics_get_uniform_value(field->id); (void)field_name;
 
 		void const * data = gfx_material_override_find(override, field->id, data_type_get_size(field->type) * field->array_size);
 
