@@ -1033,10 +1033,6 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 		: mesh->counts[mesh->elements_index];
 	if (elements_count == 0) { return; }
 
-	size_t const elements_offset = (command->offset != 0)
-		? command->offset
-		: 0;
-
 	if (command->material->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
 	graphics_set_blend_mode(&command->material->blend_mode);
 	graphics_set_depth_mode(&command->material->depth_mode);
@@ -1047,11 +1043,13 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 	graphics_select_mesh(command->gpu_mesh_ref);
 
 	enum Data_Type const elements_type = mesh->parameters[mesh->elements_index].type;
+	size_t const elements_offset = command->offset * data_type_get_size(elements_type);
+
 	glDrawElements(
 		GL_TRIANGLES,
 		(GLsizei)elements_count,
 		gpu_data_type(elements_type),
-		(void const *)(elements_offset * data_type_get_size(elements_type))
+		(void const *)(size_t)elements_offset
 	);
 }
 
