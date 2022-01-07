@@ -112,6 +112,18 @@ uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator) {
 	return a * numerator + b * numerator / denominator;
 }
 
+uint32_t midpoint_u32(uint32_t v1, uint32_t v2) {
+	return (v1 < v2)
+		? v1 + (v2 - v1) / 2
+		: v2 + (v1 - v2) / 2;
+}
+
+uint64_t midpoint_u64(uint64_t v1, uint64_t v2) {
+	return (v1 < v2)
+		? v1 + (v2 - v1) / 2
+		: v2 + (v1 - v2) / 2;
+}
+
 uint32_t min_u32(uint32_t v1, uint32_t v2) { return (v1 < v2) ? v1 : v2; }
 uint32_t max_u32(uint32_t v1, uint32_t v2) { return (v1 > v2) ? v1 : v2; }
 uint32_t clamp_u32(uint32_t v, uint32_t low, uint32_t high) { return min_u32(max_u32(v, low), high); }

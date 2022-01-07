@@ -54,6 +54,9 @@ uint64_t round_up_to_PO2_u64(uint64_t value);
 uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator);
 uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator);
 
+uint32_t midpoint_u32(uint32_t v1, uint32_t v2);
+uint64_t midpoint_u64(uint64_t v1, uint64_t v2);
+
 uint32_t min_u32(uint32_t v1, uint32_t v2);
 uint32_t max_u32(uint32_t v1, uint32_t v2);
 uint32_t clamp_u32(uint32_t v, uint32_t low, uint32_t high);
