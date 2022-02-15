@@ -153,7 +153,7 @@ goto :eof
 	set /a millis = millis * 100 + "(1%cc% - 100)"
 	set /a millis = millis * 10
 
-	rem return: argunement `%~1`
+	rem return: argument `%~1`
 	set "%~1=%millis%"
 goto :eof
 
