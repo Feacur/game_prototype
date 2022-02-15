@@ -12,7 +12,7 @@ layout(location = ATTRIBUTE_TYPE_POSITION) in vec3 a_Position;
 layout(location = ATTRIBUTE_TYPE_TEXCOORD) in vec2 a_TexCoord;
 
 uniform mat4 u_Projection;
-uniform mat4 u_InverseCamera;
+uniform mat4 u_Camera;
 uniform mat4 u_Transform;
 
 out vec2 v_TexCoord;
@@ -20,7 +20,7 @@ out vec2 v_TexCoord;
 void main()
 {
 	v_TexCoord = a_TexCoord;
-	gl_Position = u_Projection * u_InverseCamera * u_Transform * vec4(a_Position, 1);
+	gl_Position = u_Projection * u_Camera * u_Transform * vec4(a_Position, 1);
 }
 #endif
 

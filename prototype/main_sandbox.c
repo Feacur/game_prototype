@@ -52,7 +52,7 @@ static void game_init(void) {
 	uniforms.color = graphics_add_uniform_id(S_("u_Color"));
 	uniforms.texture = graphics_add_uniform_id(S_("u_Texture"));
 	uniforms.projection = graphics_add_uniform_id(S_("u_Projection"));
-	uniforms.inverse_camera = graphics_add_uniform_id(S_("u_InverseCamera"));
+	uniforms.inverse_camera = graphics_add_uniform_id(S_("u_Camera"));
 	uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
 
 	//
