@@ -42,7 +42,7 @@ call "environment.bat" || ( goto :eof )
 
 rem |> OPTIONS
 set includes=-I".." -I"../third_party"
-set defines=-D_CRT_SECURE_NO_WARNINGS -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE 
+set defines=-D_CRT_SECURE_NO_WARNINGS -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE
 set libs=kernel32.lib user32.lib gdi32.lib
 set warnings=-WX -W4
 set compiler=-nologo -diagnostics:caret -EHa- -GR-
@@ -106,6 +106,7 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 	call :get_millis time_link
 	link "./%project%_unity_build.obj" %linker% -out:"%project%.exe" || ( goto error )
 ) else if %build_mode% == unity_link ( rem compile and link as a unity build
+	rem @note: this option is less preferable as it ignores already setup environment
 	call :get_millis time_link
 	cl -std:c11 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -Fe"./%project%.exe" -link %linker% || ( goto error )
 )

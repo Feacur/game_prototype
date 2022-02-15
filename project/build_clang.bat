@@ -121,6 +121,7 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 	call :get_millis time_link
 	lld-link "./%project%_unity_build.o" %linker% -out:"%project%.exe" || ( goto error )
 ) else if %build_mode% == unity_link ( rem compile and link as a unity build
+	rem @note: this option is less preferable as it ignores already setup environment
 	call :get_millis time_link
 	clang -std=c99 %compiler% %warnings% "%project_folder%/%project%_unity_build.c" -o"./%project%.exe" -Wl,%linker: =,% || ( goto error )
 )
