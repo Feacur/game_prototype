@@ -21,11 +21,11 @@ struct mat4 { struct vec4 x, y, z, w; };
 
 //
 
-extern struct vec2 const comp_identity;
-extern struct vec4 const quat_identity;
+extern struct vec2 const c_comp_identity;
+extern struct vec4 const c_quat_identity;
 
-extern struct mat2 const mat2_identity;
-extern struct mat3 const mat3_identity;
-extern struct mat4 const mat4_identity;
+extern struct mat2 const c_mat2_identity;
+extern struct mat3 const c_mat3_identity;
+extern struct mat4 const c_mat4_identity;
 
 #endif

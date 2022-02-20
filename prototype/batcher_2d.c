@@ -71,7 +71,7 @@ static void batcher_2d_bake_pass(struct Batcher_2D * batcher);
 struct Batcher_2D * batcher_2d_init(void) {
 	struct Batcher_2D * batcher = MEMORY_ALLOCATE(NULL, struct Batcher_2D);
 	*batcher = (struct Batcher_2D){
-		.matrix = mat4_identity,
+		.matrix = c_mat4_identity,
 		.mesh_parameters = {
 			[0] = (struct Mesh_Parameters){
 				.type = DATA_TYPE_R32,
@@ -126,7 +126,7 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 }
 
 void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const * matrix) {
-	batcher->matrix = (matrix != NULL) ? *matrix : mat4_identity;
+	batcher->matrix = (matrix != NULL) ? *matrix : c_mat4_identity;
 }
 
 void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material const * material) {

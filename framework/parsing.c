@@ -62,7 +62,7 @@ int32_t parse_s32(char const * text) {
 }
 
 uint32_t parse_hex_u32(char const * text) {
-	static const uint8_t table_hex[] = { 
+	static uint8_t const c_table_hex[] = { 
 		16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
 		16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
 		16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
@@ -82,7 +82,7 @@ uint32_t parse_hex_u32(char const * text) {
 	};
 	uint32_t value = 0;
 	for(;;) {
-		uint8_t const digit = table_hex[*(uint8_t const *)text];
+		uint8_t const digit = c_table_hex[*(uint8_t const *)text];
 		if (digit < 16) {
 			uint32_t const next_value = (value << 4) | digit;
 			if (next_value < value) { DEBUG_BREAK(); }

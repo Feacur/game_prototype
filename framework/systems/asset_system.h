@@ -40,6 +40,6 @@ void * asset_system_find_instance(struct Asset_System * system, struct CString n
 
 //
 
-extern struct Asset_Ref const asset_ref_empty;
+extern struct Asset_Ref const с_asset_ref_empty;
 
 #endif

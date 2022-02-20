@@ -4,21 +4,21 @@
 // @note: MSVC issues `C2099: initializer is not a constant`
 //        when a designated initializer type is specified
 
-struct vec2 const comp_identity = {1,0};
-struct vec4 const quat_identity = {0,0,0,1};
+struct vec2 const c_comp_identity = {1,0};
+struct vec4 const c_quat_identity = {0,0,0,1};
 
-struct mat2 const mat2_identity = {
+struct mat2 const c_mat2_identity = {
 	{1,0},
 	{0,1},
 };
 
-struct mat3 const mat3_identity = {
+struct mat3 const c_mat3_identity = {
 	{1,0,0},
 	{0,1,0},
 	{0,0,1},
 };
 
-struct mat4 const mat4_identity = {
+struct mat4 const c_mat4_identity = {
 	{1,0,0,0},
 	{0,1,0,0},
 	{0,0,1,0},

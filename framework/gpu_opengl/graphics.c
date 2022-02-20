@@ -124,9 +124,9 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	} while (false) \
 
 	// a mandatory version header
-	static GLchar glsl_version[20];
+	static GLchar s_glsl_version[20];
 	GLint glsl_version_length = (GLint)logger_to_buffer(
-		glsl_version, "#version %d core\n",
+		s_glsl_version, "#version %d core\n",
 		(ogl_version > 33) ? ogl_version * 10 : 330
 	);
 
@@ -146,7 +146,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	// compile shader objects
 	GLuint shader_ids[4];
 	for (uint32_t i = 0; i < headers_count; i++) {
-		GLchar const * code[]   = {glsl_version,        headers[i].text.data,          (GLchar *)asset->data};
+		GLchar const * code[]   = {s_glsl_version,        headers[i].text.data,          (GLchar *)asset->data};
 		GLint const    length[] = {glsl_version_length, (GLint)headers[i].text.length, (GLint)asset->count};
 
 		GLuint shader_id = glCreateShader(headers[i].type);
