@@ -6,14 +6,13 @@
 
 #include "framework/common.h"
 
-struct Window;
 struct GInstance;
 
-struct GInstance * ginstance_init(struct Window * window);
+struct GInstance * ginstance_init(void * device);
 void ginstance_free(struct GInstance * ginstance);
 
 int32_t ginstance_get_vsync(struct GInstance const * ginstance);
 void ginstance_set_vsync(struct GInstance * ginstance, int32_t value);
-void ginstance_display(struct GInstance const * ginstance);
+void ginstance_display(struct GInstance const * ginstance, void * device);
 
 #endif

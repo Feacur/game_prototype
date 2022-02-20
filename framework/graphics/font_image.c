@@ -76,7 +76,7 @@ void font_image_free(struct Font_Image * font_image) {
 	hash_table_u64_free(&font_image->kerning);
 
 	common_memset(font_image, 0, sizeof(*font_image));
-	MEMORY_FREE(font_image, font_image);
+	MEMORY_FREE(NULL, font_image);
 }
 
 inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t codepoint);

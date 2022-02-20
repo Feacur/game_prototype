@@ -58,7 +58,7 @@ struct Font * font_init(struct CString path) {
 void font_free(struct Font * font) {
 	buffer_free(&font->file);
 	common_memset(font, 0, sizeof(*font));
-	MEMORY_FREE(font, font);
+	MEMORY_FREE(NULL, font);
 }
 
 uint32_t font_get_glyph_id(struct Font const * font, uint32_t codepoint) {

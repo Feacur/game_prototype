@@ -5,7 +5,6 @@
 #include "framework/gpu_opengl/graphics_to_glibrary.h"
 
 #include "system_to_internal.h"
-#include "window_to_glibrary.h"
 
 #include <Windows.h>
 #include <GL/wgl.h>
@@ -172,19 +171,17 @@ struct Pixel_Format {
 
 struct GInstance {
 	HGLRC handle;
-	HDC private_device;
 	struct Pixel_Format pixel_format;
 	int32_t vsync;
 };
 
 static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format);
 static void * glibrary_get_function(struct CString name);
-struct GInstance * ginstance_init(struct Window * window) {
+struct GInstance * ginstance_init(void * device) {
 	struct GInstance * ginstance = MEMORY_ALLOCATE(&glibrary, struct GInstance);
 
-	ginstance->private_device = (HDC)window_to_glibrary_get_private_device(window);
-	ginstance->handle = create_context_auto(ginstance->private_device, NULL, &ginstance->pixel_format);
-	glibrary.dll.MakeCurrent(ginstance->private_device , ginstance->handle);
+	ginstance->handle = create_context_auto(device, NULL, &ginstance->pixel_format);
+	glibrary.dll.MakeCurrent(device , ginstance->handle);
 	ginstance->vsync = 0;
 
 	glibrary_functions_init(glibrary_get_function);
@@ -218,9 +215,9 @@ void ginstance_set_vsync(struct GInstance * ginstance, int32_t value) {
 	}
 }
 
-void ginstance_display(struct GInstance const * ginstance) {
+void ginstance_display(struct GInstance const * ginstance, void * device) {
 	if (ginstance->pixel_format.double_buffering) {
-		if (SwapBuffers(ginstance->private_device)) { return; }
+		if (SwapBuffers((HDC)device)) { return; }
 	}
 	glFlush();
 	// glFinish();

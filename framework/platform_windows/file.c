@@ -118,7 +118,7 @@ void platform_file_free(struct File * file) {
 	CloseHandle(file->handle);
 	MEMORY_FREE(file, file->path);
 	common_memset(file, 0, sizeof(*file));
-	MEMORY_FREE(file, file);
+	MEMORY_FREE(NULL, file);
 }
 
 uint64_t platform_file_size(struct File const * file) {

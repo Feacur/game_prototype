@@ -10,21 +10,19 @@
 
 #define HANDLE_PROP_WINDOW_NAME "prop_window"
 
-// @note: `WM_KILLFOCUS` is sent immediately
-static bool platform_window_internal_preserve_focus;
-
 //
 #include "framework/platform_window.h"
 
 struct Window {
 	HWND handle;
-	HDC private_context;
 	uint32_t size_x, size_y;
-
-	// bool is_unicode;
 	struct GInstance * ginstance;
+	// transient
+	HDC cached_device;
+	bool ignore_once_WM_KILLFOCUS;
 };
 
+static void platform_window_internal_release_dc(struct Window * window);
 static void platform_window_internal_toggle_raw_input(struct Window * window, bool state);
 struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Window_Settings settings) {
 	// @note: initial styles are bound to have some implicit flags
@@ -56,10 +54,7 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 		target_rect.right - target_rect.left, target_rect.bottom - target_rect.top,
 		HWND_DESKTOP, NULL, system_to_internal_get_module(), NULL
 	);
-	if (handle == NULL) {
-		logger_to_console("'CreateWindowEx' failed\n"); DEBUG_BREAK();
-		return NULL;
-	}
+	if (handle == NULL) { goto fail_handle; }
 
 	// @note: supress OS-defaults, enforce external settings
 	SetWindowLongPtr(handle, GWL_STYLE, target_style);
@@ -69,43 +64,42 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 		SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE
 	);
 
-	HDC const private_context = GetDC(handle);
-	if (private_context == NULL) {
-		logger_to_console("'GetDC' failed\n"); DEBUG_BREAK();
-		DestroyWindow(handle);
-		return NULL;
-	}
-
-	//
-	struct Window * window = MEMORY_ALLOCATE(NULL, struct Window);
-
-	BOOL prop_is_set = SetProp(handle, TEXT(HANDLE_PROP_WINDOW_NAME), window);
-	if (!prop_is_set) {
-		logger_to_console("'SetProp' failed\n"); DEBUG_BREAK();
-		MEMORY_FREE(window, window);
-		DestroyWindow(handle);
-		return NULL;
-	}
+	struct Window * const window = MEMORY_ALLOCATE(NULL, struct Window);
+	if (!window) { goto fail_window; }
+	if (!SetProp(handle, TEXT(HANDLE_PROP_WINDOW_NAME), window)) { goto fail_window; }
 
 	RECT client_rect;
 	GetClientRect(handle, &client_rect);
 
+	HDC const device = GetDC(handle);
+	if (device == NULL) { goto fail_device; }
+
 	*window = (struct Window){
 		.handle = handle,
-		.private_context = private_context,
 		.size_x = (uint32_t)(client_rect.right - client_rect.left),
 		.size_y = (uint32_t)(client_rect.bottom - client_rect.top),
+		.ginstance = ginstance_init(device),
+		.cached_device = device,
 	};
 
-	//
+	platform_window_internal_release_dc(window);
 	platform_window_internal_toggle_raw_input(window, true);
-	// (void)platform_window_toggle_raw_input;
-
-	// window->is_unicode = IsWindowUnicode(window->handle);
-	window->ginstance = ginstance_init(window);
-
 	ShowWindow(handle, SW_SHOW);
 	return window;
+
+	// process errors
+	fail_device: DEBUG_BREAK();
+	if (device) { ReleaseDC(handle, device); }
+	else { logger_to_console("failed to get device context"); }
+
+	fail_window: DEBUG_BREAK();
+	if (window) { MEMORY_FREE(NULL, window); }
+	else { logger_to_console("failed to initialize application window"); }
+
+	fail_handle: DEBUG_BREAK();
+	if (handle) { DestroyWindow(handle); }
+	else { logger_to_console("failed to create platform window"); }
+	return NULL;
 }
 
 void platform_window_free(struct Window * window) {
@@ -123,8 +117,8 @@ bool platform_window_exists(struct Window const * window) {
 	return window->handle != NULL;
 }
 
-void platform_window_update(struct Window const * window) {
-	(void)window;
+void platform_window_update(struct Window * window) {
+	window->cached_device = GetDC(window->handle);
 }
 
 int32_t platform_window_get_vsync(struct Window const * window) {
@@ -135,8 +129,9 @@ void platform_window_set_vsync(struct Window * window, int32_t value) {
 	ginstance_set_vsync(window->ginstance, value);
 }
 
-void platform_window_display(struct Window const * window) {
-	ginstance_display(window->ginstance);
+void platform_window_display(struct Window * window) {
+	ginstance_display(window->ginstance, window->cached_device);
+	platform_window_internal_release_dc(window);
 }
 
 void platform_window_get_size(struct Window const * window, uint32_t * size_x, uint32_t * size_y) {
@@ -145,15 +140,14 @@ void platform_window_get_size(struct Window const * window, uint32_t * size_x, u
 }
 
 uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value) {
-	int value = GetDeviceCaps(window->private_context, VREFRESH);
+	int value = GetDeviceCaps(window->cached_device, VREFRESH);
 	return value > 1 ? (uint32_t)value : default_value;
 }
 
 static void platform_window_internal_toggle_borderless_fullscreen(struct Window * window);
 void platform_window_toggle_borderless_fullscreen(struct Window * window) {
-	platform_window_internal_preserve_focus = true;
+	window->ignore_once_WM_KILLFOCUS = true;
 	ShowWindow(window->handle, SW_HIDE);
-	platform_window_internal_preserve_focus = false;
 	platform_window_internal_toggle_borderless_fullscreen(window);
 	ShowWindow(window->handle, SW_SHOW);
 }
@@ -169,7 +163,7 @@ void window_to_system_init(void) {
 		.lpszClassName = TEXT(APPLICATION_CLASS_NAME),
 		.hInstance = system_to_internal_get_module(),
 		.lpfnWndProc = window_procedure,
-		.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
+		.style = CS_HREDRAW | CS_VREDRAW,
 		.hCursor = LoadCursor(0, IDC_ARROW),
 	});
 	if (atom == 0) {
@@ -185,13 +179,17 @@ void window_to_system_free(void) {
 }
 
 //
-#include "window_to_glibrary.h"
 
-void * window_to_glibrary_get_private_device(struct Window const * window) {
-	return window->private_context;
+static void platform_window_internal_release_dc(struct Window * window) {
+	HDC const device = window->cached_device;
+	window->cached_device = NULL;
+
+	WNDCLASSEX window_class;
+	GetClassInfoEx(system_to_internal_get_module(), TEXT(APPLICATION_CLASS_NAME), &window_class);
+	if (window_class.style & CS_OWNDC) { return; }
+	if (window_class.style & CS_CLASSDC) { return; }
+	ReleaseDC(window->handle, device);
 }
-
-//
 
 static void platform_window_internal_toggle_borderless_fullscreen(struct Window * window) {
 	static WINDOWPLACEMENT normal_window_position = {.length = sizeof(WINDOWPLACEMENT)};
@@ -310,8 +308,8 @@ static void platform_window_internal_toggle_raw_input(struct Window * window, bo
 	if (previous_state == state) { return; }
 	previous_state = state;
 
-	USHORT flags = state ? 0 : RIDEV_REMOVE; // RIDEV_NOLEGACY seems to be tiresome
-	HWND target = state ? window->handle : NULL;
+	USHORT const flags = state ? 0 : RIDEV_REMOVE; // RIDEV_NOLEGACY seems to be tiresome
+	HWND const target = state ? window->handle : NULL;
 
 	RAWINPUTDEVICE const devices[] = {
 		(RAWINPUTDEVICE){.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_KEYBOARD, .dwFlags = flags, .hwndTarget = target},
@@ -596,9 +594,10 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		}
 
 		case WM_KILLFOCUS: { // sent immediately
-			if (!platform_window_internal_preserve_focus) {
+			if (!window->ignore_once_WM_KILLFOCUS) {
 				input_to_platform_reset();
 			}
+			window->ignore_once_WM_KILLFOCUS = false;
 			return 0;
 		}
 

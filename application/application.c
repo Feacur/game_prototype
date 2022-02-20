@@ -30,16 +30,14 @@ static uint64_t get_target_ticks(int32_t vsync_mode) {
 static void application_init(void) {
 	platform_system_init();
 
-	logger_to_console(
-		"\n"
+	logger_to_console("\n"
 		"> system status:\n"
 		"  power .. %s\n"
 		"",
 		platform_system_is_powered() ? "on" : "off"
 	);
 
-	logger_to_console(
-		"\n"
+	logger_to_console("\n"
 		"> application settings:\n"
 		"  size ......... %u x %u\n"
 		"  vsync ........ %d\n"
