@@ -36,7 +36,7 @@ static struct Main_Uniforms {
 	uint32_t projection;
 	uint32_t inverse_camera;
 	uint32_t transform;
-} uniforms; // @note: global state
+} gs_uniforms;
 
 static void game_init(void) {
 	state_init();
@@ -49,11 +49,11 @@ static void game_init(void) {
 		},
 	});
 
-	uniforms.color = graphics_add_uniform_id(S_("u_Color"));
-	uniforms.texture = graphics_add_uniform_id(S_("u_Texture"));
-	uniforms.projection = graphics_add_uniform_id(S_("u_Projection"));
-	uniforms.inverse_camera = graphics_add_uniform_id(S_("u_Camera"));
-	uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
+	gs_uniforms.color = graphics_add_uniform_id(S_("u_Color"));
+	gs_uniforms.texture = graphics_add_uniform_id(S_("u_Texture"));
+	gs_uniforms.projection = graphics_add_uniform_id(S_("u_Projection"));
+	gs_uniforms.inverse_camera = graphics_add_uniform_id(S_("u_Camera"));
+	gs_uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
 
 	//
 	struct Asset_JSON const * json_test = asset_system_find_instance(&state.asset_system, S_("assets/sandbox/test.json"));
@@ -78,7 +78,7 @@ static void game_init(void) {
 			//
 			.type = ENTITY_TYPE_QUAD_2D,
 			.as.quad = {
-				.texture_uniform = uniforms.texture,
+				.texture_uniform = gs_uniforms.texture,
 			},
 		});
 
@@ -93,7 +93,7 @@ static void game_init(void) {
 			//
 			.type = ENTITY_TYPE_QUAD_2D,
 			.as.quad = {
-				.texture_uniform = uniforms.texture,
+				.texture_uniform = gs_uniforms.texture,
 			},
 		});
 
@@ -294,7 +294,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 					//
 					override_count++;
 					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = uniforms.projection,
+						.header.id = gs_uniforms.projection,
 						.header.size = sizeof(mat4_projection),
 					});
 					buffer_push_many(&state.buffer, sizeof(mat4_projection), (void const *)&mat4_projection);
@@ -303,7 +303,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 					//
 					override_count++;
 					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = uniforms.inverse_camera,
+						.header.id = gs_uniforms.inverse_camera,
 						.header.size = sizeof(mat4_inverse_camera),
 					});
 					buffer_push_many(&state.buffer, sizeof(mat4_inverse_camera), (void const *)&mat4_inverse_camera);
@@ -312,7 +312,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 					//
 					override_count++;
 					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = uniforms.transform,
+						.header.id = gs_uniforms.transform,
 						.header.size = sizeof(mat4_entity),
 					});
 					buffer_push_many(&state.buffer, sizeof(mat4_entity), (void const *)&mat4_entity);

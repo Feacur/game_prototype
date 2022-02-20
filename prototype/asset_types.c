@@ -125,14 +125,14 @@ void asset_bytes_free(void * instance) {
 //     Asset json part
 // ----- ----- ----- ----- -----
 
-static struct Strings asset_json_strings; // @note: global state
+static struct Strings gs_asset_json_strings;
 
 void asset_json_type_init(void) {
-	strings_init(&asset_json_strings);
+	strings_init(&gs_asset_json_strings);
 }
 
 void asset_json_type_free(void) {
-	strings_free(&asset_json_strings);
+	strings_free(&gs_asset_json_strings);
 }
 
 void asset_json_init(void * instance, struct CString name) {
@@ -142,7 +142,7 @@ void asset_json_init(void * instance, struct CString name) {
 	bool const read_success = platform_file_read_entire(name, &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
 
-	json_init(&asset->value, &asset_json_strings, (char const *)buffer.data);
+	json_init(&asset->value, &gs_asset_json_strings, (char const *)buffer.data);
 
 	buffer_free(&buffer);
 }

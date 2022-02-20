@@ -25,11 +25,11 @@
 #endif
 
 //
-static char logger_buffer[STB_SPRINTF_MIN];
+static char gs_logger_buffer[STB_SPRINTF_MIN];
 static char * logger_callback_fputs_stderr(char const * buffer, void * user, int length) {
 	(void)user;
 	fwrite(buffer, sizeof(*buffer), (size_t)length, stderr);
-	return logger_buffer;
+	return gs_logger_buffer;
 }
 
 //
@@ -38,7 +38,7 @@ static char * logger_callback_fputs_stderr(char const * buffer, void * user, int
 void logger_to_console(char const * format, ...) {
 	va_list args;
 	va_start(args, format);
-	stbsp_vsprintfcb(logger_callback_fputs_stderr, NULL, logger_buffer, format, args);
+	stbsp_vsprintfcb(logger_callback_fputs_stderr, NULL, gs_logger_buffer, format, args);
 	va_end(args);
 }
 

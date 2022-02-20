@@ -16,7 +16,7 @@
 static struct Platform_System {
 	HMODULE module;
 	bool should_close;
-} platform_system; // @note: global state
+} gs_platform_system;
 
 //
 #include "framework/platform_system.h"
@@ -26,8 +26,8 @@ static void system_set_process_dpi_awareness(void);
 // static void system_enable_virtual_terminal_processing(void);
 static void system_signal_handler(int value);
 void platform_system_init(void) {
-	platform_system.module = GetModuleHandle(NULL);
-	if (platform_system.module == NULL) {
+	gs_platform_system.module = GetModuleHandle(NULL);
+	if (gs_platform_system.module == NULL) {
 		logger_to_console("'GetModuleHandle(NULL)' failed\n"); DEBUG_BREAK();
 		common_exit_failure();
 	}
@@ -56,7 +56,7 @@ void platform_system_free(void) {
 	window_to_system_free();
 	timer_to_system_free();
 	if (memory_to_system_report() > 0) { DEBUG_BREAK(); }
-	common_memset(&platform_system, 0, sizeof(platform_system));
+	common_memset(&gs_platform_system, 0, sizeof(gs_platform_system));
 }
 
 bool platform_system_is_powered(void) {
@@ -77,7 +77,7 @@ bool platform_system_is_powered(void) {
 }
 
 bool platform_system_is_running(void) {
-	return !platform_system.should_close;
+	return !gs_platform_system.should_close;
 }
 
 void platform_system_update(void) {
@@ -85,7 +85,7 @@ void platform_system_update(void) {
 
 	for (MSG message; PeekMessage(&message, NULL, 0, 0, PM_REMOVE); /*empty*/) {
 		if (message.message == WM_QUIT) {
-			platform_system.should_close = true;
+			gs_platform_system.should_close = true;
 			DEBUG_BREAK();
 			continue;
 		}
@@ -110,7 +110,7 @@ void platform_system_sleep(uint32_t millis) {
 #include "system_to_internal.h"
 
 void * system_to_internal_get_module(void) {
-	return platform_system.module;
+	return gs_platform_system.module;
 }
 
 //
@@ -247,7 +247,7 @@ static void system_signal_handler(int value) {
 		default:      DEBUG_BREAK(); break; // ?
 	}
 
-	platform_system.should_close = true;
+	gs_platform_system.should_close = true;
 
 	// http://www.cplusplus.com/reference/csignal/signal/
 }

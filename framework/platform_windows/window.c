@@ -301,12 +301,12 @@ static enum Key_Code translate_virtual_key_to_application(uint8_t scan, uint8_t 
 	return KC_ERROR;
 }
 
-static struct Window * raw_input_window = NULL; // @note: global state
+static struct Window * gs_raw_input_window = NULL;
 static void platform_window_internal_toggle_raw_input(struct Window * window, bool state) {
-	static bool previous_state = false;
+	static bool s_previous_state = false;
 
-	if (previous_state == state) { return; }
-	previous_state = state;
+	if (s_previous_state == state) { return; }
+	s_previous_state = state;
 
 	USHORT const flags = state ? 0 : RIDEV_REMOVE; // RIDEV_NOLEGACY seems to be tiresome
 	HWND const target = state ? window->handle : NULL;
@@ -318,18 +318,18 @@ static void platform_window_internal_toggle_raw_input(struct Window * window, bo
 	};
 
 	if (RegisterRawInputDevices(devices, sizeof(devices) / sizeof(*devices), sizeof(RAWINPUTDEVICE))) {
-		raw_input_window = state ? window : NULL;
+		gs_raw_input_window = state ? window : NULL;
 		return;
 	}
 
 	logger_to_console("'RegisterRawInputDevices' failed\n"); DEBUG_BREAK();
-	previous_state = !previous_state;
+	s_previous_state = !s_previous_state;
 
 	// https://docs.microsoft.com/windows-hardware/drivers/hid/
 }
 
 static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data) {
-	if (raw_input_window != window) { return; }
+	if (gs_raw_input_window != window) { return; }
 	if (data->VKey == 0xff) { return; }
 
 	uint8_t scan = (uint8_t)data->MakeCode;
@@ -360,7 +360,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 }
 
 static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
-	if (raw_input_window != window) { return; }
+	if (gs_raw_input_window != window) { return; }
 
 	bool const is_virtual_desktop = (data->usFlags & MOUSE_VIRTUAL_DESKTOP);
 	int const display_height = GetSystemMetrics(is_virtual_desktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
@@ -395,7 +395,7 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 	}
 
 	//
-	static USHORT const keys_down[] = {
+	static USHORT const c_keys_down[] = {
 		RI_MOUSE_LEFT_BUTTON_DOWN,
 		RI_MOUSE_RIGHT_BUTTON_DOWN,
 		RI_MOUSE_MIDDLE_BUTTON_DOWN,
@@ -403,7 +403,7 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 		RI_MOUSE_BUTTON_5_DOWN,
 	};
 
-	static USHORT const keys_up[] = {
+	static USHORT const c_keys_up[] = {
 		RI_MOUSE_LEFT_BUTTON_UP,
 		RI_MOUSE_RIGHT_BUTTON_UP,
 		RI_MOUSE_MIDDLE_BUTTON_UP,
@@ -411,11 +411,11 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 		RI_MOUSE_BUTTON_5_UP,
 	};
 
-	for (uint8_t i = 0; i < sizeof(keys_down) / sizeof(*keys_down); i++) {
-		if ((data->usButtonFlags & keys_down[i])) {
+	for (uint8_t i = 0; i < sizeof(c_keys_down) / sizeof(*c_keys_down); i++) {
+		if ((data->usButtonFlags & c_keys_down[i])) {
 			input_to_platform_on_mouse(i, true);
 		}
-		if ((data->usButtonFlags & keys_up[i])) {
+		if ((data->usButtonFlags & c_keys_up[i])) {
 			input_to_platform_on_mouse(i, false);
 		}
 	}
@@ -459,7 +459,7 @@ static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, L
 }
 
 static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wParam, LPARAM lParam) {
-	if (raw_input_window == window) { return 0; }
+	if (gs_raw_input_window == window) { return 0; }
 	if (wParam == 0xff) { DEBUG_BREAK(); return 0; }
 
 	WORD flags = HIWORD(lParam);
@@ -486,7 +486,7 @@ static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wPar
 }
 
 static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam, LPARAM lParam, bool client_space, float wheel_mask_x, float wheel_mask_y) {
-	if (raw_input_window == window) { return 0; }
+	if (gs_raw_input_window == window) { return 0; }
 
 	int const display_height = GetSystemMetrics(SM_CYSCREEN);
 
@@ -513,7 +513,7 @@ static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam,
 	input_to_platform_on_mouse_wheel(wheel_mask_x * wheel_delta, wheel_mask_y * wheel_delta);
 
 	//
-	static WPARAM const key_masks[] = {
+	static WPARAM const c_key_masks[] = {
 		MK_LBUTTON,
 		MK_RBUTTON,
 		MK_MBUTTON,
@@ -521,8 +521,8 @@ static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam,
 		MK_XBUTTON2,
 	};
 
-	for (uint8_t i = 0; i < sizeof(key_masks) / sizeof(*key_masks); i++) {
-		input_to_platform_on_mouse(i, (wParam & key_masks[i]));
+	for (uint8_t i = 0; i < sizeof(c_key_masks) / sizeof(*c_key_masks); i++) {
+		input_to_platform_on_mouse(i, (wParam & c_key_masks[i]));
 	}
 
 	return 0;
@@ -614,7 +614,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			RemoveProp(hwnd, TEXT(APPLICATION_CLASS_NAME));
 			input_to_platform_reset();
 			if (window->ginstance != NULL) { ginstance_free(window->ginstance); }
-			if (raw_input_window == window) {
+			if (gs_raw_input_window == window) {
 				platform_window_internal_toggle_raw_input(window, false);
 			}
 			common_memset(window, 0, sizeof(*window));

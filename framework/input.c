@@ -32,49 +32,49 @@ static struct Input_State {
 	struct Mouse_State mouse, mouse_prev;
 	struct Array_U32 codepoints;
 	bool track_codepoints;
-} input_state; // @note: global state
+} gs_input_state;
 
 bool input_key(enum Key_Code key) {
-	return input_state.keyboard.keys[key];
+	return gs_input_state.keyboard.keys[key];
 }
 
 bool input_key_transition(enum Key_Code key, bool state) {
-	uint8_t now = input_state.keyboard.keys[key];
-	uint8_t was = input_state.keyboard_prev.keys[key];
+	uint8_t now = gs_input_state.keyboard.keys[key];
+	uint8_t was = gs_input_state.keyboard_prev.keys[key];
 	return (now != was) && (now == state);
 }
 
 void input_track_codepoints(bool state) {
-	if (input_state.track_codepoints != state) { input_state.codepoints.count = 0; }
-	input_state.track_codepoints = state;
+	if (gs_input_state.track_codepoints != state) { gs_input_state.codepoints.count = 0; }
+	gs_input_state.track_codepoints = state;
 }
 
 struct Array_U32 const * input_get_codepoints(void) {
-	return &input_state.codepoints;
+	return &gs_input_state.codepoints;
 }
 
 void input_mouse_position_window(uint32_t * x, uint32_t * y) {
-	*x = input_state.mouse.window_x;
-	*y = input_state.mouse.window_y;
+	*x = gs_input_state.mouse.window_x;
+	*y = gs_input_state.mouse.window_y;
 }
 
 void input_mouse_position_display(uint32_t * x, uint32_t * y) {
-	*x = input_state.mouse.display_x;
-	*y = input_state.mouse.display_y;
+	*x = gs_input_state.mouse.display_x;
+	*y = gs_input_state.mouse.display_y;
 }
 
 void input_mouse_delta(int32_t * x, int32_t * y) {
-	*x = input_state.mouse.delta_x;
-	*y = input_state.mouse.delta_y;
+	*x = gs_input_state.mouse.delta_x;
+	*y = gs_input_state.mouse.delta_y;
 }
 
 bool input_mouse(enum Mouse_Code key) {
-	return input_state.mouse.keys[key];
+	return gs_input_state.mouse.keys[key];
 }
 
 bool input_mouse_transition(enum Mouse_Code key, bool state) {
-	uint8_t now = input_state.mouse.keys[key];
-	uint8_t was = input_state.mouse_prev.keys[key];
+	uint8_t now = gs_input_state.mouse.keys[key];
+	uint8_t was = gs_input_state.mouse_prev.keys[key];
 	return (now != was) && (now == state);
 }
 
@@ -82,50 +82,50 @@ bool input_mouse_transition(enum Mouse_Code key, bool state) {
 #include "framework/internal/input_to_system.h"
 
 void input_to_system_init(void) {
-	array_u32_init(&input_state.codepoints);
+	array_u32_init(&gs_input_state.codepoints);
 }
 
 void input_to_system_free(void) {
-	array_u32_free(&input_state.codepoints);
-	common_memset(&input_state, 0, sizeof(input_state));
+	array_u32_free(&gs_input_state.codepoints);
+	common_memset(&gs_input_state, 0, sizeof(gs_input_state));
 }
 
 void input_to_platform_before_update(void) {
 	// track input transitions
-	common_memcpy(&input_state.keyboard_prev, &input_state.keyboard, sizeof(input_state.keyboard));
-	common_memcpy(&input_state.mouse_prev, &input_state.mouse, sizeof(input_state.mouse));
+	common_memcpy(&gs_input_state.keyboard_prev, &gs_input_state.keyboard, sizeof(gs_input_state.keyboard));
+	common_memcpy(&gs_input_state.mouse_prev, &gs_input_state.mouse, sizeof(gs_input_state.mouse));
 
 	// reset per-frame data
-	input_state.mouse.delta_x = 0;
-	input_state.mouse.delta_y = 0;
-	input_state.mouse.wheel_x = 0;
-	input_state.mouse.wheel_y = 0;
+	gs_input_state.mouse.delta_x = 0;
+	gs_input_state.mouse.delta_y = 0;
+	gs_input_state.mouse.wheel_x = 0;
+	gs_input_state.mouse.wheel_y = 0;
 }
 
 void input_to_platform_after_update(void) {
 	// remap keyboard input ASCII characters
-	static char const remap_src[] = ",./"    ";'"     "[]\\"    "`1234567890-=";
-	static char const remap_dst[] = "<?>"    ":\""    "{}|"     "~!@#$%^&*()_+";
+	static char const c_remap_src[] = ",./"    ";'"     "[]\\"    "`1234567890-=";
+	static char const c_remap_dst[] = "<?>"    ":\""    "{}|"     "~!@#$%^&*()_+";
 
-	for (uint8_t i = 0; i < sizeof(remap_src) / sizeof(*remap_src); i++) {
-		input_state.keyboard.keys[(uint8_t)remap_dst[i]] = input_state.keyboard.keys[(uint8_t)remap_src[i]];
+	for (uint8_t i = 0; i < sizeof(c_remap_src) / sizeof(*c_remap_src); i++) {
+		gs_input_state.keyboard.keys[(uint8_t)c_remap_dst[i]] = gs_input_state.keyboard.keys[(uint8_t)c_remap_src[i]];
 	}
 
 	common_memcpy(
-		input_state.keyboard.keys + (uint8_t)'A',
-		input_state.keyboard.keys + (uint8_t)'a',
-		sizeof(*input_state.keyboard.keys) * (1 + 'Z' - 'A')
+		gs_input_state.keyboard.keys + (uint8_t)'A',
+		gs_input_state.keyboard.keys + (uint8_t)'a',
+		sizeof(*gs_input_state.keyboard.keys) * (1 + 'Z' - 'A')
 	);
 
 	//
-	input_state.keyboard.keys[KC_SHIFT] = input_state.keyboard.keys[KC_LSHIFT] || input_state.keyboard.keys[KC_RSHIFT];
-	input_state.keyboard.keys[KC_CTRL] = input_state.keyboard.keys[KC_LCTRL] || input_state.keyboard.keys[KC_RCTRL];
-	input_state.keyboard.keys[KC_ALT] = input_state.keyboard.keys[KC_LALT] || input_state.keyboard.keys[KC_RALT];
+	gs_input_state.keyboard.keys[KC_SHIFT] = gs_input_state.keyboard.keys[KC_LSHIFT] || gs_input_state.keyboard.keys[KC_RSHIFT];
+	gs_input_state.keyboard.keys[KC_CTRL] = gs_input_state.keyboard.keys[KC_LCTRL] || gs_input_state.keyboard.keys[KC_RCTRL];
+	gs_input_state.keyboard.keys[KC_ALT] = gs_input_state.keyboard.keys[KC_LALT] || gs_input_state.keyboard.keys[KC_RALT];
 
 	//
-	if (input_state.mouse.delta_x == 0 && input_state.mouse.delta_y == 0) {
-		input_state.mouse.delta_x = (int32_t)input_state.mouse.window_x - (int32_t)input_state.mouse_prev.window_x;
-		input_state.mouse.delta_y = (int32_t)input_state.mouse.window_y - (int32_t)input_state.mouse_prev.window_y;
+	if (gs_input_state.mouse.delta_x == 0 && gs_input_state.mouse.delta_y == 0) {
+		gs_input_state.mouse.delta_x = (int32_t)gs_input_state.mouse.window_x - (int32_t)gs_input_state.mouse_prev.window_x;
+		gs_input_state.mouse.delta_y = (int32_t)gs_input_state.mouse.window_y - (int32_t)gs_input_state.mouse_prev.window_y;
 	}
 }
 
@@ -133,41 +133,41 @@ void input_to_platform_after_update(void) {
 #include "framework/internal/input_to_window.h"
 
 void input_to_platform_reset(void) {
-	common_memset(&input_state.keyboard, 0, sizeof(input_state.keyboard));
-	common_memset(&input_state.keyboard_prev, 0, sizeof(input_state.keyboard_prev));
-	common_memset(&input_state.mouse, 0, sizeof(input_state.mouse));
-	common_memset(&input_state.mouse_prev, 0, sizeof(input_state.mouse_prev));
+	common_memset(&gs_input_state.keyboard, 0, sizeof(gs_input_state.keyboard));
+	common_memset(&gs_input_state.keyboard_prev, 0, sizeof(gs_input_state.keyboard_prev));
+	common_memset(&gs_input_state.mouse, 0, sizeof(gs_input_state.mouse));
+	common_memset(&gs_input_state.mouse_prev, 0, sizeof(gs_input_state.mouse_prev));
 }
 
 void input_to_platform_on_key(enum Key_Code key, bool is_down) {
-	input_state.keyboard.keys[key] = is_down;
+	gs_input_state.keyboard.keys[key] = is_down;
 }
 
 void input_to_platform_on_codepoint(uint32_t codepoint) {
-	if (!input_state.track_codepoints) { return; }
-	array_u32_push(&input_state.codepoints, codepoint);
+	if (!gs_input_state.track_codepoints) { return; }
+	array_u32_push(&gs_input_state.codepoints, codepoint);
 }
 
 void input_to_platform_on_mouse_move(uint32_t x, uint32_t y) {
-	input_state.mouse.display_x = x;
-	input_state.mouse.display_y = y;
+	gs_input_state.mouse.display_x = x;
+	gs_input_state.mouse.display_y = y;
 }
 
 void input_to_platform_on_mouse_move_window(uint32_t x, uint32_t y) {
-	input_state.mouse.window_x = x;
-	input_state.mouse.window_y = y;
+	gs_input_state.mouse.window_x = x;
+	gs_input_state.mouse.window_y = y;
 }
 
 void input_to_platform_on_mouse_delta(int32_t x, int32_t y) {
-	input_state.mouse.delta_x += x;
-	input_state.mouse.delta_y += y;
+	gs_input_state.mouse.delta_x += x;
+	gs_input_state.mouse.delta_y += y;
 }
 
 void input_to_platform_on_mouse_wheel(float x, float y) {
-	input_state.mouse.wheel_x += x;
-	input_state.mouse.wheel_y += y;
+	gs_input_state.mouse.wheel_x += x;
+	gs_input_state.mouse.wheel_y += y;
 }
 
 void input_to_platform_on_mouse(enum Mouse_Code key, bool is_down) {
-	input_state.mouse.keys[key] = is_down;
+	gs_input_state.mouse.keys[key] = is_down;
 }

@@ -23,7 +23,7 @@ static struct Memory_State {
 	struct Memory_Header * root;
 	uint32_t count;
 	size_t bytes;
-} memory_state; // @note: global state
+} gs_memory_state;
 
 void * memory_reallocate(void const * owner, struct CString source, void * pointer, size_t size) {
 	struct Memory_Header * pointer_header = (pointer != NULL)
@@ -36,15 +36,15 @@ void * memory_reallocate(void const * owner, struct CString source, void * point
 			return NULL;
 		}
 
-		if (memory_state.root == pointer_header) { memory_state.root = pointer_header->next; }
+		if (gs_memory_state.root == pointer_header) { gs_memory_state.root = pointer_header->next; }
 		if (pointer_header->next != NULL) { pointer_header->next->prev = pointer_header->prev; }
 		if (pointer_header->prev != NULL) { pointer_header->prev->next = pointer_header->next; }
 	}
 
 	if (size == 0) {
 		if (pointer_header == NULL) { return NULL; }
-		memory_state.count--;
-		memory_state.bytes -= pointer_header->size;
+		gs_memory_state.count--;
+		gs_memory_state.bytes -= pointer_header->size;
 		common_memset(pointer_header, 0, sizeof(*pointer_header));
 		free(pointer_header);
 		return NULL;
@@ -56,18 +56,18 @@ void * memory_reallocate(void const * owner, struct CString source, void * point
 		common_exit_failure();
 	}
 
-	memory_state.count++;
-	memory_state.bytes += size;
+	gs_memory_state.count++;
+	gs_memory_state.bytes += size;
 	*reallocated_header = (struct Memory_Header){
 		.checksum = ~(size_t)reallocated_header,
 		.size = size,
-		.next = memory_state.root,
+		.next = gs_memory_state.root,
 		.owner = owner,
 		.source = source,
 	};
 
-	if (memory_state.root != NULL) { memory_state.root->prev = reallocated_header; }
-	memory_state.root = reallocated_header;
+	if (gs_memory_state.root != NULL) { gs_memory_state.root->prev = reallocated_header; }
+	gs_memory_state.root = reallocated_header;
 
 	return reallocated_header + 1;
 }
@@ -79,7 +79,7 @@ uint32_t memory_to_system_report(void) {
 	uint32_t const pointer_digits_count = 12;
 
 	uint32_t bytes_digits_count = 0;
-	for (size_t v = memory_state.bytes; v > 0; v = v / 10) {
+	for (size_t v = gs_memory_state.bytes; v > 0; v = v / 10) {
 		bytes_digits_count++;
 	}
 
@@ -88,12 +88,12 @@ uint32_t memory_to_system_report(void) {
 		"",
 		((pointer_digits_count >= 8) ? (pointer_digits_count - 8) : 0), "",
 		bytes_digits_count,
-		memory_state.bytes,
-		memory_state.count
+		gs_memory_state.bytes,
+		gs_memory_state.count
 	);
 	uint32_t count = 0;
-	if (memory_state.root != NULL) {
-		for (struct Memory_Header * it = memory_state.root; it != NULL; it = it->next) {
+	if (gs_memory_state.root != NULL) {
+		for (struct Memory_Header * it = gs_memory_state.root; it != NULL; it = it->next) {
 			logger_to_console(
 				"  [0x%0*zx] (bytes: %-*.zu | owner: 0x%0*zx) at '%.*s'\n",
 				pointer_digits_count,
