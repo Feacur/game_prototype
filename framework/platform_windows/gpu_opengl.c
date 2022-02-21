@@ -2,14 +2,14 @@
 #include "framework/logger.h"
 
 #include "framework/gpu_opengl/functions.h"
-#include "framework/gpu_opengl/graphics_to_glibrary.h"
+#include "framework/gpu_opengl/graphics_to_gpu_library.h"
 
 #include "system_to_internal.h"
 
 #include <Windows.h>
 #include <GL/wgl.h>
 
-static struct GLibrary {
+static struct Gpu_Library {
 	HMODULE handle;
 
 	struct {
@@ -36,33 +36,33 @@ static struct GLibrary {
 		char const * extensions;
 		bool has_extension_swap_control;
 	} ext;
-} gs_glibrary;
+} gs_gpu_library;
 
 //
-#include "glibrary_to_system.h"
+#include "gpu_library_to_system.h"
 
-static void * glibrary_get_function(struct CString name);
+static void * gpu_library_get_function(struct CString name);
 
 bool contains_full_word(char const * container, struct CString value);
-void glibrary_to_system_init(void) {
+void gpu_library_to_system_init(void) {
 // #define OPENGL_CLASS_NAME "gpu_library_class"
 #define OPENGL_CLASS_NAME APPLICATION_CLASS_NAME
 	bool const use_application_class = strcmp(OPENGL_CLASS_NAME, APPLICATION_CLASS_NAME) == 0;
 
-	gs_glibrary.handle = LoadLibrary(TEXT("opengl32.dll"));
-	if (gs_glibrary.handle == NULL) {
+	gs_gpu_library.handle = LoadLibrary(TEXT("opengl32.dll"));
+	if (gs_gpu_library.handle == NULL) {
 		logger_to_console("'LoadLibrary(\"opengl32.dll\")' failed\n"); DEBUG_BREAK();
 		common_exit_failure();
 	}
 
 	// fetch basic DLL functions
-	gs_glibrary.dll.GetProcAddress    = (PFNWGLGETPROCADDRESSPROC)   (void *)GetProcAddress(gs_glibrary.handle, "wglGetProcAddress");
-	gs_glibrary.dll.CreateContext     = (PFNWGLCREATECONTEXTPROC)    (void *)GetProcAddress(gs_glibrary.handle, "wglCreateContext");
-	gs_glibrary.dll.DeleteContext     = (PFNWGLDELETECONTEXTPROC)    (void *)GetProcAddress(gs_glibrary.handle, "wglDeleteContext");
-	gs_glibrary.dll.MakeCurrent       = (PFNWGLMAKECURRENTPROC)      (void *)GetProcAddress(gs_glibrary.handle, "wglMakeCurrent");
-	gs_glibrary.dll.GetCurrentContext = (PFNWGLGETCURRENTCONTEXTPROC)(void *)GetProcAddress(gs_glibrary.handle, "wglGetCurrentContext");
-	gs_glibrary.dll.GetCurrentDC      = (PFNWGLGETCURRENTDCPROC)     (void *)GetProcAddress(gs_glibrary.handle, "wglGetCurrentDC");
-	gs_glibrary.dll.ShareLists        = (PFNWGLSHARELISTSPROC)       (void *)GetProcAddress(gs_glibrary.handle, "wglShareLists");
+	gs_gpu_library.dll.GetProcAddress    = (PFNWGLGETPROCADDRESSPROC)   (void *)GetProcAddress(gs_gpu_library.handle, "wglGetProcAddress");
+	gs_gpu_library.dll.CreateContext     = (PFNWGLCREATECONTEXTPROC)    (void *)GetProcAddress(gs_gpu_library.handle, "wglCreateContext");
+	gs_gpu_library.dll.DeleteContext     = (PFNWGLDELETECONTEXTPROC)    (void *)GetProcAddress(gs_gpu_library.handle, "wglDeleteContext");
+	gs_gpu_library.dll.MakeCurrent       = (PFNWGLMAKECURRENTPROC)      (void *)GetProcAddress(gs_gpu_library.handle, "wglMakeCurrent");
+	gs_gpu_library.dll.GetCurrentContext = (PFNWGLGETCURRENTCONTEXTPROC)(void *)GetProcAddress(gs_gpu_library.handle, "wglGetCurrentContext");
+	gs_gpu_library.dll.GetCurrentDC      = (PFNWGLGETCURRENTDCPROC)     (void *)GetProcAddress(gs_gpu_library.handle, "wglGetCurrentDC");
+	gs_gpu_library.dll.ShareLists        = (PFNWGLSHARELISTSPROC)       (void *)GetProcAddress(gs_gpu_library.handle, "wglShareLists");
 
 	// create a temporary window lass
 	if (!use_application_class) {
@@ -128,33 +128,33 @@ void glibrary_to_system_init(void) {
 		common_exit_failure();
 	}
 
-	HGLRC rc_handle = gs_glibrary.dll.CreateContext(hdc);
+	HGLRC rc_handle = gs_gpu_library.dll.CreateContext(hdc);
 	if (rc_handle == NULL) { logger_to_console("'CreateContext' failed\n"); DEBUG_BREAK(); common_exit_failure(); }
 
-	BOOL rc_is_current = gs_glibrary.dll.MakeCurrent(hdc, rc_handle);
+	BOOL rc_is_current = gs_gpu_library.dll.MakeCurrent(hdc, rc_handle);
 	if (!rc_is_current) { logger_to_console("'MakeCurrent' failed\n"); DEBUG_BREAK(); common_exit_failure(); }
 
 	// fetch extensions
-	gs_glibrary.arb.GetExtensionsString    = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   (void *)gs_glibrary.dll.GetProcAddress("wglGetExtensionsStringARB");
-	gs_glibrary.arb.GetPixelFormatAttribiv = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)(void *)gs_glibrary.dll.GetProcAddress("wglGetPixelFormatAttribivARB");
-	gs_glibrary.arb.CreateContextAttribs   = (PFNWGLCREATECONTEXTATTRIBSARBPROC)  (void *)gs_glibrary.dll.GetProcAddress("wglCreateContextAttribsARB");
+	gs_gpu_library.arb.GetExtensionsString    = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   (void *)gs_gpu_library.dll.GetProcAddress("wglGetExtensionsStringARB");
+	gs_gpu_library.arb.GetPixelFormatAttribiv = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)(void *)gs_gpu_library.dll.GetProcAddress("wglGetPixelFormatAttribivARB");
+	gs_gpu_library.arb.CreateContextAttribs   = (PFNWGLCREATECONTEXTATTRIBSARBPROC)  (void *)gs_gpu_library.dll.GetProcAddress("wglCreateContextAttribsARB");
 
-	gs_glibrary.ext.GetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)(void *)gs_glibrary.dll.GetProcAddress("wglGetExtensionsStringEXT");
-	gs_glibrary.ext.GetSwapInterval     = (PFNWGLGETSWAPINTERVALEXTPROC)    (void *)gs_glibrary.dll.GetProcAddress("wglGetSwapIntervalEXT");
-	gs_glibrary.ext.SwapInterval        = (PFNWGLSWAPINTERVALEXTPROC)       (void *)gs_glibrary.dll.GetProcAddress("wglSwapIntervalEXT");
+	gs_gpu_library.ext.GetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)(void *)gs_gpu_library.dll.GetProcAddress("wglGetExtensionsStringEXT");
+	gs_gpu_library.ext.GetSwapInterval     = (PFNWGLGETSWAPINTERVALEXTPROC)    (void *)gs_gpu_library.dll.GetProcAddress("wglGetSwapIntervalEXT");
+	gs_gpu_library.ext.SwapInterval        = (PFNWGLSWAPINTERVALEXTPROC)       (void *)gs_gpu_library.dll.GetProcAddress("wglSwapIntervalEXT");
 
-	gs_glibrary.arb.extensions = gs_glibrary.arb.GetExtensionsString(hdc);
-	gs_glibrary.ext.extensions = gs_glibrary.ext.GetExtensionsString();
+	gs_gpu_library.arb.extensions = gs_gpu_library.arb.GetExtensionsString(hdc);
+	gs_gpu_library.ext.extensions = gs_gpu_library.ext.GetExtensionsString();
 
-#define HAS_EXT(name) contains_full_word(gs_glibrary.ext.extensions, S_("WGL_EXT_" # name))
-	gs_glibrary.ext.has_extension_swap_control = HAS_EXT(swap_control);
+#define HAS_EXT(name) contains_full_word(gs_gpu_library.ext.extensions, S_("WGL_EXT_" # name))
+	gs_gpu_library.ext.has_extension_swap_control = HAS_EXT(swap_control);
 #undef HAS_EXT
 
-	glibrary_functions_init(glibrary_get_function);
+	gpu_library_functions_init(gpu_library_get_function);
 
 	//
-	gs_glibrary.dll.MakeCurrent(NULL, NULL);
-	gs_glibrary.dll.DeleteContext(rc_handle);
+	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
+	gs_gpu_library.dll.DeleteContext(rc_handle);
 
 	ReleaseDC(hwnd, hdc);
 	DestroyWindow(hwnd);
@@ -168,10 +168,10 @@ void glibrary_to_system_init(void) {
 #undef OPENGL_CLASS_NAME
 }
 
-void glibrary_to_system_free(void) {
-	glibrary_functions_free();
-	FreeLibrary(gs_glibrary.handle);
-	common_memset(&gs_glibrary, 0, sizeof(gs_glibrary));
+void gpu_library_to_system_free(void) {
+	gpu_library_functions_free();
+	FreeLibrary(gs_gpu_library.handle);
+	common_memset(&gs_gpu_library, 0, sizeof(gs_gpu_library));
 }
 
 //
@@ -195,11 +195,11 @@ struct Gpu_Context * gpu_context_init(void * device) {
 	struct Pixel_Format pixel_format;
 	HGLRC const handle = create_context_auto(device, NULL, &pixel_format);
 
-	gs_glibrary.dll.MakeCurrent(device , handle);
-	graphics_to_glibrary_init();
-	gs_glibrary.dll.MakeCurrent(NULL, NULL);
+	gs_gpu_library.dll.MakeCurrent(device , handle);
+	graphics_to_gpu_library_init();
+	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 
-	struct Gpu_Context * gpu_context = MEMORY_ALLOCATE(&gs_glibrary, struct Gpu_Context);
+	struct Gpu_Context * gpu_context = MEMORY_ALLOCATE(&gs_gpu_library, struct Gpu_Context);
 	*gpu_context = (struct Gpu_Context){
 		.handle = handle,
 		.pixel_format = pixel_format,
@@ -209,28 +209,28 @@ struct Gpu_Context * gpu_context_init(void * device) {
 }
 
 void gpu_context_free(struct Gpu_Context * gpu_context) {
-	graphics_to_glibrary_free();
+	graphics_to_gpu_library_free();
 
-	gs_glibrary.dll.MakeCurrent(NULL, NULL);
-	gs_glibrary.dll.DeleteContext(gpu_context->handle);
+	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
+	gs_gpu_library.dll.DeleteContext(gpu_context->handle);
 
 	common_memset(gpu_context, 0, sizeof(*gpu_context));
-	MEMORY_FREE(&gs_glibrary, gpu_context);
+	MEMORY_FREE(&gs_gpu_library, gpu_context);
 }
 
 void gpu_context_start_frame(struct Gpu_Context const * gpu_context, void * device) {
-	if (gs_glibrary.dll.GetCurrentContext()) { DEBUG_BREAK(); return; }
-	if (gs_glibrary.dll.GetCurrentDC()) { DEBUG_BREAK(); return; }
+	if (gs_gpu_library.dll.GetCurrentContext()) { DEBUG_BREAK(); return; }
+	if (gs_gpu_library.dll.GetCurrentDC()) { DEBUG_BREAK(); return; }
 
 	if (!device) { DEBUG_BREAK(); return; }
 
-	gs_glibrary.dll.MakeCurrent(device, gpu_context->handle);
+	gs_gpu_library.dll.MakeCurrent(device, gpu_context->handle);
 }
 
 void gpu_context_draw_frame(struct Gpu_Context const * gpu_context) {
-	if (!gs_glibrary.dll.GetCurrentContext()) { DEBUG_BREAK(); return; }
+	if (!gs_gpu_library.dll.GetCurrentContext()) { DEBUG_BREAK(); return; }
 
-	HDC const device = gs_glibrary.dll.GetCurrentDC();
+	HDC const device = gs_gpu_library.dll.GetCurrentDC();
 	if (!device) { DEBUG_BREAK(); return; }
 
 	if (gpu_context->pixel_format.double_buffering) {
@@ -240,27 +240,27 @@ void gpu_context_draw_frame(struct Gpu_Context const * gpu_context) {
 }
 
 void gpu_context_end_frame(void) {
-	gs_glibrary.dll.MakeCurrent(NULL, NULL);
+	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 }
 
 int32_t gpu_context_get_vsync(struct Gpu_Context const * gpu_context) {
-	if (!gs_glibrary.dll.GetCurrentContext()) { DEBUG_BREAK(); return 0; }
-	if (!gs_glibrary.dll.GetCurrentDC()) { DEBUG_BREAK(); return 0; }
+	if (!gs_gpu_library.dll.GetCurrentContext()) { DEBUG_BREAK(); return 0; }
+	if (!gs_gpu_library.dll.GetCurrentDC()) { DEBUG_BREAK(); return 0; }
 
 	if (!gpu_context->pixel_format.double_buffering) { return 0; }
-	if (!gs_glibrary.ext.has_extension_swap_control) { /*default is 1*/ return 1; }
-	return gs_glibrary.ext.GetSwapInterval();
+	if (!gs_gpu_library.ext.has_extension_swap_control) { /*default is 1*/ return 1; }
+	return gs_gpu_library.ext.GetSwapInterval();
 
 	// https://www.khronos.org/registry/OpenGL/extensions/EXT/WGL_EXT_swap_control.txt
 }
 
 void gpu_context_set_vsync(struct Gpu_Context * gpu_context, int32_t value) {
-	if (!gs_glibrary.dll.GetCurrentContext()) { DEBUG_BREAK(); return; }
-	if (!gs_glibrary.dll.GetCurrentDC()) { DEBUG_BREAK(); return; }
+	if (!gs_gpu_library.dll.GetCurrentContext()) { DEBUG_BREAK(); return; }
+	if (!gs_gpu_library.dll.GetCurrentDC()) { DEBUG_BREAK(); return; }
 
 	if (!gpu_context->pixel_format.double_buffering) { return; }
-	if (!gs_glibrary.ext.has_extension_swap_control) { return; }
-	gs_glibrary.ext.SwapInterval(value);
+	if (!gs_gpu_library.ext.has_extension_swap_control) { return; }
+	gs_gpu_library.ext.SwapInterval(value);
 }
 
 //
@@ -290,15 +290,15 @@ static int dictionary_int_int_get_value(int const * keys, int const * vals, int 
 }
 
 static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
-#define HAS_ARB(name) contains_full_word(gs_glibrary.arb.extensions, S_("WGL_ARB_" # name))
-#define HAS_EXT(name) contains_full_word(gs_glibrary.ext.extensions, S_("WGL_EXT_" # name))
+#define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" # name))
+#define HAS_EXT(name) contains_full_word(gs_gpu_library.ext.extensions, S_("WGL_EXT_" # name))
 #define KEYS_COUNT (sizeof(request_keys) / sizeof(*request_keys))
 #define GET_VALUE(key) dictionary_int_int_get_value(request_keys, request_vals, key)
 
 	if (!HAS_ARB(pixel_format)) { return NULL; }
 
 	int const formats_request = WGL_NUMBER_PIXEL_FORMATS_ARB; int formats_capacity;
-	if (!gs_glibrary.arb.GetPixelFormatAttribiv(device, 0, 0, 1, &formats_request, &formats_capacity)) { DEBUG_BREAK(); return NULL; }
+	if (!gs_gpu_library.arb.GetPixelFormatAttribiv(device, 0, 0, 1, &formats_request, &formats_capacity)) { DEBUG_BREAK(); return NULL; }
 	if (formats_capacity == 0) { DEBUG_BREAK(); return NULL; }
 
 	bool has_extension_multisample = HAS_ARB(multisample);
@@ -329,10 +329,10 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 	int request_vals[KEYS_COUNT];
 
 	int formats_count = 0;
-	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(&gs_glibrary, struct Pixel_Format, formats_capacity + 1);
+	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(&gs_gpu_library, struct Pixel_Format, formats_capacity + 1);
 	for (int i = 0; i < formats_capacity; i++) {
 		int pfd_id = i + 1;
-		if (!gs_glibrary.arb.GetPixelFormatAttribiv(device, pfd_id, 0, KEYS_COUNT, request_keys, request_vals)) { DEBUG_BREAK(); continue; }
+		if (!gs_gpu_library.arb.GetPixelFormatAttribiv(device, pfd_id, 0, KEYS_COUNT, request_keys, request_vals)) { DEBUG_BREAK(); continue; }
 
 		if (GET_VALUE(WGL_DRAW_TO_WINDOW_ARB) == false)                     { continue; }
 		if (GET_VALUE(WGL_SUPPORT_GDI_ARB)    == true)                      { continue; }
@@ -388,7 +388,7 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 	if (formats_capacity == 0) { return NULL; }
 
 	int formats_count = 0;
-	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(&gs_glibrary, struct Pixel_Format, formats_capacity + 1);
+	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(&gs_gpu_library, struct Pixel_Format, formats_capacity + 1);
 	for (int i = 0; i < formats_capacity; i++) {
 		int pfd_id = i + 1;
 		PIXELFORMATDESCRIPTOR pfd;
@@ -462,7 +462,7 @@ struct Context_Format {
 };
 
 static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format const * context_format) {
-#define HAS_ARB(name) contains_full_word(gs_glibrary.arb.extensions, S_("WGL_ARB_" # name))
+#define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" # name))
 #define ADD_ATTRIBUTE(key, value) \
 	do { \
 		attributes[attributes_count++] = key; \
@@ -533,7 +533,7 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format 
 
 	//
 	ADD_ATTRIBUTE(0, 0);
-	return gs_glibrary.arb.CreateContextAttribs(device, shared, attributes);
+	return gs_gpu_library.arb.CreateContextAttribs(device, shared, attributes);
 	// https://www.khronos.org/opengl/wiki/OpenGL_Context
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
 	// https://www.khronos.org/registry/OpenGL/extensions/KHR/KHR_context_flush_control.txt
@@ -545,8 +545,8 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format 
 }
 
 static HGLRC create_context_legacy(HDC device, HGLRC shared) {
-	HGLRC result = gs_glibrary.dll.CreateContext(device);
-	if (shared != NULL) { gs_glibrary.dll.ShareLists(shared, result); }
+	HGLRC result = gs_gpu_library.dll.CreateContext(device);
+	if (shared != NULL) { gs_gpu_library.dll.ShareLists(shared, result); }
 	return result;
 }
 
@@ -570,7 +570,7 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 		common_exit_failure();
 	}
 
-	MEMORY_FREE(&gs_glibrary, pixel_formats);
+	MEMORY_FREE(&gs_gpu_library, pixel_formats);
 
 	PIXELFORMATDESCRIPTOR pfd;
 	int formats_count = DescribePixelFormat(device, pixel_format.id, sizeof(pfd), &pfd);
@@ -598,13 +598,13 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 
 //
 
-static void * glibrary_get_function(struct CString name) {
+static void * gpu_library_get_function(struct CString name) {
 	if (name.data == NULL) { return NULL; }
 
-	PROC ogl_address = gs_glibrary.dll.GetProcAddress(name.data);
+	PROC ogl_address = gs_gpu_library.dll.GetProcAddress(name.data);
 	if (ogl_address != NULL) { return (void *)ogl_address; }
 
-	FARPROC dll_address = GetProcAddress(gs_glibrary.handle, name.data);
+	FARPROC dll_address = GetProcAddress(gs_gpu_library.handle, name.data);
 	if (dll_address != NULL) { return (void *)dll_address; }
 
 	return NULL;

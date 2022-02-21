@@ -1068,7 +1068,7 @@ void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 }
 
 //
-#include "graphics_to_glibrary.h"
+#include "graphics_to_gpu_library.h"
 
 static void __stdcall opengl_debug_message_callback(
 	GLenum source,
@@ -1082,7 +1082,7 @@ static void __stdcall opengl_debug_message_callback(
 
 bool contains_full_word(char const * container, struct CString value);
 static char * allocate_extensions_string(void);
-void graphics_to_glibrary_init(void) {
+void graphics_to_gpu_library_init(void) {
 	// setup debug
 	if (glDebugMessageCallback != NULL) {
 		glEnable(GL_DEBUG_OUTPUT);
@@ -1175,7 +1175,7 @@ void graphics_to_glibrary_init(void) {
 	glDepthFunc(gpu_comparison_op((gs_graphics_state.clip_space[2] > gs_graphics_state.clip_space[3]) ? COMPARISON_OP_MORE : COMPARISON_OP_LESS));
 }
 
-void graphics_to_glibrary_free(void) {
+void graphics_to_gpu_library_free(void) {
 	// @note: consider `ref.id == 0` empty
 	if (gs_graphics_state.programs.count > 1) { logger_to_console("dangling programs: %u\n", gs_graphics_state.programs.count - 1); }
 	if (gs_graphics_state.targets.count  > 1) { logger_to_console("dangling targets:  %u\n", gs_graphics_state.targets.count - 1); }

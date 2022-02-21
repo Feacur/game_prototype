@@ -5,7 +5,7 @@
 
 uint32_t ogl_version = 0;
 
-void glibrary_functions_init(void * (* get)(struct CString name)) {
+void gpu_library_functions_init(void * (* get)(struct CString name)) {
 	#define XMACRO_INIT() \
 		do { \
 			GLint version_major; \
@@ -33,7 +33,7 @@ void glibrary_functions_init(void * (* get)(struct CString name)) {
 	#include "xmacro.h"
 }
 
-void glibrary_functions_free(void) {
+void gpu_library_functions_free(void) {
 	#define XMACRO(type, name) gl ## name = NULL;
 	#include "xmacro.h"
 
