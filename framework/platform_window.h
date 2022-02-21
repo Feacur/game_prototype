@@ -16,11 +16,11 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 void platform_window_free(struct Window * window);
 
 bool platform_window_exists(struct Window const * window);
-void platform_window_update(struct Window * window);
+void platform_window_start_frame(struct Window * window);
+void platform_window_draw_frame(struct Window * window);
+void platform_window_end_frame(struct Window * window);
 
-int32_t platform_window_get_vsync(struct Window const * window);
-void platform_window_set_vsync(struct Window * window, int32_t value);
-void platform_window_display(struct Window * window);
+void * platform_window_get_cached_device(struct Window * window);
 
 void platform_window_get_size(struct Window const * window, uint32_t * size_x, uint32_t * size_y);
 uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value);

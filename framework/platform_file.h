@@ -4,7 +4,7 @@
 #include "common.h"
 
 // @note: `platform_file_read_entire` should reserve a byte more for a potential null-terminator
-//        the function assumes the buffer is uninitialized or empty: it *will* leak you memory otherwise
+//        the function assumes the buffer is uninitialized or empty: it *shall* leak you memory otherwise
 
 struct Buffer;
 struct File;

@@ -1,9 +1,9 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
+#include "framework/gpu_context.h"
 #include "framework/internal/input_to_window.h"
 
 #include "system_to_internal.h"
-#include "glibrary_to_window.h"
 
 #include <Windows.h>
 #include <hidusage.h>
@@ -17,7 +17,6 @@
 struct Window {
 	HWND handle;
 	uint32_t size_x, size_y;
-	struct GInstance * ginstance;
 	bool raw_input;
 	// fullscreen
 	WINDOWPLACEMENT pre_fullscreen_position;
@@ -27,7 +26,6 @@ struct Window {
 	bool ignore_once_WM_KILLFOCUS;
 };
 
-static void platform_window_internal_release_dc(struct Window * window);
 static void platform_window_internal_toggle_raw_input(struct Window * window, bool state);
 struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Window_Settings settings) {
 	// @note: initial styles are bound to have some implicit flags
@@ -75,28 +73,17 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 
 	RECT client_rect;
 	GetClientRect(handle, &client_rect);
-
-	HDC const device = GetDC(handle);
-	if (device == NULL) { goto fail_device; }
-
 	*window = (struct Window){
 		.handle = handle,
 		.size_x = (uint32_t)(client_rect.right - client_rect.left),
 		.size_y = (uint32_t)(client_rect.bottom - client_rect.top),
-		.ginstance = ginstance_init(device),
-		.frame_cached_device = device,
 	};
 
-	platform_window_internal_release_dc(window);
 	platform_window_internal_toggle_raw_input(window, true);
 	ShowWindow(handle, SW_SHOW);
 	return window;
 
 	// process errors
-	fail_device: DEBUG_BREAK();
-	if (device) { ReleaseDC(handle, device); }
-	else { logger_to_console("failed to get device context"); }
-
 	fail_window: DEBUG_BREAK();
 	if (window) { MEMORY_FREE(NULL, window); }
 	else { logger_to_console("failed to initialize application window"); }
@@ -109,6 +96,7 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 
 void platform_window_free(struct Window * window) {
 	if (window->handle != NULL) {
+		platform_window_internal_toggle_raw_input(window, false);
 		DestroyWindow(window->handle);
 		// delegate all the work to WM_DESTROY
 	}
@@ -122,21 +110,21 @@ bool platform_window_exists(struct Window const * window) {
 	return window->handle != NULL;
 }
 
-void platform_window_update(struct Window * window) {
+void platform_window_start_frame(struct Window * window) {
 	window->frame_cached_device = GetDC(window->handle);
 }
 
-int32_t platform_window_get_vsync(struct Window const * window) {
-	return ginstance_get_vsync(window->ginstance);
+void platform_window_draw_frame(struct Window * window) {
+	(void)window;
 }
 
-void platform_window_set_vsync(struct Window * window, int32_t value) {
-	ginstance_set_vsync(window->ginstance, value);
+void platform_window_end_frame(struct Window * window) {
+	ReleaseDC(window->handle, window->frame_cached_device);
+	window->frame_cached_device = NULL;
 }
 
-void platform_window_display(struct Window * window) {
-	ginstance_display(window->ginstance, window->frame_cached_device);
-	platform_window_internal_release_dc(window);
+void * platform_window_get_cached_device(struct Window * window) {
+	return window->frame_cached_device;
 }
 
 void platform_window_get_size(struct Window const * window, uint32_t * size_x, uint32_t * size_y) {
@@ -145,6 +133,8 @@ void platform_window_get_size(struct Window const * window, uint32_t * size_x, u
 }
 
 uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value) {
+	if (!window->frame_cached_device) { DEBUG_BREAK(); return 0; }
+
 	int value = GetDeviceCaps(window->frame_cached_device, VREFRESH);
 	return value > 1 ? (uint32_t)value : default_value;
 }
@@ -184,17 +174,6 @@ void window_to_system_free(void) {
 }
 
 //
-
-static void platform_window_internal_release_dc(struct Window * window) {
-	HDC const device = window->frame_cached_device;
-	window->frame_cached_device = NULL;
-
-	WNDCLASSEX window_class;
-	GetClassInfoEx(system_to_internal_get_module(), TEXT(APPLICATION_CLASS_NAME), &window_class);
-	if (window_class.style & CS_OWNDC) { return; }
-	if (window_class.style & CS_CLASSDC) { return; }
-	ReleaseDC(window->handle, device);
-}
 
 static void platform_window_internal_toggle_borderless_fullscreen(struct Window * window) {
 	LONG_PTR const window_style = GetWindowLongPtr(window->handle, GWL_STYLE);
@@ -303,21 +282,26 @@ static enum Key_Code translate_virtual_key_to_application(uint8_t scan, uint8_t 
 	return KC_ERROR;
 }
 
-static void platform_window_internal_toggle_raw_input(struct Window * window, bool state) {
-	RAWINPUTDEVICE devices[8]; UINT devices_count;
-	if (!GetRegisteredRawInputDevices(devices, &devices_count, sizeof(RAWINPUTDEVICE))) {
-		logger_to_console("'GetRegisteredRawInputDevices' failed\n"); DEBUG_BREAK();
-		return;
-	}
+static bool platform_window_internal_has_raw_input(struct Window * window) {
+	UINT count;
+	GetRegisteredRawInputDevices(NULL, &count, sizeof(RAWINPUTDEVICE));
 
-	for (uint32_t i = 0; i < devices_count; i++) {
-		if (devices[i].hwndTarget != window->handle) {
-			logger_to_console("application already have raw input registered to another window"); DEBUG_BREAK();
-			return;
+	RAWINPUTDEVICE * devices = alloca(sizeof(RAWINPUTDEVICE) * count);
+	if (GetRegisteredRawInputDevices(devices, &count, sizeof(RAWINPUTDEVICE)) != (UINT)-1) {
+		for (uint32_t i = 0; i < count; i++) {
+			if (devices[i].hwndTarget == window->handle) {
+				return true;
+			}
 		}
 	}
 
-	if ((devices_count > 0) == state) { return; }
+	return false;
+}
+
+static void platform_window_internal_toggle_raw_input(struct Window * window, bool state) {
+	bool const has_raw_input = platform_window_internal_has_raw_input(window);
+
+	if (has_raw_input == state) { return; }
 	USHORT const flags = state ? /*RIDEV_INPUTSINK*/ 0 : RIDEV_REMOVE;
 	HWND const target = state ? window->handle : NULL;
 
@@ -325,12 +309,13 @@ static void platform_window_internal_toggle_raw_input(struct Window * window, bo
 	// - for keyboard it removes crucial `WM_CHAR`
 	// - for mouse it removes windowed interactions
 
-	devices_count = 2;
-	devices[0] = (RAWINPUTDEVICE){.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_KEYBOARD, .dwFlags = flags, .hwndTarget = target};
-	devices[1] = (RAWINPUTDEVICE){.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_MOUSE,    .dwFlags = flags, .hwndTarget = target};
-	devices[2] = (RAWINPUTDEVICE){.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_GAMEPAD,  .dwFlags = flags, .hwndTarget = target};
+	RAWINPUTDEVICE const devices[] = {
+		{.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_KEYBOARD, .dwFlags = flags, .hwndTarget = target},
+		{.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_MOUSE,    .dwFlags = flags, .hwndTarget = target},
+		{.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_GAMEPAD,  .dwFlags = flags, .hwndTarget = target},
+	};
 
-	if (!RegisterRawInputDevices(devices, devices_count, sizeof(RAWINPUTDEVICE))) {
+	if (!RegisterRawInputDevices(devices, sizeof(devices) / sizeof(*devices), sizeof(RAWINPUTDEVICE))) {
 		logger_to_console("'RegisterRawInputDevices' failed\n"); DEBUG_BREAK();
 		return;
 	}
@@ -613,6 +598,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		}
 
 		case WM_CLOSE: { // sent immediately
+			platform_window_internal_toggle_raw_input(window, false);
 			window->handle = NULL;
 			DestroyWindow(hwnd);
 			return 0;
@@ -624,8 +610,6 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			bool should_free = window->handle != NULL;
 			RemoveProp(hwnd, TEXT(APPLICATION_CLASS_NAME));
 			input_to_platform_reset();
-			if (window->ginstance != NULL) { ginstance_free(window->ginstance); }
-			platform_window_internal_toggle_raw_input(window, false);
 			common_memset(window, 0, sizeof(*window));
 			if (should_free) { MEMORY_FREE(window, window); }
 			return 0;

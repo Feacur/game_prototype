@@ -2,6 +2,7 @@
 #include "framework/platform_file.h"
 #include "framework/platform_system.h"
 #include "framework/platform_window.h"
+#include "framework/gpu_context.h"
 #include "framework/input.h"
 #include "framework/logger.h"
 
@@ -12,6 +13,7 @@ static struct Application {
 	struct Application_Callbacks callbacks;
 	struct Application_Config config;
 	struct Window * window;
+	struct Gpu_Context * gpu_context;
 
 	struct {
 		uint64_t per_second, frame_start;
@@ -62,21 +64,31 @@ static void application_init(void) {
 		common_exit_failure();
 	}
 
-	platform_window_set_vsync(gs_app.window, gs_app.config.vsync);
+	platform_window_start_frame(gs_app.window);
+	gs_app.gpu_context = gpu_context_init(platform_window_get_cached_device(gs_app.window));
+	gpu_context_start_frame(gs_app.gpu_context, platform_window_get_cached_device(gs_app.window));
 
 	// setup timer, rewind it one frame
+	int32_t const vsync_mode = gpu_context_get_vsync(gs_app.gpu_context);
 	gs_app.ticks.per_second  = platform_timer_get_ticks_per_second();
-	gs_app.ticks.frame_start = platform_timer_get_ticks() - get_target_ticks(platform_window_get_vsync(gs_app.window));
+	gs_app.ticks.frame_start = platform_timer_get_ticks() - get_target_ticks(vsync_mode);
 
-	//
+	gpu_context_set_vsync(gs_app.gpu_context, gs_app.config.vsync);
 	if (gs_app.callbacks.init != NULL) {
 		gs_app.callbacks.init();
 	}
+
+	platform_window_end_frame(gs_app.window);
+	gpu_context_end_frame();
 }
 
 static void application_free(void) {
 	if (gs_app.callbacks.free != NULL) {
 		gs_app.callbacks.free();
+	}
+
+	if (gs_app.gpu_context != NULL) {
+		gpu_context_free(gs_app.gpu_context);
 	}
 
 	if (gs_app.window != NULL) {
@@ -97,7 +109,6 @@ static bool application_update(void) {
 
 	// window might be closed by platform
 	if (!platform_window_exists(gs_app.window)) { return false; }
-	platform_window_update(gs_app.window);
 
 	// process application-side input
 	if (input_key(KC_ALT)) {
@@ -107,9 +118,11 @@ static bool application_update(void) {
 		}
 	}
 
-	// track frame time, limit in case of heavy stutters or debug steps
+	platform_window_start_frame(gs_app.window);
+	gpu_context_start_frame(gs_app.gpu_context, platform_window_get_cached_device(gs_app.window));
+
 	uint64_t const timer_ticks  = platform_timer_get_ticks();
-	int32_t  const vsync_mode   = platform_window_get_vsync(gs_app.window);
+	int32_t  const vsync_mode   = gpu_context_get_vsync(gs_app.gpu_context);
 	uint64_t const target_ticks = get_target_ticks(vsync_mode);
 	uint64_t const fixed_ticks  = gs_app.ticks.per_second / gs_app.config.fixed_refresh_rate;
 
@@ -122,7 +135,6 @@ static bool application_update(void) {
 
 	gs_app.ticks.fixed_accumulator += frame_ticks;
 
-	// fixed update / frame update / render
 	while (gs_app.ticks.fixed_accumulator > fixed_ticks) {
 		gs_app.ticks.fixed_accumulator -= fixed_ticks;
 		if (gs_app.callbacks.fixed_update != NULL) {
@@ -147,8 +159,11 @@ static bool application_update(void) {
 		);
 	}
 
-	// swap buffers / display buffer / might vsync
-	platform_window_display(gs_app.window);
+	platform_window_draw_frame(gs_app.window);
+	gpu_context_draw_frame(gs_app.gpu_context);
+	
+	platform_window_end_frame(gs_app.window);
+	gpu_context_end_frame();
 
 	if (vsync_mode == 0) {
 		uint64_t const frame_end_ticks = gs_app.ticks.frame_start + target_ticks;

@@ -13,11 +13,13 @@ static struct GLibrary {
 	HMODULE handle;
 
 	struct {
-		PFNWGLGETPROCADDRESSPROC GetProcAddress;
-		PFNWGLCREATECONTEXTPROC  CreateContext;
-		PFNWGLDELETECONTEXTPROC  DeleteContext;
-		PFNWGLMAKECURRENTPROC    MakeCurrent;
-		PFNWGLSHARELISTSPROC     ShareLists;
+		PFNWGLGETPROCADDRESSPROC    GetProcAddress;
+		PFNWGLCREATECONTEXTPROC     CreateContext;
+		PFNWGLDELETECONTEXTPROC     DeleteContext;
+		PFNWGLMAKECURRENTPROC       MakeCurrent;
+		PFNWGLGETCURRENTCONTEXTPROC GetCurrentContext;
+		PFNWGLGETCURRENTDCPROC      GetCurrentDC;
+		PFNWGLSHARELISTSPROC        ShareLists;
 	} dll;
 
 	struct {
@@ -29,6 +31,7 @@ static struct GLibrary {
 
 	struct {
 		PFNWGLGETEXTENSIONSSTRINGEXTPROC GetExtensionsString;
+		PFNWGLGETSWAPINTERVALEXTPROC     GetSwapInterval;
 		PFNWGLSWAPINTERVALEXTPROC        SwapInterval;
 		char const * extensions;
 		bool has_extension_swap_control;
@@ -37,6 +40,8 @@ static struct GLibrary {
 
 //
 #include "glibrary_to_system.h"
+
+static void * glibrary_get_function(struct CString name);
 
 bool contains_full_word(char const * container, struct CString value);
 void glibrary_to_system_init(void) {
@@ -50,11 +55,13 @@ void glibrary_to_system_init(void) {
 	}
 
 	// fetch basic DLL functions
-	gs_glibrary.dll.GetProcAddress = (PFNWGLGETPROCADDRESSPROC)(void *)GetProcAddress(gs_glibrary.handle, "wglGetProcAddress");
-	gs_glibrary.dll.CreateContext  = (PFNWGLCREATECONTEXTPROC) (void *)GetProcAddress(gs_glibrary.handle, "wglCreateContext");
-	gs_glibrary.dll.DeleteContext  = (PFNWGLDELETECONTEXTPROC) (void *)GetProcAddress(gs_glibrary.handle, "wglDeleteContext");
-	gs_glibrary.dll.MakeCurrent    = (PFNWGLMAKECURRENTPROC)   (void *)GetProcAddress(gs_glibrary.handle, "wglMakeCurrent");
-	gs_glibrary.dll.ShareLists     = (PFNWGLSHARELISTSPROC)    (void *)GetProcAddress(gs_glibrary.handle, "wglShareLists");
+	gs_glibrary.dll.GetProcAddress    = (PFNWGLGETPROCADDRESSPROC)   (void *)GetProcAddress(gs_glibrary.handle, "wglGetProcAddress");
+	gs_glibrary.dll.CreateContext     = (PFNWGLCREATECONTEXTPROC)    (void *)GetProcAddress(gs_glibrary.handle, "wglCreateContext");
+	gs_glibrary.dll.DeleteContext     = (PFNWGLDELETECONTEXTPROC)    (void *)GetProcAddress(gs_glibrary.handle, "wglDeleteContext");
+	gs_glibrary.dll.MakeCurrent       = (PFNWGLMAKECURRENTPROC)      (void *)GetProcAddress(gs_glibrary.handle, "wglMakeCurrent");
+	gs_glibrary.dll.GetCurrentContext = (PFNWGLGETCURRENTCONTEXTPROC)(void *)GetProcAddress(gs_glibrary.handle, "wglGetCurrentContext");
+	gs_glibrary.dll.GetCurrentDC      = (PFNWGLGETCURRENTDCPROC)     (void *)GetProcAddress(gs_glibrary.handle, "wglGetCurrentDC");
+	gs_glibrary.dll.ShareLists        = (PFNWGLSHARELISTSPROC)       (void *)GetProcAddress(gs_glibrary.handle, "wglShareLists");
 
 	// create temporary class
 	// ATOM atom = RegisterClassEx(&(WNDCLASSEX){
@@ -130,6 +137,7 @@ void glibrary_to_system_init(void) {
 	gs_glibrary.arb.CreateContextAttribs   = (PFNWGLCREATECONTEXTATTRIBSARBPROC)  (void *)gs_glibrary.dll.GetProcAddress("wglCreateContextAttribsARB");
 
 	gs_glibrary.ext.GetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)(void *)gs_glibrary.dll.GetProcAddress("wglGetExtensionsStringEXT");
+	gs_glibrary.ext.GetSwapInterval     = (PFNWGLGETSWAPINTERVALEXTPROC)    (void *)gs_glibrary.dll.GetProcAddress("wglGetSwapIntervalEXT");
 	gs_glibrary.ext.SwapInterval        = (PFNWGLSWAPINTERVALEXTPROC)       (void *)gs_glibrary.dll.GetProcAddress("wglSwapIntervalEXT");
 
 	gs_glibrary.arb.extensions = gs_glibrary.arb.GetExtensionsString(hdc);
@@ -138,6 +146,8 @@ void glibrary_to_system_init(void) {
 #define HAS_EXT(name) contains_full_word(gs_glibrary.ext.extensions, S_("WGL_EXT_" # name))
 	gs_glibrary.ext.has_extension_swap_control = HAS_EXT(swap_control);
 #undef HAS_EXT
+
+	glibrary_functions_init(glibrary_get_function);
 
 	//
 	gs_glibrary.dll.MakeCurrent(NULL, NULL);
@@ -154,12 +164,13 @@ void glibrary_to_system_init(void) {
 }
 
 void glibrary_to_system_free(void) {
+	glibrary_functions_free();
 	FreeLibrary(gs_glibrary.handle);
 	common_memset(&gs_glibrary, 0, sizeof(gs_glibrary));
 }
 
 //
-#include "glibrary_to_window.h"
+#include "framework/gpu_context.h"
 
 struct Pixel_Format {
 	int id;
@@ -169,58 +180,79 @@ struct Pixel_Format {
 	int samples, sample_buffers;
 };
 
-struct GInstance {
+struct Gpu_Context {
 	HGLRC handle;
 	struct Pixel_Format pixel_format;
-	int32_t vsync;
 };
 
 static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format);
-static void * glibrary_get_function(struct CString name);
-struct GInstance * ginstance_init(void * device) {
-	struct GInstance * ginstance = MEMORY_ALLOCATE(&gs_glibrary, struct GInstance);
+struct Gpu_Context * gpu_context_init(void * device) {
+	struct Pixel_Format pixel_format;
+	HGLRC const handle = create_context_auto(device, NULL, &pixel_format);
 
-	ginstance->handle = create_context_auto(device, NULL, &ginstance->pixel_format);
-	gs_glibrary.dll.MakeCurrent(device , ginstance->handle);
-	ginstance->vsync = 0;
-
-	glibrary_functions_init(glibrary_get_function);
+	gs_glibrary.dll.MakeCurrent(device , handle);
 	graphics_to_glibrary_init();
+	gs_glibrary.dll.MakeCurrent(NULL, NULL);
 
-	return ginstance;
+	struct Gpu_Context * gpu_context = MEMORY_ALLOCATE(&gs_glibrary, struct Gpu_Context);
+	*gpu_context = (struct Gpu_Context){
+		.handle = handle,
+		.pixel_format = pixel_format,
+	};
+
+	return gpu_context;
 }
 
-void ginstance_free(struct GInstance * ginstance) {
+void gpu_context_free(struct Gpu_Context * gpu_context) {
 	graphics_to_glibrary_free();
-	glibrary_functions_free();
 
 	gs_glibrary.dll.MakeCurrent(NULL, NULL);
-	gs_glibrary.dll.DeleteContext(ginstance->handle);
+	gs_glibrary.dll.DeleteContext(gpu_context->handle);
 
-	common_memset(ginstance, 0, sizeof(*ginstance));
-	MEMORY_FREE(&gs_glibrary, ginstance);
+	common_memset(gpu_context, 0, sizeof(*gpu_context));
+	MEMORY_FREE(&gs_glibrary, gpu_context);
 }
 
-int32_t ginstance_get_vsync(struct GInstance const * ginstance) {
-	return ginstance->vsync;
+void gpu_context_start_frame(struct Gpu_Context const * gpu_context, void * device) {
+	if (!device) { DEBUG_BREAK(); return; }
+
+	gs_glibrary.dll.MakeCurrent(device , gpu_context->handle);
 }
 
-void ginstance_set_vsync(struct GInstance * ginstance, int32_t value) {
-	if (!ginstance->pixel_format.double_buffering) { return; }
-	if (gs_glibrary.ext.has_extension_swap_control) {
-		if (gs_glibrary.ext.SwapInterval((int)value)) {
-			ginstance->vsync = value;
-			return;
-		}
+void gpu_context_draw_frame(struct Gpu_Context const * gpu_context) {
+	if (!gs_glibrary.dll.GetCurrentContext()) { DEBUG_BREAK(); return; }
+
+	HDC const device = gs_glibrary.dll.GetCurrentDC();
+	if (!device) { DEBUG_BREAK(); return; }
+
+	if (gpu_context->pixel_format.double_buffering) {
+		if (SwapBuffers(device)) { return; }
 	}
+	glFinish();
 }
 
-void ginstance_display(struct GInstance const * ginstance, void * device) {
-	if (ginstance->pixel_format.double_buffering) {
-		if (SwapBuffers((HDC)device)) { return; }
-	}
-	glFlush();
-	// glFinish();
+void gpu_context_end_frame(void) {
+	gs_glibrary.dll.MakeCurrent(NULL, NULL);
+}
+
+int32_t gpu_context_get_vsync(struct Gpu_Context const * gpu_context) {
+	if (!gs_glibrary.dll.GetCurrentContext()) { DEBUG_BREAK(); return 0; }
+	if (!gs_glibrary.dll.GetCurrentDC()) { DEBUG_BREAK(); return 0; }
+
+	if (!gpu_context->pixel_format.double_buffering) { return 0; }
+	if (!gs_glibrary.ext.has_extension_swap_control) { /*default is 1*/ return 1; }
+	return gs_glibrary.ext.GetSwapInterval();
+
+	// https://www.khronos.org/registry/OpenGL/extensions/EXT/WGL_EXT_swap_control.txt
+}
+
+void gpu_context_set_vsync(struct Gpu_Context * gpu_context, int32_t value) {
+	if (!gs_glibrary.dll.GetCurrentContext()) { DEBUG_BREAK(); return; }
+	if (!gs_glibrary.dll.GetCurrentDC()) { DEBUG_BREAK(); return; }
+
+	if (!gpu_context->pixel_format.double_buffering) { return; }
+	if (!gs_glibrary.ext.has_extension_swap_control) { return; }
+	gs_glibrary.ext.SwapInterval(value);
 }
 
 //
@@ -385,22 +417,26 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 	return formats;
 }
 
-static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * formats, struct Pixel_Format hint) {
+static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * formats, struct Pixel_Format const * hint) {
 	for (struct Pixel_Format const * format = formats; format->id != 0; format++) {
-		if (format->r       < hint.r)       { continue; }
-		if (format->g       < hint.g)       { continue; }
-		if (format->b       < hint.b)       { continue; }
-		if (format->a       < hint.a)       { continue; }
-		if (format->depth   < hint.depth)   { continue; }
-		if (format->stencil < hint.stencil) { continue; }
+		if (!format->double_buffering) { DEBUG_BREAK(); }
+	}
 
-		if (format->double_buffering < hint.double_buffering) { continue; }
-		if (hint.swap_method != 0) {
-			if (format->swap_method != hint.swap_method) { continue; }
+	for (struct Pixel_Format const * format = formats; format->id != 0; format++) {
+		if (format->r       < hint->r)       { continue; }
+		if (format->g       < hint->g)       { continue; }
+		if (format->b       < hint->b)       { continue; }
+		if (format->a       < hint->a)       { continue; }
+		if (format->depth   < hint->depth)   { continue; }
+		if (format->stencil < hint->stencil) { continue; }
+
+		if (format->double_buffering < hint->double_buffering) { continue; }
+		if (hint->swap_method != 0) {
+			if (format->swap_method != hint->swap_method) { continue; }
 		}
 
-		if (format->samples < hint.samples) { continue; }
-		if (format->sample_buffers < hint.sample_buffers) { continue; }
+		if (format->samples < hint->samples) { continue; }
+		if (format->sample_buffers < hint->sample_buffers) { continue; }
 
 		return *format;
 	}
@@ -417,7 +453,7 @@ struct Context_Format {
 	int robust;
 };
 
-static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format context_format) {
+static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format const * context_format) {
 #define HAS_ARB(name) contains_full_word(gs_glibrary.arb.extensions, S_("WGL_ARB_" # name))
 #define ADD_ATTRIBUTE(key, value) \
 	do { \
@@ -434,44 +470,44 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format 
 	int context_profile_mask  = 0;
 
 	// version
-	if (context_format.version != 0) {
-		ADD_ATTRIBUTE(WGL_CONTEXT_MAJOR_VERSION_ARB, context_format.version / 10);
-		ADD_ATTRIBUTE(WGL_CONTEXT_MINOR_VERSION_ARB, context_format.version % 10);
+	if (context_format->version != 0) {
+		ADD_ATTRIBUTE(WGL_CONTEXT_MAJOR_VERSION_ARB, context_format->version / 10);
+		ADD_ATTRIBUTE(WGL_CONTEXT_MINOR_VERSION_ARB, context_format->version % 10);
 	}
 
 	// profile
-	if (context_format.version >= 32) {
-		switch (context_format.profile) {
+	if (context_format->version >= 32) {
+		switch (context_format->profile) {
 			case 1: context_profile_mask |= WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB; break;
 			case 2: context_profile_mask |= WGL_CONTEXT_CORE_PROFILE_BIT_ARB; break;
 		}
 	}
 
 	// deprecation
-	if (context_format.deprecate != 0 && context_format.version >= 30) {
+	if (context_format->deprecate != 0 && context_format->version >= 30) {
 		context_flags |= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
 	}
 
 	// flush control
 	if (HAS_ARB(context_flush_control)) {
-		switch (context_format.flush) {
+		switch (context_format->flush) {
 			case 1: ADD_ATTRIBUTE(WGL_CONTEXT_RELEASE_BEHAVIOR_ARB, WGL_CONTEXT_RELEASE_BEHAVIOR_NONE_ARB); break;
 			case 2: ADD_ATTRIBUTE(WGL_CONTEXT_RELEASE_BEHAVIOR_ARB, WGL_CONTEXT_RELEASE_BEHAVIOR_FLUSH_ARB); break;
 		}
 	}
 
 	// error control
-	if (context_format.no_error != 0 && HAS_ARB(create_context_no_error)) {
+	if (context_format->no_error != 0 && HAS_ARB(create_context_no_error)) {
 		ADD_ATTRIBUTE(WGL_CONTEXT_OPENGL_NO_ERROR_ARB, true);
 	}
 	else {
-		if (context_format.debug != 0) {
+		if (context_format->debug != 0) {
 			context_flags |= WGL_CONTEXT_DEBUG_BIT_ARB;
 		}
 
-		if (context_format.robust != 0 && HAS_ARB(create_context_robustness)) {
+		if (context_format->robust != 0 && HAS_ARB(create_context_robustness)) {
 			context_flags |= WGL_CONTEXT_ROBUST_ACCESS_BIT_ARB;
-			switch (context_format.robust) {
+			switch (context_format->robust) {
 				case 1: ADD_ATTRIBUTE(WGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB, WGL_NO_RESET_NOTIFICATION_ARB); break;
 				case 2: ADD_ATTRIBUTE(WGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB, WGL_LOSE_CONTEXT_ON_RESET_ARB); break;
 			}
@@ -507,12 +543,12 @@ static HGLRC create_context_legacy(HDC device, HGLRC shared) {
 }
 
 static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format) {
-	struct Pixel_Format hint = (struct Pixel_Format){
+	struct Pixel_Format const hint = (struct Pixel_Format){
 		.double_buffering = true, .swap_method = 0,
 		.r = 8, .g = 8, .b = 8, .a = 8,
 		.depth = 24, .stencil = 8,
 	};
-	struct Context_Format settings = (struct Context_Format){
+	struct Context_Format const settings = (struct Context_Format){
 		.version = 46, .profile = 2, .deprecate = 1,
 		.flush = 0, .no_error = 0, .debug = 0, .robust = 0,
 	};
@@ -520,7 +556,7 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 	struct Pixel_Format * pixel_formats = allocate_pixel_formats_arb(device);
 	if (pixel_formats == NULL) { pixel_formats = allocate_pixel_formats_legacy(device); }
 
-	struct Pixel_Format pixel_format = choose_pixel_format(pixel_formats, hint);
+	struct Pixel_Format pixel_format = choose_pixel_format(pixel_formats, &hint);
 	if (pixel_format.id == 0) {
 		logger_to_console("failed to choose format\n"); DEBUG_BREAK();
 		common_exit_failure();
@@ -541,7 +577,7 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 		common_exit_failure();
 	}
 
-	HGLRC result = create_context_arb(device, shared, settings);
+	HGLRC result = create_context_arb(device, shared, &settings);
 	if (result == NULL) { result = create_context_legacy(device, shared); }
 	if (result == NULL) {
 		logger_to_console("failed to create context\n"); DEBUG_BREAK();
