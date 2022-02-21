@@ -68,7 +68,7 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 	);
 
 	struct Window * const window = MEMORY_ALLOCATE(NULL, struct Window);
-	if (!window) { goto fail_window; }
+	if (window == NULL) { goto fail_window; }
 	if (!SetProp(handle, TEXT(HANDLE_PROP_WINDOW_NAME), window)) { goto fail_window; }
 
 	RECT client_rect;
@@ -85,12 +85,12 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 
 	// process errors
 	fail_window: DEBUG_BREAK();
-	if (window) { MEMORY_FREE(NULL, window); }
-	else { logger_to_console("failed to initialize application window"); }
+	if (window != NULL) { MEMORY_FREE(NULL, window); }
+	else { logger_to_console("failed to initialize application window\n"); }
 
 	fail_handle: DEBUG_BREAK();
-	if (handle) { DestroyWindow(handle); }
-	else { logger_to_console("failed to create platform window"); }
+	if (handle != NULL) { DestroyWindow(handle); }
+	else { logger_to_console("failed to create platform window\n"); }
 	return NULL;
 }
 
@@ -111,7 +111,7 @@ bool platform_window_exists(struct Window const * window) {
 }
 
 void platform_window_start_frame(struct Window * window) {
-	if (window->frame_cached_device) { DEBUG_BREAK(); return; }
+	if (window->frame_cached_device != NULL) { DEBUG_BREAK(); return; }
 
 	window->frame_cached_device = GetDC(window->handle);
 }
@@ -135,7 +135,7 @@ void platform_window_get_size(struct Window const * window, uint32_t * size_x, u
 }
 
 uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value) {
-	if (!window->frame_cached_device) { DEBUG_BREAK(); return 0; }
+	if (window->frame_cached_device == NULL) { DEBUG_BREAK(); return 0; }
 
 	int value = GetDeviceCaps(window->frame_cached_device, VREFRESH);
 	return value > 1 ? (uint32_t)value : default_value;
