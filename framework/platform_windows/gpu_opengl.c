@@ -314,15 +314,16 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 }
 
 static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
-	int formats_capacity = DescribePixelFormat(device, 1, sizeof(PIXELFORMATDESCRIPTOR), NULL);
-	if (formats_capacity == 0) { return NULL; }
+	int const pfd_count = DescribePixelFormat(device, 0, sizeof(PIXELFORMATDESCRIPTOR), NULL);
+	if (pfd_count == 0) { return NULL; }
 
 	int formats_count = 0;
-	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(&gs_gpu_library, struct Pixel_Format, formats_capacity + 1);
-	for (int i = 0; i < formats_capacity; i++) {
+	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(&gs_gpu_library, struct Pixel_Format, pfd_count + 1);
+	for (int i = 0; i < pfd_count; i++) {
 		int pfd_id = i + 1;
 		PIXELFORMATDESCRIPTOR pfd;
-		if (!DescribePixelFormat(device, pfd_id, sizeof(pfd), &pfd)) { DEBUG_BREAK(); continue; }
+		bool const pfd_found = DescribePixelFormat(device, pfd_id, sizeof(pfd), &pfd) > 0;
+		if (!pfd_found) { continue; }
 
 		if (!(pfd.dwFlags & PFD_DRAW_TO_WINDOW)) { continue; }
 		if (!(pfd.dwFlags & PFD_SUPPORT_OPENGL)) { continue; }
@@ -500,11 +501,11 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 	MEMORY_FREE(&gs_gpu_library, pixel_formats);
 
 	PIXELFORMATDESCRIPTOR pfd;
-	int formats_count = DescribePixelFormat(device, pixel_format.id, sizeof(pfd), &pfd);
-	if (formats_count == 0) { return NULL; }
-
-	BOOL pfd_found = SetPixelFormat(device, pixel_format.id, &pfd);
+	bool const pfd_found = DescribePixelFormat(device, pixel_format.id, sizeof(pfd), &pfd) > 0;
 	if (!pfd_found) { return NULL; }
+
+	BOOL const pfd_set = SetPixelFormat(device, pixel_format.id, &pfd);
+	if (!pfd_set) { return NULL; }
 
 	HGLRC handle = create_context_arb(device, shared, &settings);
 	if (handle == NULL) { handle = create_context_legacy(device, shared); }
@@ -575,11 +576,11 @@ static bool gpu_library_do_using_temporary_context(bool (* action)(void * device
 	if (pfd_id == 0) { goto clean_up_device; }
 
 	PIXELFORMATDESCRIPTOR pfd;
-	int formats_count = DescribePixelFormat(device, pfd_id, sizeof(pfd), &pfd);
-	if (formats_count == 0) { goto clean_up_device; }
-
-	BOOL const pfd_found = SetPixelFormat(device, pfd_id, &pfd);
+	bool const pfd_found = DescribePixelFormat(device, pfd_id, sizeof(pfd), &pfd) > 0;
 	if (!pfd_found) { goto clean_up_device; }
+
+	BOOL const pfd_set = SetPixelFormat(device, pfd_id, &pfd);
+	if (!pfd_set) { goto clean_up_device; }
 
 	HGLRC const handle = gs_gpu_library.dll.CreateContext(device);
 	if (handle == NULL) { goto clean_up_context; }
