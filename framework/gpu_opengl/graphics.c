@@ -109,8 +109,8 @@ static struct Graphics_State {
 //     GPU program part
 // ----- ----- ----- ----- -----
 
-static void verify_shader(GLuint id, GLenum parameter);
-static void verify_program(GLuint id, GLenum parameter);
+static void verify_shader(GLuint id);
+static void verify_program(GLuint id);
 struct Ref gpu_program_init(struct Buffer const * asset) {
 #define ADD_SECTION_HEADER(shader_type, version) \
 	do { \
@@ -152,7 +152,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 		GLuint shader_id = glCreateShader(headers[i].type);
 		glShaderSource(shader_id, sizeof(code) / sizeof(*code), code, length);
 		glCompileShader(shader_id);
-		verify_shader(shader_id, GL_COMPILE_STATUS);
+		verify_shader(shader_id);
 
 		shader_ids[i] = shader_id;
 	}
@@ -164,7 +164,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	}
 
 	glLinkProgram(program_id);
-	verify_program(program_id, GL_LINK_STATUS);
+	verify_program(program_id);
 
 	// free redundant resources
 	for (uint32_t i = 0; i < headers_count; i++) {
@@ -1232,9 +1232,9 @@ static char * allocate_extensions_string(void) {
 
 //
 
-static void verify_shader(GLuint id, GLenum parameter) {
+static void verify_shader(GLuint id) {
 	GLint status;
-	glGetShaderiv(id, parameter, &status);
+	glGetShaderiv(id, GL_COMPILE_STATUS, &status);
 	if (status) { return; }
 
 	GLint max_length;
@@ -1251,9 +1251,9 @@ static void verify_shader(GLuint id, GLenum parameter) {
 	DEBUG_BREAK();
 }
 
-static void verify_program(GLuint id, GLenum parameter) {
+static void verify_program(GLuint id) {
 	GLint status;
-	glGetProgramiv(id, parameter, &status);
+	glGetProgramiv(id, GL_LINK_STATUS, &status);
 	if (status) { return; }
 
 	GLint max_length;

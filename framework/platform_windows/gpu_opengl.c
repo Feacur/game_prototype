@@ -113,8 +113,8 @@ struct Gpu_Context * gpu_context_init(void * device) {
 	HGLRC const handle = create_context_auto(device, NULL, &pixel_format);
 	if (handle == NULL) { goto fail_context; }
 
-	BOOL const rc_is_current = gs_gpu_library.dll.MakeCurrent(device, handle);
-	if (!rc_is_current) { goto fail_context; }
+	BOOL const context_is_current = gs_gpu_library.dll.MakeCurrent(device, handle);
+	if (!context_is_current) { goto fail_context; }
 
 	graphics_to_gpu_library_init();
 	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
@@ -358,10 +358,6 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 
 static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * formats, struct Pixel_Format const * hint) {
 	for (struct Pixel_Format const * format = formats; format->id != 0; format++) {
-		if (!format->double_buffering) { DEBUG_BREAK(); }
-	}
-
-	for (struct Pixel_Format const * format = formats; format->id != 0; format++) {
 		if (format->r       < hint->r)       { continue; }
 		if (format->g       < hint->g)       { continue; }
 		if (format->b       < hint->b)       { continue; }
@@ -564,7 +560,7 @@ static bool gpu_library_do_using_temporary_context(bool (* action)(void * device
 	PIXELFORMATDESCRIPTOR pfd_hint = {
 		.nSize        = sizeof(pfd_hint),
 		.nVersion     = 1,
-		.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+		.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER,
 		.iPixelType   = PFD_TYPE_RGBA,
 		.iLayerType   = PFD_MAIN_PLANE,
 		.cColorBits   = 32,
@@ -572,7 +568,7 @@ static bool gpu_library_do_using_temporary_context(bool (* action)(void * device
 		.cStencilBits = 8,
 	};
 
-	int pfd_id = ChoosePixelFormat(device, &pfd_hint);
+	int const pfd_id = ChoosePixelFormat(device, &pfd_hint);
 	if (pfd_id == 0) { goto clean_up_device; }
 
 	PIXELFORMATDESCRIPTOR pfd;
@@ -582,20 +578,20 @@ static bool gpu_library_do_using_temporary_context(bool (* action)(void * device
 	BOOL const pfd_set = SetPixelFormat(device, pfd_id, &pfd);
 	if (!pfd_set) { goto clean_up_device; }
 
-	HGLRC const handle = gs_gpu_library.dll.CreateContext(device);
-	if (handle == NULL) { goto clean_up_context; }
+	HGLRC const context = gs_gpu_library.dll.CreateContext(device);
+	if (context == NULL) { goto clean_up_context; }
 
-	BOOL const rc_is_current = gs_gpu_library.dll.MakeCurrent(device, handle);
-	if (!rc_is_current) { goto clean_up_context; }
+	BOOL const context_is_current = gs_gpu_library.dll.MakeCurrent(device, context);
+	if (!context_is_current) { goto clean_up_context; }
 
 	//
 	success = action(device);
 
 	// clean up
 	clean_up_context: if (!success) { DEBUG_BREAK(); }
-	if (handle != NULL) {
+	if (context != NULL) {
 		gs_gpu_library.dll.MakeCurrent(NULL, NULL);
-		gs_gpu_library.dll.DeleteContext(handle);
+		gs_gpu_library.dll.DeleteContext(context);
 	}
 	else { logger_to_console("failed to create a temporary context\n"); }
 
