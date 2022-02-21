@@ -26,17 +26,6 @@ static void system_set_process_dpi_awareness(void);
 // static void system_enable_virtual_terminal_processing(void);
 static void system_signal_handler(int value);
 void platform_system_init(void) {
-	gs_platform_system.module = GetModuleHandle(NULL);
-	if (gs_platform_system.module == NULL) {
-		logger_to_console("'GetModuleHandle(NULL)' failed\n"); DEBUG_BREAK();
-		common_exit_failure();
-	}
-
-	// system_cache_paths();
-	system_set_process_dpi_awareness();
-	// system_enable_virtual_terminal_processing();
-	SetConsoleOutputCP(CP_UTF8);
-
 	signal(SIGABRT, system_signal_handler);
 	signal(SIGFPE,  system_signal_handler);
 	signal(SIGILL,  system_signal_handler);
@@ -44,10 +33,24 @@ void platform_system_init(void) {
 	signal(SIGSEGV, system_signal_handler);
 	signal(SIGTERM, system_signal_handler);
 
-	timer_to_system_init();
-	window_to_system_init();
-	gpu_library_to_system_init();
-	input_to_system_init();
+	gs_platform_system.module = GetModuleHandle(NULL);
+	if (gs_platform_system.module == NULL) { goto fail; }
+
+	// system_cache_paths();
+	system_set_process_dpi_awareness();
+	// system_enable_virtual_terminal_processing();
+	SetConsoleOutputCP(CP_UTF8);
+
+	if (!timer_to_system_init()) { goto fail; }
+	if (!window_to_system_init()) { goto fail; }
+	if (!gpu_library_to_system_init()) { goto fail; }
+	if (!input_to_system_init()) { goto fail; }
+
+	return;
+	fail: DEBUG_BREAK();
+	logger_to_console("failed to initialize the system module\n");
+	gs_platform_system.should_close = true;
+	// common_exit_failure();
 }
 
 void platform_system_free(void) {

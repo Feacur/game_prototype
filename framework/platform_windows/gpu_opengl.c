@@ -64,13 +64,10 @@ static bool gpu_library_wgl_init(void * device) {
 	return true;
 }
 
-static void gpu_library_do_using_temporary_context(bool (* action)(void * device));
-void gpu_library_to_system_init(void) {
+static bool gpu_library_do_using_temporary_context(bool (* action)(void * device));
+bool gpu_library_to_system_init(void) {
 	gs_gpu_library.handle = LoadLibrary(TEXT("opengl32.dll"));
-	if (gs_gpu_library.handle == NULL) {
-		logger_to_console("'LoadLibrary(\"opengl32.dll\")' failed\n"); DEBUG_BREAK();
-		common_exit_failure();
-	}
+	if (gs_gpu_library.handle == NULL) { return false; }
 
 	gs_gpu_library.dll.GetProcAddress    = (PFNWGLGETPROCADDRESSPROC)   (void *)GetProcAddress(gs_gpu_library.handle, "wglGetProcAddress");
 	gs_gpu_library.dll.CreateContext     = (PFNWGLCREATECONTEXTPROC)    (void *)GetProcAddress(gs_gpu_library.handle, "wglCreateContext");
@@ -80,7 +77,7 @@ void gpu_library_to_system_init(void) {
 	gs_gpu_library.dll.GetCurrentDC      = (PFNWGLGETCURRENTDCPROC)     (void *)GetProcAddress(gs_gpu_library.handle, "wglGetCurrentDC");
 	gs_gpu_library.dll.ShareLists        = (PFNWGLSHARELISTSPROC)       (void *)GetProcAddress(gs_gpu_library.handle, "wglShareLists");
 
-	gpu_library_do_using_temporary_context(gpu_library_wgl_init);
+	return gpu_library_do_using_temporary_context(gpu_library_wgl_init);
 
 	// https://docs.microsoft.com/windows/win32/api/wingdi/
 	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
@@ -110,10 +107,15 @@ struct Gpu_Context {
 
 static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format);
 struct Gpu_Context * gpu_context_init(void * device) {
+	if (device == NULL) { goto fail_device; }
+
 	struct Pixel_Format pixel_format;
 	HGLRC const handle = create_context_auto(device, NULL, &pixel_format);
+	if (handle == NULL) { goto fail_context; }
 
-	gs_gpu_library.dll.MakeCurrent(device , handle);
+	BOOL const rc_is_current = gs_gpu_library.dll.MakeCurrent(device, handle);
+	if (!rc_is_current) { goto fail_context; }
+
 	graphics_to_gpu_library_init();
 	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 
@@ -124,6 +126,16 @@ struct Gpu_Context * gpu_context_init(void * device) {
 	};
 
 	return gpu_context;
+
+	// process errors
+	fail_context: DEBUG_BREAK();
+	if (handle != NULL) { gs_gpu_library.dll.DeleteContext(handle); }
+	else { logger_to_console("failed to create context\n"); }
+
+	fail_device: DEBUG_BREAK();
+	if (device == NULL) { logger_to_console("device is null\n"); }
+
+	return NULL;
 }
 
 void gpu_context_free(struct Gpu_Context * gpu_context) {
@@ -464,7 +476,7 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format 
 
 static HGLRC create_context_legacy(HDC device, HGLRC shared) {
 	HGLRC result = gs_gpu_library.dll.CreateContext(device);
-	if (shared != NULL) { gs_gpu_library.dll.ShareLists(shared, result); }
+	if (result != NULL && shared != NULL) { gs_gpu_library.dll.ShareLists(shared, result); }
 	return result;
 }
 
@@ -483,35 +495,22 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 	if (pixel_formats == NULL) { pixel_formats = allocate_pixel_formats_legacy(device); }
 
 	struct Pixel_Format pixel_format = choose_pixel_format(pixel_formats, &hint);
-	if (pixel_format.id == 0) {
-		logger_to_console("failed to choose format\n"); DEBUG_BREAK();
-		common_exit_failure();
-	}
+	if (pixel_format.id == 0) { return NULL; }
 
 	MEMORY_FREE(&gs_gpu_library, pixel_formats);
 
 	PIXELFORMATDESCRIPTOR pfd;
 	int formats_count = DescribePixelFormat(device, pixel_format.id, sizeof(pfd), &pfd);
-	if (formats_count == 0) {
-		logger_to_console("failed to describe format\n"); DEBUG_BREAK();
-		common_exit_failure();
-	}
+	if (formats_count == 0) { return NULL; }
 
 	BOOL pfd_found = SetPixelFormat(device, pixel_format.id, &pfd);
-	if (!pfd_found) {
-		logger_to_console("'SetPixelFormat' failed\n"); DEBUG_BREAK();
-		common_exit_failure();
-	}
+	if (!pfd_found) { return NULL; }
 
-	HGLRC result = create_context_arb(device, shared, &settings);
-	if (result == NULL) { result = create_context_legacy(device, shared); }
-	if (result == NULL) {
-		logger_to_console("failed to create context\n"); DEBUG_BREAK();
-		common_exit_failure();
-	}
+	HGLRC handle = create_context_arb(device, shared, &settings);
+	if (handle == NULL) { handle = create_context_legacy(device, shared); }
 
 	*selected_pixel_format = pixel_format;
-	return result;
+	return handle;
 }
 
 //
@@ -528,8 +527,8 @@ static void * gpu_library_get_function(struct CString name) {
 	return NULL;
 }
 
-static void gpu_library_do_using_temporary_context(bool (* action)(void * device)) {
-	if (action == NULL) { DEBUG_BREAK(); return; }
+static bool gpu_library_do_using_temporary_context(bool (* action)(void * device)) {
+	if (action == NULL) { return false; }
 	bool success = false;
 
 // #define OPENGL_CLASS_NAME "gpu_library_class"
@@ -582,10 +581,10 @@ static void gpu_library_do_using_temporary_context(bool (* action)(void * device
 	BOOL const pfd_found = SetPixelFormat(device, pfd_id, &pfd);
 	if (!pfd_found) { goto clean_up_device; }
 
-	HGLRC const context = gs_gpu_library.dll.CreateContext(device);
-	if (context == NULL) { goto clean_up_context; }
+	HGLRC const handle = gs_gpu_library.dll.CreateContext(device);
+	if (handle == NULL) { goto clean_up_context; }
 
-	BOOL const rc_is_current = gs_gpu_library.dll.MakeCurrent(device, context);
+	BOOL const rc_is_current = gs_gpu_library.dll.MakeCurrent(device, handle);
 	if (!rc_is_current) { goto clean_up_context; }
 
 	//
@@ -593,9 +592,9 @@ static void gpu_library_do_using_temporary_context(bool (* action)(void * device
 
 	// clean up
 	clean_up_context: if (!success) { DEBUG_BREAK(); }
-	if (context != NULL) {
+	if (handle != NULL) {
 		gs_gpu_library.dll.MakeCurrent(NULL, NULL);
-		gs_gpu_library.dll.DeleteContext(context);
+		gs_gpu_library.dll.DeleteContext(handle);
 	}
 	else { logger_to_console("failed to create a temporary context\n"); }
 
@@ -611,6 +610,7 @@ static void gpu_library_do_using_temporary_context(bool (* action)(void * device
 	if (class_atom != 0) { UnregisterClass(TEXT(OPENGL_CLASS_NAME), (HANDLE)system_to_internal_get_module()); }
 	else if (!use_application_class) { logger_to_console("failed to create a temporary window class\n"); }
 
+	return success;
 #undef OPENGL_CLASS_NAME
 }
 

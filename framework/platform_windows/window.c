@@ -154,19 +154,16 @@ void platform_window_toggle_borderless_fullscreen(struct Window * window) {
 
 static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-void window_to_system_init(void) {
-	ATOM const atom = RegisterClassEx(&(WNDCLASSEX){
+bool window_to_system_init(void) {
+	return RegisterClassEx(&(WNDCLASSEX){
 		.cbSize = sizeof(WNDCLASSEX),
 		.lpszClassName = TEXT(APPLICATION_CLASS_NAME),
 		.hInstance = system_to_internal_get_module(),
 		.lpfnWndProc = window_procedure,
 		.style = CS_HREDRAW | CS_VREDRAW,
 		.hCursor = LoadCursor(0, IDC_ARROW),
-	});
-	if (atom == 0) {
-		logger_to_console("'RegisterClassEx' failed\n"); DEBUG_BREAK();
-		common_exit_failure();
-	}
+	}) != 0;
+
 	// https://docs.microsoft.com/windows/win32/winmsg/about-window-classes
 	// https://docs.microsoft.com/windows/win32/gdi/private-display-device-contexts
 }

@@ -29,7 +29,7 @@ static uint64_t get_target_ticks(int32_t vsync_mode) {
 	return gs_app.ticks.per_second * vsync_factor / refresh_rate;
 }
 
-static void application_init(void) {
+static bool application_init(void) {
 	platform_system_init();
 
 	logger_to_console("\n"
@@ -59,43 +59,34 @@ static void application_init(void) {
 	if (gs_app.config.flexible) { window_settings |= WINDOW_SETTINGS_FLEXIBLE; }
 
 	gs_app.window = platform_window_init(gs_app.config.size_x, gs_app.config.size_y, window_settings);
-	if (gs_app.window == NULL) {
-		logger_to_console("failed to create application window"); DEBUG_BREAK();
-		common_exit_failure();
-	}
+	if (gs_app.window == NULL) { return false; }
 
 	platform_window_start_frame(gs_app.window);
 	gs_app.gpu_context = gpu_context_init(platform_window_get_cached_device(gs_app.window));
+	if (gs_app.gpu_context == NULL) { return false; }
+
 	gpu_context_start_frame(gs_app.gpu_context, platform_window_get_cached_device(gs_app.window));
 
 	// setup timer, rewind it one frame
+	gpu_context_set_vsync(gs_app.gpu_context, gs_app.config.vsync);
 	int32_t const vsync_mode = gpu_context_get_vsync(gs_app.gpu_context);
 	gs_app.ticks.per_second  = platform_timer_get_ticks_per_second();
 	gs_app.ticks.frame_start = platform_timer_get_ticks() - get_target_ticks(vsync_mode);
 
-	gpu_context_set_vsync(gs_app.gpu_context, gs_app.config.vsync);
 	if (gs_app.callbacks.init != NULL) {
 		gs_app.callbacks.init();
 	}
 
 	platform_window_end_frame(gs_app.window);
 	gpu_context_end_frame();
+	return true;
 }
 
 static void application_free(void) {
-	if (gs_app.callbacks.free != NULL) {
-		gs_app.callbacks.free();
-	}
-
-	if (gs_app.gpu_context != NULL) {
-		gpu_context_free(gs_app.gpu_context);
-	}
-
-	if (gs_app.window != NULL) {
-		platform_window_free(gs_app.window);
-	}
+	if (gs_app.callbacks.free != NULL) { gs_app.callbacks.free(); }
+	if (gs_app.gpu_context != NULL) { gpu_context_free(gs_app.gpu_context); }
+	if (gs_app.window != NULL) { platform_window_free(gs_app.window); }
 	platform_system_free();
-
 	common_memset(&gs_app, 0, sizeof(gs_app));
 }
 
@@ -178,9 +169,10 @@ static bool application_update(void) {
 void application_run(struct Application_Config config, struct Application_Callbacks callbacks) {
 	gs_app.config = config;
 	gs_app.callbacks = callbacks;
-	application_init();
-	while (application_update()) { }
-	application_free();
+	if (application_init()) {
+		while (application_update()) { }
+		application_free();
+	}
 }
 
 void application_get_screen_size(uint32_t * size_x, uint32_t * size_y) {

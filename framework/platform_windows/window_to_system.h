@@ -4,7 +4,7 @@
 // interface from `window.c` to `system.c`
 // - framework initialization
 
-void window_to_system_init(void);
+bool window_to_system_init(void);
 void window_to_system_free(void);
 
 #endif
