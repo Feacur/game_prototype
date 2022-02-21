@@ -111,6 +111,8 @@ bool platform_window_exists(struct Window const * window) {
 }
 
 void platform_window_start_frame(struct Window * window) {
+	if (window->frame_cached_device) { DEBUG_BREAK(); return; }
+
 	window->frame_cached_device = GetDC(window->handle);
 }
 
@@ -299,15 +301,14 @@ static bool platform_window_internal_has_raw_input(struct Window * window) {
 }
 
 static void platform_window_internal_toggle_raw_input(struct Window * window, bool state) {
-	bool const has_raw_input = platform_window_internal_has_raw_input(window);
-
-	if (has_raw_input == state) { return; }
-	USHORT const flags = state ? /*RIDEV_INPUTSINK*/ 0 : RIDEV_REMOVE;
-	HWND const target = state ? window->handle : NULL;
+	if (platform_window_internal_has_raw_input(window) == state) { return; }
 
 	// `RIDEV_NOLEGACY` is tiresome:
 	// - for keyboard it removes crucial `WM_CHAR`
 	// - for mouse it removes windowed interactions
+
+	USHORT const flags = state ? /*RIDEV_INPUTSINK*/ 0 : RIDEV_REMOVE;
+	HWND const target = state ? window->handle : NULL;
 
 	RAWINPUTDEVICE const devices[] = {
 		{.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_KEYBOARD, .dwFlags = flags, .hwndTarget = target},

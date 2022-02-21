@@ -45,8 +45,9 @@ static void * glibrary_get_function(struct CString name);
 
 bool contains_full_word(char const * container, struct CString value);
 void glibrary_to_system_init(void) {
-// #define OPENGL_CLASS_NAME "temporary_opengl_class"
+// #define OPENGL_CLASS_NAME "gpu_library_class"
 #define OPENGL_CLASS_NAME APPLICATION_CLASS_NAME
+	bool const use_application_class = strcmp(OPENGL_CLASS_NAME, APPLICATION_CLASS_NAME) == 0;
 
 	gs_glibrary.handle = LoadLibrary(TEXT("opengl32.dll"));
 	if (gs_glibrary.handle == NULL) {
@@ -63,19 +64,21 @@ void glibrary_to_system_init(void) {
 	gs_glibrary.dll.GetCurrentDC      = (PFNWGLGETCURRENTDCPROC)     (void *)GetProcAddress(gs_glibrary.handle, "wglGetCurrentDC");
 	gs_glibrary.dll.ShareLists        = (PFNWGLSHARELISTSPROC)       (void *)GetProcAddress(gs_glibrary.handle, "wglShareLists");
 
-	// create temporary class
-	// ATOM atom = RegisterClassEx(&(WNDCLASSEX){
-	// 	.cbSize = sizeof(WNDCLASSEX),
-	// 	.lpszClassName = TEXT(OPENGL_CLASS_NAME),
-	// 	.hInstance = (HANDLE)system_to_internal_get_module(),
-	// 	.lpfnWndProc = DefWindowProc,
-	// });
-	// if (atom == 0) {
-	// 	logger_console("'RegisterClassEx' failed\n"); DEBUG_BREAK();
-	// 	common_exit_failure();
-	// }
+	// create a temporary window lass
+	if (!use_application_class) {
+		ATOM atom = RegisterClassEx(&(WNDCLASSEX){
+			.cbSize = sizeof(WNDCLASSEX),
+			.lpszClassName = TEXT(OPENGL_CLASS_NAME),
+			.hInstance = (HANDLE)system_to_internal_get_module(),
+			.lpfnWndProc = DefWindowProc,
+		});
+		if (atom == 0) {
+			logger_to_console("'RegisterClassEx' failed\n"); DEBUG_BREAK();
+			common_exit_failure();
+		}
+	}
 
-	// create temporary window
+	// create a temporary window
 	HWND const hwnd = CreateWindowEx(
 		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
 		TEXT(OPENGL_CLASS_NAME), TEXT(""),
@@ -94,7 +97,7 @@ void glibrary_to_system_init(void) {
 		common_exit_failure();
 	}
 
-	// create temporary rendering context
+	// create a temporary rendering context
 	PIXELFORMATDESCRIPTOR pfd_hint = {
 		.nSize        = sizeof(pfd_hint),
 		.nVersion     = 1,
@@ -153,9 +156,11 @@ void glibrary_to_system_init(void) {
 	gs_glibrary.dll.MakeCurrent(NULL, NULL);
 	gs_glibrary.dll.DeleteContext(rc_handle);
 
-	// ReleaseDC(hwnd, hdc);
+	ReleaseDC(hwnd, hdc);
 	DestroyWindow(hwnd);
-	// UnregisterClass(TEXT(OPENGL_CLASS_NAME), (HANDLE)system_to_internal_get_module());
+	if (!use_application_class) {
+		UnregisterClass(TEXT(OPENGL_CLASS_NAME), (HANDLE)system_to_internal_get_module());
+	}
 
 	// https://docs.microsoft.com/windows/win32/api/wingdi/
 	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
@@ -214,9 +219,12 @@ void gpu_context_free(struct Gpu_Context * gpu_context) {
 }
 
 void gpu_context_start_frame(struct Gpu_Context const * gpu_context, void * device) {
+	if (gs_glibrary.dll.GetCurrentContext()) { DEBUG_BREAK(); return; }
+	if (gs_glibrary.dll.GetCurrentDC()) { DEBUG_BREAK(); return; }
+
 	if (!device) { DEBUG_BREAK(); return; }
 
-	gs_glibrary.dll.MakeCurrent(device , gpu_context->handle);
+	gs_glibrary.dll.MakeCurrent(device, gpu_context->handle);
 }
 
 void gpu_context_draw_frame(struct Gpu_Context const * gpu_context) {
