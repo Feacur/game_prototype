@@ -236,12 +236,17 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 
 	int const request_keys[] = {
 		WGL_DRAW_TO_WINDOW_ARB,
-		WGL_ACCELERATION_ARB,
-		WGL_SWAP_METHOD_ARB,
-		WGL_SUPPORT_GDI_ARB,
 		WGL_SUPPORT_OPENGL_ARB,
-		WGL_DOUBLE_BUFFER_ARB,
+		WGL_SUPPORT_GDI_ARB,
+		WGL_NEED_PALETTE_ARB,
+		WGL_NEED_SYSTEM_PALETTE_ARB,
+		WGL_ACCELERATION_ARB,
 		WGL_PIXEL_TYPE_ARB,
+		//
+		WGL_SAMPLES_ARB,
+		WGL_SAMPLE_BUFFERS_ARB,
+		WGL_SWAP_METHOD_ARB,
+		WGL_DOUBLE_BUFFER_ARB,
 		//
 		WGL_RED_BITS_ARB,
 		WGL_GREEN_BITS_ARB,
@@ -249,9 +254,6 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 		WGL_ALPHA_BITS_ARB,
 		WGL_DEPTH_BITS_ARB,
 		WGL_STENCIL_BITS_ARB,
-		//
-		WGL_SAMPLES_ARB,
-		WGL_SAMPLE_BUFFERS_ARB,
 		//
 		WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB,
 	};
@@ -264,11 +266,14 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 		int pfd_id = i + 1;
 		if (!gs_gpu_library.arb.GetPixelFormatAttribiv(device, pfd_id, 0, KEYS_COUNT, request_keys, request_vals)) { DEBUG_BREAK(); continue; }
 
-		if (GET_VALUE(WGL_DRAW_TO_WINDOW_ARB) == false)                     { continue; }
-		if (GET_VALUE(WGL_SUPPORT_GDI_ARB)    == true)                      { continue; }
-		if (GET_VALUE(WGL_SUPPORT_OPENGL_ARB) == false)                     { continue; }
-		if (GET_VALUE(WGL_ACCELERATION_ARB)   != WGL_FULL_ACCELERATION_ARB) { continue; }
-		if (GET_VALUE(WGL_PIXEL_TYPE_ARB)     != WGL_TYPE_RGBA_ARB)         { continue; }
+		if (GET_VALUE(WGL_DRAW_TO_WINDOW_ARB)      == false)                     { continue; }
+		if (GET_VALUE(WGL_SUPPORT_OPENGL_ARB)      == false)                     { continue; }
+		if (GET_VALUE(WGL_SUPPORT_GDI_ARB)         == true)                      { continue; }
+		if (GET_VALUE(WGL_NEED_PALETTE_ARB)        == true)                      { continue; }
+		if (GET_VALUE(WGL_NEED_SYSTEM_PALETTE_ARB) == true)                      { continue; }
+		if (GET_VALUE(WGL_ACCELERATION_ARB)        != WGL_FULL_ACCELERATION_ARB) { continue; }
+
+		if (GET_VALUE(WGL_PIXEL_TYPE_ARB) != WGL_TYPE_RGBA_ARB) { continue; }
 
 		if (has_extension_multisample) {
 			if (GET_VALUE(WGL_SAMPLES_ARB) == 0)        { continue; }
@@ -325,12 +330,13 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 		bool const pfd_found = DescribePixelFormat(device, pfd_id, sizeof(pfd), &pfd) > 0;
 		if (!pfd_found) { continue; }
 
-		if (!(pfd.dwFlags & PFD_DRAW_TO_WINDOW)) { continue; }
-		if (!(pfd.dwFlags & PFD_SUPPORT_OPENGL)) { continue; }
-		if (!(pfd.dwFlags & PFD_GENERIC_FORMAT)) { continue; }
-
-		if ((pfd.dwFlags & PFD_SUPPORT_GDI))         { continue; }
-		if ((pfd.dwFlags & PFD_GENERIC_ACCELERATED)) { continue; }
+		if (!(pfd.dwFlags & PFD_DRAW_TO_WINDOW))      { continue; }
+		if (!(pfd.dwFlags & PFD_SUPPORT_OPENGL))      { continue; }
+		if ( (pfd.dwFlags & PFD_SUPPORT_GDI))         { continue; }
+		if ( (pfd.dwFlags & PFD_NEED_PALETTE))        { continue; }
+		if ( (pfd.dwFlags & PFD_NEED_SYSTEM_PALETTE)) { continue; }
+		if ( (pfd.dwFlags & PFD_GENERIC_ACCELERATED)) { continue; }
+		if ( (pfd.dwFlags & PFD_GENERIC_FORMAT))      { continue; }
 
 		if (pfd.iPixelType != PFD_TYPE_RGBA) { continue; }
 
@@ -354,6 +360,8 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 
 	formats[formats_count] = (struct Pixel_Format){0};
 	return formats;
+
+	// https://docs.microsoft.com/windows/win32/api/wingdi/ns-wingdi-pixelformatdescriptor
 }
 
 static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * formats, struct Pixel_Format const * hint) {
