@@ -223,9 +223,7 @@ static int dictionary_int_int_get_value(int const * keys, int const * vals, int 
 static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 
 #define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" # name))
-
 	if (!HAS_ARB(pixel_format)) { return NULL; }
-
 #undef HAS_ARB
 
 #define KEYS_COUNT (sizeof(request_keys) / sizeof(*request_keys))
@@ -291,7 +289,7 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 			.a = GET_VALUE(WGL_ALPHA_BITS_ARB),
 			.depth   = GET_VALUE(WGL_DEPTH_BITS_ARB),
 			.stencil = GET_VALUE(WGL_STENCIL_BITS_ARB),
-			.srgb = GET_VALUE(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB) ? 2 : 1,
+			.srgb = GET_VALUE(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB),
 			.double_buffering = GET_VALUE(WGL_DOUBLE_BUFFER_ARB),
 			.swap_method = swap_method,
 			.samples        = GET_VALUE(WGL_SAMPLES_ARB),
@@ -358,14 +356,14 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * formats, struct Pixel_Format const * hint) {
 
 #define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" # name))
-#define HAS_EXT(name) contains_full_word(gs_gpu_library.ext.extensions, S_("WGL_EXT_" # name))
-
 	bool const has_extension_multisample = HAS_ARB(multisample);
-	bool const has_extension_framebuffer_sRGB = HAS_EXT(framebuffer_sRGB);
-
 #undef HAS_ARB
+
+#define HAS_EXT(name) contains_full_word(gs_gpu_library.ext.extensions, S_("WGL_EXT_" # name))
+	bool const has_extension_framebuffer_sRGB = HAS_EXT(framebuffer_sRGB);
 #undef HAS_EXT
 
+	// choose strictly
 	for (struct Pixel_Format const * format = formats; format->id != 0; format++) {
 		if (format->r       < hint->r)       { continue; }
 		if (format->g       < hint->g)       { continue; }
@@ -375,12 +373,10 @@ static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * forma
 		if (format->stencil < hint->stencil) { continue; }
 
 		if (has_extension_framebuffer_sRGB) {
-			if (format->srgb != 0 && hint->srgb != 0) {
-				if (format->srgb != hint->srgb) { continue; }
-			}
+			if (format->srgb != hint->srgb) { continue; }
 		}
 		else {
-			if (format->srgb == 2) { continue; }
+			if (format->srgb) { continue; }
 		}
 
 		if (format->double_buffering != hint->double_buffering) { continue; }
@@ -401,6 +397,98 @@ static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * forma
 
 		return *format;
 	}
+
+	// ignore sRGB
+	for (struct Pixel_Format const * format = formats; format->id != 0; format++) {
+		if (format->r       < hint->r)       { continue; }
+		if (format->g       < hint->g)       { continue; }
+		if (format->b       < hint->b)       { continue; }
+		if (format->a       < hint->a)       { continue; }
+		if (format->depth   < hint->depth)   { continue; }
+		if (format->stencil < hint->stencil) { continue; }
+
+		if (!has_extension_framebuffer_sRGB) {
+			if (format->srgb) { continue; }
+		}
+
+		if (format->double_buffering != hint->double_buffering) { continue; }
+		if (format->double_buffering) {
+			if (format->swap_method != 0 && hint->swap_method != 0) {
+				if (format->swap_method != hint->swap_method) { continue; }
+			}
+		}
+
+		if (has_extension_multisample) {
+			if (format->samples < hint->samples) { continue; }
+			if (format->sample_buffers < hint->sample_buffers) { continue; }
+		}
+		else {
+			if (format->samples > 0)        { continue; }
+			if (format->sample_buffers > 0) { continue; }
+		}
+
+		return *format;
+	}
+
+	// ignore sampling
+	for (struct Pixel_Format const * format = formats; format->id != 0; format++) {
+		if (format->r       < hint->r)       { continue; }
+		if (format->g       < hint->g)       { continue; }
+		if (format->b       < hint->b)       { continue; }
+		if (format->a       < hint->a)       { continue; }
+		if (format->depth   < hint->depth)   { continue; }
+		if (format->stencil < hint->stencil) { continue; }
+
+		if (has_extension_framebuffer_sRGB) {
+			if (format->srgb != hint->srgb) { continue; }
+		}
+		else {
+			if (format->srgb) { continue; }
+		}
+
+		if (format->double_buffering != hint->double_buffering) { continue; }
+		if (format->double_buffering) {
+			if (format->swap_method != 0 && hint->swap_method != 0) {
+				if (format->swap_method != hint->swap_method) { continue; }
+			}
+		}
+
+		if (!has_extension_multisample) {
+			if (format->samples > 0)        { continue; }
+			if (format->sample_buffers > 0) { continue; }
+		}
+
+		return *format;
+	}
+
+	// ignore both sRGB and sampling
+	for (struct Pixel_Format const * format = formats; format->id != 0; format++) {
+		if (format->r       < hint->r)       { continue; }
+		if (format->g       < hint->g)       { continue; }
+		if (format->b       < hint->b)       { continue; }
+		if (format->a       < hint->a)       { continue; }
+		if (format->depth   < hint->depth)   { continue; }
+		if (format->stencil < hint->stencil) { continue; }
+
+		if (!has_extension_framebuffer_sRGB) {
+			if (format->srgb) { continue; }
+		}
+
+		if (format->double_buffering != hint->double_buffering) { continue; }
+		if (format->double_buffering) {
+			if (format->swap_method != 0 && hint->swap_method != 0) {
+				if (format->swap_method != hint->swap_method) { continue; }
+			}
+		}
+
+		if (!has_extension_multisample) {
+			if (format->samples > 0)        { continue; }
+			if (format->sample_buffers > 0) { continue; }
+		}
+
+		return *format;
+	}
+
 	return (struct Pixel_Format){0};
 }
 
@@ -503,7 +591,7 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 	struct Pixel_Format const hint = (struct Pixel_Format){
 		.r = 8, .g = 8, .b = 8, .a = 8,
 		.depth = 24, .stencil = 8,
-		.srgb = 2,
+		.srgb = 1,
 		.double_buffering = true, .swap_method = 0,
 		.samples = 0, .sample_buffers = 0,
 	};
