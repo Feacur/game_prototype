@@ -43,7 +43,9 @@ static struct Gpu_Library {
 
 static bool contains_full_word(char const * container, struct CString value);
 static void * gpu_library_get_function(struct CString name);
-static bool gpu_library_wgl_init(void * device) {
+static bool gpu_library_wgl_init(void) {
+	HDC const device = gs_gpu_library.dll.GetCurrentDC();
+
 	gs_gpu_library.arb.GetExtensionsString    = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   (void *)gs_gpu_library.dll.GetProcAddress("wglGetExtensionsStringARB");
 	gs_gpu_library.arb.GetPixelFormatAttribiv = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)(void *)gs_gpu_library.dll.GetProcAddress("wglGetPixelFormatAttribivARB");
 	gs_gpu_library.arb.CreateContextAttribs   = (PFNWGLCREATECONTEXTATTRIBSARBPROC)  (void *)gs_gpu_library.dll.GetProcAddress("wglCreateContextAttribsARB");
@@ -64,7 +66,7 @@ static bool gpu_library_wgl_init(void * device) {
 	return true;
 }
 
-static bool gpu_library_do_using_temporary_context(bool (* action)(void * device));
+static bool gpu_library_do_using_temporary_context(bool (* action)(void));
 bool gpu_library_to_system_init(void) {
 	gs_gpu_library.handle = LoadLibrary(TEXT("opengl32.dll"));
 	if (gs_gpu_library.handle == NULL) { return false; }
@@ -636,7 +638,7 @@ static void * gpu_library_get_function(struct CString name) {
 	return NULL;
 }
 
-static bool gpu_library_do_using_temporary_context(bool (* action)(void * device)) {
+static bool gpu_library_do_using_temporary_context(bool (* action)(void)) {
 	if (action == NULL) { return false; }
 	bool success = false;
 
@@ -697,7 +699,7 @@ static bool gpu_library_do_using_temporary_context(bool (* action)(void * device
 	if (!context_is_current) { goto clean_up_context; }
 
 	//
-	success = action(device);
+	success = action();
 
 	// clean up
 	clean_up_context: if (!success) { DEBUG_BREAK(); }
