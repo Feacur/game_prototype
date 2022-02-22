@@ -21,6 +21,16 @@
 	"editor.minimap.enabled": false,
 	"editor.scrollBeyondLastColumn": 5,
 	"editor.scrollBeyondLastLine": true,
+	// diff
+	"diffEditor.maxComputationTime": 0,
+	// language: C#
+	"csharp.suppressHiddenDiagnostics": false,
+	// extensions: ms-dotnettools.csharp
+	"omnisharp.loggingLevel": "information",
+	"omnisharp.enableDecompilationSupport": true,
+	"omnisharp.enableRoslynAnalyzers": true,
+	"omnisharp.enableImportCompletion": true,
+	"omnisharp.organizeImportsOnFormat": true,
 	// extensions: ms-vscode.cpptools
 	"C_Cpp.default.cStandard": "c99",
 	"C_Cpp.default.cppStandard": "c++11",
