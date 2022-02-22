@@ -94,9 +94,10 @@ void gpu_library_to_system_free(void) {
 
 struct Pixel_Format {
 	int id;
-	int double_buffering, swap_method;
 	int r, g, b, a;
 	int depth, stencil;
+	int srgb;
+	int double_buffering, swap_method;
 	int samples, sample_buffers;
 };
 
@@ -220,19 +221,19 @@ static int dictionary_int_int_get_value(int const * keys, int const * vals, int 
 }
 
 static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
+
 #define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" # name))
-#define HAS_EXT(name) contains_full_word(gs_gpu_library.ext.extensions, S_("WGL_EXT_" # name))
-#define KEYS_COUNT (sizeof(request_keys) / sizeof(*request_keys))
-#define GET_VALUE(key) dictionary_int_int_get_value(request_keys, request_vals, key)
 
 	if (!HAS_ARB(pixel_format)) { return NULL; }
+
+#undef HAS_ARB
+
+#define KEYS_COUNT (sizeof(request_keys) / sizeof(*request_keys))
+#define GET_VALUE(key) dictionary_int_int_get_value(request_keys, request_vals, key)
 
 	int const formats_request = WGL_NUMBER_PIXEL_FORMATS_ARB; int formats_capacity;
 	if (!gs_gpu_library.arb.GetPixelFormatAttribiv(device, 0, 0, 1, &formats_request, &formats_capacity)) { DEBUG_BREAK(); return NULL; }
 	if (formats_capacity == 0) { DEBUG_BREAK(); return NULL; }
-
-	bool has_extension_multisample = HAS_ARB(multisample);
-	bool has_extension_framebuffer_sRGB = HAS_EXT(framebuffer_sRGB);
 
 	int const request_keys[] = {
 		WGL_DRAW_TO_WINDOW_ARB,
@@ -275,15 +276,6 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 
 		if (GET_VALUE(WGL_PIXEL_TYPE_ARB) != WGL_TYPE_RGBA_ARB) { continue; }
 
-		if (has_extension_multisample) {
-			if (GET_VALUE(WGL_SAMPLES_ARB) == 0)        { continue; }
-			if (GET_VALUE(WGL_SAMPLE_BUFFERS_ARB) == 0) { continue; }
-		}
-
-		if (has_extension_framebuffer_sRGB) {
-			if (!GET_VALUE(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB)) { continue; }
-		}
-
 		int swap_method = 0;
 		switch (GET_VALUE(WGL_SWAP_METHOD_ARB)) {
 			case WGL_SWAP_UNDEFINED_ARB: swap_method = 0; break;
@@ -293,14 +285,15 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 
 		formats[formats_count++] = (struct Pixel_Format){
 			.id = pfd_id,
-			.double_buffering = GET_VALUE(WGL_DOUBLE_BUFFER_ARB),
-			.swap_method = swap_method,
 			.r = GET_VALUE(WGL_RED_BITS_ARB),
 			.g = GET_VALUE(WGL_GREEN_BITS_ARB),
 			.b = GET_VALUE(WGL_BLUE_BITS_ARB),
 			.a = GET_VALUE(WGL_ALPHA_BITS_ARB),
 			.depth   = GET_VALUE(WGL_DEPTH_BITS_ARB),
 			.stencil = GET_VALUE(WGL_STENCIL_BITS_ARB),
+			.srgb = GET_VALUE(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB) ? 2 : 1,
+			.double_buffering = GET_VALUE(WGL_DOUBLE_BUFFER_ARB),
+			.swap_method = swap_method,
 			.samples        = GET_VALUE(WGL_SAMPLES_ARB),
 			.sample_buffers = GET_VALUE(WGL_SAMPLE_BUFFERS_ARB),
 		};
@@ -312,8 +305,6 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_multisample.txt
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_framebuffer_sRGB.txt
 
-#undef HAS_ARB
-#undef HAS_EXT
 #undef KEYS_COUNT
 #undef GET_VALUE
 }
@@ -347,14 +338,14 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 
 		formats[formats_count++] = (struct Pixel_Format){
 			.id = pfd_id,
-			.double_buffering = (pfd.dwFlags & PFD_DOUBLEBUFFER),
-			.swap_method = swap_method,
 			.r = pfd.cRedBits,
 			.g = pfd.cGreenBits,
 			.b = pfd.cBlueBits,
 			.a = pfd.cAlphaBits,
 			.depth   = pfd.cDepthBits,
 			.stencil = pfd.cStencilBits,
+			.double_buffering = (pfd.dwFlags & PFD_DOUBLEBUFFER),
+			.swap_method = swap_method,
 		};
 	}
 
@@ -365,6 +356,16 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 }
 
 static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * formats, struct Pixel_Format const * hint) {
+
+#define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" # name))
+#define HAS_EXT(name) contains_full_word(gs_gpu_library.ext.extensions, S_("WGL_EXT_" # name))
+
+	bool const has_extension_multisample = HAS_ARB(multisample);
+	bool const has_extension_framebuffer_sRGB = HAS_EXT(framebuffer_sRGB);
+
+#undef HAS_ARB
+#undef HAS_EXT
+
 	for (struct Pixel_Format const * format = formats; format->id != 0; format++) {
 		if (format->r       < hint->r)       { continue; }
 		if (format->g       < hint->g)       { continue; }
@@ -373,13 +374,30 @@ static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * forma
 		if (format->depth   < hint->depth)   { continue; }
 		if (format->stencil < hint->stencil) { continue; }
 
-		if (format->double_buffering < hint->double_buffering) { continue; }
-		if (hint->swap_method != 0) {
-			if (format->swap_method != hint->swap_method) { continue; }
+		if (has_extension_framebuffer_sRGB) {
+			if (format->srgb != 0 && hint->srgb != 0) {
+				if (format->srgb != hint->srgb) { continue; }
+			}
+		}
+		else {
+			if (format->srgb == 2) { continue; }
 		}
 
-		if (format->samples < hint->samples) { continue; }
-		if (format->sample_buffers < hint->sample_buffers) { continue; }
+		if (format->double_buffering != hint->double_buffering) { continue; }
+		if (format->double_buffering) {
+			if (format->swap_method != 0 && hint->swap_method != 0) {
+				if (format->swap_method != hint->swap_method) { continue; }
+			}
+		}
+
+		if (has_extension_multisample) {
+			if (format->samples < hint->samples) { continue; }
+			if (format->sample_buffers < hint->sample_buffers) { continue; }
+		}
+		else {
+			if (format->samples > 0)        { continue; }
+			if (format->sample_buffers > 0) { continue; }
+		}
 
 		return *format;
 	}
@@ -387,13 +405,8 @@ static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * forma
 }
 
 struct Context_Format {
-	int version;
-	int profile;
-	int deprecate;
-	int flush;
-	int no_error;
-	int debug;
-	int robust;
+	int version, profile, deprecate;
+	int flush, no_error, debug, robust;
 };
 
 static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format const * context_format) {
@@ -469,6 +482,7 @@ static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format 
 	//
 	ADD_ATTRIBUTE(0, 0);
 	return gs_gpu_library.arb.CreateContextAttribs(device, shared, attributes);
+
 	// https://www.khronos.org/opengl/wiki/OpenGL_Context
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
 	// https://www.khronos.org/registry/OpenGL/extensions/KHR/KHR_context_flush_control.txt
@@ -487,9 +501,11 @@ static HGLRC create_context_legacy(HDC device, HGLRC shared) {
 
 static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format) {
 	struct Pixel_Format const hint = (struct Pixel_Format){
-		.double_buffering = true, .swap_method = 0,
 		.r = 8, .g = 8, .b = 8, .a = 8,
 		.depth = 24, .stencil = 8,
+		.srgb = 2,
+		.double_buffering = true, .swap_method = 0,
+		.samples = 0, .sample_buffers = 0,
 	};
 	struct Context_Format const settings = (struct Context_Format){
 		.version = 46, .profile = 2, .deprecate = 1,
@@ -568,7 +584,7 @@ static bool gpu_library_do_using_temporary_context(bool (* action)(void * device
 	PIXELFORMATDESCRIPTOR pfd_hint = {
 		.nSize        = sizeof(pfd_hint),
 		.nVersion     = 1,
-		.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER,
+		.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER_DONTCARE | PFD_STEREO_DONTCARE,
 		.iPixelType   = PFD_TYPE_RGBA,
 		.iLayerType   = PFD_MAIN_PLANE,
 		.cColorBits   = 32,
