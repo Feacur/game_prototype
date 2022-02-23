@@ -30,7 +30,7 @@
 		{
 			"shader": "assets/shaders/batcher_2d.glsl",
 			"mode": "transparent", "depth": false,
-			"u_Texture": {"type": "font", "path": "assets/fonts/JetBrainsMono-Regular.ttf",},
+			"u_Texture": {"type": "font", "path": "assets/fonts/Ubuntu-Regular.ttf",},
 			"u_Color": [1, 1, 1, 1],
 		},
 		{
@@ -103,7 +103,7 @@
 				"pivot": [0.5, 0.5],
 			},
 			"type": "text_2d",
-			"font": "assets/fonts/JetBrainsMono-Regular.ttf",
+			"font": "assets/fonts/Ubuntu-Regular.ttf",
 			"message": "assets/sandbox/test.txt",
 		},
 	],
