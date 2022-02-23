@@ -28,12 +28,9 @@ struct Entity_Quad {
 };
 
 struct Entity_Text {
-	// @todo: a separate type for Asset_Bytes?
 	uint32_t visible_length;
-	uint32_t length;
-	uint8_t const * data;
-	// @todo: an asset ref
 	struct Asset_Font const * font;
+	struct Asset_Bytes const * text;
 };
 
 struct Entity {

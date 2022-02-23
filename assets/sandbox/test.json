@@ -93,5 +93,18 @@
 			},
 			"type": "quad_2d",
 		},
+		{
+			"material_uid": 3,
+			"camera_uid": 2,
+			"rect": {
+				"min_rel": [0.5, 0.25],
+				"max_rel": [0.5, 0.25],
+				"max_abs": [250, 150],
+				"pivot": [0.5, 0.5],
+			},
+			"type": "text_2d",
+			"font": "assets/fonts/OpenSans-Regular.ttf",
+			"text": "assets/sandbox/test.txt",
+		},
 	],
 }

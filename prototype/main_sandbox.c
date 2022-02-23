@@ -55,35 +55,8 @@ static void game_init(void) {
 	gs_uniforms.inverse_camera = graphics_add_uniform_id(S_("u_Camera"));
 	gs_uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
 
-	//
 	struct Asset_JSON const * json_test = asset_system_aquire_instance(&state.asset_system, S_("assets/sandbox/test.json"));
 	if (json_test != NULL) { state_read_json(&json_test->value); }
-
-	// objects
-	{
-		struct Asset_Bytes const * text_test = asset_system_aquire_instance(&state.asset_system, S_("assets/sandbox/test.txt"));
-		struct Asset_Font const * asset_font = asset_system_aquire_instance(&state.asset_system, S_("assets/fonts/OpenSans-Regular.ttf"));
-
-		// > entities
-		array_any_push(&state.entities, &(struct Entity){
-			.material = 2,
-			.camera = 1,
-			.transform = transform_3d_default,
-			.rect = (struct Transform_Rect){
-				.min_relative = (struct vec2){0.5f, 0.25f},
-				.max_relative = (struct vec2){0.5f, 0.25f},
-				.max_absolute = (struct vec2){250, 150},
-				.pivot = (struct vec2){0.5f, 0.5f},
-			},
-			//
-			.type = ENTITY_TYPE_TEXT_2D,
-			.as.text = {
-				.length = text_test->length,
-				.data = text_test->data,
-				.font = asset_font,
-			},
-		});
-	}
 }
 
 static void game_free(void) {
@@ -160,8 +133,8 @@ static void game_frame_update(uint64_t elapsed, uint64_t per_second) {
 
 			case ENTITY_TYPE_TEXT_2D: {
 				struct Entity_Text * text = &entity->as.text;
-
-				text->visible_length = (text->visible_length + 1) % text->length;
+				uint32_t const text_length = text->text->length;
+				text->visible_length = (text->visible_length + 1) % text_length;
 			} break;
 		}
 	}
@@ -316,7 +289,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 						entity_rect_min, entity_rect_max, entity_pivot,
 						text->font,
 						text->visible_length,
-						text->data
+						text->text->data
 					);
 				} break;
 			}

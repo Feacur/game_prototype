@@ -563,10 +563,20 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 
 		case ENTITY_TYPE_QUAD_2D:
 			struct CString const uniform = json_get_string(json, S_("uniform"), S_NULL);
-			entity->as.quad.texture_uniform = graphics_add_uniform_id(uniform);
+			entity->as.quad = (struct Entity_Quad){
+				.texture_uniform = graphics_add_uniform_id(uniform)
+			};
 			break;
 
 		case ENTITY_TYPE_TEXT_2D:
+			struct CString const font_path = json_get_string(json, S_("font"), S_NULL);
+			struct Asset_Font const * fonst_asset = asset_system_aquire_instance(&state.asset_system, font_path);
+			struct CString const text_path = json_get_string(json, S_("text"), S_NULL);
+			struct Asset_Bytes const * text_asset = asset_system_aquire_instance(&state.asset_system, text_path);
+			entity->as.text = (struct Entity_Text){
+				.font = fonst_asset,
+				.text = text_asset,
+			};
 			break;
 	}
 }
