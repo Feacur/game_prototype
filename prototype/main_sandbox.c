@@ -66,38 +66,6 @@ static void game_init(void) {
 
 		// > entities
 		array_any_push(&state.entities, &(struct Entity){
-			.material = 3,
-			.camera = 1,
-			.transform = transform_3d_default,
-			.rect = (struct Transform_Rect){
-				.min_relative = (struct vec2){0.5f, 0.25f},
-				.max_relative = (struct vec2){0.5f, 0.25f},
-				.max_absolute = (struct vec2){250, 150},
-				.pivot = (struct vec2){0.5f, 0.5f},
-			},
-			//
-			.type = ENTITY_TYPE_QUAD_2D,
-			.as.quad = {
-				.texture_uniform = gs_uniforms.texture,
-			},
-		});
-
-		array_any_push(&state.entities, &(struct Entity){
-			.material = 3,
-			.camera = 1,
-			.transform = transform_3d_default,
-			.rect = (struct Transform_Rect){
-				.max_relative = (struct vec2){0.5f, 0.25f},
-				.pivot = (struct vec2){0.5f, 0.5f},
-			},
-			//
-			.type = ENTITY_TYPE_QUAD_2D,
-			.as.quad = {
-				.texture_uniform = gs_uniforms.texture,
-			},
-		});
-
-		array_any_push(&state.entities, &(struct Entity){
 			.material = 2,
 			.camera = 1,
 			.transform = transform_3d_default,
