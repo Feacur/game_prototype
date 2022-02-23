@@ -142,20 +142,19 @@ static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token 
 	if (parser->panic) { return; }
 	parser->panic = true;
 
-	logger_to_console("[line %u]", token->line + 1);
-	switch (token->type) {
-		case JSON_TOKEN_EOF:
-			logger_to_console("[context: eof]");
-			break;
+	static char const * c_json_token_names[] = {
+		[JSON_TOKEN_ERROR_IDENTIFIER] = "identifier",
+		[JSON_TOKEN_ERROR_UNKNOWN_CHARACTER] = "unknown character",
+		[JSON_TOKEN_ERROR_UNTERMINATED_STRING] = "unterminated string",
+		[JSON_TOKEN_EOF] = "eof",
+	};
 
-		case JSON_TOKEN_ERROR:
-			logger_to_console("[context: \"%.*s\"]", token->text.length, token->text.data);
-			break;
+	char const * const reason = c_json_token_names[token->type];
 
-		default:
-			logger_to_console("[context: %.*s]", token->text.length, token->text.data);
-			break;
-	}
+	logger_to_console("json");
+	logger_to_console(" [line: %u]", token->line + 1);
+	logger_to_console(" [context: '%.*s']", token->text.length, token->text.data);
+	if (reason != NULL) { logger_to_console(" [%s]", reason); }
 	if (message != NULL) { logger_to_console(": %s", message); }
 	logger_to_console("\n");
 }
@@ -172,16 +171,17 @@ static void json_parser_consume(struct JSON_Parser * parser) {
 	parser->previous = parser->current;
 	while (parser->current.type != JSON_TOKEN_EOF) {
 		parser->current = json_scanner_next(&parser->scanner);
-		if (parser->current.type == JSON_TOKEN_COMMENT) {
-			continue;
-		}
-		if (parser->current.type == JSON_TOKEN_IDENTIFIER) {
-			json_parser_error_current(parser, "identifier is an unvalid token");
-			continue;
-		}
-		if (parser->current.type == JSON_TOKEN_ERROR) {
-			json_parser_error_current(parser, "scanner error");
-			continue;
+		switch (parser->current.type) {
+			case JSON_TOKEN_COMMENT:
+				continue;
+
+			case JSON_TOKEN_ERROR_IDENTIFIER:
+			case JSON_TOKEN_ERROR_UNKNOWN_CHARACTER:
+			case JSON_TOKEN_ERROR_UNTERMINATED_STRING:
+				json_parser_error_current(parser, "scanner error");
+				continue;
+
+			default: break;
 		}
 		break;
 	}
@@ -195,18 +195,18 @@ static bool json_parser_match(struct JSON_Parser * parser, enum JSON_Token_Type 
 
 static void json_parser_synchronize_object(struct JSON_Parser * parser) {
 	while (parser->current.type != JSON_TOKEN_EOF) {
-		if (parser->previous.type == JSON_TOKEN_COMMA && parser->current.type == JSON_TOKEN_STRING) { break; }
-		if (parser->current.type == JSON_TOKEN_RIGHT_BRACE) { break; }
 		json_parser_consume(parser);
+		if (parser->current.type == JSON_TOKEN_RIGHT_BRACE) { break; }
+		if (parser->previous.type == JSON_TOKEN_COMMA && parser->current.type == JSON_TOKEN_STRING) { break; }
 	}
 	parser->panic = false;
 }
 
 static void json_parser_synchronize_array(struct JSON_Parser * parser) {
 	while (parser->current.type != JSON_TOKEN_EOF) {
-		if (parser->previous.type == JSON_TOKEN_COMMA) { break; }
-		if (parser->current.type == JSON_TOKEN_RIGHT_SQUARE) { break; }
 		json_parser_consume(parser);
+		if (parser->current.type == JSON_TOKEN_RIGHT_SQUARE) { break; }
+		if (parser->previous.type == JSON_TOKEN_COMMA) { break; }
 	}
 	parser->panic = false;
 }
@@ -230,8 +230,8 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		}
 
 		if (!json_parser_match(parser, JSON_TOKEN_COLON)) {
-			json_parser_error_previous(parser, "expected ':'");
 			goto syncronization_point;
+			json_parser_error_previous(parser, "expected ':'");
 		}
 
 		struct JSON entry_value;

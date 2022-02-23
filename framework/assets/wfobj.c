@@ -23,26 +23,26 @@ void wfobj_free(struct WFObj * obj) {
 
 static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 	DEBUG_BREAK();
-	// if (parser->panic_mode) { return; }
-	// parser->panic_mode = true;
 
-	logger_to_console("[line %u] error", token->line + 1);
+	static char const * c_wfobj_token_names[] = {
+		[WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER] = "unknown character",
+		[WFOBJ_TOKEN_EOF] = "eof",
+	};
 
-	switch (token->type) {
-		case WFOBJ_TOKEN_ERROR: break;
-		case WFOBJ_TOKEN_EOF: logger_to_console(" at the end of file"); break;
-		case WFOBJ_TOKEN_NEW_LINE: logger_to_console(" at the end of line"); break;
-		default: logger_to_console(" at '%.*s'", token->text.length, token->text.data); break;
-	}
+	char const * const reason = c_wfobj_token_names[token->type];
 
-	logger_to_console(": %s\n", message);
-	// parser->had_error = true;
+	logger_to_console("wfobj");
+	logger_to_console(" [line: %u]", token->line + 1);
+	logger_to_console(" [context: '%.*s']", token->text.length, token->text.data);
+	if (reason != NULL) { logger_to_console(" [%s]", reason); }
+	if (message != NULL) { logger_to_console(": %s", message); }
+	logger_to_console("\n");
 }
 
 static void wfobj_advance(struct WFObj_Scanner * scanner, struct WFObj_Token * token) {
 	while (token->type != WFOBJ_TOKEN_EOF) {
 		*token = wfobj_scanner_next(scanner);
-		if (token->type != WFOBJ_TOKEN_ERROR) { break; }
+		if (token->type != WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER) { break; }
 		wfobj_error_at(token, "scan error");
 	}
 }
@@ -212,9 +212,7 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 			case WFOBJ_TOKEN_COMMENT: break;
 
 			// errors
-			case WFOBJ_TOKEN_IDENTIFIER: wfobj_error_at(&token, "unknown identifier"); break;
-			case WFOBJ_TOKEN_ERROR: wfobj_error_at(&token, "scan error"); break;
-			default: wfobj_error_at(&token, "unhandled input"); break;
+			default: wfobj_error_at(&token, "scanner error"); break;
 
 			// valid
 			case WFOBJ_TOKEN_POSITION: { ADVANCE();

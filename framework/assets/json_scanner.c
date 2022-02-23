@@ -89,8 +89,8 @@ static struct JSON_Token json_scanner_make_number_token(struct JSON_Scanner * sc
 }
 
 static enum JSON_Token_Type json_scanner_check_keyword(struct JSON_Scanner * scanner, uint32_t start, struct CString rest, enum JSON_Token_Type type) {
-	if (scanner->current - scanner->start != start + rest.length) { return JSON_TOKEN_IDENTIFIER; }
-	if (common_memcmp(scanner->start + start, rest.data, rest.length) != 0) { return JSON_TOKEN_IDENTIFIER; }
+	if (scanner->current - scanner->start != start + rest.length) { return JSON_TOKEN_ERROR_IDENTIFIER; }
+	if (common_memcmp(scanner->start + start, rest.data, rest.length) != 0) { return JSON_TOKEN_ERROR_IDENTIFIER; }
 	return type;
 }
 
@@ -100,15 +100,7 @@ static enum JSON_Token_Type json_scanner_identifier_type(struct JSON_Scanner * s
 		case 'f': return json_scanner_check_keyword(scanner, 1, S_("alse"), JSON_TOKEN_FALSE);
 		case 'n': return json_scanner_check_keyword(scanner, 1, S_("ull"), JSON_TOKEN_NULL);
 	}
-	return JSON_TOKEN_IDENTIFIER;
-}
-
-static struct JSON_Token json_scanner_make_error_token(struct JSON_Scanner * scanner, struct CString message) {
-	return (struct JSON_Token) {
-		.type = JSON_TOKEN_ERROR,
-		.text = message,
-		.line = scanner->line_start,
-	};
+	return JSON_TOKEN_ERROR_IDENTIFIER;
 }
 
 static struct JSON_Token json_scanner_make_identifier_token(struct JSON_Scanner * scanner) {
@@ -123,7 +115,7 @@ static struct JSON_Token json_scanner_make_string(struct JSON_Scanner * scanner)
 		}
 		ADVANCE();
 	}
-	if (PEEK() != '"') { return json_scanner_make_error_token(scanner, S_("unterminated string")); }
+	if (PEEK() != '"') { return json_scanner_make_token(scanner, JSON_TOKEN_ERROR_UNTERMINATED_STRING); }
 	ADVANCE();
 	return json_scanner_make_token(scanner, JSON_TOKEN_STRING);
 }
@@ -141,11 +133,13 @@ inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner *
 			switch (PEEK()) {
 				case '/': while (PEEK() != '\0') { ADVANCE();
 					if (PEEK() != '\n') { continue; }
+					scanner->line_current++;
 					ADVANCE(); break;
 				}
 				return json_scanner_make_token(scanner, JSON_TOKEN_COMMENT);
 
 				case '*': while (PEEK() != '\0') { ADVANCE();
+					if (PEEK() == '\n') { scanner->line_current++; }
 					if (PEEK() != '*') { continue; }
 					if (PEEK_OFFSET(1) != '/') { continue; }
 					ADVANCE(); ADVANCE(); break;
@@ -166,7 +160,7 @@ inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner *
 	if (parse_is_alpha(c)) { return json_scanner_make_identifier_token(scanner); }
 	if (c == '-' || parse_is_digit(c)) { return json_scanner_make_number_token(scanner); }
 
-	return json_scanner_make_error_token(scanner, S_("unexpected character"));
+	return json_scanner_make_token(scanner, JSON_TOKEN_ERROR_UNKNOWN_CHARACTER);
 }
 
 #undef PEEK

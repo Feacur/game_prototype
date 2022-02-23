@@ -102,14 +102,6 @@ static enum WFObj_Token_Type wfobj_scanner_identifier_type(struct WFObj_Scanner 
 	return WFOBJ_TOKEN_IDENTIFIER;
 }
 
-static struct WFObj_Token wfobj_scanner_make_error_token(struct WFObj_Scanner * scanner, struct CString message) {
-	return (struct WFObj_Token) {
-		.type = WFOBJ_TOKEN_ERROR,
-		.text = message,
-		.line = scanner->line_start,
-	};
-}
-
 static struct WFObj_Token wfobj_scanner_make_identifier_token(struct WFObj_Scanner * scanner) {
 	while (parse_is_alpha(PEEK()) || parse_is_digit(PEEK())) { ADVANCE(); }
 	return wfobj_scanner_make_token(scanner, wfobj_scanner_identifier_type(scanner));
@@ -124,9 +116,12 @@ inline static struct WFObj_Token wfobj_scanner_next_internal(struct WFObj_Scanne
 
 	char const c = ADVANCE();
 	switch (c) {
-		case '#':
-			while (PEEK() != '\0' && PEEK() != '\n') { ADVANCE(); }
-			return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_COMMENT);
+		case '#': while (PEEK() != '\0') { ADVANCE();
+			if (PEEK() != '\n') { continue; }
+			scanner->line_current++;
+			ADVANCE(); break;
+		}
+		return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_COMMENT);
 
 		case '/': return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_SLASH);
 
@@ -139,7 +134,7 @@ inline static struct WFObj_Token wfobj_scanner_next_internal(struct WFObj_Scanne
 	if (c == '-' || parse_is_digit(c)) { return wfobj_scanner_make_number_token(scanner); }
 
 	DEBUG_BREAK();
-	return wfobj_scanner_make_error_token(scanner, S_("unexpected character"));
+	return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER);
 }
 
 #undef PEEK
