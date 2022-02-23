@@ -10,11 +10,12 @@
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_command.h"
 
+#include "application/asset_types.h"
+
 #include "batcher_2d.h"
 #include "components.h"
 #include "object_camera.h"
 #include "object_entity.h"
-#include "asset_types.h"
 
 //
 #include "game_state.h"

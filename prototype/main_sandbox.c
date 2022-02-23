@@ -22,13 +22,13 @@
 #include "framework/assets/json.h"
 
 #include "application/application.h"
+#include "application/asset_types.h"
 
 #include "object_camera.h"
 #include "object_entity.h"
 #include "game_state.h"
 #include "components.h"
 #include "batcher_2d.h"
-#include "asset_types.h"
 
 static struct Main_Uniforms {
 	uint32_t color;

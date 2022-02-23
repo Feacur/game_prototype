@@ -48,11 +48,11 @@ framework/gpu_opengl/types.c
 framework/gpu_opengl/graphics.c
 
 application/application.c
+application/asset_types.c
 
 prototype/object_camera.c
 prototype/object_entity.c
 prototype/game_state.c
 prototype/components.c
 prototype/batcher_2d.c
-prototype/asset_types.c
 prototype/main_sandbox.c

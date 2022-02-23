@@ -53,13 +53,13 @@
 #endif
 
 #include "application/application.c"
+#include "application/asset_types.c"
 
 #include "prototype/object_camera.c"
 #include "prototype/object_entity.c"
 #include "prototype/game_state.c"
 #include "prototype/components.c"
 #include "prototype/batcher_2d.c"
-#include "prototype/asset_types.c"
 #include "prototype/main_sandbox.c"
 
 /*
