@@ -137,9 +137,21 @@ inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner *
 
 	char const c = ADVANCE();
 	switch (c) {
-		case '/': if (PEEK() == '/') { ADVANCE();
-			while (PEEK() != '\0' && PEEK() != '\n') { ADVANCE(); }
-			return json_scanner_make_token(scanner, JSON_TOKEN_COMMENT);
+		case '/': {
+			switch (PEEK()) {
+				case '/': while (PEEK() != '\0') { ADVANCE();
+					if (PEEK() != '\n') { continue; }
+					ADVANCE(); break;
+				}
+				return json_scanner_make_token(scanner, JSON_TOKEN_COMMENT);
+
+				case '*': while (PEEK() != '\0') { ADVANCE();
+					if (PEEK() != '*') { continue; }
+					if (PEEK_OFFSET(1) != '/') { continue; }
+					ADVANCE(); ADVANCE(); break;
+				}
+				return json_scanner_make_token(scanner, JSON_TOKEN_COMMENT);
+			}
 		} break;
 
 		case ':': return json_scanner_make_token(scanner, JSON_TOKEN_COLON);
