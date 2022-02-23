@@ -30,7 +30,7 @@ bool platform_file_read_entire(struct CString path, struct Buffer * buffer) {
 	uint64_t const size = platform_file_size(file);
 	if (size == 0) {
 		// success: `buffer->count == 0` and `size == 0`
-		goto finalize; // the label is that way vvvvv
+		goto finalize;
 	}
 
 	uint64_t const padding = 1;
@@ -44,7 +44,7 @@ bool platform_file_read_entire(struct CString path, struct Buffer * buffer) {
 		buffer_free(buffer);
 	}
 
-	finalize: // `goto` is this way ^^^^^;
+	finalize:
 	platform_file_free(file);
 	return buffer->count == size;
 }

@@ -180,7 +180,6 @@ static void json_parser_consume(struct JSON_Parser * parser) {
 			continue;
 		}
 		if (parser->current.type == JSON_TOKEN_ERROR) {
-			json_parser_error_previous(parser, "context for vvvvv"); parser->panic = false;
 			json_parser_error_current(parser, "scanner error");
 			continue;
 		}
@@ -227,18 +226,18 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		json_parser_do_value(parser, &entry_key);
 		if (entry_key.type != JSON_STRING) {
 			json_parser_error_current(parser, "expected string");
-			goto syncronization_point; // the label is that way vvvvv
+			goto syncronization_point;
 		}
 
 		if (!json_parser_match(parser, JSON_TOKEN_COLON)) {
 			json_parser_error_previous(parser, "expected ':'");
-			goto syncronization_point; // the label is that way vvvvv
+			goto syncronization_point;
 		}
 
 		struct JSON entry_value;
 		json_parser_do_value(parser, &entry_value);
 		if (entry_value.type == JSON_ERROR) {
-			goto syncronization_point; // the label is that way vvvvv
+			goto syncronization_point;
 		}
 
 		// add
@@ -255,7 +254,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		if (is_comma) { continue; }
 		json_parser_error_previous(parser, "expected ',' or '}'");
 
-		syncronization_point: // `goto` are this way ^^^^^;
+		syncronization_point:
 		json_parser_synchronize_object(parser);
 	}
 }
@@ -273,7 +272,7 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 		struct JSON entry_value;
 		json_parser_do_value(parser, &entry_value);
 		if (entry_value.type == JSON_ERROR) {
-			goto syncronization_point; // the label is that way vvvvv
+			goto syncronization_point;
 		}
 
 		// add
@@ -285,7 +284,7 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 		if (is_comma) { continue; }
 		json_parser_error_previous(parser, "expected ',' or ']'");
 
-		syncronization_point: // `goto` is this way ^^^^^;
+		syncronization_point:
 		json_parser_synchronize_array(parser);
 	}
 }
@@ -342,7 +341,7 @@ static void json_init_internal(struct JSON * value, struct Strings * strings, ch
 
 	if (parser.current.type == JSON_TOKEN_EOF) {
 		*value = json_null;
-		goto finalize; // the label is that way vvvvv
+		goto finalize;
 	}
 
 	json_parser_do_value(&parser, value);
@@ -356,6 +355,6 @@ static void json_init_internal(struct JSON * value, struct Strings * strings, ch
 		DEBUG_BREAK();
 	}
 
-	finalize: // `goto` is this way ^^^^^;
+	finalize:
 	json_scanner_free(&parser.scanner);
 }
