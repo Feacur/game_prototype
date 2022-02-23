@@ -1,7 +1,7 @@
 #if !defined(GAME_PROTOTYPE_OBJECT_ENTITY)
 #define GAME_PROTOTYPE_OBJECT_ENTITY
 
-#include "framework/containers/ref.h"
+#include "framework/systems/asset_ref.h"
 #include "framework/graphics/types.h"
 
 #include "components.h"
@@ -29,8 +29,8 @@ struct Entity_Quad {
 
 struct Entity_Text {
 	uint32_t visible_length;
-	struct Asset_Font const * font;
-	struct Asset_Bytes const * text;
+	struct Asset_Ref font;
+	struct Asset_Ref text;
 };
 
 struct Entity {

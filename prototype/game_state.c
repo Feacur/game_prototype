@@ -570,9 +570,9 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 
 		case ENTITY_TYPE_TEXT_2D:
 			struct CString const font_path = json_get_string(json, S_("font"), S_NULL);
-			struct Asset_Font const * fonst_asset = asset_system_aquire_instance(&state.asset_system, font_path);
+			struct Asset_Ref const fonst_asset = asset_system_aquire(&state.asset_system, font_path);
 			struct CString const text_path = json_get_string(json, S_("text"), S_NULL);
-			struct Asset_Bytes const * text_asset = asset_system_aquire_instance(&state.asset_system, text_path);
+			struct Asset_Ref const text_asset = asset_system_aquire(&state.asset_system, text_path);
 			entity->as.text = (struct Entity_Text){
 				.font = fonst_asset,
 				.text = text_asset,

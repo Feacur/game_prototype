@@ -133,7 +133,8 @@ static void game_frame_update(uint64_t elapsed, uint64_t per_second) {
 
 			case ENTITY_TYPE_TEXT_2D: {
 				struct Entity_Text * text = &entity->as.text;
-				uint32_t const text_length = text->text->length;
+				struct Asset_Bytes const * text_text = asset_system_find_instance(&state.asset_system, text->text);
+				uint32_t const text_length = text_text->length;
 				text->visible_length = (text->visible_length + 1) % text_length;
 			} break;
 		}
@@ -284,12 +285,14 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
+					struct Asset_Font const * text_font = asset_system_find_instance(&state.asset_system, text->font);
+					struct Asset_Bytes const * text_text = asset_system_find_instance(&state.asset_system, text->text);
 					batcher_2d_add_text(
 						state.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
-						text->font,
+						text_font,
 						text->visible_length,
-						text->text->data
+						text_text->data
 					);
 				} break;
 			}
