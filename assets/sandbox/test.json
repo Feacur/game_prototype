@@ -104,7 +104,7 @@
 			},
 			"type": "text_2d",
 			"font": "assets/fonts/OpenSans-Regular.ttf",
-			"text": "assets/sandbox/test.txt",
+			"message": "assets/sandbox/test.txt",
 		},
 	],
 }

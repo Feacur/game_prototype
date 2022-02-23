@@ -19,7 +19,7 @@ enum Entity_Type {
 };
 
 struct Entity_Mesh {
-	struct Ref gpu_mesh_ref;
+	struct Asset_Ref mesh;
 };
 
 struct Entity_Quad {
@@ -28,9 +28,9 @@ struct Entity_Quad {
 };
 
 struct Entity_Text {
-	uint32_t visible_length;
 	struct Asset_Ref font;
-	struct Asset_Ref text;
+	struct Asset_Ref message;
+	uint32_t visible_length;
 };
 
 struct Entity {

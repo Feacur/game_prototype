@@ -555,29 +555,26 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 
 		case ENTITY_TYPE_MESH: {
 			struct CString const model_path = json_get_string(json, S_("model"), S_NULL);
-			struct Asset_Model const * model = asset_system_aquire_instance(&state.asset_system, model_path);
 			entity->as.mesh = (struct Entity_Mesh){
-				.gpu_mesh_ref = (model != NULL) ? model->gpu_ref : ref_empty,
+				.mesh = asset_system_aquire(&state.asset_system, model_path),
 			};
 		} break;
 
-		case ENTITY_TYPE_QUAD_2D:
+		case ENTITY_TYPE_QUAD_2D: {
 			struct CString const uniform = json_get_string(json, S_("uniform"), S_NULL);
 			entity->as.quad = (struct Entity_Quad){
 				.texture_uniform = graphics_add_uniform_id(uniform)
 			};
-			break;
+		} break;
 
-		case ENTITY_TYPE_TEXT_2D:
+		case ENTITY_TYPE_TEXT_2D: {
 			struct CString const font_path = json_get_string(json, S_("font"), S_NULL);
-			struct Asset_Ref const fonst_asset = asset_system_aquire(&state.asset_system, font_path);
-			struct CString const text_path = json_get_string(json, S_("text"), S_NULL);
-			struct Asset_Ref const text_asset = asset_system_aquire(&state.asset_system, text_path);
+			struct CString const message_path = json_get_string(json, S_("message"), S_NULL);
 			entity->as.text = (struct Entity_Text){
-				.font = fonst_asset,
-				.text = text_asset,
+				.font = asset_system_aquire(&state.asset_system, font_path),
+				.message = asset_system_aquire(&state.asset_system, message_path),
 			};
-			break;
+		} break;
 	}
 }
 

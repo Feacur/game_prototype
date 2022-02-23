@@ -133,7 +133,7 @@ static void game_frame_update(uint64_t elapsed, uint64_t per_second) {
 
 			case ENTITY_TYPE_TEXT_2D: {
 				struct Entity_Text * text = &entity->as.text;
-				struct Asset_Bytes const * text_text = asset_system_find_instance(&state.asset_system, text->text);
+				struct Asset_Bytes const * text_text = asset_system_find_instance(&state.asset_system, text->message);
 				uint32_t const text_length = text_text->length;
 				text->visible_length = (text->visible_length + 1) % text_length;
 			} break;
@@ -229,6 +229,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_MESH: {
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
+					struct Asset_Model const * model = asset_system_find_instance(&state.asset_system, mesh->mesh);
 
 					uint32_t const override_offset = (uint32_t)state.buffer.count;
 					uint32_t override_count = 0;
@@ -265,7 +266,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 						.type = GPU_COMMAND_TYPE_DRAW,
 						.as.draw = {
 							.material = material,
-							.gpu_mesh_ref = mesh->gpu_mesh_ref,
+							.gpu_mesh_ref = model->gpu_ref,
 							.override = {
 								.buffer = &state.buffer,
 								.offset = override_offset, .count = override_count,
@@ -285,14 +286,14 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
-					struct Asset_Font const * text_font = asset_system_find_instance(&state.asset_system, text->font);
-					struct Asset_Bytes const * text_text = asset_system_find_instance(&state.asset_system, text->text);
+					struct Asset_Font const * font = asset_system_find_instance(&state.asset_system, text->font);
+					struct Asset_Bytes const * message = asset_system_find_instance(&state.asset_system, text->message);
 					batcher_2d_add_text(
 						state.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
-						text_font,
+						font,
 						text->visible_length,
-						text_text->data
+						message->data
 					);
 				} break;
 			}
