@@ -55,4 +55,4 @@ prototype/object_entity.c
 prototype/game_state.c
 prototype/components.c
 prototype/batcher_2d.c
-prototype/main_sandbox.c
+prototype/main.c

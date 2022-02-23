@@ -38,8 +38,8 @@ static struct Main_Uniforms {
 	uint32_t transform;
 } gs_uniforms;
 
-static void game_init(void) {
-	state_init();
+static void app_init(void) {
+	game_init();
 
 	gpu_execute(1, &(struct GPU_Command){
 		.type = GPU_COMMAND_TYPE_CULL,
@@ -55,20 +55,20 @@ static void game_init(void) {
 	gs_uniforms.inverse_camera = graphics_add_uniform_id(S_("u_Camera"));
 	gs_uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
 
-	struct Asset_JSON const * json_test = asset_system_aquire_instance(&state.asset_system, S_("assets/sandbox/test.json"));
-	if (json_test != NULL) { state_read_json(&json_test->value); }
+	struct Asset_JSON const * json_test = asset_system_aquire_instance(&gs_game.asset_system, S_("assets/sandbox/test.json"));
+	if (json_test != NULL) { game_read_json(&json_test->value); }
 }
 
-static void game_free(void) {
-	state_free();
+static void app_free(void) {
+	game_free();
 }
 
-static void game_fixed_update(uint64_t elapsed, uint64_t per_second) {
+static void app_fixed_update(uint64_t elapsed, uint64_t per_second) {
 	float const delta_time = (float)((double)elapsed / (double)per_second);
 	(void)delta_time;
 }
 
-static void game_frame_update(uint64_t elapsed, uint64_t per_second) {
+static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 	float const delta_time = (float)((double)elapsed / (double)per_second);
 
 	uint32_t screen_size_x, screen_size_y;
@@ -80,9 +80,9 @@ static void game_frame_update(uint64_t elapsed, uint64_t per_second) {
 	// 	logger_to_console("delta: %d %d\n", x, y);
 	// }
 
-	for (uint32_t entity_i = 0; entity_i < state.entities.count; entity_i++) {
-		struct Entity * entity = array_any_at(&state.entities, entity_i);
-		struct Camera const * camera = array_any_at(&state.cameras, entity->camera);
+	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
+		struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
+		struct Camera const * camera = array_any_at(&gs_game.cameras, entity->camera);
 
 		// @todo: precalculate all cameras?
 		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
@@ -129,7 +129,7 @@ static void game_frame_update(uint64_t elapsed, uint64_t per_second) {
 
 			case ENTITY_TYPE_TEXT_2D: {
 				struct Entity_Text * text = &entity->as.text;
-				struct Asset_Bytes const * text_text = asset_system_find_instance(&state.asset_system, text->message);
+				struct Asset_Bytes const * text_text = asset_system_find_instance(&gs_game.asset_system, text->message);
 				uint32_t const text_length = text_text->length;
 				text->visible_length = (text->visible_length + 1) % text_length;
 			} break;
@@ -137,7 +137,7 @@ static void game_frame_update(uint64_t elapsed, uint64_t per_second) {
 	}
 }
 
-static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
+static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 	// float const delta_time = (float)((double)elapsed / (double)per_second);
 	(void)elapsed; (void)per_second;
 
@@ -147,19 +147,19 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 	if (screen_size_x == 0) { return; }
 	if (screen_size_y == 0) { return; }
 
-	batcher_2d_clear(state.batcher);
-	buffer_clear(&state.buffer);
-	array_any_clear(&state.gpu_commands);
+	batcher_2d_clear(gs_game.batcher);
+	buffer_clear(&gs_game.buffer);
+	array_any_clear(&gs_game.gpu_commands);
 
 	// @todo: override material params per shader or material where possible
 
-	uint32_t const gpu_commands_count_estimate = state.cameras.count * 2 + state.entities.count;
-	if (state.gpu_commands.capacity < gpu_commands_count_estimate) {
-		array_any_resize(&state.gpu_commands, gpu_commands_count_estimate);
+	uint32_t const gpu_commands_count_estimate = gs_game.cameras.count * 2 + gs_game.entities.count;
+	if (gs_game.gpu_commands.capacity < gpu_commands_count_estimate) {
+		array_any_resize(&gs_game.gpu_commands, gpu_commands_count_estimate);
 	}
 
-	for (uint32_t camera_i = 0; camera_i < state.cameras.count; camera_i++) {
-		struct Camera const * camera = array_any_at(&state.cameras, camera_i);
+	for (uint32_t camera_i = 0; camera_i < gs_game.cameras.count; camera_i++) {
+		struct Camera const * camera = array_any_at(&gs_game.cameras, camera_i);
 
 		// prepare camera
 		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
@@ -172,7 +172,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 		struct mat4 const mat4_camera = mat4_mul_mat(mat4_projection, mat4_inverse_camera);
 
 		// process camera
-		array_any_push(&state.gpu_commands, &(struct GPU_Command){
+		array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
 			.type = GPU_COMMAND_TYPE_TARGET,
 			.as.target = {
 				.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
@@ -181,7 +181,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 		});
 
 		if (camera->clear_mask != TEXTURE_TYPE_NONE) {
-			array_any_push(&state.gpu_commands, &(struct GPU_Command){
+			array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_CLEAR,
 				.as.clear = {
 					.mask = camera->clear_mask,
@@ -191,11 +191,11 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 		}
 
 		// draw entities
-		for (uint32_t entity_i = 0; entity_i < state.entities.count; entity_i++) {
-			struct Entity * entity = array_any_at(&state.entities, entity_i);
+		for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
+			struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
 
-			struct Gfx_Material * material = array_any_at(&state.materials, entity->material);
+			struct Gfx_Material * material = array_any_at(&gs_game.materials, entity->material);
 
 			struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
 			entity_get_rect(
@@ -214,10 +214,10 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 			);
 
 			if (entity_get_is_batched(entity)) {
-				batcher_2d_set_matrix(state.batcher, (struct mat4[]){
+				batcher_2d_set_matrix(gs_game.batcher, (struct mat4[]){
 					mat4_mul_mat(mat4_camera, mat4_entity)
 				});
-				batcher_2d_set_material(state.batcher, material);
+				batcher_2d_set_material(gs_game.batcher, material);
 			}
 
 			switch (entity->type) {
@@ -225,46 +225,46 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_MESH: {
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
-					struct Asset_Model const * model = asset_system_find_instance(&state.asset_system, mesh->mesh);
+					struct Asset_Model const * model = asset_system_find_instance(&gs_game.asset_system, mesh->mesh);
 
-					uint32_t const override_offset = (uint32_t)state.buffer.count;
+					uint32_t const override_offset = (uint32_t)gs_game.buffer.count;
 					uint32_t override_count = 0;
 
 					//
 					override_count++;
-					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
+					buffer_push_many(&gs_game.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
 						.header.id = gs_uniforms.projection,
 						.header.size = sizeof(mat4_projection),
 					});
-					buffer_push_many(&state.buffer, sizeof(mat4_projection), (void const *)&mat4_projection);
-					buffer_align(&state.buffer);
+					buffer_push_many(&gs_game.buffer, sizeof(mat4_projection), (void const *)&mat4_projection);
+					buffer_align(&gs_game.buffer);
 
 					//
 					override_count++;
-					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
+					buffer_push_many(&gs_game.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
 						.header.id = gs_uniforms.inverse_camera,
 						.header.size = sizeof(mat4_inverse_camera),
 					});
-					buffer_push_many(&state.buffer, sizeof(mat4_inverse_camera), (void const *)&mat4_inverse_camera);
-					buffer_align(&state.buffer);
+					buffer_push_many(&gs_game.buffer, sizeof(mat4_inverse_camera), (void const *)&mat4_inverse_camera);
+					buffer_align(&gs_game.buffer);
 
 					//
 					override_count++;
-					buffer_push_many(&state.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
+					buffer_push_many(&gs_game.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
 						.header.id = gs_uniforms.transform,
 						.header.size = sizeof(mat4_entity),
 					});
-					buffer_push_many(&state.buffer, sizeof(mat4_entity), (void const *)&mat4_entity);
-					buffer_align(&state.buffer);
+					buffer_push_many(&gs_game.buffer, sizeof(mat4_entity), (void const *)&mat4_entity);
+					buffer_align(&gs_game.buffer);
 
 					//
-					array_any_push(&state.gpu_commands, &(struct GPU_Command){
+					array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
 						.type = GPU_COMMAND_TYPE_DRAW,
 						.as.draw = {
 							.material = material,
 							.gpu_mesh_ref = model->gpu_ref,
 							.override = {
-								.buffer = &state.buffer,
+								.buffer = &gs_game.buffer,
 								.offset = override_offset, .count = override_count,
 							}
 						},
@@ -274,7 +274,7 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 				case ENTITY_TYPE_QUAD_2D: {
 					// struct Entity_Quad const * quad = &entity->as.quad;
 					batcher_2d_add_quad(
-						state.batcher,
+						gs_game.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
 						(float[]){0,0,1,1}
 					);
@@ -282,10 +282,10 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
-					struct Asset_Font const * font = asset_system_find_instance(&state.asset_system, text->font);
-					struct Asset_Bytes const * message = asset_system_find_instance(&state.asset_system, text->message);
+					struct Asset_Font const * font = asset_system_find_instance(&gs_game.asset_system, text->font);
+					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.asset_system, text->message);
 					batcher_2d_add_text(
-						state.batcher,
+						gs_game.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
 						font,
 						text->visible_length,
@@ -296,8 +296,8 @@ static void game_draw_update(uint64_t elapsed, uint64_t per_second) {
 		}
 	}
 
-	batcher_2d_bake(state.batcher, &state.gpu_commands);
-	gpu_execute(state.gpu_commands.count, state.gpu_commands.data);
+	batcher_2d_bake(gs_game.batcher, &gs_game.gpu_commands);
+	gpu_execute(gs_game.gpu_commands.count, gs_game.gpu_commands.data);
 }
 
 //
@@ -334,11 +334,11 @@ int main (int argc, char * argv[]) {
 	main_get_config(&config);
 
 	application_run(config, (struct Application_Callbacks){
-		.init = game_init,
-		.free = game_free,
-		.fixed_update = game_fixed_update,
-		.frame_update = game_frame_update,
-		.draw_update  = game_draw_update,
+		.init = app_init,
+		.free = app_free,
+		.fixed_update = app_fixed_update,
+		.frame_update = app_frame_update,
+		.draw_update  = app_draw_update,
 	});
 
 	return 0;

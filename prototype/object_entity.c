@@ -65,7 +65,7 @@ struct uvec2 entity_get_content_size(
 	struct Entity const * entity,
 	uint32_t viewport_size_x, uint32_t viewport_size_y
 ) {
-	struct Gfx_Material * material = array_any_at(&state.materials, entity->material);
+	struct Gfx_Material * material = array_any_at(&gs_game.materials, entity->material);
 
 	switch (entity->type) {
 		case ENTITY_TYPE_NONE: return (struct uvec2){0, 0};

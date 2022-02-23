@@ -7,7 +7,7 @@
 struct Batcher_2D;
 struct JSON;
 
-struct Game_State {
+extern struct Game_State {
 	struct Batcher_2D * batcher;
 	struct Buffer buffer;
 	struct Array_Any gpu_commands;
@@ -18,15 +18,13 @@ struct Game_State {
 	struct Array_Any materials;
 	struct Array_Any cameras;
 	struct Array_Any entities;
-};
-
-extern struct Game_State state;
+} gs_game;
 
 //
 
-void state_init(void);
-void state_free(void);
+void game_init(void);
+void game_free(void);
 
-void state_read_json(struct JSON const * json);
+void game_read_json(struct JSON const * json);
 
 #endif

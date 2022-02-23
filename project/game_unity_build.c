@@ -60,7 +60,7 @@
 #include "prototype/game_state.c"
 #include "prototype/components.c"
 #include "prototype/batcher_2d.c"
-#include "prototype/main_sandbox.c"
+#include "prototype/main.c"
 
 /*
 Language: C99 or C11

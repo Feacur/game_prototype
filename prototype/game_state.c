@@ -20,63 +20,63 @@
 //
 #include "game_state.h"
 
-struct Game_State state;
+struct Game_State gs_game;
 
-void state_init(void) {
+void game_init(void) {
 
 	// init state
 	{
-		state = (struct Game_State){
+		gs_game = (struct Game_State){
 			.batcher = batcher_2d_init(),
 		};
-		asset_system_init(&state.asset_system);
-		buffer_init(&state.buffer);
-		array_any_init(&state.gpu_commands, sizeof(struct GPU_Command));
-		array_any_init(&state.targets, sizeof(struct Ref));
-		array_any_init(&state.materials, sizeof(struct Gfx_Material));
-		array_any_init(&state.cameras, sizeof(struct Camera));
-		array_any_init(&state.entities, sizeof(struct Entity));
+		asset_system_init(&gs_game.asset_system);
+		buffer_init(&gs_game.buffer);
+		array_any_init(&gs_game.gpu_commands, sizeof(struct GPU_Command));
+		array_any_init(&gs_game.targets, sizeof(struct Ref));
+		array_any_init(&gs_game.materials, sizeof(struct Gfx_Material));
+		array_any_init(&gs_game.cameras, sizeof(struct Camera));
+		array_any_init(&gs_game.entities, sizeof(struct Entity));
 	}
 
 	// init asset system
 	{ // state is expected to be inited
 		// > map types
-		asset_system_map_extension(&state.asset_system, S_("shader"), S_("glsl"));
-		asset_system_map_extension(&state.asset_system, S_("model"),  S_("obj"));
-		asset_system_map_extension(&state.asset_system, S_("model"),  S_("fbx"));
-		asset_system_map_extension(&state.asset_system, S_("image"),  S_("png"));
-		asset_system_map_extension(&state.asset_system, S_("font"),   S_("ttf"));
-		asset_system_map_extension(&state.asset_system, S_("font"),   S_("otf"));
-		asset_system_map_extension(&state.asset_system, S_("bytes"),  S_("txt"));
-		asset_system_map_extension(&state.asset_system, S_("json"),   S_("json"));
+		asset_system_map_extension(&gs_game.asset_system, S_("shader"), S_("glsl"));
+		asset_system_map_extension(&gs_game.asset_system, S_("model"),  S_("obj"));
+		asset_system_map_extension(&gs_game.asset_system, S_("model"),  S_("fbx"));
+		asset_system_map_extension(&gs_game.asset_system, S_("image"),  S_("png"));
+		asset_system_map_extension(&gs_game.asset_system, S_("font"),   S_("ttf"));
+		asset_system_map_extension(&gs_game.asset_system, S_("font"),   S_("otf"));
+		asset_system_map_extension(&gs_game.asset_system, S_("bytes"),  S_("txt"));
+		asset_system_map_extension(&gs_game.asset_system, S_("json"),   S_("json"));
 
 		// > register types
-		asset_system_set_type(&state.asset_system, S_("shader"), (struct Asset_Callbacks){
+		asset_system_set_type(&gs_game.asset_system, S_("shader"), (struct Asset_Callbacks){
 			.init = asset_shader_init,
 			.free = asset_shader_free,
 		}, sizeof(struct Asset_Shader));
 
-		asset_system_set_type(&state.asset_system, S_("model"), (struct Asset_Callbacks){
+		asset_system_set_type(&gs_game.asset_system, S_("model"), (struct Asset_Callbacks){
 			.init = asset_model_init,
 			.free = asset_model_free,
 		}, sizeof(struct Asset_Model));
 
-		asset_system_set_type(&state.asset_system, S_("image"), (struct Asset_Callbacks){
+		asset_system_set_type(&gs_game.asset_system, S_("image"), (struct Asset_Callbacks){
 			.init = asset_image_init,
 			.free = asset_image_free,
 		}, sizeof(struct Asset_Image));
 
-		asset_system_set_type(&state.asset_system, S_("font"), (struct Asset_Callbacks){
+		asset_system_set_type(&gs_game.asset_system, S_("font"), (struct Asset_Callbacks){
 			.init = asset_font_init,
 			.free = asset_font_free,
 		}, sizeof(struct Asset_Font));
 
-		asset_system_set_type(&state.asset_system, S_("bytes"), (struct Asset_Callbacks){
+		asset_system_set_type(&gs_game.asset_system, S_("bytes"), (struct Asset_Callbacks){
 			.init = asset_bytes_init,
 			.free = asset_bytes_free,
 		}, sizeof(struct Asset_Bytes));
 
-		asset_system_set_type(&state.asset_system, S_("json"), (struct Asset_Callbacks){
+		asset_system_set_type(&gs_game.asset_system, S_("json"), (struct Asset_Callbacks){
 			.type_init = asset_json_type_init,
 			.type_free = asset_json_type_free,
 			.init = asset_json_init,
@@ -85,23 +85,23 @@ void state_init(void) {
 	}
 }
 
-void state_free(void) {
-	batcher_2d_free(state.batcher);
+void game_free(void) {
+	batcher_2d_free(gs_game.batcher);
 
-	asset_system_free(&state.asset_system);
+	asset_system_free(&gs_game.asset_system);
 
-	for (uint32_t i = 0; i < state.materials.count; i++) {
-		gfx_material_free(array_any_at(&state.materials, i));
+	for (uint32_t i = 0; i < gs_game.materials.count; i++) {
+		gfx_material_free(array_any_at(&gs_game.materials, i));
 	}
 
-	buffer_free(&state.buffer);
-	array_any_free(&state.gpu_commands);
-	array_any_free(&state.targets);
-	array_any_free(&state.materials);
-	array_any_free(&state.cameras);
-	array_any_free(&state.entities);
+	buffer_free(&gs_game.buffer);
+	array_any_free(&gs_game.gpu_commands);
+	array_any_free(&gs_game.targets);
+	array_any_free(&gs_game.materials);
+	array_any_free(&gs_game.cameras);
+	array_any_free(&gs_game.entities);
 
-	common_memset(&state, 0, sizeof(state));
+	common_memset(&gs_game, 0, sizeof(gs_game));
 }
 
 static void state_read_json_targets(struct JSON const * json);
@@ -109,7 +109,7 @@ static void state_read_json_materials(struct JSON const * json);
 static void state_read_json_cameras(struct JSON const * json);
 static void state_read_json_entities(struct JSON const * json);
 
-void state_read_json(struct JSON const * json) {
+void game_read_json(struct JSON const * json) {
 	state_read_json_targets(json_get(json, S_("targets")));
 	state_read_json_materials(json_get(json, S_("materials")));
 	state_read_json_cameras(json_get(json, S_("cameras")));
@@ -240,7 +240,7 @@ static uint32_t state_read_json_hex(struct JSON const * json) {
 static struct Ref state_read_json_get_target_ref(struct JSON const * json) {
 	uint32_t const target_uid = (uint32_t)json_as_number(json, 0);
 	if (target_uid != 0) {
-		struct Ref const * gpu_target = array_any_at(&state.targets, target_uid - 1);
+		struct Ref const * gpu_target = array_any_at(&gs_game.targets, target_uid - 1);
 		if (gpu_target != NULL) { return *gpu_target; }
 	}
 	return ref_empty;
@@ -340,7 +340,7 @@ static void state_read_json_targets(struct JSON const * json) {
 		struct Ref target_ref;
 		state_read_json_target(target_json, &target_ref, &parameters_buffer);
 
-		array_any_push(&state.targets, &target_ref);
+		array_any_push(&gs_game.targets, &target_ref);
 	}
 
 	array_any_free(&parameters_buffer);
@@ -353,7 +353,7 @@ static void state_read_json_targets(struct JSON const * json) {
 static struct Ref state_read_json_uniform_image(struct JSON const * json) {
 	if (json->type == JSON_OBJECT) {
 		struct CString     const   path  = json_get_string(json, S_("path"), S_NULL);
-		struct Asset_Image const * asset = asset_system_aquire_instance(&state.asset_system, path);
+		struct Asset_Image const * asset = asset_system_aquire_instance(&gs_game.asset_system, path);
 		if (asset != NULL) { return asset->gpu_ref; }
 	}
 	return ref_empty;
@@ -372,7 +372,7 @@ static struct Ref state_read_json_uniform_target(struct JSON const * json) {
 static struct Ref state_read_json_uniform_font(struct JSON const * json) {
 	if (json->type == JSON_OBJECT) {
 		struct CString    const   path  = json_get_string(json, S_("path"), S_NULL);
-		struct Asset_Font const * asset = asset_system_aquire_instance(&state.asset_system, path);
+		struct Asset_Font const * asset = asset_system_aquire_instance(&gs_game.asset_system, path);
 		if (asset != NULL) { return asset->gpu_ref; }
 	}
 	return ref_empty;
@@ -398,7 +398,7 @@ static void state_read_json_material(struct JSON const * json, struct Gfx_Materi
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
 	struct CString      const   path  = json_get_string(json, S_("shader"), S_NULL);
-	struct Asset_Shader const * asset = asset_system_aquire_instance(&state.asset_system, path);
+	struct Asset_Shader const * asset = asset_system_aquire_instance(&gs_game.asset_system, path);
 	if (asset == NULL) { DEBUG_BREAK(); return; }
 
 	struct Blend_Mode blend_mode;
@@ -489,7 +489,7 @@ static void state_read_json_materials(struct JSON const * json) {
 		struct Gfx_Material material;
 		state_read_json_material(material_json, &material, &uniform_data_buffer);
 
-		array_any_push(&state.materials, &material);
+		array_any_push(&gs_game.materials, &material);
 	}
 
 	array_any_free(&uniform_data_buffer);
@@ -523,7 +523,7 @@ static void state_read_json_cameras(struct JSON const * json) {
 		struct Camera camera;
 		state_read_json_camera(camera_json, &camera);
 
-		array_any_push(&state.cameras, &camera);
+		array_any_push(&gs_game.cameras, &camera);
 	}
 }
 
@@ -545,7 +545,7 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 		case ENTITY_TYPE_MESH: {
 			struct CString const model_path = json_get_string(json, S_("model"), S_NULL);
 			entity->as.mesh = (struct Entity_Mesh){
-				.mesh = asset_system_aquire(&state.asset_system, model_path),
+				.mesh = asset_system_aquire(&gs_game.asset_system, model_path),
 			};
 		} break;
 
@@ -561,8 +561,8 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 			struct CString const font_path = json_get_string(json, S_("font"), S_NULL);
 			struct CString const message_path = json_get_string(json, S_("message"), S_NULL);
 			entity->as.text = (struct Entity_Text){
-				.font = asset_system_aquire(&state.asset_system, font_path),
-				.message = asset_system_aquire(&state.asset_system, message_path),
+				.font = asset_system_aquire(&gs_game.asset_system, font_path),
+				.message = asset_system_aquire(&gs_game.asset_system, message_path),
 			};
 		} break;
 	}
@@ -578,6 +578,6 @@ static void state_read_json_entities(struct JSON const * json) {
 		struct Entity entity;
 		state_read_json_entity(entity_json, &entity);
 
-		array_any_push(&state.entities, &entity);
+		array_any_push(&gs_game.entities, &entity);
 	}
 }
