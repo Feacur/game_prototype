@@ -211,16 +211,6 @@ static enum Camera_Mode state_read_json_camera_mode(struct JSON const * json) {
 	return CAMERA_MODE_NONE;
 }
 
-static enum Entity_Rect_Behaviour state_read_json_entity_rect_behaviour(struct JSON const * json) {
-	if (json->type == JSON_STRING) {
-		uint32_t const id = json_as_id(json);
-		if (id == json_find_id(json, S_("fit"))) {
-			return ENTITY_RECT_BEHAVIOUR_FIT;
-		}
-	}
-	return ENTITY_RECT_BEHAVIOUR_NONE;
-}
-
 static enum Entity_Type state_read_json_entity_type(struct JSON const * json) {
 	if (json->type == JSON_STRING) {
 		uint32_t const id = json_as_id(json);
@@ -544,8 +534,6 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 	state_read_json_transform_3d(json_get(json, S_("transform")), &entity->transform);
 	state_read_json_transform_rect(json_get(json, S_("rect")), &entity->rect);
 
-	entity->rect_behaviour = state_read_json_entity_rect_behaviour(json_get(json, S_("rect_behaviour")));
-
 	entity->material = (uint32_t)json_get_number(json, S_("material_uid"), 0) - 1;
 	entity->camera   = (uint32_t)json_get_number(json, S_("camera_uid"), 0) - 1;
 
@@ -563,7 +551,8 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 		case ENTITY_TYPE_QUAD_2D: {
 			struct CString const uniform = json_get_string(json, S_("uniform"), S_NULL);
 			entity->as.quad = (struct Entity_Quad){
-				.texture_uniform = graphics_add_uniform_id(uniform)
+				.texture_uniform = graphics_add_uniform_id(uniform),
+				.fit = json_get_boolean(json, S_("fit"), false),
 			};
 		} break;
 

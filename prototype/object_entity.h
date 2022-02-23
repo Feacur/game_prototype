@@ -6,11 +6,6 @@
 
 #include "components.h"
 
-enum Entity_Rect_Behaviour {
-	ENTITY_RECT_BEHAVIOUR_NONE,
-	ENTITY_RECT_BEHAVIOUR_FIT,
-};
-
 enum Entity_Type {
 	ENTITY_TYPE_NONE,
 	ENTITY_TYPE_MESH,
@@ -23,8 +18,8 @@ struct Entity_Mesh {
 };
 
 struct Entity_Quad {
-	// @idea: a gpu ref?
 	uint32_t texture_uniform;
+	bool fit;
 };
 
 struct Entity_Text {
@@ -39,7 +34,6 @@ struct Entity {
 	//
 	struct Transform_3D transform;
 	struct Transform_Rect rect; // @todo: make it completely optional?
-	enum Entity_Rect_Behaviour rect_behaviour;
 	//
 	enum Entity_Type type;
 	union {

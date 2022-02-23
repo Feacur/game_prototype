@@ -90,38 +90,34 @@ static void game_frame_update(uint64_t elapsed, uint64_t per_second) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
-		// rect behaviour
-		switch (entity->rect_behaviour) {
-			case ENTITY_RECT_BEHAVIOUR_NONE: break;
-
-			case ENTITY_RECT_BEHAVIOUR_FIT: {
-				struct uvec2 const entity_content_size = entity_get_content_size(entity, viewport_size_x, viewport_size_y);
-				if (entity_content_size.x != 0 && entity_content_size.y != 0)  {
-					// @note: `(fit_size_N <= viewport_size_N) == true`
-					//        `(fit_offset_N >= 0) == true`
-					//        alternatively `fit_axis_is_x` can be calculated as:
-					//        `((float)texture_size_x / (float)viewport_size_x > (float)texture_size_y / (float)viewport_size_y)`
-					bool const fit_axis_is_x = (entity_content_size.x * viewport_size_y > entity_content_size.y * viewport_size_x);
-					uint32_t const fit_size_x = fit_axis_is_x ? viewport_size_x : mul_div_u32(viewport_size_y, entity_content_size.x, entity_content_size.y);
-					uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(viewport_size_x, entity_content_size.y, entity_content_size.x) : viewport_size_y;
-					uint32_t const fit_offset_x = (viewport_size_x - fit_size_x) / 2;
-					uint32_t const fit_offset_y = (viewport_size_y - fit_size_y) / 2;
-
-					entity->rect = (struct Transform_Rect){
-						.min_absolute = {(float)fit_offset_x, (float)fit_offset_y},
-						.max_absolute = {(float)(fit_offset_x + fit_size_x), (float)(fit_offset_y + fit_size_y)},
-						.pivot = {0.5f, 0.5f},
-					};
-				}
-				else { entity->rect = transform_rect_default; }
-			} break;
-		}
-
 		// entity behaviour
 		switch (entity->type) {
 			case ENTITY_TYPE_NONE: break;
 
-			case ENTITY_TYPE_QUAD_2D: break;
+			case ENTITY_TYPE_QUAD_2D: {
+				struct Entity_Quad * quad = &entity->as.quad;
+				if (quad->fit) {
+					struct uvec2 const entity_content_size = entity_get_content_size(entity, viewport_size_x, viewport_size_y);
+					if (entity_content_size.x != 0 && entity_content_size.y != 0)  {
+						// @note: `(fit_size_N <= viewport_size_N) == true`
+						//        `(fit_offset_N >= 0) == true`
+						//        alternatively `fit_axis_is_x` can be calculated as:
+						//        `((float)texture_size_x / (float)viewport_size_x > (float)texture_size_y / (float)viewport_size_y)`
+						bool const fit_axis_is_x = (entity_content_size.x * viewport_size_y > entity_content_size.y * viewport_size_x);
+						uint32_t const fit_size_x = fit_axis_is_x ? viewport_size_x : mul_div_u32(viewport_size_y, entity_content_size.x, entity_content_size.y);
+						uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(viewport_size_x, entity_content_size.y, entity_content_size.x) : viewport_size_y;
+						uint32_t const fit_offset_x = (viewport_size_x - fit_size_x) / 2;
+						uint32_t const fit_offset_y = (viewport_size_y - fit_size_y) / 2;
+
+						entity->rect = (struct Transform_Rect){
+							.min_absolute = {(float)fit_offset_x, (float)fit_offset_y},
+							.max_absolute = {(float)(fit_offset_x + fit_size_x), (float)(fit_offset_y + fit_size_y)},
+							.pivot = {0.5f, 0.5f},
+						};
+					}
+					else { entity->rect = transform_rect_default; }
+				}
+			} break;
 
 			case ENTITY_TYPE_MESH: {
 				// struct Entity_Mesh * mesh = &entity->as.mesh;
