@@ -71,12 +71,11 @@
 			"camera_uid": 2,
 			"rect_behaviour": "fit",
 			"type": "quad_2d",
-			"uniform": "u_Texture",
+			"uniform": "u_Texture", // rect mode "fit" uses it
 		},
 		{
 			"material_uid": 4,
 			"camera_uid": 2,
-			"rect_behaviour": "fit",
 			"rect": {
 				"min_rel": [0.5, 0.25],
 				"max_rel": [0.5, 0.25],
@@ -84,18 +83,15 @@
 				"pivot": [0.5, 0.5],
 			},
 			"type": "quad_2d",
-			"uniform": "u_Texture",
 		},
 		{
 			"material_uid": 4,
 			"camera_uid": 2,
-			"rect_behaviour": "fit",
 			"rect": {
 				"max_rel": [0.5, 0.25],
 				"pivot": [0.5, 0.5],
 			},
 			"type": "quad_2d",
-			"uniform": "u_Texture",
 		},
 	],
 }

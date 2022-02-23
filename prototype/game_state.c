@@ -544,7 +544,7 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 	state_read_json_transform_3d(json_get(json, S_("transform")), &entity->transform);
 	state_read_json_transform_rect(json_get(json, S_("rect")), &entity->rect);
 
-	entity->rect_behaviour = state_read_json_entity_rect_behaviour(json_get(json, S_("rect_auto")));
+	entity->rect_behaviour = state_read_json_entity_rect_behaviour(json_get(json, S_("rect_behaviour")));
 
 	entity->material = (uint32_t)json_get_number(json, S_("material_uid"), 0) - 1;
 	entity->camera   = (uint32_t)json_get_number(json, S_("camera_uid"), 0) - 1;
