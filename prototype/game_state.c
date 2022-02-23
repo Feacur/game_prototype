@@ -362,7 +362,7 @@ static void state_read_json_targets(struct JSON const * json) {
 static struct Ref state_read_json_uniform_image(struct JSON const * json) {
 	if (json->type == JSON_OBJECT) {
 		struct CString     const   path  = json_get_string(json, S_("path"), S_NULL);
-		struct Asset_Image const * asset = asset_system_find_instance(&state.asset_system, path);
+		struct Asset_Image const * asset = asset_system_aquire_instance(&state.asset_system, path);
 		if (asset != NULL) { return asset->gpu_ref; }
 	}
 	return ref_empty;
@@ -381,7 +381,7 @@ static struct Ref state_read_json_uniform_target(struct JSON const * json) {
 static struct Ref state_read_json_uniform_font(struct JSON const * json) {
 	if (json->type == JSON_OBJECT) {
 		struct CString    const   path  = json_get_string(json, S_("path"), S_NULL);
-		struct Asset_Font const * asset = asset_system_find_instance(&state.asset_system, path);
+		struct Asset_Font const * asset = asset_system_aquire_instance(&state.asset_system, path);
 		if (asset != NULL) { return asset->gpu_ref; }
 	}
 	return ref_empty;
@@ -407,7 +407,7 @@ static void state_read_json_material(struct JSON const * json, struct Gfx_Materi
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
 	struct CString      const   path  = json_get_string(json, S_("shader"), S_NULL);
-	struct Asset_Shader const * asset = asset_system_find_instance(&state.asset_system, path);
+	struct Asset_Shader const * asset = asset_system_aquire_instance(&state.asset_system, path);
 	if (asset == NULL) { DEBUG_BREAK(); return; }
 
 	struct Blend_Mode blend_mode;
@@ -555,7 +555,7 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 
 		case ENTITY_TYPE_MESH: {
 			struct CString const model_path = json_get_string(json, S_("model"), S_NULL);
-			struct Asset_Model const * model = asset_system_find_instance(&state.asset_system, model_path);
+			struct Asset_Model const * model = asset_system_aquire_instance(&state.asset_system, model_path);
 			entity->as.mesh = (struct Entity_Mesh){
 				.gpu_mesh_ref = (model != NULL) ? model->gpu_ref : ref_empty,
 			};

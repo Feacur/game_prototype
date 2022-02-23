@@ -142,6 +142,7 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 
 	struct Asset_Entry * entry = ref_table_get(&asset_type->instances, instance_ref);
 	entry->header.resource_id = resource_id;
+
 	if (asset_type->callbacks.init != NULL) {
 		asset_type->callbacks.init(entry->payload, name);
 	}
@@ -180,7 +181,7 @@ void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_r
 	}
 }
 
-void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref asset_ref) {
+void * asset_system_find_instance(struct Asset_System * system, struct Asset_Ref asset_ref) {
 	if (asset_ref.type_id == с_asset_ref_empty.type_id) {
 		logger_to_console("unknown type"); DEBUG_BREAK(); return NULL;
 	}
@@ -201,9 +202,13 @@ void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref 
 	return entry->payload;
 }
 
-void * asset_system_find_instance(struct Asset_System * system, struct CString name) {
+struct CString asset_system_get_name(struct Asset_System * system, struct Asset_Ref asset_ref) {
+	return strings_get(&system->strings, asset_ref.resource_id);
+}
+
+void * asset_system_aquire_instance(struct Asset_System * system, struct CString name) {
 	struct Asset_Ref const asset_ref = asset_system_aquire(system, name);
-	return asset_system_get_instance(system, asset_ref);
+	return asset_system_find_instance(system, asset_ref);
 }
 
 //

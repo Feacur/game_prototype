@@ -56,13 +56,13 @@ static void game_init(void) {
 	gs_uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
 
 	//
-	struct Asset_JSON const * json_test = asset_system_find_instance(&state.asset_system, S_("assets/sandbox/test.json"));
+	struct Asset_JSON const * json_test = asset_system_aquire_instance(&state.asset_system, S_("assets/sandbox/test.json"));
 	if (json_test != NULL) { state_read_json(&json_test->value); }
 
 	// objects
 	{
-		struct Asset_Bytes const * text_test = asset_system_find_instance(&state.asset_system, S_("assets/sandbox/test.txt"));
-		struct Asset_Font const * asset_font = asset_system_find_instance(&state.asset_system, S_("assets/fonts/OpenSans-Regular.ttf"));
+		struct Asset_Bytes const * text_test = asset_system_aquire_instance(&state.asset_system, S_("assets/sandbox/test.txt"));
+		struct Asset_Font const * asset_font = asset_system_aquire_instance(&state.asset_system, S_("assets/fonts/OpenSans-Regular.ttf"));
 
 		// > entities
 		array_any_push(&state.entities, &(struct Entity){

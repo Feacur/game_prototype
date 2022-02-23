@@ -5,10 +5,7 @@
 #include "framework/containers/hash_table_u32.h"
 #include "framework/containers/ref_table.h"
 
-struct Asset_Ref {
-	struct Ref instance_ref;
-	uint32_t type_id, resource_id;
-};
+#include "asset_ref.h"
 
 struct Asset_Callbacks {
 	void (* type_init)(void);
@@ -35,8 +32,10 @@ void asset_system_del_type(struct Asset_System * system, struct CString type);
 struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CString name);
 void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_ref);
 
-void * asset_system_get_instance(struct Asset_System * system, struct Asset_Ref asset_ref);
-void * asset_system_find_instance(struct Asset_System * system, struct CString name);
+void * asset_system_find_instance(struct Asset_System * system, struct Asset_Ref asset_ref);
+void * asset_system_aquire_instance(struct Asset_System * system, struct CString name);
+
+struct CString asset_system_get_name(struct Asset_System * system, struct Asset_Ref asset_ref);
 
 //
 
