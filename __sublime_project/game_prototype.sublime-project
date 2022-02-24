@@ -11,28 +11,28 @@
 			"folder_include_patterns": ["."],
 		},
 		{
-			"path": "../framework"
+			"path": "../framework",
 		},
 		{
-			"path": "../application"
+			"path": "../application",
 		},
 		{
-			"path": "../prototype"
+			"path": "../prototype",
 		},
 		{
-			"path": "../third_party"
+			"path": "../third_party",
 		},
 		{
-			"path": "../assets"
+			"path": "../assets",
 		},
 		{
-			"path": "../project"
+			"path": "../project",
 		},
 		{
-			"path": "../bin"
+			"path": "../bin",
 		},
 		{
-			"path": "../__vscode_workspace"
+			"path": "../__vscode_workspace",
 		},
 	],
 	"settings": {
