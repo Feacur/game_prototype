@@ -11,10 +11,10 @@
 //
 #include "json.h"
 
-struct JSON const json_true  = {.type = JSON_BOOLEAN, .as.boolean = true,};
-struct JSON const json_false = {.type = JSON_BOOLEAN, .as.boolean = false,};
-struct JSON const json_null  = {.type = JSON_NULL,};
-struct JSON const json_error = {.type = JSON_ERROR,};
+struct JSON const c_json_true  = {.type = JSON_BOOLEAN, .as.boolean = true,};
+struct JSON const c_json_false = {.type = JSON_BOOLEAN, .as.boolean = false,};
+struct JSON const c_json_null  = {.type = JSON_NULL,};
+struct JSON const c_json_error = {.type = JSON_ERROR,};
 
 static void json_init_internal(struct JSON * value, struct Strings * strings, char const * data);
 void json_init(struct JSON * value, struct Strings * strings, char const * data) {
@@ -53,18 +53,18 @@ uint32_t json_find_id(struct JSON const * value, struct CString text) {
 
 // -- JSON get/at element
 struct JSON const * json_get(struct JSON const * value, struct CString key) {
-	if (value->type != JSON_OBJECT) { DEBUG_BREAK(); return &json_error; }
-	if (value->strings == NULL) { DEBUG_BREAK(); return &json_error; }
+	if (value->type != JSON_OBJECT) { DEBUG_BREAK(); return &c_json_error; }
+	if (value->strings == NULL) { DEBUG_BREAK(); return &c_json_error; }
 	uint32_t const key_id = strings_find(value->strings, key);
-	if (key_id == INDEX_EMPTY) { return &json_null; }
+	if (key_id == INDEX_EMPTY) { return &c_json_null; }
 	void const * result = hash_table_u32_get(&value->as.table, key_id);
-	return (result != NULL) ? result : &json_null;
+	return (result != NULL) ? result : &c_json_null;
 }
 
 struct JSON const * json_at(struct JSON const * value, uint32_t index) {
-	if (value->type != JSON_ARRAY) { DEBUG_BREAK(); return &json_error; }
+	if (value->type != JSON_ARRAY) { DEBUG_BREAK(); return &c_json_error; }
 	void * result = array_any_at(&value->as.array, index);
-	return (result != NULL) ? result : &json_null;
+	return (result != NULL) ? result : &c_json_null;
 }
 
 uint32_t json_count(struct JSON const * value) {
@@ -312,9 +312,9 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 		case JSON_TOKEN_STRING: json_parser_do_string(parser, value); return;
 		case JSON_TOKEN_NUMBER: json_parser_do_number(parser, value); return;
 
-		case JSON_TOKEN_TRUE:  *value = json_true;  json_parser_consume(parser); return;
-		case JSON_TOKEN_FALSE: *value = json_false; json_parser_consume(parser); return;
-		case JSON_TOKEN_NULL:  *value = json_null;  json_parser_consume(parser); return;
+		case JSON_TOKEN_TRUE:  *value = c_json_true;  json_parser_consume(parser); return;
+		case JSON_TOKEN_FALSE: *value = c_json_false; json_parser_consume(parser); return;
+		case JSON_TOKEN_NULL:  *value = c_json_null;  json_parser_consume(parser); return;
 
 		default: break;
 	}
@@ -328,12 +328,12 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 	}
 
 	json_parser_error_current(parser, "expected value");
-	*value = json_error;
+	*value = c_json_error;
 }
 
 static void json_init_internal(struct JSON * value, struct Strings * strings, char const * data) {
-	if (strings == NULL) { *value = json_error; return; }
-	if (data == NULL) { *value = json_error; return; }
+	if (strings == NULL) { *value = c_json_error; return; }
+	if (data == NULL) { *value = c_json_error; return; }
 
 	struct JSON_Parser parser = {
 		.strings = strings,
@@ -342,7 +342,7 @@ static void json_init_internal(struct JSON * value, struct Strings * strings, ch
 	json_parser_consume(&parser);
 
 	if (parser.current.type == JSON_TOKEN_EOF) {
-		*value = json_null;
+		*value = c_json_null;
 		goto finalize;
 	}
 
@@ -353,7 +353,7 @@ static void json_init_internal(struct JSON * value, struct Strings * strings, ch
 
 	if (parser.error) {
 		json_free(value);
-		*value = json_error;
+		*value = c_json_error;
 		DEBUG_BREAK();
 	}
 

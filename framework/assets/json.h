@@ -59,9 +59,9 @@ float json_at_number(struct JSON const * value, uint32_t index, float default_va
 bool json_at_boolean(struct JSON const * value, uint32_t index, bool default_value);
 
 //
-extern struct JSON const json_true;
-extern struct JSON const json_false;
-extern struct JSON const json_null;
-extern struct JSON const json_error;
+extern struct JSON const c_json_true;
+extern struct JSON const c_json_false;
+extern struct JSON const c_json_null;
+extern struct JSON const c_json_error;
 
 #endif
