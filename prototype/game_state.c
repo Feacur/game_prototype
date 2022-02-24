@@ -59,6 +59,19 @@ void game_read_json(struct JSON const * json) {
 	state_read_json_entities(json_get(json, S_("entities")));
 }
 
+static uint32_t state_read_json_hex(struct JSON const * json) {
+	struct CString const value = json_as_string(json, S_EMPTY);
+	if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x')
+	{
+		return parse_hex_u32(value.data + 2);
+	}
+	return 0;
+}
+
+// ----- ----- ----- ----- -----
+//     Transform part
+// ----- ----- ----- ----- -----
+
 static void state_read_json_transform_3d(struct JSON const * json, struct Transform_3D * transform) {
 	*transform = transform_3d_default;
 	if (json->type == JSON_OBJECT) {
@@ -83,6 +96,10 @@ static void state_read_json_transform_rect(struct JSON const * json, struct Tran
 	}
 }
 
+// ----- ----- ----- ----- -----
+//     Cameras part
+// ----- ----- ----- ----- -----
+
 static enum Camera_Mode state_read_json_camera_mode(struct JSON const * json) {
 	if (json->type == JSON_STRING) {
 		uint32_t const id = json_as_id(json);
@@ -98,35 +115,6 @@ static enum Camera_Mode state_read_json_camera_mode(struct JSON const * json) {
 	}
 	return CAMERA_MODE_NONE;
 }
-
-static enum Entity_Type state_read_json_entity_type(struct JSON const * json) {
-	if (json->type == JSON_STRING) {
-		uint32_t const id = json_as_id(json);
-		if (id == json_find_id(json, S_("mesh"))) {
-			return ENTITY_TYPE_MESH;
-		}
-		if (id == json_find_id(json, S_("quad_2d"))) {
-			return ENTITY_TYPE_QUAD_2D;
-		}
-		if (id == json_find_id(json, S_("text_2d"))) {
-			return ENTITY_TYPE_TEXT_2D;
-		}
-	}
-	return ENTITY_TYPE_NONE;
-}
-
-static uint32_t state_read_json_hex(struct JSON const * json) {
-	struct CString const value = json_as_string(json, S_EMPTY);
-	if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x')
-	{
-		return parse_hex_u32(value.data + 2);
-	}
-	return 0;
-}
-
-// ----- ----- ----- ----- -----
-//     Cameras part
-// ----- ----- ----- ----- -----
 
 static void state_read_json_camera(struct JSON const * json, struct Camera * camera) {
 	state_read_json_transform_3d(json_get(json, S_("transform")), &camera->transform);
@@ -167,6 +155,22 @@ static void state_read_json_cameras(struct JSON const * json) {
 // ----- ----- ----- ----- -----
 //     Entities part
 // ----- ----- ----- ----- -----
+
+static enum Entity_Type state_read_json_entity_type(struct JSON const * json) {
+	if (json->type == JSON_STRING) {
+		uint32_t const id = json_as_id(json);
+		if (id == json_find_id(json, S_("mesh"))) {
+			return ENTITY_TYPE_MESH;
+		}
+		if (id == json_find_id(json, S_("quad_2d"))) {
+			return ENTITY_TYPE_QUAD_2D;
+		}
+		if (id == json_find_id(json, S_("text_2d"))) {
+			return ENTITY_TYPE_TEXT_2D;
+		}
+	}
+	return ENTITY_TYPE_NONE;
+}
 
 static void state_read_json_entity(struct JSON const * json, struct Entity * entity) {
 	state_read_json_transform_3d(json_get(json, S_("transform")), &entity->transform);
