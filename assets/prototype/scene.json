@@ -1,42 +1,27 @@
 {
-	"targets": [
-		{
-			"size_x": 320,
-			"size_y": 180,
-			"buffers": [
-				{
-					"type": "color_rgba_u8",
-					"read": true,
-				},
-				{
-					"type": "depth_r32",
-				},
-			]
-		}
-	],
 	"materials": [
 		{
 			"shader": "assets/shaders/test.glsl",
 			"mode": "opaque", "depth": true,
-			"u_Texture": {"type": "image", "path": "assets/images/test.png",},
+			"u_Texture": {"path": "assets/images/test.png",},
 			"u_Color": [0.2, 0.6, 1, 1],
 		},
 		{
 			"shader": "assets/shaders/batcher_2d.glsl",
 			"mode": "opaque", "depth": false,
-			"u_Texture": {"type": "target", "uid": 1, "buffer_type": ["color"],},
+			"u_Texture": {"path": "assets/back_buffer.json.target", "buffer_type": ["color"],},
 			"u_Color": [1, 1, 1, 1],
 		},
 		{
 			"shader": "assets/shaders/batcher_2d.glsl",
 			"mode": "transparent", "depth": false,
-			"u_Texture": {"type": "font", "path": "assets/fonts/Ubuntu-Regular.ttf",},
+			"u_Texture": {"path": "assets/fonts/Ubuntu-Regular.ttf",},
 			"u_Color": [1, 1, 1, 1],
 		},
 		{
 			"shader": "assets/shaders/batcher_2d.glsl",
 			"mode": "opaque", "depth": false,
-			"u_Texture": {"type": "image", "path": "assets/images/test.png",},
+			"u_Texture": {"path": "assets/images/test.png",},
 			"u_Color": [0.2, 0.6, 1, 1],
 		},
 	],
@@ -48,7 +33,7 @@
 			},
 			"mode": "aspect_x",
 			"ncp": 0.1, "fcp": 10,
-			"target_uid": 1,
+			"target": "assets/back_buffer.json.target",
 			"clear_mask": ["color", "depth"],
 			"clear_rgba": "0x303030ff",
 		},

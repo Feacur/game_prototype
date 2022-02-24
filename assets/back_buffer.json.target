@@ -1,0 +1,13 @@
+{
+	"size_x": 320,
+	"size_y": 180,
+	"buffers": [
+		{
+			"type": "color_rgba_u8",
+			"read": true,
+		},
+		{
+			"type": "depth_r32",
+		},
+	],
+}

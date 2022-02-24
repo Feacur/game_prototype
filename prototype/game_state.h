@@ -12,9 +12,8 @@ extern struct Game_State {
 	struct Buffer buffer;
 	struct Array_Any gpu_commands;
 
-	struct Asset_System asset_system;
+	struct Asset_System assets;
 
-	struct Array_Any targets;
 	struct Array_Any materials;
 	struct Array_Any cameras;
 	struct Array_Any entities;

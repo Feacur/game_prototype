@@ -166,6 +166,93 @@ void asset_json_free(struct Asset_System * system, void * instance) {
 }
 
 // ----- ----- ----- ----- -----
+// -- Asset target part
+// ----- ----- ----- ----- -----
+
+static void state_read_json_target_buffer(struct JSON const * json, struct Array_Any * parameters) {
+	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
+
+	uint32_t const type_id = json_get_id(json, S_("type"));
+	if (type_id == INDEX_EMPTY) { DEBUG_BREAK(); return; }
+
+	bool const buffer_read = json_get_boolean(json, S_("read"), false);
+
+	if (type_id == json_find_id(json, S_("color_rgba_u8"))) {
+		array_any_push(parameters, &(struct Texture_Parameters) {
+			.texture_type = TEXTURE_TYPE_COLOR,
+			.data_type = DATA_TYPE_U8,
+			.channels = 4,
+			.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
+		});
+		return;
+	}
+
+	if (type_id == json_find_id(json, S_("color_depth_r32"))) {
+		array_any_push(parameters, &(struct Texture_Parameters) {
+			.texture_type = TEXTURE_TYPE_DEPTH,
+			.data_type = DATA_TYPE_R32,
+			.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
+		});
+		return;
+	}
+}
+
+static void state_read_json_target(struct JSON const * json, struct Ref * target_ref) {
+	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
+
+	struct JSON const * buffers_json = json_get(json, S_("buffers"));
+	if (buffers_json->type != JSON_ARRAY) { DEBUG_BREAK(); return; }
+
+	struct Array_Any parameters_buffer;
+	array_any_init(&parameters_buffer, sizeof(struct Texture_Parameters));
+
+	uint32_t const buffers_count = json_count(buffers_json);
+	for (uint32_t i = 0; i < buffers_count; i++) {
+		struct JSON const * buffer_json = json_at(buffers_json, i);
+		state_read_json_target_buffer(buffer_json, &parameters_buffer);
+	}
+
+	if (parameters_buffer.count > 0) {
+		uint32_t const size_x = (uint32_t)json_get_number(json, S_("size_x"), 0);
+		uint32_t const size_y = (uint32_t)json_get_number(json, S_("size_y"), 0);
+		if (size_x > 0 && size_y > 0) {
+			*target_ref = gpu_target_init(size_x, size_y, parameters_buffer.data, parameters_buffer.count);
+		}
+	}
+
+	if (target_ref->id == ref_empty.id) { DEBUG_BREAK(); }
+	array_any_free(&parameters_buffer);
+}
+
+void asset_target_init(struct Asset_System * system, void * instance, struct CString name) {
+	struct Asset_Target * asset = instance;
+	(void)system;
+
+	struct Buffer buffer;
+	bool const read_success = platform_file_read_entire(name, &buffer);
+	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
+
+	struct Strings strings;
+	strings_init(&strings);
+
+	struct JSON json;
+	json_init(&json, &strings, (char const *)buffer.data);
+	buffer_free(&buffer);
+
+	state_read_json_target(&json, &asset->gpu_ref);
+
+	json_free(&json);
+	strings_free(&strings);
+}
+
+void asset_target_free(struct Asset_System * system, void * instance) {
+	struct Asset_Target * asset = instance;
+	(void)system;
+	gpu_target_free(asset->gpu_ref);
+}
+
+/*
+// ----- ----- ----- ----- -----
 // -- Asset material part
 // ----- ----- ----- ----- -----
 
@@ -192,3 +279,4 @@ void asset_material_free(struct Asset_System * system, void * instance) {
 	(void)system;
 	(void)asset;
 }
+*/

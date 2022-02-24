@@ -86,6 +86,18 @@ void asset_json_init(struct Asset_System * system, void * instance, struct CStri
 void asset_json_free(struct Asset_System * system, void * instance);
 
 // ----- ----- ----- ----- -----
+// -- Asset target part
+// ----- ----- ----- ----- -----
+
+struct Asset_Target {
+	struct Ref gpu_ref;
+};
+
+void asset_target_init(struct Asset_System * system, void * instance, struct CString name);
+void asset_target_free(struct Asset_System * system, void * instance);
+
+/*
+// ----- ----- ----- ----- -----
 // -- Asset material part
 // ----- ----- ----- ----- -----
 
@@ -95,5 +107,6 @@ struct Asset_Material {
 
 void asset_material_init(struct Asset_System * system, void * instance, struct CString name);
 void asset_material_free(struct Asset_System * system, void * instance);
+*/
 
 #endif

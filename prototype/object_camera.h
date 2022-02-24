@@ -15,19 +15,21 @@ enum Camera_Mode {
 
 struct Camera {
 	struct Transform_3D transform;
-	//
-	enum Camera_Mode mode;
-	float ncp, fcp, ortho;
-	//
+	struct Camera_Params {
+		enum Camera_Mode mode;
+		float ncp, fcp, ortho;
+	} params;
+	struct Camera_Clear {
+		enum Texture_Type mask;
+		uint32_t rgba;
+	} clear;
 	struct Ref gpu_target_ref;
-	enum Texture_Type clear_mask;
-	uint32_t clear_rgba;
 };
 
 //
 
 struct mat4 camera_get_projection(
-	struct Camera const * camera,
+	struct Camera_Params const * params,
 	uint32_t viewport_size_x, uint32_t viewport_size_y
 );
 

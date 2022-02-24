@@ -25,6 +25,7 @@ void asset_system_init(struct Asset_System * system);
 void asset_system_free(struct Asset_System * system);
 
 void asset_system_map_extension(struct Asset_System * system, struct CString type_name, struct CString extension);
+bool asset_system_match_type(struct Asset_System * system, struct Asset_Ref asset_ref, struct CString type_name);
 
 void asset_system_set_type(struct Asset_System * system, struct CString type, struct Asset_Callbacks callbacks, uint32_t value_size);
 void asset_system_del_type(struct Asset_System * system, struct CString type);

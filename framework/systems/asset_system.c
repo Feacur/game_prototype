@@ -55,6 +55,10 @@ void asset_system_map_extension(struct Asset_System * system, struct CString typ
 	hash_table_u32_set(&system->map, extension_id, &type_id);
 }
 
+bool asset_system_match_type(struct Asset_System * system, struct Asset_Ref asset_ref, struct CString type_name) {
+	return asset_ref.type_id == strings_find(&system->strings, type_name);
+}
+
 void asset_system_set_type(struct Asset_System * system, struct CString type, struct Asset_Callbacks callbacks, uint32_t value_size) {
 	if (type.length == 0) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
 

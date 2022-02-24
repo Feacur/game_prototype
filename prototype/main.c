@@ -56,8 +56,8 @@ static void app_init(void) {
 
 	game_init();
 
-	struct CString const path = json_get_string(&gs_main_settings.json, S_("scene"), S_("assets/default/scene.json"));
-	struct Asset_JSON const * json_test = asset_system_aquire_instance(&gs_game.asset_system, path);
+	struct CString const path = json_get_string(&gs_main_settings.json, S_("scene"), S_NULL);
+	struct Asset_JSON const * json_test = asset_system_aquire_instance(&gs_game.assets, path);
 	if (json_test != NULL) { game_read_json(&json_test->value); }
 }
 
@@ -133,7 +133,7 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 
 			case ENTITY_TYPE_TEXT_2D: {
 				struct Entity_Text * text = &entity->as.text;
-				struct Asset_Bytes const * text_text = asset_system_find_instance(&gs_game.asset_system, text->message);
+				struct Asset_Bytes const * text_text = asset_system_find_instance(&gs_game.assets, text->message);
 				uint32_t const text_length = text_text->length;
 				text->visible_length = (text->visible_length + 1) % text_length;
 			} break;
@@ -171,7 +171,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
-		struct mat4 const mat4_projection = camera_get_projection(camera, viewport_size_x, viewport_size_y);
+		struct mat4 const mat4_projection = camera_get_projection(&camera->params, viewport_size_x, viewport_size_y);
 		struct mat4 const mat4_inverse_camera = mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
 		struct mat4 const mat4_camera = mat4_mul_mat(mat4_projection, mat4_inverse_camera);
 
@@ -184,12 +184,12 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 			},
 		});
 
-		if (camera->clear_mask != TEXTURE_TYPE_NONE) {
+		if (camera->clear.mask != TEXTURE_TYPE_NONE) {
 			array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_CLEAR,
 				.as.clear = {
-					.mask = camera->clear_mask,
-					.rgba = camera->clear_rgba,
+					.mask = camera->clear.mask,
+					.rgba = camera->clear.rgba,
 				}
 			});
 		}
@@ -229,7 +229,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_MESH: {
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
-					struct Asset_Model const * model = asset_system_find_instance(&gs_game.asset_system, mesh->mesh);
+					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->mesh);
 
 					uint32_t const override_offset = (uint32_t)gs_game.buffer.count;
 					uint32_t override_count = 0;
@@ -286,8 +286,8 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
-					struct Asset_Font const * font = asset_system_find_instance(&gs_game.asset_system, text->font);
-					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.asset_system, text->message);
+					struct Asset_Font const * font = asset_system_find_instance(&gs_game.assets, text->font);
+					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.assets, text->message);
 					batcher_2d_add_text(
 						gs_game.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
@@ -317,7 +317,7 @@ static void main_settings_init(void) {
 }
 
 static void main_get_config(struct Application_Config * config) {
-	struct CString const path = json_get_string(&gs_main_settings.json, S_("application"), S_("assets/default/application.json"));
+	struct CString const path = json_get_string(&gs_main_settings.json, S_("application"), S_NULL);
 
 	struct Buffer buffer;
 	bool const read_success = platform_file_read_entire(path, &buffer);
