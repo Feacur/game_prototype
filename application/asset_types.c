@@ -3,6 +3,7 @@
 #include "framework/platform_file.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
+#include "framework/systems/asset_system.h"
 #include "framework/graphics/gpu_objects.h"
 
 #include "framework/assets/font.h"
@@ -17,8 +18,9 @@
 //     Asset shader part
 // ----- ----- ----- ----- -----
 
-void asset_shader_init(void * instance, struct CString name) {
+void asset_shader_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Shader * asset = instance;
+	(void)system;
 
 	struct Buffer buffer;
 	bool const read_success = platform_file_read_entire(name, &buffer);
@@ -31,8 +33,9 @@ void asset_shader_init(void * instance, struct CString name) {
 	asset->gpu_ref = gpu_ref;
 }
 
-void asset_shader_free(void * instance) {
+void asset_shader_free(struct Asset_System * system, void * instance) {
 	struct Asset_Shader * asset = instance;
+	(void)system;
 	gpu_program_free(asset->gpu_ref);
 }
 
@@ -40,8 +43,9 @@ void asset_shader_free(void * instance) {
 //     Asset model part
 // ----- ----- ----- ----- -----
 
-void asset_model_init(void * instance, struct CString name) {
+void asset_model_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Model * asset = instance;
+	(void)system;
 
 	struct Mesh mesh;
 	mesh_init(&mesh, name);
@@ -52,8 +56,9 @@ void asset_model_init(void * instance, struct CString name) {
 	asset->gpu_ref = gpu_ref;
 }
 
-void asset_model_free(void * instance) {
+void asset_model_free(struct Asset_System * system, void * instance) {
 	struct Asset_Model * asset = instance;
+	(void)system;
 	gpu_mesh_free(asset->gpu_ref);
 }
 
@@ -61,8 +66,9 @@ void asset_model_free(void * instance) {
 //     Asset image part
 // ----- ----- ----- ----- -----
 
-void asset_image_init(void * instance, struct CString name) {
+void asset_image_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Image * asset = instance;
+	(void)system;
 
 	struct Image image;
 	image_init(&image, name);
@@ -73,8 +79,9 @@ void asset_image_init(void * instance, struct CString name) {
 	asset->gpu_ref = gpu_ref;
 }
 
-void asset_image_free(void * instance) {
+void asset_image_free(struct Asset_System * system, void * instance) {
 	struct Asset_Image * asset = instance;
+	(void)system;
 	gpu_texture_free(asset->gpu_ref);
 }
 
@@ -82,8 +89,9 @@ void asset_image_free(void * instance) {
 //     Asset font part
 // ----- ----- ----- ----- -----
 
-void asset_font_init(void * instance, struct CString name) {
+void asset_font_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Font * asset = instance;
+	(void)system;
 
 	struct Font * font = font_init(name);
 	struct Font_Image * buffer = font_image_init(font, 32); // @todo: remove hardcode
@@ -93,8 +101,9 @@ void asset_font_init(void * instance, struct CString name) {
 	asset->gpu_ref = gpu_texture_init(font_image_get_asset(buffer));
 }
 
-void asset_font_free(void * instance) {
+void asset_font_free(struct Asset_System * system, void * instance) {
 	struct Asset_Font * asset = instance;
+	(void)system;
 	font_free(asset->font);
 	font_image_free(asset->buffer);
 	gpu_texture_free(asset->gpu_ref);
@@ -104,8 +113,9 @@ void asset_font_free(void * instance) {
 //     Asset bytes part
 // ----- ----- ----- ----- -----
 
-void asset_bytes_init(void * instance, struct CString name) {
+void asset_bytes_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Bytes * asset = instance;
+	(void)system;
 
 	struct Buffer buffer;
 	bool const read_success = platform_file_read_entire(name, &buffer);
@@ -116,8 +126,9 @@ void asset_bytes_init(void * instance, struct CString name) {
 	asset->length = (uint32_t)buffer.count;
 }
 
-void asset_bytes_free(void * instance) {
+void asset_bytes_free(struct Asset_System * system, void * instance) {
 	struct Asset_Bytes * asset = instance;
+	(void)system;
 	MEMORY_FREE(instance, asset->data);
 }
 
@@ -135,8 +146,9 @@ void asset_json_type_free(void) {
 	strings_free(&gs_asset_json_strings);
 }
 
-void asset_json_init(void * instance, struct CString name) {
+void asset_json_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_JSON * asset = instance;
+	(void)system;
 
 	struct Buffer buffer;
 	bool const read_success = platform_file_read_entire(name, &buffer);
@@ -147,7 +159,36 @@ void asset_json_init(void * instance, struct CString name) {
 	buffer_free(&buffer);
 }
 
-void asset_json_free(void * instance) {
+void asset_json_free(struct Asset_System * system, void * instance) {
 	struct Asset_JSON * asset = instance;
+	(void)system;
 	json_free(&asset->value);
+}
+
+// ----- ----- ----- ----- -----
+// -- Asset material part
+// ----- ----- ----- ----- -----
+
+void asset_material_init(struct Asset_System * system, void * instance, struct CString name) {
+	struct Asset_Material * asset = instance;
+	(void)system;
+
+	struct Buffer buffer;
+	bool const read_success = platform_file_read_entire(name, &buffer);
+	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
+
+	struct Strings strings;
+	strings_init(&strings);
+
+	struct JSON json;
+	json_init(&json, &strings, (char const *)buffer.data);
+	buffer_free(&buffer);
+
+	(void)asset;
+}
+
+void asset_material_free(struct Asset_System * system, void * instance) {
+	struct Asset_Material * asset = instance;
+	(void)system;
+	(void)asset;
 }

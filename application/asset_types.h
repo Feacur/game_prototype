@@ -3,10 +3,12 @@
 
 #include "framework/containers/ref.h"
 #include "framework/graphics/font_image.h"
+#include "framework/graphics/material.h"
 #include "framework/assets/json.h"
 
 struct Font;
 struct Font_Image;
+struct Asset_System;
 
 // ----- ----- ----- ----- -----
 //     Asset shader part
@@ -16,8 +18,8 @@ struct Asset_Shader {
 	struct Ref gpu_ref;
 };
 
-void asset_shader_init(void * instance, struct CString name);
-void asset_shader_free(void * instance);
+void asset_shader_init(struct Asset_System * system, void * instance, struct CString name);
+void asset_shader_free(struct Asset_System * system, void * instance);
 
 // ----- ----- ----- ----- -----
 //     Asset model part
@@ -27,8 +29,8 @@ struct Asset_Model {
 	struct Ref gpu_ref;
 };
 
-void asset_model_init(void * instance, struct CString name);
-void asset_model_free(void * instance);
+void asset_model_init(struct Asset_System * system, void * instance, struct CString name);
+void asset_model_free(struct Asset_System * system, void * instance);
 
 // ----- ----- ----- ----- -----
 //     Asset image part
@@ -38,8 +40,8 @@ struct Asset_Image {
 	struct Ref gpu_ref;
 };
 
-void asset_image_init(void * instance, struct CString name);
-void asset_image_free(void * instance);
+void asset_image_init(struct Asset_System * system, void * instance, struct CString name);
+void asset_image_free(struct Asset_System * system, void * instance);
 
 // ----- ----- ----- ----- -----
 //     Asset font part
@@ -54,8 +56,8 @@ struct Asset_Font {
 	struct Ref gpu_ref;
 };
 
-void asset_font_init(void * instance, struct CString name);
-void asset_font_free(void * instance);
+void asset_font_init(struct Asset_System * system, void * instance, struct CString name);
+void asset_font_free(struct Asset_System * system, void * instance);
 
 // ----- ----- ----- ----- -----
 //     Asset bytes part
@@ -66,8 +68,8 @@ struct Asset_Bytes {
 	uint32_t length;
 };
 
-void asset_bytes_init(void * instance, struct CString name);
-void asset_bytes_free(void * instance);
+void asset_bytes_init(struct Asset_System * system, void * instance, struct CString name);
+void asset_bytes_free(struct Asset_System * system, void * instance);
 
 // ----- ----- ----- ----- -----
 // -- Asset json part
@@ -80,7 +82,18 @@ struct Asset_JSON {
 void asset_json_type_init(void);
 void asset_json_type_free(void);
 
-void asset_json_init(void * instance, struct CString name);
-void asset_json_free(void * instance);
+void asset_json_init(struct Asset_System * system, void * instance, struct CString name);
+void asset_json_free(struct Asset_System * system, void * instance);
+
+// ----- ----- ----- ----- -----
+// -- Asset material part
+// ----- ----- ----- ----- -----
+
+struct Asset_Material {
+	struct Gfx_Material value;
+};
+
+void asset_material_init(struct Asset_System * system, void * instance, struct CString name);
+void asset_material_free(struct Asset_System * system, void * instance);
 
 #endif

@@ -7,18 +7,18 @@
 
 #include "asset_ref.h"
 
-struct Asset_Callbacks {
-	void (* type_init)(void);
-	void (* type_free)(void);
-	void (* init)(void * instance, struct CString name);
-	void (* free)(void * instance);
-};
-
 struct Asset_System {
 	struct Strings strings;
 	struct Hash_Table_U32 types;
 	struct Hash_Table_U32 refs;
 	struct Hash_Table_U32 map;
+};
+
+struct Asset_Callbacks {
+	void (* type_init)(void);
+	void (* type_free)(void);
+	void (* init)(struct Asset_System * system, void * instance, struct CString name);
+	void (* free)(struct Asset_System * system, void * instance);
 };
 
 void asset_system_init(struct Asset_System * system);

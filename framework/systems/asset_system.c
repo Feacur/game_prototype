@@ -144,7 +144,7 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 	entry->header.resource_id = resource_id;
 
 	if (asset_type->callbacks.init != NULL) {
-		asset_type->callbacks.init(entry->payload, name);
+		asset_type->callbacks.init(system, entry->payload, name);
 	}
 
 	return (struct Asset_Ref){
@@ -176,7 +176,7 @@ void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_r
 	hash_table_u32_del(&system->refs, asset_ref.resource_id);
 	if (asset_type->callbacks.free != NULL) {
 		struct Asset_Entry * entry = ref_table_get(&asset_type->instances, asset_ref.instance_ref);
-		asset_type->callbacks.free(entry->payload);
+		asset_type->callbacks.free(system, entry->payload);
 		ref_table_discard(&asset_type->instances, asset_ref.instance_ref);
 	}
 }
@@ -219,7 +219,7 @@ static void asset_system_del_type_internal(struct Asset_System * system, struct 
 		struct Asset_Entry * entry = it.value;
 		hash_table_u32_del(&system->refs, entry->header.resource_id);
 		if (asset_type->callbacks.free != NULL) {
-			asset_type->callbacks.free(entry->payload);
+			asset_type->callbacks.free(system, entry->payload);
 		}
 	}
 
