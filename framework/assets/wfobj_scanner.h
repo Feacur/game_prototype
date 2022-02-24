@@ -7,8 +7,8 @@ enum WFObj_Token_Type {
 	WFOBJ_TOKEN_NONE,
 
 	// tokens
-	WFOBJ_TOKEN_NEW_LINE,
 	WFOBJ_TOKEN_COMMENT,
+	WFOBJ_TOKEN_NEW_LINE,
 	WFOBJ_TOKEN_SLASH,
 
 	// literals

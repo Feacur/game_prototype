@@ -109,15 +109,33 @@ static struct JSON_Token json_scanner_make_identifier_token(struct JSON_Scanner 
 }
 
 static struct JSON_Token json_scanner_make_string(struct JSON_Scanner * scanner) {
-	while (PEEK() != '\0' && PEEK() != '\n' && PEEK() != '"') {
-		if (PEEK() == '\\' && PEEK_OFFSET(1) == '"') {
-			ADVANCE(); ADVANCE(); continue;
+	while (ADVANCE() != '\0') {
+		if (PEEK() == '\n') { scanner->line_current++; break; }
+		if (PEEK() == '"') { ADVANCE(); return json_scanner_make_token(scanner, JSON_TOKEN_STRING); }
+		if (PEEK() == '\\') {
+			switch (ADVANCE(), PEEK()) {
+				case '"':
+				case '\\':
+				case '/':
+				case 'b':
+				case 'f':
+				case 'n':
+				case 'r':
+				case 't':
+					continue;
+
+				case 'u':
+					if (!parse_is_hex(PEEK_OFFSET(1))) { return json_scanner_make_token(scanner, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
+					if (!parse_is_hex(PEEK_OFFSET(2))) { return json_scanner_make_token(scanner, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
+					if (!parse_is_hex(PEEK_OFFSET(3))) { return json_scanner_make_token(scanner, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
+					if (!parse_is_hex(PEEK_OFFSET(4))) { return json_scanner_make_token(scanner, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
+					ADVANCE(); ADVANCE(); ADVANCE(); ADVANCE();
+					continue;
+			}
+			return json_scanner_make_token(scanner, JSON_TOKEN_ERROR_UNESCAPED_CONTROL);
 		}
-		ADVANCE();
 	}
-	if (PEEK() != '"') { return json_scanner_make_token(scanner, JSON_TOKEN_ERROR_UNTERMINATED_STRING); }
-	ADVANCE();
-	return json_scanner_make_token(scanner, JSON_TOKEN_STRING);
+	return json_scanner_make_token(scanner, JSON_TOKEN_ERROR_UNTERMINATED_STRING);
 }
 
 inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner * scanner) {
@@ -131,18 +149,14 @@ inline static struct JSON_Token json_scanner_next_internal(struct JSON_Scanner *
 	switch (c) {
 		case '/': {
 			switch (PEEK()) {
-				case '/': while (PEEK() != '\0') { ADVANCE();
-					if (PEEK() != '\n') { continue; }
-					scanner->line_current++;
-					ADVANCE(); break;
+				case '/': while (ADVANCE() != '\0') {
+					if (PEEK() == '\n') { scanner->line_current++; break; }
 				}
 				return json_scanner_make_token(scanner, JSON_TOKEN_COMMENT);
 
-				case '*': while (PEEK() != '\0') { ADVANCE();
+				case '*': while (ADVANCE() != '\0') {
 					if (PEEK() == '\n') { scanner->line_current++; }
-					if (PEEK() != '*') { continue; }
-					if (PEEK_OFFSET(1) != '/') { continue; }
-					ADVANCE(); ADVANCE(); break;
+					if (PEEK() == '*' && PEEK_OFFSET(1) == '/') { ADVANCE(); ADVANCE(); break; }
 				}
 				return json_scanner_make_token(scanner, JSON_TOKEN_COMMENT);
 			}

@@ -116,10 +116,8 @@ inline static struct WFObj_Token wfobj_scanner_next_internal(struct WFObj_Scanne
 
 	char const c = ADVANCE();
 	switch (c) {
-		case '#': while (PEEK() != '\0') { ADVANCE();
-			if (PEEK() != '\n') { continue; }
-			scanner->line_current++;
-			ADVANCE(); break;
+		case '#': while (ADVANCE() != '\0') {
+			if (PEEK() == '\n') { scanner->line_current++; break; }
 		}
 		return wfobj_scanner_make_token(scanner, WFOBJ_TOKEN_COMMENT);
 

@@ -146,6 +146,8 @@ static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token 
 		[JSON_TOKEN_ERROR_IDENTIFIER] = "identifier",
 		[JSON_TOKEN_ERROR_UNKNOWN_CHARACTER] = "unknown character",
 		[JSON_TOKEN_ERROR_UNTERMINATED_STRING] = "unterminated string",
+		[JSON_TOKEN_ERROR_UNESCAPED_CONTROL] = "unescaped control",
+		[JSON_TOKEN_ERROR_MALFORMED_UNICODE] = "malformed unicode",
 		[JSON_TOKEN_EOF] = "eof",
 	};
 
@@ -172,18 +174,18 @@ static void json_parser_consume(struct JSON_Parser * parser) {
 	while (parser->current.type != JSON_TOKEN_EOF) {
 		parser->current = json_scanner_next(&parser->scanner);
 		switch (parser->current.type) {
-			case JSON_TOKEN_COMMENT:
-				continue;
+			case JSON_TOKEN_COMMENT: continue;
 
 			case JSON_TOKEN_ERROR_IDENTIFIER:
 			case JSON_TOKEN_ERROR_UNKNOWN_CHARACTER:
 			case JSON_TOKEN_ERROR_UNTERMINATED_STRING:
+			case JSON_TOKEN_ERROR_UNESCAPED_CONTROL:
+			case JSON_TOKEN_ERROR_MALFORMED_UNICODE:
 				json_parser_error_current(parser, "scanner error");
 				continue;
 
-			default: break;
+			default: return;
 		}
-		break;
 	}
 }
 
