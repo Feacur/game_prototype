@@ -1,6 +1,20 @@
 # -
-[documentation] reorganize
-[system] track memory through a doubly linked list; the memory system is automatically zero-initialized
+[project] reorganize documentation
+[framework] track memory through a doubly linked list; the memory system is automatically zero-initialized
+[framework] remove CS_OWNDC dependence
+[framework] untangle GPU context from window
+[framework] reduce exit-with-error usage
+[framework] fix legacy WGL initialization
+[framework] allow single-buffered WGL
+[framework] allow multiline commnents in JSON files
+[framework] keep error context for WFObj and JSON scanners
+[refactor] add explicit prefix to global states, statics, and constants
+[refactor] remove some global state
+[refactor] rename GPU context enitites using better wording
+[prototype] migrate all entities to JSON initialization
+[prototype] operate asset refs instead of gpu refs or asset instances where applicable
+[prototype] unhardcode startup settings
+
 
 # 2021, august 12
 ```

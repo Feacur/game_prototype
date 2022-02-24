@@ -86,7 +86,7 @@ void asset_font_init(void * instance, struct CString name) {
 	struct Asset_Font * asset = instance;
 
 	struct Font * font = font_init(name);
-	struct Font_Image * buffer = font_image_init(font, 32);
+	struct Font_Image * buffer = font_image_init(font, 32); // @todo: remove hardcode
 
 	asset->font = font;
 	asset->buffer = buffer;
