@@ -30,21 +30,21 @@
 #include "components.h"
 #include "batcher_2d.h"
 
-static struct Main_Uniforms {
-	uint32_t color;
-	uint32_t texture;
-	uint32_t projection;
-	uint32_t inverse_camera;
-	uint32_t transform;
-} gs_main_uniforms;
-
 static struct Main_Settings {
 	struct Strings strings;
 	struct JSON json;
 } gs_main_settings;
 
+static struct Main_Uniforms {
+	uint32_t projection;
+	uint32_t camera;
+	uint32_t transform;
+} gs_main_uniforms;
+
 static void app_init(void) {
-	game_init();
+	gs_main_uniforms.projection = graphics_add_uniform_id(S_("u_Projection"));
+	gs_main_uniforms.camera = graphics_add_uniform_id(S_("u_Camera"));
+	gs_main_uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
 
 	gpu_execute(1, &(struct GPU_Command){
 		.type = GPU_COMMAND_TYPE_CULL,
@@ -54,11 +54,7 @@ static void app_init(void) {
 		},
 	});
 
-	gs_main_uniforms.color = graphics_add_uniform_id(S_("u_Color"));
-	gs_main_uniforms.texture = graphics_add_uniform_id(S_("u_Texture"));
-	gs_main_uniforms.projection = graphics_add_uniform_id(S_("u_Projection"));
-	gs_main_uniforms.inverse_camera = graphics_add_uniform_id(S_("u_Camera"));
-	gs_main_uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
+	game_init();
 
 	struct CString const path = json_get_string(&gs_main_settings.json, S_("scene"), S_("assets/default/scene.json"));
 	struct Asset_JSON const * json_test = asset_system_aquire_instance(&gs_game.asset_system, path);
@@ -250,7 +246,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 					//
 					override_count++;
 					buffer_push_many(&gs_game.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = gs_main_uniforms.inverse_camera,
+						.header.id = gs_main_uniforms.camera,
 						.header.size = sizeof(mat4_inverse_camera),
 					});
 					buffer_push_many(&gs_game.buffer, sizeof(mat4_inverse_camera), (void const *)&mat4_inverse_camera);
