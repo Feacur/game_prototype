@@ -36,7 +36,12 @@ static struct Main_Uniforms {
 	uint32_t projection;
 	uint32_t inverse_camera;
 	uint32_t transform;
-} gs_uniforms;
+} gs_main_uniforms;
+
+static struct Main_Settings {
+	struct Strings strings;
+	struct JSON json;
+} gs_main_settings;
 
 static void app_init(void) {
 	game_init();
@@ -49,17 +54,20 @@ static void app_init(void) {
 		},
 	});
 
-	gs_uniforms.color = graphics_add_uniform_id(S_("u_Color"));
-	gs_uniforms.texture = graphics_add_uniform_id(S_("u_Texture"));
-	gs_uniforms.projection = graphics_add_uniform_id(S_("u_Projection"));
-	gs_uniforms.inverse_camera = graphics_add_uniform_id(S_("u_Camera"));
-	gs_uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
+	gs_main_uniforms.color = graphics_add_uniform_id(S_("u_Color"));
+	gs_main_uniforms.texture = graphics_add_uniform_id(S_("u_Texture"));
+	gs_main_uniforms.projection = graphics_add_uniform_id(S_("u_Projection"));
+	gs_main_uniforms.inverse_camera = graphics_add_uniform_id(S_("u_Camera"));
+	gs_main_uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
 
-	struct Asset_JSON const * json_test = asset_system_aquire_instance(&gs_game.asset_system, S_("assets/sandbox/test.json"));
+	struct CString const path = json_get_string(&gs_main_settings.json, S_("scene"), S_("assets/default/scene.json"));
+	struct Asset_JSON const * json_test = asset_system_aquire_instance(&gs_game.asset_system, path);
 	if (json_test != NULL) { game_read_json(&json_test->value); }
 }
 
 static void app_free(void) {
+	json_free(&gs_main_settings.json);
+	strings_free(&gs_main_settings.strings);
 	game_free();
 }
 
@@ -233,7 +241,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 					//
 					override_count++;
 					buffer_push_many(&gs_game.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = gs_uniforms.projection,
+						.header.id = gs_main_uniforms.projection,
 						.header.size = sizeof(mat4_projection),
 					});
 					buffer_push_many(&gs_game.buffer, sizeof(mat4_projection), (void const *)&mat4_projection);
@@ -242,7 +250,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 					//
 					override_count++;
 					buffer_push_many(&gs_game.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = gs_uniforms.inverse_camera,
+						.header.id = gs_main_uniforms.inverse_camera,
 						.header.size = sizeof(mat4_inverse_camera),
 					});
 					buffer_push_many(&gs_game.buffer, sizeof(mat4_inverse_camera), (void const *)&mat4_inverse_camera);
@@ -251,7 +259,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 					//
 					override_count++;
 					buffer_push_many(&gs_game.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = gs_uniforms.transform,
+						.header.id = gs_main_uniforms.transform,
 						.header.size = sizeof(mat4_entity),
 					});
 					buffer_push_many(&gs_game.buffer, sizeof(mat4_entity), (void const *)&mat4_entity);
@@ -302,33 +310,46 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 //
 
-static void main_get_config(struct Application_Config * config) {
+static void main_settings_init(void) {
 	struct Buffer buffer;
-	bool const read_success = platform_file_read_entire(S_("assets/sandbox/application.json"), &buffer);
+	bool const read_success = platform_file_read_entire(S_("assets/main.json"), &buffer);
+	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
+
+	strings_init(&gs_main_settings.strings);
+	json_init(&gs_main_settings.json, &gs_main_settings.strings, (char const *)buffer.data);
+	buffer_free(&buffer);
+}
+
+static void main_get_config(struct Application_Config * config) {
+	struct CString const path = json_get_string(&gs_main_settings.json, S_("application"), S_("assets/default/application.json"));
+
+	struct Buffer buffer;
+	bool const read_success = platform_file_read_entire(path, &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
 
 	struct Strings strings;
 	strings_init(&strings);
 
-	struct JSON settings;
-	json_init(&settings, &strings, (char const *)buffer.data);
+	struct JSON json;
+	json_init(&json, &strings, (char const *)buffer.data);
 	buffer_free(&buffer);
 
 	*config = (struct Application_Config){
-		.size_x = (uint32_t)json_get_number(&settings, S_("size_x"), 960),
-		.size_y = (uint32_t)json_get_number(&settings, S_("size_y"), 540),
-		.vsync = (int32_t)json_get_number(&settings, S_("vsync"), 0),
-		.target_refresh_rate = (uint32_t)json_get_number(&settings, S_("target_refresh_rate"), 60),
-		.fixed_refresh_rate = (uint32_t)json_get_number(&settings, S_("fixed_refresh_rate"), 30),
-		.slow_frames_limit = (uint32_t)json_get_number(&settings, S_("slow_frames_limit"), 2),
+		.size_x = (uint32_t)json_get_number(&json, S_("size_x"), 960),
+		.size_y = (uint32_t)json_get_number(&json, S_("size_y"), 540),
+		.vsync = (int32_t)json_get_number(&json, S_("vsync"), 0),
+		.target_refresh_rate = (uint32_t)json_get_number(&json, S_("target_refresh_rate"), 60),
+		.fixed_refresh_rate = (uint32_t)json_get_number(&json, S_("fixed_refresh_rate"), 30),
+		.slow_frames_limit = (uint32_t)json_get_number(&json, S_("slow_frames_limit"), 2),
 	};
 
-	json_free(&settings);
+	json_free(&json);
 	strings_free(&strings);
 }
 
 int main (int argc, char * argv[]) {
 	(void)argc; (void)argv;
+	main_settings_init();
 
 	struct Application_Config config;
 	main_get_config(&config);

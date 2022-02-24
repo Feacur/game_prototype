@@ -18,7 +18,7 @@
 		{
 			"shader": "assets/shaders/test.glsl",
 			"mode": "opaque", "depth": true,
-			"u_Texture": {"type": "image", "path": "assets/sandbox/test.png",},
+			"u_Texture": {"type": "image", "path": "assets/images/test.png",},
 			"u_Color": [0.2, 0.6, 1, 1],
 		},
 		{
@@ -36,7 +36,7 @@
 		{
 			"shader": "assets/shaders/batcher_2d.glsl",
 			"mode": "opaque", "depth": false,
-			"u_Texture": {"type": "image", "path": "assets/sandbox/test.png",},
+			"u_Texture": {"type": "image", "path": "assets/images/test.png",},
 			"u_Color": [0.2, 0.6, 1, 1],
 		},
 	],
@@ -64,7 +64,7 @@
 			"material_uid": 1,
 			"camera_uid": 1,
 			"type": "mesh",
-			"model": "assets/sandbox/cube.obj",
+			"model": "assets/models/cube.obj",
 		},
 		{
 			"material_uid": 2,
@@ -106,7 +106,7 @@
 			},
 			"type": "text_2d",
 			"font": "assets/fonts/Ubuntu-Regular.ttf",
-			"message": "assets/sandbox/test.txt",
+			"message": "assets/prototype/test.txt",
 		},
 	],
 }
