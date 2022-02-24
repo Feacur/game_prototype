@@ -230,8 +230,8 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		}
 
 		if (!json_parser_match(parser, JSON_TOKEN_COLON)) {
-			goto syncronization_point;
 			json_parser_error_previous(parser, "expected ':'");
+			goto syncronization_point;
 		}
 
 		struct JSON entry_value;
