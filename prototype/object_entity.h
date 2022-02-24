@@ -29,8 +29,8 @@ struct Entity_Text {
 };
 
 struct Entity {
-	uint32_t material;
 	uint32_t camera;
+	struct Asset_Ref material;
 	//
 	struct Transform_3D transform;
 	struct Transform_Rect rect; // @todo: make it completely optional?
@@ -55,7 +55,7 @@ void entity_get_rect(
 );
 
 struct uvec2 entity_get_content_size(
-	struct Entity const * entity,
+	struct Entity const * entity, struct Gfx_Material const * material,
 	uint32_t viewport_size_x, uint32_t viewport_size_y
 );
 

@@ -49,3 +49,20 @@ uint64_t align_u64(uint64_t value) {
 	uint64_t const alignment = 8 - 1;
 	return ((value | alignment) & ~alignment);
 }
+
+bool contains_full_word(char const * container, struct CString value) {
+	if (container == NULL)  { return false; }
+	if (value.data == NULL) { return false; }
+
+	for (char const * start = container, * end = container; *start; start = end) {
+		while (*start == ' ') { start++; }
+
+		end = strchr(start, ' ');
+		if (end == NULL) { end = container + strlen(container); }
+
+		if ((size_t)(end - start) != value.length) { continue; }
+		if (common_memcmp(start, value.data, value.length) == 0) { return true; }
+	}
+
+	return false;
+}

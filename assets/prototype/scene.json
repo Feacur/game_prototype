@@ -1,30 +1,4 @@
 {
-	"materials": [
-		{
-			"shader": "assets/shaders/test.glsl",
-			"mode": "opaque", "depth": true,
-			"u_Texture": {"path": "assets/images/test.png",},
-			"u_Color": [0.2, 0.6, 1, 1],
-		},
-		{
-			"shader": "assets/shaders/batcher_2d.glsl",
-			"mode": "opaque", "depth": false,
-			"u_Texture": {"path": "assets/back_buffer.json.target", "buffer_type": ["color"],},
-			"u_Color": [1, 1, 1, 1],
-		},
-		{
-			"shader": "assets/shaders/batcher_2d.glsl",
-			"mode": "transparent", "depth": false,
-			"u_Texture": {"path": "assets/fonts/Ubuntu-Regular.ttf",},
-			"u_Color": [1, 1, 1, 1],
-		},
-		{
-			"shader": "assets/shaders/batcher_2d.glsl",
-			"mode": "opaque", "depth": false,
-			"u_Texture": {"path": "assets/images/test.png",},
-			"u_Color": [0.2, 0.6, 1, 1],
-		},
-	],
 	"cameras": [
 		{
 			"transform": {
@@ -46,21 +20,21 @@
 	],
 	"entities": [
 		{
-			"material_uid": 1,
 			"camera_uid": 1,
+			"material": "assets/materials/textured.json.mat",
 			"type": "mesh",
 			"model": "assets/models/cube.obj",
 		},
 		{
-			"material_uid": 2,
+			"material": "assets/materials/back_buffer.json.mat",
 			"camera_uid": 2,
 			"type": "quad_2d",
 			"uniform": "u_Texture",
 			"fit": true
 		},
 		{
-			"material_uid": 4,
 			"camera_uid": 2,
+			"material": "assets/materials/image.json.mat",
 			"rect": {
 				"min_rel": [0.5, 0.25],
 				"max_rel": [0.5, 0.25],
@@ -71,8 +45,8 @@
 			"uniform": "u_Texture",
 		},
 		{
-			"material_uid": 4,
 			"camera_uid": 2,
+			"material": "assets/materials/image.json.mat",
 			"rect": {
 				"max_rel": [0.5, 0.25],
 				"pivot": [0.5, 0.5],
@@ -81,8 +55,8 @@
 			"uniform": "u_Texture",
 		},
 		{
-			"material_uid": 3,
 			"camera_uid": 2,
+			"material": "assets/materials/font.json.mat",
 			"rect": {
 				"min_rel": [0.5, 0.25],
 				"max_rel": [0.5, 0.25],

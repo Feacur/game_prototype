@@ -96,7 +96,6 @@ struct Asset_Target {
 void asset_target_init(struct Asset_System * system, void * instance, struct CString name);
 void asset_target_free(struct Asset_System * system, void * instance);
 
-/*
 // ----- ----- ----- ----- -----
 // -- Asset material part
 // ----- ----- ----- ----- -----
@@ -107,6 +106,5 @@ struct Asset_Material {
 
 void asset_material_init(struct Asset_System * system, void * instance, struct CString name);
 void asset_material_free(struct Asset_System * system, void * instance);
-*/
 
 #endif

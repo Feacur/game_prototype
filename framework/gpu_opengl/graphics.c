@@ -1080,7 +1080,6 @@ static void __stdcall opengl_debug_message_callback(
 	const void *userParam
 );
 
-bool contains_full_word(char const * container, struct CString value);
 static char * allocate_extensions_string(void);
 void graphics_to_gpu_library_init(void) {
 	// setup debug

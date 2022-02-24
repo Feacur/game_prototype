@@ -101,7 +101,8 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 			case ENTITY_TYPE_QUAD_2D: {
 				struct Entity_Quad * quad = &entity->as.quad;
 				if (quad->fit) {
-					struct uvec2 const entity_content_size = entity_get_content_size(entity, viewport_size_x, viewport_size_y);
+					struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
+					struct uvec2 const entity_content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
 					if (entity_content_size.x != 0 && entity_content_size.y != 0)  {
 						// @note: `(fit_size_N <= viewport_size_N) == true`
 						//        `(fit_offset_N >= 0) == true`
@@ -199,7 +200,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 			struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
 
-			struct Gfx_Material * material = array_any_at(&gs_game.materials, entity->material);
+			struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
 
 			struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
 			entity_get_rect(
@@ -221,7 +222,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 				batcher_2d_set_matrix(gs_game.batcher, (struct mat4[]){
 					mat4_mul_mat(mat4_camera, mat4_entity)
 				});
-				batcher_2d_set_material(gs_game.batcher, material);
+				batcher_2d_set_material(gs_game.batcher, &material->value);
 			}
 
 			switch (entity->type) {
@@ -265,7 +266,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 					array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
 						.type = GPU_COMMAND_TYPE_DRAW,
 						.as.draw = {
-							.material = material,
+							.material = &material->value,
 							.gpu_mesh_ref = model->gpu_ref,
 							.override = {
 								.buffer = &gs_game.buffer,

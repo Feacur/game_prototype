@@ -41,7 +41,6 @@ static struct Gpu_Library {
 //
 #include "gpu_library_to_system.h"
 
-static bool contains_full_word(char const * container, struct CString value);
 static void * gpu_library_get_function(struct CString name);
 static bool gpu_library_wgl_init(void) {
 	HDC const device = gs_gpu_library.dll.GetCurrentDC();
@@ -197,23 +196,6 @@ void gpu_context_set_vsync(struct Gpu_Context * gpu_context, int32_t value) {
 }
 
 //
-
-static bool contains_full_word(char const * container, struct CString value) {
-	if (container == NULL)  { return false; }
-	if (value.data == NULL) { return false; }
-
-	for (char const * start = container, * end = container; *start; start = end) {
-		while (*start == ' ') { start++; }
-
-		end = strchr(start, ' ');
-		if (end == NULL) { end = container + strlen(container); }
-
-		if ((size_t)(end - start) != value.length) { continue; }
-		if (common_memcmp(start, value.data, value.length) == 0) { return true; }
-	}
-
-	return false;
-}
 
 static int dictionary_int_int_get_value(int const * keys, int const * vals, int key) {
 	for (int i = 0; keys[i]; i++) {

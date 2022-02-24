@@ -14,7 +14,6 @@ extern struct Game_State {
 
 	struct Asset_System assets;
 
-	struct Array_Any materials;
 	struct Array_Any cameras;
 	struct Array_Any entities;
 } gs_game;

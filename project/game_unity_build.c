@@ -54,6 +54,7 @@
 
 #include "application/application.c"
 #include "application/asset_types.c"
+#include "application/asset_parser.c"
 
 #include "prototype/object_camera.c"
 #include "prototype/object_entity.c"

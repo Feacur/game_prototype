@@ -49,6 +49,7 @@ framework/gpu_opengl/graphics.c
 
 application/application.c
 application/asset_types.c
+application/asset_parser.c
 
 prototype/object_camera.c
 prototype/object_entity.c

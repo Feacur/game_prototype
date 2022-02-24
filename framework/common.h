@@ -53,6 +53,8 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 uint32_t align_u32(uint32_t value);
 uint64_t align_u64(uint64_t value);
 
+bool contains_full_word(char const * container, struct CString value);
+
 // ----- ----- ----- ----- -----
 //     flexible array
 // ----- ----- ----- ----- -----
