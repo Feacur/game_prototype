@@ -7,7 +7,7 @@
 			},
 			"mode": "aspect_x",
 			"ncp": 0.1, "fcp": 10,
-			"target": "assets/back_buffer.json.target",
+			"target": "assets/back_buffer.json.rt",
 			"clear_mask": ["color", "depth"],
 			"clear_rgba": "0x303030ff",
 		},

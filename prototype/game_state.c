@@ -11,6 +11,7 @@
 #include "framework/graphics/gpu_command.h"
 
 #include "application/asset_types.h"
+#include "application/asset_registry.h"
 #include "application/asset_parser.h"
 
 #include "batcher_2d.h"
@@ -24,82 +25,23 @@
 struct Game_State gs_game;
 
 void game_init(void) {
+	gs_game = (struct Game_State){
+		.batcher = batcher_2d_init(),
+	};
+	buffer_init(&gs_game.buffer);
+	array_any_init(&gs_game.gpu_commands, sizeof(struct GPU_Command));
+	array_any_init(&gs_game.cameras, sizeof(struct Camera));
+	array_any_init(&gs_game.entities, sizeof(struct Entity));
 
-	// init state
-	{
-		gs_game = (struct Game_State){
-			.batcher = batcher_2d_init(),
-		};
-		asset_system_init(&gs_game.assets);
-		buffer_init(&gs_game.buffer);
-		array_any_init(&gs_game.gpu_commands, sizeof(struct GPU_Command));
-		array_any_init(&gs_game.cameras, sizeof(struct Camera));
-		array_any_init(&gs_game.entities, sizeof(struct Entity));
-	}
-
-	// init asset system
-	{ // state is expected to be inited
-		// > map types
-		asset_system_map_extension(&gs_game.assets, S_("shader"),   S_("glsl"));
-		asset_system_map_extension(&gs_game.assets, S_("model"),    S_("obj"));
-		asset_system_map_extension(&gs_game.assets, S_("model"),    S_("fbx"));
-		asset_system_map_extension(&gs_game.assets, S_("image"),    S_("png"));
-		asset_system_map_extension(&gs_game.assets, S_("font"),     S_("ttf"));
-		asset_system_map_extension(&gs_game.assets, S_("font"),     S_("otf"));
-		asset_system_map_extension(&gs_game.assets, S_("bytes"),    S_("txt"));
-		asset_system_map_extension(&gs_game.assets, S_("json"),     S_("json"));
-		asset_system_map_extension(&gs_game.assets, S_("target"),   S_("target"));
-		asset_system_map_extension(&gs_game.assets, S_("material"), S_("mat"));
-
-		// > register types
-		asset_system_set_type(&gs_game.assets, S_("shader"), (struct Asset_Callbacks){
-			.init = asset_shader_init,
-			.free = asset_shader_free,
-		}, sizeof(struct Asset_Shader));
-
-		asset_system_set_type(&gs_game.assets, S_("model"), (struct Asset_Callbacks){
-			.init = asset_model_init,
-			.free = asset_model_free,
-		}, sizeof(struct Asset_Model));
-
-		asset_system_set_type(&gs_game.assets, S_("image"), (struct Asset_Callbacks){
-			.init = asset_image_init,
-			.free = asset_image_free,
-		}, sizeof(struct Asset_Image));
-
-		asset_system_set_type(&gs_game.assets, S_("font"), (struct Asset_Callbacks){
-			.init = asset_font_init,
-			.free = asset_font_free,
-		}, sizeof(struct Asset_Font));
-
-		asset_system_set_type(&gs_game.assets, S_("bytes"), (struct Asset_Callbacks){
-			.init = asset_bytes_init,
-			.free = asset_bytes_free,
-		}, sizeof(struct Asset_Bytes));
-
-		asset_system_set_type(&gs_game.assets, S_("json"), (struct Asset_Callbacks){
-			.type_init = asset_json_type_init,
-			.type_free = asset_json_type_free,
-			.init = asset_json_init,
-			.free = asset_json_free,
-		}, sizeof(struct Asset_JSON));
-
-		asset_system_set_type(&gs_game.assets, S_("target"), (struct Asset_Callbacks){
-			.init = asset_target_init,
-			.free = asset_target_free,
-		}, sizeof(struct Asset_Target));
-
-		asset_system_set_type(&gs_game.assets, S_("material"), (struct Asset_Callbacks){
-			.init = asset_material_init,
-			.free = asset_material_free,
-		}, sizeof(struct Asset_Material));
-	}
+	asset_system_init(&gs_game.assets);
+	asset_types_init(&gs_game.assets);
 }
 
 void game_free(void) {
 	batcher_2d_free(gs_game.batcher);
 
 	asset_system_free(&gs_game.assets);
+	asset_types_free(&gs_game.assets);
 
 	buffer_free(&gs_game.buffer);
 	array_any_free(&gs_game.gpu_commands);

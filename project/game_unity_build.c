@@ -53,7 +53,7 @@
 #endif
 
 #include "application/application.c"
-#include "application/asset_types.c"
+#include "application/asset_registry.c"
 #include "application/asset_parser.c"
 
 #include "prototype/object_camera.c"
