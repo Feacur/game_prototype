@@ -70,16 +70,16 @@ void state_read_json_blend_mode(struct JSON const * json, struct Blend_Mode * re
 	uint32_t const mode_id = json_get_id(json, S_("mode"));
 
 	if (mode_id == json_find_id(json, S_("opaque"))) {
-		*result = blend_mode_opaque;
+		*result = c_blend_mode_opaque;
 		return;
 	}
 
 	if (mode_id == json_find_id(json, S_("transparent"))) {
-		*result = blend_mode_transparent;
+		*result = c_blend_mode_transparent;
 		return;
 	}
 
-	*result = blend_mode_opaque;
+	*result = c_blend_mode_opaque;
 }
 
 void state_read_json_depth_mode(struct JSON const * json, struct Depth_Mode * result) {

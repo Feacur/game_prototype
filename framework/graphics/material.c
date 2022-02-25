@@ -12,7 +12,7 @@ void gfx_material_init(
 	struct Depth_Mode const * depth_mode
 ) {
 	material->gpu_program_ref = gpu_program_ref;
-	material->blend_mode = (blend_mode != NULL) ? *blend_mode : blend_mode_opaque;
+	material->blend_mode = (blend_mode != NULL) ? *blend_mode : c_blend_mode_opaque;
 	material->depth_mode = (blend_mode != NULL) ? *depth_mode : (struct Depth_Mode){.enabled = true, .mask = true};
 
 	array_any_init(&material->textures, sizeof(struct Ref));

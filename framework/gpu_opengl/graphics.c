@@ -115,7 +115,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 #define ADD_SECTION_HEADER(shader_type, version) \
 	do { \
 		if (common_strstr((char const *)asset->data, #shader_type)) {\
-			if (ogl_version < (version)) { logger_to_console("'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); break; } \
+			if (gs_ogl_version < (version)) { logger_to_console("'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); break; } \
 			headers[headers_count++] = (struct Section_Header){ \
 				.type = GL_ ## shader_type, \
 				.text = S_("#define " #shader_type "\n"), \
@@ -127,7 +127,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	static GLchar s_glsl_version[20];
 	GLint glsl_version_length = (GLint)logger_to_buffer(
 		s_glsl_version, "#version %d core\n",
-		(ogl_version > 33) ? ogl_version * 10 : 330
+		(gs_ogl_version > 33) ? gs_ogl_version * 10 : 330
 	);
 
 	// section headers, per shader type
@@ -1015,7 +1015,7 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 	if (command->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
 
 	// @todo: ever need variations?
-	graphics_set_blend_mode((struct Blend_Mode[]){blend_mode_opaque});
+	graphics_set_blend_mode((struct Blend_Mode[]){c_blend_mode_opaque});
 	graphics_set_depth_mode(&(struct Depth_Mode){.enabled = true, .mask = true});
 
 	graphics_clear(command->mask, command->rgba);
@@ -1161,7 +1161,7 @@ void graphics_to_gpu_library_init(void) {
 	common_memset(gs_graphics_state.units, 0, sizeof(* gs_graphics_state.units) * (size_t)max_units);
 
 	// @note: manage OpenGL's clip space instead of ours
-	bool const supports_reverse_z = (ogl_version >= 45) || contains_full_word(gs_graphics_state.extensions, S_("GL_ARB_clip_control"));
+	bool const supports_reverse_z = (gs_ogl_version >= 45) || contains_full_word(gs_graphics_state.extensions, S_("GL_ARB_clip_control"));
 	if (supports_reverse_z) { glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); }
 
 	gs_graphics_state.clip_space[0] =                             0.0f; // origin X

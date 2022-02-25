@@ -3,7 +3,7 @@
 //
 #include "functions.h"
 
-uint32_t ogl_version = 0;
+uint32_t gs_ogl_version = 0;
 
 void gpu_library_functions_init(void * (* get)(struct CString name)) {
 	#define XMACRO_INIT() \
@@ -12,7 +12,7 @@ void gpu_library_functions_init(void * (* get)(struct CString name)) {
 			GLint version_minor; \
 			glGetIntegerv(GL_MAJOR_VERSION, &version_major); \
 			glGetIntegerv(GL_MINOR_VERSION, &version_minor); \
-			ogl_version = (uint32_t)(version_major * 10 + version_minor); \
+			gs_ogl_version = (uint32_t)(version_major * 10 + version_minor); \
 			\
 			logger_to_console( \
 				"\n" \
@@ -37,7 +37,7 @@ void gpu_library_functions_free(void) {
 	#define XMACRO(type, name) gl ## name = NULL;
 	#include "xmacro.h"
 
-	ogl_version = 0;
+	gs_ogl_version = 0;
 }
 
 #define XMACRO(type, name) type gl ## name;

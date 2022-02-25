@@ -216,7 +216,7 @@ uint32_t data_type_get_size(enum Data_Type value);
 
 //
 
-extern struct Blend_Mode const blend_mode_opaque;
-extern struct Blend_Mode const blend_mode_transparent;
+extern struct Blend_Mode const c_blend_mode_opaque;
+extern struct Blend_Mode const c_blend_mode_transparent;
 
 #endif
