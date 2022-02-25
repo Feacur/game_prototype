@@ -14,6 +14,8 @@
 [prototype] migrate all entities to JSON initialization
 [prototype] operate asset refs instead of gpu refs or asset instances where applicable
 [prototype] unhardcode startup settings
+[application] make render target assets
+[application] make material assets
 
 
 # 2021, august 12
