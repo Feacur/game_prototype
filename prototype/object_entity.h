@@ -2,6 +2,7 @@
 #define GAME_PROTOTYPE_OBJECT_ENTITY
 
 #include "framework/systems/asset_ref.h"
+#include "framework/graphics/material.h"
 #include "framework/graphics/types.h"
 
 #include "components.h"
