@@ -4,6 +4,8 @@
 // interface from `gpu_library_*.c` to `system.c`
 // - graphics library initialization
 
+#include "framework/common.h"
+
 bool gpu_library_to_system_init(void);
 void gpu_library_to_system_free(void);
 

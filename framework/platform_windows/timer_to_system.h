@@ -4,6 +4,8 @@
 // interface from `timer.c` to `system.c`
 // - framework initialization
 
+#include "framework/common.h"
+
 bool timer_to_system_init(void);
 void timer_to_system_free(void);
 
