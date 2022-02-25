@@ -285,6 +285,7 @@ static bool platform_window_internal_has_raw_input(struct Window * window) {
 	UINT count;
 	GetRegisteredRawInputDevices(NULL, &count, sizeof(RAWINPUTDEVICE));
 
+	// @todo: arena/stack allocator (?)
 	RAWINPUTDEVICE * devices = alloca(sizeof(RAWINPUTDEVICE) * count);
 	if (GetRegisteredRawInputDevices(devices, &count, sizeof(RAWINPUTDEVICE)) != (UINT)-1) {
 		for (uint32_t i = 0; i < count; i++) {
@@ -430,6 +431,7 @@ static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, L
 
 	RAWINPUTHEADER header; UINT header_size = sizeof(header);
 	if (GetRawInputData((HRAWINPUT)lParam, RID_HEADER, &header, &header_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
+		// @todo: arena/stack allocator (?)
 		RAWINPUT * input = alloca(header.dwSize); UINT input_size = header.dwSize;
 		if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, input, &input_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
 			switch (input->header.dwType) {

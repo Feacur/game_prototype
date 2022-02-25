@@ -8,4 +8,6 @@ struct Asset_Ref {
 	uint32_t type_id, resource_id;
 };
 
+extern struct Asset_Ref const с_asset_ref_empty;
+
 #endif

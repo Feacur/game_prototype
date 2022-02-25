@@ -38,8 +38,4 @@ void * asset_system_aquire_instance(struct Asset_System * system, struct CString
 
 struct CString asset_system_get_name(struct Asset_System * system, struct Asset_Ref asset_ref);
 
-//
-
-extern struct Asset_Ref const с_asset_ref_empty;
-
 #endif

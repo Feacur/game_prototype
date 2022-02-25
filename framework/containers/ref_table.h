@@ -38,8 +38,4 @@ void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index);
 
 bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator * iterator);
 
-//
-
-extern struct Ref const ref_empty;
-
 #endif

@@ -24,6 +24,7 @@
 #include "framework/containers/hash_table_u64.c"
 #include "framework/containers/hash_set_u32.c"
 #include "framework/containers/hash_set_u64.c"
+#include "framework/containers/ref.c"
 #include "framework/containers/ref_table.c"
 #include "framework/containers/strings.c"
 
@@ -35,6 +36,7 @@
 #include "framework/assets/image.c"
 #include "framework/assets/font.c"
 
+#include "framework/systems/asset_ref.c"
 #include "framework/systems/asset_system.c"
 
 #define GAME_GRAPHICS_IS_OPENGL

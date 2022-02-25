@@ -194,7 +194,3 @@ bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator *
 	}
 	return false;
 }
-
-//
-
-struct Ref const ref_empty = {.id = INDEX_EMPTY,};

@@ -242,7 +242,3 @@ static uint32_t asset_system_get_extension_from_name(struct CString name) {
 	}
 	return 0;
 }
-
-//
-
-struct Asset_Ref const с_asset_ref_empty = {.instance_ref.id = INDEX_EMPTY};

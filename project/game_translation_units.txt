@@ -24,6 +24,7 @@ framework/containers/hash_table_u32.c
 framework/containers/hash_table_u64.c
 framework/containers/hash_set_u32.c
 framework/containers/hash_set_u64.c
+framework/containers/ref.c
 framework/containers/ref_table.c
 framework/containers/strings.c
 
@@ -35,6 +36,7 @@ framework/assets/mesh.c
 framework/assets/image.c
 framework/assets/font.c
 
+framework/systems/asset_ref.c
 framework/systems/asset_system.c
 
 framework/platform_windows/timer.c
