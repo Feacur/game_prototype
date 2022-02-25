@@ -73,7 +73,7 @@ static uint32_t state_read_json_hex(struct JSON const * json) {
 // ----- ----- ----- ----- -----
 
 static void state_read_json_transform_3d(struct JSON const * json, struct Transform_3D * transform) {
-	*transform = transform_3d_default;
+	*transform = c_transform_3d_default;
 	if (json->type == JSON_OBJECT) {
 		struct vec3 euler = {0, 0, 0};
 		state_read_json_float_n(json_get(json, S_("euler")), 3, &euler.x);
@@ -86,7 +86,7 @@ static void state_read_json_transform_3d(struct JSON const * json, struct Transf
 }
 
 static void state_read_json_transform_rect(struct JSON const * json, struct Transform_Rect * transform) {
-	*transform = transform_rect_default;
+	*transform = c_transform_rect_default;
 	if (json->type == JSON_OBJECT) {
 		state_read_json_float_n(json_get(json, S_("min_rel")), 2, &transform->min_relative.x);
 		state_read_json_float_n(json_get(json, S_("min_abs")), 2, &transform->min_absolute.x);

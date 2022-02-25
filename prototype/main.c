@@ -120,7 +120,7 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 							.pivot = {0.5f, 0.5f},
 						};
 					}
-					else { entity->rect = transform_rect_default; }
+					else { entity->rect = c_transform_rect_default; }
 				}
 			} break;
 
