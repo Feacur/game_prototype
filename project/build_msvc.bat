@@ -42,7 +42,7 @@ call "environment.bat" || ( goto :eof )
 
 rem |> OPTIONS
 set includes=-I".." -I"../third_party"
-set defines=-D_CRT_SECURE_NO_WARNINGS -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE
+set defines=-D_CRT_SECURE_NO_WARNINGS -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE -D_UNICODE
 set libs=kernel32.lib user32.lib gdi32.lib
 set warnings=-WX -W4
 set compiler=-nologo -diagnostics:caret -EHa- -GR-

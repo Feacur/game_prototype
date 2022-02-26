@@ -56,9 +56,11 @@ static void app_init(void) {
 
 	game_init();
 
-	struct CString const path = json_get_string(&gs_main_settings.json, S_("scene"), S_NULL);
-	struct Asset_JSON const * json_test = asset_system_aquire_instance(&gs_game.assets, path);
-	if (json_test != NULL) { game_read_json(&json_test->value); }
+	struct CString const scene_path = json_get_string(&gs_main_settings.json, S_("scene"), S_NULL);
+	struct Asset_JSON const * scene = asset_system_aquire_instance(&gs_game.assets, scene_path);
+	if (scene != NULL) {
+		game_read_json(&scene->value);
+	}
 }
 
 static void app_free(void) {
@@ -343,6 +345,8 @@ static void main_get_config(struct Application_Config * config) {
 	json_free(&json);
 	strings_free(&strings);
 }
+
+//
 
 int main (int argc, char * argv[]) {
 	(void)argc; (void)argv;
