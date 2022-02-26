@@ -150,7 +150,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 		GLint const    length[] = {glsl_version_length, (GLint)headers[i].text.length, (GLint)asset->count};
 
 		GLuint shader_id = glCreateShader(headers[i].type);
-		glShaderSource(shader_id, sizeof(code) / sizeof(*code), code, length);
+		glShaderSource(shader_id, SIZE_OF_ARRAY(code), code, length);
 		glCompileShader(shader_id);
 		verify_shader(shader_id);
 

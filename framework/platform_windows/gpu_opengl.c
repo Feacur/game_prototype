@@ -210,7 +210,7 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 	if (!HAS_ARB(pixel_format)) { return NULL; }
 #undef HAS_ARB
 
-#define KEYS_COUNT (sizeof(request_keys) / sizeof(*request_keys))
+#define KEYS_COUNT SIZE_OF_ARRAY(request_keys)
 #define GET_VALUE(key) dictionary_int_int_get_value(request_keys, request_vals, key)
 
 	int const formats_request = WGL_NUMBER_PIXEL_FORMATS_ARB; int formats_capacity;

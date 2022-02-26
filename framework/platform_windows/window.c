@@ -314,7 +314,7 @@ static void platform_window_internal_toggle_raw_input(struct Window * window, bo
 		{.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_GAMEPAD,  .dwFlags = flags, .hwndTarget = target},
 	};
 
-	if (!RegisterRawInputDevices(devices, sizeof(devices) / sizeof(*devices), sizeof(RAWINPUTDEVICE))) {
+	if (!RegisterRawInputDevices(devices, SIZE_OF_ARRAY(devices), sizeof(RAWINPUTDEVICE))) {
 		logger_to_console("'RegisterRawInputDevices' failed\n"); DEBUG_BREAK();
 		return;
 	}
@@ -406,7 +406,7 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 		RI_MOUSE_BUTTON_5_UP,
 	};
 
-	for (uint8_t i = 0; i < sizeof(c_keys_down) / sizeof(*c_keys_down); i++) {
+	for (uint8_t i = 0; i < SIZE_OF_ARRAY(c_keys_down); i++) {
 		if ((data->usButtonFlags & c_keys_down[i])) {
 			input_to_platform_on_mouse(i, true);
 		}
@@ -509,7 +509,7 @@ static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam,
 		MK_XBUTTON2,
 	};
 
-	for (uint8_t i = 0; i < sizeof(c_key_masks) / sizeof(*c_key_masks); i++) {
+	for (uint8_t i = 0; i < SIZE_OF_ARRAY(c_key_masks); i++) {
 		input_to_platform_on_mouse(i, (wParam & c_key_masks[i]));
 	}
 

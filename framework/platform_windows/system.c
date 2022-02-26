@@ -165,7 +165,7 @@ static void system_set_process_dpi_awareness(void) {
 //
 // static void system_enable_virtual_terminal_processing(void) {
 // 	DWORD const handles[] = {STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
-// 	for (uint32_t i = 0; i < sizeof(handles) / sizeof(*handles); i++) {
+// 	for (uint32_t i = 0; i < SIZE_OF_ARRAY(handles); i++) {
 // 		HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 // 		if (handle == NULL) { continue; }
 // 		DWORD mode = 0;

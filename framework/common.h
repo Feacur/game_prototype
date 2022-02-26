@@ -48,6 +48,7 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 #define FILE_AND_LINE __FILE__ ":" STRINGIFY_A_MACRO(__LINE__)
 #define S_FILE_AND_LINE S_(FILE_AND_LINE)
 
+#define SIZE_OF_ARRAY(array) (sizeof(array) / sizeof(*array))
 #define SIZE_OF_MEMBER(type, name) sizeof(((type *)0)->name)
 
 uint32_t align_u32(uint32_t value);

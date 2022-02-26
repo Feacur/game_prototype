@@ -108,7 +108,7 @@ void input_to_platform_after_update(void) {
 	static char const c_remap_src[] = ",./"    ";'"     "[]\\"    "`1234567890-=";
 	static char const c_remap_dst[] = "<?>"    ":\""    "{}|"     "~!@#$%^&*()_+";
 
-	for (uint8_t i = 0; i < sizeof(c_remap_src) / sizeof(*c_remap_src); i++) {
+	for (uint8_t i = 0; i < SIZE_OF_ARRAY(c_remap_src); i++) {
 		gs_input_state.keyboard.keys[(uint8_t)c_remap_dst[i]] = gs_input_state.keyboard.keys[(uint8_t)c_remap_src[i]];
 	}
 
