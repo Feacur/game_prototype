@@ -183,15 +183,25 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	struct Gpu_Program_Field uniforms[MAX_UNIFORMS];
 	GLint uniform_locations[MAX_UNIFORMS];
 	for (GLint i = 0; i < uniforms_count; i++) {
-		// GL_NAME_LENGTH // includes zero-terminator
-		GLenum const props[] = {GL_TYPE, GL_ARRAY_SIZE, GL_LOCATION};
-		GLint params[sizeof(props) / sizeof(*props)];
-		glGetProgramResourceiv(program_id, GL_UNIFORM, (GLuint)i, sizeof(props) / sizeof(*props), props, sizeof(params) / sizeof(*params), NULL, params);
+		enum Param {
+			PARAM_TYPE,
+			PARAM_ARRAY_SIZE,
+			PARAM_LOCATION,
+			// PARAM_NAME_LENGTH,
+		};
+		GLenum const props[] = {
+			[PARAM_TYPE] = GL_TYPE,
+			[PARAM_ARRAY_SIZE] = GL_ARRAY_SIZE,
+			[PARAM_LOCATION] = GL_LOCATION,
+			// [PARAM_NAME_LENGTH] = GL_NAME_LENGTH,
+		};
+		GLint params[SIZE_OF_ARRAY(props)];
+		glGetProgramResourceiv(program_id, GL_UNIFORM, (GLuint)i, SIZE_OF_ARRAY(props), props, SIZE_OF_ARRAY(params), NULL, params);
 
 		GLsizei name_length;
 		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
 
-		if (params[1] > 1) {
+		if (params[PARAM_ARRAY_SIZE] > 1) {
 			// @todo: improve reflection/introspection/whatever;
 			//        simple arrays have names ending with a `[0]`;
 			//        more specifically the very first elememnt is tagget such a way
@@ -204,10 +214,10 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 				.length = (uint32_t)name_length,
 				.data = uniform_name_buffer,
 			}),
-			.type = interpret_gl_type(params[0]),
-			.array_size = (uint32_t)params[1],
+			.type = interpret_gl_type(params[PARAM_TYPE]),
+			.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
 		};
-		uniform_locations[i] = params[2];
+		uniform_locations[i] = params[PARAM_LOCATION];
 	}
 
 	MEMORY_FREE(&gs_graphics_state, uniform_name_buffer);
