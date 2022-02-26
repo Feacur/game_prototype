@@ -24,8 +24,8 @@ uint32_t convert_bits_r32_u32(float value) {
 }
 
 uint32_t hash_u32_bytes_fnv1(uint8_t const * value, uint64_t length) {
-	uint32_t const prime = 0x01000193u;
-	uint32_t hash = 0x811c9dc5u;
+	uint32_t const prime = UINT32_C(0x01000193);
+	uint32_t hash = UINT32_C(0x811c9dc5);
 	for (uint64_t i = 0; i < length; i++) {
 		hash ^= value[i];
 		hash *= prime;
@@ -41,8 +41,8 @@ uint32_t hash_u32_xorshift(uint32_t value) {
 }
 
 uint64_t hash_u64_bytes_fnv1(uint8_t const * value, uint64_t length) {
-	uint64_t const prime = 0x00000100000001B3ul;
-	uint64_t hash = 0xcbf29ce484222325ul;
+	uint64_t const prime = UINT64_C(0x00000100000001B3);
+	uint64_t hash = UINT64_C(0xcbf29ce484222325);
 	for (uint64_t i = 0; i < length; i++) {
 		hash ^= value[i];
 		hash *= prime;
@@ -59,9 +59,9 @@ uint64_t hash_u64_xorshift(uint64_t value) {
 
 uint32_t round_up_to_PO2_u32(uint32_t value) {
 #if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
-	if (value > 0x80000000u) {
+	if (value > UINT32_C(0x80000000)) {
 		logger_to_console("value is over the largest power of two: %u\n", value); DEBUG_BREAK();
-		return 0x80000000u;
+		return UINT32_C(0x80000000);
 	}
 #endif
 
@@ -77,9 +77,9 @@ uint32_t round_up_to_PO2_u32(uint32_t value) {
 
 uint64_t round_up_to_PO2_u64(uint64_t value) {
 #if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
-	if (value > 0x8000000000000000ull) {
+	if (value > UINT64_C(0x8000000000000000)) {
 		logger_to_console("value is over the largest power of two: %llu\n", value); DEBUG_BREAK();
-		return 0x8000000000000000ull;
+		return UINT64_C(0x8000000000000000);
 	}
 #endif
 
@@ -147,13 +147,13 @@ float inverse_eerp(float v1, float v2, float value) { return logf(value / v1) / 
 bool maths_isinf(float value) {
 	// @note: check all exponent bits and no mantissa bits are set
 	// uint32_t const bits = convert_bits_r32_u32(value);
-	// return (bits & 0x7fffffffu) == 0x7f800000u;
+	// return (bits & UINT32_C(0x7fffffff)) == UINT32_C(0x7f800000);
 	return isinf(value);
 }
 bool maths_isnan(float value) {
 	// @note: check all exponent bits and some mantissa bits are set
 	// uint32_t const bits = convert_bits_r32_u32(value);
-	// return (bits & 0x7f800000u) == 0x7f800000u && (bits & 0x7fffffffu) != 0x7f800000u;
+	// return (bits & UINT32_C(0x7f800000)) == UINT32_C(0x7f800000) && (bits & UINT32_C(0x7fffffff)) != UINT32_C(0x7f800000);
 	return isnan(value);
 }
 float maths_floor(float value) { return floorf(value); }
