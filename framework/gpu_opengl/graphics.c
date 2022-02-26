@@ -15,6 +15,8 @@
 #include "functions.h"
 #include "types.h"
 
+#include <malloc.h>
+
 // @todo: GPU scissor test
 // @todo: expose screen buffer settings, as well as OpenGL's
 // @idea: use dedicated samplers instead of texture defaults
@@ -124,9 +126,9 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	} while (false) \
 
 	// a mandatory version header
-	static GLchar s_glsl_version[20];
+	GLchar glsl_version[20];
 	GLint glsl_version_length = (GLint)logger_to_buffer(
-		s_glsl_version, "#version %d core\n",
+		glsl_version, "#version %d core\n",
 		(gs_ogl_version > 33) ? gs_ogl_version * 10 : 330
 	);
 
@@ -146,7 +148,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	// compile shader objects
 	GLuint shader_ids[4];
 	for (uint32_t i = 0; i < headers_count; i++) {
-		GLchar const * code[]   = {s_glsl_version,        headers[i].text.data,          (GLchar *)asset->data};
+		GLchar const * code[]   = {glsl_version,        headers[i].text.data,          (GLchar *)asset->data};
 		GLint const    length[] = {glsl_version_length, (GLint)headers[i].text.length, (GLint)asset->count};
 
 		GLuint shader_id = glCreateShader(headers[i].type);
@@ -1250,11 +1252,10 @@ static void verify_shader(GLuint id) {
 	glGetShaderiv(id, GL_INFO_LOG_LENGTH, &max_length);
 
 	if (max_length > 0) {
-		// @todo: arena/stack allocator
-		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(&gs_graphics_state, GLchar, max_length);
+		// @todo: (?) arena/stack allocator
+		GLchar * buffer = alloca(sizeof(GLchar) * (size_t)max_length);
 		glGetShaderInfoLog(id, max_length, &max_length, buffer);
 		logger_to_console("%s\n", buffer);
-		MEMORY_FREE(&gs_graphics_state, buffer);
 	}
 
 	DEBUG_BREAK();
@@ -1269,11 +1270,10 @@ static void verify_program(GLuint id) {
 	glGetProgramiv(id, GL_INFO_LOG_LENGTH, &max_length);
 
 	if (max_length > 0) {
-		// @todo: arena/stack allocator
-		GLchar * buffer = MEMORY_ALLOCATE_ARRAY(&gs_graphics_state, GLchar, max_length);
+		// @todo: (?) arena/stack allocator
+		GLchar * buffer = alloca(sizeof(GLchar) * (size_t)max_length);
 		glGetProgramInfoLog(id, max_length, &max_length, buffer);
 		logger_to_console("%s\n", buffer);
-		MEMORY_FREE(&gs_graphics_state, buffer);
 	}
 
 	DEBUG_BREAK();

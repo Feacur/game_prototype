@@ -3,10 +3,7 @@
 #include "framework/containers/buffer.h"
 
 #include <Windows.h>
-
-#if defined(UNICODE)
-	static wchar_t * platform_file_allocate_utf8_to_utf16(struct CString value);
-#endif
+#include <malloc.h>
 
 // @todo: sidestep `MAX_PATH` limit?
 // @idea: async file access through OS API
@@ -51,51 +48,20 @@ bool platform_file_read_entire(struct CString path, struct Buffer * buffer) {
 
 void platform_file_delete(struct CString path) {
 #if defined(UNICODE)
-	wchar_t * path_valid = platform_file_allocate_utf8_to_utf16(path);
+	// @todo: (?) arena/stack allocator
+	const int path_valid_length = MultiByteToWideChar(CP_UTF8, 0, path.data, -1, NULL, 0);
+	wchar_t * path_valid = alloca(sizeof(wchar_t) * (uint64_t)path_valid_length);
+	MultiByteToWideChar(CP_UTF8, 0, path.data, -1, path_valid, path_valid_length);
 #else
 	char const * path_valid = path.data;
 #endif
 
 	DeleteFile(path_valid);
-
-#if defined(UNICODE)
-	MEMORY_FREE(NULL, path_valid);
-#endif
 }
 
+static HANDLE platform_internal_create_file(struct CString path, enum File_Mode mode);
 struct File * platform_file_init(struct CString path, enum File_Mode mode) {
-	DWORD access = 0, share = 0, creation = OPEN_EXISTING;
-	if (mode & FILE_MODE_READ) {
-		access |= GENERIC_READ;
-		share |= FILE_SHARE_READ;
-	}
-
-	if (mode & FILE_MODE_WRITE) {
-		access |= GENERIC_WRITE;
-		share |= FILE_SHARE_WRITE;
-		creation = OPEN_ALWAYS;
-	}
-
-	if (mode & FILE_MODE_DELETE) {
-		share |= FILE_SHARE_DELETE;
-	}
-
-#if defined(UNICODE)
-	wchar_t * path_valid = platform_file_allocate_utf8_to_utf16(path);
-#else
-	char const * path_valid = path.data;
-#endif
-
-	HANDLE handle = CreateFile(
-		path_valid,
-		access, share, NULL, creation,
-		FILE_ATTRIBUTE_NORMAL, NULL
-	);
-
-#if defined(UNICODE)
-	MEMORY_FREE(NULL, path_valid);
-#endif
-
+	HANDLE handle = platform_internal_create_file(path, mode);
 	if (handle == INVALID_HANDLE_VALUE) {
 		logger_to_console("'CreateFile' failed; \"%.*s\"\n", path.length, path.data);
 		return NULL;
@@ -207,12 +173,35 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 
 //
 
-#if defined(UNICODE)
-	static wchar_t * platform_file_allocate_utf8_to_utf16(struct CString value) {
-		// @todo: arena/stack allocator
-		const int length = MultiByteToWideChar(CP_UTF8, 0, value.data, -1, NULL, 0);
-		wchar_t * buffer = MEMORY_ALLOCATE_ARRAY(NULL, wchar_t, length);
-		MultiByteToWideChar(CP_UTF8, 0, value.data, -1, buffer, length);
-		return buffer;
+static HANDLE platform_internal_create_file(struct CString path, enum File_Mode mode) {
+	DWORD access = 0, share = 0, creation = OPEN_EXISTING;
+	if (mode & FILE_MODE_READ) {
+		access |= GENERIC_READ;
+		share |= FILE_SHARE_READ;
 	}
+
+	if (mode & FILE_MODE_WRITE) {
+		access |= GENERIC_WRITE;
+		share |= FILE_SHARE_WRITE;
+		creation = OPEN_ALWAYS;
+	}
+
+	if (mode & FILE_MODE_DELETE) {
+		share |= FILE_SHARE_DELETE;
+	}
+
+#if defined(UNICODE)
+	// @todo: (?) arena/stack allocator
+	const int path_valid_length = MultiByteToWideChar(CP_UTF8, 0, path.data, -1, NULL, 0);
+	wchar_t * path_valid = alloca(sizeof(wchar_t) * (uint64_t)path_valid_length);
+	MultiByteToWideChar(CP_UTF8, 0, path.data, -1, path_valid, path_valid_length);
+#else
+	char const * path_valid = path.data;
 #endif
+
+	return CreateFile(
+		path_valid,
+		access, share, NULL, creation,
+		FILE_ATTRIBUTE_NORMAL, NULL
+	);
+}
