@@ -42,6 +42,11 @@
 	{ "keys": ["ctrl+f12"], "command": "goto_definition" },
 	{ "keys": ["ctrl+shift+f12"], "command": "goto_reference" },
 	{ "keys": ["ctrl+,"], "command": "context_menu" },
+	// editor: disable defaults
+	{ "keys": ["f7"], "command": "" },
+	{ "keys": ["f9"], "command": "" },
+	{ "keys": ["ctrl+f9"], "command": "" },
+	{ "keys": ["ctrl+shift+k"], "command": "" },
 	// extensions: EasyClangComplete
 	// { "keys": ["f12"], "command": "ecc_goto_declaration" },
 	// { "keys": ["ctrl+."], "command": "ecc_show_popup_info" },
