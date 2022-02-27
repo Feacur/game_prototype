@@ -328,7 +328,10 @@ static void main_fill_config(struct JSON const * json, void * data) {
 }
 
 int main (int argc, char * argv[]) {
-	(void)argc; (void)argv;
+	logger_to_console("> arguments:\n");
+	for (int i = 0; i < argc; i++) {
+		logger_to_console("  %s\n", argv[i]);
+	}
 
 	struct CString const path = S_("assets/main.json");
 	process_json(main_fill_settings, &gs_main_settings, path);
