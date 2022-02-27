@@ -23,6 +23,7 @@
 
 #include "application/application.h"
 #include "application/asset_types.h"
+#include "application/utilities.h"
 
 #include "object_camera.h"
 #include "object_entity.h"
@@ -32,7 +33,8 @@
 
 static struct Main_Settings {
 	struct Strings strings;
-	struct JSON json;
+	uint32_t config_id;
+	uint32_t scene_id;
 } gs_main_settings;
 
 static struct Main_Uniforms {
@@ -42,9 +44,11 @@ static struct Main_Uniforms {
 } gs_main_uniforms;
 
 static void app_init(void) {
-	gs_main_uniforms.projection = graphics_add_uniform_id(S_("u_Projection"));
-	gs_main_uniforms.camera = graphics_add_uniform_id(S_("u_Camera"));
-	gs_main_uniforms.transform = graphics_add_uniform_id(S_("u_Transform"));
+	gs_main_uniforms = (struct Main_Uniforms){
+		.projection = graphics_add_uniform_id(S_("u_Projection")),
+		.camera = graphics_add_uniform_id(S_("u_Camera")),
+		.transform = graphics_add_uniform_id(S_("u_Transform")),
+	};
 
 	gpu_execute(1, &(struct GPU_Command){
 		.type = GPU_COMMAND_TYPE_CULL,
@@ -56,15 +60,10 @@ static void app_init(void) {
 
 	game_init();
 
-	struct CString const scene_path = json_get_string(&gs_main_settings.json, S_("scene"), S_NULL);
-	struct Asset_JSON const * scene = asset_system_aquire_instance(&gs_game.assets, scene_path);
-	if (scene != NULL) {
-		game_read_json(&scene->value);
-	}
+	process_json(game_fill_scene, &gs_game, strings_get(&gs_main_settings.strings, gs_main_settings.scene_id));
 }
 
 static void app_free(void) {
-	json_free(&gs_main_settings.json);
 	strings_free(&gs_main_settings.strings);
 	game_free();
 }
@@ -309,51 +308,33 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 //
 
-static void main_settings_init(void) {
-	struct Buffer buffer;
-	bool const read_success = platform_file_read_entire(S_("assets/main.json"), &buffer);
-	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
-
-	strings_init(&gs_main_settings.strings);
-	json_init(&gs_main_settings.json, &gs_main_settings.strings, (char const *)buffer.data);
-	buffer_free(&buffer);
+static void main_fill_settings(struct JSON const * json, void * output) {
+	struct Main_Settings * result = output;
+	strings_init(&result->strings);
+	result->config_id = strings_add(&result->strings, json_get_string(json, S_("config"), S_NULL));
+	result->scene_id = strings_add(&result->strings, json_get_string(json, S_("scene"), S_NULL));
 }
 
-static void main_get_config(struct Application_Config * config) {
-	struct CString const path = json_get_string(&gs_main_settings.json, S_("application"), S_NULL);
-
-	struct Buffer buffer;
-	bool const read_success = platform_file_read_entire(path, &buffer);
-	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
-
-	struct Strings strings;
-	strings_init(&strings);
-
-	struct JSON json;
-	json_init(&json, &strings, (char const *)buffer.data);
-	buffer_free(&buffer);
-
-	*config = (struct Application_Config){
-		.size_x = (uint32_t)json_get_number(&json, S_("size_x"), 960),
-		.size_y = (uint32_t)json_get_number(&json, S_("size_y"), 540),
-		.vsync = (int32_t)json_get_number(&json, S_("vsync"), 0),
-		.target_refresh_rate = (uint32_t)json_get_number(&json, S_("target_refresh_rate"), 60),
-		.fixed_refresh_rate = (uint32_t)json_get_number(&json, S_("fixed_refresh_rate"), 30),
-		.slow_frames_limit = (uint32_t)json_get_number(&json, S_("slow_frames_limit"), 2),
+static void main_fill_config(struct JSON const * json, void * output) {
+	struct Application_Config * result = output;
+	*result = (struct Application_Config){
+		.size_x = (uint32_t)json_get_number(json, S_("size_x"), 960),
+		.size_y = (uint32_t)json_get_number(json, S_("size_y"), 540),
+		.vsync = (int32_t)json_get_number(json, S_("vsync"), 0),
+		.target_refresh_rate = (uint32_t)json_get_number(json, S_("target_refresh_rate"), 60),
+		.fixed_refresh_rate = (uint32_t)json_get_number(json, S_("fixed_refresh_rate"), 30),
+		.slow_frames_limit = (uint32_t)json_get_number(json, S_("slow_frames_limit"), 2),
 	};
-
-	json_free(&json);
-	strings_free(&strings);
 }
-
-//
 
 int main (int argc, char * argv[]) {
 	(void)argc; (void)argv;
-	main_settings_init();
+
+	struct CString const path = S_("assets/main.json");
+	process_json(main_fill_settings, &gs_main_settings, path);
 
 	struct Application_Config config;
-	main_get_config(&config);
+	process_json(main_fill_config, &config, strings_get(&gs_main_settings.strings, gs_main_settings.config_id));
 
 	application_run(config, (struct Application_Callbacks){
 		.init = app_init,

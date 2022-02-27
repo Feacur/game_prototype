@@ -54,7 +54,8 @@ void game_free(void) {
 static void state_read_json_cameras(struct JSON const * json);
 static void state_read_json_entities(struct JSON const * json);
 
-void game_read_json(struct JSON const * json) {
+void game_fill_scene(struct JSON const * json, void * output) {
+	if (output != &gs_game) { DEBUG_BREAK(); }
 	state_read_json_cameras(json_get(json, S_("cameras")));
 	state_read_json_entities(json_get(json, S_("entities")));
 }

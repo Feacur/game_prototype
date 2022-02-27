@@ -29,10 +29,12 @@ rem |> DO
 pushd ..
 if exist "%project_folder%/%project%.rdbg" (
 	call :check_debugger_online || (
-		start remedybg -g -q "%project_folder%/%project%.rdbg"
+		start remedybg -q "%project_folder%/%project%.rdbg"
 		:wait_for_debugger
 		call :check_debugger_online || goto wait_for_debugger
 	)
+	rem instead of the `-g` flag command it to start: existing instances should be drived too
+	start remedybg.exe start-debugging
 ) else (
 	start remedybg "%binary_folder%/%project%.exe"
 	rem current working directory should be the root

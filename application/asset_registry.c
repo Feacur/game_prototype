@@ -15,6 +15,7 @@
 #include "framework/assets/json.h"
 
 #include "asset_parser.h"
+#include "utilities.h"
 
 //
 #include "asset_types.h"
@@ -151,25 +152,20 @@ static void asset_font_free(struct Asset_System * system, void * instance) {
 // -- Asset target part
 // ----- ----- ----- ----- -----
 
+struct Asset_Fill_Target {
+	struct Asset_System * system;
+	struct Ref * gpu_ref;
+};
+
+static void asset_fill_target(struct JSON const * json, void * output) {
+	struct Asset_Fill_Target * data = output;
+	state_read_json_target(json, data->gpu_ref);
+}
+
 static void asset_target_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Target * asset = instance;
-	(void)system;
-
-	struct Buffer buffer;
-	bool const read_success = platform_file_read_entire(name, &buffer);
-	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
-
-	struct Strings strings;
-	strings_init(&strings);
-
-	struct JSON json;
-	json_init(&json, &strings, (char const *)buffer.data);
-	buffer_free(&buffer);
-
-	state_read_json_target(&json, &asset->gpu_ref);
-
-	json_free(&json);
-	strings_free(&strings);
+	struct Asset_Fill_Target data = { .system = system, .gpu_ref = &asset->gpu_ref };
+	process_json(asset_fill_target, &data, name);
 }
 
 static void asset_target_free(struct Asset_System * system, void * instance) {
@@ -205,25 +201,20 @@ static void asset_model_free(struct Asset_System * system, void * instance) {
 // -- Asset material part
 // ----- ----- ----- ----- -----
 
+struct Asset_Fill_Material {
+	struct Asset_System * system;
+	struct Gfx_Material * value;
+};
+
+static void asset_fill_material(struct JSON const * json, void * output) {
+	struct Asset_Fill_Material * data = output;
+	state_read_json_material(data->system, json, data->value);
+}
+
 static void asset_material_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Material * asset = instance;
-	(void)system;
-
-	struct Buffer buffer;
-	bool const read_success = platform_file_read_entire(name, &buffer);
-	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
-
-	struct Strings strings;
-	strings_init(&strings);
-
-	struct JSON json;
-	json_init(&json, &strings, (char const *)buffer.data);
-	buffer_free(&buffer);
-
-	state_read_json_material(system, &json, &asset->value);
-
-	json_free(&json);
-	strings_free(&strings);
+	struct Asset_Fill_Material data = { .system = system, .value = &asset->value };
+	process_json(asset_fill_material, &data, name);
 }
 
 static void asset_material_free(struct Asset_System * system, void * instance) {

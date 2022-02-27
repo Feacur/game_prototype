@@ -32,7 +32,8 @@ you are free to use any other IDE, it's just me who didn't supply additional pro
    tip: it's best to prepare environment beforehand, rather than at each build  
    to do so launch `open_sublime.bat` or `open_vscode.bat`
 2) launch one of the build/debug/run commands  
-   N.B. debugging in Sublime Text relies on [RemedyBG](https://remedybg.itch.io/remedybg)
+   N.B. debugging in Sublime Text relies on [RemedyBG](https://remedybg.itch.io/remedybg)  
+        also note, that it doesn't support relative paths yet (see `*.rdbg`)  
 
 ### Third-party code used
 1) [stb](https://github.com/nothings/stb): single-file public domain (or MIT licensed) libraries for C/C++
