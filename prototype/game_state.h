@@ -23,6 +23,6 @@ extern struct Game_State {
 void game_init(void);
 void game_free(void);
 
-void game_fill_scene(struct JSON const * json, void * output);
+void game_fill_scene(struct JSON const * json, void * data);
 
 #endif

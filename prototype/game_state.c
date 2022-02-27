@@ -22,44 +22,6 @@
 //
 #include "game_state.h"
 
-struct Game_State gs_game;
-
-void game_init(void) {
-	gs_game = (struct Game_State){
-		.batcher = batcher_2d_init(),
-	};
-	buffer_init(&gs_game.buffer);
-	array_any_init(&gs_game.gpu_commands, sizeof(struct GPU_Command));
-	array_any_init(&gs_game.cameras, sizeof(struct Camera));
-	array_any_init(&gs_game.entities, sizeof(struct Entity));
-
-	asset_system_init(&gs_game.assets);
-	asset_types_init(&gs_game.assets);
-}
-
-void game_free(void) {
-	batcher_2d_free(gs_game.batcher);
-
-	asset_system_free(&gs_game.assets);
-	asset_types_free(&gs_game.assets);
-
-	buffer_free(&gs_game.buffer);
-	array_any_free(&gs_game.gpu_commands);
-	array_any_free(&gs_game.cameras);
-	array_any_free(&gs_game.entities);
-
-	common_memset(&gs_game, 0, sizeof(gs_game));
-}
-
-static void state_read_json_cameras(struct JSON const * json);
-static void state_read_json_entities(struct JSON const * json);
-
-void game_fill_scene(struct JSON const * json, void * output) {
-	if (output != &gs_game) { DEBUG_BREAK(); }
-	state_read_json_cameras(json_get(json, S_("cameras")));
-	state_read_json_entities(json_get(json, S_("entities")));
-}
-
 static uint32_t state_read_json_hex(struct JSON const * json) {
 	struct CString const value = json_as_string(json, S_EMPTY);
 	if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x')
@@ -224,4 +186,41 @@ static void state_read_json_entities(struct JSON const * json) {
 
 		array_any_push(&gs_game.entities, &entity);
 	}
+}
+
+//
+
+struct Game_State gs_game;
+
+void game_init(void) {
+	gs_game = (struct Game_State){
+		.batcher = batcher_2d_init(),
+	};
+	buffer_init(&gs_game.buffer);
+	array_any_init(&gs_game.gpu_commands, sizeof(struct GPU_Command));
+	array_any_init(&gs_game.cameras, sizeof(struct Camera));
+	array_any_init(&gs_game.entities, sizeof(struct Entity));
+
+	asset_system_init(&gs_game.assets);
+	asset_types_init(&gs_game.assets);
+}
+
+void game_free(void) {
+	batcher_2d_free(gs_game.batcher);
+
+	asset_types_free(&gs_game.assets);
+	asset_system_free(&gs_game.assets);
+
+	buffer_free(&gs_game.buffer);
+	array_any_free(&gs_game.gpu_commands);
+	array_any_free(&gs_game.cameras);
+	array_any_free(&gs_game.entities);
+
+	common_memset(&gs_game, 0, sizeof(gs_game));
+}
+
+void game_fill_scene(struct JSON const * json, void * data) {
+	if (data != &gs_game) { DEBUG_BREAK(); }
+	state_read_json_cameras(json_get(json, S_("cameras")));
+	state_read_json_entities(json_get(json, S_("entities")));
 }

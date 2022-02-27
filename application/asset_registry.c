@@ -157,15 +157,15 @@ struct Asset_Fill_Target {
 	struct Ref * gpu_ref;
 };
 
-static void asset_fill_target(struct JSON const * json, void * output) {
-	struct Asset_Fill_Target * data = output;
-	state_read_json_target(json, data->gpu_ref);
+static void asset_fill_target(struct JSON const * json, void * data) {
+	struct Asset_Fill_Target * context = data;
+	state_read_json_target(json, context->gpu_ref);
 }
 
 static void asset_target_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Target * asset = instance;
-	struct Asset_Fill_Target data = { .system = system, .gpu_ref = &asset->gpu_ref };
-	process_json(asset_fill_target, &data, name);
+	struct Asset_Fill_Target context = { .system = system, .gpu_ref = &asset->gpu_ref };
+	process_json(asset_fill_target, &context, name);
 }
 
 static void asset_target_free(struct Asset_System * system, void * instance) {
@@ -206,15 +206,15 @@ struct Asset_Fill_Material {
 	struct Gfx_Material * value;
 };
 
-static void asset_fill_material(struct JSON const * json, void * output) {
-	struct Asset_Fill_Material * data = output;
-	state_read_json_material(data->system, json, data->value);
+static void asset_fill_material(struct JSON const * json, void * data) {
+	struct Asset_Fill_Material * context = data;
+	state_read_json_material(context->system, json, context->value);
 }
 
 static void asset_material_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Material * asset = instance;
-	struct Asset_Fill_Material data = { .system = system, .value = &asset->value };
-	process_json(asset_fill_material, &data, name);
+	struct Asset_Fill_Material context = { .system = system, .value = &asset->value };
+	process_json(asset_fill_material, &context, name);
 }
 
 static void asset_material_free(struct Asset_System * system, void * instance) {
@@ -235,7 +235,6 @@ void asset_types_init(struct Asset_System * system) {
 	asset_system_map_extension(system, S_("font"),     S_("otf"));
 	asset_system_map_extension(system, S_("target"),   S_("rt"));
 	asset_system_map_extension(system, S_("model"),    S_("obj"));
-	asset_system_map_extension(system, S_("model"),    S_("fbx"));
 	asset_system_map_extension(system, S_("material"), S_("mat"));
 
 	asset_system_set_type(system, S_("bytes"), (struct Asset_Callbacks){
@@ -282,5 +281,12 @@ void asset_types_init(struct Asset_System * system) {
 }
 
 void asset_types_free(struct Asset_System * system) {
-	(void)system;
+	asset_system_del_type(system, S_("bytes"));
+	asset_system_del_type(system, S_("json"));
+	asset_system_del_type(system, S_("shader"));
+	asset_system_del_type(system, S_("image"));
+	asset_system_del_type(system, S_("font"));
+	asset_system_del_type(system, S_("target"));
+	asset_system_del_type(system, S_("model"));
+	asset_system_del_type(system, S_("material"));
 }

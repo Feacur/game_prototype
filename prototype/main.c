@@ -308,15 +308,15 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 //
 
-static void main_fill_settings(struct JSON const * json, void * output) {
-	struct Main_Settings * result = output;
+static void main_fill_settings(struct JSON const * json, void * data) {
+	struct Main_Settings * result = data;
 	strings_init(&result->strings);
 	result->config_id = strings_add(&result->strings, json_get_string(json, S_("config"), S_NULL));
 	result->scene_id = strings_add(&result->strings, json_get_string(json, S_("scene"), S_NULL));
 }
 
-static void main_fill_config(struct JSON const * json, void * output) {
-	struct Application_Config * result = output;
+static void main_fill_config(struct JSON const * json, void * data) {
+	struct Application_Config * result = data;
 	*result = (struct Application_Config){
 		.size_x = (uint32_t)json_get_number(json, S_("size_x"), 960),
 		.size_y = (uint32_t)json_get_number(json, S_("size_y"), 540),

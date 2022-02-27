@@ -84,27 +84,24 @@ uint32_t memory_to_system_report(void) {
 		bytes_digits_count++;
 	}
 
+	uint32_t const header_blank_offset = ((pointer_digits_count >= 8) ? (pointer_digits_count - 8) : 0);
 	logger_to_console("\n"
 		"> memory report%*s(bytes: %-*zu | count: %u):\n"
 		"",
-		((pointer_digits_count >= 8) ? (pointer_digits_count - 8) : 0), "",
-		bytes_digits_count,
-		gs_memory_state.bytes,
+		header_blank_offset, "",
+		bytes_digits_count,  gs_memory_state.bytes,
 		gs_memory_state.count
 	);
 	uint32_t count = 0;
 	if (gs_memory_state.root != NULL) {
 		for (struct Memory_Header * it = gs_memory_state.root; it != NULL; it = it->next) {
 			logger_to_console(
-				"  [0x%0*zx] (bytes: %-*.zu | owner: 0x%0*zx) at '%.*s'\n",
-				pointer_digits_count,
-				(size_t)(it + 1),
-				bytes_digits_count,
-				it->size,
-				pointer_digits_count,
-				(size_t)it->owner,
-				it->source.length,
-				it->source.data
+				"  [0x%0*zx] (bytes: %-*.zu | owner: 0x%0*zx) at '%.*s'\n"
+				"",
+				pointer_digits_count, (size_t)(it + 1),
+				bytes_digits_count,   it->size,
+				pointer_digits_count, (size_t)it->owner,
+				it->source.length,    it->source.data
 			);
 			count++;
 		}
