@@ -14,13 +14,19 @@ enum Entity_Type {
 	ENTITY_TYPE_TEXT_2D,
 };
 
+enum Entity_Quad_Mode {
+	ENTITY_QUAD_MODE_NONE,
+	ENTITY_QUAD_MODE_FIT,
+	ENTITY_QUAD_MODE_SIZE,
+};
+
 struct Entity_Mesh {
 	struct Asset_Ref mesh;
 };
 
 struct Entity_Quad {
 	uint32_t texture_uniform;
-	bool fit;
+	enum Entity_Quad_Mode mode;
 };
 
 struct Entity_Text {

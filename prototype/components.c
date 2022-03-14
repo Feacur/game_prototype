@@ -13,6 +13,5 @@ struct Transform_2D const c_transform_2d_default = {
 	.rotation = {1, 0},
 	.scale = {1, 1},
 };
-struct Transform_Rect const c_transform_rect_default = {
-	.max_relative = {1, 1},
-};
+
+struct Transform_Rect const c_transform_rect_default = {0};

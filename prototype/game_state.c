@@ -51,11 +51,11 @@ static void state_read_json_transform_3d(struct JSON const * json, struct Transf
 static void state_read_json_transform_rect(struct JSON const * json, struct Transform_Rect * transform) {
 	*transform = c_transform_rect_default;
 	if (json->type == JSON_OBJECT) {
-		state_read_json_float_n(json_get(json, S_("min_rel")), 2, &transform->min_relative.x);
-		state_read_json_float_n(json_get(json, S_("min_abs")), 2, &transform->min_absolute.x);
-		state_read_json_float_n(json_get(json, S_("max_rel")), 2, &transform->max_relative.x);
-		state_read_json_float_n(json_get(json, S_("max_abs")), 2, &transform->max_absolute.x);
-		state_read_json_float_n(json_get(json, S_("pivot")),   2, &transform->pivot.x);
+		state_read_json_float_n(json_get(json, S_("anchor_min")),  2, &transform->anchor_min.x);
+		state_read_json_float_n(json_get(json, S_("anchor_max")),  2, &transform->anchor_max.x);
+		state_read_json_float_n(json_get(json, S_("offset_pos")),  2, &transform->offset_pos.x);
+		state_read_json_float_n(json_get(json, S_("offset_size")), 2, &transform->offset_size.x);
+		state_read_json_float_n(json_get(json, S_("pivot")),       2, &transform->pivot.x);
 	}
 }
 
@@ -135,6 +135,19 @@ static enum Entity_Type state_read_json_entity_type(struct JSON const * json) {
 	return ENTITY_TYPE_NONE;
 }
 
+static enum Entity_Quad_Mode state_read_json_entity_quad_mode(struct JSON const * json) {
+	if (json->type == JSON_STRING) {
+		uint32_t const id = json_as_id(json);
+		if (id == json_find_id(json, S_("fit"))) {
+			return ENTITY_QUAD_MODE_FIT;
+		}
+		if (id == json_find_id(json, S_("size"))) {
+			return ENTITY_QUAD_MODE_SIZE;
+		}
+	}
+	return ENTITY_QUAD_MODE_NONE;
+}
+
 static void state_read_json_entity(struct JSON const * json, struct Entity * entity) {
 	state_read_json_transform_3d(json_get(json, S_("transform")), &entity->transform);
 	state_read_json_transform_rect(json_get(json, S_("rect")), &entity->rect);
@@ -159,7 +172,7 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 			struct CString const uniform = json_get_string(json, S_("uniform"), S_NULL);
 			entity->as.quad = (struct Entity_Quad){
 				.texture_uniform = graphics_add_uniform_id(uniform),
-				.fit = json_get_boolean(json, S_("fit"), false),
+				.mode = state_read_json_entity_quad_mode(json_get(json, S_("mode"))),
 			};
 		} break;
 

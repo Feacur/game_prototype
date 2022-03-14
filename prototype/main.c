@@ -101,10 +101,14 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 
 			case ENTITY_TYPE_QUAD_2D: {
 				struct Entity_Quad * quad = &entity->as.quad;
-				if (quad->fit) {
-					struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
-					struct uvec2 const entity_content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
-					if (entity_content_size.x != 0 && entity_content_size.y != 0)  {
+				switch (quad->mode) {
+					case ENTITY_QUAD_MODE_NONE: break;
+
+					case ENTITY_QUAD_MODE_FIT: {
+						struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
+						struct uvec2 const entity_content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
+						if (entity_content_size.x == 0 || entity_content_size.y == 0) { break; }
+
 						// @note: `(fit_size_N <= viewport_size_N) == true`
 						//        `(fit_offset_N >= 0) == true`
 						//        alternatively `fit_axis_is_x` can be calculated as:
@@ -116,12 +120,22 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 						uint32_t const fit_offset_y = (viewport_size_y - fit_size_y) / 2;
 
 						entity->rect = (struct Transform_Rect){
-							.min_absolute = {(float)fit_offset_x, (float)fit_offset_y},
-							.max_absolute = {(float)(fit_offset_x + fit_size_x), (float)(fit_offset_y + fit_size_y)},
+							.anchor_min = {(float)fit_offset_x, (float)fit_offset_y},
+							.anchor_max = {(float)(fit_offset_x + fit_size_x), (float)(fit_offset_y + fit_size_y)},
 							.pivot = {0.5f, 0.5f},
 						};
-					}
-					else { entity->rect = c_transform_rect_default; }
+					} break;
+
+					case ENTITY_QUAD_MODE_SIZE: {
+						struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
+						struct uvec2 const entity_content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
+						if (entity_content_size.x == 0 || entity_content_size.y == 0) { break; }
+
+						entity->rect.offset_size = (struct vec2){
+							.x = (float)entity_content_size.x,
+							.y = (float)entity_content_size.y,
+						};
+					} break;
 				}
 			} break;
 
