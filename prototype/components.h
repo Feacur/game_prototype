@@ -17,7 +17,7 @@ struct Transform_2D {
 
 struct Transform_Rect {
 	struct vec2 anchor_min, anchor_max;
-	struct vec2 offset_pos, offset_size;
+	struct vec2 offset, extents;
 	struct vec2 pivot;
 };
 

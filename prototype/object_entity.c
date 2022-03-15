@@ -48,13 +48,13 @@ void entity_get_rect(
 	struct vec2 * min, struct vec2 * max, struct vec2 * pivot
 ) {
 	struct vec2 const offset_min = {
-		.x = entity->rect.offset_pos.x - entity->rect.offset_size.x * entity->rect.pivot.x,
-		.y = entity->rect.offset_pos.y - entity->rect.offset_size.y * entity->rect.pivot.y,
+		.x = entity->rect.offset.x - entity->rect.extents.x * entity->rect.pivot.x,
+		.y = entity->rect.offset.y - entity->rect.extents.y * entity->rect.pivot.y,
 	};
 
 	struct vec2 const offset_max = {
-		.x = entity->rect.offset_pos.x + entity->rect.offset_size.x * (1 - entity->rect.pivot.x),
-		.y = entity->rect.offset_pos.y + entity->rect.offset_size.y * (1 - entity->rect.pivot.y),
+		.x = entity->rect.offset.x + entity->rect.extents.x * (1 - entity->rect.pivot.x),
+		.y = entity->rect.offset.y + entity->rect.extents.y * (1 - entity->rect.pivot.y),
 	};
 
 	*min = (struct vec2){
@@ -99,10 +99,10 @@ struct uvec2 entity_get_content_size(
 
 		case ENTITY_TYPE_TEXT_2D: {
 			int32_t const rect[] = {
-				(int32_t)maths_floor(entity->rect.anchor_min.x * (float)viewport_size_x + entity->rect.offset_size.x),
-				(int32_t)maths_floor(entity->rect.anchor_min.y * (float)viewport_size_y + entity->rect.offset_size.y),
-				(int32_t)maths_ceil (entity->rect.anchor_max.x * (float)viewport_size_x + entity->rect.offset_size.x),
-				(int32_t)maths_ceil (entity->rect.anchor_max.y * (float)viewport_size_y + entity->rect.offset_size.y),
+				(int32_t)maths_floor(entity->rect.anchor_min.x * (float)viewport_size_x + entity->rect.extents.x),
+				(int32_t)maths_floor(entity->rect.anchor_min.y * (float)viewport_size_y + entity->rect.extents.y),
+				(int32_t)maths_ceil (entity->rect.anchor_max.x * (float)viewport_size_x + entity->rect.extents.x),
+				(int32_t)maths_ceil (entity->rect.anchor_max.y * (float)viewport_size_y + entity->rect.extents.y),
 			};
 			return (struct uvec2){
 				(uint32_t)max_s32(rect[2] - rect[0], rect[0] - rect[2]),

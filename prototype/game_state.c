@@ -51,11 +51,11 @@ static void state_read_json_transform_3d(struct JSON const * json, struct Transf
 static void state_read_json_transform_rect(struct JSON const * json, struct Transform_Rect * transform) {
 	*transform = c_transform_rect_default;
 	if (json->type == JSON_OBJECT) {
-		state_read_json_float_n(json_get(json, S_("anchor_min")),  2, &transform->anchor_min.x);
-		state_read_json_float_n(json_get(json, S_("anchor_max")),  2, &transform->anchor_max.x);
-		state_read_json_float_n(json_get(json, S_("offset_pos")),  2, &transform->offset_pos.x);
-		state_read_json_float_n(json_get(json, S_("offset_size")), 2, &transform->offset_size.x);
-		state_read_json_float_n(json_get(json, S_("pivot")),       2, &transform->pivot.x);
+		state_read_json_float_n(json_get(json, S_("anchor_min")), 2, &transform->anchor_min.x);
+		state_read_json_float_n(json_get(json, S_("anchor_max")), 2, &transform->anchor_max.x);
+		state_read_json_float_n(json_get(json, S_("offset")),     2, &transform->offset.x);
+		state_read_json_float_n(json_get(json, S_("extents")),    2, &transform->extents.x);
+		state_read_json_float_n(json_get(json, S_("pivot")),      2, &transform->pivot.x);
 	}
 }
 

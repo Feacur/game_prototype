@@ -116,12 +116,11 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 						bool const fit_axis_is_x = (entity_content_size.x * viewport_size_y > entity_content_size.y * viewport_size_x);
 						uint32_t const fit_size_x = fit_axis_is_x ? viewport_size_x : mul_div_u32(viewport_size_y, entity_content_size.x, entity_content_size.y);
 						uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(viewport_size_x, entity_content_size.y, entity_content_size.x) : viewport_size_y;
-						uint32_t const fit_offset_x = (viewport_size_x - fit_size_x) / 2;
-						uint32_t const fit_offset_y = (viewport_size_y - fit_size_y) / 2;
 
 						entity->rect = (struct Transform_Rect){
-							.anchor_min = {(float)fit_offset_x, (float)fit_offset_y},
-							.anchor_max = {(float)(fit_offset_x + fit_size_x), (float)(fit_offset_y + fit_size_y)},
+							.anchor_min = {0.5f, 0.5f},
+							.anchor_max = {0.5f, 0.5f},
+							.extents = {(float)fit_size_x, (float)fit_size_y},
 							.pivot = {0.5f, 0.5f},
 						};
 					} break;
@@ -131,7 +130,7 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 						struct uvec2 const entity_content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
 						if (entity_content_size.x == 0 || entity_content_size.y == 0) { break; }
 
-						entity->rect.offset_size = (struct vec2){
+						entity->rect.extents = (struct vec2){
 							.x = (float)entity_content_size.x,
 							.y = (float)entity_content_size.y,
 						};
@@ -334,6 +333,7 @@ static void main_fill_config(struct JSON const * json, void * data) {
 	*result = (struct Application_Config){
 		.size_x = (uint32_t)json_get_number(json, S_("size_x"), 960),
 		.size_y = (uint32_t)json_get_number(json, S_("size_y"), 540),
+		.flexible = json_get_boolean(json, S_("flexible"), false),
 		.vsync = (int32_t)json_get_number(json, S_("vsync"), 0),
 		.target_refresh_rate = (uint32_t)json_get_number(json, S_("target_refresh_rate"), 60),
 		.fixed_refresh_rate = (uint32_t)json_get_number(json, S_("fixed_refresh_rate"), 30),
