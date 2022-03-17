@@ -17,7 +17,7 @@
 	autocrlf = true
 	editor = code --wait # VS Code as default editor
 [pull]
-	ff = only
+	ff = no
 # diff and merge options
 [diff]
 	tool = vscode # VS Code as default diff tool
