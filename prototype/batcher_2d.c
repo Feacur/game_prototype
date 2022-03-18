@@ -62,7 +62,7 @@ struct Batcher_2D {
 	struct Ref gpu_mesh_ref;
 };
 
-static void batcher_2d_bake_mesh(struct Batcher_2D * batcher);
+static void batcher_2d_bake_mesh_buffers(struct Batcher_2D * batcher);
 static void batcher_2d_bake_pass(struct Batcher_2D * batcher);
 
 //
@@ -102,7 +102,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 	}
 
 	//
-	batcher_2d_bake_mesh(batcher);
+	batcher_2d_bake_mesh_buffers(batcher);
 	batcher->gpu_mesh_ref = gpu_mesh_init(&(struct Mesh){
 		.count      = BATCHER_2D_BUFFERS_COUNT,
 		.buffers    = batcher->mesh_buffers,
@@ -366,17 +366,7 @@ void batcher_2d_clear(struct Batcher_2D * batcher) {
 	array_u32_clear(&batcher->buffer_indices);
 }
 
-void batcher_2d_bake(struct Batcher_2D * batcher, struct Array_Any * gpu_commands) {
-	if (batcher->batches.count == 0) { return; }
-
-	batcher_2d_bake_texts(batcher);
-	batcher_2d_bake_mesh(batcher);
-	gpu_mesh_update(batcher->gpu_mesh_ref, &(struct Mesh){
-		.count      = BATCHER_2D_BUFFERS_COUNT,
-		.buffers    = batcher->mesh_buffers,
-		.parameters = batcher->mesh_parameters,
-	});
-
+void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * gpu_commands) {
 	batcher_2d_bake_pass(batcher);
 	for (uint32_t i = 0; i < batcher->batches.count; i++) {
 		struct Batcher_2D_Batch const * batch = array_any_at(&batcher->batches, i);
@@ -390,6 +380,17 @@ void batcher_2d_bake(struct Batcher_2D * batcher, struct Array_Any * gpu_command
 			},
 		});
 	}
+	array_any_clear(&batcher->batches);
+}
+
+void batcher_2d_bake(struct Batcher_2D * batcher) {
+	batcher_2d_bake_texts(batcher);
+	batcher_2d_bake_mesh_buffers(batcher);
+	gpu_mesh_update(batcher->gpu_mesh_ref, &(struct Mesh){
+		.count      = BATCHER_2D_BUFFERS_COUNT,
+		.buffers    = batcher->mesh_buffers,
+		.parameters = batcher->mesh_parameters,
+	});
 }
 
 //
@@ -415,7 +416,7 @@ static void batcher_2d_bake_pass(struct Batcher_2D * batcher) {
 	}
 }
 
-static void batcher_2d_bake_mesh(struct Batcher_2D * batcher) {
+static void batcher_2d_bake_mesh_buffers(struct Batcher_2D * batcher) {
 	batcher->mesh_buffers[0] = (struct Buffer){
 		.data = batcher->buffer_vertices.data,
 		.count = sizeof(struct Batcher_2D_Vertex) * batcher->buffer_vertices.count,

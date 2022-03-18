@@ -23,14 +23,6 @@
 // @idea: support older OpenGL versions (pre direct state access, which is 4.5)
 // @idea: condense graphics material's buffers into a single bytes arrays?
 
-#define WARNING_MUTABLE_BUFFER_REALLOCATION() (void)0
-/*
-#define WARNING_MUTABLE_BUFFER_REALLOCATION() \
-	do { \
-		logger_to_console("WARNING! reallocating a buffer\n"); \
-	} while(false) \
-*/
-
 #define MAX_UNIFORMS 32
 #define MAX_UNITS_PER_MATERIAL 64
 #define MAX_TARGET_ATTACHMENTS 4
@@ -399,7 +391,7 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset) 
 		);
 	}
 	else if (gpu_texture->parameters.flags & TEXTURE_FLAG_MUTABLE) {
-		WARNING_MUTABLE_BUFFER_REALLOCATION();
+		// logger_to_console("WARNING! reallocating a buffer\n");
 		gpu_texture->size_x = asset->size_x;
 		gpu_texture->size_y = asset->size_y;
 		glBindTexture(GL_TEXTURE_2D, gpu_texture->id);
@@ -704,7 +696,7 @@ void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 			);
 		}
 		else if (parameters->flags & MESH_FLAG_MUTABLE) {
-			WARNING_MUTABLE_BUFFER_REALLOCATION();
+			// logger_to_console("WARNING! reallocating a buffer\n");
 			gpu_mesh->capacities[i] = gpu_mesh->counts[i];
 			glNamedBufferData(
 				gpu_mesh->buffer_ids[i],

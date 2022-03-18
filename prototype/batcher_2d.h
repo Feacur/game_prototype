@@ -33,6 +33,7 @@ void batcher_2d_add_text(
 );
 
 void batcher_2d_clear(struct Batcher_2D * batcher);
-void batcher_2d_bake(struct Batcher_2D * batcher, struct Array_Any * commands);
+void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * commands);
+void batcher_2d_bake(struct Batcher_2D * batcher);
 
 #endif

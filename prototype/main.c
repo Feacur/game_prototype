@@ -192,6 +192,8 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 		array_any_resize(&gs_game.gpu_commands, gpu_commands_count_estimate);
 	}
 
+	struct GPU_Command_Target command_target = (struct GPU_Command_Target){0};
+
 	for (uint32_t camera_i = 0; camera_i < gs_game.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&gs_game.cameras, camera_i);
 
@@ -205,16 +207,25 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 		struct mat4 const mat4_inverse_camera = mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
 		struct mat4 const mat4_camera = mat4_mul_mat(mat4_projection, mat4_inverse_camera);
 
+		bool const changed_target = command_target.screen_size_x != screen_size_x
+		                         || command_target.screen_size_y != screen_size_y
+		                         || command_target.gpu_ref.id    != camera->gpu_target_ref.id
+		                         || command_target.gpu_ref.gen   != camera->gpu_target_ref.gen;
+
 		// process camera
-		array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
-			.type = GPU_COMMAND_TYPE_TARGET,
-			.as.target = {
-				.screen_size_x = screen_size_x, .screen_size_y = screen_size_y,
-				.gpu_ref = camera->gpu_target_ref,
-			},
-		});
+		if (changed_target) {
+			command_target.screen_size_x = screen_size_x;
+			command_target.screen_size_y = screen_size_y;
+			command_target.gpu_ref       = camera->gpu_target_ref;
+			batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
+			array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
+				.type = GPU_COMMAND_TYPE_TARGET,
+				.as.target = command_target,
+			});
+		}
 
 		if (camera->clear.mask != TEXTURE_TYPE_NONE) {
+			batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
 			array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_CLEAR,
 				.as.clear = {
@@ -225,6 +236,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 		}
 
 		// draw entities
+		bool was_batching = false;
 		for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
 			struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
@@ -248,10 +260,15 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 			);
 
 			if (entity_get_is_batched(entity)) {
+				was_batching = true;
 				batcher_2d_set_matrix(gs_game.batcher, (struct mat4[]){
 					mat4_mul_mat(mat4_camera, mat4_entity)
 				});
 				batcher_2d_set_material(gs_game.batcher, &material->value);
+			}
+			else if (was_batching) {
+				was_batching = false;
+				batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
 			}
 
 			switch (entity->type) {
@@ -330,7 +347,8 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 		}
 	}
 
-	batcher_2d_bake(gs_game.batcher, &gs_game.gpu_commands);
+	batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
+	batcher_2d_bake(gs_game.batcher);
 	gpu_execute(gs_game.gpu_commands.count, gs_game.gpu_commands.data);
 }
 
