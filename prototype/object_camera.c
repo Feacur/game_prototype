@@ -9,9 +9,7 @@ struct mat4 camera_get_projection(
 	uint32_t viewport_size_x, uint32_t viewport_size_y
 ) {
 	switch (params->mode) {
-		case CAMERA_MODE_NONE: // @note: basically normalized device coordinates
-			// @note: is equivalent of `CAMERA_MODE_ASPECT_X` or `CAMERA_MODE_ASPECT_Y`
-			//        with `camera_size_x == camera_size_y`
+		case CAMERA_MODE_NONE:
 			return c_mat4_identity;
 
 		case CAMERA_MODE_SCREEN:

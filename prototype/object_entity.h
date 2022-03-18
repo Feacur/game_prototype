@@ -20,6 +20,13 @@ enum Entity_Quad_Mode {
 	ENTITY_QUAD_MODE_SIZE,
 };
 
+enum Entity_Rotation_Mode {
+	ENTITY_ROTATION_MODE_NONE,
+	ENTITY_ROTATION_MODE_X,
+	ENTITY_ROTATION_MODE_Y,
+	ENTITY_ROTATION_MODE_Z,
+};
+
 struct Entity_Mesh {
 	struct Asset_Ref mesh;
 };
@@ -41,6 +48,7 @@ struct Entity {
 	//
 	struct Transform_3D transform;
 	struct Transform_Rect rect; // @todo: make it completely optional?
+	enum Entity_Rotation_Mode rotation_mode;
 	//
 	enum Entity_Type type;
 	union {

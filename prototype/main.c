@@ -95,44 +95,65 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
-		// entity behaviour
+		// entity rotation mode
+		switch (entity->rotation_mode) {
+			case ENTITY_ROTATION_MODE_NONE: break;
+
+			case ENTITY_ROTATION_MODE_X: {
+				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
+					(struct vec3){1 * delta_time, 0, 0}
+				)));
+			} break;
+
+			case ENTITY_ROTATION_MODE_Y: {
+				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
+					(struct vec3){0, 1 * delta_time, 0}
+				)));
+			} break;
+
+			case ENTITY_ROTATION_MODE_Z: {
+				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
+					(struct vec3){0, 0, 1 * delta_time}
+				)));
+			} break;
+		}
+
+		// entity type
 		switch (entity->type) {
 			case ENTITY_TYPE_NONE: break;
 
 			case ENTITY_TYPE_QUAD_2D: {
 				struct Entity_Quad * quad = &entity->as.quad;
+
 				switch (quad->mode) {
 					case ENTITY_QUAD_MODE_NONE: break;
 
 					case ENTITY_QUAD_MODE_FIT: {
 						struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
-						struct uvec2 const entity_content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
-						if (entity_content_size.x == 0 || entity_content_size.y == 0) { break; }
+						struct uvec2 const content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
+						if (content_size.x == 0 || content_size.y == 0) { break; }
 
-						// @note: `(fit_size_N <= viewport_size_N) == true`
-						//        `(fit_offset_N >= 0) == true`
-						//        alternatively `fit_axis_is_x` can be calculated as:
-						//        `((float)texture_size_x / (float)viewport_size_x > (float)texture_size_y / (float)viewport_size_y)`
-						bool const fit_axis_is_x = (entity_content_size.x * viewport_size_y > entity_content_size.y * viewport_size_x);
-						uint32_t const fit_size_x = fit_axis_is_x ? viewport_size_x : mul_div_u32(viewport_size_y, entity_content_size.x, entity_content_size.y);
-						uint32_t const fit_size_y = fit_axis_is_x ? mul_div_u32(viewport_size_x, entity_content_size.y, entity_content_size.x) : viewport_size_y;
-
+						uint32_t const factor_x = content_size.x * viewport_size_y;
+						uint32_t const factor_y = content_size.y * viewport_size_x;
 						entity->rect = (struct Transform_Rect){
 							.anchor_min = {0.5f, 0.5f},
 							.anchor_max = {0.5f, 0.5f},
-							.extents = {(float)fit_size_x, (float)fit_size_y},
+							.extents = {
+								(float)((factor_x > factor_y) ? viewport_size_x : (factor_x / content_size.y)),
+								(float)((factor_x > factor_y) ? (factor_y / content_size.x) : viewport_size_y),
+							},
 							.pivot = {0.5f, 0.5f},
 						};
 					} break;
 
 					case ENTITY_QUAD_MODE_SIZE: {
 						struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
-						struct uvec2 const entity_content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
-						if (entity_content_size.x == 0 || entity_content_size.y == 0) { break; }
+						struct uvec2 const content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
+						if (content_size.x == 0 || content_size.y == 0) { break; }
 
 						entity->rect.extents = (struct vec2){
-							.x = (float)entity_content_size.x,
-							.y = (float)entity_content_size.y,
+							.x = (float)content_size.x,
+							.y = (float)content_size.y,
 						};
 					} break;
 				}
@@ -140,10 +161,6 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 
 			case ENTITY_TYPE_MESH: {
 				// struct Entity_Mesh * mesh = &entity->as.mesh;
-
-				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
-					(struct vec3){0, 1 * delta_time, 0}
-				)));
 			} break;
 
 			case ENTITY_TYPE_TEXT_2D: {
@@ -162,9 +179,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 	uint32_t screen_size_x, screen_size_y;
 	application_get_screen_size(&screen_size_x, &screen_size_y);
-
-	if (screen_size_x == 0) { return; }
-	if (screen_size_y == 0) { return; }
+	if (screen_size_x == 0 || screen_size_y == 0) { return; }
 
 	batcher_2d_clear(gs_game.batcher);
 	buffer_clear(&gs_game.buffer);

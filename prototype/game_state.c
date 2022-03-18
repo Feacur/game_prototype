@@ -148,9 +148,26 @@ static enum Entity_Quad_Mode state_read_json_entity_quad_mode(struct JSON const 
 	return ENTITY_QUAD_MODE_NONE;
 }
 
+static enum Entity_Rotation_Mode state_read_json_entity_rotation_mode(struct JSON const * json) {
+	if (json->type == JSON_STRING) {
+		uint32_t const id = json_as_id(json);
+		if (id == json_find_id(json, S_("x"))) {
+			return ENTITY_ROTATION_MODE_X;
+		}
+		if (id == json_find_id(json, S_("y"))) {
+			return ENTITY_ROTATION_MODE_Y;
+		}
+		if (id == json_find_id(json, S_("z"))) {
+			return ENTITY_ROTATION_MODE_Z;
+		}
+	}
+	return ENTITY_ROTATION_MODE_NONE;
+}
+
 static void state_read_json_entity(struct JSON const * json, struct Entity * entity) {
 	state_read_json_transform_3d(json_get(json, S_("transform")), &entity->transform);
 	state_read_json_transform_rect(json_get(json, S_("rect")), &entity->rect);
+	entity->rotation_mode = state_read_json_entity_rotation_mode(json_get(json, S_("rotation_mode")));
 
 	entity->camera   = (uint32_t)json_get_number(json, S_("camera_uid"), 0) - 1;
 

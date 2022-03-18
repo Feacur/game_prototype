@@ -24,6 +24,7 @@
 			"material": "assets/materials/textured.json.mat",
 			"type": "mesh",
 			"model": "assets/models/cube.obj",
+			"rotation_mode": "y",
 		},
 		{
 			"camera_uid": 2,
