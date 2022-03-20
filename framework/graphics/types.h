@@ -69,6 +69,16 @@ enum Texture_Flag {
 	TEXTURE_FLAG_INTERNAL = (1 << 3),
 };
 
+enum Swizzle_Op {
+	SWIZZLE_OP_NONE,
+	SWIZZLE_OP_0,
+	SWIZZLE_OP_1,
+	SWIZZLE_OP_R,
+	SWIZZLE_OP_G,
+	SWIZZLE_OP_B,
+	SWIZZLE_OP_A,
+};
+
 enum Mesh_Flag {
 	MESH_FLAG_NONE     = 0,
 	MESH_FLAG_MUTABLE  = (1 << 0),
@@ -192,6 +202,7 @@ struct Texture_Parameters {
 struct Texture_Settings {
 	enum Filter_Mode mipmap, minification, magnification;
 	enum Wrap_Mode wrap_x, wrap_y;
+	enum Swizzle_Op swizzle[4];
 };
 
 enum Attribute_Type {

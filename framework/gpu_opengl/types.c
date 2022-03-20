@@ -391,3 +391,23 @@ GLenum gpu_blend_factor(enum Blend_Factor value) {
 	logger_to_console("unknown blend factor\n"); DEBUG_BREAK();
 	return GL_NONE;
 }
+
+GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index) {
+	switch (value) {
+		case SWIZZLE_OP_NONE: switch (index) {
+			case 0: return GL_RED;
+			case 1: return GL_GREEN;
+			case 2: return GL_BLUE;
+			case 3: return GL_ALPHA;
+		} break;
+
+		case SWIZZLE_OP_0: return GL_ZERO;
+		case SWIZZLE_OP_1: return GL_ONE;
+		case SWIZZLE_OP_R: return GL_RED;
+		case SWIZZLE_OP_G: return GL_GREEN;
+		case SWIZZLE_OP_B: return GL_BLUE;
+		case SWIZZLE_OP_A: return GL_ALPHA;
+	}
+	logger_to_console("unknown swizzle operation\n"); DEBUG_BREAK();
+	return GL_NONE;
+}

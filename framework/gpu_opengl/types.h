@@ -25,3 +25,5 @@ GLenum gpu_stencil_op(enum Stencil_Op value);
 
 GLenum gpu_blend_op(enum Blend_Op value);
 GLenum gpu_blend_factor(enum Blend_Factor value);
+
+GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index);

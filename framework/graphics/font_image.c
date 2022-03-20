@@ -44,6 +44,12 @@ struct Font_Image * font_image_init(struct Font const * font, int32_t size) {
 				.flags = TEXTURE_FLAG_MUTABLE | TEXTURE_FLAG_WRITE,
 				.channels = 1,
 			},
+			.settings = {
+				.swizzle[0] = SWIZZLE_OP_1,
+				.swizzle[1] = SWIZZLE_OP_1,
+				.swizzle[2] = SWIZZLE_OP_1,
+				.swizzle[3] = SWIZZLE_OP_R,
+			},
 		},
 		.scale = font_get_scale(font, (float)size),
 		.font = font,
