@@ -33,7 +33,7 @@ if exist "%project_folder%/%project%.rdbg" (
 		:wait_for_debugger
 		call :check_debugger_online || goto wait_for_debugger
 	)
-	rem instead of the `-g` flag command it to start: existing instances should be drived too
+	rem instead of the `-g` flag, command it to start: existing instances should be drived too
 	start remedybg.exe start-debugging
 ) else (
 	start remedybg "%binary_folder%/%project%.exe"

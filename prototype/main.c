@@ -299,7 +299,8 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 							.gpu_mesh_ref = model->gpu_ref,
 							.override = {
 								.uniforms = &gs_game.uniforms,
-								.offset = override_offset, .count = (gs_game.uniforms.headers.count - override_offset),
+								.offset = override_offset,
+								.count = (gs_game.uniforms.headers.count - override_offset),
 							}
 						},
 					});

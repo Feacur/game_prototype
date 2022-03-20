@@ -128,16 +128,29 @@ static void asset_image_free(struct Asset_System * system, void * instance) {
 //     Asset font part
 // ----- ----- ----- ----- -----
 
+struct Asset_Fill_Font {
+	struct Asset_System * system;
+	struct Asset_Font * result;
+};
+
+static void asset_fill_font(struct JSON const * json, void * data) {
+	struct Asset_Fill_Font * context = data;
+
+	struct CString const font_name = json_get_string(json, S_("path"), S_EMPTY);
+	float font_size = json_get_number(json, S_("size"), 0);
+
+	struct Font * font = font_init(font_name);
+	struct Font_Image * buffer = font_image_init(font, (int32_t)font_size);
+
+	context->result->font = font;
+	context->result->buffer = buffer;
+	context->result->gpu_ref = gpu_texture_init(font_image_get_asset(buffer));
+}
+
 static void asset_font_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Font * asset = instance;
-	(void)system;
-
-	struct Font * font = font_init(name);
-	struct Font_Image * buffer = font_image_init(font, 32); // @todo: remove hardcode
-
-	asset->font = font;
-	asset->buffer = buffer;
-	asset->gpu_ref = gpu_texture_init(font_image_get_asset(buffer));
+	struct Asset_Fill_Font context = { .system = system, .result = asset };
+	process_json(asset_fill_font, &context, name);
 }
 
 static void asset_font_free(struct Asset_System * system, void * instance) {
@@ -154,17 +167,17 @@ static void asset_font_free(struct Asset_System * system, void * instance) {
 
 struct Asset_Fill_Target {
 	struct Asset_System * system;
-	struct Ref * gpu_ref;
+	struct Asset_Target * result;
 };
 
 static void asset_fill_target(struct JSON const * json, void * data) {
 	struct Asset_Fill_Target * context = data;
-	state_read_json_target(json, context->gpu_ref);
+	state_read_json_target(json, &context->result->gpu_ref);
 }
 
 static void asset_target_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Target * asset = instance;
-	struct Asset_Fill_Target context = { .system = system, .gpu_ref = &asset->gpu_ref };
+	struct Asset_Fill_Target context = { .system = system, .result = asset };
 	process_json(asset_fill_target, &context, name);
 }
 
@@ -203,17 +216,17 @@ static void asset_model_free(struct Asset_System * system, void * instance) {
 
 struct Asset_Fill_Material {
 	struct Asset_System * system;
-	struct Gfx_Material * value;
+	struct Asset_Material * result;
 };
 
 static void asset_fill_material(struct JSON const * json, void * data) {
 	struct Asset_Fill_Material * context = data;
-	state_read_json_material(context->system, json, context->value);
+	state_read_json_material(context->system, json, &context->result->value);
 }
 
 static void asset_material_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Material * asset = instance;
-	struct Asset_Fill_Material context = { .system = system, .value = &asset->value };
+	struct Asset_Fill_Material context = { .system = system, .result = asset };
 	process_json(asset_fill_material, &context, name);
 }
 
@@ -231,8 +244,7 @@ void asset_types_init(struct Asset_System * system) {
 	asset_system_map_extension(system, S_("json"),     S_("json"));
 	asset_system_map_extension(system, S_("shader"),   S_("glsl"));
 	asset_system_map_extension(system, S_("image"),    S_("png"));
-	asset_system_map_extension(system, S_("font"),     S_("ttf"));
-	asset_system_map_extension(system, S_("font"),     S_("otf"));
+	asset_system_map_extension(system, S_("font"),     S_("fnt"));
 	asset_system_map_extension(system, S_("target"),   S_("rt"));
 	asset_system_map_extension(system, S_("model"),    S_("obj"));
 	asset_system_map_extension(system, S_("material"), S_("mat"));
