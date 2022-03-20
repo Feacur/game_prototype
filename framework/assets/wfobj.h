@@ -1,13 +1,13 @@
 #if !defined(GAME_ASSETS_MESH_OBJ)
 #define GAME_ASSETS_MESH_OBJ
 
-#include "framework/containers/array_float.h"
+#include "framework/containers/array_flt.h"
 #include "framework/containers/array_u32.h"
 
 struct WFObj {
-	struct Array_Float positions;
-	struct Array_Float texcoords;
-	struct Array_Float normals;
+	struct Array_Flt positions;
+	struct Array_Flt texcoords;
+	struct Array_Flt normals;
 	struct Array_U32 triangles;
 };
 

@@ -1,4 +1,5 @@
 #include "framework/logger.h"
+#include "framework/containers/ref.h"
 
 //
 #include "types.h"
@@ -70,7 +71,7 @@ uint32_t data_type_get_size(enum Data_Type value) {
 	switch (value) {
 		case DATA_TYPE_NONE: break;
 
-		case DATA_TYPE_UNIT: return sizeof(uint32_t);
+		case DATA_TYPE_UNIT: return sizeof(struct Ref);
 
 		case DATA_TYPE_U8:  return sizeof(uint8_t);
 		case DATA_TYPE_U16: return sizeof(uint16_t);

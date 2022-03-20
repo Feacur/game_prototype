@@ -13,7 +13,8 @@ struct Depth_Mode;
 
 enum Texture_Type state_read_json_texture_type(struct JSON const * json);
 
-void state_read_json_float_n(struct JSON const * json, uint32_t length, float * result);
+void state_read_json_unt_n(struct Asset_System * system, struct JSON const * json, uint32_t length, struct Ref * result);
+void state_read_json_flt_n(struct JSON const * json, uint32_t length, float * result);
 void state_read_json_u32_n(struct JSON const * json, uint32_t length, uint32_t * result);
 void state_read_json_s32_n(struct JSON const * json, uint32_t length, int32_t * result);
 

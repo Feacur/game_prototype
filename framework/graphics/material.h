@@ -1,26 +1,57 @@
 #if !defined(GAME_GRAPHICS_MATERIAL)
 #define GAME_GRAPHICS_MATERIAL
 
+#include "framework/containers/buffer.h"
 #include "framework/containers/array_any.h"
 #include "framework/containers/array_u32.h"
 #include "framework/containers/array_s32.h"
-#include "framework/containers/array_float.h"
+#include "framework/containers/array_flt.h"
 #include "framework/containers/ref.h"
 
 #include "types.h"
 
-// @idea: converge data into a single array
+// ----- ----- ----- ----- -----
+//     uniforms
+// ----- ----- ----- ----- -----
+
+struct Gfx_Uniforms_Entry {
+	uint32_t id;
+	uint32_t size, offset;
+};
+
+struct Gfx_Uniforms {
+	struct Array_Any headers;
+	struct Buffer payload;
+};
+
+struct Gfx_Uniform_In {
+	uint32_t size;
+	void const * data;
+};
+
+struct Gfx_Uniform_Out {
+	uint32_t size;
+	void * data;
+};
+
+void gfx_uniforms_init(struct Gfx_Uniforms * uniforms);
+void gfx_uniforms_free(struct Gfx_Uniforms * uniforms);
+
+void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms);
+
+struct Gfx_Uniform_Out gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, uint32_t uniform_id);
+void gfx_uniforms_set(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct Gfx_Uniform_In value);
+void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct Gfx_Uniform_In value);
+
+// ----- ----- ----- ----- -----
+//     material
+// ----- ----- ----- ----- -----
 
 struct Gfx_Material {
 	struct Ref gpu_program_ref;
-
-	struct Array_Any textures;
-	struct Array_U32 values_u32;
-	struct Array_S32 values_s32;
-	struct Array_Float values_float;
-
 	struct Blend_Mode blend_mode;
 	struct Depth_Mode depth_mode;
+	struct Gfx_Uniforms uniforms;
 };
 
 void gfx_material_init(
@@ -30,15 +61,5 @@ void gfx_material_init(
 	struct Depth_Mode const * depth_mode
 );
 void gfx_material_free(struct Gfx_Material * material);
-
-void gfx_material_set_texture(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, struct Ref const * value);
-void gfx_material_set_u32(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, uint32_t const * value);
-void gfx_material_set_s32(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, int32_t const * value);
-void gfx_material_set_float(struct Gfx_Material * material, uint32_t uniform_id, uint32_t count, float const * value);
-
-struct Ref * gfx_material_get_texture(struct Gfx_Material const * material, uint32_t uniform_id);
-uint32_t * gfx_material_get_u32(struct Gfx_Material const * material, uint32_t uniform_id);
-int32_t * gfx_material_get_s32(struct Gfx_Material const * material, uint32_t uniform_id);
-float * gfx_material_get_float(struct Gfx_Material const * material, uint32_t uniform_id);
 
 #endif

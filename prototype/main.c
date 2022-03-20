@@ -182,7 +182,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 	if (screen_size_x == 0 || screen_size_y == 0) { return; }
 
 	batcher_2d_clear(gs_game.batcher);
-	buffer_clear(&gs_game.buffer);
+	gfx_uniforms_clear(&gs_game.uniforms);
 	array_any_clear(&gs_game.gpu_commands);
 
 	// @todo: override material params per shader or material where possible
@@ -278,45 +278,28 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
 					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->mesh);
 
-					uint32_t const override_offset = (uint32_t)gs_game.buffer.count;
-					uint32_t override_count = 0;
-
-					//
-					override_count++;
-					buffer_push_many(&gs_game.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = gs_main_uniforms.projection,
-						.header.size = sizeof(mat4_projection),
+					uint32_t const override_offset = gs_game.uniforms.headers.count;
+					gfx_uniforms_push(&gs_game.uniforms, gs_main_uniforms.projection, (struct Gfx_Uniform_In){
+						.size = sizeof(mat4_projection),
+						.data = &mat4_projection,
 					});
-					buffer_push_many(&gs_game.buffer, sizeof(mat4_projection), (void const *)&mat4_projection);
-					buffer_align(&gs_game.buffer);
-
-					//
-					override_count++;
-					buffer_push_many(&gs_game.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = gs_main_uniforms.camera,
-						.header.size = sizeof(mat4_inverse_camera),
+					gfx_uniforms_push(&gs_game.uniforms, gs_main_uniforms.camera, (struct Gfx_Uniform_In){
+						.size = sizeof(mat4_inverse_camera),
+						.data = &mat4_inverse_camera,
 					});
-					buffer_push_many(&gs_game.buffer, sizeof(mat4_inverse_camera), (void const *)&mat4_inverse_camera);
-					buffer_align(&gs_game.buffer);
-
-					//
-					override_count++;
-					buffer_push_many(&gs_game.buffer, SIZE_OF_MEMBER(struct Gfx_Material_Override_Entry, header), (void *)&(struct Gfx_Material_Override_Entry){
-						.header.id = gs_main_uniforms.transform,
-						.header.size = sizeof(mat4_entity),
+					gfx_uniforms_push(&gs_game.uniforms, gs_main_uniforms.transform, (struct Gfx_Uniform_In){
+						.size = sizeof(mat4_entity),
+						.data = &mat4_entity,
 					});
-					buffer_push_many(&gs_game.buffer, sizeof(mat4_entity), (void const *)&mat4_entity);
-					buffer_align(&gs_game.buffer);
 
-					//
 					array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
 						.type = GPU_COMMAND_TYPE_DRAW,
 						.as.draw = {
 							.material = &material->value,
 							.gpu_mesh_ref = model->gpu_ref,
 							.override = {
-								.buffer = &gs_game.buffer,
-								.offset = override_offset, .count = override_count,
+								.uniforms = &gs_game.uniforms,
+								.offset = override_offset, .count = (gs_game.uniforms.headers.count - override_offset),
 							}
 						},
 					});

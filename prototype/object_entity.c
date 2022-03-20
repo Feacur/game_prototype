@@ -86,7 +86,8 @@ struct uvec2 entity_get_content_size(
 		case ENTITY_TYPE_QUAD_2D: {
 			struct Entity_Quad const * quad = &entity->as.quad;
 
-			struct Ref const * gpu_texture_ref = gfx_material_get_texture(material, quad->texture_uniform);
+			struct Gfx_Uniform_Out const value = gfx_uniforms_get(&material->uniforms, quad->texture_uniform);
+			struct Ref const * gpu_texture_ref = value.data;
 
 			uint32_t texture_size_x, texture_size_y;
 			gpu_texture_get_size(*gpu_texture_ref, &texture_size_x, &texture_size_y);

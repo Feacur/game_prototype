@@ -1,7 +1,7 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
 #include "framework/platform_file.h"
-#include "framework/containers/array_float.h"
+#include "framework/containers/array_flt.h"
 #include "framework/containers/array_u32.h"
 #include "wfobj.h"
 
@@ -10,14 +10,14 @@
 
 static void wfobj_repack(
 	struct WFObj const * wfobj,
-	struct Array_Float * vertices,
+	struct Array_Flt * vertices,
 	struct Array_U32 * attributes,
 	struct Array_U32 * indices
 );
 
 static void mesh_fill(
 	struct Mesh * mesh,
-	struct Array_Float const * vertices,
+	struct Array_Flt const * vertices,
 	struct Array_U32 const * attributes,
 	struct Array_U32 const * indices
 );
@@ -32,7 +32,7 @@ void mesh_init(struct Mesh * mesh, struct CString path) {
 	buffer_free(&file);
 
 	//
-	struct Array_Float vertices;
+	struct Array_Flt vertices;
 	struct Array_U32 attributes;
 	struct Array_U32 indices;
 
@@ -56,11 +56,11 @@ void mesh_free(struct Mesh * mesh) {
 
 static void wfobj_repack(
 	struct WFObj const * wfobj,
-	struct Array_Float * vertices,
+	struct Array_Flt * vertices,
 	struct Array_U32 * attributes,
 	struct Array_U32 * indices
 ) {
-	array_float_init(vertices);
+	array_flt_init(vertices);
 	array_u32_init(attributes);
 	array_u32_init(indices);
 
@@ -86,9 +86,9 @@ static void wfobj_repack(
 		//        so a hash_table it is
 
 		uint32_t attribute_index = 1;
-		if (wfobj->positions.count > 0) { array_float_push_many(vertices, 3, wfobj->positions.data + vertex_index[0] * attributes_buffer[attribute_index]); attribute_index += 2; }
-		if (wfobj->texcoords.count > 0) { array_float_push_many(vertices, 2, wfobj->texcoords.data + vertex_index[1] * attributes_buffer[attribute_index]); attribute_index += 2; }
-		if (wfobj->normals.count > 0)   { array_float_push_many(vertices, 3, wfobj->normals.data   + vertex_index[2] * attributes_buffer[attribute_index]); attribute_index += 2; }
+		if (wfobj->positions.count > 0) { array_flt_push_many(vertices, 3, wfobj->positions.data + vertex_index[0] * attributes_buffer[attribute_index]); attribute_index += 2; }
+		if (wfobj->texcoords.count > 0) { array_flt_push_many(vertices, 2, wfobj->texcoords.data + vertex_index[1] * attributes_buffer[attribute_index]); attribute_index += 2; }
+		if (wfobj->normals.count > 0)   { array_flt_push_many(vertices, 3, wfobj->normals.data   + vertex_index[2] * attributes_buffer[attribute_index]); attribute_index += 2; }
 
 		array_u32_push(indices, vertex_id);
 		vertex_id++;
@@ -97,7 +97,7 @@ static void wfobj_repack(
 
 static void mesh_fill(
 	struct Mesh * mesh,
-	struct Array_Float const * vertices,
+	struct Array_Flt const * vertices,
 	struct Array_U32 const * attributes,
 	struct Array_U32 const * indices
 ) {

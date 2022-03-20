@@ -248,7 +248,7 @@ GLenum gpu_mesh_usage_pattern(enum Mesh_Flag flags) {
 	#pragma warning(push, 0)
 #endif
 
-	// @note: those a hints, not directives
+	// @note: those are hints, not directives
 	if (flags & MESH_FLAG_MUTABLE) {
 		if (flags & MESH_FLAG_FREQUENT) {
 			return (flags & MESH_FLAG_READ)     ? GL_STREAM_READ

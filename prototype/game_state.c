@@ -39,23 +39,23 @@ static void state_read_json_transform_3d(struct JSON const * json, struct Transf
 	*transform = c_transform_3d_default;
 	if (json->type == JSON_OBJECT) {
 		struct vec3 euler = {0, 0, 0};
-		state_read_json_float_n(json_get(json, S_("euler")), 3, &euler.x);
+		state_read_json_flt_n(json_get(json, S_("euler")), 3, &euler.x);
 		transform->rotation = quat_set_radians(euler);
 
-		state_read_json_float_n(json_get(json, S_("pos")),   3, &transform->position.x);
-		state_read_json_float_n(json_get(json, S_("quat")),  4, &transform->rotation.x);
-		state_read_json_float_n(json_get(json, S_("scale")), 3, &transform->scale.x);
+		state_read_json_flt_n(json_get(json, S_("pos")),   3, &transform->position.x);
+		state_read_json_flt_n(json_get(json, S_("quat")),  4, &transform->rotation.x);
+		state_read_json_flt_n(json_get(json, S_("scale")), 3, &transform->scale.x);
 	}
 }
 
 static void state_read_json_transform_rect(struct JSON const * json, struct Transform_Rect * transform) {
 	*transform = c_transform_rect_default;
 	if (json->type == JSON_OBJECT) {
-		state_read_json_float_n(json_get(json, S_("anchor_min")), 2, &transform->anchor_min.x);
-		state_read_json_float_n(json_get(json, S_("anchor_max")), 2, &transform->anchor_max.x);
-		state_read_json_float_n(json_get(json, S_("offset")),     2, &transform->offset.x);
-		state_read_json_float_n(json_get(json, S_("extents")),    2, &transform->extents.x);
-		state_read_json_float_n(json_get(json, S_("pivot")),      2, &transform->pivot.x);
+		state_read_json_flt_n(json_get(json, S_("anchor_min")), 2, &transform->anchor_min.x);
+		state_read_json_flt_n(json_get(json, S_("anchor_max")), 2, &transform->anchor_max.x);
+		state_read_json_flt_n(json_get(json, S_("offset")),     2, &transform->offset.x);
+		state_read_json_flt_n(json_get(json, S_("extents")),    2, &transform->extents.x);
+		state_read_json_flt_n(json_get(json, S_("pivot")),      2, &transform->pivot.x);
 	}
 }
 
@@ -226,7 +226,7 @@ void game_init(void) {
 	gs_game = (struct Game_State){
 		.batcher = batcher_2d_init(),
 	};
-	buffer_init(&gs_game.buffer);
+	gfx_uniforms_init(&gs_game.uniforms);
 	array_any_init(&gs_game.gpu_commands, sizeof(struct GPU_Command));
 	array_any_init(&gs_game.cameras, sizeof(struct Camera));
 	array_any_init(&gs_game.entities, sizeof(struct Entity));
@@ -241,7 +241,7 @@ void game_free(void) {
 	asset_types_free(&gs_game.assets);
 	asset_system_free(&gs_game.assets);
 
-	buffer_free(&gs_game.buffer);
+	gfx_uniforms_free(&gs_game.uniforms);
 	array_any_free(&gs_game.gpu_commands);
 	array_any_free(&gs_game.cameras);
 	array_any_free(&gs_game.entities);

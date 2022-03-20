@@ -9,13 +9,12 @@
 
 #include "framework/graphics/types.c"
 #include "framework/graphics/material.c"
-#include "framework/graphics/material_override.c"
 #include "framework/graphics/font_image.c"
 
 #include "framework/containers/internal.c"
 #include "framework/containers/buffer.c"
 #include "framework/containers/array_any.c"
-#include "framework/containers/array_float.c"
+#include "framework/containers/array_flt.c"
 #include "framework/containers/array_u32.c"
 #include "framework/containers/array_s32.c"
 #include "framework/containers/array_u64.c"

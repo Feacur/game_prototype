@@ -26,14 +26,14 @@ void main()
 #if defined(FRAGMENT_SHADER)
 in vec2 v_TexCoord;
 
-uniform vec4 u_Color;
-uniform sampler2D u_Texture;
+uniform vec4 prop_Color;
+uniform sampler2D prop_Texture;
 
 layout(location = 0) out vec4 out_color;
 
 void main()
 {
-	vec4 texture_pixel = texture(u_Texture, v_TexCoord);
-	out_color = (texture_pixel * u_Color);
+	vec4 texture_pixel = texture(prop_Texture, v_TexCoord);
+	out_color = (texture_pixel * prop_Color);
 }
 #endif

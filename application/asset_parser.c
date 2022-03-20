@@ -30,7 +30,20 @@ enum Texture_Type state_read_json_texture_type(struct JSON const * json) {
 	return texture_type;
 }
 
-void state_read_json_float_n(struct JSON const * json, uint32_t length, float * result) {
+static void state_read_json_uniform_texture(struct Asset_System * system, struct JSON const * json, struct Ref * result);
+void state_read_json_unt_n(struct Asset_System * system, struct JSON const * json, uint32_t length, struct Ref * result) {
+	if (json->type == JSON_ARRAY) {
+		uint32_t const count = min_u32(length, json_count(json));
+		for (uint32_t element_index = 0; element_index < count; element_index++) {
+			state_read_json_uniform_texture(system, json_at(json, element_index), result + element_index);
+		}
+	}
+	else {
+		state_read_json_uniform_texture(system, json, result);
+	}
+}
+
+void state_read_json_flt_n(struct JSON const * json, uint32_t length, float * result) {
 	if (json->type == JSON_ARRAY) {
 		uint32_t const count = min_u32(length, json_count(json));
 		for (uint32_t i = 0; i < count; i++) {
@@ -121,7 +134,6 @@ void state_read_json_target(struct JSON const * json, struct Ref * result) {
 	array_any_free(&parameters_buffer);
 }
 
-static void state_read_json_uniform_texture(struct Asset_System * system, struct JSON const * json, struct Ref * result);
 void state_read_json_material(struct Asset_System * system, struct JSON const * json, struct Gfx_Material * result) {
 	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
 
@@ -148,58 +160,61 @@ void state_read_json_material(struct Asset_System * system, struct JSON const * 
 	array_any_init(&uniform_data_buffer, sizeof(uint8_t));
 
 	for (uint32_t i = 0; i < uniforms_count; i++) {
-		struct CString const uniform_name = graphics_get_uniform_value(uniforms[i].id);
+		struct Gpu_Program_Field const * uniform = uniforms + i;
+		struct CString const uniform_name = graphics_get_uniform_value(uniform->id);
 		struct JSON const * uniform_json = json_get(json, uniform_name);
 
 		if (uniform_json->type == JSON_NULL) { continue; }
 
-		uint32_t const uniform_elements_count = data_type_get_count(uniforms[i].type) * uniforms[i].array_size;
+		uint32_t const uniform_count = data_type_get_count(uniform->type) * uniform->array_size;
+		uint32_t const uniform_bytes = data_type_get_size(uniform->type) * uniform->array_size;
 
-		uint32_t const uniform_bytes = data_type_get_size(uniforms[i].type) * uniforms[i].array_size;
 		if (uniform_data_buffer.capacity < uniform_bytes) {
 			array_any_resize(&uniform_data_buffer, uniform_bytes);
 		}
 
 		uint32_t const json_elements_count = max_u32(1, json_count(uniform_json));
-		if (json_elements_count != uniform_elements_count) {
+		if (json_elements_count != uniform_count) {
 			logger_to_console(
 				"uniform `%.*s` size mismatch: expected %u, found %u\n",
 				uniform_name.length, uniform_name.data,
-				uniform_elements_count, json_elements_count
+				uniform_count, json_elements_count
 			); DEBUG_BREAK();
 		}
 
-		switch (data_type_get_element_type(uniforms[i].type)) {
+		switch (data_type_get_element_type(uniform->type)) {
 			default: logger_to_console("unknown data type\n"); DEBUG_BREAK(); break;
 
 			case DATA_TYPE_UNIT: {
-				if (uniform_json->type == JSON_ARRAY) {
-					uint32_t const count = min_u32(uniform_elements_count, json_count(uniform_json));
-					for (uint32_t element_index = 0; element_index < count; element_index++) {
-						struct Ref * data = uniform_data_buffer.data;
-						state_read_json_uniform_texture(system, json_at(uniform_json, element_index), data + element_index);
-					}
-				}
-				else {
-					struct Ref * data = uniform_data_buffer.data;
-					state_read_json_uniform_texture(system, uniform_json, data);
-				}
-				gfx_material_set_texture(result, uniforms[i].id, uniform_elements_count, uniform_data_buffer.data);
+				state_read_json_unt_n(system, uniform_json, uniform_count, uniform_data_buffer.data);
+				gfx_uniforms_set(&result->uniforms, uniform->id, (struct Gfx_Uniform_In){
+					.size = sizeof(struct Ref) * uniform_count,
+					.data = uniform_data_buffer.data,
+				});
 			} break;
 
 			case DATA_TYPE_U32: {
-				state_read_json_u32_n(uniform_json, uniform_elements_count, uniform_data_buffer.data);
-				gfx_material_set_u32(result, uniforms[i].id, uniform_elements_count, uniform_data_buffer.data);
+				state_read_json_u32_n(uniform_json, uniform_count, uniform_data_buffer.data);
+				gfx_uniforms_set(&result->uniforms, uniform->id, (struct Gfx_Uniform_In){
+					.size = sizeof(uint32_t) * uniform_count,
+					.data = uniform_data_buffer.data,
+				});
 			} break;
 
 			case DATA_TYPE_S32: {
-				state_read_json_s32_n(uniform_json,uniform_elements_count,  uniform_data_buffer.data);
-				gfx_material_set_s32(result, uniforms[i].id, uniform_elements_count, uniform_data_buffer.data);
+				state_read_json_s32_n(uniform_json,uniform_count,  uniform_data_buffer.data);
+				gfx_uniforms_set(&result->uniforms, uniform->id, (struct Gfx_Uniform_In){
+					.size = sizeof(int32_t) * uniform_count,
+					.data = uniform_data_buffer.data,
+				});
 			} break;
 
 			case DATA_TYPE_R32: {
-				state_read_json_float_n(uniform_json, uniform_elements_count, uniform_data_buffer.data);
-				gfx_material_set_float(result, uniforms[i].id, uniform_elements_count, uniform_data_buffer.data);
+				state_read_json_flt_n(uniform_json, uniform_count, uniform_data_buffer.data);
+				gfx_uniforms_set(&result->uniforms, uniform->id, (struct Gfx_Uniform_In){
+					.size = sizeof(float) * uniform_count,
+					.data = uniform_data_buffer.data,
+				});
 			} break;
 		}
 	}

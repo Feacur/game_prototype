@@ -160,6 +160,7 @@ struct Gpu_Program_Field {
 	uint32_t id;
 	enum Data_Type type;
 	uint32_t array_size;
+	bool is_property;
 };
 
 struct Blend_Func {

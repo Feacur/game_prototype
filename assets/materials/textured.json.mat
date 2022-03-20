@@ -1,6 +1,6 @@
 {
 	"shader": "assets/shaders/test.glsl",
 	"mode": "opaque", "depth": true,
-	"u_Texture": {"path": "assets/images/test.png",},
-	"u_Color": [0.2, 0.6, 1, 1],
+	"prop_Texture": {"path": "assets/images/test.png",},
+	"prop_Color": [0.2, 0.6, 1, 1],
 }

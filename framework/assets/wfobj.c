@@ -13,9 +13,9 @@ void wfobj_init(struct WFObj * obj, char const * text) {
 }
 
 void wfobj_free(struct WFObj * obj) {
-	array_float_free(&obj->positions);
-	array_float_free(&obj->texcoords);
-	array_float_free(&obj->normals);
+	array_flt_free(&obj->positions);
+	array_flt_free(&obj->texcoords);
+	array_flt_free(&obj->normals);
 	array_u32_free(&obj->triangles);
 }
 
@@ -92,7 +92,7 @@ static void wfobj_do_name(struct WFObj_Scanner * scanner, struct WFObj_Token * t
 	}
 }
 
-static void wfobj_do_vertex(struct WFObj_Scanner * scanner, struct WFObj_Token * token, struct Array_Float * buffer, uint32_t limit) {
+static void wfobj_do_vertex(struct WFObj_Scanner * scanner, struct WFObj_Token * token, struct Array_Flt * buffer, uint32_t limit) {
 #define ADVANCE() wfobj_advance(scanner, token)
 
 	uint32_t entries = 0;
@@ -102,7 +102,7 @@ static void wfobj_do_vertex(struct WFObj_Scanner * scanner, struct WFObj_Token *
 		float value;
 		if (wfobj_consume_float(scanner, token, &value)) {
 			if (entries >= limit) { continue; } entries++;
-			array_float_push(buffer, value);
+			array_flt_push(buffer, value);
 		}
 		else { ADVANCE(); }
 	}
@@ -194,14 +194,14 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 	}
 	wfobj_scanner_free(&scanner);
 
-	array_float_init(&obj->positions);
-	array_float_init(&obj->texcoords);
-	array_float_init(&obj->normals);
+	array_flt_init(&obj->positions);
+	array_flt_init(&obj->texcoords);
+	array_flt_init(&obj->normals);
 	array_u32_init(&obj->triangles);
 
-	array_float_resize(&obj->positions, position_lines * 3);
-	array_float_resize(&obj->texcoords, texcoord_lines * 2);
-	array_float_resize(&obj->normals, normal_lines * 3);
+	array_flt_resize(&obj->positions, position_lines * 3);
+	array_flt_resize(&obj->texcoords, texcoord_lines * 2);
+	array_flt_resize(&obj->normals, normal_lines * 3);
 	array_u32_resize(&obj->triangles, face_lines * 3 * 2);
 
 	//

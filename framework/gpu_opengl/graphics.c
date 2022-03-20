@@ -87,13 +87,16 @@ static struct Graphics_State {
 
 	float clip_space[4]; // origin XY; normalized-space near and far
 
-	uint32_t max_units_vertex_shader;
-	uint32_t max_units_fragment_shader;
-	uint32_t max_units_compute_shader;
-	uint32_t max_texture_size;
-	uint32_t max_renderbuffer_size;
-	uint32_t max_elements_vertices;
-	uint32_t max_elements_indices;
+	struct Graphics_State_Limits {
+		uint32_t max_units_vertex_shader;
+		uint32_t max_units_fragment_shader;
+		uint32_t max_units_compute_shader;
+		uint32_t max_texture_size;
+		uint32_t max_renderbuffer_size;
+		uint32_t max_elements_vertices;
+		uint32_t max_elements_indices;
+		uint32_t max_uniform_locations;
+	} limits;
 } gs_graphics_state;
 
 //
@@ -172,7 +175,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	
 	GLint uniform_name_buffer_length; // includes zero-terminator
 	glGetProgramInterfaceiv(program_id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
-	GLchar * uniform_name_buffer = MEMORY_ALLOCATE_ARRAY(&gs_graphics_state, GLchar, uniform_name_buffer_length);
+	GLchar * uniform_name_buffer = alloca(sizeof(GLchar) * (size_t)uniform_name_buffer_length);
 
 	struct Gpu_Program_Field uniforms[MAX_UNIFORMS];
 	GLint uniform_locations[MAX_UNIFORMS];
@@ -183,14 +186,14 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 			PARAM_LOCATION,
 			// PARAM_NAME_LENGTH,
 		};
-		GLenum const props[] = {
-			[PARAM_TYPE] = GL_TYPE,
-			[PARAM_ARRAY_SIZE] = GL_ARRAY_SIZE,
-			[PARAM_LOCATION] = GL_LOCATION,
+		static GLenum const c_props[] = {
+			[PARAM_TYPE]        = GL_TYPE,
+			[PARAM_ARRAY_SIZE]  = GL_ARRAY_SIZE,
+			[PARAM_LOCATION]    = GL_LOCATION,
 			// [PARAM_NAME_LENGTH] = GL_NAME_LENGTH,
 		};
-		GLint params[SIZE_OF_ARRAY(props)];
-		glGetProgramResourceiv(program_id, GL_UNIFORM, (GLuint)i, SIZE_OF_ARRAY(props), props, SIZE_OF_ARRAY(params), NULL, params);
+		GLint params[SIZE_OF_ARRAY(c_props)];
+		glGetProgramResourceiv(program_id, GL_UNIFORM, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
 
 		GLsizei name_length;
 		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
@@ -210,11 +213,10 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 			}),
 			.type = interpret_gl_type(params[PARAM_TYPE]),
 			.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
+			.is_property = common_memcmp(uniform_name_buffer, "prop_", 5) == 0,
 		};
 		uniform_locations[i] = params[PARAM_LOCATION];
 	}
-
-	MEMORY_FREE(&gs_graphics_state, uniform_name_buffer);
 
 	//
 	struct Gpu_Program gpu_program = (struct Gpu_Program){
@@ -261,14 +263,14 @@ static struct Ref gpu_texture_allocate(
 	struct Texture_Settings const * settings,
 	void const * data
 ) {
-	if (size_x > gs_graphics_state.max_texture_size) {
+	if (size_x > gs_graphics_state.limits.max_texture_size) {
 		logger_to_console("requested size is too large\n"); DEBUG_BREAK();
-		size_x = gs_graphics_state.max_texture_size;
+		size_x = gs_graphics_state.limits.max_texture_size;
 	}
 
-	if (size_y > gs_graphics_state.max_texture_size) {
+	if (size_y > gs_graphics_state.limits.max_texture_size) {
 		logger_to_console("requested size is too large\n"); DEBUG_BREAK();
-		size_y = gs_graphics_state.max_texture_size;
+		size_y = gs_graphics_state.limits.max_texture_size;
 	}
 
 	GLuint texture_id;
@@ -825,9 +827,16 @@ static void graphics_select_mesh(struct Ref gpu_mesh_ref) {
 	glBindVertexArray((gpu_mesh != NULL) ? gpu_mesh->id : 0);
 }
 
-static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_program, uint32_t uniform_index, void const * data) {
-	struct Gpu_Program_Field const * field = gpu_program->uniforms + uniform_index;
-	GLint const location = gpu_program->uniform_locations[uniform_index];
+static uint32_t graphics_find_field_index(struct Gpu_Program const * gpu_program, uint32_t id) {
+	for (uint32_t i = 0; i < gpu_program->uniforms_count; i++) {
+		if (gpu_program->uniforms[i].id == id) { return i; }
+	}
+	return INDEX_EMPTY;
+}
+
+static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_program, uint32_t field_index, void const * data) {
+	struct Gpu_Program_Field const * field = gpu_program->uniforms + field_index;
+	GLint const location = gpu_program->uniform_locations[field_index];
 
 	switch (field->type) {
 		default: logger_to_console("unsupported field type '0x%x'\n", field->type); DEBUG_BREAK(); break;
@@ -870,48 +879,17 @@ static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_progra
 	}
 }
 
-static void graphics_upload_uniforms(struct Gfx_Material const * material, struct Gfx_Material_Override const * override) {
-	struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, material->gpu_program_ref);
-	uint32_t const uniforms_count = gpu_program->uniforms_count;
+static void graphics_upload_uniforms(struct Gpu_Program const * gpu_program, struct Gfx_Uniforms const * uniforms, uint32_t offset, uint32_t count) {
+	for (uint32_t i = offset, last = offset + count; i < last; i++) {
+		struct Gfx_Uniforms_Entry const * entry = array_any_at(&uniforms->headers, i);
 
-	uint32_t unit_offset = 0, u32_offset = 0, s32_offset = 0, float_offset = 0;
-	for (uint32_t i = 0; i < uniforms_count; i++) {
-		struct Gpu_Program_Field const * field = gpu_program->uniforms + i;
-		// struct CString const field_name = graphics_get_uniform_value(field->id); (void)field_name;
+		uint32_t const field_index = graphics_find_field_index(gpu_program, entry->id);
+		if (field_index == INDEX_EMPTY) { continue; }
 
-		void const * data = gfx_material_override_find(override, field->id, data_type_get_size(field->type) * field->array_size);
+		struct Gpu_Program_Field const * uniform = gpu_program->uniforms + field_index;
+		if (data_type_get_size(uniform->type) * uniform->array_size != entry->size) { continue; }
 
-		enum Data_Type const element_type   = data_type_get_element_type(field->type);
-		uint32_t       const elements_count = data_type_get_count(field->type) * field->array_size;
-		switch (element_type) {
-			default: logger_to_console("unknown element type '0x%x'\n", element_type); DEBUG_BREAK(); break;
-
-			case DATA_TYPE_UNIT: {
-				if (data == NULL) { data = array_any_at(&material->textures, unit_offset); }
-				unit_offset += elements_count;
-				break;
-			}
-
-			case DATA_TYPE_U32: {
-				if (data == NULL) { data = material->values_u32.data + u32_offset; }
-				u32_offset += elements_count;
-				break;
-			}
-
-			case DATA_TYPE_S32: {
-				if (data == NULL) { data = material->values_s32.data + s32_offset; }
-				s32_offset += elements_count;
-				break;
-			}
-
-			case DATA_TYPE_R32: {
-				if (data == NULL) { data = material->values_float.data + float_offset; }
-				float_offset += elements_count;
-				break;
-			}
-		}
-
-		if (data != NULL) { graphics_upload_single_uniform(gpu_program, i, data); }
+		graphics_upload_single_uniform(gpu_program, field_index, uniforms->payload.data + entry->offset);
 	}
 }
 
@@ -1043,9 +1021,13 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 	graphics_set_depth_mode(&command->material->depth_mode);
 
 	graphics_select_program(command->material->gpu_program_ref);
-	graphics_upload_uniforms(command->material, &command->override);
-
 	graphics_select_mesh(command->gpu_mesh_ref);
+
+	{
+		struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, command->material->gpu_program_ref);
+		graphics_upload_uniforms(gpu_program, &command->material->uniforms, 0, command->material->uniforms.headers.count);
+		graphics_upload_uniforms(gpu_program, command->override.uniforms, command->override.offset, command->override.count);
+	}
 
 	enum Data_Type const elements_type = mesh->parameters[mesh->elements_index].type;
 	size_t const elements_offset = command->offset * data_type_get_size(elements_type);
@@ -1120,6 +1102,7 @@ void graphics_to_gpu_library_init(void) {
 	GLint max_units_vertex_shader, max_units_fragment_shader, max_units_compute_shader;
 	GLint max_texture_size, max_renderbuffer_size;
 	GLint max_elements_vertices, max_elements_indices;
+	GLint max_uniform_locations;
 
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_units);
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,          &max_units_fragment_shader);
@@ -1129,6 +1112,7 @@ void graphics_to_gpu_library_init(void) {
 	glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE,            &max_renderbuffer_size);
 	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,            &max_elements_vertices);
 	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,             &max_elements_indices);
+	glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS,            &max_uniform_locations);
 
 	logger_to_console(
 		"\n"
@@ -1141,6 +1125,7 @@ void graphics_to_gpu_library_init(void) {
 		"  target size ... %d\n"
 		"  vertices ...... %d\n"
 		"  indices ....... %d\n"
+		"  uniforms .......%d\n"
 		"",
 		max_units,
 		max_units_fragment_shader,
@@ -1149,16 +1134,20 @@ void graphics_to_gpu_library_init(void) {
 		max_texture_size,
 		max_renderbuffer_size,
 		max_elements_vertices,
-		max_elements_indices
+		max_elements_indices,
+		max_uniform_locations
 	);
 
-	gs_graphics_state.max_units_vertex_shader   = (uint32_t)max_units_vertex_shader;
-	gs_graphics_state.max_units_fragment_shader = (uint32_t)max_units_fragment_shader;
-	gs_graphics_state.max_units_compute_shader  = (uint32_t)max_units_compute_shader;
-	gs_graphics_state.max_texture_size          = (uint32_t)max_texture_size;
-	gs_graphics_state.max_renderbuffer_size     = (uint32_t)max_renderbuffer_size;
-	gs_graphics_state.max_elements_vertices     = (uint32_t)max_elements_vertices;
-	gs_graphics_state.max_elements_indices      = (uint32_t)max_elements_indices;
+	gs_graphics_state.limits = (struct Graphics_State_Limits){
+		.max_units_vertex_shader   = (uint32_t)max_units_vertex_shader,
+		.max_units_fragment_shader = (uint32_t)max_units_fragment_shader,
+		.max_units_compute_shader  = (uint32_t)max_units_compute_shader,
+		.max_texture_size          = (uint32_t)max_texture_size,
+		.max_renderbuffer_size     = (uint32_t)max_renderbuffer_size,
+		.max_elements_vertices     = (uint32_t)max_elements_vertices,
+		.max_elements_indices      = (uint32_t)max_elements_indices,
+		.max_uniform_locations     = (uint32_t)max_uniform_locations,
+	};
 
 	gs_graphics_state.units_capacity = (uint32_t)max_units;
 	gs_graphics_state.units = MEMORY_ALLOCATE_ARRAY(&gs_graphics_state, struct Gpu_Unit, max_units);

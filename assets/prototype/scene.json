@@ -30,7 +30,7 @@
 			"camera_uid": 2,
 			"material": "assets/materials/back_buffer.json.mat",
 			"type": "quad_2d",
-			"uniform": "u_Texture",
+			"uniform": "prop_Texture",
 			"mode": "fit",
 		},
 		{
@@ -43,7 +43,7 @@
 				"pivot": [0.5, 0.5],
 			},
 			"type": "quad_2d",
-			"uniform": "u_Texture",
+			"uniform": "prop_Texture",
 		},
 		{
 			"camera_uid": 2,
@@ -54,7 +54,7 @@
 				"pivot": [0.5, 0.5],
 			},
 			"type": "quad_2d",
-			"uniform": "u_Texture",
+			"uniform": "prop_Texture",
 		},
 		{
 			"camera_uid": 2,
@@ -78,7 +78,7 @@
 				"pivot": [0, 1],
 			},
 			"type": "quad_2d",
-			"uniform": "u_Texture",
+			"uniform": "prop_Texture",
 			"mode": "size",
 		},
 	],

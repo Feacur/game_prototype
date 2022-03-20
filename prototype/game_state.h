@@ -3,13 +3,14 @@
 
 #include "framework/containers/array_any.h"
 #include "framework/systems/asset_system.h"
+#include "framework/graphics/material.h"
 
 struct Batcher_2D;
 struct JSON;
 
 extern struct Game_State {
 	struct Batcher_2D * batcher;
-	struct Buffer buffer;
+	struct Gfx_Uniforms uniforms;
 	struct Array_Any gpu_commands;
 
 	struct Asset_System assets;
