@@ -8,7 +8,7 @@ enum Data_Type interpret_gl_type(GLint value);
 
 GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture);
 GLint gpu_mag_filter_mode(enum Filter_Mode value);
-GLint gpu_wrap_mode(enum Wrap_Mode value, bool mirror);
+GLint gpu_wrap_mode(enum Wrap_Mode value);
 
 GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, uint32_t channels);
 GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels);

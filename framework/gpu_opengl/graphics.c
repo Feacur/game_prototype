@@ -316,8 +316,8 @@ static struct Ref gpu_texture_allocate(
 	// chart buffer
 	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(settings->mipmap, settings->minification));
 	glTextureParameteri(texture_id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(settings->magnification));
-	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(settings->wrap_x, settings->mirror_wrap_x));
-	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings->wrap_y, settings->mirror_wrap_y));
+	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(settings->wrap_x));
+	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings->wrap_y));
 
 	switch (parameters->channels) {
 		case 1: {
@@ -434,8 +434,8 @@ struct Ref gpu_target_init(
 	for (uint32_t i = 0; i < count; i++) {
 		if (parameters[i].flags & TEXTURE_FLAG_READ) {
 			texture_refs[textures_count++] = gpu_texture_allocate(size_x, size_y, parameters + i, &(struct Texture_Settings){
-				.wrap_x = WRAP_MODE_CLAMP,
-				.wrap_y = WRAP_MODE_CLAMP,
+				.wrap_x = WRAP_MODE_EDGE,
+				.wrap_y = WRAP_MODE_EDGE,
 			}, NULL);
 		}
 		else {

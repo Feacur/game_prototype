@@ -17,7 +17,7 @@ struct Image {
 	struct Texture_Settings settings;
 };
 
-void image_init(struct Image * image, struct CString path);
+void image_init(struct Image * image, struct Texture_Settings settings, struct CString path);
 void image_free(struct Image * image);
 
 void image_resize(struct Image * image, uint32_t size_x, uint32_t size_y);

@@ -27,7 +27,7 @@
 //
 #include "image.h"
 
-void image_init(struct Image * image, struct CString path) {
+void image_init(struct Image * image, struct Texture_Settings settings, struct CString path) {
 	struct Buffer file;
 	bool const read_success = platform_file_read_entire(path, &file);
 	if (!read_success || file.count == 0) { DEBUG_BREAK(); return; }
@@ -50,10 +50,7 @@ void image_init(struct Image * image, struct CString path) {
 			.data_type = DATA_TYPE_U8,
 			.channels = (uint32_t)channels,
 		},
-		.settings = {
-			.wrap_x = WRAP_MODE_CLAMP,
-			.wrap_y = WRAP_MODE_CLAMP,
-		},
+		.settings = settings,
 	};
 }
 

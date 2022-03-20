@@ -107,10 +107,14 @@ GLint gpu_mag_filter_mode(enum Filter_Mode value) {
 	return GL_NONE;
 }
 
-GLint gpu_wrap_mode(enum Wrap_Mode value, bool mirror) {
+GLint gpu_wrap_mode(enum Wrap_Mode value) {
 	switch (value) {
-		case WRAP_MODE_REPEAT: return mirror ? GL_MIRRORED_REPEAT : GL_REPEAT;
-		case WRAP_MODE_CLAMP:  return mirror ? GL_MIRROR_CLAMP_TO_EDGE : GL_CLAMP_TO_EDGE;
+		case WRAP_MODE_NONE:          return GL_CLAMP_TO_EDGE;
+		case WRAP_MODE_EDGE:          return GL_CLAMP_TO_EDGE;
+		case WRAP_MODE_BORDER:        return GL_CLAMP_TO_BORDER;
+		case WRAP_MODE_REPEAT:        return GL_REPEAT;
+		case WRAP_MODE_MIRROR_EDGE:   return GL_MIRROR_CLAMP_TO_EDGE;
+		case WRAP_MODE_MIRROR_REPEAT: return GL_MIRRORED_REPEAT;
 	}
 	logger_to_console("unknown wrap mode\n"); DEBUG_BREAK();
 	return GL_NONE;

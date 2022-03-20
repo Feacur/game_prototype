@@ -44,8 +44,12 @@ enum Filter_Mode {
 };
 
 enum Wrap_Mode {
-	WRAP_MODE_CLAMP,
+	WRAP_MODE_NONE,
+	WRAP_MODE_EDGE,
+	WRAP_MODE_BORDER,
 	WRAP_MODE_REPEAT,
+	WRAP_MODE_MIRROR_EDGE,
+	WRAP_MODE_MIRROR_REPEAT,
 };
 
 enum Texture_Type {
@@ -188,7 +192,6 @@ struct Texture_Parameters {
 struct Texture_Settings {
 	enum Filter_Mode mipmap, minification, magnification;
 	enum Wrap_Mode wrap_x, wrap_y;
-	bool mirror_wrap_x, mirror_wrap_y;
 };
 
 enum Attribute_Type {

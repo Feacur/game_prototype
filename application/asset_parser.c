@@ -30,6 +30,51 @@ enum Texture_Type state_read_json_texture_type(struct JSON const * json) {
 	return texture_type;
 }
 
+enum Filter_Mode state_read_json_filter_mode(struct JSON const * json) {
+	if (json->type == JSON_STRING) {
+		uint32_t const id = json_as_id(json);
+		if (id == json_find_id(json, S_("point"))) {
+			return FILTER_MODE_POINT;
+		}
+		if (id == json_find_id(json, S_("lerp"))) {
+			return FILTER_MODE_LERP;
+		}
+	}
+	return FILTER_MODE_NONE;
+}
+
+enum Wrap_Mode state_read_json_wrap_mode(struct JSON const * json) {
+	if (json->type == JSON_STRING) {
+		uint32_t const id = json_as_id(json);
+		if (id == json_find_id(json, S_("edge"))) {
+			return WRAP_MODE_EDGE;
+		}
+		if (id == json_find_id(json, S_("border"))) {
+			return WRAP_MODE_BORDER;
+		}
+		if (id == json_find_id(json, S_("repeat"))) {
+			return WRAP_MODE_REPEAT;
+		}
+		if (id == json_find_id(json, S_("mirror_edge"))) {
+			return WRAP_MODE_MIRROR_EDGE;
+		}
+		if (id == json_find_id(json, S_("mirror_repeat"))) {
+			return WRAP_MODE_MIRROR_REPEAT;
+		}
+	}
+	return WRAP_MODE_NONE;
+}
+
+void state_read_json_texture_settings(struct JSON const * json, struct Texture_Settings * result) {
+	*result = (struct Texture_Settings){
+		.mipmap        = state_read_json_filter_mode(json_get(json, S_("mipmap"))),
+		.minification  = state_read_json_filter_mode(json_get(json, S_("minification"))),
+		.magnification = state_read_json_filter_mode(json_get(json, S_("magnification"))),
+		.wrap_x        = state_read_json_wrap_mode(json_get(json, S_("wrap_x"))),
+		.wrap_y        = state_read_json_wrap_mode(json_get(json, S_("wrap_y"))),
+	};
+}
+
 static void state_read_json_uniform_texture(struct Asset_System * system, struct JSON const * json, struct Ref * result);
 void state_read_json_unt_n(struct Asset_System * system, struct JSON const * json, uint32_t length, struct Ref * result) {
 	if (json->type == JSON_ARRAY) {

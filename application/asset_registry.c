@@ -105,17 +105,32 @@ static void asset_shader_free(struct Asset_System * system, void * instance) {
 //     Asset image part
 // ----- ----- ----- ----- -----
 
-static void asset_image_init(struct Asset_System * system, void * instance, struct CString name) {
-	struct Asset_Image * asset = instance;
-	(void)system;
+struct Asset_Fill_Image {
+	struct Asset_System * system;
+	struct Asset_Image * result;
+};
+
+static void asset_fill_image(struct JSON const * json, void * data) {
+	struct Asset_Fill_Image * context = data;
+
+	struct CString const path = json_get_string(json, S_("path"), S_EMPTY);
+
+	struct Texture_Settings settings;
+	state_read_json_texture_settings(json, &settings);
 
 	struct Image image;
-	image_init(&image, name);
+	image_init(&image, settings, path);
 
 	struct Ref const gpu_ref = gpu_texture_init(&image);
 	image_free(&image);
 
-	asset->gpu_ref = gpu_ref;
+	context->result->gpu_ref = gpu_ref;
+}
+
+static void asset_image_init(struct Asset_System * system, void * instance, struct CString name) {
+	struct Asset_Image * asset = instance;
+	struct Asset_Fill_Image context = { .system = system, .result = asset };
+	process_json(asset_fill_image, &context, name);
 }
 
 static void asset_image_free(struct Asset_System * system, void * instance) {
@@ -136,11 +151,11 @@ struct Asset_Fill_Font {
 static void asset_fill_font(struct JSON const * json, void * data) {
 	struct Asset_Fill_Font * context = data;
 
-	struct CString const font_name = json_get_string(json, S_("path"), S_EMPTY);
-	float font_size = json_get_number(json, S_("size"), 0);
+	struct CString const path = json_get_string(json, S_("path"), S_EMPTY);
+	float size = json_get_number(json, S_("size"), 0);
 
-	struct Font * font = font_init(font_name);
-	struct Font_Image * buffer = font_image_init(font, (int32_t)font_size);
+	struct Font * font = font_init(path);
+	struct Font_Image * buffer = font_image_init(font, (int32_t)size);
 
 	context->result->font = font;
 	context->result->buffer = buffer;
@@ -243,7 +258,7 @@ void asset_types_init(struct Asset_System * system) {
 	asset_system_map_extension(system, S_("bytes"),    S_("txt"));
 	asset_system_map_extension(system, S_("json"),     S_("json"));
 	asset_system_map_extension(system, S_("shader"),   S_("glsl"));
-	asset_system_map_extension(system, S_("image"),    S_("png"));
+	asset_system_map_extension(system, S_("image"),    S_("img"));
 	asset_system_map_extension(system, S_("font"),     S_("fnt"));
 	asset_system_map_extension(system, S_("target"),   S_("rt"));
 	asset_system_map_extension(system, S_("model"),    S_("obj"));
