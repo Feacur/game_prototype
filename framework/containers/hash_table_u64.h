@@ -30,4 +30,9 @@ void hash_table_u64_del_at(struct Hash_Table_U64 * hash_table, uint32_t key_inde
 
 bool hash_table_u64_iterate(struct Hash_Table_U64 * hash_table, struct Hash_Table_U64_Iterator * iterator);
 
+#define FOR_HASH_TABLE_U64(data, it) for ( \
+	struct Hash_Table_U64_Iterator it = {0}; \
+	hash_table_u64_iterate(data, &it); \
+) \
+
 #endif

@@ -2,6 +2,7 @@
 #define GAME_CONTAINERS_REF_TABLE
 
 #include "ref.h"
+#include "array_any.h"
 
 struct Ref_Table_Iterator {
 	uint32_t current, next;
@@ -9,13 +10,13 @@ struct Ref_Table_Iterator {
 	void * value;
 };
 
+// @note: `struct Ref` is zero-initializable
 struct Ref_Table {
+	struct Array_Any buffer;
+	// handles table
 	uint32_t free_sparse_index;
-	uint32_t value_size;
-	uint32_t capacity, count;
-	struct Ref * sparse;
-	uint32_t * dense;
-	void * values;
+	struct Ref * sparse; // free id: next free sparse index; taken id: dense and value index
+	uint32_t * dense; // taken sparse index
 };
 
 void ref_table_init(struct Ref_Table * ref_table, uint32_t value_size);
@@ -37,5 +38,10 @@ struct Ref ref_table_ref_at(struct Ref_Table * ref_table, uint32_t index);
 void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index);
 
 bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator * iterator);
+
+#define FOR_REF_TABLE(data, it) for ( \
+	struct Ref_Table_Iterator it = {0}; \
+	ref_table_iterate(data, &it); \
+) \
 
 #endif

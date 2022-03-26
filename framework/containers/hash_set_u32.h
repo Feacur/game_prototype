@@ -27,4 +27,9 @@ void hash_set_u32_del_at(struct Hash_Set_U32 * hash_set, uint32_t key_index);
 
 bool hash_set_u32_iterate(struct Hash_Set_U32 * hash_set, struct Hash_Set_U32_Iterator * iterator);
 
+#define FOR_HASH_SET_U32(data, it) for ( \
+	struct Hash_Set_U32_Iterator it = {0}; \
+	hash_set_u32_iterate(data, &it); \
+) \
+
 #endif

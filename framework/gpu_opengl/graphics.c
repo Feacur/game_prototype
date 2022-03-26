@@ -237,8 +237,8 @@ static void gpu_program_free_internal(struct Gpu_Program const * gpu_program) {
 }
 
 void gpu_program_free(struct Ref gpu_program_ref) {
-	if (gs_graphics_state.active_program_ref.id == gpu_program_ref.id && gs_graphics_state.active_program_ref.gen == gpu_program_ref.gen) {
-		gs_graphics_state.active_program_ref = (struct Ref){0};
+	if (ref_equals(gs_graphics_state.active_program_ref, gpu_program_ref)) {
+		gs_graphics_state.active_program_ref = c_ref_zero;
 	}
 	struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, gpu_program_ref);
 	if (gpu_program != NULL) {
@@ -249,8 +249,10 @@ void gpu_program_free(struct Ref gpu_program_ref) {
 
 void gpu_program_get_uniforms(struct Ref gpu_program_ref, uint32_t * count, struct Gpu_Program_Field const ** values) {
 	struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, gpu_program_ref);
-	*count = gpu_program->uniforms_count;
-	*values = gpu_program->uniforms;
+	if (gpu_program != NULL) {
+		*count = gpu_program->uniforms_count;
+		*values = gpu_program->uniforms;
+	}
 }
 
 // ----- ----- ----- ----- -----
@@ -355,8 +357,8 @@ static void gpu_texture_free_internal(struct Gpu_Texture const * gpu_texture) {
 void gpu_texture_free(struct Ref gpu_texture_ref) {
 	for (uint32_t i = 1; i < gs_graphics_state.units_capacity; i++) {
 		struct Gpu_Unit * unit = gs_graphics_state.units + i;
-		if (unit->gpu_texture_ref.id == gpu_texture_ref.id && unit->gpu_texture_ref.gen == gpu_texture_ref.gen) {
-			unit->gpu_texture_ref = (struct Ref){0};
+		if (ref_equals(unit->gpu_texture_ref, gpu_texture_ref)) {
+			unit->gpu_texture_ref = c_ref_zero;
 		}
 	}
 	struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
@@ -368,12 +370,15 @@ void gpu_texture_free(struct Ref gpu_texture_ref) {
 
 void gpu_texture_get_size(struct Ref gpu_texture_ref, uint32_t * x, uint32_t * y) {
 	struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
-	*x = gpu_texture->size_x;
-	*y = gpu_texture->size_y;
+	if (gpu_texture != NULL) {
+		*x = gpu_texture->size_x;
+		*y = gpu_texture->size_y;
+	}
 }
 
 void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset) {
 	struct Gpu_Texture * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
+	if (gpu_texture == NULL) { return; }
 
 	// @todo: compare texture and asset parameters?
 
@@ -462,14 +467,15 @@ struct Ref gpu_target_init(
 		else {
 			struct Ref const gpu_texture_ref = texture_refs[texture_index++];
 			struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
-
-			GLint const level = 0;
-			glNamedFramebufferTexture(
-				target_id,
-				gpu_attachment_point(parameters[i].texture_type, color_index),
-				gpu_texture->id,
-				level
-			);
+			if (gpu_texture != NULL) {
+				GLint const level = 0;
+				glNamedFramebufferTexture(
+					target_id,
+					gpu_attachment_point(parameters[i].texture_type, color_index),
+					gpu_texture->id,
+					level
+				);
+			}
 		}
 
 		if (parameters[i].texture_type == TEXTURE_TYPE_COLOR) { color_index++; }
@@ -500,8 +506,8 @@ static void gpu_target_free_internal(struct Gpu_Target const * gpu_target) {
 }
 
 void gpu_target_free(struct Ref gpu_target_ref) {
-	if (gs_graphics_state.active_target_ref.id == gpu_target_ref.id && gs_graphics_state.active_target_ref.gen == gpu_target_ref.gen) {
-		gs_graphics_state.active_target_ref = (struct Ref){0};
+	if (ref_equals(gs_graphics_state.active_target_ref, gpu_target_ref)) {
+		gs_graphics_state.active_target_ref = c_ref_zero;
 	}
 	struct Gpu_Target const * gpu_target = ref_table_get(&gs_graphics_state.targets, gpu_target_ref);
 	if (gpu_target != NULL) {
@@ -512,12 +518,15 @@ void gpu_target_free(struct Ref gpu_target_ref) {
 
 void gpu_target_get_size(struct Ref gpu_target_ref, uint32_t * x, uint32_t * y) {
 	struct Gpu_Target const * gpu_target = ref_table_get(&gs_graphics_state.targets, gpu_target_ref);
-	*x = gpu_target->size_x;
-	*y = gpu_target->size_y;
+	if (gpu_target != NULL) {
+		*x = gpu_target->size_x;
+		*y = gpu_target->size_y;
+	}
 }
 
 struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Type type, uint32_t index) {
 	struct Gpu_Target const * gpu_target = ref_table_get(&gs_graphics_state.targets, gpu_target_ref);
+	if (gpu_target == NULL) { return c_ref_zero; }
 	for (uint32_t i = 0, color_index = 0; i < gpu_target->textures_count; i++) {
 		struct Ref const gpu_texture_ref = gpu_target->texture_refs[i];
 		struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
@@ -528,7 +537,7 @@ struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Ty
 	}
 
 	logger_to_console("failure: target doesn't have requested texture\n"); DEBUG_BREAK();
-	return c_ref_empty;
+	return c_ref_zero;
 }
 
 // ----- ----- ----- ----- -----
@@ -661,8 +670,8 @@ static void gpu_mesh_free_internal(struct Gpu_Mesh const * gpu_mesh) {
 }
 
 void gpu_mesh_free(struct Ref gpu_mesh_ref) {
-	if (gs_graphics_state.active_mesh_ref.id == gpu_mesh_ref.id && gs_graphics_state.active_mesh_ref.gen == gpu_mesh_ref.gen) {
-		gs_graphics_state.active_mesh_ref = (struct Ref){0};
+	if (ref_equals(gs_graphics_state.active_mesh_ref, gpu_mesh_ref)) {
+		gs_graphics_state.active_mesh_ref = c_ref_zero;
 	}
 	struct Gpu_Mesh const * gpu_mesh = ref_table_get(&gs_graphics_state.meshes, gpu_mesh_ref);
 	if (gpu_mesh != NULL) {
@@ -673,6 +682,7 @@ void gpu_mesh_free(struct Ref gpu_mesh_ref) {
 
 void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 	struct Gpu_Mesh * gpu_mesh = ref_table_get(&gs_graphics_state.meshes, gpu_mesh_ref);
+	if (gpu_mesh == NULL) { return; }
 	for (uint32_t i = 0; i < gpu_mesh->buffers_count; i++) {
 		// @todo: compare mesh and asset parameters?
 		// struct Mesh_Parameters const * asset_parameters = asset->parameters + i;
@@ -766,61 +776,59 @@ static uint32_t graphics_unit_find(struct Ref gpu_texture_ref) {
 	return 0;
 }
 
-static uint32_t graphics_unit_init(struct Ref gpu_texture_ref) {
-	uint32_t unit = graphics_unit_find(gpu_texture_ref);
-	if (unit != 0) { return unit; }
+static uint32_t gpu_unit_init(struct Ref gpu_texture_ref) {
+	uint32_t const existing_unit = graphics_unit_find(gpu_texture_ref);
+	if (existing_unit != 0) { return existing_unit; }
 
-	unit = graphics_unit_find((struct Ref){0});
-	if (unit == 0) {
+	uint32_t const free_unit = graphics_unit_find(c_ref_zero);
+	if (free_unit == 0) {
 		logger_to_console("failure: no spare texture/sampler units\n"); DEBUG_BREAK();
-		return unit;
+		return 0;
 	}
 
-	gs_graphics_state.units[unit] = (struct Gpu_Unit){
+	struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
+	if (gpu_texture == NULL) {
+		logger_to_console("failure: no spare texture/sampler units\n"); DEBUG_BREAK();
+		return 0;
+	}
+
+	gs_graphics_state.units[free_unit] = (struct Gpu_Unit){
 		.gpu_texture_ref = gpu_texture_ref,
 	};
 
-	struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
-	glBindTextureUnit((GLuint)unit, gpu_texture->id);
-
-	return unit;
+	glBindTextureUnit((GLuint)free_unit, gpu_texture->id);
+	return free_unit;
 }
 
-// static void graphics_unit_free(struct Gpu_Texture * gpu_texture) {
-// 	if (ogl_version > 0) {
+// static void gpu_unit_free(struct Ref gpu_texture) {
+// 	if (gs_ogl_version > 0) {
 // 		uint32_t unit = graphics_unit_find(gpu_texture);
 // 		if (unit == 0) { return; }
 // 
-// 		graphics_state.units[unit] = (struct Gpu_Unit){
-// 			.gpu_texture = NULL,
+// 		gs_graphics_state.units[unit] = (struct Gpu_Unit){
+// 			.gpu_texture_ref = c_ref_zero,
 // 		};
 // 
 // 		glBindTextureUnit((GLuint)unit, 0);
 // 	}
 // }
 
-static void graphics_select_program(struct Ref gpu_program_ref) {
-	if (gs_graphics_state.active_program_ref.id == gpu_program_ref.id && gs_graphics_state.active_program_ref.gen == gpu_program_ref.gen) {
-		return;
-	}
+static void gpu_select_program(struct Ref gpu_program_ref) {
+	if (ref_equals(gs_graphics_state.active_program_ref, gpu_program_ref)) { return; }
 	gs_graphics_state.active_program_ref = gpu_program_ref;
 	struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, gpu_program_ref);
 	glUseProgram((gpu_program != NULL) ? gpu_program->id : 0);
 }
 
-static void graphics_select_target(struct Ref gpu_target_ref) {
-	if (gs_graphics_state.active_target_ref.id == gpu_target_ref.id && gs_graphics_state.active_target_ref.gen == gpu_target_ref.gen) {
-		return;
-	}
+static void gpu_select_target(struct Ref gpu_target_ref) {
+	if (ref_equals(gs_graphics_state.active_target_ref, gpu_target_ref)) { return; }
 	gs_graphics_state.active_target_ref = gpu_target_ref;
 	struct Gpu_Target const * gpu_target = ref_table_get(&gs_graphics_state.targets, gpu_target_ref);
 	glBindFramebuffer(GL_FRAMEBUFFER, (gpu_target != NULL) ? gpu_target->id : 0);
 }
 
-static void graphics_select_mesh(struct Ref gpu_mesh_ref) {
-	if (gs_graphics_state.active_mesh_ref.id == gpu_mesh_ref.id && gs_graphics_state.active_mesh_ref.gen == gpu_mesh_ref.gen) {
-		return;
-	}
+static void gpu_select_mesh(struct Ref gpu_mesh_ref) {
+	if (ref_equals(gs_graphics_state.active_mesh_ref, gpu_mesh_ref)) { return; }
 	gs_graphics_state.active_mesh_ref = gpu_mesh_ref;
 	struct Gpu_Mesh const * gpu_mesh = ref_table_get(&gs_graphics_state.meshes, gpu_mesh_ref);
 	glBindVertexArray((gpu_mesh != NULL) ? gpu_mesh->id : 0);
@@ -833,7 +841,7 @@ static uint32_t graphics_find_field_index(struct Gpu_Program const * gpu_program
 	return INDEX_EMPTY;
 }
 
-static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_program, uint32_t field_index, void const * data) {
+static void gpu_upload_single_uniform(struct Gpu_Program const * gpu_program, uint32_t field_index, void const * data) {
 	struct Gpu_Program_Field const * field = gpu_program->uniforms + field_index;
 	GLint const location = gpu_program->uniform_locations[field_index];
 
@@ -849,7 +857,7 @@ static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_progra
 			for (uint32_t i = 0; i < field->array_size; i++) {
 				uint32_t unit = graphics_unit_find(gpu_texture_refs[i]);
 				if (unit == 0) {
-					unit = graphics_unit_init(gpu_texture_refs[i]);
+					unit = gpu_unit_init(gpu_texture_refs[i]);
 				}
 				units[units_count++] = (GLint)unit;
 			}
@@ -878,7 +886,7 @@ static void graphics_upload_single_uniform(struct Gpu_Program const * gpu_progra
 	}
 }
 
-static void graphics_upload_uniforms(struct Gpu_Program const * gpu_program, struct Gfx_Uniforms const * uniforms, uint32_t offset, uint32_t count) {
+static void gpu_upload_uniforms(struct Gpu_Program const * gpu_program, struct Gfx_Uniforms const * uniforms, uint32_t offset, uint32_t count) {
 	for (uint32_t i = offset, last = offset + count; i < last; i++) {
 		struct Gfx_Uniforms_Entry const * entry = array_any_at(&uniforms->headers, i);
 
@@ -888,17 +896,11 @@ static void graphics_upload_uniforms(struct Gpu_Program const * gpu_program, str
 		struct Gpu_Program_Field const * uniform = gpu_program->uniforms + field_index;
 		if (data_type_get_size(uniform->type) * uniform->array_size != entry->size) { continue; }
 
-		graphics_upload_single_uniform(gpu_program, field_index, uniforms->payload.data + entry->offset);
+		gpu_upload_single_uniform(gpu_program, field_index, uniforms->payload.data + entry->offset);
 	}
 }
 
-static bool graphics_should_blend(struct Blend_Func const * func) {
-	if (func == NULL) { return false; }
-	if (func->op == BLEND_OP_NONE) { return false; }
-	return true;
-}
-
-static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
+static void gpu_set_blend_mode(struct Blend_Mode const * mode) {
 	glColorMask(
 		(mode->mask & COLOR_CHANNEL_RED),
 		(mode->mask & COLOR_CHANNEL_GREEN),
@@ -914,8 +916,8 @@ static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 	);
 
 	//
-	bool const would_blend_rgb = graphics_should_blend(&mode->rgb);
-	bool const would_blend_a = graphics_should_blend(&mode->a);
+	bool const would_blend_rgb = mode->rgb.op != BLEND_OP_NONE;
+	bool const would_blend_a   = mode->a.op   != BLEND_OP_NONE;
 	if (!(would_blend_rgb || would_blend_a)) {
 		glDisable(GL_BLEND);
 	}
@@ -936,7 +938,7 @@ static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 	}
 }
 
-static void graphics_set_depth_mode(struct Depth_Mode const * mode) {
+static void gpu_set_depth_mode(struct Depth_Mode const * mode) {
 	glDepthMask((mode->enabled && mode->mask) ? GL_TRUE : GL_FALSE);
 	if (mode->enabled) {
 		glEnable(GL_DEPTH_TEST);
@@ -946,7 +948,7 @@ static void graphics_set_depth_mode(struct Depth_Mode const * mode) {
 	}
 }
 
-static void graphics_clear(enum Texture_Type mask, uint32_t rgba) {
+static void gpu_clear(enum Texture_Type mask, uint32_t rgba) {
 	if (mask == TEXTURE_TYPE_NONE) { return; }
 
 	GLbitfield clear_bitfield = 0;
@@ -979,10 +981,10 @@ inline static void gpu_execute_cull(struct GPU_Command_Cull const * command) {
 }
 
 inline static void gpu_execute_target(struct GPU_Command_Target const * command) {
-	graphics_select_target(command->gpu_ref);
+	gpu_select_target(command->gpu_ref);
 
 	uint32_t viewport_size_x = command->screen_size_x, viewport_size_y = command->screen_size_y;
-	if (command->gpu_ref.id != 0 && command->gpu_ref.id != c_ref_empty.id) {
+	if (!ref_equals(command->gpu_ref, c_ref_zero)) {
 		gpu_target_get_size(command->gpu_ref, &viewport_size_x, &viewport_size_y);
 	}
 
@@ -993,37 +995,39 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 	if (command->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
 
 	// @todo: ever need variations?
-	graphics_set_blend_mode((struct Blend_Mode[]){c_blend_mode_opaque});
-	graphics_set_depth_mode(&(struct Depth_Mode){.enabled = true, .mask = true});
+	gpu_set_blend_mode((struct Blend_Mode[]){c_blend_mode_opaque});
+	gpu_set_depth_mode(&(struct Depth_Mode){.enabled = true, .mask = true});
 
-	graphics_clear(command->mask, command->rgba);
+	gpu_clear(command->mask, command->rgba);
 }
 
 inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 	if (command->material == NULL) { logger_to_console("material is null"); DEBUG_BREAK(); return; }
-	if (command->material->gpu_program_ref.id == 0) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
+	if (ref_equals(command->material->gpu_program_ref, c_ref_zero)) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
 
-	if (command->gpu_mesh_ref.id == 0) { logger_to_console("mesh is null"); DEBUG_BREAK(); return; }
+	struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, command->material->gpu_program_ref);
+	if (gpu_program == NULL) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
+
+	if (ref_equals(command->gpu_mesh_ref, c_ref_zero)) { logger_to_console("mesh is null"); DEBUG_BREAK(); return; }
 	struct Gpu_Mesh const * mesh = ref_table_get(&gs_graphics_state.meshes, command->gpu_mesh_ref);
+	if (mesh == NULL) { logger_to_console("mesh is null"); DEBUG_BREAK(); return; }
 	if (mesh->elements_index == INDEX_EMPTY) { logger_to_console("mesh has no elements buffer"); DEBUG_BREAK(); return; }
 
+	//
 	uint32_t const elements_count = (command->length != 0)
 		? command->length
 		: mesh->counts[mesh->elements_index];
 	if (elements_count == 0) { return; }
 
 	if (command->material->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
-	graphics_set_blend_mode(&command->material->blend_mode);
-	graphics_set_depth_mode(&command->material->depth_mode);
+	gpu_set_blend_mode(&command->material->blend_mode);
+	gpu_set_depth_mode(&command->material->depth_mode);
 
-	graphics_select_program(command->material->gpu_program_ref);
-	graphics_select_mesh(command->gpu_mesh_ref);
+	gpu_select_program(command->material->gpu_program_ref);
+	gpu_select_mesh(command->gpu_mesh_ref);
 
-	{
-		struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, command->material->gpu_program_ref);
-		graphics_upload_uniforms(gpu_program, &command->material->uniforms, 0, command->material->uniforms.headers.count);
-		graphics_upload_uniforms(gpu_program, command->override.uniforms, command->override.offset, command->override.count);
-	}
+	gpu_upload_uniforms(gpu_program, &command->material->uniforms, 0, command->material->uniforms.headers.count);
+	gpu_upload_uniforms(gpu_program, command->override.uniforms, command->override.offset, command->override.count);
 
 	enum Data_Type const elements_type = mesh->parameters[mesh->elements_index].type;
 	size_t const elements_offset = command->offset * data_type_get_size(elements_type);
@@ -1082,16 +1086,11 @@ void graphics_to_gpu_library_init(void) {
 	strings_init(&gs_graphics_state.uniforms);
 	strings_add(&gs_graphics_state.uniforms, S_EMPTY);
 
-	// init gpu objects, consider 0 ref.id empty
+	// init gpu objects
 	ref_table_init(&gs_graphics_state.programs, sizeof(struct Gpu_Program));
 	ref_table_init(&gs_graphics_state.targets, sizeof(struct Gpu_Target));
 	ref_table_init(&gs_graphics_state.textures, sizeof(struct Gpu_Texture));
 	ref_table_init(&gs_graphics_state.meshes, sizeof(struct Gpu_Mesh));
-
-	ref_table_aquire(&gs_graphics_state.programs, &(struct Gpu_Program){0});
-	ref_table_aquire(&gs_graphics_state.targets, &(struct Gpu_Target){0});
-	ref_table_aquire(&gs_graphics_state.textures, &(struct Gpu_Texture){0});
-	ref_table_aquire(&gs_graphics_state.meshes, &(struct Gpu_Mesh){0});
 
 	//
 	GLint max_units;
@@ -1164,30 +1163,16 @@ void graphics_to_gpu_library_init(void) {
 }
 
 void graphics_to_gpu_library_free(void) {
-	// @note: consider `ref.id == 0` empty
-	if (gs_graphics_state.programs.count > 1) { logger_to_console("dangling programs: %u\n", gs_graphics_state.programs.count - 1); }
-	if (gs_graphics_state.targets.count  > 1) { logger_to_console("dangling targets:  %u\n", gs_graphics_state.targets.count - 1); }
-	if (gs_graphics_state.textures.count > 1) { logger_to_console("dangling textures: %u\n", gs_graphics_state.textures.count - 1); }
-	if (gs_graphics_state.meshes.count   > 1) { logger_to_console("dangling meshes:   %u\n", gs_graphics_state.meshes.count - 1); }
+#define GPU_FREE(data) do { \
+	if (data.buffer.count > 0) { logger_to_console("dangling \"" #data "\": %u\n", data.buffer.count - 1); } \
+	FOR_REF_TABLE (&data, it) { gpu_program_free_internal(it.value); } \
+	ref_table_free(&data); \
+} while (false)\
 
-	for (struct Ref_Table_Iterator it = {0}; ref_table_iterate(&gs_graphics_state.programs, &it); /*empty*/) {
-		gpu_program_free_internal(it.value);
-	}
-	for (struct Ref_Table_Iterator it = {0}; ref_table_iterate(&gs_graphics_state.targets, &it); /*empty*/) {
-		gpu_target_free_internal(it.value);
-	}
-	for (struct Ref_Table_Iterator it = {0}; ref_table_iterate(&gs_graphics_state.textures, &it); /*empty*/) {
-		gpu_texture_free_internal(it.value);
-	}
-	for (struct Ref_Table_Iterator it = {0}; ref_table_iterate(&gs_graphics_state.meshes, &it); /*empty*/) {
-		gpu_mesh_free_internal(it.value);
-	}
-
-	//
-	ref_table_free(&gs_graphics_state.programs);
-	ref_table_free(&gs_graphics_state.textures);
-	ref_table_free(&gs_graphics_state.targets);
-	ref_table_free(&gs_graphics_state.meshes);
+	GPU_FREE(gs_graphics_state.programs);
+	GPU_FREE(gs_graphics_state.targets);
+	GPU_FREE(gs_graphics_state.textures);
+	GPU_FREE(gs_graphics_state.meshes);
 
 	//
 	strings_free(&gs_graphics_state.uniforms);
@@ -1196,6 +1181,8 @@ void graphics_to_gpu_library_free(void) {
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
 
 	(void)gpu_stencil_op;
+
+#undef GPU_FREE
 }
 
 //

@@ -94,7 +94,7 @@ void font_image_add_glyphs_from_range(struct Font_Image * font_image, uint32_t f
 }
 
 void font_image_add_glyphs_from_text(struct Font_Image * font_image, uint32_t length, uint8_t const * data) {
-	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) {
+	FOR_UTF8 (length, data, it) {
 		switch (it.codepoint) {
 			case CODEPOINT_ZERO_WIDTH_SPACE: break;
 
@@ -135,12 +135,12 @@ void font_image_add_kerning_from_range(struct Font_Image * font_image, uint32_t 
 
 void font_image_add_kerning_from_text(struct Font_Image * font_image, uint32_t length, uint8_t const * data) {
 	uint32_t codepoints_count = 0;
-	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) { codepoints_count++; }
+	FOR_UTF8 (length, data, it) { codepoints_count++; }
 
 	struct Glyph_Codepoint * pairs = MEMORY_ALLOCATE_ARRAY(font_image, struct Glyph_Codepoint, codepoints_count);
 
 	uint32_t count = 0;
-	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) {
+	FOR_UTF8 (length, data, it) {
 		uint32_t const glyph_id = font_get_glyph_id(font_image->font, it.codepoint);
 		if (glyph_id == 0) { continue; }
 		pairs[count] = (struct Glyph_Codepoint){
@@ -163,9 +163,9 @@ void font_image_add_kerning_from_text(struct Font_Image * font_image, uint32_t l
 
 void font_image_add_kerning_all(struct Font_Image * font_image) {
 	hash_table_u64_clear(&font_image->kerning);
-	for (struct Hash_Table_U32_Iterator it1 = {0}; hash_table_u32_iterate(&font_image->table, &it1); /*empty*/) {
+	FOR_HASH_TABLE_U32 (&font_image->table, it1) {
 		struct Font_Glyph const * glyph1 = it1.value;
-		for (struct Hash_Table_U32_Iterator it2 = {0}; hash_table_u32_iterate(&font_image->table, &it2); /*empty*/) {
+		FOR_HASH_TABLE_U32 (&font_image->table, it2) {
 			struct Font_Glyph const * glyph2 = it2.value;
 			font_image_add_kerning(font_image, it1.key_hash, it2.key_hash, glyph1->id, glyph2->id);
 		}
@@ -177,7 +177,7 @@ void font_image_render(struct Font_Image * font_image) {
 	uint32_t const padding = 1;
 
 	// track glyphs usage
-	for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(&font_image->table, &it); /*empty*/) {
+	FOR_HASH_TABLE_U32 (&font_image->table, it) {
 		if (it.key_hash == CODEPOINT_EMPTY) { continue; }
 		struct Font_Glyph * glyph = it.value;
 
@@ -197,7 +197,7 @@ void font_image_render(struct Font_Image * font_image) {
 	uint32_t symbols_count = 0;
 	struct Font_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(font_image, struct Font_Symbol, font_image->table.count);
 
-	for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(&font_image->table, &it); /*empty*/) {
+	FOR_HASH_TABLE_U32 (&font_image->table, it) {
 		struct Font_Glyph const * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 

@@ -11,11 +11,6 @@
 //
 #include "json.h"
 
-struct JSON const c_json_true  = {.type = JSON_BOOLEAN, .as.boolean = true,};
-struct JSON const c_json_false = {.type = JSON_BOOLEAN, .as.boolean = false,};
-struct JSON const c_json_null  = {.type = JSON_NULL,};
-struct JSON const c_json_error = {.type = JSON_ERROR,};
-
 static void json_init_internal(struct JSON * value, struct Strings * strings, char const * data);
 void json_init(struct JSON * value, struct Strings * strings, char const * data) {
 	json_init_internal(value, strings, data);
@@ -25,9 +20,7 @@ void json_free(struct JSON * value) {
 	switch (value->type) {
 		case JSON_OBJECT: {
 			struct Hash_Table_U32 * table = &value->as.table;
-			for (struct Hash_Table_U32_Iterator it = {0}; hash_table_u32_iterate(table, &it); /*empty*/) {
-				json_free(it.value);
-			}
+			FOR_HASH_TABLE_U32 (table, it) { json_free(it.value); }
 			hash_table_u32_free(table);
 		} break;
 
@@ -360,3 +353,9 @@ static void json_init_internal(struct JSON * value, struct Strings * strings, ch
 	finalize:
 	json_scanner_free(&parser.scanner);
 }
+
+//
+struct JSON const c_json_true  = {.type = JSON_BOOLEAN, .as.boolean = true,};
+struct JSON const c_json_false = {.type = JSON_BOOLEAN, .as.boolean = false,};
+struct JSON const c_json_null  = {.type = JSON_NULL,};
+struct JSON const c_json_error = {.type = JSON_ERROR,};

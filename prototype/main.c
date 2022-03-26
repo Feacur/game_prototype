@@ -91,7 +91,7 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 
 		// @todo: precalculate all cameras?
 		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
-		if (camera->gpu_target_ref.id != 0 && camera->gpu_target_ref.id != c_ref_empty.id) {
+		if (!ref_equals(camera->gpu_target_ref, c_ref_zero)) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
@@ -199,7 +199,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 		// prepare camera
 		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
-		if (camera->gpu_target_ref.id != 0 && camera->gpu_target_ref.id != c_ref_empty.id) {
+		if (!ref_equals(camera->gpu_target_ref, c_ref_zero)) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 

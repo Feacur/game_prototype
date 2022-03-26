@@ -33,4 +33,9 @@ void hash_table_any_del_at(struct Hash_Table_Any * hash_table, uint32_t key_inde
 
 bool hash_table_any_iterate(struct Hash_Table_Any * hash_table, struct Hash_Table_Any_Iterator * iterator);
 
+#define FOR_HASH_TABLE_ANY(data, it) for ( \
+	struct Hash_Table_Any_Iterator it = {0}; \
+	hash_table_any_iterate(data, &it); \
+) \
+
 #endif

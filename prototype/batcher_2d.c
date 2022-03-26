@@ -195,7 +195,7 @@ void batcher_2d_add_text(
 	//        UVs can be postponed
 	// @idea: decode UTF-8 once into an array
 	uint32_t codepoints_count = 0;
-	for (struct UTF8_Iterator it = {0}; utf8_iterate(length, data, &it); /*empty*/) {
+	FOR_UTF8 (length, data, it) {
 		switch (it.codepoint) {
 			case CODEPOINT_ZERO_WIDTH_SPACE: break;
 
@@ -260,17 +260,17 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 			hash_set_u64_set(&fonts, (uint64_t)text->font);
 		}
 
-		for (struct Hash_Set_U64_Iterator it = {0}; hash_set_u64_iterate(&fonts, &it); /*empty*/) {
+		FOR_HASH_SET_U64 (&fonts, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
 			font_image_add_kerning_all(font->buffer);
 		}
 
-		for (struct Hash_Set_U64_Iterator it = {0}; hash_set_u64_iterate(&fonts, &it); /*empty*/) {
+		FOR_HASH_SET_U64 (&fonts, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
 			font_image_render(font->buffer);
 		}
 
-		for (struct Hash_Set_U64_Iterator it = {0}; hash_set_u64_iterate(&fonts, &it); /*empty*/) {
+		FOR_HASH_SET_U64 (&fonts, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
 			gpu_texture_update(font->gpu_ref, font_image_get_asset(font->buffer));
 		}
@@ -303,7 +303,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 		float const tab_size = space_size * 4; // @todo: expose tab scale
 
 		uint32_t previous_codepoint = 0;
-		for (struct UTF8_Iterator it = {0}; utf8_iterate(text->length, text_data, &it); /*empty*/) {
+		FOR_UTF8 (text->length, text_data, it) {
 			switch (it.codepoint) {
 				case CODEPOINT_ZERO_WIDTH_SPACE: break;
 

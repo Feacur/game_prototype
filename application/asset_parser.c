@@ -175,7 +175,7 @@ void state_read_json_target(struct JSON const * json, struct Ref * result) {
 		}
 	}
 
-	if (result->id == c_ref_empty.id) { DEBUG_BREAK(); }
+	if (ref_equals(*result, c_ref_zero)) { DEBUG_BREAK(); }
 	array_any_free(&parameters_buffer);
 }
 
@@ -304,7 +304,7 @@ static void state_read_json_uniform_texture(struct Asset_System * system, struct
 	if (path.data == NULL) { return; }
 
 	struct Asset_Ref const asset_ref = asset_system_aquire(system, path);
-	if (asset_ref.resource_id == с_asset_ref_empty.resource_id) { return; }
+	if (asset_ref.name_id == с_asset_ref_zero.name_id) { return; }
 
 	void const * instance = asset_system_find_instance(system, asset_ref);
 	if (instance == NULL) { return; }

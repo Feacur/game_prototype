@@ -17,4 +17,9 @@ uint32_t utf8_codepoint_decode(uint8_t const * value, uint32_t length);
 
 bool utf8_iterate(uint32_t length, uint8_t const * data, struct UTF8_Iterator * it);
 
+#define FOR_UTF8(length, data, it) for ( \
+	struct UTF8_Iterator it = {0}; \
+	utf8_iterate(length, data, &it); \
+) \
+
 #endif

@@ -3,10 +3,15 @@
 
 #include "framework/common.h"
 
+// @note: it's ok to zero-initialize this
 struct Ref {
 	uint32_t id, gen;
 };
 
-extern struct Ref const c_ref_empty;
+inline static bool ref_equals(struct Ref v1, struct Ref v2) {
+	return v1.gen == v2.gen && v1.id == v2.id;
+}
+
+extern struct Ref const c_ref_zero;
 
 #endif

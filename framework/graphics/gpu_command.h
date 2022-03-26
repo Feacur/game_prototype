@@ -45,10 +45,10 @@ struct GPU_Command_Draw {
 struct GPU_Command {
 	enum GPU_Command_Type type;
 	union {
-		struct GPU_Command_Cull    cull;
-		struct GPU_Command_Target  target;
-		struct GPU_Command_Clear   clear;
-		struct GPU_Command_Draw    draw;
+		struct GPU_Command_Cull   cull;
+		struct GPU_Command_Target target;
+		struct GPU_Command_Clear  clear;
+		struct GPU_Command_Draw   draw;
 	} as;
 };
 

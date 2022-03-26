@@ -35,11 +35,13 @@ static void array_any_ensure_capacity(struct Array_Any * array, uint32_t target_
 
 void array_any_push(struct Array_Any * array, void const * value) {
 	array_any_ensure_capacity(array, array->count + 1);
-	common_memcpy(
-		(uint8_t *)array->data + array->value_size * array->count,
-		value,
-		array->value_size
-	);
+	if (value != NULL) {
+		common_memcpy(
+			(uint8_t *)array->data + array->value_size * array->count,
+			value,
+			array->value_size
+		);
+	}
 	array->count++;
 }
 
