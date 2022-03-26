@@ -91,7 +91,7 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 
 		// @todo: precalculate all cameras?
 		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
-		if (camera->gpu_target_ref.id != 0 && camera->gpu_target_ref.id != ref_empty.id) {
+		if (camera->gpu_target_ref.id != 0 && camera->gpu_target_ref.id != c_ref_empty.id) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
@@ -199,7 +199,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 		// prepare camera
 		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
-		if (camera->gpu_target_ref.id != 0 && camera->gpu_target_ref.id != ref_empty.id) {
+		if (camera->gpu_target_ref.id != 0 && camera->gpu_target_ref.id != c_ref_empty.id) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
 		}
 
@@ -278,6 +278,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
 					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->mesh);
 
+					// @todo: move out of the loop per-camera and global uniforms
 					uint32_t const override_offset = gs_game.uniforms.headers.count;
 					gfx_uniforms_push(&gs_game.uniforms, gs_main_uniforms.projection, (struct Gfx_Uniform_In){
 						.size = sizeof(mat4_projection),

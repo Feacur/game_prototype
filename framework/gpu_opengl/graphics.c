@@ -21,7 +21,7 @@
 // @todo: expose screen buffer settings, as well as OpenGL's
 // @idea: use dedicated samplers instead of texture defaults
 // @idea: support older OpenGL versions (pre direct state access, which is 4.5)
-// @idea: condense graphics material's buffers into a single bytes arrays?
+// @idea: use arrays and tables
 
 #define MAX_UNIFORMS 32
 #define MAX_UNITS_PER_MATERIAL 64
@@ -528,7 +528,7 @@ struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Ty
 	}
 
 	logger_to_console("failure: target doesn't have requested texture\n"); DEBUG_BREAK();
-	return ref_empty;
+	return c_ref_empty;
 }
 
 // ----- ----- ----- ----- -----
@@ -893,12 +893,9 @@ static void graphics_upload_uniforms(struct Gpu_Program const * gpu_program, str
 }
 
 static bool graphics_should_blend(struct Blend_Func const * func) {
-	return (func != NULL)
-		&& (func->op != BLEND_OP_NONE)
-		&& (
-			(func->src != BLEND_FACTOR_ONE) ||
-			(func->dst != BLEND_FACTOR_ZERO)
-		);
+	if (func == NULL) { return false; }
+	if (func->op == BLEND_OP_NONE) { return false; }
+	return true;
 }
 
 static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
@@ -912,8 +909,8 @@ static void graphics_set_blend_mode(struct Blend_Mode const * mode) {
 	glBlendColor(
 		((mode->rgba >> 24) & 0xff) / 255.0f,
 		((mode->rgba >> 16) & 0xff) / 255.0f,
-		((mode->rgba >> 8) & 0xff) / 255.0f,
-		((mode->rgba >> 0) & 0xff) / 255.0f
+		((mode->rgba >>  8) & 0xff) / 255.0f,
+		((mode->rgba >>  0) & 0xff) / 255.0f
 	);
 
 	//
@@ -985,7 +982,7 @@ inline static void gpu_execute_target(struct GPU_Command_Target const * command)
 	graphics_select_target(command->gpu_ref);
 
 	uint32_t viewport_size_x = command->screen_size_x, viewport_size_y = command->screen_size_y;
-	if (command->gpu_ref.id != 0 && command->gpu_ref.id != ref_empty.id) {
+	if (command->gpu_ref.id != 0 && command->gpu_ref.id != c_ref_empty.id) {
 		gpu_target_get_size(command->gpu_ref, &viewport_size_x, &viewport_size_y);
 	}
 

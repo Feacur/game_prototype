@@ -13,7 +13,7 @@ void gpu_library_functions_init(void * (* get)(struct CString name));
 void gpu_library_functions_free(void);
 
 #define XMACRO(type, name) extern type gl ## name;
-#include "xmacro.h"
+#include "functions_xmacro.h"
 
 //
 

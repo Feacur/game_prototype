@@ -166,7 +166,7 @@ uint32_t ref_table_get_count(struct Ref_Table * ref_table) {
 }
 
 struct Ref ref_table_ref_at(struct Ref_Table * ref_table, uint32_t index) {
-	if (index >= ref_table->count) { return ref_empty; }
+	if (index >= ref_table->count) { return c_ref_empty; }
 	uint32_t const sparse_index = ref_table->dense[index];
 	return (struct Ref){
 		.id = sparse_index,

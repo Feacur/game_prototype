@@ -111,8 +111,8 @@ GLint gpu_wrap_mode(enum Wrap_Mode value) {
 	switch (value) {
 		case WRAP_MODE_NONE:          return GL_CLAMP_TO_EDGE;
 		case WRAP_MODE_EDGE:          return GL_CLAMP_TO_EDGE;
-		case WRAP_MODE_BORDER:        return GL_CLAMP_TO_BORDER;
 		case WRAP_MODE_REPEAT:        return GL_REPEAT;
+		case WRAP_MODE_BORDER:        return GL_CLAMP_TO_BORDER;
 		case WRAP_MODE_MIRROR_EDGE:   return GL_MIRROR_CLAMP_TO_EDGE;
 		case WRAP_MODE_MIRROR_REPEAT: return GL_MIRRORED_REPEAT;
 	}

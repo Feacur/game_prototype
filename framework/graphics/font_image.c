@@ -12,12 +12,14 @@
 #include "framework/logger.h"
 #include "framework/unicode.h"
 
+#define GLYPH_USAGE_MAX UINT8_MAX
+
 struct Font_Image {
 	struct Image buffer;
 	//
 	struct Font const * font;
-	struct Hash_Table_U32 table;
-	struct Hash_Table_U64 kerning;
+	struct Hash_Table_U32 table; // codepoint : rendered glyph
+	struct Hash_Table_U64 kerning; // codepoints pair : offset
 	float scale;
 	bool rendered;
 };
@@ -60,17 +62,16 @@ struct Font_Image * font_image_init(struct Font const * font, int32_t size) {
 	// setup an error glyph
 	float const size_error_y = font_image_get_ascent(font_image);
 	float const size_error_x = size_error_y / 2;
-	float const scale_error[] = {0.2f, 0.0f, 0.9f, 0.8f};
 
 	hash_table_u32_set(&font_image->table, CODEPOINT_EMPTY, &(struct Font_Glyph){
 		.params = (struct Glyph_Params){
 			.full_size_x = size_error_x,
-			.rect[0] = (int32_t)(size_error_x * scale_error[0]),
-			.rect[1] = (int32_t)(size_error_y * scale_error[1]),
-			.rect[2] = (int32_t)(size_error_x * scale_error[2]),
-			.rect[3] = (int32_t)(size_error_y * scale_error[3]),
+			.rect[0] = (int32_t)maths_floor(size_error_x * 0.2f),
+			.rect[1] = (int32_t)maths_floor(size_error_y * 0.0f),
+			.rect[2] = (int32_t)maths_ceil (size_error_x * 0.9f),
+			.rect[3] = (int32_t)maths_ceil (size_error_y * 0.8f),
 		},
-		// .usage = UINT8_MAX,
+		// .usage = GLYPH_USAGE_MAX,
 	});
 
 	return font_image;
@@ -409,7 +410,7 @@ static int font_image_sort_comparison(void const * v1, void const * v2) {
 
 inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t codepoint) {
 	struct Font_Glyph * glyph = hash_table_u32_get(&font_image->table, codepoint);
-	if (glyph != NULL) { if (glyph->usage < UINT8_MAX) { glyph->usage++; } return; }
+	if (glyph != NULL) { glyph->usage = GLYPH_USAGE_MAX; return; }
 
 	uint32_t const glyph_id = font_get_glyph_id(font_image->font, codepoint);
 	if (glyph_id == 0) { logger_to_console("font misses a glyph for codepoint '0x%x'\n", codepoint); DEBUG_BREAK(); return; }
@@ -421,7 +422,7 @@ inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t
 	hash_table_u32_set(&font_image->table, codepoint, &(struct Font_Glyph){
 		.params = glyph_params,
 		.id = glyph_id,
-		.usage = UINT8_MAX,
+		.usage = GLYPH_USAGE_MAX,
 	});
 }
 
@@ -435,3 +436,5 @@ inline static void font_image_add_kerning(struct Font_Image * font_image, uint32
 	float const value_float = ((float)value) * font_image->scale;
 	hash_table_u64_set(&font_image->kerning, key_hash, &value_float);
 }
+
+#undef GLYPH_USAGE_MAX

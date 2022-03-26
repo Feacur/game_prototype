@@ -130,7 +130,7 @@ bool json_at_boolean(struct JSON const * value, uint32_t index, bool default_val
 //
 
 struct JSON_Parser {
-	struct Strings * strings;
+	struct Strings * strings; // keys, string values
 	struct JSON_Scanner scanner;
 	struct JSON_Token previous, current;
 	bool error, panic;
@@ -143,12 +143,12 @@ static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token 
 	parser->panic = true;
 
 	static char const * c_json_token_names[] = {
-		[JSON_TOKEN_ERROR_IDENTIFIER] = "identifier",
-		[JSON_TOKEN_ERROR_UNKNOWN_CHARACTER] = "unknown character",
+		[JSON_TOKEN_ERROR_IDENTIFIER]          = "identifier",
+		[JSON_TOKEN_ERROR_UNKNOWN_CHARACTER]   = "unknown character",
 		[JSON_TOKEN_ERROR_UNTERMINATED_STRING] = "unterminated string",
-		[JSON_TOKEN_ERROR_UNESCAPED_CONTROL] = "unescaped control",
-		[JSON_TOKEN_ERROR_MALFORMED_UNICODE] = "malformed unicode",
-		[JSON_TOKEN_EOF] = "eof",
+		[JSON_TOKEN_ERROR_UNESCAPED_CONTROL]   = "unescaped control",
+		[JSON_TOKEN_ERROR_MALFORMED_UNICODE]   = "malformed unicode",
+		[JSON_TOKEN_EOF]                       = "eof",
 	};
 
 	char const * const reason = c_json_token_names[token->type];

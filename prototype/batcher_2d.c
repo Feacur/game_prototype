@@ -57,7 +57,7 @@ struct Batcher_2D {
 	struct Array_Any buffer_vertices;
 	struct Array_U32 buffer_indices;
 	//
-	struct Buffer      mesh_buffers[BATCHER_2D_BUFFERS_COUNT];
+	struct Buffer          mesh_buffers[BATCHER_2D_BUFFERS_COUNT]; // a convenience temporary container
 	struct Mesh_Parameters mesh_parameters[BATCHER_2D_BUFFERS_COUNT];
 	struct Ref gpu_mesh_ref;
 };

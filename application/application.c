@@ -23,7 +23,7 @@ static struct Application {
 
 static uint64_t get_target_ticks(int32_t vsync_mode) {
 	uint32_t const vsync_factor = (vsync_mode > 0) ? (uint32_t)vsync_mode : 1;
-	uint32_t refresh_rate = (vsync_mode != 0) || (gs_app.config.target_refresh_rate == 0)
+	uint32_t const refresh_rate = ((vsync_mode != 0) || (gs_app.config.target_refresh_rate == 0))
 		? platform_window_get_refresh_rate(gs_app.window, gs_app.config.target_refresh_rate)
 		: gs_app.config.target_refresh_rate;
 	return gs_app.ticks.per_second * vsync_factor / refresh_rate;

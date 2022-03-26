@@ -26,7 +26,7 @@ static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 
 	static char const * c_wfobj_token_names[] = {
 		[WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER] = "unknown character",
-		[WFOBJ_TOKEN_EOF] = "eof",
+		[WFOBJ_TOKEN_EOF]                     = "eof",
 	};
 
 	char const * const reason = c_wfobj_token_names[token->type];

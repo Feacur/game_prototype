@@ -49,11 +49,11 @@ enum Wrap_Mode state_read_json_wrap_mode(struct JSON const * json) {
 		if (id == json_find_id(json, S_("edge"))) {
 			return WRAP_MODE_EDGE;
 		}
-		if (id == json_find_id(json, S_("border"))) {
-			return WRAP_MODE_BORDER;
-		}
 		if (id == json_find_id(json, S_("repeat"))) {
 			return WRAP_MODE_REPEAT;
+		}
+		if (id == json_find_id(json, S_("border"))) {
+			return WRAP_MODE_BORDER;
 		}
 		if (id == json_find_id(json, S_("mirror_edge"))) {
 			return WRAP_MODE_MIRROR_EDGE;
@@ -175,7 +175,7 @@ void state_read_json_target(struct JSON const * json, struct Ref * result) {
 		}
 	}
 
-	if (result->id == ref_empty.id) { DEBUG_BREAK(); }
+	if (result->id == c_ref_empty.id) { DEBUG_BREAK(); }
 	array_any_free(&parameters_buffer);
 }
 

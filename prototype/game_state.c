@@ -96,9 +96,9 @@ static void state_read_json_camera(struct JSON const * json, struct Camera * cam
 	struct CString const target = json_get_string(json, S_("target"), S_NULL);
 	if (target.data != NULL) {
 		struct Asset_Target const * asset = asset_system_aquire_instance(&gs_game.assets, target);
-		camera->gpu_target_ref = (asset != NULL) ? asset->gpu_ref : ref_empty;
+		camera->gpu_target_ref = (asset != NULL) ? asset->gpu_ref : c_ref_empty;
 	}
-	else { camera->gpu_target_ref = ref_empty; }
+	else { camera->gpu_target_ref = c_ref_empty; }
 }
 
 static void state_read_json_cameras(struct JSON const * json) {

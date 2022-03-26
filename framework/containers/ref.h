@@ -7,6 +7,6 @@ struct Ref {
 	uint32_t id, gen;
 };
 
-extern struct Ref const ref_empty;
+extern struct Ref const c_ref_empty;
 
 #endif
