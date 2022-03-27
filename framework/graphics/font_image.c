@@ -99,6 +99,7 @@ void font_image_add_glyphs_from_text(struct Font_Image * font_image, uint32_t le
 			case CODEPOINT_ZERO_WIDTH_SPACE: break;
 
 			case ' ':
+			case '\t':
 			case CODEPOINT_NON_BREAKING_SPACE:
 				font_image_add_glyph(font_image, ' ');
 				break;

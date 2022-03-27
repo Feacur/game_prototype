@@ -196,24 +196,9 @@ void batcher_2d_add_text(
 	// @idea: decode UTF-8 once into an array
 	uint32_t codepoints_count = 0;
 	FOR_UTF8 (length, data, it) {
-		switch (it.codepoint) {
-			case CODEPOINT_ZERO_WIDTH_SPACE: break;
-
-			case ' ':
-			case CODEPOINT_NON_BREAKING_SPACE:
-				break;
-
-			case '\t': break;
-
-			case '\r': break;
-			case '\n': break;
-
-			default: if (it.codepoint > ' ') {
-				codepoints_count++;
-			} break;
-		}
+		if (!codepoint_is_visible(it.codepoint)) { continue; }
+		codepoints_count++;
 	}
-
 	if (codepoints_count == 0) { return; }
 
 	//

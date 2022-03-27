@@ -23,13 +23,6 @@ void asset_system_init(struct Asset_System * system) {
 	hash_table_u32_init(&system->types, sizeof(struct Asset_Type));
 	hash_table_u32_init(&system->refs, sizeof(struct Ref));
 	hash_table_u32_init(&system->map, sizeof(uint32_t));
-
-	{
-		// @note: consider `type_id == 0` and `resource_id == 0` empty
-		uint32_t const id = strings_add(&system->strings, S_EMPTY);
-		hash_table_u32_set(&system->types, id, &(struct Asset_Type){0});
-		hash_table_u32_set(&system->refs, id, &(struct Ref){0});
-	}
 }
 
 void asset_system_free(struct Asset_System * system) {
@@ -90,11 +83,11 @@ void asset_system_del_type(struct Asset_System * system, struct CString type) {
 }
 
 struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CString name) {
-	if (name.length == INDEX_EMPTY) { logger_to_console("empty name"); DEBUG_BREAK(); return с_asset_ref_zero; }
+	if (name.length == INDEX_EMPTY) { logger_to_console("empty name"); DEBUG_BREAK(); return c_asset_ref_empty; }
 
 	//
 	uint32_t const extension_length = asset_system_get_extension_from_name(name);
-	if (extension_length == 0) { logger_to_console("empty extension"); DEBUG_BREAK(); return с_asset_ref_zero; }
+	if (extension_length == 0) { logger_to_console("empty extension"); DEBUG_BREAK(); return c_asset_ref_empty; }
 
 	char const * extension_name = name.data + (name.length - extension_length);
 
@@ -105,23 +98,23 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 	});
 	if (extension_id == INDEX_EMPTY) {
 		logger_to_console("unknown extension: %.*s\n", extension_length, extension_name); DEBUG_BREAK();
-		return с_asset_ref_zero;
+		return c_asset_ref_empty;
 	}
 
 	uint32_t const * type_id = hash_table_u32_get(&system->map, extension_id);
 	if (type_id == NULL) {
 		logger_to_console("can't infer type from extension: %.*s\n", extension_length, extension_name); DEBUG_BREAK();
-		return с_asset_ref_zero;
+		return c_asset_ref_empty;
 	}
 
 	//
-	uint32_t resource_id = strings_add(&system->strings, name);
-	struct Ref const * instance_ref_ptr = hash_table_u32_get(&system->refs, resource_id);
+	uint32_t name_id = strings_add(&system->strings, name);
+	struct Ref const * instance_ref_ptr = hash_table_u32_get(&system->refs, name_id);
 	if (instance_ref_ptr != NULL) {
 		return (struct Asset_Ref){
 			.instance_ref = *instance_ref_ptr,
 			.type_id = *type_id,
-			.name_id = resource_id,
+			.name_id = name_id,
 		};
 	}
 
@@ -130,15 +123,15 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 	if (asset_type == NULL) {
 		struct CString const type = strings_get(&system->strings, *type_id);
 		logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK();
-		return с_asset_ref_zero;
+		return c_asset_ref_empty;
 	}
 
 	//
 	struct Ref const instance_ref = ref_table_aquire(&asset_type->instances, NULL);
-	hash_table_u32_set(&system->refs, resource_id, &instance_ref);
+	hash_table_u32_set(&system->refs, name_id, &instance_ref);
 
 	struct Asset_Entry * entry = ref_table_get(&asset_type->instances, instance_ref);
-	entry->header.name_id = resource_id;
+	entry->header.name_id = name_id;
 
 	if (asset_type->callbacks.init != NULL) {
 		asset_type->callbacks.init(system, entry->payload, name);
@@ -147,17 +140,17 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 	return (struct Asset_Ref){
 		.instance_ref = instance_ref,
 		.type_id = *type_id,
-		.name_id = resource_id,
+		.name_id = name_id,
 	};
 }
 
 void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_ref) {
-	if (asset_ref.type_id == с_asset_ref_zero.type_id) {
+	if (asset_ref.type_id == c_asset_ref_empty.type_id) {
 		logger_to_console("unknown type"); DEBUG_BREAK();
 		return;
 	}
 
-	if (asset_ref.name_id == с_asset_ref_zero.name_id) {
+	if (asset_ref.name_id == c_asset_ref_empty.name_id) {
 		logger_to_console("unknown resource"); DEBUG_BREAK();
 		return;
 	}
@@ -179,11 +172,11 @@ void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_r
 }
 
 void * asset_system_find_instance(struct Asset_System * system, struct Asset_Ref asset_ref) {
-	if (asset_ref.type_id == с_asset_ref_zero.type_id) {
+	if (asset_ref.type_id == c_asset_ref_empty.type_id) {
 		logger_to_console("unknown type"); DEBUG_BREAK(); return NULL;
 	}
 
-	if (asset_ref.name_id == с_asset_ref_zero.name_id) {
+	if (asset_ref.name_id == c_asset_ref_empty.name_id) {
 		logger_to_console("unknown resource"); DEBUG_BREAK(); return NULL;
 	}
 

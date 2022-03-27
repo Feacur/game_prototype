@@ -1,4 +1,4 @@
 //
 #include "ref.h"
 
-struct Ref const c_ref_zero = {0};
+struct Ref const c_ref_empty = {0};

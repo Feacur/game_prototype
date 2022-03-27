@@ -6,5 +6,7 @@
 [third_party] (?) add a MakeGlyphSDF implementation
 [prototype] read font from the attached material for rendering or update material with the font's texture
 [project] (?) make a custom builder app
+[prototype] convenient entities system
+[prototype] UI system
 
 [Markdown](https://www.markdownguide.org/basic-syntax/)

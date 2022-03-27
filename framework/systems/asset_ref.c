@@ -1,4 +1,4 @@
 //
 #include "asset_ref.h"
 
-struct Asset_Ref const с_asset_ref_zero = {0};
+struct Asset_Ref const c_asset_ref_empty = {0};
