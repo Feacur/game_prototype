@@ -8,7 +8,7 @@ struct Array_U32 {
 	uint32_t * data;
 };
 
-void array_u32_init(struct Array_U32 * array);
+struct Array_U32 array_u32_init(void);
 void array_u32_free(struct Array_U32 * array);
 
 void array_u32_clear(struct Array_U32 * array);

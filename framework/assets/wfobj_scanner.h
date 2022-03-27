@@ -42,7 +42,7 @@ struct WFObj_Scanner {
 	uint32_t line_start, line_current;
 };
 
-void wfobj_scanner_init(struct WFObj_Scanner * scanner, char const * text);
+struct WFObj_Scanner wfobj_scanner_init(char const * text);
 void wfobj_scanner_free(struct WFObj_Scanner * scanner);
 
 struct WFObj_Token wfobj_scanner_next(struct WFObj_Scanner * scanner);

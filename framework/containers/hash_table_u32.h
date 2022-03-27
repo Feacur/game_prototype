@@ -17,7 +17,7 @@ struct Hash_Table_U32 {
 	uint8_t * marks;
 };
 
-void hash_table_u32_init(struct Hash_Table_U32 * hash_table, uint32_t value_size);
+struct Hash_Table_U32 hash_table_u32_init(uint32_t value_size);
 void hash_table_u32_free(struct Hash_Table_U32 * hash_table);
 
 void hash_table_u32_clear(struct Hash_Table_U32 * hash_table);

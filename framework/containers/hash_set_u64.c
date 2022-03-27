@@ -5,8 +5,8 @@
 //
 #include "hash_set_u64.h"
 
-void hash_set_u64_init(struct Hash_Set_U64 * hash_set) {
-	*hash_set = (struct Hash_Set_U64){0};
+struct Hash_Set_U64 hash_set_u64_init(void) {
+	return (struct Hash_Set_U64){0};
 }
 
 void hash_set_u64_free(struct Hash_Set_U64 * hash_set) {

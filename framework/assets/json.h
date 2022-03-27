@@ -29,7 +29,7 @@ struct JSON {
 	} as;
 };
 
-void json_init(struct JSON * value, struct Strings * strings, char const * data);
+struct JSON json_init(struct Strings * strings, char const * data);
 void json_free(struct JSON * value);
 
 // -- JSON find id

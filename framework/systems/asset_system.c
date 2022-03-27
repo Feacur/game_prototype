@@ -18,11 +18,13 @@ struct Asset_Entry {
 static void asset_system_del_type_internal(struct Asset_System * system, struct Asset_Type * asset_type);
 static uint32_t asset_system_get_extension_from_name(struct CString name);
 
-void asset_system_init(struct Asset_System * system) {
-	strings_init(&system->strings);
-	hash_table_u32_init(&system->types, sizeof(struct Asset_Type));
-	hash_table_u32_init(&system->refs, sizeof(struct Ref));
-	hash_table_u32_init(&system->map, sizeof(uint32_t));
+struct Asset_System asset_system_init(void) {
+	return (struct Asset_System){
+		.strings = strings_init(),
+		.types = hash_table_u32_init(sizeof(struct Asset_Type)),
+		.refs = hash_table_u32_init(sizeof(struct Ref)),
+		.map = hash_table_u32_init(sizeof(uint32_t)),
+	};
 }
 
 void asset_system_free(struct Asset_System * system) {
@@ -59,9 +61,8 @@ void asset_system_set_type(struct Asset_System * system, struct CString type, st
 
 	struct Asset_Type asset_type = {
 		.callbacks = callbacks,
+		.instances = ref_table_init(SIZE_OF_MEMBER(struct Asset_Entry, header) + value_size),
 	};
-
-	ref_table_init(&asset_type.instances, SIZE_OF_MEMBER(struct Asset_Entry, header) + value_size);
 
 	uint32_t const type_id = strings_add(&system->strings, type);
 

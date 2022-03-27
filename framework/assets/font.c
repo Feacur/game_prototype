@@ -41,6 +41,7 @@ struct Font {
 struct Font * font_init(struct CString path) {
 	struct Font * font = MEMORY_ALLOCATE(NULL, struct Font);
 
+	font->file = buffer_init();
 	bool const read_success = platform_file_read_entire(path, &font->file);
 	if (!read_success || font->file.count == 0) { DEBUG_BREAK(); return font; }
 

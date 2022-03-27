@@ -8,7 +8,7 @@ struct Buffer {
 	uint8_t * data;
 };
 
-void buffer_init(struct Buffer * buffer);
+struct Buffer buffer_init(void);
 void buffer_free(struct Buffer * buffer);
 
 void buffer_clear(struct Buffer * buffer);

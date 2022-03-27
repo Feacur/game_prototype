@@ -341,7 +341,9 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 static void main_fill_settings(struct JSON const * json, void * data) {
 	struct Main_Settings * result = data;
-	strings_init(&result->strings);
+	*result = (struct Main_Settings){
+		.strings = strings_init(),
+	};
 	result->config_id = strings_add(&result->strings, json_get_string(json, S_("config"), S_NULL));
 	result->scene_id = strings_add(&result->strings, json_get_string(json, S_("scene"), S_NULL));
 }

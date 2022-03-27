@@ -5,8 +5,8 @@
 //
 #include "array_any.h"
 
-void array_any_init(struct Array_Any * array, uint32_t value_size) {
-	*array = (struct Array_Any){
+struct Array_Any array_any_init(uint32_t value_size) {
+	return (struct Array_Any){
 		.value_size = value_size,
 	};
 }

@@ -5,8 +5,8 @@
 //
 #include "hash_table_any.h"
 
-void hash_table_any_init(struct Hash_Table_Any * hash_table, uint32_t key_size, uint32_t value_size) {
-	*hash_table = (struct Hash_Table_Any){
+struct Hash_Table_Any hash_table_any_init(uint32_t key_size, uint32_t value_size) {
+	return (struct Hash_Table_Any){
 		.key_size = key_size,
 		.value_size = value_size,
 	};

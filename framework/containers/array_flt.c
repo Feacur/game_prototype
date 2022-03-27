@@ -5,8 +5,8 @@
 //
 #include "array_flt.h"
 
-void array_flt_init(struct Array_Flt * array) {
-	*array = (struct Array_Flt){0};
+struct Array_Flt array_flt_init(void) {
+	return (struct Array_Flt){0};
 }
 
 void array_flt_free(struct Array_Flt * array) {

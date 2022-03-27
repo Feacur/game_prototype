@@ -11,7 +11,7 @@ struct Mesh {
 	struct Mesh_Parameters * parameters;
 };
 
-void mesh_init(struct Mesh * mesh, struct CString path);
+struct Mesh mesh_init(struct CString path);
 void mesh_free(struct Mesh * mesh);
 
 #endif

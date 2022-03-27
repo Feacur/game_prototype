@@ -5,8 +5,8 @@
 //
 #include "array_u64.h"
 
-void array_u64_init(struct Array_U64 * array) {
-	*array = (struct Array_U64){0};
+struct Array_U64 array_u64_init(void) {
+	return (struct Array_U64){0};
 }
 
 void array_u64_free(struct Array_U64 * array) {

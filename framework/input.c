@@ -82,7 +82,7 @@ bool input_mouse_transition(enum Mouse_Code key, bool state) {
 #include "framework/internal/input_to_system.h"
 
 bool input_to_system_init(void) {
-	array_u32_init(&gs_input_state.codepoints);
+	gs_input_state.codepoints = array_u32_init();
 	return true;
 }
 

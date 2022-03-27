@@ -89,16 +89,15 @@ struct Batcher_2D * batcher_2d_init(void) {
 				.flags = MESH_FLAG_INDEX | MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
 			},
 		},
+		.strings         = buffer_init(),
+		.batches         = array_any_init(sizeof(struct Batcher_2D_Batch)),
+		.texts           = array_any_init(sizeof(struct Batcher_2D_Text)),
+		.buffer_vertices = array_any_init(sizeof(struct Batcher_2D_Vertex)),
+		.buffer_indices  = array_u32_init(),
 	};
 
-	buffer_init(&batcher->strings);
-	array_any_init(&batcher->batches,         sizeof(struct Batcher_2D_Batch));
-	array_any_init(&batcher->texts,           sizeof(struct Batcher_2D_Text));
-	array_any_init(&batcher->buffer_vertices, sizeof(struct Batcher_2D_Vertex));
-	array_u32_init(&batcher->buffer_indices);
-
 	for (uint32_t i = 0; i < BATCHER_2D_BUFFERS_COUNT; i++) {
-		buffer_init(batcher->mesh_buffers + i);
+		batcher->mesh_buffers[i] = buffer_init();
 	}
 
 	//
@@ -237,8 +236,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 	// render an upload the atlases
 	{
-		struct Hash_Set_U64 fonts;
-		hash_set_u64_init(&fonts);
+		struct Hash_Set_U64 fonts = hash_set_u64_init();
 
 		for (uint32_t i = 0; i < batcher->texts.count; i++) {
 			struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);

@@ -19,8 +19,6 @@ struct File {
 };
 
 bool platform_file_read_entire(struct CString path, struct Buffer * buffer) {
-	buffer_init(buffer);
-
 	struct File * file = platform_file_init(path, FILE_MODE_READ);
 	if (file == NULL) { return false; }
 

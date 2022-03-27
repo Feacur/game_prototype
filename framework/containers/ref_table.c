@@ -7,9 +7,10 @@
 //
 #include "ref_table.h"
 
-void ref_table_init(struct Ref_Table * ref_table, uint32_t value_size) {
-	*ref_table = (struct Ref_Table){0};
-	array_any_init(&ref_table->buffer, value_size);
+struct Ref_Table ref_table_init(uint32_t value_size) {
+	return (struct Ref_Table){
+		.buffer = array_any_init(value_size),
+	};
 }
 
 void ref_table_free(struct Ref_Table * ref_table) {

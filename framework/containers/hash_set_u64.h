@@ -14,7 +14,7 @@ struct Hash_Set_U64 {
 	uint8_t * marks;
 };
 
-void hash_set_u64_init(struct Hash_Set_U64 * hash_set);
+struct Hash_Set_U64 hash_set_u64_init(void);
 void hash_set_u64_free(struct Hash_Set_U64 * hash_set);
 
 void hash_set_u64_clear(struct Hash_Set_U64 * hash_set);

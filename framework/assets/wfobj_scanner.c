@@ -4,8 +4,8 @@
 //
 #include "wfobj_scanner.h"
 
-void wfobj_scanner_init(struct WFObj_Scanner * scanner, char const * text) {
-	*scanner = (struct WFObj_Scanner){
+struct WFObj_Scanner wfobj_scanner_init(char const * text) {
+	return (struct WFObj_Scanner){
 		.start = text,
 		.current = text,
 	};

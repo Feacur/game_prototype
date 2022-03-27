@@ -7,9 +7,9 @@
 //
 #include "wfobj.h"
 
-inline static void wfobj_init_internal(struct WFObj * obj, char const * text);
-void wfobj_init(struct WFObj * obj, char const * text) {
-	wfobj_init_internal(obj, text);
+inline static struct WFObj wfobj_init_internal(char const * text);
+struct WFObj wfobj_init(char const * text) {
+	return wfobj_init_internal(text);
 }
 
 void wfobj_free(struct WFObj * obj) {
@@ -167,8 +167,15 @@ static void wfobj_do_faces(
 #undef ADVANCE
 }
 
-inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
+inline static struct WFObj wfobj_init_internal(char const * text) {
 #define ADVANCE() wfobj_advance(&scanner, &token)
+
+	struct WFObj result = {
+		.positions = array_flt_init(),
+		.texcoords = array_flt_init(),
+		.normals   = array_flt_init(),
+		.triangles = array_u32_init(),
+	};
 
 	struct WFObj_Scanner scanner;
 	struct WFObj_Token token;
@@ -179,7 +186,7 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 	uint32_t normal_lines = 0;
 	uint32_t face_lines = 0;
 
-	wfobj_scanner_init(&scanner, text);
+	scanner = wfobj_scanner_init(text);
 	token = (struct WFObj_Token){0}; ADVANCE();
 	while (token.type != WFOBJ_TOKEN_EOF) {
 		switch (token.type) {
@@ -194,23 +201,17 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 	}
 	wfobj_scanner_free(&scanner);
 
-	array_flt_init(&obj->positions);
-	array_flt_init(&obj->texcoords);
-	array_flt_init(&obj->normals);
-	array_u32_init(&obj->triangles);
-
-	array_flt_resize(&obj->positions, position_lines * 3);
-	array_flt_resize(&obj->texcoords, texcoord_lines * 2);
-	array_flt_resize(&obj->normals, normal_lines * 3);
-	array_u32_resize(&obj->triangles, face_lines * 3 * 2);
+	array_flt_resize(&result.positions, position_lines * 3);
+	array_flt_resize(&result.texcoords, texcoord_lines * 2);
+	array_flt_resize(&result.normals, normal_lines * 3);
+	array_u32_resize(&result.triangles, face_lines * 3 * 2);
 
 	//
 	// @todo: arena/stack allocator
-	struct Array_U32 scratch_u32;
-	array_u32_init(&scratch_u32);
+	struct Array_U32 scratch_u32 = array_u32_init();
 	array_u32_resize(&scratch_u32, 3 * 4);
 
-	wfobj_scanner_init(&scanner, text);
+	scanner = wfobj_scanner_init(text);
 	token = (struct WFObj_Token){0}; ADVANCE();
 	while (token.type != WFOBJ_TOKEN_EOF) {
 		switch (token.type) {
@@ -223,17 +224,17 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 
 			// valid
 			case WFOBJ_TOKEN_POSITION: { ADVANCE();
-				wfobj_do_vertex(&scanner, &token, &obj->positions, 3);
+				wfobj_do_vertex(&scanner, &token, &result.positions, 3);
 				break;
 			}
 
 			case WFOBJ_TOKEN_TEXCOORD: { ADVANCE();
-				wfobj_do_vertex(&scanner, &token, &obj->texcoords, 2);
+				wfobj_do_vertex(&scanner, &token, &result.texcoords, 2);
 				break;
 			}
 
 			case WFOBJ_TOKEN_NORMAL: { ADVANCE();
-				wfobj_do_vertex(&scanner, &token, &obj->normals, 3);
+				wfobj_do_vertex(&scanner, &token, &result.normals, 3);
 				break;
 			}
 
@@ -241,14 +242,14 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 				scratch_u32.count = 0;
 				wfobj_do_faces(
 					&scanner, &token, &scratch_u32,
-					obj->positions.count, obj->texcoords.count, obj->normals.count
+					result.positions.count, result.texcoords.count, result.normals.count
 				);
 
 				uint32_t indices_count = scratch_u32.count / 3;
 				for (uint32_t i = 2; i < indices_count; i++) {
-					array_u32_push_many(&obj->triangles, 3, scratch_u32.data + 0);
-					array_u32_push_many(&obj->triangles, 3, scratch_u32.data + (i - 1) * 3);
-					array_u32_push_many(&obj->triangles, 3, scratch_u32.data + i * 3);
+					array_u32_push_many(&result.triangles, 3, scratch_u32.data + 0);
+					array_u32_push_many(&result.triangles, 3, scratch_u32.data + (i - 1) * 3);
+					array_u32_push_many(&result.triangles, 3, scratch_u32.data + i * 3);
 				}
 				break;
 			}
@@ -260,8 +261,9 @@ inline static void wfobj_init_internal(struct WFObj * obj, char const * text) {
 		ADVANCE();
 	}
 	wfobj_scanner_free(&scanner);
-
 	array_u32_free(&scratch_u32);
+
+	return result;
 
 #undef ADVANCE
 }

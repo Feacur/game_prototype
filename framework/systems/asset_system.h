@@ -22,7 +22,7 @@ struct Asset_Callbacks {
 	void (* free)(struct Asset_System * system, void * instance);
 };
 
-void asset_system_init(struct Asset_System * system);
+struct Asset_System asset_system_init(void);
 void asset_system_free(struct Asset_System * system);
 
 void asset_system_map_extension(struct Asset_System * system, struct CString type_name, struct CString extension);

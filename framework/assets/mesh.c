@@ -15,20 +15,18 @@ static void wfobj_repack(
 	struct Array_U32 * indices
 );
 
-static void mesh_fill(
-	struct Mesh * mesh,
+static struct Mesh mesh_construct(
 	struct Array_Flt const * vertices,
 	struct Array_U32 const * attributes,
 	struct Array_U32 const * indices
 );
 
-void mesh_init(struct Mesh * mesh, struct CString path) {
-	struct Buffer file;
+struct Mesh mesh_init(struct CString path) {
+	struct Buffer file = buffer_init();
 	bool const read_success = platform_file_read_entire(path, &file);
-	if (!read_success || file.count == 0) { DEBUG_BREAK(); return; }
+	if (!read_success || file.count == 0) { DEBUG_BREAK(); return (struct Mesh){0}; }
 
-	struct WFObj wfobj;
-	wfobj_init(&wfobj, (char const *)file.data);
+	struct WFObj wfobj = wfobj_init((char const *)file.data);
 	buffer_free(&file);
 
 	//
@@ -39,8 +37,10 @@ void mesh_init(struct Mesh * mesh, struct CString path) {
 	wfobj_repack(&wfobj, &vertices, &attributes, &indices);
 	wfobj_free(&wfobj);
 
-	mesh_fill(mesh, &vertices, &attributes, &indices);
+	struct Mesh mesh = mesh_construct(&vertices, &attributes, &indices);
 	array_u32_free(&attributes);
+
+	return mesh;
 }
 
 void mesh_free(struct Mesh * mesh) {
@@ -60,9 +60,9 @@ static void wfobj_repack(
 	struct Array_U32 * attributes,
 	struct Array_U32 * indices
 ) {
-	array_flt_init(vertices);
-	array_u32_init(attributes);
-	array_u32_init(indices);
+	*vertices   = array_flt_init();
+	*attributes = array_u32_init();
+	*indices    = array_u32_init();
 
 	uint32_t attributes_buffer[MAX_MESH_ATTRIBUTES];
 	uint32_t attributes_count = 0;
@@ -95,39 +95,41 @@ static void wfobj_repack(
 	}
 }
 
-static void mesh_fill(
-	struct Mesh * mesh,
+static struct Mesh mesh_construct(
 	struct Array_Flt const * vertices,
 	struct Array_U32 const * attributes,
 	struct Array_U32 const * indices
 ) {
-	if (vertices->count == 0) { return; }
-	if (indices->count == 0) { return; }
+	if (vertices->count == 0) { return (struct Mesh){0}; }
+	if (indices->count == 0) { return (struct Mesh){0}; }
 
 	uint32_t const count = 2;
-	mesh->capacity = count;
-	mesh->count = count;
-	mesh->buffers    = MEMORY_ALLOCATE_ARRAY(mesh, struct Buffer, count);
-	mesh->parameters = MEMORY_ALLOCATE_ARRAY(mesh, struct Mesh_Parameters, count);
-
-	mesh->buffers[0] = (struct Buffer){
+	struct Mesh mesh = {
+		.capacity = count,
+		.count = count,
+		.buffers    = MEMORY_ALLOCATE_ARRAY(NULL, struct Buffer, count),
+		.parameters = MEMORY_ALLOCATE_ARRAY(NULL, struct Mesh_Parameters, count),
+	};
+	//
+	mesh.buffers[0] = (struct Buffer){
 		.data = (uint8_t *)vertices->data,
 		.count = sizeof(float) * vertices->count,
 		.capacity = sizeof(float) * vertices->capacity,
 	};
-	mesh->buffers[1] = (struct Buffer){
+	mesh.buffers[1] = (struct Buffer){
 		.data = (uint8_t *)indices->data,
 		.count = sizeof(uint32_t) * indices->count,
 		.capacity = sizeof(uint32_t) * indices->capacity,
 	};
-
-	mesh->parameters[0] = (struct Mesh_Parameters){
+	//
+	mesh.parameters[0] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_R32,
 		.attributes_count = attributes->count / 2,
 	};
-	mesh->parameters[1] = (struct Mesh_Parameters){
+	mesh.parameters[1] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_U32,
 		.flags = MESH_FLAG_INDEX,
 	};
-	common_memcpy(mesh->parameters[0].attributes, attributes->data, sizeof(*attributes->data) * attributes->count);
+	common_memcpy(mesh.parameters[0].attributes, attributes->data, sizeof(*attributes->data) * attributes->count);
+	return mesh;
 }

@@ -34,7 +34,7 @@ struct Gfx_Uniform_Out {
 	void * data;
 };
 
-void gfx_uniforms_init(struct Gfx_Uniforms * uniforms);
+struct Gfx_Uniforms gfx_uniforms_init(void);
 void gfx_uniforms_free(struct Gfx_Uniforms * uniforms);
 
 void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms);
@@ -54,8 +54,7 @@ struct Gfx_Material {
 	struct Gfx_Uniforms uniforms;
 };
 
-void gfx_material_init(
-	struct Gfx_Material * material,
+struct Gfx_Material gfx_material_init(
 	struct Ref gpu_program_ref,
 	struct Blend_Mode const * blend_mode,
 	struct Depth_Mode const * depth_mode

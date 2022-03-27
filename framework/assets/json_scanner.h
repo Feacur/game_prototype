@@ -44,7 +44,7 @@ struct JSON_Scanner {
 	uint32_t line_start, line_current;
 };
 
-void json_scanner_init(struct JSON_Scanner * scanner, char const * text);
+struct JSON_Scanner json_scanner_init(char const * text);
 void json_scanner_free(struct JSON_Scanner * scanner);
 
 struct JSON_Token json_scanner_next(struct JSON_Scanner * scanner);

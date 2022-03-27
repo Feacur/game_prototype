@@ -53,11 +53,11 @@ struct Font_Image * font_image_init(struct Font const * font, int32_t size) {
 				.swizzle[3] = SWIZZLE_OP_R,
 			},
 		},
-		.scale = font_get_scale(font, (float)size),
 		.font = font,
+		.table = hash_table_u32_init(sizeof(struct Font_Glyph)),
+		.kerning = hash_table_u64_init(sizeof(float)),
+		.scale = font_get_scale(font, (float)size),
 	};
-	hash_table_u32_init(&font_image->table, sizeof(struct Font_Glyph));
-	hash_table_u64_init(&font_image->kerning, sizeof(float));
 
 	// setup an error glyph
 	float const size_error_y = font_image_get_ascent(font_image);
@@ -290,8 +290,7 @@ void font_image_render(struct Font_Image * font_image) {
 	common_memset(font_image->buffer.data, 0, sizeof(*font_image->buffer.data) * font_image->buffer.size_x * font_image->buffer.size_y);
 	{
 		// @todo: arena/stack allocator
-		struct Buffer scratch_buffer;
-		buffer_init(&scratch_buffer);
+		struct Buffer scratch_buffer = buffer_init();
 
 		uint32_t line_height = 0;
 		uint32_t offset_x = padding, offset_y = padding;

@@ -20,7 +20,7 @@ struct Hash_Table_Any {
 	uint8_t * marks;
 };
 
-void hash_table_any_init(struct Hash_Table_Any * hash_table, uint32_t key_size, uint32_t value_size);
+struct Hash_Table_Any hash_table_any_init(uint32_t key_size, uint32_t value_size);
 void hash_table_any_free(struct Hash_Table_Any * hash_table);
 
 void hash_table_any_clear(struct Hash_Table_Any * hash_table);

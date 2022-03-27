@@ -19,7 +19,7 @@ struct Ref_Table {
 	uint32_t * dense; // taken sparse index
 };
 
-void ref_table_init(struct Ref_Table * ref_table, uint32_t value_size);
+struct Ref_Table ref_table_init(uint32_t value_size);
 void ref_table_free(struct Ref_Table * ref_table);
 
 void ref_table_clear(struct Ref_Table * ref_table);

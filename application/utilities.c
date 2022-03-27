@@ -8,15 +8,13 @@
 #include "utilities.h"
 
 void process_json(void (* action)(struct JSON const * json, void * output), void * data, struct CString path) {
-	struct Buffer buffer;
+	struct Buffer buffer = buffer_init();
 	bool const read_success = platform_file_read_entire(path, &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); return; }
 
-	struct Strings strings;
-	strings_init(&strings);
+	struct Strings strings = strings_init();
 
-	struct JSON json;
-	json_init(&json, &strings, (char const *)buffer.data);
+	struct JSON json = json_init(&strings, (char const *)buffer.data);
 	buffer_free(&buffer);
 
 	action(&json, data);

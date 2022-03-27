@@ -158,8 +158,7 @@ void state_read_json_target(struct JSON const * json, struct Ref * result) {
 	struct JSON const * buffers_json = json_get(json, S_("buffers"));
 	if (buffers_json->type != JSON_ARRAY) { DEBUG_BREAK(); return; }
 
-	struct Array_Any parameters_buffer;
-	array_any_init(&parameters_buffer, sizeof(struct Texture_Parameters));
+	struct Array_Any parameters_buffer = array_any_init(sizeof(struct Texture_Parameters));
 
 	uint32_t const buffers_count = json_count(buffers_json);
 	for (uint32_t i = 0; i < buffers_count; i++) {
@@ -192,8 +191,8 @@ void state_read_json_material(struct Asset_System * system, struct JSON const * 
 	struct Depth_Mode depth_mode;
 	state_read_json_depth_mode(json, &depth_mode);
 
-	gfx_material_init(
-		result, shader_asset->gpu_ref,
+	*result = gfx_material_init(
+		shader_asset->gpu_ref,
 		&blend_mode, &depth_mode
 	);
 
@@ -201,8 +200,7 @@ void state_read_json_material(struct Asset_System * system, struct JSON const * 
 	struct Gpu_Program_Field const * uniforms;
 	gpu_program_get_uniforms(result->gpu_program_ref, &uniforms_count, &uniforms);
 
-	struct Array_Any uniform_data_buffer;
-	array_any_init(&uniform_data_buffer, sizeof(uint8_t));
+	struct Array_Any uniform_data_buffer = array_any_init(sizeof(uint8_t));
 
 	for (uint32_t i = 0; i < uniforms_count; i++) {
 		struct Gpu_Program_Field const * uniform = uniforms + i;

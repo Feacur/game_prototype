@@ -1082,13 +1082,13 @@ void graphics_to_gpu_library_init(void) {
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
 	gs_graphics_state.extensions = allocate_extensions_string();
 
-	strings_init(&gs_graphics_state.uniforms);
+	gs_graphics_state.uniforms = strings_init();
 
 	// init gpu objects
-	ref_table_init(&gs_graphics_state.programs, sizeof(struct Gpu_Program));
-	ref_table_init(&gs_graphics_state.targets, sizeof(struct Gpu_Target));
-	ref_table_init(&gs_graphics_state.textures, sizeof(struct Gpu_Texture));
-	ref_table_init(&gs_graphics_state.meshes, sizeof(struct Gpu_Mesh));
+	gs_graphics_state.programs = ref_table_init(sizeof(struct Gpu_Program));
+	gs_graphics_state.targets  = ref_table_init(sizeof(struct Gpu_Target));
+	gs_graphics_state.textures = ref_table_init(sizeof(struct Gpu_Texture));
+	gs_graphics_state.meshes   = ref_table_init(sizeof(struct Gpu_Mesh));
 
 	//
 	GLint max_units;
@@ -1186,8 +1186,7 @@ void graphics_to_gpu_library_free(void) {
 //
 
 static char * allocate_extensions_string(void) {
-	struct Buffer string;
-	buffer_init(&string);
+	struct Buffer string = buffer_init();
 
 	GLint extensions_count = 0;
 	glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);

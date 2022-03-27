@@ -9,7 +9,7 @@ struct Array_Any {
 	void * data;
 };
 
-void array_any_init(struct Array_Any * array, uint32_t value_size);
+struct Array_Any array_any_init(uint32_t value_size);
 void array_any_free(struct Array_Any * array);
 
 void array_any_clear(struct Array_Any * array);

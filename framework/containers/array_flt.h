@@ -8,7 +8,7 @@ struct Array_Flt {
 	float * data;
 };
 
-void array_flt_init(struct Array_Flt * array);
+struct Array_Flt array_flt_init(void);
 void array_flt_free(struct Array_Flt * array);
 
 void array_flt_clear(struct Array_Flt * array);

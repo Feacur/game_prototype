@@ -5,8 +5,8 @@
 //
 #include "hash_set_u32.h"
 
-void hash_set_u32_init(struct Hash_Set_U32 * hash_set) {
-	*hash_set = (struct Hash_Set_U32){0};
+struct Hash_Set_U32 hash_set_u32_init(void) {
+	return (struct Hash_Set_U32){0};
 }
 
 void hash_set_u32_free(struct Hash_Set_U32 * hash_set) {

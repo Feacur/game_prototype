@@ -5,8 +5,8 @@
 //
 #include "array_s32.h"
 
-void array_s32_init(struct Array_S32 * array) {
-	*array = (struct Array_S32){0};
+struct Array_S32 array_s32_init(void) {
+	return (struct Array_S32){0};
 }
 
 void array_s32_free(struct Array_S32 * array) {

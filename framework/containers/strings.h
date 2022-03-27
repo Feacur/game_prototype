@@ -11,7 +11,7 @@ struct Strings {
 	struct Buffer buffer;
 };
 
-void strings_init(struct Strings * strings);
+struct Strings strings_init(void);
 void strings_free(struct Strings * strings);
 
 uint32_t strings_find(struct Strings const * strings, struct CString value);

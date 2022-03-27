@@ -8,7 +8,7 @@ struct Array_U64 {
 	uint64_t * data;
 };
 
-void array_u64_init(struct Array_U64 * array);
+struct Array_U64 array_u64_init(void);
 void array_u64_free(struct Array_U64 * array);
 
 void array_u64_clear(struct Array_U64 * array);

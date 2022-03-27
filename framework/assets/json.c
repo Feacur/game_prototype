@@ -11,9 +11,9 @@
 //
 #include "json.h"
 
-static void json_init_internal(struct JSON * value, struct Strings * strings, char const * data);
-void json_init(struct JSON * value, struct Strings * strings, char const * data) {
-	json_init_internal(value, strings, data);
+static struct JSON json_init_internal(struct Strings * strings, char const * data);
+struct JSON json_init(struct Strings * strings, char const * data) {
+	return json_init_internal(strings, data);
 }
 
 void json_free(struct JSON * value) {
@@ -210,7 +210,7 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * value) {
 	*value = (struct JSON){.strings = parser->strings, .type = JSON_OBJECT,};
 	struct Hash_Table_U32 * table = &value->as.table;
-	hash_table_u32_init(table, sizeof(struct JSON));
+	*table = hash_table_u32_init(sizeof(struct JSON));
 
 	enum JSON_Token_Type const scope = JSON_TOKEN_RIGHT_BRACE;
 	if (parser->current.type == scope) { json_parser_consume(parser); return; }
@@ -257,7 +257,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * value) {
 	*value = (struct JSON){.strings = parser->strings, .type = JSON_ARRAY,};
 	struct Array_Any * array = &value->as.array;
-	array_any_init(array, sizeof(struct JSON));
+	*array = array_any_init(sizeof(struct JSON));
 
 	enum JSON_Token_Type const scope = JSON_TOKEN_RIGHT_SQUARE;
 	if (parser->current.type == scope) { json_parser_consume(parser); return; }
@@ -324,34 +324,37 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 	*value = c_json_error;
 }
 
-static void json_init_internal(struct JSON * value, struct Strings * strings, char const * data) {
-	if (strings == NULL) { *value = c_json_error; return; }
-	if (data == NULL) { *value = c_json_error; return; }
+static struct JSON json_init_internal(struct Strings * strings, char const * data) {
+	if (strings == NULL) { return c_json_error; }
+	if (data == NULL) { return c_json_error; }
 
 	struct JSON_Parser parser = {
 		.strings = strings,
+		.scanner = json_scanner_init(data),
 	};
-	json_scanner_init(&parser.scanner, data);
 	json_parser_consume(&parser);
 
+	struct JSON value;
 	if (parser.current.type == JSON_TOKEN_EOF) {
-		*value = c_json_null;
+		value = c_json_null;
 		goto finalize;
 	}
 
-	json_parser_do_value(&parser, value);
+	json_parser_do_value(&parser, &value);
 	if (parser.current.type != JSON_TOKEN_EOF) {
 		json_parser_error_current(&parser, "expected eof");
 	}
 
 	if (parser.error) {
-		json_free(value);
-		*value = c_json_error;
 		DEBUG_BREAK();
+		json_free(&value);
+		value = c_json_error;
+		goto finalize;
 	}
 
 	finalize:
 	json_scanner_free(&parser.scanner);
+	return value;
 }
 
 //

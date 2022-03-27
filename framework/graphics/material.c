@@ -11,9 +11,11 @@
 //     uniforms
 // ----- ----- ----- ----- -----
 
-void gfx_uniforms_init(struct Gfx_Uniforms * uniforms) {
-	array_any_init(&uniforms->headers, sizeof(struct Gfx_Uniforms_Entry));
-	buffer_init(&uniforms->payload);
+struct Gfx_Uniforms gfx_uniforms_init(void) {
+	return (struct Gfx_Uniforms){
+		.headers = array_any_init(sizeof(struct Gfx_Uniforms_Entry)),
+		.payload = buffer_init(),
+	};
 }
 
 void gfx_uniforms_free(struct Gfx_Uniforms * uniforms) {
@@ -63,17 +65,17 @@ void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, stru
 //     material
 // ----- ----- ----- ----- -----
 
-void gfx_material_init(
-	struct Gfx_Material * material,
+struct Gfx_Material gfx_material_init(
 	struct Ref gpu_program_ref,
 	struct Blend_Mode const * blend_mode,
 	struct Depth_Mode const * depth_mode
 ) {
-	gfx_uniforms_init(&material->uniforms);
-
-	material->gpu_program_ref = gpu_program_ref;
-	material->blend_mode = (blend_mode != NULL) ? *blend_mode : c_blend_mode_opaque;
-	material->depth_mode = (blend_mode != NULL) ? *depth_mode : (struct Depth_Mode){.enabled = true, .mask = true};
+	struct Gfx_Material material = {
+		.uniforms = gfx_uniforms_init(),
+		.gpu_program_ref = gpu_program_ref,
+		.blend_mode = (blend_mode != NULL) ? *blend_mode : c_blend_mode_opaque,
+		.depth_mode = (blend_mode != NULL) ? *depth_mode : (struct Depth_Mode){.enabled = true, .mask = true},
+	};
 
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
@@ -87,18 +89,19 @@ void gfx_material_init(
 		properties_count++;
 	}
 
-	array_any_resize(&material->uniforms.headers, sizeof(struct Gfx_Uniforms_Entry) * properties_count);
-	buffer_resize(&material->uniforms.payload, payload_bytes);
+	array_any_resize(&material.uniforms.headers, sizeof(struct Gfx_Uniforms_Entry) * properties_count);
+	buffer_resize(&material.uniforms.payload, payload_bytes);
 
 	for (uint32_t i = 0; i < uniforms_count; i++) {
 		struct Gpu_Program_Field const * uniform = uniforms + i;
 		if (!uniform->is_property) { continue; }
-		gfx_uniforms_push(&material->uniforms, uniform->id, (struct Gfx_Uniform_In){
+		gfx_uniforms_push(&material.uniforms, uniform->id, (struct Gfx_Uniform_In){
 			.size = data_type_get_size(uniform->type) * uniform->array_size,
 		});
 	}
 
-	common_memset(material->uniforms.payload.data, 0, payload_bytes);
+	common_memset(material.uniforms.payload.data, 0, payload_bytes);
+	return material;
 }
 
 void gfx_material_free(struct Gfx_Material * material) {

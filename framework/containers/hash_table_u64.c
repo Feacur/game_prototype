@@ -5,8 +5,8 @@
 //
 #include "hash_table_u64.h"
 
-void hash_table_u64_init(struct Hash_Table_U64 * hash_table, uint32_t value_size) {
-	*hash_table = (struct Hash_Table_U64){
+struct Hash_Table_U64 hash_table_u64_init(uint32_t value_size) {
+	return (struct Hash_Table_U64){
 		.value_size = value_size,
 	};
 }

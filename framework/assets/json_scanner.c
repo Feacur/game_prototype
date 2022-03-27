@@ -4,8 +4,8 @@
 //
 #include "json_scanner.h"
 
-void json_scanner_init(struct JSON_Scanner * scanner, char const * text) {
-	*scanner = (struct JSON_Scanner){
+struct JSON_Scanner json_scanner_init(char const * text) {
+	return (struct JSON_Scanner){
 		.start = text,
 		.current = text,
 	};

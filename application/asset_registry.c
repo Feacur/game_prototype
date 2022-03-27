@@ -28,7 +28,7 @@ static void asset_bytes_init(struct Asset_System * system, void * instance, stru
 	struct Asset_Bytes * asset = instance;
 	(void)system;
 
-	struct Buffer buffer;
+	struct Buffer buffer = buffer_init();
 	bool const read_success = platform_file_read_entire(name, &buffer);
 	if (!read_success) { DEBUG_BREAK(); }
 
@@ -50,7 +50,7 @@ static void asset_bytes_free(struct Asset_System * system, void * instance) {
 static struct Strings gs_asset_json_strings;
 
 static void asset_json_type_init(void) {
-	strings_init(&gs_asset_json_strings);
+	gs_asset_json_strings = strings_init();
 }
 
 static void asset_json_type_free(void) {
@@ -61,11 +61,11 @@ static void asset_json_init(struct Asset_System * system, void * instance, struc
 	struct Asset_JSON * asset = instance;
 	(void)system;
 
-	struct Buffer buffer;
+	struct Buffer buffer = buffer_init();
 	bool const read_success = platform_file_read_entire(name, &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); }
 
-	json_init(&asset->value, &gs_asset_json_strings, (char const *)buffer.data);
+	asset->value = json_init(&gs_asset_json_strings, (char const *)buffer.data);
 
 	buffer_free(&buffer);
 }
@@ -84,7 +84,7 @@ static void asset_shader_init(struct Asset_System * system, void * instance, str
 	struct Asset_Shader * asset = instance;
 	(void)system;
 
-	struct Buffer buffer;
+	struct Buffer buffer = buffer_init();
 	bool const read_success = platform_file_read_entire(name, &buffer);
 	if (!read_success || buffer.count == 0) { DEBUG_BREAK(); return; }
 	// @todo: return error shader?
@@ -118,8 +118,7 @@ static void asset_fill_image(struct JSON const * json, void * data) {
 	struct Texture_Settings settings;
 	state_read_json_texture_settings(json, &settings);
 
-	struct Image image;
-	image_init(&image, settings, path);
+	struct Image image = image_init(settings, path);
 
 	struct Ref const gpu_ref = gpu_texture_init(&image);
 	image_free(&image);
@@ -210,8 +209,7 @@ static void asset_model_init(struct Asset_System * system, void * instance, stru
 	struct Asset_Model * asset = instance;
 	(void)system;
 
-	struct Mesh mesh;
-	mesh_init(&mesh, name);
+	struct Mesh mesh = mesh_init(name);
 
 	struct Ref const gpu_ref = gpu_mesh_init(&mesh);
 	mesh_free(&mesh);

@@ -8,7 +8,7 @@ struct Array_S32 {
 	int32_t * data;
 };
 
-void array_s32_init(struct Array_S32 * array);
+struct Array_S32 array_s32_init(void);
 void array_s32_free(struct Array_S32 * array);
 
 void array_s32_clear(struct Array_S32 * array);

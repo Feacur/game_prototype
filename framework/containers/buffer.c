@@ -5,8 +5,8 @@
 //
 #include "buffer.h"
 
-void buffer_init(struct Buffer * buffer) {
-	*buffer = (struct Buffer){0};
+struct Buffer buffer_init(void) {
+	return (struct Buffer){0};
 }
 
 void buffer_free(struct Buffer * buffer) {

@@ -225,13 +225,12 @@ struct Game_State gs_game;
 void game_init(void) {
 	gs_game = (struct Game_State){
 		.batcher = batcher_2d_init(),
+		.uniforms = gfx_uniforms_init(),
+		.gpu_commands = array_any_init(sizeof(struct GPU_Command)),
+		.cameras = array_any_init(sizeof(struct Camera)),
+		.entities = array_any_init(sizeof(struct Entity)),
+		.assets = asset_system_init(),
 	};
-	gfx_uniforms_init(&gs_game.uniforms);
-	array_any_init(&gs_game.gpu_commands, sizeof(struct GPU_Command));
-	array_any_init(&gs_game.cameras, sizeof(struct Camera));
-	array_any_init(&gs_game.entities, sizeof(struct Entity));
-
-	asset_system_init(&gs_game.assets);
 	asset_types_init(&gs_game.assets);
 }
 

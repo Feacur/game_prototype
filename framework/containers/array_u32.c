@@ -5,8 +5,8 @@
 //
 #include "array_u32.h"
 
-void array_u32_init(struct Array_U32 * array) {
-	*array = (struct Array_U32){0};
+struct Array_U32 array_u32_init(void) {
+	return (struct Array_U32){0};
 }
 
 void array_u32_free(struct Array_U32 * array) {
