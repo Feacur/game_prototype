@@ -27,18 +27,12 @@
 //
 #include "image.h"
 
-struct Image image_init(struct Texture_Settings settings, struct CString path) {
-	struct Buffer file = buffer_init();
-	bool const read_success = platform_file_read_entire(path, &file);
-	if (!read_success || file.count == 0) { DEBUG_BREAK(); return (struct Image){0}; }
-
+struct Image image_init(struct Texture_Settings settings, struct Buffer const * buffer) {
 	// @note: ensure image data layout
 	stbi_set_flip_vertically_on_load(1);
 
 	int size_x, size_y, channels;
-	uint8_t * image_bytes = (uint8_t *)stbi_load_from_memory(file.data, (int)file.count, &size_x, &size_y, &channels, 0);
-
-	buffer_free(&file);
+	uint8_t * image_bytes = (uint8_t *)stbi_load_from_memory(buffer->data, (int)buffer->count, &size_x, &size_y, &channels, 0);
 
 	return (struct Image){
 		.capacity = (uint32_t)(size_x * size_y),

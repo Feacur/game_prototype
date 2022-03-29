@@ -84,7 +84,8 @@ void asset_system_del_type(struct Asset_System * system, struct CString type) {
 }
 
 struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CString name) {
-	if (name.length == INDEX_EMPTY) { logger_to_console("empty name"); DEBUG_BREAK(); return c_asset_ref_empty; }
+	if (name.length == 0) { logger_to_console("empty name"); DEBUG_BREAK(); return c_asset_ref_empty; }
+	// if (name.data == NULL) { logger_to_console("empty name"); DEBUG_BREAK(); return c_asset_ref_empty; }
 
 	//
 	uint32_t const extension_length = asset_system_get_extension_from_name(name);

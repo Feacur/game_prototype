@@ -1,6 +1,7 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
 #include "framework/platform_file.h"
+#include "framework/containers/buffer.h"
 #include "framework/containers/array_flt.h"
 #include "framework/containers/array_u32.h"
 #include "wfobj.h"
@@ -21,13 +22,8 @@ static struct Mesh mesh_construct(
 	struct Array_U32 const * indices
 );
 
-struct Mesh mesh_init(struct CString path) {
-	struct Buffer file = buffer_init();
-	bool const read_success = platform_file_read_entire(path, &file);
-	if (!read_success || file.count == 0) { DEBUG_BREAK(); return (struct Mesh){0}; }
-
-	struct WFObj wfobj = wfobj_init((char const *)file.data);
-	buffer_free(&file);
+struct Mesh mesh_init(struct Buffer const * buffer) {
+	struct WFObj wfobj = wfobj_init((char const *)buffer->data);
 
 	//
 	struct Array_Flt vertices;

@@ -18,26 +18,31 @@ struct File {
 	char * path;
 };
 
-bool platform_file_read_entire(struct CString path, struct Buffer * buffer) {
+struct Buffer platform_file_read_entire(struct CString path) {
+	if (path.length == 0) { return (struct Buffer){0}; }
+	// if (path.data == NULL) { return (struct Buffer){0}; }
+
+	struct Buffer buffer = buffer_init();
+
 	struct File * file = platform_file_init(path, FILE_MODE_READ);
-	if (file == NULL) { return false; }
+	if (file == NULL) { goto finalize; }
 
 	uint64_t const size = platform_file_size(file);
 	if (size == 0) { goto finalize; }
 
 	uint64_t const padding = 1;
-	buffer_resize(buffer, size + padding);
-	buffer->count = platform_file_read(file, buffer->data, size);
-	if (padding > 0) { buffer->data[buffer->count] = '\0'; }
+	buffer_resize(&buffer, size + padding);
+	buffer.count = platform_file_read(file, buffer.data, size);
+	if (padding > 0) { buffer.data[buffer.count] = '\0'; }
 
-	if (buffer->count != size) {
-		logger_to_console("read failure: %zu / %zu bytes; \"%.*s\"\n", buffer->count, size, path.length, path.data);
-		buffer_free(buffer);
+	if (buffer.count != size) {
+		logger_to_console("read failure: %zu / %zu bytes; \"%.*s\"\n", buffer.count, size, path.length, path.data);
+		buffer_free(&buffer);
 	}
 
 	finalize:
 	platform_file_free(file);
-	return buffer->count == size;
+	return buffer;
 }
 
 void platform_file_delete(struct CString path) {

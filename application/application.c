@@ -15,18 +15,25 @@ static struct Application {
 	struct Window * window;
 	struct Gpu_Context * gpu_context;
 
-	struct {
-		uint64_t per_second, frame_start;
+	struct Application_Ticks {
+		uint64_t elapsed, per_second;
 		uint64_t fixed_accumulator;
+		uint64_t frame_start;
 	} ticks;
 } gs_app;
 
 static uint64_t get_target_ticks(int32_t vsync_mode) {
 	uint32_t const vsync_factor = (vsync_mode > 0) ? (uint32_t)vsync_mode : 1;
-	uint32_t const refresh_rate = ((vsync_mode != 0) || (gs_app.config.target_refresh_rate == 0))
-		? platform_window_get_refresh_rate(gs_app.window, gs_app.config.target_refresh_rate)
-		: gs_app.config.target_refresh_rate;
+	uint32_t const refresh_rate = ((vsync_mode != 0) || (gs_app.config.frame_refresh_rate == 0))
+		? platform_window_get_refresh_rate(gs_app.window, gs_app.config.frame_refresh_rate)
+		: gs_app.config.frame_refresh_rate;
 	return gs_app.ticks.per_second * vsync_factor / refresh_rate;
+}
+
+static uint64_t get_fixed_ticks(uint64_t target_ticks) {
+	return (gs_app.config.fixed_refresh_rate > 0)
+		? gs_app.ticks.per_second / gs_app.config.fixed_refresh_rate
+		: target_ticks;
 }
 
 static bool application_init(void) {
@@ -47,9 +54,9 @@ static bool application_init(void) {
 		"  fixed rate ... %u\n"
 		"  slow frames .. %u\n"
 		"",
-		gs_app.config.size_x, gs_app.config.size_y,
+		gs_app.config.size.x, gs_app.config.size.y,
 		gs_app.config.vsync,
-		gs_app.config.target_refresh_rate,
+		gs_app.config.frame_refresh_rate,
 		gs_app.config.fixed_refresh_rate,
 		gs_app.config.slow_frames_limit
 	);
@@ -58,7 +65,7 @@ static bool application_init(void) {
 	enum Window_Settings window_settings = WINDOW_SETTINGS_MINIMIZE;
 	if (gs_app.config.flexible) { window_settings |= WINDOW_SETTINGS_FLEXIBLE; }
 
-	gs_app.window = platform_window_init(gs_app.config.size_x, gs_app.config.size_y, window_settings);
+	gs_app.window = platform_window_init(gs_app.config.size.x, gs_app.config.size.y, window_settings);
 	if (gs_app.window == NULL) { return false; }
 
 	platform_window_start_frame(gs_app.window);
@@ -70,8 +77,12 @@ static bool application_init(void) {
 	// setup timer, rewind it one frame
 	gpu_context_set_vsync(gs_app.gpu_context, gs_app.config.vsync);
 	int32_t const vsync_mode = gpu_context_get_vsync(gs_app.gpu_context);
-	gs_app.ticks.per_second  = platform_timer_get_ticks_per_second();
-	gs_app.ticks.frame_start = platform_timer_get_ticks() - get_target_ticks(vsync_mode);
+	uint64_t const target_ticks = get_target_ticks(vsync_mode);
+	gs_app.ticks = (struct Application_Ticks){
+		.elapsed     = target_ticks,
+		.per_second  = platform_timer_get_ticks_per_second(),
+		.frame_start = platform_timer_get_ticks() - target_ticks,
+	};
 
 	if (gs_app.callbacks.init != NULL) {
 		gs_app.callbacks.init();
@@ -115,39 +126,26 @@ static bool application_update(void) {
 	uint64_t const timer_ticks  = platform_timer_get_ticks();
 	int32_t  const vsync_mode   = gpu_context_get_vsync(gs_app.gpu_context);
 	uint64_t const target_ticks = get_target_ticks(vsync_mode);
-	uint64_t const fixed_ticks  = gs_app.ticks.per_second / gs_app.config.fixed_refresh_rate;
+	uint64_t const fixed_ticks  = get_fixed_ticks(target_ticks);
 
-	uint64_t frame_ticks = timer_ticks - gs_app.ticks.frame_start;
+	gs_app.ticks.elapsed = timer_ticks - gs_app.ticks.frame_start;
 	gs_app.ticks.frame_start = timer_ticks;
 
-	if (gs_app.config.slow_frames_limit > 0 && frame_ticks > target_ticks * gs_app.config.slow_frames_limit) {
-		frame_ticks = target_ticks * gs_app.config.slow_frames_limit;
+	if (gs_app.config.slow_frames_limit > 0 && gs_app.ticks.elapsed > target_ticks * gs_app.config.slow_frames_limit) {
+		gs_app.ticks.elapsed = target_ticks * gs_app.config.slow_frames_limit;
 	}
 
-	gs_app.ticks.fixed_accumulator += frame_ticks;
-
+	// @note: probably should limit this too?
+	gs_app.ticks.fixed_accumulator += gs_app.ticks.elapsed;
 	while (gs_app.ticks.fixed_accumulator > fixed_ticks) {
 		gs_app.ticks.fixed_accumulator -= fixed_ticks;
-		if (gs_app.callbacks.fixed_update != NULL) {
-			gs_app.callbacks.fixed_update(
-				fixed_ticks,
-				gs_app.ticks.per_second
-			);
+		if (gs_app.callbacks.fixed_tick != NULL) {
+			gs_app.callbacks.fixed_tick();
 		}
 	}
 
-	if (gs_app.callbacks.frame_update != NULL) {
-		gs_app.callbacks.frame_update(
-			frame_ticks,
-			gs_app.ticks.per_second
-		);
-	}
-
-	if (gs_app.callbacks.draw_update != NULL) {
-		gs_app.callbacks.draw_update(
-			frame_ticks,
-			gs_app.ticks.per_second
-		);
+	if (gs_app.callbacks.frame_tick != NULL) {
+		gs_app.callbacks.frame_tick();
 	}
 
 	platform_window_draw_frame(gs_app.window);
@@ -175,6 +173,14 @@ void application_run(struct Application_Config config, struct Application_Callba
 	}
 }
 
-void application_get_screen_size(uint32_t * size_x, uint32_t * size_y) {
-	platform_window_get_size(gs_app.window, size_x, size_y);
+struct uvec2 application_get_screen_size(void) {
+	struct uvec2 result;
+	platform_window_get_size(gs_app.window, &result.x, &result.y);
+	return result;
+}
+
+float application_get_delta_time(void) {
+	return (float)(
+		(double)gs_app.ticks.elapsed / (double)gs_app.ticks.per_second
+	);
 }

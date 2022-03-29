@@ -1,9 +1,10 @@
 #if !defined(GAME_ASSETS_MESH)
 #define GAME_ASSETS_MESH
 
-#include "framework/containers/buffer.h"
-
+#include "framework/common.h"
 #include "framework/graphics/types.h"
+
+struct Buffer;
 
 struct Mesh {
 	uint32_t capacity, count;
@@ -11,7 +12,7 @@ struct Mesh {
 	struct Mesh_Parameters * parameters;
 };
 
-struct Mesh mesh_init(struct CString path);
+struct Mesh mesh_init(struct Buffer const * buffer);
 void mesh_free(struct Mesh * mesh);
 
 #endif

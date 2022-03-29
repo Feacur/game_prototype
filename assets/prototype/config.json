@@ -3,7 +3,7 @@
 	"size_y": 720,
 	"flexible": false,
 	"vsync": 1,
-	"target_refresh_rate": 72,
+	"frame_refresh_rate": 72,
 	"fixed_refresh_rate": 50,
 	"slow_frames_limit": 5,
 }

@@ -4,6 +4,8 @@
 #include "framework/common.h"
 #include "framework/graphics/types.h"
 
+struct Buffer;
+
 // @note: image data layout
 // +----------+
 // |image  1,1|
@@ -17,7 +19,7 @@ struct Image {
 	struct Texture_Settings settings;
 };
 
-struct Image image_init(struct Texture_Settings settings, struct CString path);
+struct Image image_init(struct Texture_Settings settings, struct Buffer const * buffer);
 void image_free(struct Image * image);
 
 void image_resize(struct Image * image, uint32_t size_x, uint32_t size_y);

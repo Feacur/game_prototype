@@ -38,15 +38,13 @@ struct Font {
 	int ascent, descent, line_gap;
 };
 
-struct Font * font_init(struct CString path) {
+struct Font * font_init(struct Buffer buffer) {
 	struct Font * font = MEMORY_ALLOCATE(NULL, struct Font);
 
-	font->file = buffer_init();
-	bool const read_success = platform_file_read_entire(path, &font->file);
-	if (!read_success || font->file.count == 0) { DEBUG_BREAK(); return font; }
+	font->file = buffer;
 
 	if (!stbtt_InitFont(&font->font, font->file.data, stbtt_GetFontOffsetForIndex(font->file.data, 0))) {
-		logger_to_console("failure: can't read font file\n"); DEBUG_BREAK();
+		logger_to_console("failure: can't read font data\n"); DEBUG_BREAK();
 	}
 
 	if (!stbtt_GetFontVMetricsOS2(&font->font, &font->ascent, &font->descent, &font->line_gap)) {

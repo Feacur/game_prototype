@@ -65,8 +65,8 @@ enum Wrap_Mode state_read_json_wrap_mode(struct JSON const * json) {
 	return WRAP_MODE_NONE;
 }
 
-void state_read_json_texture_settings(struct JSON const * json, struct Texture_Settings * result) {
-	*result = (struct Texture_Settings){
+struct Texture_Settings state_read_json_texture_settings(struct JSON const * json) {
+	return (struct Texture_Settings){
 		.mipmap        = state_read_json_filter_mode(json_get(json, S_("mipmap"))),
 		.minification  = state_read_json_filter_mode(json_get(json, S_("minification"))),
 		.magnification = state_read_json_filter_mode(json_get(json, S_("magnification"))),
@@ -124,81 +124,78 @@ void state_read_json_s32_n(struct JSON const * json, uint32_t length, int32_t * 
 	}
 }
 
-void state_read_json_blend_mode(struct JSON const * json, struct Blend_Mode * result) {
+struct Blend_Mode state_read_json_blend_mode(struct JSON const * json) {
 	uint32_t const mode_id = json_get_id(json, S_("mode"));
 
 	if (mode_id == json_find_id(json, S_("opaque"))) {
-		*result = c_blend_mode_opaque;
-		return;
+		return c_blend_mode_opaque;
 	}
 
 	if (mode_id == json_find_id(json, S_("transparent"))) {
-		*result = c_blend_mode_transparent;
-		return;
+		return c_blend_mode_transparent;
 	}
 
-	*result = c_blend_mode_opaque;
+	return c_blend_mode_opaque;
 }
 
-void state_read_json_depth_mode(struct JSON const * json, struct Depth_Mode * result) {
+struct Depth_Mode state_read_json_depth_mode(struct JSON const * json) {
 	bool const depth_write = json_get_boolean(json, S_("depth"), false);
 
 	if (depth_write) {
-		*result = (struct Depth_Mode){.enabled = true, .mask = true};
-		return;
+		return (struct Depth_Mode){.enabled = true, .mask = true};
 	}
 
-	*result = (struct Depth_Mode){0};
+	return (struct Depth_Mode){0};
 }
 
-static void state_read_json_target_buffer(struct JSON const * json, struct Array_Any * result);
-void state_read_json_target(struct JSON const * json, struct Ref * result) {
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
+static struct Texture_Parameters state_read_json_texture_parameters(struct JSON const * json);
+struct Ref state_read_json_target(struct JSON const * json) {
+	if (json->type != JSON_OBJECT) { return c_ref_empty; }
 
 	struct JSON const * buffers_json = json_get(json, S_("buffers"));
-	if (buffers_json->type != JSON_ARRAY) { DEBUG_BREAK(); return; }
+	if (buffers_json->type != JSON_ARRAY) { return c_ref_empty; }
 
 	struct Array_Any parameters_buffer = array_any_init(sizeof(struct Texture_Parameters));
 
 	uint32_t const buffers_count = json_count(buffers_json);
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct JSON const * buffer_json = json_at(buffers_json, i);
-		state_read_json_target_buffer(buffer_json, &parameters_buffer);
+		struct Texture_Parameters const texture_parameters = state_read_json_texture_parameters(json_at(buffers_json, i));
+		array_any_push(&parameters_buffer, &texture_parameters);
 	}
 
+	struct Ref result = c_ref_empty;
 	if (parameters_buffer.count > 0) {
 		uint32_t const size_x = (uint32_t)json_get_number(json, S_("size_x"), 0);
 		uint32_t const size_y = (uint32_t)json_get_number(json, S_("size_y"), 0);
 		if (size_x > 0 && size_y > 0) {
-			*result = gpu_target_init(size_x, size_y, parameters_buffer.data, parameters_buffer.count);
+			result = gpu_target_init(size_x, size_y, parameters_buffer.data, parameters_buffer.count);
 		}
 	}
 
-	if (ref_equals(*result, c_ref_empty)) { DEBUG_BREAK(); }
 	array_any_free(&parameters_buffer);
+	return result;
 }
 
-void state_read_json_material(struct Asset_System * system, struct JSON const * json, struct Gfx_Material * result) {
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
+struct Gfx_Material state_read_json_material(struct Asset_System * system, struct JSON const * json) {
+	if (json->type != JSON_OBJECT) { return (struct Gfx_Material){0}; }
 
 	struct CString const shader_path = json_get_string(json, S_("shader"), S_NULL);
+	if (shader_path.data == NULL) { return (struct Gfx_Material){0}; }
+
 	struct Asset_Shader const * shader_asset = asset_system_aquire_instance(system, shader_path);
-	if (shader_asset == NULL) { DEBUG_BREAK(); return; }
+	if (shader_asset == NULL) { return (struct Gfx_Material){0}; }
 
-	struct Blend_Mode blend_mode;
-	state_read_json_blend_mode(json, &blend_mode);
+	struct Blend_Mode blend_mode = state_read_json_blend_mode(json);
+	struct Depth_Mode depth_mode = state_read_json_depth_mode(json);
 
-	struct Depth_Mode depth_mode;
-	state_read_json_depth_mode(json, &depth_mode);
-
-	*result = gfx_material_init(
+	struct Gfx_Material result = gfx_material_init(
 		shader_asset->gpu_ref,
 		&blend_mode, &depth_mode
 	);
 
 	uint32_t uniforms_count;
 	struct Gpu_Program_Field const * uniforms;
-	gpu_program_get_uniforms(result->gpu_program_ref, &uniforms_count, &uniforms);
+	gpu_program_get_uniforms(result.gpu_program_ref, &uniforms_count, &uniforms);
 
 	struct Array_Any uniform_data_buffer = array_any_init(sizeof(uint8_t));
 
@@ -230,7 +227,7 @@ void state_read_json_material(struct Asset_System * system, struct JSON const * 
 
 			case DATA_TYPE_UNIT: {
 				state_read_json_unt_n(system, uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&result->uniforms, uniform->id, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result.uniforms, uniform->id, (struct Gfx_Uniform_In){
 					.size = sizeof(struct Ref) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -238,7 +235,7 @@ void state_read_json_material(struct Asset_System * system, struct JSON const * 
 
 			case DATA_TYPE_U32: {
 				state_read_json_u32_n(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&result->uniforms, uniform->id, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result.uniforms, uniform->id, (struct Gfx_Uniform_In){
 					.size = sizeof(uint32_t) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -246,7 +243,7 @@ void state_read_json_material(struct Asset_System * system, struct JSON const * 
 
 			case DATA_TYPE_S32: {
 				state_read_json_s32_n(uniform_json,uniform_count,  uniform_data_buffer.data);
-				gfx_uniforms_set(&result->uniforms, uniform->id, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result.uniforms, uniform->id, (struct Gfx_Uniform_In){
 					.size = sizeof(int32_t) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -254,7 +251,7 @@ void state_read_json_material(struct Asset_System * system, struct JSON const * 
 
 			case DATA_TYPE_R32: {
 				state_read_json_flt_n(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&result->uniforms, uniform->id, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result.uniforms, uniform->id, (struct Gfx_Uniform_In){
 					.size = sizeof(float) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -263,36 +260,37 @@ void state_read_json_material(struct Asset_System * system, struct JSON const * 
 	}
 
 	array_any_free(&uniform_data_buffer);
+	return result;
 }
 
 //
 
-static void state_read_json_target_buffer(struct JSON const * json, struct Array_Any * result) {
-	if (json->type != JSON_OBJECT) { DEBUG_BREAK(); return; }
+static struct Texture_Parameters state_read_json_texture_parameters(struct JSON const * json) {
+	if (json->type != JSON_OBJECT) { return (struct Texture_Parameters){0}; }
 
 	uint32_t const type_id = json_get_id(json, S_("type"));
-	if (type_id == INDEX_EMPTY) { DEBUG_BREAK(); return; }
+	if (type_id == INDEX_EMPTY) { return (struct Texture_Parameters){0}; }
 
 	bool const buffer_read = json_get_boolean(json, S_("read"), false);
 
 	if (type_id == json_find_id(json, S_("color_rgba_u8"))) {
-		array_any_push(result, &(struct Texture_Parameters) {
+		return (struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_COLOR,
 			.data_type = DATA_TYPE_U8,
 			.channels = 4,
 			.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
-		});
-		return;
+		};
 	}
 
-	if (type_id == json_find_id(json, S_("color_depth_r32"))) {
-		array_any_push(result, &(struct Texture_Parameters) {
+	if (type_id == json_find_id(json, S_("depth_r32"))) {
+		return (struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_DEPTH,
 			.data_type = DATA_TYPE_R32,
 			.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
-		});
-		return;
+		};
 	}
+
+	return (struct Texture_Parameters){0};
 }
 
 static void state_read_json_uniform_texture(struct Asset_System * system, struct JSON const * json, struct Ref * result) {

@@ -37,65 +37,11 @@ static struct Main_Settings {
 	uint32_t scene_id;
 } gs_main_settings;
 
-static struct Main_Uniforms {
-	uint32_t projection;
-	uint32_t camera;
-	uint32_t transform;
-} gs_main_uniforms;
-
-static void app_init(void) {
-	gs_main_uniforms = (struct Main_Uniforms){
-		.projection = graphics_add_uniform_id(S_("u_Projection")),
-		.camera = graphics_add_uniform_id(S_("u_Camera")),
-		.transform = graphics_add_uniform_id(S_("u_Transform")),
-	};
-
-	gpu_execute(1, &(struct GPU_Command){
-		.type = GPU_COMMAND_TYPE_CULL,
-		.as.cull = {
-			.mode = CULL_MODE_BACK,
-			.order = WINDING_ORDER_POSITIVE,
-		},
-	});
-
-	game_init();
-
-	process_json(game_fill_scene, &gs_game, strings_get(&gs_main_settings.strings, gs_main_settings.scene_id));
-}
-
-static void app_free(void) {
-	strings_free(&gs_main_settings.strings);
-	game_free();
-}
-
-static void app_fixed_update(uint64_t elapsed, uint64_t per_second) {
-	float const delta_time = (float)((double)elapsed / (double)per_second);
-	(void)delta_time;
-}
-
-static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
-	float const delta_time = (float)((double)elapsed / (double)per_second);
-
-	uint32_t screen_size_x, screen_size_y;
-	application_get_screen_size(&screen_size_x, &screen_size_y);
-
-	// if (input_mouse(MC_LEFT)) {
-	// 	int32_t x, y;
-	// 	input_mouse_delta(&x, &y);
-	// 	logger_to_console("delta: %d %d\n", x, y);
-	// }
-
+static void prototype_tick_entities_rotation_mode(void) {
+	float const delta_time = application_get_delta_time();
 	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
 		struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
-		struct Camera const * camera = array_any_at(&gs_game.cameras, entity->camera);
 
-		// @todo: precalculate all cameras?
-		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
-		if (!ref_equals(camera->gpu_target_ref, c_ref_empty)) {
-			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
-		}
-
-		// entity rotation mode
 		switch (entity->rotation_mode) {
 			case ENTITY_ROTATION_MODE_NONE: break;
 
@@ -117,73 +63,101 @@ static void app_frame_update(uint64_t elapsed, uint64_t per_second) {
 				)));
 			} break;
 		}
+	}
+}
 
-		// entity type
-		switch (entity->type) {
-			case ENTITY_TYPE_NONE: break;
+static void prototype_tick_entities_quad_2d(void) {
+	struct uvec2 const screen_size = application_get_screen_size();
+	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
+		struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
+		if (entity->type != ENTITY_TYPE_QUAD_2D) { continue; }
+		struct Entity_Quad * quad = &entity->as.quad;
+		if (quad->mode == ENTITY_QUAD_MODE_NONE) { continue; }
 
-			case ENTITY_TYPE_QUAD_2D: {
-				struct Entity_Quad * quad = &entity->as.quad;
+		// @todo: precalculate all cameras?
+		struct Camera const * camera = array_any_at(&gs_game.cameras, entity->camera);
+		struct uvec2 viewport_size = screen_size;
+		if (!ref_equals(camera->gpu_target_ref, c_ref_empty)) {
+			gpu_target_get_size(camera->gpu_target_ref, &viewport_size.x, &viewport_size.y);
+		}
 
-				switch (quad->mode) {
-					case ENTITY_QUAD_MODE_NONE: break;
+		//
+		struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
+		struct uvec2 const content_size = entity_get_content_size(entity, &material->value, viewport_size.x, viewport_size.y);
+		if (content_size.x == 0 || content_size.y == 0) { break; }
 
-					case ENTITY_QUAD_MODE_FIT: {
-						struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
-						struct uvec2 const content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
-						if (content_size.x == 0 || content_size.y == 0) { break; }
+		switch (quad->mode) {
+			case ENTITY_QUAD_MODE_NONE: break;
 
-						uint32_t const factor_x = content_size.x * viewport_size_y;
-						uint32_t const factor_y = content_size.y * viewport_size_x;
-						entity->rect = (struct Transform_Rect){
-							.anchor_min = {0.5f, 0.5f},
-							.anchor_max = {0.5f, 0.5f},
-							.extents = {
-								(float)((factor_x > factor_y) ? viewport_size_x : (factor_x / content_size.y)),
-								(float)((factor_x > factor_y) ? (factor_y / content_size.x) : viewport_size_y),
-							},
-							.pivot = {0.5f, 0.5f},
-						};
-					} break;
-
-					case ENTITY_QUAD_MODE_SIZE: {
-						struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
-						struct uvec2 const content_size = entity_get_content_size(entity, &material->value, viewport_size_x, viewport_size_y);
-						if (content_size.x == 0 || content_size.y == 0) { break; }
-
-						entity->rect.extents = (struct vec2){
-							.x = (float)content_size.x,
-							.y = (float)content_size.y,
-						};
-					} break;
-				}
+			case ENTITY_QUAD_MODE_FIT: {
+				uint32_t const factor_x = content_size.x * viewport_size.y;
+				uint32_t const factor_y = content_size.y * viewport_size.x;
+				entity->rect = (struct Transform_Rect){
+					.anchor_min = {0.5f, 0.5f},
+					.anchor_max = {0.5f, 0.5f},
+					.extents = {
+						(float)((factor_x > factor_y) ? viewport_size.x : (factor_x / content_size.y)),
+						(float)((factor_x > factor_y) ? (factor_y / content_size.x) : viewport_size.y),
+					},
+					.pivot = {0.5f, 0.5f},
+				};
 			} break;
 
-			case ENTITY_TYPE_MESH: {
-				// struct Entity_Mesh * mesh = &entity->as.mesh;
-			} break;
-
-			case ENTITY_TYPE_TEXT_2D: {
-				struct Entity_Text * text = &entity->as.text;
-				struct Asset_Bytes const * text_text = asset_system_find_instance(&gs_game.assets, text->message);
-				uint32_t const text_length = text_text->length;
-				text->visible_length = (text->visible_length + 1) % text_length;
+			case ENTITY_QUAD_MODE_SIZE: {
+				entity->rect.extents = (struct vec2){
+					.x = (float)content_size.x,
+					.y = (float)content_size.y,
+				};
 			} break;
 		}
 	}
 }
 
-static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
-	// float const delta_time = (float)((double)elapsed / (double)per_second);
-	(void)elapsed; (void)per_second;
+static void prototype_tick_entities_text_2d(void) {
+	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
+		struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
+		if (entity->type != ENTITY_TYPE_TEXT_2D) { continue; }
+		struct Entity_Text * text = &entity->as.text;
 
-	uint32_t screen_size_x, screen_size_y;
-	application_get_screen_size(&screen_size_x, &screen_size_y);
-	if (screen_size_x == 0 || screen_size_y == 0) { return; }
+		struct Asset_Bytes const * text_text = asset_system_find_instance(&gs_game.assets, text->message);
+		uint32_t const text_length = text_text->length;
+		text->visible_length = (text->visible_length + 1) % text_length;
+	}
+}
 
-	batcher_2d_clear(gs_game.batcher);
-	gfx_uniforms_clear(&gs_game.uniforms);
-	array_any_clear(&gs_game.gpu_commands);
+// ----- ----- ----- ----- -----
+//     prototype part
+// ----- ----- ----- ----- -----
+
+static void prototype_init(void) {
+	process_json(game_fill_scene, &gs_game, strings_get(&gs_main_settings.strings, gs_main_settings.scene_id));
+	gpu_execute(1, &(struct GPU_Command){
+		.type = GPU_COMMAND_TYPE_CULL,
+		.as.cull = {
+			.mode = CULL_MODE_BACK,
+			.order = WINDING_ORDER_POSITIVE,
+		},
+	});
+}
+
+static void prototype_tick_entities(void) {
+	// if (input_mouse(MC_LEFT)) {
+	// 	int32_t x, y;
+	// 	input_mouse_delta(&x, &y);
+	// 	logger_to_console("delta: %d %d\n", x, y);
+	// }
+
+	prototype_tick_entities_rotation_mode();
+	prototype_tick_entities_quad_2d();
+	prototype_tick_entities_text_2d();
+}
+
+static void prototype_draw_entities(void) {
+	struct uvec2 const screen_size = application_get_screen_size();
+
+	uint32_t const uniform_projection = graphics_add_uniform_id(S_("u_Projection"));
+	uint32_t const uniform_camera     = graphics_add_uniform_id(S_("u_Camera"));
+	uint32_t const uniform_transform  = graphics_add_uniform_id(S_("u_Transform"));
 
 	// @todo: override material params per shader or material where possible
 
@@ -192,35 +166,34 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 		array_any_resize(&gs_game.gpu_commands, gpu_commands_count_estimate);
 	}
 
-	struct GPU_Command_Target command_target = (struct GPU_Command_Target){0};
+	struct Ref previous_gpu_target_ref = { // @note: deliberately wrong handle
+		.id = INDEX_EMPTY, .gen = INDEX_EMPTY,
+	};
 
 	for (uint32_t camera_i = 0; camera_i < gs_game.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&gs_game.cameras, camera_i);
 
 		// prepare camera
-		uint32_t viewport_size_x = screen_size_x, viewport_size_y = screen_size_y;
+		struct uvec2 viewport_size = screen_size;
 		if (!ref_equals(camera->gpu_target_ref, c_ref_empty)) {
-			gpu_target_get_size(camera->gpu_target_ref, &viewport_size_x, &viewport_size_y);
+			gpu_target_get_size(camera->gpu_target_ref, &viewport_size.x, &viewport_size.y);
 		}
 
-		struct mat4 const mat4_projection = camera_get_projection(&camera->params, viewport_size_x, viewport_size_y);
+		struct mat4 const mat4_projection = camera_get_projection(&camera->params, viewport_size.x, viewport_size.y);
 		struct mat4 const mat4_inverse_camera = mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
 		struct mat4 const mat4_camera = mat4_mul_mat(mat4_projection, mat4_inverse_camera);
 
-		bool const changed_target = command_target.screen_size_x != screen_size_x
-		                         || command_target.screen_size_y != screen_size_y
-		                         || command_target.gpu_ref.id    != camera->gpu_target_ref.id
-		                         || command_target.gpu_ref.gen   != camera->gpu_target_ref.gen;
-
 		// process camera
-		if (changed_target) {
-			command_target.screen_size_x = screen_size_x;
-			command_target.screen_size_y = screen_size_y;
-			command_target.gpu_ref       = camera->gpu_target_ref;
+		if (!ref_equals(previous_gpu_target_ref, camera->gpu_target_ref)) {
+			previous_gpu_target_ref = camera->gpu_target_ref;
 			batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
 			array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_TARGET,
-				.as.target = command_target,
+				.as.target = {
+					.screen_size_x = screen_size.x,
+					.screen_size_y = screen_size.y,
+					.gpu_ref = camera->gpu_target_ref,
+				},
 			});
 		}
 
@@ -236,7 +209,6 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 		}
 
 		// draw entities
-		bool was_batching = false;
 		for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
 			struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
@@ -246,7 +218,7 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 			struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
 			entity_get_rect(
 				entity,
-				viewport_size_x, viewport_size_y,
+				viewport_size.x, viewport_size.y,
 				&entity_rect_min, &entity_rect_max, &entity_pivot
 			);
 			struct mat4 const mat4_entity = mat4_set_transformation(
@@ -260,15 +232,10 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 			);
 
 			if (entity_get_is_batched(entity)) {
-				was_batching = true;
 				batcher_2d_set_matrix(gs_game.batcher, (struct mat4[]){
 					mat4_mul_mat(mat4_camera, mat4_entity)
 				});
 				batcher_2d_set_material(gs_game.batcher, &material->value);
-			}
-			else if (was_batching) {
-				was_batching = false;
-				batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
 			}
 
 			switch (entity->type) {
@@ -280,19 +247,20 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 
 					// @todo: move out of the loop per-camera and global uniforms
 					uint32_t const override_offset = gs_game.uniforms.headers.count;
-					gfx_uniforms_push(&gs_game.uniforms, gs_main_uniforms.projection, (struct Gfx_Uniform_In){
+					gfx_uniforms_push(&gs_game.uniforms, uniform_projection, (struct Gfx_Uniform_In){
 						.size = sizeof(mat4_projection),
 						.data = &mat4_projection,
 					});
-					gfx_uniforms_push(&gs_game.uniforms, gs_main_uniforms.camera, (struct Gfx_Uniform_In){
+					gfx_uniforms_push(&gs_game.uniforms, uniform_camera, (struct Gfx_Uniform_In){
 						.size = sizeof(mat4_inverse_camera),
 						.data = &mat4_inverse_camera,
 					});
-					gfx_uniforms_push(&gs_game.uniforms, gs_main_uniforms.transform, (struct Gfx_Uniform_In){
+					gfx_uniforms_push(&gs_game.uniforms, uniform_transform, (struct Gfx_Uniform_In){
 						.size = sizeof(mat4_entity),
 						.data = &mat4_entity,
 					});
 
+					batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
 					array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
 						.type = GPU_COMMAND_TYPE_DRAW,
 						.as.draw = {
@@ -331,13 +299,53 @@ static void app_draw_update(uint64_t elapsed, uint64_t per_second) {
 			}
 		}
 	}
-
 	batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
-	batcher_2d_bake(gs_game.batcher);
-	gpu_execute(gs_game.gpu_commands.count, gs_game.gpu_commands.data);
 }
 
-//
+static void prototype_draw_ui(void) {
+	// struct uvec2 const screen_size = application_get_screen_size();
+}
+
+// ----- ----- ----- ----- -----
+//     app callbacks part
+// ----- ----- ----- ----- -----
+
+static void app_init(void) {
+	game_init();
+	prototype_init();
+}
+
+static void app_free(void) {
+	// @note: free strings here, because application checks for memory leaks right after this routine
+	//        an alternative solution would be to split `application_run` into stages
+	strings_free(&gs_main_settings.strings);
+	game_free();
+}
+
+static void app_fixed_tick(void) {
+}
+
+static void app_frame_tick(void) {
+	struct uvec2 const screen_size = application_get_screen_size();
+
+	prototype_tick_entities();
+
+	if (screen_size.x > 0 && screen_size.y > 0) {
+		batcher_2d_clear(gs_game.batcher);
+		gfx_uniforms_clear(&gs_game.uniforms);
+		array_any_clear(&gs_game.gpu_commands);
+
+		prototype_draw_entities();
+		prototype_draw_ui();
+
+		batcher_2d_bake(gs_game.batcher);
+		gpu_execute(gs_game.gpu_commands.count, gs_game.gpu_commands.data);
+	}
+}
+
+// ----- ----- ----- ----- -----
+//     main part
+// ----- ----- ----- ----- -----
 
 static void main_fill_settings(struct JSON const * json, void * data) {
 	struct Main_Settings * result = data;
@@ -346,18 +354,21 @@ static void main_fill_settings(struct JSON const * json, void * data) {
 	};
 	result->config_id = strings_add(&result->strings, json_get_string(json, S_("config"), S_NULL));
 	result->scene_id = strings_add(&result->strings, json_get_string(json, S_("scene"), S_NULL));
+	// @note: `gs_main_settings.strings` will be freed in the `app_free` function
 }
 
 static void main_fill_config(struct JSON const * json, void * data) {
 	struct Application_Config * result = data;
 	*result = (struct Application_Config){
-		.size_x = (uint32_t)json_get_number(json, S_("size_x"), 960),
-		.size_y = (uint32_t)json_get_number(json, S_("size_y"), 540),
+		.size = {
+			.x = (uint32_t)json_get_number(json, S_("size_x"), 0),
+			.y = (uint32_t)json_get_number(json, S_("size_y"), 0),
+		},
 		.flexible = json_get_boolean(json, S_("flexible"), false),
-		.vsync = (int32_t)json_get_number(json, S_("vsync"), 0),
-		.target_refresh_rate = (uint32_t)json_get_number(json, S_("target_refresh_rate"), 60),
-		.fixed_refresh_rate = (uint32_t)json_get_number(json, S_("fixed_refresh_rate"), 30),
-		.slow_frames_limit = (uint32_t)json_get_number(json, S_("slow_frames_limit"), 2),
+		.vsync              = (int32_t)json_get_number(json, S_("vsync"), 0),
+		.frame_refresh_rate = (uint32_t)json_get_number(json, S_("frame_refresh_rate"), 0),
+		.fixed_refresh_rate = (uint32_t)json_get_number(json, S_("fixed_refresh_rate"), 0),
+		.slow_frames_limit  = (uint32_t)json_get_number(json, S_("slow_frames_limit"), 0),
 	};
 }
 
@@ -367,8 +378,7 @@ int main (int argc, char * argv[]) {
 		logger_to_console("  %s\n", argv[i]);
 	}
 
-	struct CString const path = S_("assets/main.json");
-	process_json(main_fill_settings, &gs_main_settings, path);
+	process_json(main_fill_settings, &gs_main_settings, S_("assets/main.json"));
 
 	struct Application_Config config;
 	process_json(main_fill_config, &config, strings_get(&gs_main_settings.strings, gs_main_settings.config_id));
@@ -376,9 +386,8 @@ int main (int argc, char * argv[]) {
 	application_run(config, (struct Application_Callbacks){
 		.init = app_init,
 		.free = app_free,
-		.fixed_update = app_fixed_update,
-		.frame_update = app_frame_update,
-		.draw_update  = app_draw_update,
+		.fixed_tick = app_fixed_tick,
+		.frame_tick = app_frame_tick,
 	});
 
 	return 0;

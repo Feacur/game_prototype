@@ -23,7 +23,7 @@
 #include "game_state.h"
 
 static uint32_t state_read_json_hex(struct JSON const * json) {
-	struct CString const value = json_as_string(json, S_EMPTY);
+	struct CString const value = json_as_string(json, S_NULL);
 	if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x')
 	{
 		return parse_hex_u32(value.data + 2);

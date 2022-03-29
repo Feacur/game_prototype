@@ -1,12 +1,11 @@
 #if !defined(GAME_PLATFORM_FILE)
 #define GAME_PLATFORM_FILE
 
-#include "common.h"
+#include "framework/containers/buffer.h"
 
 // @note: `platform_file_read_entire` should reserve a byte more for a potential null-terminator
 //        the function assumes the buffer is uninitialized or empty: it *shall* leak you memory otherwise
 
-struct Buffer;
 struct File;
 
 enum File_Mode {
@@ -16,7 +15,7 @@ enum File_Mode {
 	FILE_MODE_DELETE = (1 << 2),
 };
 
-bool platform_file_read_entire(struct CString path, struct Buffer * buffer);
+struct Buffer platform_file_read_entire(struct CString path);
 void platform_file_delete(struct CString path);
 
 struct File * platform_file_init(struct CString path, enum File_Mode mode);
