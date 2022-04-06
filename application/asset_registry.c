@@ -156,12 +156,12 @@ static void asset_fill_font(struct JSON const * json, void * data) {
 	float const size = json_get_number(json, S_("size"), 0);
 
 	// @note: memory ownership transfer
-	struct Font * font = font_init(file_buffer);
+	struct Font * font = font_init(&file_buffer);
 	struct Font_Image * font_image = font_image_init(font, (int32_t)size);
 
 	*context->result = (struct Asset_Font){
 		.font = font,
-		.buffer = font_image,
+		.font_image = font_image,
 		.gpu_ref = gpu_texture_init(font_image_get_asset(font_image)),
 	};
 }
@@ -176,7 +176,7 @@ static void asset_font_free(struct Asset_System * system, void * instance) {
 	struct Asset_Font * asset = instance;
 	(void)system;
 	font_free(asset->font);
-	font_image_free(asset->buffer);
+	font_image_free(asset->font_image);
 	gpu_texture_free(asset->gpu_ref);
 }
 
@@ -269,11 +269,11 @@ void asset_types_init(struct Asset_System * system) {
 	asset_system_map_extension(system, S_("bytes"),    S_("txt"));
 	asset_system_map_extension(system, S_("json"),     S_("json"));
 	asset_system_map_extension(system, S_("shader"),   S_("glsl"));
-	asset_system_map_extension(system, S_("image"),    S_("img"));
-	asset_system_map_extension(system, S_("font"),     S_("fnt"));
-	asset_system_map_extension(system, S_("target"),   S_("rt"));
+	asset_system_map_extension(system, S_("image"),    S_("image"));
+	asset_system_map_extension(system, S_("font"),     S_("font"));
+	asset_system_map_extension(system, S_("target"),   S_("target"));
 	asset_system_map_extension(system, S_("model"),    S_("obj"));
-	asset_system_map_extension(system, S_("material"), S_("mat"));
+	asset_system_map_extension(system, S_("material"), S_("material"));
 
 	asset_system_set_type(system, S_("bytes"), (struct Asset_Callbacks){
 		.init = asset_bytes_init,

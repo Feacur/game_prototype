@@ -22,7 +22,7 @@ struct JSON {
 	enum JSON_Type type;
 	union {
 		struct Hash_Table_U32 table; // key string id : json value
-		struct Array_Any array;
+		struct Array_Any array;      // `struct JSON`
 		uint32_t id;
 		float number;
 		bool boolean;

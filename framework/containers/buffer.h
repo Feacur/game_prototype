@@ -13,6 +13,7 @@ void buffer_free(struct Buffer * buffer);
 
 void buffer_clear(struct Buffer * buffer);
 void buffer_resize(struct Buffer * buffer, size_t target_capacity);
+void buffer_ensure(struct Buffer * buffer, size_t target_capacity);
 
 void buffer_push(struct Buffer * buffer, uint8_t value);
 void buffer_push_many(struct Buffer * buffer, size_t count, uint8_t const * value);

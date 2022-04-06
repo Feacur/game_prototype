@@ -26,7 +26,13 @@ void array_any_resize(struct Array_Any * array, uint32_t target_capacity) {
 	array->data = MEMORY_REALLOCATE_SIZE(array, array->data, array->value_size * target_capacity);
 }
 
-static void array_any_ensure_capacity(struct Array_Any * array, uint32_t target_count) {
+void array_any_ensure(struct Array_Any * array, uint32_t target_capacity) {
+	if (array->capacity < target_capacity) {
+		array_any_resize(array, target_capacity);
+	}
+}
+
+static void array_any_grow_if_must(struct Array_Any * array, uint32_t target_count) {
 	if (array->capacity < target_count) {
 		uint32_t const target_capacity = grow_capacity_value_u32(array->capacity, target_count - array->capacity);
 		array_any_resize(array, target_capacity);
@@ -34,7 +40,7 @@ static void array_any_ensure_capacity(struct Array_Any * array, uint32_t target_
 }
 
 void array_any_push(struct Array_Any * array, void const * value) {
-	array_any_ensure_capacity(array, array->count + 1);
+	array_any_grow_if_must(array, array->count + 1);
 	if (value != NULL) {
 		common_memcpy(
 			(uint8_t *)array->data + array->value_size * array->count,
@@ -46,7 +52,7 @@ void array_any_push(struct Array_Any * array, void const * value) {
 }
 
 void array_any_push_many(struct Array_Any * array, uint32_t count, void const * value) {
-	array_any_ensure_capacity(array, array->count + count);
+	array_any_grow_if_must(array, array->count + count);
 	if (value != NULL) {
 		common_memcpy(
 			(uint8_t *)array->data + array->value_size * array->count,

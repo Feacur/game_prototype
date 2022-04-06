@@ -146,7 +146,7 @@ void hash_table_any_del_at(struct Hash_Table_Any * hash_table, uint32_t key_inde
 	hash_table->count--;
 }
 
-bool hash_table_any_iterate(struct Hash_Table_Any * hash_table, struct Hash_Table_Any_Iterator * iterator) {
+bool hash_table_any_iterate(struct Hash_Table_Any const * hash_table, struct Hash_Table_Any_Iterator * iterator) {
 	while (iterator->next < hash_table->capacity) {
 		uint32_t const index = iterator->next++;
 		iterator->current = index;

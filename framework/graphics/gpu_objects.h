@@ -16,6 +16,7 @@
 struct Buffer;
 struct Mesh;
 struct Image;
+struct Hash_Table_U32;
 
 // ----- ----- ----- ----- -----
 //     GPU program part
@@ -24,7 +25,9 @@ struct Image;
 struct Gpu_Program_Field;
 struct Ref gpu_program_init(struct Buffer const * asset);
 void gpu_program_free(struct Ref gpu_program_ref);
-void gpu_program_get_uniforms(struct Ref gpu_program_ref, uint32_t * count, struct Gpu_Program_Field const ** values);
+
+// uniform string id : `struct Gpu_Program_Field`
+struct Hash_Table_U32 const * gpu_program_get_uniforms(struct Ref gpu_program_ref);
 
 // ----- ----- ----- ----- -----
 //     GPU texture part
@@ -43,8 +46,8 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset);
 
 struct Ref gpu_target_init(
 	uint32_t size_x, uint32_t size_y,
-	struct Texture_Parameters const * parameters,
-	uint32_t count
+	uint32_t parameters_count,
+	struct Texture_Parameters const * parameters
 );
 void gpu_target_free(struct Ref gpu_target_ref);
 

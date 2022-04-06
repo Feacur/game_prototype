@@ -1,6 +1,7 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
 #include "framework/maths.h"
+#include "framework/containers/hash_table_u32.h"
 #include "framework/systems/asset_system.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
@@ -168,7 +169,7 @@ struct Ref state_read_json_target(struct JSON const * json) {
 		uint32_t const size_x = (uint32_t)json_get_number(json, S_("size_x"), 0);
 		uint32_t const size_y = (uint32_t)json_get_number(json, S_("size_y"), 0);
 		if (size_x > 0 && size_y > 0) {
-			result = gpu_target_init(size_x, size_y, parameters_buffer.data, parameters_buffer.count);
+			result = gpu_target_init(size_x, size_y, parameters_buffer.count, parameters_buffer.data);
 		}
 	}
 
@@ -193,15 +194,13 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 		&blend_mode, &depth_mode
 	);
 
-	uint32_t uniforms_count;
-	struct Gpu_Program_Field const * uniforms;
-	gpu_program_get_uniforms(result.gpu_program_ref, &uniforms_count, &uniforms);
+	struct Hash_Table_U32 const * uniforms = gpu_program_get_uniforms(result.gpu_program_ref);
 
 	struct Array_Any uniform_data_buffer = array_any_init(sizeof(uint8_t));
 
-	for (uint32_t i = 0; i < uniforms_count; i++) {
-		struct Gpu_Program_Field const * uniform = uniforms + i;
-		struct CString const uniform_name = graphics_get_uniform_value(uniform->id);
+	FOR_HASH_TABLE_U32(uniforms, it) {
+		struct Gpu_Program_Field const * uniform = it.value;
+		struct CString const uniform_name = graphics_get_uniform_value(it.key_hash);
 		struct JSON const * uniform_json = json_get(json, uniform_name);
 
 		if (uniform_json->type == JSON_NULL) { continue; }
@@ -209,9 +208,7 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 		uint32_t const uniform_count = data_type_get_count(uniform->type) * uniform->array_size;
 		uint32_t const uniform_bytes = data_type_get_size(uniform->type) * uniform->array_size;
 
-		if (uniform_data_buffer.capacity < uniform_bytes) {
-			array_any_resize(&uniform_data_buffer, uniform_bytes);
-		}
+		array_any_ensure(&uniform_data_buffer, uniform_bytes);
 
 		uint32_t const json_elements_count = max_u32(1, json_count(uniform_json));
 		if (json_elements_count != uniform_count) {
@@ -227,7 +224,7 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 
 			case DATA_TYPE_UNIT: {
 				state_read_json_unt_n(system, uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&result.uniforms, uniform->id, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result.uniforms, it.key_hash, (struct Gfx_Uniform_In){
 					.size = sizeof(struct Ref) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -235,7 +232,7 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 
 			case DATA_TYPE_U32: {
 				state_read_json_u32_n(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&result.uniforms, uniform->id, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result.uniforms, it.key_hash, (struct Gfx_Uniform_In){
 					.size = sizeof(uint32_t) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -243,7 +240,7 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 
 			case DATA_TYPE_S32: {
 				state_read_json_s32_n(uniform_json,uniform_count,  uniform_data_buffer.data);
-				gfx_uniforms_set(&result.uniforms, uniform->id, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result.uniforms, it.key_hash, (struct Gfx_Uniform_In){
 					.size = sizeof(int32_t) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -251,7 +248,7 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 
 			case DATA_TYPE_R32: {
 				state_read_json_flt_n(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&result.uniforms, uniform->id, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result.uniforms, it.key_hash, (struct Gfx_Uniform_In){
 					.size = sizeof(float) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});

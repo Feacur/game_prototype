@@ -28,7 +28,7 @@ bool hash_table_u64_set(struct Hash_Table_U64 * hash_table, uint64_t key_hash, v
 bool hash_table_u64_del(struct Hash_Table_U64 * hash_table, uint64_t key_hash);
 void hash_table_u64_del_at(struct Hash_Table_U64 * hash_table, uint32_t key_index);
 
-bool hash_table_u64_iterate(struct Hash_Table_U64 * hash_table, struct Hash_Table_U64_Iterator * iterator);
+bool hash_table_u64_iterate(struct Hash_Table_U64 const * hash_table, struct Hash_Table_U64_Iterator * iterator);
 
 #define FOR_HASH_TABLE_U64(data, it) for ( \
 	struct Hash_Table_U64_Iterator it = {0}; \

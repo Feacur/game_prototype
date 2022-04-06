@@ -31,7 +31,7 @@ bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, ui
 bool hash_table_any_del(struct Hash_Table_Any * hash_table, void const * key, uint32_t hash);
 void hash_table_any_del_at(struct Hash_Table_Any * hash_table, uint32_t key_index);
 
-bool hash_table_any_iterate(struct Hash_Table_Any * hash_table, struct Hash_Table_Any_Iterator * iterator);
+bool hash_table_any_iterate(struct Hash_Table_Any const * hash_table, struct Hash_Table_Any_Iterator * iterator);
 
 #define FOR_HASH_TABLE_ANY(data, it) for ( \
 	struct Hash_Table_Any_Iterator it = {0}; \

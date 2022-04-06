@@ -24,7 +24,13 @@ void array_u64_resize(struct Array_U64 * array, uint32_t target_capacity) {
 	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, target_capacity);
 }
 
-static void array_u64_ensure_capacity(struct Array_U64 * array, uint32_t target_count) {
+void array_u64_ensure(struct Array_U64 * array, uint32_t target_capacity) {
+	if (array->capacity < target_capacity) {
+		array_u64_resize(array, target_capacity);
+	}
+}
+
+static void array_u64_grow_if_must(struct Array_U64 * array, uint32_t target_count) {
 	if (array->capacity < target_count) {
 		uint32_t const target_capacity = grow_capacity_value_u32(array->capacity, target_count - array->capacity);
 		array_u64_resize(array, target_capacity);
@@ -32,12 +38,12 @@ static void array_u64_ensure_capacity(struct Array_U64 * array, uint32_t target_
 }
 
 void array_u64_push(struct Array_U64 * array, uint64_t value) {
-	array_u64_ensure_capacity(array, array->count + 1);
+	array_u64_grow_if_must(array, array->count + 1);
 	array->data[array->count++] = value;
 }
 
 void array_u64_push_many(struct Array_U64 * array, uint32_t count, uint64_t const * value) {
-	array_u64_ensure_capacity(array, array->count + count);
+	array_u64_grow_if_must(array, array->count + count);
 	if (value != NULL) {
 		common_memcpy(
 			array->data + array->count,

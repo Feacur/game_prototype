@@ -20,7 +20,7 @@ struct Gfx_Uniforms_Entry {
 };
 
 struct Gfx_Uniforms {
-	struct Array_Any headers;
+	struct Array_Any headers; // `struct Gfx_Uniforms_Entry`
 	struct Buffer payload;
 };
 

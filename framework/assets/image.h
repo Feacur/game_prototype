@@ -22,6 +22,6 @@ struct Image {
 struct Image image_init(struct Texture_Settings settings, struct Buffer const * buffer);
 void image_free(struct Image * image);
 
-void image_resize(struct Image * image, uint32_t size_x, uint32_t size_y);
+void image_ensure(struct Image * image, uint32_t size_x, uint32_t size_y);
 
 #endif

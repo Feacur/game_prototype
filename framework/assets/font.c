@@ -38,10 +38,12 @@ struct Font {
 	int ascent, descent, line_gap;
 };
 
-struct Font * font_init(struct Buffer buffer) {
+struct Font * font_init(struct Buffer * buffer) {
 	struct Font * font = MEMORY_ALLOCATE(NULL, struct Font);
 
-	font->file = buffer;
+	// @note: memory ownership transfer
+	font->file = *buffer;
+	*buffer = (struct Buffer){0};
 
 	if (!stbtt_InitFont(&font->font, font->file.data, stbtt_GetFontOffsetForIndex(font->file.data, 0))) {
 		logger_to_console("failure: can't read font data\n"); DEBUG_BREAK();
@@ -106,32 +108,36 @@ void font_get_glyph_parameters(struct Font const * font, struct Glyph_Params * p
 
 void font_fill_buffer(
 	struct Font const * font,
-	uint8_t * buffer, uint32_t buffer_rect_width,
-	uint32_t glyph_id, uint32_t glyph_size_x, uint32_t glyph_size_y, float scale
+	uint32_t glyph_id, float scale,
+	uint8_t * buffer, uint32_t buffer_width,
+	uint32_t glyph_size_x, uint32_t glyph_size_y,
+	uint32_t offset_x, uint32_t offset_y
 ) {
+	if (glyph_size_x == 0) { logger_to_console("'glyph_size_x == 0' doesn't make sense\n"); DEBUG_BREAK(); return; }
+	if (glyph_size_y == 0) { logger_to_console("'glyph_size_y == 0' doesn't make sense\n"); DEBUG_BREAK(); return; }
+
 	if (glyph_id == 0) {
-		if (glyph_size_x == 0) { logger_to_console("'glyph_size_x == 0' doesn't make sense\n"); DEBUG_BREAK(); }
-		if (glyph_size_y == 0) { logger_to_console("'glyph_size_y == 0' doesn't make sense\n"); DEBUG_BREAK(); }
-		buffer[0] = 0xff;
 		common_memset(buffer, 0xff, glyph_size_x * glyph_size_y * sizeof(*buffer));
 		return;
 	}
+
+	if (buffer_width == 0) { logger_to_console("'buffer_width == 0' doesn't make sense\n"); DEBUG_BREAK(); return; }
 
 	// @note: ensure glyphs data layout inside the atlas
 	// stbtt_set_flip_vertically_on_load(1);
 
 	stbtt_MakeGlyphBitmap(
-		&font->font, buffer,
-		(int)glyph_size_x, (int)glyph_size_y, (int)buffer_rect_width,
+		&font->font, buffer + offset_y * buffer_width + offset_x,
+		(int)glyph_size_x, (int)glyph_size_y, (int)buffer_width,
 		scale, scale,
 		(int)glyph_id
 	);
 }
 
 float font_get_scale(struct Font const * font, float pixels_size) {
-	return (pixels_size >= 0)
-		? stbtt_ScaleForPixelHeight(&font->font, pixels_size)
-		: stbtt_ScaleForMappingEmToPixels(&font->font, -pixels_size);
+	if (pixels_size > 0) { return stbtt_ScaleForPixelHeight(&font->font, pixels_size); }
+	if (pixels_size < 0) { return stbtt_ScaleForMappingEmToPixels(&font->font, -pixels_size); }
+	return 0;
 }
 
 int32_t font_get_ascent(struct Font const * font) {

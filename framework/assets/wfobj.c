@@ -194,8 +194,8 @@ inline static struct WFObj wfobj_init_internal(char const * text) {
 
 			case WFOBJ_TOKEN_POSITION: position_lines++; break;
 			case WFOBJ_TOKEN_TEXCOORD: texcoord_lines++; break;
-			case WFOBJ_TOKEN_NORMAL: normal_lines++; break;
-			case WFOBJ_TOKEN_FACE: face_lines++; break;
+			case WFOBJ_TOKEN_NORMAL:   normal_lines++;   break;
+			case WFOBJ_TOKEN_FACE:     face_lines++;     break;
 		}
 		ADVANCE();
 	}
@@ -203,7 +203,7 @@ inline static struct WFObj wfobj_init_internal(char const * text) {
 
 	array_flt_resize(&result.positions, position_lines * 3);
 	array_flt_resize(&result.texcoords, texcoord_lines * 2);
-	array_flt_resize(&result.normals, normal_lines * 3);
+	array_flt_resize(&result.normals,   normal_lines * 3);
 	array_u32_resize(&result.triangles, face_lines * 3 * 2);
 
 	//

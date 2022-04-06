@@ -7,7 +7,7 @@
 			},
 			"mode": "aspect_x",
 			"ncp": 0.1, "fcp": 10,
-			"target": "assets/back_buffer.json.rt",
+			"target": "assets/back_buffer.target",
 			"clear_mask": ["color", "depth"],
 			"clear_rgba": "0x303030ff",
 		},
@@ -21,21 +21,21 @@
 	"entities": [
 		{
 			"camera_uid": 1,
-			"material": "assets/materials/textured.json.mat",
+			"material": "assets/materials/textured.material",
 			"type": "mesh",
 			"model": "assets/models/cube.obj",
 			"rotation_mode": "y",
 		},
 		{
 			"camera_uid": 2,
-			"material": "assets/materials/back_buffer.json.mat",
+			"material": "assets/materials/back_buffer.material",
 			"type": "quad_2d",
 			"uniform": "prop_Texture",
 			"mode": "fit",
 		},
 		{
 			"camera_uid": 2,
-			"material": "assets/materials/image.json.mat",
+			"material": "assets/materials/image.material",
 			"rect": {
 				"anchor_min": [0.5, 0.25],
 				"anchor_max": [0.5, 0.25],
@@ -47,7 +47,7 @@
 		},
 		{
 			"camera_uid": 2,
-			"material": "assets/materials/image.json.mat",
+			"material": "assets/materials/image.material",
 			"rect": {
 				"anchor_min": [0, 0],
 				"anchor_max": [0.5, 0.25],
@@ -58,7 +58,7 @@
 		},
 		{
 			"camera_uid": 2,
-			"material": "assets/materials/font.json.mat",
+			"material": "assets/materials/font.material",
 			"rect": {
 				"anchor_min": [0.5, 0.25],
 				"anchor_max": [0.5, 0.25],
@@ -66,12 +66,12 @@
 				"pivot": [0.5, 0.5],
 			},
 			"type": "text_2d",
-			"font": "assets/fonts/test.json.fnt",
+			"font": "assets/fonts/test.font",
 			"message": "assets/prototype/test.txt",
 		},
 		{
 			"camera_uid": 2,
-			"material": "assets/materials/font.json.mat",
+			"material": "assets/materials/font.material",
 			"rect": {
 				"anchor_min": [0, 1],
 				"anchor_max": [0, 1],

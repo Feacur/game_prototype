@@ -41,7 +41,7 @@ struct Buffer platform_file_read_entire(struct CString path) {
 	}
 
 	finalize:
-	platform_file_free(file);
+	if (file != NULL) { platform_file_free(file); }
 	return buffer;
 }
 

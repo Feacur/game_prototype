@@ -24,7 +24,13 @@ void buffer_resize(struct Buffer * buffer, size_t target_capacity) {
 	buffer->data = MEMORY_REALLOCATE_ARRAY(buffer, buffer->data, target_capacity);
 }
 
-static void buffer_ensure_capacity(struct Buffer * buffer, size_t target_count) {
+void buffer_ensure(struct Buffer * buffer, size_t target_capacity) {
+	if (buffer->capacity < target_capacity) {
+		buffer_resize(buffer, target_capacity);
+	}
+}
+
+static void buffer_grow_if_must(struct Buffer * buffer, size_t target_count) {
 	if (buffer->capacity < target_count) {
 		size_t const target_capacity = grow_capacity_value_u64(buffer->capacity, target_count - buffer->capacity);
 		buffer_resize(buffer, target_capacity);
@@ -32,12 +38,12 @@ static void buffer_ensure_capacity(struct Buffer * buffer, size_t target_count) 
 }
 
 void buffer_push(struct Buffer * buffer, uint8_t value) {
-	buffer_ensure_capacity(buffer, buffer->count + 1);
+	buffer_grow_if_must(buffer, buffer->count + 1);
 	buffer->data[buffer->count++] = value;
 }
 
 void buffer_push_many(struct Buffer * buffer, size_t count, uint8_t const * value) {
-	buffer_ensure_capacity(buffer, buffer->count + count);
+	buffer_grow_if_must(buffer, buffer->count + count);
 	if (value != NULL) {
 		common_memcpy(
 			buffer->data + buffer->count,
@@ -50,7 +56,7 @@ void buffer_push_many(struct Buffer * buffer, size_t count, uint8_t const * valu
 
 void buffer_align(struct Buffer * buffer) {
 	size_t const target_count = align_u64(buffer->count);
-	buffer_ensure_capacity(buffer, target_count);
+	buffer_grow_if_must(buffer, target_count);
 	buffer->count = target_count;
 }
 

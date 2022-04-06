@@ -20,7 +20,7 @@ void common_memcpy(void * target, void const * source, size_t size) {
 	memcpy(target, source, size);
 }
 
-int common_memcmp(void const * buffer_1, void const * buffer_2, size_t size) {
+int32_t common_memcmp(void const * buffer_1, void const * buffer_2, size_t size) {
 	return memcmp(buffer_1, buffer_2, size);
 }
 

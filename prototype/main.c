@@ -162,9 +162,7 @@ static void prototype_draw_entities(void) {
 	// @todo: override material params per shader or material where possible
 
 	uint32_t const gpu_commands_count_estimate = gs_game.cameras.count * 2 + gs_game.entities.count;
-	if (gs_game.gpu_commands.capacity < gpu_commands_count_estimate) {
-		array_any_resize(&gs_game.gpu_commands, gpu_commands_count_estimate);
-	}
+	array_any_ensure(&gs_game.gpu_commands, gpu_commands_count_estimate);
 
 	struct Ref previous_gpu_target_ref = { // @note: deliberately wrong handle
 		.id = INDEX_EMPTY, .gen = INDEX_EMPTY,

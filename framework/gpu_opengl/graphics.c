@@ -3,6 +3,9 @@
 
 #include "framework/containers/strings.h"
 #include "framework/containers/buffer.h"
+#include "framework/containers/array_any.h"
+#include "framework/containers/array_u32.h"
+#include "framework/containers/hash_table_u32.h"
 #include "framework/containers/ref_table.h"
 
 #include "framework/assets/mesh.h"
@@ -21,18 +24,21 @@
 // @todo: expose screen buffer settings, as well as OpenGL's
 // @idea: use dedicated samplers instead of texture defaults
 // @idea: support older OpenGL versions (pre direct state access, which is 4.5)
-// @idea: use arrays and tables
 
-#define MAX_UNIFORMS 32
-#define MAX_UNITS_PER_MATERIAL 64
-#define MAX_TARGET_ATTACHMENTS 4
-#define MAX_MESH_BUFFERS 2
+struct Gpu_Program_Field_Internal {
+	struct Gpu_Program_Field base;
+	GLint location;
+};
+
+struct Gpu_Mesh_Buffer {
+	GLuint id;
+	struct Mesh_Parameters parameters;
+	uint32_t capacity, count;
+};
 
 struct Gpu_Program {
 	GLuint id;
-	struct Gpu_Program_Field uniforms[MAX_UNIFORMS];
-	GLint uniform_locations[MAX_UNIFORMS];
-	uint32_t uniforms_count;
+	struct Hash_Table_U32 uniforms; // uniform string id : `struct Gpu_Program_Field_Internal`
 	// @idea: add an optional asset source
 };
 
@@ -47,19 +53,14 @@ struct Gpu_Texture {
 struct Gpu_Target {
 	GLuint id;
 	uint32_t size_x, size_y;
-	struct Ref texture_refs[MAX_TARGET_ATTACHMENTS];
-	uint32_t textures_count;
-	GLuint buffers[MAX_TARGET_ATTACHMENTS];
-	uint32_t buffers_count;
+	struct Array_Any textures; // `struct Ref` handles for `struct Gpu_Texture`
+	struct Array_U32 buffers;  // OpenGL ids
+	// @idea: add an optional asset source
 };
 
 struct Gpu_Mesh {
 	GLuint id;
-	uint32_t buffers_count;
-	GLuint buffer_ids[MAX_MESH_BUFFERS];
-	struct Mesh_Parameters parameters[MAX_MESH_BUFFERS];
-	uint32_t capacities[MAX_MESH_BUFFERS];
-	uint32_t counts[MAX_MESH_BUFFERS];
+	struct Array_Any buffers; // `struct Gpu_Mesh_Buffer`
 	uint32_t elements_index;
 	// @idea: add an optional asset source
 };
@@ -177,8 +178,9 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	glGetProgramInterfaceiv(program_id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
 	GLchar * uniform_name_buffer = alloca(sizeof(GLchar) * (size_t)uniform_name_buffer_length);
 
-	struct Gpu_Program_Field uniforms[MAX_UNIFORMS];
-	GLint uniform_locations[MAX_UNIFORMS];
+	struct Hash_Table_U32 uniforms = hash_table_u32_init(sizeof(struct Gpu_Program_Field_Internal));
+	hash_table_u32_resize(&uniforms, (uint32_t)uniforms_count);
+
 	for (GLint i = 0; i < uniforms_count; i++) {
 		enum Param {
 			PARAM_TYPE,
@@ -201,38 +203,38 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 		if (params[PARAM_ARRAY_SIZE] > 1) {
 			// @todo: improve reflection/introspection/whatever;
 			//        simple arrays have names ending with a `[0]`;
-			//        more specifically the very first elememnt is tagget such a way
+			//        more specifically the very first elememnt is tagged such a way
 			if (common_memcmp(uniform_name_buffer + name_length - 3, "[0]", 3) != 0) { continue; }
 			name_length -= 3;
 		}
 
-		uniforms[i] = (struct Gpu_Program_Field){
-			.id = strings_add(&gs_graphics_state.uniforms, (struct CString){
-				.length = (uint32_t)name_length,
-				.data = uniform_name_buffer,
-			}),
-			.type = interpret_gl_type(params[PARAM_TYPE]),
-			.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
-			.is_property = common_memcmp(uniform_name_buffer, "prop_", 5) == 0,
-		};
-		uniform_locations[i] = params[PARAM_LOCATION];
+		uint32_t const id = strings_add(&gs_graphics_state.uniforms, (struct CString){
+			.length = (uint32_t)name_length,
+			.data = uniform_name_buffer,
+		});
+
+		hash_table_u32_set(&uniforms, id, &(struct Gpu_Program_Field_Internal){
+			.base = {
+				.type = interpret_gl_type(params[PARAM_TYPE]),
+				.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
+				.is_property = common_memcmp(uniform_name_buffer, "prop_", 5) == 0,
+			},
+			.location = params[PARAM_LOCATION],
+		});
 	}
 
 	//
-	struct Gpu_Program gpu_program = (struct Gpu_Program){
+	return ref_table_aquire(&gs_graphics_state.programs, &(struct Gpu_Program){
 		.id = program_id,
-		.uniforms_count = (uint32_t)uniforms_count,
-	};
-	common_memcpy(gpu_program.uniforms, uniforms, sizeof(*uniforms) * (size_t)uniforms_count);
-	common_memcpy(gpu_program.uniform_locations, uniform_locations, sizeof(*uniform_locations) * (size_t)uniforms_count);
-
-	return ref_table_aquire(&gs_graphics_state.programs, &gpu_program);
+		.uniforms = uniforms, // @note: memory ownership transfer
+	});
 	// https://www.khronos.org/opengl/wiki/Program_Introspection
 
 #undef ADD_HEADER
 }
 
-static void gpu_program_free_internal(struct Gpu_Program const * gpu_program) {
+static void gpu_program_free_internal(struct Gpu_Program * gpu_program) {
+	hash_table_u32_free(&gpu_program->uniforms);
 	glDeleteProgram(gpu_program->id);
 }
 
@@ -240,19 +242,16 @@ void gpu_program_free(struct Ref gpu_program_ref) {
 	if (ref_equals(gs_graphics_state.active_program_ref, gpu_program_ref)) {
 		gs_graphics_state.active_program_ref = c_ref_empty;
 	}
-	struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, gpu_program_ref);
+	struct Gpu_Program * gpu_program = ref_table_get(&gs_graphics_state.programs, gpu_program_ref);
 	if (gpu_program != NULL) {
 		gpu_program_free_internal(gpu_program);
 		ref_table_discard(&gs_graphics_state.programs, gpu_program_ref);
 	}
 }
 
-void gpu_program_get_uniforms(struct Ref gpu_program_ref, uint32_t * count, struct Gpu_Program_Field const ** values) {
+struct Hash_Table_U32 const * gpu_program_get_uniforms(struct Ref gpu_program_ref) {
 	struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, gpu_program_ref);
-	if (gpu_program != NULL) {
-		*count = gpu_program->uniforms_count;
-		*values = gpu_program->uniforms;
-	}
+	return (gpu_program != NULL) ? &gpu_program->uniforms : NULL;
 }
 
 // ----- ----- ----- ----- -----
@@ -261,8 +260,8 @@ void gpu_program_get_uniforms(struct Ref gpu_program_ref, uint32_t * count, stru
 
 static struct Ref gpu_texture_allocate(
 	uint32_t size_x, uint32_t size_y,
-	struct Texture_Parameters const * parameters,
-	struct Texture_Settings const * settings,
+	struct Texture_Parameters parameters,
+	struct Texture_Settings settings,
 	void const * data
 ) {
 	if (size_x > gs_graphics_state.limits.max_texture_size) {
@@ -280,17 +279,17 @@ static struct Ref gpu_texture_allocate(
 
 	// allocate buffer
 	GLint const level = 0;
-	if (data == NULL && !(parameters->flags & (TEXTURE_FLAG_WRITE | TEXTURE_FLAG_READ | TEXTURE_FLAG_INTERNAL))) {
+	if (data == NULL && !(parameters.flags & (TEXTURE_FLAG_WRITE | TEXTURE_FLAG_READ | TEXTURE_FLAG_INTERNAL))) {
 		logger_to_console("non-internal storage should have initial data\n"); DEBUG_BREAK();
 	}
-	else if (parameters->flags & TEXTURE_FLAG_MUTABLE) {
+	else if (parameters.flags & TEXTURE_FLAG_MUTABLE) {
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		glTexImage2D(
 			GL_TEXTURE_2D, level,
-			(GLint)gpu_sized_internal_format(parameters->texture_type, parameters->data_type, parameters->channels),
+			(GLint)gpu_sized_internal_format(parameters.texture_type, parameters.data_type, parameters.channels),
 			(GLsizei)size_x, (GLsizei)size_y, 0,
-			gpu_pixel_data_format(parameters->texture_type, parameters->channels),
-			gpu_pixel_data_type(parameters->texture_type, parameters->data_type),
+			gpu_pixel_data_format(parameters.texture_type, parameters.channels),
+			gpu_pixel_data_type(parameters.texture_type, parameters.data_type),
 			data
 		);
 	}
@@ -298,15 +297,15 @@ static struct Ref gpu_texture_allocate(
 		GLsizei const levels = 1;
 		glTextureStorage2D(
 			texture_id, levels,
-			gpu_sized_internal_format(parameters->texture_type, parameters->data_type, parameters->channels),
+			gpu_sized_internal_format(parameters.texture_type, parameters.data_type, parameters.channels),
 			(GLsizei)size_x, (GLsizei)size_y
 		);
 		if (data != NULL) {
 			glTextureSubImage2D(
 				texture_id, level,
 				0, 0, (GLsizei)size_x, (GLsizei)size_y,
-				gpu_pixel_data_format(parameters->texture_type, parameters->channels),
-				gpu_pixel_data_type(parameters->texture_type, parameters->data_type),
+				gpu_pixel_data_format(parameters.texture_type, parameters.channels),
+				gpu_pixel_data_type(parameters.texture_type, parameters.data_type),
 				data
 			);
 		}
@@ -316,33 +315,31 @@ static struct Ref gpu_texture_allocate(
 	}
 
 	// chart buffer
-	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(settings->mipmap, settings->minification));
-	glTextureParameteri(texture_id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(settings->magnification));
-	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(settings->wrap_x));
-	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings->wrap_y));
+	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(settings.mipmap, settings.minification));
+	glTextureParameteri(texture_id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(settings.magnification));
+	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(settings.wrap_x));
+	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings.wrap_y));
 
 	glTextureParameteriv(texture_id, GL_TEXTURE_SWIZZLE_RGBA, (GLint[]){
-		gpu_swizzle_op(settings->swizzle[0], 0),
-		gpu_swizzle_op(settings->swizzle[1], 1),
-		gpu_swizzle_op(settings->swizzle[2], 2),
-		gpu_swizzle_op(settings->swizzle[3], 3),
+		gpu_swizzle_op(settings.swizzle[0], 0),
+		gpu_swizzle_op(settings.swizzle[1], 1),
+		gpu_swizzle_op(settings.swizzle[2], 2),
+		gpu_swizzle_op(settings.swizzle[3], 3),
 	});
 
 	//
-	struct Gpu_Texture gpu_texture = (struct Gpu_Texture){
+	return ref_table_aquire(&gs_graphics_state.textures, &(struct Gpu_Texture){
 		.id = texture_id,
 		.size_x = size_x,
 		.size_y = size_y,
-		.parameters = *parameters,
-		.settings = *settings,
-	};
-
-	return ref_table_aquire(&gs_graphics_state.textures, &gpu_texture);
+		.parameters = parameters,
+		.settings = settings,
+	});
 }
 
 struct Ref gpu_texture_init(struct Image const * asset) {
 	struct Ref const gpu_texture_ref = gpu_texture_allocate(
-		asset->size_x, asset->size_y, &asset->parameters, &asset->settings, asset->data
+		asset->size_x, asset->size_y, asset->parameters, asset->settings, asset->data
 	);
 
 	gpu_texture_update(gpu_texture_ref, asset);
@@ -350,7 +347,7 @@ struct Ref gpu_texture_init(struct Image const * asset) {
 	return gpu_texture_ref;
 }
 
-static void gpu_texture_free_internal(struct Gpu_Texture const * gpu_texture) {
+static void gpu_texture_free_internal(struct Gpu_Texture * gpu_texture) {
 	glDeleteTextures(1, &gpu_texture->id);
 }
 
@@ -361,7 +358,7 @@ void gpu_texture_free(struct Ref gpu_texture_ref) {
 			unit->gpu_texture_ref = c_ref_empty;
 		}
 	}
-	struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
+	struct Gpu_Texture * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
 	if (gpu_texture != NULL) {
 		gpu_texture_free_internal(gpu_texture);
 		ref_table_discard(&gs_graphics_state.textures, gpu_texture_ref);
@@ -422,25 +419,35 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset) 
 
 struct Ref gpu_target_init(
 	uint32_t size_x, uint32_t size_y,
-	struct Texture_Parameters const * parameters,
-	uint32_t count
+	uint32_t parameters_count,
+	struct Texture_Parameters const * parameters
 ) {
 	GLuint target_id;
 	glCreateFramebuffers(1, &target_id);
 
-	struct Ref texture_refs[MAX_TARGET_ATTACHMENTS];
-	uint32_t textures_count = 0;
+	struct Array_Any textures = array_any_init(sizeof(struct Ref));
+	struct Array_U32 buffers = array_u32_init();
 
-	GLuint buffers[MAX_TARGET_ATTACHMENTS];
-	uint32_t buffers_count = 0;
+	// allocate exact space for the buffers
+	uint32_t textures_count = 0;
+	for (uint32_t i = 0; i < parameters_count; i++) {
+		if (parameters[i].flags & TEXTURE_FLAG_READ) {
+			textures_count++;
+		}
+	}
+	uint32_t buffers_count = parameters_count - textures_count;
+
+	array_any_resize(&textures, textures_count);
+	array_u32_resize(&buffers, buffers_count);
 
 	// allocate buffers
-	for (uint32_t i = 0; i < count; i++) {
+	for (uint32_t i = 0; i < parameters_count; i++) {
 		if (parameters[i].flags & TEXTURE_FLAG_READ) {
-			texture_refs[textures_count++] = gpu_texture_allocate(size_x, size_y, parameters + i, &(struct Texture_Settings){
+			struct Ref const texture_ref = gpu_texture_allocate(size_x, size_y, parameters[i], (struct Texture_Settings){
 				.wrap_x = WRAP_MODE_EDGE,
 				.wrap_y = WRAP_MODE_EDGE,
 			}, NULL);
+			array_any_push(&textures, &texture_ref);
 		}
 		else {
 			GLuint buffer_id;
@@ -450,23 +457,23 @@ struct Ref gpu_target_init(
 				gpu_sized_internal_format(parameters[i].texture_type, parameters[i].data_type, parameters[i].channels),
 				(GLsizei)size_x, (GLsizei)size_y
 			);
-			buffers[buffers_count++] = buffer_id;
+			array_u32_push(&buffers, buffer_id);
 		}
 	}
 
 	// chart buffers
-	for (uint32_t i = 0, texture_index = 0, color_index = 0, buffer_index = 0; i < count; i++) {
+	for (uint32_t i = 0, texture_index = 0, color_index = 0, buffer_index = 0; i < parameters_count; i++) {
 		if (!(parameters[i].flags & TEXTURE_FLAG_READ)) {
 			glNamedFramebufferRenderbuffer(
 				target_id,
 				gpu_attachment_point(parameters[i].texture_type, color_index),
 				GL_RENDERBUFFER,
-				buffers[buffer_index++]
+				buffers.data[buffer_index++]
 			);
 		}
 		else {
-			struct Ref const gpu_texture_ref = texture_refs[texture_index++];
-			struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
+			struct Ref const * gpu_texture_ref = array_any_at(&textures, texture_index++);
+			struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, *gpu_texture_ref);
 			if (gpu_texture != NULL) {
 				GLint const level = 0;
 				glNamedFramebufferTexture(
@@ -482,26 +489,25 @@ struct Ref gpu_target_init(
 	}
 
 	//
-	struct Gpu_Target gpu_target = (struct Gpu_Target){
+	return ref_table_aquire(&gs_graphics_state.targets, &(struct Gpu_Target){
 		.id = target_id,
 		.size_x = size_x,
 		.size_y = size_y,
-		.textures_count = textures_count,
-		.buffers_count = buffers_count,
-	};
-	common_memcpy(gpu_target.texture_refs, texture_refs, sizeof(*texture_refs) * textures_count);
-	common_memcpy(gpu_target.buffers, buffers, sizeof(*buffers) * buffers_count);
-
-	return ref_table_aquire(&gs_graphics_state.targets, &gpu_target);
+		.textures = textures, // @note: memory ownership transfer
+		.buffers = buffers, // @note: memory ownership transfer
+	});
 }
 
-static void gpu_target_free_internal(struct Gpu_Target const * gpu_target) {
-	for (uint32_t i = 0; i < gpu_target->textures_count; i++) {
-		gpu_texture_free(gpu_target->texture_refs[i]);
+static void gpu_target_free_internal(struct Gpu_Target * gpu_target) {
+	for (uint32_t i = 0; i < gpu_target->textures.count; i++) {
+		struct Ref const * gpu_texture_ref = array_any_at(&gpu_target->textures, i);
+		gpu_texture_free(*gpu_texture_ref);
 	}
-	for (uint32_t i = 0; i < gpu_target->buffers_count; i++) {
-		glDeleteRenderbuffers(1, gpu_target->buffers + i);
+	for (uint32_t i = 0; i < gpu_target->buffers.count; i++) {
+		glDeleteRenderbuffers(1, gpu_target->buffers.data + i);
 	}
+	array_any_free(&gpu_target->textures);
+	array_u32_free(&gpu_target->buffers);
 	glDeleteFramebuffers(1, &gpu_target->id);
 }
 
@@ -509,7 +515,7 @@ void gpu_target_free(struct Ref gpu_target_ref) {
 	if (ref_equals(gs_graphics_state.active_target_ref, gpu_target_ref)) {
 		gs_graphics_state.active_target_ref = c_ref_empty;
 	}
-	struct Gpu_Target const * gpu_target = ref_table_get(&gs_graphics_state.targets, gpu_target_ref);
+	struct Gpu_Target * gpu_target = ref_table_get(&gs_graphics_state.targets, gpu_target_ref);
 	if (gpu_target != NULL) {
 		gpu_target_free_internal(gpu_target);
 		ref_table_discard(&gs_graphics_state.targets, gpu_target_ref);
@@ -527,12 +533,12 @@ void gpu_target_get_size(struct Ref gpu_target_ref, uint32_t * x, uint32_t * y) 
 struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Type type, uint32_t index) {
 	struct Gpu_Target const * gpu_target = ref_table_get(&gs_graphics_state.targets, gpu_target_ref);
 	if (gpu_target == NULL) { return c_ref_empty; }
-	for (uint32_t i = 0, color_index = 0; i < gpu_target->textures_count; i++) {
-		struct Ref const gpu_texture_ref = gpu_target->texture_refs[i];
-		struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
+	for (uint32_t i = 0, color_index = 0; i < gpu_target->textures.count; i++) {
+		struct Ref const * gpu_texture_ref = array_any_at(&gpu_target->textures, i);
+		struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, *gpu_texture_ref);
 		if (gpu_texture->parameters.texture_type == type) {
 			if (type == TEXTURE_TYPE_COLOR && color_index != index) { color_index++; continue; }
-			return gpu_texture_ref;
+			return *gpu_texture_ref;
 		}
 	}
 
@@ -546,126 +552,126 @@ struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Ty
 
 static struct Ref gpu_mesh_allocate(
 	uint32_t buffers_count,
-	uint32_t * byte_lengths,
-	struct Mesh_Parameters const * parameters_set,
-	void ** data
+	struct Buffer * asset_buffers,
+	struct Mesh_Parameters const * parameters_set
 ) {
-	if (buffers_count > MAX_MESH_BUFFERS) {
-		logger_to_console("too many buffers\n"); DEBUG_BREAK();
-		buffers_count = MAX_MESH_BUFFERS;
-	}
-
 	GLuint mesh_id;
 	glCreateVertexArrays(1, &mesh_id);
 
-	GLuint buffer_ids[MAX_MESH_BUFFERS];
-	uint32_t capacities[MAX_MESH_BUFFERS];
+	struct Array_Any buffers = array_any_init(sizeof(struct Gpu_Mesh_Buffer));
+	array_any_resize(&buffers, buffers_count);
 
 	// allocate buffers
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct Mesh_Parameters const * parameters = parameters_set + i;
+		struct Buffer const * asset_buffer = asset_buffers + i;
 
-		glCreateBuffers(1, buffer_ids + i);
+		struct Mesh_Parameters const parameters = parameters_set[i];
+		array_any_push(&buffers, &(struct Gpu_Mesh_Buffer){
+			.parameters = parameters,
+		});
 
-		if (data[i] == NULL && !(parameters->flags & (MESH_FLAG_WRITE | MESH_FLAG_READ | MESH_FLAG_INTERNAL))) {
+		struct Gpu_Mesh_Buffer * buffer = array_any_at(&buffers, i);
+		glCreateBuffers(1, &buffer->id);
+
+		if (asset_buffer->data == NULL && !(parameters.flags & (MESH_FLAG_WRITE | MESH_FLAG_READ | MESH_FLAG_INTERNAL))) {
 			logger_to_console("non-internal storage should have initial data\n"); DEBUG_BREAK();
 		}
-		else if (parameters->flags & MESH_FLAG_MUTABLE) {
+		else if (parameters.flags & MESH_FLAG_MUTABLE) {
 			glNamedBufferData(
-				buffer_ids[i],
-				(GLsizeiptr)byte_lengths[i], data[i],
-				gpu_mesh_usage_pattern(parameters->flags)
+				buffer->id,
+				(GLsizeiptr)asset_buffer->count, asset_buffer->data,
+				gpu_mesh_usage_pattern(parameters.flags)
 			);
 		}
-		else if (byte_lengths[i] != 0) {
+		else if (asset_buffer->count != 0) {
 			glNamedBufferStorage(
-				buffer_ids[i],
-				(GLsizeiptr)byte_lengths[i], data[i],
-				gpu_mesh_immutable_flag(parameters->flags)
+				buffer->id,
+				(GLsizeiptr)asset_buffer->count, asset_buffer->data,
+				gpu_mesh_immutable_flag(parameters.flags)
 			);
 		}
 		else {
 			logger_to_console("immutable storage should have non-zero size\n"); DEBUG_BREAK();
+			continue;
 		}
 
-		capacities[i] = byte_lengths[i] / data_type_get_size(parameters->type);
+		// @note: deliberately using count instead of capacity, so as to drop junk data
+		buffer->capacity = (uint32_t)asset_buffer->count / data_type_get_size(parameters.type);
+		buffer->count = (asset_buffer->data != NULL) ? buffer->capacity : 0;
 	}
 
 	// chart buffers
-	uint32_t elements_index = INDEX_EMPTY;
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct Mesh_Parameters const * parameters = parameters_set + i;
+		struct Gpu_Mesh_Buffer const * buffer = array_any_at(&buffers, i);
+		struct Mesh_Parameters const parameters = buffer->parameters;
 
 		// element buffer
-		if (parameters->flags & MESH_FLAG_INDEX) {
-			elements_index = i;
-			glVertexArrayElementBuffer(mesh_id, buffer_ids[i]);
+		if (parameters.flags & MESH_FLAG_INDEX) {
+			glVertexArrayElementBuffer(mesh_id, buffer->id);
 			continue;
 		}
 
 		// vertex buffer
 		uint32_t all_attributes_size = 0;
-		for (uint32_t atti = 0; atti < parameters->attributes_count; atti++) {
-			all_attributes_size += parameters->attributes[atti * 2 + 1] * data_type_get_size(parameters->type);
+		for (uint32_t atti = 0; atti < parameters.attributes_count; atti++) {
+			all_attributes_size += parameters.attributes[atti * 2 + 1] * data_type_get_size(parameters.type);
 		}
 
 		GLuint buffer_index = 0;
 		GLintptr buffer_start = 0;
-		glVertexArrayVertexBuffer(mesh_id, buffer_index, buffer_ids[i], buffer_start, (GLsizei)all_attributes_size);
+		glVertexArrayVertexBuffer(mesh_id, buffer_index, buffer->id, buffer_start, (GLsizei)all_attributes_size);
 
 		uint32_t attribute_offset = 0;
-		for (uint32_t atti = 0; atti < parameters->attributes_count; atti++) {
-			GLuint location = (GLuint)parameters->attributes[atti * 2];
-			uint32_t size = parameters->attributes[atti * 2 + 1];
+		for (uint32_t atti = 0; atti < parameters.attributes_count; atti++) {
+			GLuint location = (GLuint)parameters.attributes[atti * 2];
+			uint32_t size = parameters.attributes[atti * 2 + 1];
 			glEnableVertexArrayAttrib(mesh_id, location);
 			glVertexArrayAttribBinding(mesh_id, location, buffer_index);
 			glVertexArrayAttribFormat(
 				mesh_id, location,
-				(GLint)size, gpu_data_type(parameters->type),
+				(GLint)size, gpu_data_type(parameters.type),
 				GL_FALSE, (GLuint)attribute_offset
 			);
-			attribute_offset += size * data_type_get_size(parameters->type);
+			attribute_offset += size * data_type_get_size(parameters.type);
 		}
 	}
 
 	//
-	if (elements_index == INDEX_EMPTY) {
-		logger_to_console("not element buffer\n"); DEBUG_BREAK();
-	}
-
-	struct Gpu_Mesh gpu_mesh = (struct Gpu_Mesh){
-		.id = mesh_id,
-		.buffers_count = buffers_count,
-		.elements_index = elements_index,
-	};
-	common_memcpy(gpu_mesh.buffer_ids, buffer_ids,     sizeof(*buffer_ids) * buffers_count);
-	common_memcpy(gpu_mesh.parameters, parameters_set, sizeof(*parameters_set) * buffers_count);
-	common_memcpy(gpu_mesh.capacities, capacities,     sizeof(*capacities) * buffers_count);
+	uint32_t elements_index = INDEX_EMPTY;
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		gpu_mesh.counts[i] = (data[i] != NULL) ? capacities[i] : 0;
+		struct Gpu_Mesh_Buffer const * buffer = array_any_at(&buffers, i);
+		struct Mesh_Parameters const parameters = buffer->parameters;
+		if (parameters.flags & MESH_FLAG_INDEX) {
+			elements_index = i;
+			break;
+		}
+	}
+	if (elements_index == INDEX_EMPTY) {
+		logger_to_console("no element buffer\n"); DEBUG_BREAK();
 	}
 
-	return ref_table_aquire(&gs_graphics_state.meshes, &gpu_mesh);
+	return ref_table_aquire(&gs_graphics_state.meshes, &(struct Gpu_Mesh){
+		.id = mesh_id,
+		.buffers = buffers,
+		.elements_index = elements_index,
+	});
 }
 
 struct Ref gpu_mesh_init(struct Mesh const * asset) {
-	uint32_t byte_lengths[MAX_MESH_BUFFERS];
-	void * data[MAX_MESH_BUFFERS];
-	for (uint32_t i = 0; i < asset->count; i++) {
-		byte_lengths[i] = (uint32_t)asset->buffers[i].count;
-		data[i] = asset->buffers[i].data;
-	}
-
 	struct Ref const gpu_mesh_ref = gpu_mesh_allocate(
-		asset->count, byte_lengths, asset->parameters, data
+		asset->count, asset->buffers, asset->parameters
 	);
 
 	gpu_mesh_update(gpu_mesh_ref, asset);
 	return gpu_mesh_ref;
 }
 
-static void gpu_mesh_free_internal(struct Gpu_Mesh const * gpu_mesh) {
-	glDeleteBuffers((GLsizei)gpu_mesh->buffers_count, gpu_mesh->buffer_ids);
+static void gpu_mesh_free_internal(struct Gpu_Mesh * gpu_mesh) {
+	for (uint32_t i = 0; i < gpu_mesh->buffers.count; i++) {
+		struct Gpu_Mesh_Buffer const * buffer = array_any_at(&gpu_mesh->buffers, i);
+		glDeleteBuffers(1, &buffer->id);
+	}
+	array_any_free(&gpu_mesh->buffers);
 	glDeleteVertexArrays(1, &gpu_mesh->id);
 }
 
@@ -673,7 +679,7 @@ void gpu_mesh_free(struct Ref gpu_mesh_ref) {
 	if (ref_equals(gs_graphics_state.active_mesh_ref, gpu_mesh_ref)) {
 		gs_graphics_state.active_mesh_ref = c_ref_empty;
 	}
-	struct Gpu_Mesh const * gpu_mesh = ref_table_get(&gs_graphics_state.meshes, gpu_mesh_ref);
+	struct Gpu_Mesh * gpu_mesh = ref_table_get(&gs_graphics_state.meshes, gpu_mesh_ref);
 	if (gpu_mesh != NULL) {
 		gpu_mesh_free_internal(gpu_mesh);
 		ref_table_discard(&gs_graphics_state.meshes, gpu_mesh_ref);
@@ -683,42 +689,44 @@ void gpu_mesh_free(struct Ref gpu_mesh_ref) {
 void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 	struct Gpu_Mesh * gpu_mesh = ref_table_get(&gs_graphics_state.meshes, gpu_mesh_ref);
 	if (gpu_mesh == NULL) { return; }
-	for (uint32_t i = 0; i < gpu_mesh->buffers_count; i++) {
+	for (uint32_t i = 0; i < gpu_mesh->buffers.count; i++) {
+		struct Gpu_Mesh_Buffer * buffer = array_any_at(&gpu_mesh->buffers, i);
+		struct Mesh_Parameters const parameters = buffer->parameters;
 		// @todo: compare mesh and asset parameters?
 		// struct Mesh_Parameters const * asset_parameters = asset->parameters + i;
 
-		struct Mesh_Parameters const * parameters = gpu_mesh->parameters + i;
-		if (!(parameters->flags & MESH_FLAG_WRITE)) { continue; }
-		gpu_mesh->counts[i] = 0;
+		if (!(parameters.flags & MESH_FLAG_WRITE)) { continue; }
 
-		struct Buffer const * buffer = asset->buffers + i;
-		if (buffer->count == 0) { continue; }
-		if (buffer->data == NULL) { continue; }
+		struct Buffer const * asset_buffer = asset->buffers + i;
+		if (asset_buffer->count == 0) { continue; }
+		if (asset_buffer->data == NULL) { continue; }
 
-		uint32_t const data_type_size = data_type_get_size(parameters->type);
+		uint32_t const data_type_size = data_type_get_size(parameters.type);
+		uint32_t const elements_count = (uint32_t)asset_buffer->count / data_type_size;
 
-		gpu_mesh->counts[i] = ((uint32_t)buffer->count) / data_type_size;
-
-		if (gpu_mesh->capacities[i] * data_type_size >= buffer->count) {
+		if (buffer->capacity >= elements_count) {
 			glNamedBufferSubData(
-				gpu_mesh->buffer_ids[i], 0,
-				(GLsizeiptr)buffer->count,
-				buffer->data
+				buffer->id, 0,
+				(GLsizeiptr)asset_buffer->count,
+				asset_buffer->data
 			);
 		}
-		else if (parameters->flags & MESH_FLAG_MUTABLE) {
+		else if (parameters.flags & MESH_FLAG_MUTABLE) {
 			// logger_to_console("WARNING! reallocating a buffer\n");
-			gpu_mesh->capacities[i] = gpu_mesh->counts[i];
+			buffer->capacity = elements_count;
 			glNamedBufferData(
-				gpu_mesh->buffer_ids[i],
-				(GLsizeiptr)buffer->count, buffer->data,
-				gpu_mesh_usage_pattern(parameters->flags)
+				buffer->id,
+				(GLsizeiptr)asset_buffer->count, asset_buffer->data,
+				gpu_mesh_usage_pattern(parameters.flags)
 			);
 		}
 		else {
-			logger_to_console("trying to reallocate an immutable buffer"); DEBUG_BREAK();
 			// @todo: completely recreate object instead of using a mutable storage?
+			logger_to_console("trying to reallocate an immutable buffer"); DEBUG_BREAK();
+			continue;
 		}
+
+		buffer->count = elements_count;
 	}
 }
 
@@ -834,55 +842,45 @@ static void gpu_select_mesh(struct Ref gpu_mesh_ref) {
 	glBindVertexArray((gpu_mesh != NULL) ? gpu_mesh->id : 0);
 }
 
-static uint32_t graphics_find_field_index(struct Gpu_Program const * gpu_program, uint32_t id) {
-	for (uint32_t i = 0; i < gpu_program->uniforms_count; i++) {
-		if (gpu_program->uniforms[i].id == id) { return i; }
-	}
-	return INDEX_EMPTY;
-}
-
-static void gpu_upload_single_uniform(struct Gpu_Program const * gpu_program, uint32_t field_index, void const * data) {
-	struct Gpu_Program_Field const * field = gpu_program->uniforms + field_index;
-	GLint const location = gpu_program->uniform_locations[field_index];
-
-	switch (field->type) {
-		default: logger_to_console("unsupported field type '0x%x'\n", field->type); DEBUG_BREAK(); break;
+static void gpu_upload_single_uniform(struct Gpu_Program const * gpu_program, struct Gpu_Program_Field_Internal const * field, void const * data) {
+	switch (field->base.type) {
+		default: logger_to_console("unsupported field type '0x%x'\n", field->base.type); DEBUG_BREAK(); break;
 
 		case DATA_TYPE_UNIT: {
-			GLint units[MAX_UNITS_PER_MATERIAL];
+			GLint * units = alloca(sizeof(GLint) * field->base.array_size);
 			uint32_t units_count = 0;
 
 			// @todo: automatically rebind in a circular buffer manner
 			struct Ref const * gpu_texture_refs = (struct Ref const *)data;
-			for (uint32_t i = 0; i < field->array_size; i++) {
+			for (uint32_t i = 0; i < field->base.array_size; i++) {
 				uint32_t unit = graphics_unit_find(gpu_texture_refs[i]);
 				if (unit == 0) {
 					unit = gpu_unit_init(gpu_texture_refs[i]);
 				}
 				units[units_count++] = (GLint)unit;
 			}
-			glProgramUniform1iv(gpu_program->id, location, (GLsizei)field->array_size, units);
+			glProgramUniform1iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, units);
 			break;
 		}
 
-		case DATA_TYPE_U32:   glProgramUniform1uiv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
-		case DATA_TYPE_UVEC2: glProgramUniform2uiv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
-		case DATA_TYPE_UVEC3: glProgramUniform3uiv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
-		case DATA_TYPE_UVEC4: glProgramUniform4uiv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_U32:   glProgramUniform1uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_UVEC2: glProgramUniform2uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_UVEC3: glProgramUniform3uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_UVEC4: glProgramUniform4uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
 
-		case DATA_TYPE_S32:   glProgramUniform1iv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
-		case DATA_TYPE_SVEC2: glProgramUniform2iv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
-		case DATA_TYPE_SVEC3: glProgramUniform3iv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
-		case DATA_TYPE_SVEC4: glProgramUniform4iv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_S32:   glProgramUniform1iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_SVEC2: glProgramUniform2iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_SVEC3: glProgramUniform3iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_SVEC4: glProgramUniform4iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
 
-		case DATA_TYPE_R32:  glProgramUniform1fv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
-		case DATA_TYPE_VEC2: glProgramUniform2fv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
-		case DATA_TYPE_VEC3: glProgramUniform3fv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
-		case DATA_TYPE_VEC4: glProgramUniform4fv(gpu_program->id, location, (GLsizei)field->array_size, data); break;
+		case DATA_TYPE_R32:  glProgramUniform1fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_VEC2: glProgramUniform2fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_VEC3: glProgramUniform3fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_VEC4: glProgramUniform4fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
 
-		case DATA_TYPE_MAT2: glProgramUniformMatrix2fv(gpu_program->id, location, (GLsizei)field->array_size, GL_FALSE, data); break;
-		case DATA_TYPE_MAT3: glProgramUniformMatrix3fv(gpu_program->id, location, (GLsizei)field->array_size, GL_FALSE, data); break;
-		case DATA_TYPE_MAT4: glProgramUniformMatrix4fv(gpu_program->id, location, (GLsizei)field->array_size, GL_FALSE, data); break;
+		case DATA_TYPE_MAT2: glProgramUniformMatrix2fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;
+		case DATA_TYPE_MAT3: glProgramUniformMatrix3fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;
+		case DATA_TYPE_MAT4: glProgramUniformMatrix4fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;
 	}
 }
 
@@ -890,13 +888,12 @@ static void gpu_upload_uniforms(struct Gpu_Program const * gpu_program, struct G
 	for (uint32_t i = offset, last = offset + count; i < last; i++) {
 		struct Gfx_Uniforms_Entry const * entry = array_any_at(&uniforms->headers, i);
 
-		uint32_t const field_index = graphics_find_field_index(gpu_program, entry->id);
-		if (field_index == INDEX_EMPTY) { continue; }
+		struct Gpu_Program_Field_Internal const * uniform = hash_table_u32_get(&gpu_program->uniforms, entry->id);
+		if (uniform == NULL) { continue; }
 
-		struct Gpu_Program_Field const * uniform = gpu_program->uniforms + field_index;
-		if (data_type_get_size(uniform->type) * uniform->array_size != entry->size) { continue; }
+		if (data_type_get_size(uniform->base.type) * uniform->base.array_size != entry->size) { continue; }
 
-		gpu_upload_single_uniform(gpu_program, field_index, uniforms->payload.data + entry->offset);
+		gpu_upload_single_uniform(gpu_program, uniform, uniforms->payload.data + entry->offset);
 	}
 }
 
@@ -1014,10 +1011,15 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 	if (mesh->elements_index == INDEX_EMPTY) { logger_to_console("mesh has no elements buffer"); DEBUG_BREAK(); return; }
 
 	//
+	struct Gpu_Mesh_Buffer const * buffer = array_any_at(&mesh->buffers, mesh->elements_index);
+	if (command->length == 0) {
+		if (buffer == NULL) { return; }
+		if (buffer->count == 0) { return; }
+	}
+
 	uint32_t const elements_count = (command->length != 0)
 		? command->length
-		: mesh->counts[mesh->elements_index];
-	if (elements_count == 0) { return; }
+		: buffer->count;
 
 	if (command->material->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
 	gpu_set_blend_mode(&command->material->blend_mode);
@@ -1029,15 +1031,32 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 	gpu_upload_uniforms(gpu_program, &command->material->uniforms, 0, command->material->uniforms.headers.count);
 	gpu_upload_uniforms(gpu_program, command->override.uniforms, command->override.offset, command->override.count);
 
-	enum Data_Type const elements_type = mesh->parameters[mesh->elements_index].type;
-	size_t const elements_offset = command->offset * data_type_get_size(elements_type);
+	if (buffer != NULL) {
+		enum Data_Type const elements_type = buffer->parameters.type;
+		uint32_t const elements_offset = (command->length != 0)
+			? command->offset * data_type_get_size(elements_type)
+			: 0;
 
-	glDrawElements(
-		GL_TRIANGLES,
-		(GLsizei)elements_count,
-		gpu_data_type(elements_type),
-		(void const *)(size_t)elements_offset
-	);
+		glDrawElements(
+			GL_TRIANGLES,
+			(GLsizei)elements_count,
+			gpu_data_type(elements_type),
+			(void const *)(size_t)elements_offset
+		);
+	}
+	else {
+		logger_to_console("not implemented"); DEBUG_BREAK();
+		// @todo: implement
+		// uint32_t const elements_offset = (command->length != 0)
+		// 	? command->offset * 3
+		// 	: 0;
+		// 
+		// glDrawArrays(
+		// 	GL_TRIANGLES,
+		// 	(GLint)elements_offset,
+		// 	(GLsizei)elements_count
+		// );
+	}
 }
 
 void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
@@ -1186,11 +1205,13 @@ void graphics_to_gpu_library_free(void) {
 //
 
 static char * allocate_extensions_string(void) {
+	// @note: used as a convenience
 	struct Buffer string = buffer_init();
 
 	GLint extensions_count = 0;
 	glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);
 
+	// @note: heuristically reserve the buffer memory
 	buffer_resize(&string, (uint32_t)(extensions_count * 26));
 	for(GLint i = 0; i < extensions_count; i++) {
 		GLubyte const * value = glGetStringi(GL_EXTENSIONS, (GLuint)i);
@@ -1199,6 +1220,7 @@ static char * allocate_extensions_string(void) {
 	}
 	buffer_push(&string, '\0');
 
+	// @note: memory ownership transfer
 	return (char *)string.data;
 }
 

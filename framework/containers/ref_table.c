@@ -170,7 +170,7 @@ void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index) {
 	return array_any_at(&ref_table->buffer, sparse_index);
 }
 
-bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator * iterator) {
+bool ref_table_iterate(struct Ref_Table const * ref_table, struct Ref_Table_Iterator * iterator) {
 	while (iterator->next < ref_table->buffer.count) {
 		uint32_t const index = iterator->next++;
 		iterator->current = index;

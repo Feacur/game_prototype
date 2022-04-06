@@ -37,7 +37,7 @@ uint32_t ref_table_get_count(struct Ref_Table * ref_table);
 struct Ref ref_table_ref_at(struct Ref_Table * ref_table, uint32_t index);
 void * ref_table_value_at(struct Ref_Table * ref_table, uint32_t index);
 
-bool ref_table_iterate(struct Ref_Table * ref_table, struct Ref_Table_Iterator * iterator);
+bool ref_table_iterate(struct Ref_Table const * ref_table, struct Ref_Table_Iterator * iterator);
 
 #define FOR_REF_TABLE(data, it) for ( \
 	struct Ref_Table_Iterator it = {0}; \

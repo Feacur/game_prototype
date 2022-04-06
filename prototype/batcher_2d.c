@@ -49,12 +49,12 @@ struct Batcher_2D_Vertex {
 struct Batcher_2D {
 	struct Batcher_2D_Batch batch;
 	struct Buffer strings;
-	struct Array_Any batches;
-	struct Array_Any texts;
+	struct Array_Any batches; // `struct Batcher_2D_Batch`
+	struct Array_Any texts;   // `struct Batcher_2D_Text`
 	//
 	struct mat4 matrix;
 	//
-	struct Array_Any buffer_vertices;
+	struct Array_Any buffer_vertices; // `struct Batcher_2D_Vertex`
 	struct Array_U32 buffer_indices;
 	//
 	struct Buffer          mesh_buffers[BATCHER_2D_BUFFERS_COUNT]; // a convenience temporary container
@@ -231,7 +231,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 	for (uint32_t i = 0; i < batcher->texts.count; i++) {
 		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
 		uint8_t const * text_data = batcher->strings.data + text->strings_offset;
-		font_image_add_glyphs_from_text(text->font->buffer, text->length, text_data);
+		font_image_add_glyphs_from_text(text->font->font_image, text->length, text_data);
 	}
 
 	// render an upload the atlases
@@ -245,17 +245,17 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 		FOR_HASH_SET_U64 (&fonts, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
-			font_image_add_kerning_all(font->buffer);
+			font_image_add_kerning_all(font->font_image);
 		}
 
 		FOR_HASH_SET_U64 (&fonts, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
-			font_image_render(font->buffer);
+			font_image_render(font->font_image);
 		}
 
 		FOR_HASH_SET_U64 (&fonts, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
-			gpu_texture_update(font->gpu_ref, font_image_get_asset(font->buffer));
+			gpu_texture_update(font->gpu_ref, font_image_get_asset(font->font_image));
 		}
 
 		hash_set_u64_free(&fonts);
@@ -269,9 +269,9 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 		uint32_t vertices_offset = text->vertices_offset;
 		uint32_t indices_offset  = text->indices_offset;
 
-		float const font_ascent  = font_image_get_ascent(text->font->buffer);
-		float const font_descent = font_image_get_descent(text->font->buffer);
-		float const line_gap     = font_image_get_gap(text->font->buffer);
+		float const font_ascent  = font_image_get_ascent(text->font->font_image);
+		float const font_descent = font_image_get_descent(text->font->font_image);
+		float const line_gap     = font_image_get_gap(text->font->font_image);
 		float const line_height  = font_ascent - font_descent + line_gap;
 
 		struct vec2 offset = (struct vec2){
@@ -279,8 +279,8 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 			text->local_offset.y - font_ascent,
 		};
 
-		struct Font_Glyph const * glyph_space = font_image_get_glyph(text->font->buffer, ' ');
-		struct Font_Glyph const * glyph_error = font_image_get_glyph(text->font->buffer, CODEPOINT_EMPTY);
+		struct Font_Glyph const * glyph_space = font_image_get_glyph(text->font->font_image, ' ');
+		struct Font_Glyph const * glyph_error = font_image_get_glyph(text->font->font_image, CODEPOINT_EMPTY);
 
 		float const space_size = (glyph_space != NULL) ? glyph_space->params.full_size_x : 0;
 		float const tab_size = space_size * 4; // @todo: expose tab scale
@@ -309,12 +309,12 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 					break;
 
 				default: if (it.codepoint > ' ') {
-					struct Font_Glyph const * glyph = font_image_get_glyph(text->font->buffer, it.codepoint);
+					struct Font_Glyph const * glyph = font_image_get_glyph(text->font->font_image, it.codepoint);
 					if (glyph == NULL) { glyph = glyph_error; }
 
 					if (glyph->params.is_empty) { logger_to_console("codepoint '0x%x' has empty glyph\n", it.codepoint); DEBUG_BREAK(); }
 
-					offset.x += font_image_get_kerning(text->font->buffer, previous_codepoint, it.codepoint);
+					offset.x += font_image_get_kerning(text->font->font_image, previous_codepoint, it.codepoint);
 
 					batcher_2d_fill_quad(
 						batcher,

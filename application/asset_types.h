@@ -29,7 +29,7 @@ struct Asset_Font {
 	// @todo: map font size to buffer and gpu_ref pair?
 	// @idea: put differently sized glyphs onto one atlas?
 	struct Font * font;
-	struct Font_Image * buffer;
+	struct Font_Image * font_image;
 	struct Ref gpu_ref;
 };
 

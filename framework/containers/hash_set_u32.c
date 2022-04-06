@@ -97,7 +97,7 @@ void hash_set_u32_del_at(struct Hash_Set_U32 * hash_set, uint32_t key_index) {
 	hash_set->count--;
 }
 
-bool hash_set_u32_iterate(struct Hash_Set_U32 * hash_set, struct Hash_Set_U32_Iterator * iterator) {
+bool hash_set_u32_iterate(struct Hash_Set_U32 const * hash_set, struct Hash_Set_U32_Iterator * iterator) {
 	while (iterator->next < hash_set->capacity) {
 		uint32_t const index = iterator->next++;
 		iterator->current = index;
