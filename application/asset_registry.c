@@ -141,35 +141,22 @@ static void asset_image_free(struct Asset_System * system, void * instance) {
 //     Asset font part
 // ----- ----- ----- ----- -----
 
-struct Asset_Fill_Font {
-	struct Asset_System * system;
-	struct Asset_Font * result;
-};
+static void asset_font_init(struct Asset_System * system, void * instance, struct CString name) {
+	struct Asset_Font * asset = instance;
+	(void)system;
 
-static void asset_fill_font(struct JSON const * json, void * data) {
-	struct Asset_Fill_Font * context = data;
-
-	struct CString const path = json_get_string(json, S_("path"), S_NULL);
-	struct Buffer file_buffer = platform_file_read_entire(path);
+	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) { DEBUG_BREAK(); return; }
-
-	float const size = json_get_number(json, S_("size"), 0);
 
 	// @note: memory ownership transfer
 	struct Font * font = font_init(&file_buffer);
-	struct Font_Image * font_image = font_image_init(font, (int32_t)size);
+	struct Font_Image * font_image = font_image_init(font);
 
-	*context->result = (struct Asset_Font){
+	*asset = (struct Asset_Font){
 		.font = font,
 		.font_image = font_image,
 		.gpu_ref = gpu_texture_init(font_image_get_asset(font_image)),
 	};
-}
-
-static void asset_font_init(struct Asset_System * system, void * instance, struct CString name) {
-	struct Asset_Font * asset = instance;
-	struct Asset_Fill_Font context = { .system = system, .result = asset };
-	process_json(asset_fill_font, &context, name);
 }
 
 static void asset_font_free(struct Asset_System * system, void * instance) {
@@ -270,7 +257,7 @@ void asset_types_init(struct Asset_System * system) {
 	asset_system_map_extension(system, S_("json"),     S_("json"));
 	asset_system_map_extension(system, S_("shader"),   S_("glsl"));
 	asset_system_map_extension(system, S_("image"),    S_("image"));
-	asset_system_map_extension(system, S_("font"),     S_("font"));
+	asset_system_map_extension(system, S_("font"),     S_("ttf"));
 	asset_system_map_extension(system, S_("target"),   S_("target"));
 	asset_system_map_extension(system, S_("model"),    S_("obj"));
 	asset_system_map_extension(system, S_("material"), S_("material"));

@@ -1,4 +1,27 @@
 # -
+[framework] make Ref_Table and Ref zero-initializable
+[framework] reuse Array_Any code for Ref_Table
+[framework] introduce macros for iterators
+[framework] free GPU objects with a macro
+[framework] rename some functions `graphics_*` into `gpu_*`
+[framework] introduce Ref and Asset_Ref equality comparers
+[framework] consider string_id {0} empty
+[prototype] check codepoints visibility with a function
+[prototype] rename `resource` -> `name`
+[framework] get rid of asset system's allocations upon init
+[prototype] tweak some API regarding return values
+[prototype] tweak application API
+[framework] pass binary buffers to the basic asset structures
+[project] add missing compiler flags for the clangd LSP and ECC
+[framework] introduce iterators macros
+[framework] make iterators accept const containers
+[application] tweak assets extensions (is a WIP)
+[project] write font glyphs directly to the atlas
+[project] document `any` containers data types
+[framework] use arrays and tables at gpu code side
+[application] expose font scale setting
+
+# -
 [project] reorganize documentation
 [framework] track memory through a doubly linked list; the memory system is automatically zero-initialized
 [framework] remove CS_OWNDC dependence
@@ -19,7 +42,6 @@
 [application] make render target assets
 [application] make material assets
 [application] migrate assets from hardcode to json-based files
-
 
 # 2021, august 12
 ```

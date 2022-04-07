@@ -31,7 +31,6 @@
 #include "font.h"
 #include "font_glyph.h"
 
-// @idea: cache here basic metrics, without scaling?
 struct Font {
 	struct Buffer file;
 	stbtt_fontinfo font;
@@ -66,36 +65,33 @@ uint32_t font_get_glyph_id(struct Font const * font, uint32_t codepoint) {
 	return (uint32_t)stbtt_FindGlyphIndex(&font->font, (int)codepoint);
 }
 
-void font_get_glyph_parameters(struct Font const * font, struct Glyph_Params * params, uint32_t glyph_id, float scale) {
+struct Glyph_Params font_get_glyph_parameters(struct Font const * font, uint32_t glyph_id, float scale) {
 	int advance_width, left_side_bearing;
 	stbtt_GetGlyphHMetrics(&font->font, (int)glyph_id, &advance_width, &left_side_bearing);
 
 	int rect[4]; // left, bottom, right, top
 	if (!stbtt_GetGlyphBox(&font->font, (int)glyph_id, rect + 0, rect + 1, rect + 2, rect + 3)) {
-		*params = (struct Glyph_Params){
+		return (struct Glyph_Params){
 			.full_size_x = ((float)advance_width) * scale,
 			.is_empty = true,
 		};
-		return;
 	}
 
 	if ((rect[2] <= rect[0]) || (rect[3] <= rect[1])) {
-		*params = (struct Glyph_Params){
+		return (struct Glyph_Params){
 			.full_size_x = ((float)advance_width) * scale,
 			.is_empty = true,
 		};
-		return;
 	}
 
 	if (stbtt_IsGlyphEmpty(&font->font, (int)glyph_id)) {
-		*params = (struct Glyph_Params){
+		return (struct Glyph_Params){
 			.full_size_x = ((float)advance_width) * scale,
 			.is_empty = true,
 		};
-		return;
 	}
 
-	*params = (struct Glyph_Params){
+	return (struct Glyph_Params){
 		.rect = {
 			[0] = (int32_t)maths_floor(((float)rect[0]) * scale),
 			[1] = (int32_t)maths_floor(((float)rect[1]) * scale),

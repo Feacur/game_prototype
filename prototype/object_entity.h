@@ -40,6 +40,7 @@ struct Entity_Text {
 	struct Asset_Ref font;
 	struct Asset_Ref message;
 	uint32_t visible_length;
+	float size;
 };
 
 struct Entity {

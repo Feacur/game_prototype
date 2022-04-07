@@ -29,7 +29,7 @@ void batcher_2d_add_quad(
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
 	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot,
-	struct Asset_Font const * font, uint32_t length, uint8_t const * data
+	struct Asset_Font const * font, uint32_t length, uint8_t const * data, float size
 );
 
 void batcher_2d_clear(struct Batcher_2D * batcher);

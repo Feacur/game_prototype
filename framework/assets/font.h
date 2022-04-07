@@ -1,7 +1,7 @@
 #if !defined(GAME_ASSETS_FONT)
 #define GAME_ASSETS_FONT
 
-#include "framework/common.h"
+#include "font_glyph.h"
 
 // @note: glyph data layout inside an atlas
 // +----------------+
@@ -17,14 +17,13 @@
 // @note: `font_init` takes memory ownership of the buffer
 
 struct Font;
-struct Glyph_Params;
 struct Buffer;
 
 struct Font * font_init(struct Buffer * buffer);
 void font_free(struct Font * font);
 
 uint32_t font_get_glyph_id(struct Font const * font, uint32_t codepoint);
-void font_get_glyph_parameters(struct Font const * font, struct Glyph_Params * params, uint32_t glyph_id, float scale);
+struct Glyph_Params font_get_glyph_parameters(struct Font const * font, uint32_t glyph_id, float scale);
 void font_fill_buffer(
 	struct Font const * font,
 	uint32_t glyph_id, float scale,
@@ -33,7 +32,7 @@ void font_fill_buffer(
 	uint32_t offset_x, uint32_t offset_y
 );
 
-float font_get_scale(struct Font const * font, float pixels_size);
+float font_get_scale(struct Font const * font, float size);
 int32_t font_get_ascent(struct Font const * font);
 int32_t font_get_descent(struct Font const * font);
 int32_t font_get_gap(struct Font const * font);

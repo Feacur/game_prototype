@@ -199,6 +199,7 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 			entity->as.text = (struct Entity_Text){
 				.font = asset_system_aquire(&gs_game.assets, font_path),
 				.message = asset_system_aquire(&gs_game.assets, message_path),
+				.size = json_get_number(json, S_("size"), 16),
 			};
 		} break;
 	}

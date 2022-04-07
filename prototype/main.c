@@ -291,7 +291,8 @@ static void prototype_draw_entities(void) {
 						entity_rect_min, entity_rect_max, entity_pivot,
 						font,
 						text->visible_length,
-						message->data
+						message->data,
+						text->size
 					);
 				} break;
 			}
