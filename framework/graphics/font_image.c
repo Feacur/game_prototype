@@ -431,7 +431,12 @@ inline static uint64_t font_image_get_key_hash(struct Font_Key value) {
 }
 
 inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t codepoint, float size) {
-	struct Font_Glyph * glyph = hash_table_u64_get(&font_image->table, codepoint);
+	uint64_t const key_hash = font_image_get_key_hash((struct Font_Key){
+		.codepoint = codepoint,
+		.size = size,
+	});
+
+	struct Font_Glyph * glyph = hash_table_u64_get(&font_image->table, key_hash);
 	if (glyph != NULL) { glyph->usage = GLYPH_USAGE_MAX; return; }
 
 	uint32_t const glyph_id = font_get_glyph_id(font_image->font, codepoint);
@@ -441,10 +446,6 @@ inline static void font_image_add_glyph(struct Font_Image * font_image, uint32_t
 		font_image->font, glyph_id, font_get_scale(font_image->font, size)
 	);
 
-	uint64_t const key_hash = font_image_get_key_hash((struct Font_Key){
-		.codepoint = codepoint,
-		.size = size,
-	});
 	hash_table_u64_set(&font_image->table, key_hash, &(struct Font_Glyph){
 		.params = glyph_params,
 		.id = glyph_id,
