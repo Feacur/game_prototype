@@ -1,5 +1,6 @@
 #include "framework/memory.h"
 #include "framework/unicode.h"
+#include "framework/platform_system.h"
 #include "framework/platform_file.h"
 #include "framework/logger.h"
 
@@ -11,8 +12,6 @@
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/gpu_command.h"
-
-#include "application/application.h"
 
 #include "framework/containers/hash_table_any.h"
 
@@ -372,6 +371,8 @@ static void main_fill_config(struct JSON const * json, void * data) {
 }
 
 int main (int argc, char * argv[]) {
+	platform_system_init();
+
 	logger_to_console("> arguments:\n");
 	for (int i = 0; i < argc; i++) {
 		logger_to_console("  %s\n", argv[i]);
@@ -389,5 +390,6 @@ int main (int argc, char * argv[]) {
 		.frame_tick = app_frame_tick,
 	});
 
+	platform_system_free();
 	return 0;
 }

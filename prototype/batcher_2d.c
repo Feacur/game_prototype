@@ -52,6 +52,7 @@ struct Batcher_2D {
 	struct Buffer strings;
 	struct Array_Any batches; // `struct Batcher_2D_Batch`
 	struct Array_Any texts;   // `struct Batcher_2D_Text`
+	struct Hash_Set_U64 fonts_cache;
 	//
 	struct mat4 matrix;
 	//
@@ -70,7 +71,7 @@ static void batcher_2d_bake_pass(struct Batcher_2D * batcher);
 #include "batcher_2d.h"
 
 struct Batcher_2D * batcher_2d_init(void) {
-	struct Batcher_2D * batcher = MEMORY_ALLOCATE(NULL, struct Batcher_2D);
+	struct Batcher_2D * batcher = MEMORY_ALLOCATE(struct Batcher_2D);
 	*batcher = (struct Batcher_2D){
 		.matrix = c_mat4_identity,
 		.mesh_parameters = {
@@ -118,11 +119,12 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	buffer_free(&batcher->strings);
 	array_any_free(&batcher->batches);
 	array_any_free(&batcher->texts);
+	hash_set_u64_free(&batcher->fonts_cache);
 	array_any_free(&batcher->buffer_vertices);
 	array_u32_free(&batcher->buffer_indices);
 	//
 	common_memset(batcher, 0, sizeof(*batcher));
-	MEMORY_FREE(batcher, batcher);
+	MEMORY_FREE(batcher);
 }
 
 void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const * matrix) {
@@ -239,29 +241,27 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 	// render an upload the atlases
 	{
-		struct Hash_Set_U64 fonts = hash_set_u64_init();
+		hash_set_u64_clear(&batcher->fonts_cache);
 
 		for (uint32_t i = 0; i < batcher->texts.count; i++) {
 			struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
-			hash_set_u64_set(&fonts, (uint64_t)text->font);
+			hash_set_u64_set(&batcher->fonts_cache, (uint64_t)text->font);
 		}
 
-		FOR_HASH_SET_U64 (&fonts, it) {
+		FOR_HASH_SET_U64 (&batcher->fonts_cache, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
 			font_image_add_kerning_all(font->font_image);
 		}
 
-		FOR_HASH_SET_U64 (&fonts, it) {
+		FOR_HASH_SET_U64 (&batcher->fonts_cache, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
 			font_image_render(font->font_image);
 		}
 
-		FOR_HASH_SET_U64 (&fonts, it) {
+		FOR_HASH_SET_U64 (&batcher->fonts_cache, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
 			gpu_texture_update(font->gpu_ref, font_image_get_asset(font->font_image));
 		}
-
-		hash_set_u64_free(&fonts);
 	}
 
 	// fill quads

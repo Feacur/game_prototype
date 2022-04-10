@@ -13,10 +13,10 @@ struct Hash_Table_Any hash_table_any_init(uint32_t key_size, uint32_t value_size
 }
 
 void hash_table_any_free(struct Hash_Table_Any * hash_table) {
-	MEMORY_FREE(hash_table, hash_table->hashes);
-	MEMORY_FREE(hash_table, hash_table->keys);
-	MEMORY_FREE(hash_table, hash_table->values);
-	MEMORY_FREE(hash_table, hash_table->marks);
+	MEMORY_FREE(hash_table->hashes);
+	MEMORY_FREE(hash_table->keys);
+	MEMORY_FREE(hash_table->values);
+	MEMORY_FREE(hash_table->marks);
 
 	common_memset(hash_table, 0, sizeof(*hash_table));
 }
@@ -35,10 +35,10 @@ void hash_table_any_resize(struct Hash_Table_Any * hash_table, uint32_t target_c
 	uint8_t  * marks  = hash_table->marks;
 
 	hash_table->capacity = adjust_hash_table_capacity_value(target_capacity);
-	hash_table->hashes   = MEMORY_ALLOCATE_ARRAY(hash_table, uint32_t, hash_table->capacity);
-	hash_table->keys     = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->key_size * hash_table->capacity);
-	hash_table->values   = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->value_size * hash_table->capacity);
-	hash_table->marks    = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity);
+	hash_table->hashes   = MEMORY_ALLOCATE_ARRAY(uint32_t, hash_table->capacity);
+	hash_table->keys     = MEMORY_ALLOCATE_ARRAY(uint8_t, hash_table->key_size * hash_table->capacity);
+	hash_table->values   = MEMORY_ALLOCATE_ARRAY(uint8_t, hash_table->value_size * hash_table->capacity);
+	hash_table->marks    = MEMORY_ALLOCATE_ARRAY(uint8_t, hash_table->capacity);
 
 	common_memset(hash_table->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 
@@ -65,10 +65,10 @@ void hash_table_any_resize(struct Hash_Table_Any * hash_table, uint32_t target_c
 		hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
 	}
 
-	MEMORY_FREE(hash_table, hashes);
-	MEMORY_FREE(hash_table, keys);
-	MEMORY_FREE(hash_table, values);
-	MEMORY_FREE(hash_table, marks);
+	MEMORY_FREE(hashes);
+	MEMORY_FREE(keys);
+	MEMORY_FREE(values);
+	MEMORY_FREE(marks);
 }
 
 void hash_table_any_clear(struct Hash_Table_Any * hash_table) {

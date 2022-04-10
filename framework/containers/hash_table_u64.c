@@ -12,9 +12,9 @@ struct Hash_Table_U64 hash_table_u64_init(uint32_t value_size) {
 }
 
 void hash_table_u64_free(struct Hash_Table_U64 * hash_table) {
-	MEMORY_FREE(hash_table, hash_table->key_hashes);
-	MEMORY_FREE(hash_table, hash_table->values);
-	MEMORY_FREE(hash_table, hash_table->marks);
+	MEMORY_FREE(hash_table->key_hashes);
+	MEMORY_FREE(hash_table->values);
+	MEMORY_FREE(hash_table->marks);
 
 	common_memset(hash_table, 0, sizeof(*hash_table));
 }
@@ -32,9 +32,9 @@ void hash_table_u64_resize(struct Hash_Table_U64 * hash_table, uint32_t target_c
 	uint8_t  * marks      = hash_table->marks;
 
 	hash_table->capacity   = adjust_hash_table_capacity_value(target_capacity);
-	hash_table->key_hashes = MEMORY_ALLOCATE_ARRAY(hash_table, uint64_t, hash_table->capacity);
-	hash_table->values     = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->value_size * hash_table->capacity);
-	hash_table->marks      = MEMORY_ALLOCATE_ARRAY(hash_table, uint8_t, hash_table->capacity);
+	hash_table->key_hashes = MEMORY_ALLOCATE_ARRAY(uint64_t, hash_table->capacity);
+	hash_table->values     = MEMORY_ALLOCATE_ARRAY(uint8_t, hash_table->value_size * hash_table->capacity);
+	hash_table->marks      = MEMORY_ALLOCATE_ARRAY(uint8_t, hash_table->capacity);
 
 	common_memset(hash_table->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_table->marks) * hash_table->capacity);
 
@@ -55,9 +55,9 @@ void hash_table_u64_resize(struct Hash_Table_U64 * hash_table, uint32_t target_c
 		hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
 	}
 
-	MEMORY_FREE(hash_table, key_hashes);
-	MEMORY_FREE(hash_table, values);
-	MEMORY_FREE(hash_table, marks);
+	MEMORY_FREE(key_hashes);
+	MEMORY_FREE(values);
+	MEMORY_FREE(marks);
 }
 
 void hash_table_u64_clear(struct Hash_Table_U64 * hash_table) {

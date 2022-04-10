@@ -39,7 +39,7 @@ static void asset_bytes_init(struct Asset_System * system, void * instance, stru
 static void asset_bytes_free(struct Asset_System * system, void * instance) {
 	struct Asset_Bytes * asset = instance;
 	(void)system;
-	MEMORY_FREE(instance, asset->data);
+	MEMORY_FREE(asset->data);
 }
 
 // ----- ----- ----- ----- -----

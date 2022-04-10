@@ -12,7 +12,7 @@
 PRINTF_LIKE(1, 2)
 void logger_to_console(char const * format, ...);
 
-PRINTF_LIKE(2, 3)
-uint32_t logger_to_buffer(char * buffer, char const * format, ...);
+PRINTF_LIKE(3, 4)
+uint32_t logger_to_buffer(uint32_t size, char * buffer, char const * format, ...);
 
 #endif

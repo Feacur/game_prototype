@@ -10,8 +10,8 @@ struct Hash_Set_U32 hash_set_u32_init(void) {
 }
 
 void hash_set_u32_free(struct Hash_Set_U32 * hash_set) {
-	MEMORY_FREE(hash_set, hash_set->key_hashes);
-	MEMORY_FREE(hash_set, hash_set->marks);
+	MEMORY_FREE(hash_set->key_hashes);
+	MEMORY_FREE(hash_set->marks);
 
 	common_memset(hash_set, 0, sizeof(*hash_set));
 }
@@ -28,8 +28,8 @@ void hash_set_u32_resize(struct Hash_Set_U32 * hash_set, uint32_t target_capacit
 	uint8_t  * marks      = hash_set->marks;
 
 	hash_set->capacity   = adjust_hash_table_capacity_value(target_capacity);
-	hash_set->key_hashes = MEMORY_ALLOCATE_ARRAY(hash_set, uint32_t, hash_set->capacity);
-	hash_set->marks      = MEMORY_ALLOCATE_ARRAY(hash_set, uint8_t, hash_set->capacity);
+	hash_set->key_hashes = MEMORY_ALLOCATE_ARRAY(uint32_t, hash_set->capacity);
+	hash_set->marks      = MEMORY_ALLOCATE_ARRAY(uint8_t, hash_set->capacity);
 
 	common_memset(hash_set->marks, HASH_TABLE_MARK_NONE, sizeof(*hash_set->marks) * hash_set->capacity);
 
@@ -45,8 +45,8 @@ void hash_set_u32_resize(struct Hash_Set_U32 * hash_set, uint32_t target_capacit
 		hash_set->marks[key_index] = HASH_TABLE_MARK_FULL;
 	}
 
-	MEMORY_FREE(hash_set, key_hashes);
-	MEMORY_FREE(hash_set, marks);
+	MEMORY_FREE(key_hashes);
+	MEMORY_FREE(marks);
 }
 
 void hash_set_u32_clear(struct Hash_Set_U32 * hash_set) {

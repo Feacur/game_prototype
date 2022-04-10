@@ -10,7 +10,7 @@ struct Buffer buffer_init(void) {
 }
 
 void buffer_free(struct Buffer * buffer) {
-	MEMORY_FREE(buffer, buffer->data);
+	MEMORY_FREE(buffer->data);
 	common_memset(buffer, 0, sizeof(*buffer));
 }
 
@@ -21,7 +21,7 @@ void buffer_clear(struct Buffer * buffer) {
 void buffer_resize(struct Buffer * buffer, size_t target_capacity) {
 	buffer->capacity = target_capacity;
 	if (buffer->count > target_capacity) { buffer->count = target_capacity; }
-	buffer->data = MEMORY_REALLOCATE_ARRAY(buffer, buffer->data, target_capacity);
+	buffer->data = MEMORY_REALLOCATE_ARRAY(buffer->data, target_capacity);
 }
 
 void buffer_ensure(struct Buffer * buffer, size_t target_capacity) {

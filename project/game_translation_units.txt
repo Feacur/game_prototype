@@ -42,6 +42,7 @@ framework/platform_windows/timer.c
 framework/platform_windows/file.c
 framework/platform_windows/system.c
 framework/platform_windows/window.c
+framework/platform_windows/debug.c
 
 framework/platform_windows/gpu_opengl.c
 framework/gpu_opengl/functions.c

@@ -12,7 +12,7 @@ struct Array_Any array_any_init(uint32_t value_size) {
 }
 
 void array_any_free(struct Array_Any * array) {
-	MEMORY_FREE(array, array->data);
+	MEMORY_FREE(array->data);
 	common_memset(array, 0, sizeof(*array));
 }
 
@@ -23,7 +23,7 @@ void array_any_clear(struct Array_Any * array) {
 void array_any_resize(struct Array_Any * array, uint32_t target_capacity) {
 	array->capacity = target_capacity;
 	if (array->count > target_capacity) { array->count = target_capacity; }
-	array->data = MEMORY_REALLOCATE_SIZE(array, array->data, array->value_size * target_capacity);
+	array->data = memory_reallocate(array->data, array->value_size * target_capacity);
 }
 
 void array_any_ensure(struct Array_Any * array, uint32_t target_capacity) {

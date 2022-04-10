@@ -6,6 +6,7 @@
 #include "framework/input_keys.h"
 #include "framework/logger.h"
 
+#include "debug_to_system.h"
 #include "timer_to_system.h"
 #include "window_to_system.h"
 #include "gpu_library_to_system.h"
@@ -15,6 +16,8 @@
 
 static struct Platform_System {
 	HMODULE module;
+	HANDLE process;
+	HANDLE thread;
 	bool should_close;
 } gs_platform_system;
 
@@ -33,7 +36,11 @@ void platform_system_init(void) {
 	signal(SIGSEGV, system_signal_handler);
 	signal(SIGTERM, system_signal_handler);
 
-	gs_platform_system.module = GetModuleHandle(NULL);
+	gs_platform_system = (struct Platform_System){
+		.module = GetModuleHandle(NULL),
+		.process = GetCurrentProcess(),
+		.thread  = GetCurrentThread(),
+	};
 	if (gs_platform_system.module == NULL) { goto fail; }
 
 	// system_cache_paths();
@@ -41,6 +48,7 @@ void platform_system_init(void) {
 	// system_enable_virtual_terminal_processing();
 	SetConsoleOutputCP(CP_UTF8);
 
+	if (!debug_to_system_init()) { goto fail; }
 	if (!timer_to_system_init()) { goto fail; }
 	if (!window_to_system_init()) { goto fail; }
 	if (!gpu_library_to_system_init()) { goto fail; }
@@ -54,12 +62,15 @@ void platform_system_init(void) {
 }
 
 void platform_system_free(void) {
+	common_memset(&gs_platform_system, 0, sizeof(gs_platform_system));
+
 	input_to_system_free();
 	gpu_library_to_system_free();
 	window_to_system_free();
 	timer_to_system_free();
+
 	if (memory_to_system_report() > 0) { DEBUG_BREAK(); }
-	common_memset(&gs_platform_system, 0, sizeof(gs_platform_system));
+	debug_to_system_free();
 }
 
 bool platform_system_is_powered(void) {

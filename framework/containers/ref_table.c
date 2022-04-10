@@ -15,8 +15,8 @@ struct Ref_Table ref_table_init(uint32_t value_size) {
 
 void ref_table_free(struct Ref_Table * ref_table) {
 	array_any_free(&ref_table->buffer);
-	MEMORY_FREE(ref_table, ref_table->dense);
-	MEMORY_FREE(ref_table, ref_table->sparse);
+	MEMORY_FREE(ref_table->dense);
+	MEMORY_FREE(ref_table->sparse);
 	common_memset(ref_table, 0, sizeof(*ref_table));
 }
 
@@ -45,8 +45,8 @@ void ref_table_resize(struct Ref_Table * ref_table, uint32_t target_capacity) {
 	uint32_t const capacity = ref_table->buffer.capacity;
 
 	array_any_resize(&ref_table->buffer, target_capacity);
-	ref_table->dense  = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->dense, ref_table->buffer.capacity);
-	ref_table->sparse = MEMORY_REALLOCATE_ARRAY(ref_table, ref_table->sparse, ref_table->buffer.capacity);
+	ref_table->dense  = MEMORY_REALLOCATE_ARRAY(ref_table->dense, ref_table->buffer.capacity);
+	ref_table->sparse = MEMORY_REALLOCATE_ARRAY(ref_table->sparse, ref_table->buffer.capacity);
 
 	common_memset(ref_table->dense + capacity, 0, sizeof(*ref_table->dense) * (ref_table->buffer.capacity - capacity));
 	for (uint32_t i = capacity; i < ref_table->buffer.capacity; i++) {

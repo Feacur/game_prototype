@@ -121,7 +121,7 @@ struct Gpu_Context * gpu_context_init(void * device) {
 	graphics_to_gpu_library_init();
 	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 
-	struct Gpu_Context * gpu_context = MEMORY_ALLOCATE(&gs_gpu_library, struct Gpu_Context);
+	struct Gpu_Context * gpu_context = MEMORY_ALLOCATE(struct Gpu_Context);
 	*gpu_context = (struct Gpu_Context){
 		.handle = handle,
 		.pixel_format = pixel_format,
@@ -147,7 +147,7 @@ void gpu_context_free(struct Gpu_Context * gpu_context) {
 	gs_gpu_library.dll.DeleteContext(gpu_context->handle);
 
 	common_memset(gpu_context, 0, sizeof(*gpu_context));
-	MEMORY_FREE(&gs_gpu_library, gpu_context);
+	MEMORY_FREE(gpu_context);
 }
 
 void gpu_context_start_frame(struct Gpu_Context const * gpu_context, void * device) {
@@ -244,7 +244,7 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 	int request_vals[KEYS_COUNT];
 
 	int formats_count = 0;
-	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(&gs_gpu_library, struct Pixel_Format, formats_capacity + 1);
+	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(struct Pixel_Format, formats_capacity + 1);
 	for (int i = 0; i < formats_capacity; i++) {
 		int pfd_id = i + 1;
 		if (!gs_gpu_library.arb.GetPixelFormatAttribiv(device, pfd_id, 0, KEYS_COUNT, request_keys, request_vals)) { DEBUG_BREAK(); continue; }
@@ -296,7 +296,7 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 	if (pfd_count == 0) { return NULL; }
 
 	int formats_count = 0;
-	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(&gs_gpu_library, struct Pixel_Format, pfd_count + 1);
+	struct Pixel_Format * formats = MEMORY_ALLOCATE_ARRAY(struct Pixel_Format, pfd_count + 1);
 	for (int i = 0; i < pfd_count; i++) {
 		int pfd_id = i + 1;
 		PIXELFORMATDESCRIPTOR pfd;
@@ -590,7 +590,7 @@ static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format *
 	struct Pixel_Format pixel_format = choose_pixel_format(pixel_formats, &hint);
 	if (pixel_format.id == 0) { return NULL; }
 
-	MEMORY_FREE(&gs_gpu_library, pixel_formats);
+	MEMORY_FREE(pixel_formats);
 
 	PIXELFORMATDESCRIPTOR pfd;
 	bool const pfd_found = DescribePixelFormat(device, pixel_format.id, sizeof(pfd), &pfd) > 0;

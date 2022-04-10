@@ -5,6 +5,8 @@
 
 #include "framework/platform_file.h"
 
+static void * font_memory_allocate(size_t size, struct Buffer * scratch);
+static void font_memory_free(void * pointer, struct Buffer * scratch);
 
 // @idea: compile third-parties as separate units
 #if defined(__clang__)
@@ -14,8 +16,8 @@
 	#pragma warning(push, 0)
 #endif
 
-#define STBTT_malloc(size, user_data)  MEMORY_ALLOCATE_SIZE(NULL, size)
-#define STBTT_free(pointer, user_data) MEMORY_FREE(NULL, pointer)
+#define STBTT_malloc(size, user_data)  font_memory_allocate(size, user_data)
+#define STBTT_free(pointer, user_data) font_memory_free(pointer, user_data)
 
 #define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -35,15 +37,21 @@ struct Font {
 	struct Buffer file;
 	stbtt_fontinfo font;
 	int ascent, descent, line_gap;
+	struct Buffer * scratch;
 };
 
 struct Font * font_init(struct Buffer * buffer) {
-	struct Font * font = MEMORY_ALLOCATE(NULL, struct Font);
+	struct Font * font = MEMORY_ALLOCATE(struct Font);
+	*font = (struct Font){0};
+
+	font->scratch = MEMORY_ALLOCATE(struct Buffer);
+	*font->scratch = buffer_init();
 
 	// @note: memory ownership transfer
 	font->file = *buffer;
 	*buffer = (struct Buffer){0};
 
+	font->font.userdata = font->scratch;
 	if (!stbtt_InitFont(&font->font, font->file.data, stbtt_GetFontOffsetForIndex(font->file.data, 0))) {
 		logger_to_console("failure: can't read font data\n"); DEBUG_BREAK();
 	}
@@ -56,9 +64,10 @@ struct Font * font_init(struct Buffer * buffer) {
 }
 
 void font_free(struct Font * font) {
+	buffer_free(font->scratch); MEMORY_FREE(font->scratch);
 	buffer_free(&font->file);
 	common_memset(font, 0, sizeof(*font));
-	MEMORY_FREE(NULL, font);
+	MEMORY_FREE(font);
 }
 
 uint32_t font_get_glyph_id(struct Font const * font, uint32_t codepoint) {
@@ -128,6 +137,10 @@ void font_fill_buffer(
 		scale, scale,
 		(int)glyph_id
 	);
+
+	// @todo: arena/stack allocator
+	buffer_ensure(font->scratch, font->scratch->count);
+	buffer_clear(font->scratch);
 }
 
 float font_get_scale(struct Font const * font, float pixels_size) {
@@ -150,4 +163,25 @@ int32_t font_get_gap(struct Font const * font) {
 
 int32_t font_get_kerning(struct Font const * font, uint32_t glyph_id1, uint32_t glyph_id2) {
 	return (int32_t)stbtt_GetGlyphKernAdvance(&font->font, (int)glyph_id1, (int)glyph_id2);
+}
+
+//
+
+static void * font_memory_allocate(size_t size, struct Buffer * scratch) {
+	bool const should_grow = (scratch->count + size > scratch->capacity);
+
+	// @note: grow count, even past capacity
+	size_t const offset = scratch->count;
+	scratch->count += size;
+
+	// @note: use the scratch buffer until it's memory should be reallocated
+	if (should_grow) { return MEMORY_ALLOCATE_SIZE(size); }
+	return scratch->data + offset;
+}
+
+static void font_memory_free(void * pointer, struct Buffer * scratch) {
+	// @note: free only non-buffered allocations
+	if (pointer < (void *)scratch->data || (void *)(scratch->data + scratch->capacity) < pointer) {
+		MEMORY_FREE(pointer);
+	}
 }

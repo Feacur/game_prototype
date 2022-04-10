@@ -1,4 +1,5 @@
 #include "framework/logger.h"
+#include "framework/platform_debug.h"
 
 #include <stdlib.h>
 
@@ -9,14 +10,16 @@
 // @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
 // @idea: use OS-native allocators instead of CRT's
 
+// @note: skip `debug.c` and `memory.c`
+#define STACKTRACE_OFFSET 2
+
 //
 #include "memory.h"
 
 struct Memory_Header {
 	size_t checksum, size;
 	struct Memory_Header * prev, * next;
-	void const * owner;
-	struct CString source;
+	struct Callstack callstack;
 };
 
 static struct Memory_State {
@@ -25,17 +28,25 @@ static struct Memory_State {
 	size_t bytes;
 } gs_memory_state;
 
-void * memory_reallocate(void const * owner, struct CString source, void * pointer, size_t size) {
+void * memory_reallocate(void * pointer, size_t size) {
+	struct Callstack const callstack = platform_debug_get_callstack();
+
 	struct Memory_Header * pointer_header = (pointer != NULL)
 		? (struct Memory_Header *)pointer - 1
 		: NULL;
 
 	if (pointer_header != NULL) {
-		if (pointer_header->checksum != ~(size_t)pointer_header) {
-			logger_to_console("incorrect checksum\n"); DEBUG_BREAK();
-			return NULL;
+		if (pointer_header->checksum != (size_t)pointer_header) {
+			struct CString const stacktrace = platform_debug_get_stacktrace(callstack, STACKTRACE_OFFSET);
+			logger_to_console("incorrect checksum: \"%.*s\"\n", stacktrace.length, stacktrace.data); DEBUG_BREAK();
+			return pointer;
 		}
 
+		// untrack memory
+		gs_memory_state.count--;
+		gs_memory_state.bytes -= pointer_header->size;
+
+		pointer_header->checksum = 0;
 		if (gs_memory_state.root == pointer_header) { gs_memory_state.root = pointer_header->next; }
 		if (pointer_header->next != NULL) { pointer_header->next->prev = pointer_header->prev; }
 		if (pointer_header->prev != NULL) { pointer_header->prev->next = pointer_header->next; }
@@ -43,8 +54,6 @@ void * memory_reallocate(void const * owner, struct CString source, void * point
 
 	if (size == 0) {
 		if (pointer_header == NULL) { return NULL; }
-		gs_memory_state.count--;
-		gs_memory_state.bytes -= pointer_header->size;
 		common_memset(pointer_header, 0, sizeof(*pointer_header));
 		free(pointer_header);
 		return NULL;
@@ -52,19 +61,20 @@ void * memory_reallocate(void const * owner, struct CString source, void * point
 
 	struct Memory_Header * reallocated_header = realloc(pointer_header, sizeof(*pointer_header) + size);
 	if (reallocated_header == NULL) {
-		logger_to_console("'realloc' failed: \"%.*s\"\n", source.length, source.data); DEBUG_BREAK();
-		return NULL;
-		// common_exit_failure();
+		struct CString const stacktrace = platform_debug_get_stacktrace(callstack, STACKTRACE_OFFSET);
+		logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data); DEBUG_BREAK();
+		return pointer;
 	}
+
+	if (pointer_header == NULL) { common_memset(reallocated_header, 0, sizeof(*reallocated_header)); }
 
 	gs_memory_state.count++;
 	gs_memory_state.bytes += size;
 	*reallocated_header = (struct Memory_Header){
-		.checksum = ~(size_t)reallocated_header,
+		.checksum = (size_t)reallocated_header,
 		.size = size,
 		.next = gs_memory_state.root,
-		.owner = owner,
-		.source = source,
+		.callstack = callstack,
 	};
 
 	if (gs_memory_state.root != NULL) { gs_memory_state.root->prev = reallocated_header; }
@@ -86,7 +96,7 @@ uint32_t memory_to_system_report(void) {
 
 	uint32_t const header_blank_offset = ((pointer_digits_count >= 8) ? (pointer_digits_count - 8) : 0);
 	logger_to_console("\n"
-		"> memory report%*s(bytes: %-*zu | count: %u):\n"
+		"> memory report%*s(bytes: %*.zu | count: %u):\n"
 		"",
 		header_blank_offset, "",
 		bytes_digits_count,  gs_memory_state.bytes,
@@ -95,16 +105,18 @@ uint32_t memory_to_system_report(void) {
 	uint32_t count = 0;
 	if (gs_memory_state.root != NULL) {
 		for (struct Memory_Header * it = gs_memory_state.root; it != NULL; it = it->next) {
+			struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack, STACKTRACE_OFFSET);
 			logger_to_console(
-				"  [0x%0*zx] (bytes: %-*.zu | owner: 0x%0*zx) at '%.*s'\n"
+				"  [0x%0*.zx] (bytes: %*.zu) stacktrace:\n%.*s\n"
 				"",
 				pointer_digits_count, (size_t)(it + 1),
 				bytes_digits_count,   it->size,
-				pointer_digits_count, (size_t)it->owner,
-				it->source.length,    it->source.data
+				stacktrace.length,    stacktrace.data
 			);
 			count++;
 		}
 	}
 	return count;
 }
+
+#undef STACKTRACE_OFFSET

@@ -37,8 +37,6 @@ static uint64_t get_fixed_ticks(uint64_t target_ticks) {
 }
 
 static bool application_init(void) {
-	platform_system_init();
-
 	logger_to_console("\n"
 		"> system status:\n"
 		"  power .. %s\n"
@@ -97,7 +95,6 @@ static void application_free(void) {
 	if (gs_app.callbacks.free != NULL) { gs_app.callbacks.free(); }
 	if (gs_app.gpu_context != NULL) { gpu_context_free(gs_app.gpu_context); }
 	if (gs_app.window != NULL) { platform_window_free(gs_app.window); }
-	platform_system_free();
 	common_memset(&gs_app, 0, sizeof(gs_app));
 }
 

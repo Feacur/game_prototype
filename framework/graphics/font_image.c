@@ -1,6 +1,7 @@
 #include "framework/maths.h"
 
 #include "framework/containers/buffer.h"
+#include "framework/containers/array_any.h"
 #include "framework/containers/hash_table_u64.h"
 
 #include "framework/assets/image.h"
@@ -19,6 +20,7 @@ struct Font_Image {
 	struct Font const * font;
 	struct Hash_Table_U64 table;   // `struct Font_Key` : `struct Font_Glyph`
 	struct Hash_Table_U64 kerning; // codepoints pair : offset
+	struct Array_Any scratch;
 	bool rendered;
 };
 
@@ -42,7 +44,7 @@ struct Glyph_Codepoint {
 };
 
 struct Font_Image * font_image_init(struct Font const * font) {
-	struct Font_Image * font_image = MEMORY_ALLOCATE(NULL, struct Font_Image);
+	struct Font_Image * font_image = MEMORY_ALLOCATE(struct Font_Image);
 	*font_image = (struct Font_Image){
 		.buffer = {
 			.parameters = {
@@ -61,6 +63,7 @@ struct Font_Image * font_image_init(struct Font const * font) {
 		.font = font,
 		.table = hash_table_u64_init(sizeof(struct Font_Glyph)),
 		.kerning = hash_table_u64_init(sizeof(int32_t)),
+		.scratch = array_any_init(sizeof(struct Font_Symbol)),
 	};
 	return font_image;
 }
@@ -69,9 +72,10 @@ void font_image_free(struct Font_Image * font_image) {
 	image_free(&font_image->buffer);
 	hash_table_u64_free(&font_image->table);
 	hash_table_u64_free(&font_image->kerning);
+	array_any_free(&font_image->scratch);
 
 	common_memset(font_image, 0, sizeof(*font_image));
-	MEMORY_FREE(NULL, font_image);
+	MEMORY_FREE(font_image);
 }
 
 void font_image_add_glyph_error(struct Font_Image *font_image, float size) {
@@ -119,7 +123,7 @@ void font_image_add_glyphs_from_text(struct Font_Image * font_image, uint32_t le
 
 inline static void font_image_add_kerning(struct Font_Image * font_image, uint32_t codepoint1, uint32_t codepoint2, uint32_t glyph1, uint32_t glyph2);
 void font_image_add_kerning_from_range(struct Font_Image * font_image, uint32_t from, uint32_t to) {
-	uint32_t * glyphs = MEMORY_ALLOCATE_ARRAY(font_image, uint32_t, to - from + 1);
+	uint32_t * glyphs = MEMORY_ALLOCATE_ARRAY(uint32_t, to - from + 1);
 
 	uint32_t count = 0;
 	for (uint32_t codepoint = from; codepoint <= to; codepoint++) {
@@ -137,14 +141,15 @@ void font_image_add_kerning_from_range(struct Font_Image * font_image, uint32_t 
 		}
 	}
 
-	MEMORY_FREE(font_image, glyphs);
+	MEMORY_FREE(glyphs);
 }
 
 void font_image_add_kerning_from_text(struct Font_Image * font_image, uint32_t length, uint8_t const * data) {
 	uint32_t codepoints_count = 0;
 	FOR_UTF8 (length, data, it) { codepoints_count++; }
 
-	struct Glyph_Codepoint * pairs = MEMORY_ALLOCATE_ARRAY(font_image, struct Glyph_Codepoint, codepoints_count);
+	array_any_ensure(&font_image->scratch, codepoints_count);
+	struct Glyph_Codepoint * pairs = font_image->scratch.data;
 
 	uint32_t count = 0;
 	FOR_UTF8 (length, data, it) {
@@ -164,8 +169,6 @@ void font_image_add_kerning_from_text(struct Font_Image * font_image, uint32_t l
 			font_image_add_kerning(font_image, pair1.codepoint, pair2.codepoint, pair1.glyph, pair2.glyph);
 		}
 	}
-
-	MEMORY_FREE(font_image, pairs);
 }
 
 inline static struct Font_Key font_image_get_key(uint64_t value);
@@ -205,7 +208,7 @@ void font_image_render(struct Font_Image * font_image) {
 
 	// collect visible glyphs
 	uint32_t symbols_count = 0;
-	struct Font_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(font_image, struct Font_Symbol, font_image->table.count);
+	struct Font_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(struct Font_Symbol, font_image->table.count);
 
 	FOR_HASH_TABLE_U64 (&font_image->table, it) {
 		struct Font_Glyph const * glyph = it.value;
@@ -338,7 +341,7 @@ void font_image_render(struct Font_Image * font_image) {
 		}
 	}
 
-	MEMORY_FREE(font_image, symbols_to_render);
+	MEMORY_FREE(symbols_to_render);
 }
 
 struct Image const * font_image_get_asset(struct Font_Image const * font_image) {

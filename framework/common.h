@@ -74,7 +74,7 @@ bool contains_full_word(char const * container, struct CString value);
 //     debug break
 // ----- ----- ----- ----- -----
 
-#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
+#if !defined(GAME_TARGET_OPTIMIZED)
 	#if defined(__clang__)
 		#define DEBUG_BREAK() __builtin_debugtrap()
 	#elif defined(_MSC_VER)
@@ -87,3 +87,9 @@ bool contains_full_word(char const * container, struct CString value);
 #endif
 
 #endif
+
+// ----- ----- ----- ----- -----
+//     documentation
+// ----- ----- ----- ----- -----
+
+// https://sourceforge.net/p/predef/wiki/Home/

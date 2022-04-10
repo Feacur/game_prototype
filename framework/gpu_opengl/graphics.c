@@ -124,7 +124,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	// a mandatory version header
 	GLchar glsl_version[20];
 	GLint glsl_version_length = (GLint)logger_to_buffer(
-		glsl_version, "#version %d core\n",
+		SIZE_OF_ARRAY(glsl_version), glsl_version, "#version %d core\n",
 		(gs_ogl_version > 33) ? gs_ogl_version * 10 : 330
 	);
 
@@ -1162,7 +1162,7 @@ void graphics_to_gpu_library_init(void) {
 	};
 
 	gs_graphics_state.units_capacity = (uint32_t)max_units;
-	gs_graphics_state.units = MEMORY_ALLOCATE_ARRAY(&gs_graphics_state, struct Gpu_Unit, max_units);
+	gs_graphics_state.units = MEMORY_ALLOCATE_ARRAY(struct Gpu_Unit, max_units);
 	common_memset(gs_graphics_state.units, 0, sizeof(* gs_graphics_state.units) * (size_t)max_units);
 
 	// @note: manage OpenGL's clip space instead of ours
@@ -1193,8 +1193,8 @@ void graphics_to_gpu_library_free(void) {
 
 	//
 	strings_free(&gs_graphics_state.uniforms);
-	MEMORY_FREE(&gs_graphics_state, gs_graphics_state.extensions);
-	MEMORY_FREE(&gs_graphics_state, gs_graphics_state.units);
+	MEMORY_FREE(gs_graphics_state.extensions);
+	MEMORY_FREE(gs_graphics_state.units);
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
 
 	(void)gpu_stencil_op;

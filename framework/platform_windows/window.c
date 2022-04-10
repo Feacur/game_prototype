@@ -67,7 +67,7 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 		SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE
 	);
 
-	struct Window * const window = MEMORY_ALLOCATE(NULL, struct Window);
+	struct Window * const window = MEMORY_ALLOCATE(struct Window);
 	if (window == NULL) { goto fail_window; }
 	if (!SetProp(handle, TEXT(HANDLE_PROP_WINDOW_NAME), window)) { goto fail_window; }
 
@@ -85,7 +85,7 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 
 	// process errors
 	fail_window: DEBUG_BREAK();
-	if (window != NULL) { MEMORY_FREE(NULL, window); }
+	if (window != NULL) { MEMORY_FREE(window); }
 	else { logger_to_console("failed to initialize application window\n"); }
 
 	fail_handle: DEBUG_BREAK();
@@ -101,7 +101,7 @@ void platform_window_free(struct Window * window) {
 		// delegate all the work to WM_DESTROY
 	}
 	else {
-		MEMORY_FREE(window, window);
+		MEMORY_FREE(window);
 		// WM_CLOSE has been processed; now, just free the application window
 	}
 }
@@ -611,7 +611,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			RemoveProp(hwnd, TEXT(APPLICATION_CLASS_NAME));
 			input_to_platform_reset();
 			common_memset(window, 0, sizeof(*window));
-			if (should_free) { MEMORY_FREE(window, window); }
+			if (should_free) { MEMORY_FREE(window); }
 			return 0;
 		}
 	}

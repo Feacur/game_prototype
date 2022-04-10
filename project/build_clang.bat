@@ -74,11 +74,13 @@ if %configuration% == optimized (
 ) else if %configuration% == development (
 	set compiler=%compiler% -O3 -g
 	set linker=%linker% -debug:full
+	set libs=%libs% dbghelp.lib
 	set defines=%defines% -DGAME_TARGET_DEVELOPMENT
 	rem [linker] -opt:noref -opt:noicf -opt:nolbr
 ) else if %configuration% == debug (
 	set compiler=%compiler% -O0 -g
 	set linker=%linker% -debug:full
+	set libs=%libs% dbghelp.lib
 	set defines=%defines% -DGAME_TARGET_DEBUG
 	rem [linker] -opt:noref -opt:noicf -opt:nolbr
 )

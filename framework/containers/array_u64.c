@@ -10,7 +10,7 @@ struct Array_U64 array_u64_init(void) {
 }
 
 void array_u64_free(struct Array_U64 * array) {
-	MEMORY_FREE(array, array->data);
+	MEMORY_FREE(array->data);
 	common_memset(array, 0, sizeof(*array));
 }
 
@@ -21,7 +21,7 @@ void array_u64_clear(struct Array_U64 * array) {
 void array_u64_resize(struct Array_U64 * array, uint32_t target_capacity) {
 	array->capacity = target_capacity;
 	if (array->count > target_capacity) { array->count = target_capacity; }
-	array->data = MEMORY_REALLOCATE_ARRAY(array, array->data, target_capacity);
+	array->data = MEMORY_REALLOCATE_ARRAY(array->data, target_capacity);
 }
 
 void array_u64_ensure(struct Array_U64 * array, uint32_t target_capacity) {
