@@ -46,7 +46,7 @@ struct Buffer platform_file_read_entire(struct CString path) {
 }
 
 void platform_file_delete(struct CString path) {
-#if defined(UNICODE)
+#if defined(UNICODE) || defined(_UNICODE)
 	// @todo: (?) arena/stack allocator
 	const int path_valid_length = MultiByteToWideChar(CP_UTF8, 0, path.data, -1, NULL, 0);
 	wchar_t * path_valid = alloca(sizeof(wchar_t) * (uint64_t)path_valid_length);
@@ -189,7 +189,7 @@ static HANDLE platform_internal_create_file(struct CString path, enum File_Mode 
 		share |= FILE_SHARE_DELETE;
 	}
 
-#if defined(UNICODE)
+#if defined(UNICODE) || defined(_UNICODE)
 	// @todo: (?) arena/stack allocator
 	const int path_valid_length = MultiByteToWideChar(CP_UTF8, 0, path.data, -1, NULL, 0);
 	wchar_t * path_valid = alloca(sizeof(wchar_t) * (uint64_t)path_valid_length);
