@@ -16,6 +16,8 @@ struct CString {
 	char const * data;
 };
 
+typedef void * Allocator(void * pointer, size_t size);
+
 // ----- ----- ----- ----- -----
 //     standard
 // ----- ----- ----- ----- -----

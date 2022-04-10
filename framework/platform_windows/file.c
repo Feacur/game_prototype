@@ -22,7 +22,7 @@ struct Buffer platform_file_read_entire(struct CString path) {
 	if (path.length == 0) { return (struct Buffer){0}; }
 	// if (path.data == NULL) { return (struct Buffer){0}; }
 
-	struct Buffer buffer = buffer_init();
+	struct Buffer buffer = buffer_init(NULL);
 
 	struct File * file = platform_file_init(path, FILE_MODE_READ);
 	if (file == NULL) { goto finalize; }

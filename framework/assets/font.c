@@ -45,7 +45,7 @@ struct Font * font_init(struct Buffer * buffer) {
 	*font = (struct Font){0};
 
 	font->scratch = MEMORY_ALLOCATE(struct Buffer);
-	*font->scratch = buffer_init();
+	*font->scratch = buffer_init(NULL);
 
 	// @note: memory ownership transfer
 	font->file = *buffer;
@@ -168,14 +168,12 @@ int32_t font_get_kerning(struct Font const * font, uint32_t glyph_id1, uint32_t 
 //
 
 static void * font_memory_allocate(size_t size, struct Buffer * scratch) {
-	bool const should_grow = (scratch->count + size > scratch->capacity);
-
 	// @note: grow count, even past capacity
 	size_t const offset = scratch->count;
 	scratch->count += size;
 
 	// @note: use the scratch buffer until it's memory should be reallocated
-	if (should_grow) { return MEMORY_ALLOCATE_SIZE(size); }
+	if (scratch->count > scratch->capacity) { return MEMORY_ALLOCATE_SIZE(size); }
 	return (uint8_t *)scratch->data + offset;
 }
 

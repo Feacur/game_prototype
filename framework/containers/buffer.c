@@ -5,12 +5,14 @@
 //
 #include "buffer.h"
 
-struct Buffer buffer_init(void) {
-	return (struct Buffer){0};
+struct Buffer buffer_init(Allocator * allocator) {
+	return (struct Buffer){
+		.allocator = allocator,
+	};
 }
 
 void buffer_free(struct Buffer * buffer) {
-	MEMORY_FREE(buffer->data);
+	allocator_default(buffer->allocator)(buffer->data, 0);
 	common_memset(buffer, 0, sizeof(*buffer));
 }
 
@@ -21,7 +23,7 @@ void buffer_clear(struct Buffer * buffer) {
 void buffer_resize(struct Buffer * buffer, size_t target_capacity) {
 	buffer->capacity = target_capacity;
 	if (buffer->count > target_capacity) { buffer->count = target_capacity; }
-	buffer->data = MEMORY_REALLOCATE_SIZE(buffer->data, target_capacity);
+	buffer->data = allocator_default(buffer->allocator)(buffer->data, target_capacity);
 }
 
 void buffer_ensure(struct Buffer * buffer, size_t target_capacity) {

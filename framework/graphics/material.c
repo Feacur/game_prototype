@@ -15,7 +15,7 @@
 struct Gfx_Uniforms gfx_uniforms_init(void) {
 	return (struct Gfx_Uniforms){
 		.headers = array_any_init(sizeof(struct Gfx_Uniforms_Entry)),
-		.payload = buffer_init(),
+		.payload = buffer_init(NULL),
 	};
 }
 

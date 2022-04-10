@@ -91,7 +91,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 				.flags = MESH_FLAG_INDEX | MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
 			},
 		},
-		.strings         = buffer_init(),
+		.strings         = buffer_init(NULL),
 		.batches         = array_any_init(sizeof(struct Batcher_2D_Batch)),
 		.texts           = array_any_init(sizeof(struct Batcher_2D_Text)),
 		.buffer_vertices = array_any_init(sizeof(struct Batcher_2D_Vertex)),
@@ -99,7 +99,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 	};
 
 	for (uint32_t i = 0; i < BATCHER_2D_BUFFERS_COUNT; i++) {
-		batcher->mesh_buffers[i] = buffer_init();
+		batcher->mesh_buffers[i] = buffer_init(NULL);
 	}
 
 	//

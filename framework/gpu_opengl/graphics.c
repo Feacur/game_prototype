@@ -1206,7 +1206,7 @@ void graphics_to_gpu_library_free(void) {
 
 static char * allocate_extensions_string(void) {
 	// @note: used as a convenience
-	struct Buffer string = buffer_init();
+	struct Buffer string = buffer_init(NULL);
 
 	GLint extensions_count = 0;
 	glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);

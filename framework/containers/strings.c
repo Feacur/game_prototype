@@ -5,7 +5,7 @@ struct Strings strings_init(void) {
 	return (struct Strings){
 		.offsets = array_u32_init(),
 		.lengths = array_u32_init(),
-		.buffer = buffer_init(),
+		.buffer = buffer_init(NULL),
 	};
 }
 

@@ -4,6 +4,8 @@
 // ----- ----- ----- ----- -----
 
 #include "framework/logger.h"
+#include "framework/memory.h"
+#include "framework/containers/buffer.h"
 
 #if defined (UNICODE) || defined (_UNICODE)
 	#define DBGHELP_TRANSLATE_TCHAR
@@ -11,34 +13,10 @@
 
 #include <Windows.h>
 #include <DbgHelp.h>
-#include <stdlib.h>
-
-// @note: could've used `struct Buffer`, but currently its memory is tracked
-//        and I considered it inconvenient to add special cases to the common code
-struct Debug_Buffer {
-	uint32_t capacity, count;
-	void * data;
-};
-
-static struct Debug_Buffer debug_buffer_init(void) {
-	return (struct Debug_Buffer){0};
-}
-
-static void debug_buffer_free(struct Debug_Buffer * buffer) {
-	free(buffer->data);
-}
-
-static void debug_buffer_ensure(struct Debug_Buffer * buffer, uint32_t target_capacity) {
-	if (target_capacity <= buffer->capacity) { return; }
-	void * reallocated = realloc(buffer->data, target_capacity);
-	if (reallocated == NULL) { return; }
-	buffer->capacity = target_capacity;
-	buffer->data = reallocated;
-}
 
 static struct Platform_Debug {
-	struct Debug_Buffer buffer;
-	struct Debug_Buffer scratch;
+	struct Buffer buffer;
+	struct Buffer scratch;
 } gs_platform_debug;
 
 //
@@ -95,7 +73,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 	#if defined(DBGHELP_TRANSLATE_TCHAR)
 		uint32_t const symbol_length = valid_symbol ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, NULL, 0, NULL, NULL) : 0;
 		uint32_t const source_length = valid_source ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, source.FileName, -1, NULL, 0, NULL, NULL) : 0;
-		debug_buffer_ensure(&gs_platform_debug.scratch, symbol_length + source_length);
+		buffer_ensure(&gs_platform_debug.scratch, symbol_length + source_length);
 		WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, gs_platform_debug.scratch.data, (int)symbol_length, NULL, NULL);
 		WideCharToMultiByte(CP_UTF8, 0, source.FileName, -1, (char *)gs_platform_debug.scratch.data + symbol_length, (int)source_length, NULL, NULL);
 		char const * symbol_data = gs_platform_debug.scratch.data;
@@ -108,7 +86,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 	#endif
 
 		// reserve output buffer
-		debug_buffer_ensure(&gs_platform_debug.buffer, gs_platform_debug.buffer.count + 1 + symbol_length + 4 + source_length + 16);
+		buffer_ensure(&gs_platform_debug.buffer, gs_platform_debug.buffer.count + 1 + symbol_length + 4 + source_length + 16);
 
 		// fill the buffer
 		uint32_t const written = logger_to_buffer(
@@ -123,7 +101,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 	}
 
 	return (struct CString){
-		.length = gs_platform_debug.buffer.count,
+		.length = (uint32_t)gs_platform_debug.buffer.count,
 		.data = (gs_platform_debug.buffer.count > 0)
 			? gs_platform_debug.buffer.data
 			: NULL,
@@ -138,11 +116,11 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 
 bool debug_to_system_init(void) {
 	gs_platform_debug = (struct Platform_Debug){
-		.buffer  = debug_buffer_init(),
-		.scratch = debug_buffer_init(),
+		.buffer  = buffer_init(memory_reallocate_trivial),
+		.scratch = buffer_init(memory_reallocate_trivial),
 	};
-	debug_buffer_ensure(&gs_platform_debug.buffer, 4096);
-	debug_buffer_ensure(&gs_platform_debug.buffer, 512);
+	buffer_ensure(&gs_platform_debug.buffer, 4096);
+	buffer_ensure(&gs_platform_debug.buffer, 512);
 
 	SymInitialize(GetCurrentProcess(), NULL, TRUE);
 	return true;
@@ -150,8 +128,8 @@ bool debug_to_system_init(void) {
 
 void debug_to_system_free(void) {
 	SymCleanup(GetCurrentProcess());
-	debug_buffer_free(&gs_platform_debug.buffer);
-	debug_buffer_free(&gs_platform_debug.scratch);
+	buffer_free(&gs_platform_debug.buffer);
+	buffer_free(&gs_platform_debug.scratch);
 	common_memset(&gs_platform_debug, 0, sizeof(gs_platform_debug));
 }
 

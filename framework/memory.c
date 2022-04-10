@@ -54,6 +54,7 @@ void * memory_reallocate(void * pointer, size_t size) {
 
 	if (size == 0) {
 		if (pointer_header == NULL) { return NULL; }
+		// common_memset(pointer_header + 1, 0, pointer_header->size);
 		common_memset(pointer_header, 0, sizeof(*pointer_header));
 		free(pointer_header);
 		return NULL;
@@ -73,14 +74,23 @@ void * memory_reallocate(void * pointer, size_t size) {
 	*reallocated_header = (struct Memory_Header){
 		.checksum = (size_t)reallocated_header,
 		.size = size,
-		.next = gs_memory_state.root,
 		.callstack = callstack,
 	};
 
+	// track memory
+	reallocated_header->next = gs_memory_state.root;
 	if (gs_memory_state.root != NULL) { gs_memory_state.root->prev = reallocated_header; }
 	gs_memory_state.root = reallocated_header;
 
 	return reallocated_header + 1;
+}
+
+void * memory_reallocate_trivial(void * pointer, size_t size) {
+	if (size == 0) { free(pointer); return NULL; }
+	void * reallocated = realloc(pointer, size);
+	if (reallocated != NULL) { return reallocated; }
+	logger_to_console("'realloc' failed\n"); DEBUG_BREAK();
+	return pointer;
 }
 
 //

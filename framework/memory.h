@@ -4,6 +4,11 @@
 #include "common.h"
 
 void * memory_reallocate(void * pointer, size_t size);
+void * memory_reallocate_trivial(void * pointer, size_t size);
+
+inline static Allocator * allocator_default(Allocator * allocator) {
+	return (allocator != NULL) ? allocator : memory_reallocate;
+}
 
 #define MEMORY_ALLOCATE(type) memory_reallocate((type *)NULL, sizeof(type))
 #define MEMORY_ALLOCATE_SIZE(size) memory_reallocate(NULL, (size_t)(size))

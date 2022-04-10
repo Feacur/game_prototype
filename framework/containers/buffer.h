@@ -4,11 +4,12 @@
 #include "framework/common.h"
 
 struct Buffer {
+	Allocator * allocator;
 	size_t capacity, count;
 	void * data;
 };
 
-struct Buffer buffer_init(void);
+struct Buffer buffer_init(Allocator * allocator);
 void buffer_free(struct Buffer * buffer);
 
 void buffer_clear(struct Buffer * buffer);
