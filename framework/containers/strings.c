@@ -19,7 +19,7 @@ uint32_t strings_find(struct Strings const * strings, struct CString value) {
 	uint32_t offset = 0;
 	for (uint32_t i = 0; i < strings->lengths.count; i++) {
 		if (value.length == strings->lengths.data[i]) {
-			if (common_memcmp(value.data, strings->buffer.data + offset, value.length) == 0) { return i + 1; }
+			if (common_memcmp(value.data, (uint8_t *)strings->buffer.data + offset, value.length) == 0) { return i + 1; }
 		}
 		offset += strings->lengths.data[i] + 1;
 	}
@@ -30,7 +30,7 @@ uint32_t strings_add(struct Strings * strings, struct CString value) {
 	uint32_t offset = 0;
 	for (uint32_t i = 0; i < strings->lengths.count; i++) {
 		if (value.length == strings->lengths.data[i]) {
-			if (common_memcmp(value.data, strings->buffer.data + offset, value.length) == 0) { return i + 1; }
+			if (common_memcmp(value.data, (uint8_t *)strings->buffer.data + offset, value.length) == 0) { return i + 1; }
 		}
 		offset += strings->lengths.data[i] + 1;
 	}
@@ -38,7 +38,7 @@ uint32_t strings_add(struct Strings * strings, struct CString value) {
 	array_u32_push(&strings->offsets, offset);
 	array_u32_push(&strings->lengths, value.length);
 	buffer_push_many(&strings->buffer, value.length, (uint8_t const *)value.data);
-	buffer_push(&strings->buffer, '\0');
+	buffer_push_many(&strings->buffer, 1, "\0");
 
 	return strings->lengths.count;
 }
@@ -48,7 +48,7 @@ struct CString strings_get(struct Strings const * strings, uint32_t id) {
 	uint32_t const index = id - 1;
 	return (struct CString){
 		.length = strings->lengths.data[index],
-		.data = (char const *)(strings->buffer.data + strings->offsets.data[index]),
+		.data = (char const *)((uint8_t *)strings->buffer.data + strings->offsets.data[index]),
 	};
 }
 

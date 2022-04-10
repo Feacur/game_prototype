@@ -35,7 +35,7 @@ struct Gfx_Uniform_Out gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, ui
 		if (entry->id != uniform_id) { continue; }
 		return (struct Gfx_Uniform_Out){
 			.size = entry->size,
-			.data = uniforms->payload.data + entry->offset,
+			.data = (uint8_t *)uniforms->payload.data + entry->offset,
 		};
 	}
 	logger_to_console("material doesn't have such a property\n"); DEBUG_BREAK();

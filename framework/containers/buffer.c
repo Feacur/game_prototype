@@ -21,7 +21,7 @@ void buffer_clear(struct Buffer * buffer) {
 void buffer_resize(struct Buffer * buffer, size_t target_capacity) {
 	buffer->capacity = target_capacity;
 	if (buffer->count > target_capacity) { buffer->count = target_capacity; }
-	buffer->data = MEMORY_REALLOCATE_ARRAY(buffer->data, target_capacity);
+	buffer->data = MEMORY_REALLOCATE_SIZE(buffer->data, target_capacity);
 }
 
 void buffer_ensure(struct Buffer * buffer, size_t target_capacity) {
@@ -37,18 +37,12 @@ static void buffer_grow_if_must(struct Buffer * buffer, size_t target_count) {
 	}
 }
 
-void buffer_push(struct Buffer * buffer, uint8_t value) {
-	buffer_grow_if_must(buffer, buffer->count + 1);
-	buffer->data[buffer->count++] = value;
-}
-
-void buffer_push_many(struct Buffer * buffer, size_t count, uint8_t const * value) {
+void buffer_push_many(struct Buffer * buffer, size_t count, void const * value) {
 	buffer_grow_if_must(buffer, buffer->count + count);
 	if (value != NULL) {
 		common_memcpy(
-			buffer->data + buffer->count,
-			value,
-			sizeof(*buffer->data) * count
+			(uint8_t *)buffer->data + buffer->count,
+			value, count
 		);
 	}
 	buffer->count += count;
@@ -63,23 +57,23 @@ void buffer_align(struct Buffer * buffer) {
 void buffer_set_many(struct Buffer * buffer, size_t index, size_t count, uint8_t const * value) {
 	if (index + count > buffer->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
 	common_memcpy(
-		buffer->data + index,
-		value,
-		sizeof(*buffer->data) * count
+		(uint8_t *)buffer->data + index,
+		value, count
 	);
 }
 
-uint8_t buffer_pop(struct Buffer * buffer) {
-	if (buffer->count == 0) { DEBUG_BREAK(); return 0; }
-	return buffer->data[--buffer->count];
+void * buffer_pop(struct Buffer * buffer, size_t size) {
+	if (buffer->count < size) { DEBUG_BREAK(); return NULL; }
+	buffer->count -= size;
+	return (uint8_t *)buffer->data + buffer->count;
 }
 
-uint8_t buffer_peek(struct Buffer const * buffer, size_t offset) {
-	if (offset >= buffer->count) { DEBUG_BREAK(); return 0; }
-	return buffer->data[buffer->count - offset - 1];
+void * buffer_peek(struct Buffer const * buffer, size_t offset) {
+	if (offset >= buffer->count) { DEBUG_BREAK(); return NULL; }
+	return (uint8_t *)buffer->data + (buffer->count - offset - 1);
 }
 
-uint8_t buffer_at(struct Buffer const * buffer, size_t index) {
-	if (index >= buffer->count) { DEBUG_BREAK(); return 0; }
-	return buffer->data[index];
+void * buffer_at(struct Buffer const * buffer, size_t index) {
+	if (index >= buffer->count) { DEBUG_BREAK(); return NULL; }
+	return (uint8_t *)buffer->data + index;
 }

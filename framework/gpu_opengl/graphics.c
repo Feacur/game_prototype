@@ -893,7 +893,7 @@ static void gpu_upload_uniforms(struct Gpu_Program const * gpu_program, struct G
 
 		if (data_type_get_size(uniform->base.type) * uniform->base.array_size != entry->size) { continue; }
 
-		gpu_upload_single_uniform(gpu_program, uniform, uniforms->payload.data + entry->offset);
+		gpu_upload_single_uniform(gpu_program, uniform, (uint8_t *)uniforms->payload.data + entry->offset);
 	}
 }
 
@@ -1216,9 +1216,9 @@ static char * allocate_extensions_string(void) {
 	for(GLint i = 0; i < extensions_count; i++) {
 		GLubyte const * value = glGetStringi(GL_EXTENSIONS, (GLuint)i);
 		buffer_push_many(&string, (uint32_t)strlen((char const *)value), value);
-		buffer_push(&string, ' ');
+		buffer_push_many(&string, 1, " ");
 	}
-	buffer_push(&string, '\0');
+	buffer_push_many(&string, 1, "\0");
 
 	// @note: memory ownership transfer
 	return (char *)string.data;

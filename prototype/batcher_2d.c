@@ -234,7 +234,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 	// add all glyphs
 	for (uint32_t i = 0; i < batcher->texts.count; i++) {
 		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
-		uint8_t const * text_data = batcher->strings.data + text->strings_offset;
+		uint8_t const * text_data = (uint8_t *)batcher->strings.data + text->strings_offset;
 		font_image_add_glyph_error(text->font->font_image, text->size);
 		font_image_add_glyphs_from_text(text->font->font_image, text->length, text_data, text->size);
 	}
@@ -267,7 +267,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 	// fill quads
 	for (uint32_t i = 0; i < batcher->texts.count; i++) {
 		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
-		uint8_t const * text_data = batcher->strings.data + text->strings_offset;
+		uint8_t const * text_data = (uint8_t *)batcher->strings.data + text->strings_offset;
 
 		uint32_t vertices_offset = text->vertices_offset;
 		uint32_t indices_offset  = text->indices_offset;

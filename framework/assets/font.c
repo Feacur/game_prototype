@@ -176,12 +176,13 @@ static void * font_memory_allocate(size_t size, struct Buffer * scratch) {
 
 	// @note: use the scratch buffer until it's memory should be reallocated
 	if (should_grow) { return MEMORY_ALLOCATE_SIZE(size); }
-	return scratch->data + offset;
+	return (uint8_t *)scratch->data + offset;
 }
 
 static void font_memory_free(void * pointer, struct Buffer * scratch) {
 	// @note: free only non-buffered allocations
-	if (pointer < (void *)scratch->data || (void *)(scratch->data + scratch->capacity) < pointer) {
+	void const * scratch_end = (uint8_t *)scratch->data + scratch->capacity;
+	if (pointer < scratch->data || scratch_end < pointer) {
 		MEMORY_FREE(pointer);
 	}
 }
