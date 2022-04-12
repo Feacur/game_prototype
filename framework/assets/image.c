@@ -41,8 +41,7 @@ struct Image image_init(struct Texture_Settings settings, struct Buffer const * 
 		.data = image_bytes,
 		.parameters = {
 			.texture_type = TEXTURE_TYPE_COLOR,
-			.data_type = DATA_TYPE_R8_U,
-			.channels = (uint32_t)channels,
+			.data_type = data_type_get_vector_type(DATA_TYPE_R8_U, (uint32_t)channels),
 		},
 		.settings = settings,
 	};
@@ -54,9 +53,11 @@ void image_free(struct Image * image) {
 }
 
 void image_ensure(struct Image * image, uint32_t size_x, uint32_t size_y) {
-	uint32_t const target_capacity = size_x * size_y * image->parameters.channels;
+	uint32_t const channels = data_type_get_count(image->parameters.data_type);
+	uint32_t const data_size = data_type_get_size(image->parameters.data_type);
+	uint32_t const target_capacity = size_x * size_y * channels;
 	if (image->capacity < target_capacity) {
-		image->data = MEMORY_REALLOCATE_ARRAY(image->data, size_x * size_y * image->parameters.channels);
+		image->data = MEMORY_REALLOCATE_SIZE(image->data, size_x * size_y * data_size);
 		image->capacity = target_capacity;
 	}
 	image->size_x = size_x;

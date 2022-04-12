@@ -273,8 +273,7 @@ static struct Texture_Parameters state_read_json_texture_parameters(struct JSON 
 	if (type_id == json_find_id(json, S_("color_rgba_u8"))) {
 		return (struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_COLOR,
-			.data_type = DATA_TYPE_R8_U,
-			.channels = 4,
+			.data_type = DATA_TYPE_RGBA8_U,
 			.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
 		};
 	}

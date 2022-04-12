@@ -51,7 +51,6 @@ struct Font_Image * font_image_init(struct Font const * font) {
 				.texture_type = TEXTURE_TYPE_COLOR,
 				.data_type = DATA_TYPE_R8_U,
 				.flags = TEXTURE_FLAG_MUTABLE | TEXTURE_FLAG_WRITE,
-				.channels = 1,
 			},
 			.settings = {
 				.swizzle[0] = SWIZZLE_OP_1,
@@ -296,7 +295,8 @@ void font_image_render(struct Font_Image * font_image) {
 	}
 
 	// render glyphs into the atlas, assuming they shall fit
-	common_memset(font_image->buffer.data, 0, sizeof(*font_image->buffer.data) * font_image->buffer.size_x * font_image->buffer.size_y);
+	uint32_t const buffer_data_size = data_type_get_size(font_image->buffer.parameters.data_type);
+	common_memset(font_image->buffer.data, 0, font_image->buffer.size_x * font_image->buffer.size_y * buffer_data_size);
 	{
 		uint32_t line_height = 0;
 		uint32_t offset_x = padding, offset_y = padding;

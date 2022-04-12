@@ -8,9 +8,17 @@ enum Data_Type {
 	DATA_TYPE_UNIT,
 
 	DATA_TYPE_R8_U,
+	DATA_TYPE_RG8_U,
+	DATA_TYPE_RGB8_U,
+	DATA_TYPE_RGBA8_U,
+
 	DATA_TYPE_R8_S,
 
 	DATA_TYPE_R16_U,
+	DATA_TYPE_RG16_U,
+	DATA_TYPE_RGB16_U,
+	DATA_TYPE_RGBA16_U,
+
 	DATA_TYPE_R16_S,
 	DATA_TYPE_R16_F,
 
@@ -196,7 +204,6 @@ struct Texture_Parameters {
 	enum Texture_Type texture_type;
 	enum Data_Type data_type;
 	enum Texture_Flag flags;
-	uint32_t channels;
 };
 
 struct Texture_Settings {
@@ -226,6 +233,7 @@ struct Mesh_Parameters {
 //
 
 enum Data_Type data_type_get_element_type(enum Data_Type value);
+enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels);
 uint32_t data_type_get_count(enum Data_Type value);
 uint32_t data_type_get_size(enum Data_Type value);
 

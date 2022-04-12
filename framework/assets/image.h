@@ -14,7 +14,7 @@ struct Buffer;
 // +----------+
 struct Image {
 	uint32_t capacity, size_x, size_y;
-	uint8_t * data;
+	void * data;
 	struct Texture_Parameters parameters;
 	struct Texture_Settings settings;
 };

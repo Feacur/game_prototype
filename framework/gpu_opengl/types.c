@@ -128,33 +128,27 @@ GLint gpu_wrap_mode(enum Wrap_Mode value) {
 	return GL_NONE;
 }
 
-GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, uint32_t channels) {
+GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
 
 		case TEXTURE_TYPE_COLOR: switch (data_type) {
 			default: break;
 
-			case DATA_TYPE_R8_U: switch (channels) {
-				case 1: return GL_R8;
-				case 2: return GL_RG8;
-				case 3: return GL_RGB8;
-				case 4: return GL_RGBA8;
-			} break;
+			case DATA_TYPE_R8_U:    return GL_R8;
+			case DATA_TYPE_RG8_U:   return GL_RG8;
+			case DATA_TYPE_RGB8_U:  return GL_RGB8;
+			case DATA_TYPE_RGBA8_U: return GL_RGBA8;
 
-			case DATA_TYPE_R16_U: switch (channels) {
-				case 1: return GL_R16;
-				case 2: return GL_RG16;
-				case 3: return GL_RGB16;
-				case 4: return GL_RGBA16;
-			} break;
+			case DATA_TYPE_R16_U:    return GL_R16;
+			case DATA_TYPE_RG16_U:   return GL_RG16;
+			case DATA_TYPE_RGB16_U:  return GL_RGB16;
+			case DATA_TYPE_RGBA16_U: return GL_RGBA16;
 
-			case DATA_TYPE_R32_F: switch (channels) {
-				case 1: return GL_R32F;
-				case 2: return GL_RG32F;
-				case 3: return GL_RGB32F;
-				case 4: return GL_RGBA32F;
-			} break;
+			case DATA_TYPE_R32_F:    return GL_R32F;
+			case DATA_TYPE_RG32_F:   return GL_RG32F;
+			case DATA_TYPE_RGB32_F:  return GL_RGB32F;
+			case DATA_TYPE_RGBA32_F: return GL_RGBA32F;
 		} break;
 
 		case TEXTURE_TYPE_DEPTH: switch (data_type) {
@@ -179,15 +173,27 @@ GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type 
 	return GL_NONE;
 }
 
-GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels) {
+GLenum gpu_pixel_data_format(enum Texture_Type texture_type, enum Data_Type data_type) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
 
-		case TEXTURE_TYPE_COLOR: switch (channels) {
-			case 1: return GL_RED;
-			case 2: return GL_RG;
-			case 3: return GL_RGB;
-			case 4: return GL_RGBA;
+		case TEXTURE_TYPE_COLOR: switch (data_type) {
+			default: break;
+
+			case DATA_TYPE_R8_U:    return GL_RED;
+			case DATA_TYPE_RG8_U:   return GL_RG;
+			case DATA_TYPE_RGB8_U:  return GL_RGB;
+			case DATA_TYPE_RGBA8_U: return GL_RGBA;
+
+			case DATA_TYPE_R16_U:    return GL_RED;
+			case DATA_TYPE_RG16_U:   return GL_RG;
+			case DATA_TYPE_RGB16_U:  return GL_RGB;
+			case DATA_TYPE_RGBA16_U: return GL_RGBA;
+
+			case DATA_TYPE_R32_F:    return GL_RED;
+			case DATA_TYPE_RG32_F:   return GL_RG;
+			case DATA_TYPE_RGB32_F:  return GL_RGB;
+			case DATA_TYPE_RGBA32_F: return GL_RGBA;
 		} break;
 
 		case TEXTURE_TYPE_DEPTH:    return GL_DEPTH_COMPONENT;
@@ -199,30 +205,30 @@ GLenum gpu_pixel_data_format(enum Texture_Type texture_type, uint32_t channels) 
 }
 
 GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type) {
+	enum Data_Type const element_type = data_type_get_element_type(data_type);
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
 
-		case TEXTURE_TYPE_COLOR: switch (data_type) {
+		case TEXTURE_TYPE_COLOR: switch (element_type) {
 			default: break;
 			case DATA_TYPE_R8_U:  return GL_UNSIGNED_BYTE;
 			case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
-			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
 			case DATA_TYPE_R32_F: return GL_FLOAT;
 		} break;
 
-		case TEXTURE_TYPE_DEPTH: switch (data_type) {
+		case TEXTURE_TYPE_DEPTH: switch (element_type) {
 			default: break;
 			case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
 			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
 			case DATA_TYPE_R32_F: return GL_FLOAT;
 		} break;
 
-		case TEXTURE_TYPE_STENCIL: switch (data_type) {
+		case TEXTURE_TYPE_STENCIL: switch (element_type) {
 			default: break;
 			case DATA_TYPE_R8_U: return GL_UNSIGNED_BYTE;
 		} break;
 
-		case TEXTURE_TYPE_DSTENCIL: switch (data_type) {
+		case TEXTURE_TYPE_DSTENCIL: switch (element_type) {
 			default: break;
 			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT_24_8;
 			case DATA_TYPE_R32_F: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
