@@ -239,63 +239,13 @@ GLenum gpu_pixel_data_format(enum Texture_Type texture_type, enum Data_Type data
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
 
-		case TEXTURE_TYPE_COLOR: switch (data_type) {
+		case TEXTURE_TYPE_COLOR: switch (data_type_get_count(data_type)) {
 			default: break;
 
-			case DATA_TYPE_R8_U:    return GL_RED;
-			case DATA_TYPE_RG8_U:   return GL_RG;
-			case DATA_TYPE_RGB8_U:  return GL_RGB;
-			case DATA_TYPE_RGBA8_U: return GL_RGBA;
-
-			case DATA_TYPE_R8_UNORM:    return GL_RED;
-			case DATA_TYPE_RG8_UNORM:   return GL_RG;
-			case DATA_TYPE_RGB8_UNORM:  return GL_RGB;
-			case DATA_TYPE_RGBA8_UNORM: return GL_RGBA;
-
-			case DATA_TYPE_R8_S:    return GL_RED;
-			case DATA_TYPE_RG8_S:   return GL_RG;
-			case DATA_TYPE_RGB8_S:  return GL_RGB;
-			case DATA_TYPE_RGBA8_S: return GL_RGBA;
-
-			case DATA_TYPE_R8_SNORM:    return GL_RED;
-			case DATA_TYPE_RG8_SNORM:   return GL_RG;
-			case DATA_TYPE_RGB8_SNORM:  return GL_RGB;
-			case DATA_TYPE_RGBA8_SNORM: return GL_RGBA;
-
-			case DATA_TYPE_R16_U:    return GL_RED;
-			case DATA_TYPE_RG16_U:   return GL_RG;
-			case DATA_TYPE_RGB16_U:  return GL_RGB;
-			case DATA_TYPE_RGBA16_U: return GL_RGBA;
-
-			case DATA_TYPE_R16_UNORM:    return GL_RED;
-			case DATA_TYPE_RG16_UNORM:   return GL_RG;
-			case DATA_TYPE_RGB16_UNORM:  return GL_RGB;
-			case DATA_TYPE_RGBA16_UNORM: return GL_RGBA;
-
-			case DATA_TYPE_R16_S:    return GL_RED;
-			case DATA_TYPE_RG16_S:   return GL_RG;
-			case DATA_TYPE_RGB16_S:  return GL_RGB;
-			case DATA_TYPE_RGBA16_S: return GL_RGBA;
-
-			case DATA_TYPE_R16_SNORM:    return GL_RED;
-			case DATA_TYPE_RG16_SNORM:   return GL_RG;
-			case DATA_TYPE_RGB16_SNORM:  return GL_RGB;
-			case DATA_TYPE_RGBA16_SNORM: return GL_RGBA;
-
-			case DATA_TYPE_R32_U:    return GL_RED;
-			case DATA_TYPE_RG32_U:   return GL_RG;
-			case DATA_TYPE_RGB32_U:  return GL_RGB;
-			case DATA_TYPE_RGBA32_U: return GL_RGBA;
-
-			case DATA_TYPE_R32_S:    return GL_RED;
-			case DATA_TYPE_RG32_S:   return GL_RG;
-			case DATA_TYPE_RGB32_S:  return GL_RGB;
-			case DATA_TYPE_RGBA32_S: return GL_RGBA;
-
-			case DATA_TYPE_R32_F:    return GL_RED;
-			case DATA_TYPE_RG32_F:   return GL_RG;
-			case DATA_TYPE_RGB32_F:  return GL_RGB;
-			case DATA_TYPE_RGBA32_F: return GL_RGBA;
+			case 1: return GL_RED;
+			case 2: return GL_RG;
+			case 3: return GL_RGB;
+			case 4: return GL_RGBA;
 		} break;
 
 		case TEXTURE_TYPE_DEPTH:    return GL_DEPTH_COMPONENT;
