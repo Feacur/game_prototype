@@ -10,7 +10,7 @@ GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture);
 GLint gpu_mag_filter_mode(enum Filter_Mode value);
 GLint gpu_wrap_mode(enum Wrap_Mode value);
 
-GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, bool normalize);
+GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type);
 GLenum gpu_pixel_data_format(enum Texture_Type texture_type, enum Data_Type data_type);
 GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type);
 GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index);

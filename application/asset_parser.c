@@ -270,15 +270,15 @@ static struct Texture_Parameters state_read_json_texture_parameters(struct JSON 
 
 	bool const buffer_read = json_get_boolean(json, S_("read"), false);
 
-	if (type_id == json_find_id(json, S_("color_rgba_u8"))) {
+	if (type_id == json_find_id(json, S_("color_rgba8_unorm"))) {
 		return (struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_COLOR,
-			.data_type = DATA_TYPE_RGBA8_U,
+			.data_type = DATA_TYPE_RGBA8_UNORM,
 			.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
 		};
 	}
 
-	if (type_id == json_find_id(json, S_("depth_r32"))) {
+	if (type_id == json_find_id(json, S_("depth_r32_f"))) {
 		return (struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_DEPTH,
 			.data_type = DATA_TYPE_R32_F,

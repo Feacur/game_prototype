@@ -41,7 +41,7 @@ struct Image image_init(struct Texture_Settings settings, struct Buffer const * 
 		.data = image_bytes,
 		.parameters = {
 			.texture_type = TEXTURE_TYPE_COLOR,
-			.data_type = data_type_get_vector_type(DATA_TYPE_R8_U, (uint32_t)channels),
+			.data_type = data_type_get_vector_type(DATA_TYPE_R8_UNORM, (uint32_t)channels),
 		},
 		.settings = settings,
 	};

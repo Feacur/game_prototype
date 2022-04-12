@@ -3,11 +3,11 @@
 	"size_y": 180,
 	"buffers": [
 		{
-			"type": "color_rgba_u8",
+			"type": "color_rgba8_unorm",
 			"read": true,
 		},
 		{
-			"type": "depth_r32",
+			"type": "depth_r32_f",
 		},
 	],
 }

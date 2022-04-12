@@ -286,7 +286,7 @@ static struct Ref gpu_texture_allocate(
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		glTexImage2D(
 			GL_TEXTURE_2D, level,
-			(GLint)gpu_sized_internal_format(parameters.texture_type, parameters.data_type, true),
+			(GLint)gpu_sized_internal_format(parameters.texture_type, parameters.data_type),
 			(GLsizei)size_x, (GLsizei)size_y, 0,
 			gpu_pixel_data_format(parameters.texture_type, parameters.data_type),
 			gpu_pixel_data_type(parameters.texture_type, parameters.data_type),
@@ -297,7 +297,7 @@ static struct Ref gpu_texture_allocate(
 		GLsizei const levels = 1;
 		glTextureStorage2D(
 			texture_id, levels,
-			gpu_sized_internal_format(parameters.texture_type, parameters.data_type, true),
+			gpu_sized_internal_format(parameters.texture_type, parameters.data_type),
 			(GLsizei)size_x, (GLsizei)size_y
 		);
 		if (data != NULL) {
@@ -400,7 +400,7 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset) 
 		glBindTexture(GL_TEXTURE_2D, gpu_texture->id);
 		glTexImage2D(
 			GL_TEXTURE_2D, level,
-			(GLint)gpu_sized_internal_format(gpu_texture->parameters.texture_type, gpu_texture->parameters.data_type, true),
+			(GLint)gpu_sized_internal_format(gpu_texture->parameters.texture_type, gpu_texture->parameters.data_type),
 			(GLsizei)asset->size_x, (GLsizei)asset->size_y, 0,
 			gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.data_type),
 			gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
@@ -454,7 +454,7 @@ struct Ref gpu_target_init(
 			glCreateRenderbuffers(1, &buffer_id);
 			glNamedRenderbufferStorage(
 				buffer_id,
-				gpu_sized_internal_format(parameters[i].texture_type, parameters[i].data_type, true),
+				gpu_sized_internal_format(parameters[i].texture_type, parameters[i].data_type),
 				(GLsizei)size_x, (GLsizei)size_y
 			);
 			array_u32_push(&buffers, buffer_id);

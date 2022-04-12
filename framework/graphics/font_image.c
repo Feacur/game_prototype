@@ -49,7 +49,7 @@ struct Font_Image * font_image_init(struct Font const * font) {
 		.buffer = {
 			.parameters = {
 				.texture_type = TEXTURE_TYPE_COLOR,
-				.data_type = DATA_TYPE_R8_U,
+				.data_type = DATA_TYPE_R8_UNORM,
 				.flags = TEXTURE_FLAG_MUTABLE | TEXTURE_FLAG_WRITE,
 			},
 			.settings = {
