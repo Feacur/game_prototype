@@ -13,10 +13,20 @@ enum Data_Type data_type_get_element_type(enum Data_Type value) {
 		case DATA_TYPE_RGBA8_U:
 			return DATA_TYPE_R8_U;
 
+		case DATA_TYPE_RG8_S:
+		case DATA_TYPE_RGB8_S:
+		case DATA_TYPE_RGBA8_S:
+			return DATA_TYPE_R8_S;
+
 		case DATA_TYPE_RG16_U:
 		case DATA_TYPE_RGB16_U:
 		case DATA_TYPE_RGBA16_U:
 			return DATA_TYPE_R16_U;
+
+		case DATA_TYPE_RG16_S:
+		case DATA_TYPE_RGB16_S:
+		case DATA_TYPE_RGBA16_S:
+			return DATA_TYPE_R16_S;
 
 		case DATA_TYPE_RG32_U:
 		case DATA_TYPE_RGB32_U:
@@ -67,11 +77,25 @@ enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels
 			case 4: return DATA_TYPE_RGBA8_U;
 		} break;
 
+		case DATA_TYPE_R8_S: switch(channels) {
+			case 1: return DATA_TYPE_R8_S;
+			case 2: return DATA_TYPE_RG8_S;
+			case 3: return DATA_TYPE_RGB8_S;
+			case 4: return DATA_TYPE_RGBA8_S;
+		} break;
+
 		case DATA_TYPE_R16_U: switch(channels) {
 			case 1: return DATA_TYPE_R16_U;
 			case 2: return DATA_TYPE_RG16_U;
 			case 3: return DATA_TYPE_RGB16_U;
 			case 4: return DATA_TYPE_RGBA16_U;
+		} break;
+
+		case DATA_TYPE_R16_S: switch(channels) {
+			case 1: return DATA_TYPE_R16_S;
+			case 2: return DATA_TYPE_RG16_S;
+			case 3: return DATA_TYPE_RGB16_S;
+			case 4: return DATA_TYPE_RGBA16_S;
 		} break;
 
 		case DATA_TYPE_R32_U: switch(channels) {
@@ -131,14 +155,21 @@ uint32_t data_type_get_count(enum Data_Type value) {
 		case DATA_TYPE_RGB8_U:  return 3;
 		case DATA_TYPE_RGBA8_U: return 4;
 
-		case DATA_TYPE_R8_S: return 1;
+		case DATA_TYPE_R8_S:    return 1;
+		case DATA_TYPE_RG8_S:   return 2;
+		case DATA_TYPE_RGB8_S:  return 3;
+		case DATA_TYPE_RGBA8_S: return 4;
 
 		case DATA_TYPE_R16_U:    return 1;
 		case DATA_TYPE_RG16_U:   return 2;
 		case DATA_TYPE_RGB16_U:  return 3;
 		case DATA_TYPE_RGBA16_U: return 4;
 
-		case DATA_TYPE_R16_S: return 1;
+		case DATA_TYPE_R16_S:    return 1;
+		case DATA_TYPE_RG16_S:   return 2;
+		case DATA_TYPE_RGB16_S:  return 3;
+		case DATA_TYPE_RGBA16_S: return 4;
+
 		case DATA_TYPE_R16_F: return 1;
 
 		case DATA_TYPE_R32_U:    return 1;
@@ -190,14 +221,21 @@ uint32_t data_type_get_size(enum Data_Type value) {
 		case DATA_TYPE_RGB8_U:  return sizeof(uint8_t) * 3;
 		case DATA_TYPE_RGBA8_U: return sizeof(uint8_t) * 4;
 
-		case DATA_TYPE_R8_S:  return sizeof(int8_t);
+		case DATA_TYPE_R8_S:    return sizeof(int8_t);
+		case DATA_TYPE_RG8_S:   return sizeof(int8_t) * 2;
+		case DATA_TYPE_RGB8_S:  return sizeof(int8_t) * 3;
+		case DATA_TYPE_RGBA8_S: return sizeof(int8_t) * 4;
 
 		case DATA_TYPE_R16_U:    return sizeof(uint16_t);
 		case DATA_TYPE_RG16_U:   return sizeof(uint16_t) * 2;
 		case DATA_TYPE_RGB16_U:  return sizeof(uint16_t) * 3;
 		case DATA_TYPE_RGBA16_U: return sizeof(uint16_t) * 4;
 
-		case DATA_TYPE_R16_S: return sizeof(int16_t);
+		case DATA_TYPE_R16_S:    return sizeof(int16_t);
+		case DATA_TYPE_RG16_S:   return sizeof(int16_t) * 2;
+		case DATA_TYPE_RGB16_S:  return sizeof(int16_t) * 3;
+		case DATA_TYPE_RGBA16_S: return sizeof(int16_t) * 4;
+
 		case DATA_TYPE_R16_F: return sizeof(float) / 2;
 
 		case DATA_TYPE_R32_U:    return sizeof(uint32_t);

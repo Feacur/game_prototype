@@ -150,22 +150,42 @@ GLint gpu_wrap_mode(enum Wrap_Mode value) {
 	return GL_NONE;
 }
 
-GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type) {
+GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, bool normalize) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
 
 		case TEXTURE_TYPE_COLOR: switch (data_type) {
 			default: break;
 
-			case DATA_TYPE_R8_U:    return GL_R8;
-			case DATA_TYPE_RG8_U:   return GL_RG8;
-			case DATA_TYPE_RGB8_U:  return GL_RGB8;
-			case DATA_TYPE_RGBA8_U: return GL_RGBA8;
+			case DATA_TYPE_R8_U:    return normalize ? GL_R8    : GL_R8UI;
+			case DATA_TYPE_RG8_U:   return normalize ? GL_RG8   : GL_RG8UI;
+			case DATA_TYPE_RGB8_U:  return normalize ? GL_RGB8  : GL_RGB8UI;
+			case DATA_TYPE_RGBA8_U: return normalize ? GL_RGBA8 : GL_RGBA8UI;
 
-			case DATA_TYPE_R16_U:    return GL_R16;
-			case DATA_TYPE_RG16_U:   return GL_RG16;
-			case DATA_TYPE_RGB16_U:  return GL_RGB16;
-			case DATA_TYPE_RGBA16_U: return GL_RGBA16;
+			case DATA_TYPE_R8_S:    return normalize ? GL_R8_SNORM    : GL_R8I;
+			case DATA_TYPE_RG8_S:   return normalize ? GL_RG8_SNORM   : GL_RG8I;
+			case DATA_TYPE_RGB8_S:  return normalize ? GL_RGB8_SNORM  : GL_RGB8I;
+			case DATA_TYPE_RGBA8_S: return normalize ? GL_RGBA8_SNORM : GL_RGBA8I;
+
+			case DATA_TYPE_R16_U:    return normalize ? GL_R16    : GL_R16UI;
+			case DATA_TYPE_RG16_U:   return normalize ? GL_RG16   : GL_RG16UI;
+			case DATA_TYPE_RGB16_U:  return normalize ? GL_RGB16  : GL_RGB16UI;
+			case DATA_TYPE_RGBA16_U: return normalize ? GL_RGBA16 : GL_RGBA16UI;
+
+			case DATA_TYPE_R16_S:    return normalize ? GL_R16_SNORM    : GL_R16I;
+			case DATA_TYPE_RG16_S:   return normalize ? GL_RG16_SNORM   : GL_RG16I;
+			case DATA_TYPE_RGB16_S:  return normalize ? GL_RGB16_SNORM  : GL_RGB16I;
+			case DATA_TYPE_RGBA16_S: return normalize ? GL_RGBA16_SNORM : GL_RGBA16I;
+
+			case DATA_TYPE_R32_U:    return GL_R32UI;
+			case DATA_TYPE_RG32_U:   return GL_RG32UI;
+			case DATA_TYPE_RGB32_U:  return GL_RGB32UI;
+			case DATA_TYPE_RGBA32_U: return GL_RGBA32UI;
+
+			case DATA_TYPE_R32_S:    return GL_R32I;
+			case DATA_TYPE_RG32_S:   return GL_RG32I;
+			case DATA_TYPE_RGB32_S:  return GL_RGB32I;
+			case DATA_TYPE_RGBA32_S: return GL_RGBA32I;
 
 			case DATA_TYPE_R32_F:    return GL_R32F;
 			case DATA_TYPE_RG32_F:   return GL_RG32F;
@@ -207,10 +227,30 @@ GLenum gpu_pixel_data_format(enum Texture_Type texture_type, enum Data_Type data
 			case DATA_TYPE_RGB8_U:  return GL_RGB;
 			case DATA_TYPE_RGBA8_U: return GL_RGBA;
 
+			case DATA_TYPE_R8_S:    return GL_RED;
+			case DATA_TYPE_RG8_S:   return GL_RG;
+			case DATA_TYPE_RGB8_S:  return GL_RGB;
+			case DATA_TYPE_RGBA8_S: return GL_RGBA;
+
 			case DATA_TYPE_R16_U:    return GL_RED;
 			case DATA_TYPE_RG16_U:   return GL_RG;
 			case DATA_TYPE_RGB16_U:  return GL_RGB;
 			case DATA_TYPE_RGBA16_U: return GL_RGBA;
+
+			case DATA_TYPE_R16_S:    return GL_RED;
+			case DATA_TYPE_RG16_S:   return GL_RG;
+			case DATA_TYPE_RGB16_S:  return GL_RGB;
+			case DATA_TYPE_RGBA16_S: return GL_RGBA;
+
+			case DATA_TYPE_R32_U:    return GL_RED;
+			case DATA_TYPE_RG32_U:   return GL_RG;
+			case DATA_TYPE_RGB32_U:  return GL_RGB;
+			case DATA_TYPE_RGBA32_U: return GL_RGBA;
+
+			case DATA_TYPE_R32_S:    return GL_RED;
+			case DATA_TYPE_RG32_S:   return GL_RG;
+			case DATA_TYPE_RGB32_S:  return GL_RGB;
+			case DATA_TYPE_RGBA32_S: return GL_RGBA;
 
 			case DATA_TYPE_R32_F:    return GL_RED;
 			case DATA_TYPE_RG32_F:   return GL_RG;
@@ -234,7 +274,11 @@ GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_t
 		case TEXTURE_TYPE_COLOR: switch (element_type) {
 			default: break;
 			case DATA_TYPE_R8_U:  return GL_UNSIGNED_BYTE;
+			case DATA_TYPE_R8_S:  return GL_BYTE;
 			case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
+			case DATA_TYPE_R16_S: return GL_SHORT;
+			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
+			case DATA_TYPE_R32_S: return GL_INT;
 			case DATA_TYPE_R32_F: return GL_FLOAT;
 		} break;
 
