@@ -35,9 +35,20 @@ GLenum gpu_data_type(enum Data_Type value) {
 		case DATA_TYPE_MAT3: return GL_FLOAT_MAT3;
 		case DATA_TYPE_MAT4: return GL_FLOAT_MAT4;
 
-		// case DATA_TYPE_R64_U: return GL_UNSIGNED_INT64_ARB;
-		// case DATA_TYPE_R64_S: return GL_INT64_ARB;
-		case DATA_TYPE_R64_F: return GL_DOUBLE;
+		// case DATA_TYPE_R64_U:    return GL_UNSIGNED_INT64_ARB;
+		// case DATA_TYPE_RG64_U:   return GL_UNSIGNED_INT64_VEC2_ARB;
+		// case DATA_TYPE_RGB64_U:  return GL_UNSIGNED_INT64_VEC3_ARB;
+		// case DATA_TYPE_RGBA64_U: return GL_UNSIGNED_INT64_VEC4_ARB;
+
+		// case DATA_TYPE_R64_S:    return GL_INT64_ARB;
+		// case DATA_TYPE_RG64_S:   return GL_INT64_VEC2_ARB;
+		// case DATA_TYPE_RGB64_S:  return GL_INT64_VEC3_ARB;
+		// case DATA_TYPE_RGBA64_S: return GL_INT64_VEC4_ARB;
+
+		// case DATA_TYPE_R64_F:    return GL_DOUBLE;
+		// case DATA_TYPE_RG64_F:   return GL_DOUBLE_VEC2;
+		// case DATA_TYPE_RGB64_F:  return GL_DOUBLE_VEC3;
+		// case DATA_TYPE_RGBA64_F: return GL_DOUBLE_VEC4;
 	}
 	logger_to_console("unknown data type\n"); DEBUG_BREAK();
 	return GL_NONE;
@@ -73,9 +84,20 @@ enum Data_Type interpret_gl_type(GLint value) {
 		case GL_FLOAT_MAT3: return DATA_TYPE_MAT3;
 		case GL_FLOAT_MAT4: return DATA_TYPE_MAT4;
 
-		// case GL_UNSIGNED_INT64_ARB: return DATA_TYPE_R64_U;
-		// case GL_INT64_ARB:          return DATA_TYPE_R64_S;
-		case GL_DOUBLE:             return DATA_TYPE_R64_F;
+		// case GL_UNSIGNED_INT64_ARB:      return DATA_TYPE_R64_U;
+		// case GL_UNSIGNED_INT64_VEC2_ARB: return DATA_TYPE_RG64_U;
+		// case GL_UNSIGNED_INT64_VEC3_ARB: return DATA_TYPE_RGB64_U;
+		// case GL_UNSIGNED_INT64_VEC4_ARB: return DATA_TYPE_RGBA64_U;
+
+		// case GL_INT64_ARB:      return DATA_TYPE_R64_S;
+		// case GL_INT64_VEC2_ARB: return DATA_TYPE_RG64_S;
+		// case GL_INT64_VEC3_ARB: return DATA_TYPE_RGB64_S;
+		// case GL_INT64_VEC4_ARB: return DATA_TYPE_RGBA64_S;
+
+		// case GL_DOUBLE:      return DATA_TYPE_R64_F;
+		// case GL_DOUBLE_VEC2: return DATA_TYPE_RG64_F;
+		// case GL_DOUBLE_VEC3: return DATA_TYPE_RGB64_F;
+		// case GL_DOUBLE_VEC4: return DATA_TYPE_RGBA64_F;
 	}
 	logger_to_console("unknown GL type\n"); DEBUG_BREAK();
 	return DATA_TYPE_NONE;

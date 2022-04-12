@@ -37,6 +37,21 @@ enum Data_Type data_type_get_element_type(enum Data_Type value) {
 		case DATA_TYPE_MAT3:
 		case DATA_TYPE_MAT4:
 			return DATA_TYPE_R32_F;
+
+		// case DATA_TYPE_RG64_U:
+		// case DATA_TYPE_RGB64_U:
+		// case DATA_TYPE_RGBA64_U:
+		// 	return DATA_TYPE_R64_U;
+
+		// case DATA_TYPE_RG64_S:
+		// case DATA_TYPE_RGB64_S:
+		// case DATA_TYPE_RGBA64_S:
+		// 	return DATA_TYPE_R64_S;
+
+		// case DATA_TYPE_RG64_F:
+		// case DATA_TYPE_RGB64_F:
+		// case DATA_TYPE_RGBA64_F:
+		// 	return DATA_TYPE_R64_F;
 	}
 	return value;
 }
@@ -79,6 +94,27 @@ enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels
 			case 3: return DATA_TYPE_RGB32_F;
 			case 4: return DATA_TYPE_RGBA32_F;
 		} break;
+
+		// case DATA_TYPE_R64_U: switch(channels) {
+		// 	case 1: return DATA_TYPE_R64_U;
+		// 	case 2: return DATA_TYPE_RG64_U;
+		// 	case 3: return DATA_TYPE_RGB64_U;
+		// 	case 4: return DATA_TYPE_RGBA64_U;
+		// } break;
+
+		// case DATA_TYPE_R64_S: switch(channels) {
+		// 	case 1: return DATA_TYPE_R64_S;
+		// 	case 2: return DATA_TYPE_RG64_S;
+		// 	case 3: return DATA_TYPE_RGB64_S;
+		// 	case 4: return DATA_TYPE_RGBA64_S;
+		// } break;
+
+		// case DATA_TYPE_R64_F: switch(channels) {
+		// 	case 1: return DATA_TYPE_R64_F;
+		// 	case 2: return DATA_TYPE_RG64_F;
+		// 	case 3: return DATA_TYPE_RGB64_F;
+		// 	case 4: return DATA_TYPE_RGBA64_F;
+		// } break;
 	}
 	logger_to_console("unknown vector type\n"); DEBUG_BREAK();
 	return DATA_TYPE_NONE;
@@ -124,9 +160,20 @@ uint32_t data_type_get_count(enum Data_Type value) {
 		case DATA_TYPE_MAT3: return 3 * 3;
 		case DATA_TYPE_MAT4: return 4 * 4;
 
-		case DATA_TYPE_R64_U: return 1;
-		case DATA_TYPE_R64_S: return 1;
-		case DATA_TYPE_R64_F: return 1;
+		// case DATA_TYPE_R64_U:    return 1;
+		// case DATA_TYPE_RG64_U:   return 2;
+		// case DATA_TYPE_RGB64_U:  return 3;
+		// case DATA_TYPE_RGBA64_U: return 4;
+
+		// case DATA_TYPE_R64_S:    return 1;
+		// case DATA_TYPE_RG64_S:   return 2;
+		// case DATA_TYPE_RGB64_S:  return 3;
+		// case DATA_TYPE_RGBA64_S: return 4;
+
+		// case DATA_TYPE_R64_F:    return 1;
+		// case DATA_TYPE_RG64_F:   return 2;
+		// case DATA_TYPE_RGB64_F:  return 3;
+		// case DATA_TYPE_RGBA64_F: return 4;
 	}
 	logger_to_console("unknown data type\n"); DEBUG_BREAK();
 	return 0;
@@ -172,9 +219,20 @@ uint32_t data_type_get_size(enum Data_Type value) {
 		case DATA_TYPE_MAT3: return sizeof(float) * 3 * 3;
 		case DATA_TYPE_MAT4: return sizeof(float) * 4 * 4;
 
-		case DATA_TYPE_R64_U: return sizeof(uint64_t);
-		case DATA_TYPE_R64_S: return sizeof(int64_t);
-		case DATA_TYPE_R64_F: return sizeof(double);
+		// case DATA_TYPE_R64_U:    return sizeof(uint64_t);
+		// case DATA_TYPE_RG64_U:   return sizeof(uint64_t) * 2;
+		// case DATA_TYPE_RGB64_U:  return sizeof(uint64_t) * 3;
+		// case DATA_TYPE_RGBA64_U: return sizeof(uint64_t) * 4;
+
+		// case DATA_TYPE_R64_S:    return sizeof(int64_t);
+		// case DATA_TYPE_RG64_S:   return sizeof(int64_t) * 2;
+		// case DATA_TYPE_RGB64_S:  return sizeof(int64_t) * 3;
+		// case DATA_TYPE_RGBA64_S: return sizeof(int64_t) * 4;
+
+		// case DATA_TYPE_R64_F:    return sizeof(double);
+		// case DATA_TYPE_RG64_F:   return sizeof(double) * 2;
+		// case DATA_TYPE_RGB64_F:  return sizeof(double) * 3;
+		// case DATA_TYPE_RGBA64_F: return sizeof(double) * 4;
 	}
 	logger_to_console("unknown data type\n"); DEBUG_BREAK();
 	return 0;
