@@ -9,8 +9,8 @@ GLenum gpu_data_type(enum Data_Type value) {
 
 		case DATA_TYPE_UNIT: return GL_SAMPLER_2D;
 
-		case DATA_TYPE_R8_U:  return GL_UNSIGNED_BYTE;
-		case DATA_TYPE_R8_S:  return GL_BYTE;
+		case DATA_TYPE_R8_U: return GL_UNSIGNED_BYTE;
+		case DATA_TYPE_R8_S: return GL_BYTE;
 
 		case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
 		case DATA_TYPE_R16_S: return GL_SHORT;
@@ -45,37 +45,37 @@ GLenum gpu_data_type(enum Data_Type value) {
 
 enum Data_Type interpret_gl_type(GLint value) {
 	switch (value) {
-		case GL_SAMPLER_2D:        return DATA_TYPE_UNIT;
+		case GL_SAMPLER_2D: return DATA_TYPE_UNIT;
 
-		case GL_UNSIGNED_BYTE:     return DATA_TYPE_R8_U;
-		case GL_BYTE:              return DATA_TYPE_R8_S;
+		case GL_UNSIGNED_BYTE: return DATA_TYPE_R8_U;
+		case GL_BYTE:          return DATA_TYPE_R8_S;
 
-		case GL_UNSIGNED_SHORT:    return DATA_TYPE_R16_U;
-		case GL_SHORT:             return DATA_TYPE_R16_S;
-		case GL_HALF_FLOAT:        return DATA_TYPE_R16_F;
+		case GL_UNSIGNED_SHORT: return DATA_TYPE_R16_U;
+		case GL_SHORT:          return DATA_TYPE_R16_S;
+		case GL_HALF_FLOAT:     return DATA_TYPE_R16_F;
 
 		case GL_UNSIGNED_INT:      return DATA_TYPE_R32_U;
 		case GL_UNSIGNED_INT_VEC2: return DATA_TYPE_RG32_U;
 		case GL_UNSIGNED_INT_VEC3: return DATA_TYPE_RGB32_U;
 		case GL_UNSIGNED_INT_VEC4: return DATA_TYPE_RGBA32_U;
 
-		case GL_INT:               return DATA_TYPE_R32_S;
-		case GL_INT_VEC2:          return DATA_TYPE_RG32_S;
-		case GL_INT_VEC3:          return DATA_TYPE_RGB32_S;
-		case GL_INT_VEC4:          return DATA_TYPE_RGBA32_S;
+		case GL_INT:      return DATA_TYPE_R32_S;
+		case GL_INT_VEC2: return DATA_TYPE_RG32_S;
+		case GL_INT_VEC3: return DATA_TYPE_RGB32_S;
+		case GL_INT_VEC4: return DATA_TYPE_RGBA32_S;
 
-		case GL_FLOAT:             return DATA_TYPE_R32_F;
-		case GL_FLOAT_VEC2:        return DATA_TYPE_RG32_F;
-		case GL_FLOAT_VEC3:        return DATA_TYPE_RGB32_F;
-		case GL_FLOAT_VEC4:        return DATA_TYPE_RGBA32_F;
+		case GL_FLOAT:      return DATA_TYPE_R32_F;
+		case GL_FLOAT_VEC2: return DATA_TYPE_RG32_F;
+		case GL_FLOAT_VEC3: return DATA_TYPE_RGB32_F;
+		case GL_FLOAT_VEC4: return DATA_TYPE_RGBA32_F;
 
-		case GL_FLOAT_MAT2:        return DATA_TYPE_MAT2;
-		case GL_FLOAT_MAT3:        return DATA_TYPE_MAT3;
-		case GL_FLOAT_MAT4:        return DATA_TYPE_MAT4;
+		case GL_FLOAT_MAT2: return DATA_TYPE_MAT2;
+		case GL_FLOAT_MAT3: return DATA_TYPE_MAT3;
+		case GL_FLOAT_MAT4: return DATA_TYPE_MAT4;
 
-		// case GL_UNSIGNED_INT64_ARB return DATA_TYPE_R64_U;
-		// case GL_INT64_ARB:         return DATA_TYPE_R64_S;
-		case GL_DOUBLE:            return DATA_TYPE_R64_F;
+		// case GL_UNSIGNED_INT64_ARB: return DATA_TYPE_R64_U;
+		// case GL_INT64_ARB:          return DATA_TYPE_R64_S;
+		case GL_DOUBLE:             return DATA_TYPE_R64_F;
 	}
 	logger_to_console("unknown GL type\n"); DEBUG_BREAK();
 	return DATA_TYPE_NONE;

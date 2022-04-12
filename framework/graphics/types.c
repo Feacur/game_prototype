@@ -95,7 +95,7 @@ uint32_t data_type_get_count(enum Data_Type value) {
 		case DATA_TYPE_RGB8_U:  return 3;
 		case DATA_TYPE_RGBA8_U: return 4;
 
-		case DATA_TYPE_R8_S:  return 1;
+		case DATA_TYPE_R8_S: return 1;
 
 		case DATA_TYPE_R16_U:    return 1;
 		case DATA_TYPE_RG16_U:   return 2;
