@@ -4,6 +4,33 @@
 //
 #include "types.h"
 
+enum Data_Type data_type_get_basic_type(enum Data_Type value) {
+	switch (value) {
+		default: break;
+
+		case DATA_TYPE_R8_UNORM:    return DATA_TYPE_R8_U;
+		case DATA_TYPE_RG8_UNORM:   return DATA_TYPE_RG8_U;
+		case DATA_TYPE_RGB8_UNORM:  return DATA_TYPE_RGB8_U;
+		case DATA_TYPE_RGBA8_UNORM: return DATA_TYPE_RGBA8_U;
+
+		case DATA_TYPE_R8_SNORM:    return DATA_TYPE_R8_S;
+		case DATA_TYPE_RG8_SNORM:   return DATA_TYPE_RG8_S;
+		case DATA_TYPE_RGB8_SNORM:  return DATA_TYPE_RGB8_S;
+		case DATA_TYPE_RGBA8_SNORM: return DATA_TYPE_RGBA8_S;
+
+		case DATA_TYPE_R16_UNORM:    return DATA_TYPE_R16_U;
+		case DATA_TYPE_RG16_UNORM:   return DATA_TYPE_RG16_U;
+		case DATA_TYPE_RGB16_UNORM:  return DATA_TYPE_RGB16_U;
+		case DATA_TYPE_RGBA16_UNORM: return DATA_TYPE_RGBA16_U;
+
+		case DATA_TYPE_R16_SNORM:    return DATA_TYPE_R16_S;
+		case DATA_TYPE_RG16_SNORM:   return DATA_TYPE_RG16_S;
+		case DATA_TYPE_RGB16_SNORM:  return DATA_TYPE_RGB16_S;
+		case DATA_TYPE_RGBA16_SNORM: return DATA_TYPE_RGBA16_S;
+	}
+	return value;
+}
+
 enum Data_Type data_type_get_element_type(enum Data_Type value) {
 	switch (value) {
 		default: break;

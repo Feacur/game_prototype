@@ -9,11 +9,46 @@ GLenum gpu_data_type(enum Data_Type value) {
 
 		case DATA_TYPE_UNIT: return GL_SAMPLER_2D;
 
-		case DATA_TYPE_R8_U: return GL_UNSIGNED_BYTE;
-		case DATA_TYPE_R8_S: return GL_BYTE;
+		case DATA_TYPE_R8_U:
+		case DATA_TYPE_RG8_U:
+		case DATA_TYPE_RGB8_U:
+		case DATA_TYPE_RGBA8_U:
+		case DATA_TYPE_R8_UNORM:
+		case DATA_TYPE_RG8_UNORM:
+		case DATA_TYPE_RGB8_UNORM:
+		case DATA_TYPE_RGBA8_UNORM:
+			return GL_UNSIGNED_BYTE;
 
-		case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
-		case DATA_TYPE_R16_S: return GL_SHORT;
+		case DATA_TYPE_R8_S:
+		case DATA_TYPE_RG8_S:
+		case DATA_TYPE_RGB8_S:
+		case DATA_TYPE_RGBA8_S:
+		case DATA_TYPE_R8_SNORM:
+		case DATA_TYPE_RG8_SNORM:
+		case DATA_TYPE_RGB8_SNORM:
+		case DATA_TYPE_RGBA8_SNORM:
+			return GL_BYTE;
+
+		case DATA_TYPE_R16_U:
+		case DATA_TYPE_RG16_U:
+		case DATA_TYPE_RGB16_U:
+		case DATA_TYPE_RGBA16_U:
+		case DATA_TYPE_R16_UNORM:
+		case DATA_TYPE_RG16_UNORM:
+		case DATA_TYPE_RGB16_UNORM:
+		case DATA_TYPE_RGBA16_UNORM:
+			return GL_UNSIGNED_SHORT;
+
+		case DATA_TYPE_R16_S:
+		case DATA_TYPE_RG16_S:
+		case DATA_TYPE_RGB16_S:
+		case DATA_TYPE_RGBA16_S:
+		case DATA_TYPE_R16_SNORM:
+		case DATA_TYPE_RG16_SNORM:
+		case DATA_TYPE_RGB16_SNORM:
+		case DATA_TYPE_RGBA16_SNORM:
+			return GL_SHORT;
+
 		case DATA_TYPE_R16_F: return GL_HALF_FLOAT;
 
 		case DATA_TYPE_R32_U:    return GL_UNSIGNED_INT;

@@ -270,6 +270,7 @@ struct Mesh_Parameters {
 
 //
 
+enum Data_Type data_type_get_basic_type(enum Data_Type value);
 enum Data_Type data_type_get_element_type(enum Data_Type value);
 enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels);
 uint32_t data_type_get_count(enum Data_Type value);
