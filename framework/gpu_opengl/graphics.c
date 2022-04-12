@@ -863,20 +863,20 @@ static void gpu_upload_single_uniform(struct Gpu_Program const * gpu_program, st
 			break;
 		}
 
-		case DATA_TYPE_U32:   glProgramUniform1uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_UVEC2: glProgramUniform2uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_UVEC3: glProgramUniform3uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_UVEC4: glProgramUniform4uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_R32_U:    glProgramUniform1uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_RG32_U:   glProgramUniform2uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_RGB32_U:  glProgramUniform3uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_RGBA32_U: glProgramUniform4uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
 
-		case DATA_TYPE_S32:   glProgramUniform1iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_SVEC2: glProgramUniform2iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_SVEC3: glProgramUniform3iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_SVEC4: glProgramUniform4iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_R32_S:    glProgramUniform1iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_RG32_S:   glProgramUniform2iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_RGB32_S:  glProgramUniform3iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_RGBA32_S: glProgramUniform4iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
 
-		case DATA_TYPE_R32:  glProgramUniform1fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_VEC2: glProgramUniform2fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_VEC3: glProgramUniform3fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_VEC4: glProgramUniform4fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_R32_F:    glProgramUniform1fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_RG32_F:   glProgramUniform2fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_RGB32_F:  glProgramUniform3fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case DATA_TYPE_RGBA32_F: glProgramUniform4fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
 
 		case DATA_TYPE_MAT2: glProgramUniformMatrix2fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;
 		case DATA_TYPE_MAT3: glProgramUniformMatrix3fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;

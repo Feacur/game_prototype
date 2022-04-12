@@ -119,11 +119,11 @@ static struct Mesh mesh_construct(
 	};
 	//
 	mesh.parameters[0] = (struct Mesh_Parameters){
-		.type = DATA_TYPE_R32,
+		.type = DATA_TYPE_R32_F,
 		.attributes_count = attributes->count / 2,
 	};
 	mesh.parameters[1] = (struct Mesh_Parameters){
-		.type = DATA_TYPE_U32,
+		.type = DATA_TYPE_R32_U,
 		.flags = MESH_FLAG_INDEX,
 	};
 	common_memcpy(mesh.parameters[0].attributes, attributes->data, sizeof(*attributes->data) * attributes->count);

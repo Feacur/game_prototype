@@ -230,7 +230,7 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 				});
 			} break;
 
-			case DATA_TYPE_U32: {
+			case DATA_TYPE_R32_U: {
 				state_read_json_u32_n(uniform_json, uniform_count, uniform_data_buffer.data);
 				gfx_uniforms_set(&result.uniforms, it.key_hash, (struct Gfx_Uniform_In){
 					.size = sizeof(uint32_t) * uniform_count,
@@ -238,7 +238,7 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 				});
 			} break;
 
-			case DATA_TYPE_S32: {
+			case DATA_TYPE_R32_S: {
 				state_read_json_s32_n(uniform_json,uniform_count,  uniform_data_buffer.data);
 				gfx_uniforms_set(&result.uniforms, it.key_hash, (struct Gfx_Uniform_In){
 					.size = sizeof(int32_t) * uniform_count,
@@ -246,7 +246,7 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 				});
 			} break;
 
-			case DATA_TYPE_R32: {
+			case DATA_TYPE_R32_F: {
 				state_read_json_flt_n(uniform_json, uniform_count, uniform_data_buffer.data);
 				gfx_uniforms_set(&result.uniforms, it.key_hash, (struct Gfx_Uniform_In){
 					.size = sizeof(float) * uniform_count,
@@ -273,7 +273,7 @@ static struct Texture_Parameters state_read_json_texture_parameters(struct JSON 
 	if (type_id == json_find_id(json, S_("color_rgba_u8"))) {
 		return (struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_COLOR,
-			.data_type = DATA_TYPE_U8,
+			.data_type = DATA_TYPE_R8_U,
 			.channels = 4,
 			.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
 		};
@@ -282,7 +282,7 @@ static struct Texture_Parameters state_read_json_texture_parameters(struct JSON 
 	if (type_id == json_find_id(json, S_("depth_r32"))) {
 		return (struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_DEPTH,
-			.data_type = DATA_TYPE_R32,
+			.data_type = DATA_TYPE_R32_F,
 			.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
 		};
 	}
