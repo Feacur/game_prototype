@@ -7,7 +7,9 @@ GLenum gpu_data_type(enum Data_Type value) {
 	switch (value) {
 		default: break;
 
-		case DATA_TYPE_UNIT: return GL_SAMPLER_2D;
+		case DATA_TYPE_UNIT_U: return GL_UNSIGNED_INT_SAMPLER_2D;
+		case DATA_TYPE_UNIT_S: return GL_INT_SAMPLER_2D;
+		case DATA_TYPE_UNIT_F: return GL_SAMPLER_2D;
 
 		case DATA_TYPE_R8_U:
 		case DATA_TYPE_RG8_U:
@@ -91,7 +93,9 @@ GLenum gpu_data_type(enum Data_Type value) {
 
 enum Data_Type interpret_gl_type(GLint value) {
 	switch (value) {
-		case GL_SAMPLER_2D: return DATA_TYPE_UNIT;
+		case GL_UNSIGNED_INT_SAMPLER_2D: return DATA_TYPE_UNIT_U;
+		case GL_INT_SAMPLER_2D:          return DATA_TYPE_UNIT_S;
+		case GL_SAMPLER_2D:              return DATA_TYPE_UNIT_F;
 
 		case GL_UNSIGNED_BYTE: return DATA_TYPE_R8_U;
 		case GL_BYTE:          return DATA_TYPE_R8_S;
@@ -277,10 +281,10 @@ GLenum gpu_pixel_data_format(enum Texture_Type texture_type, enum Data_Type data
 		case TEXTURE_TYPE_COLOR: switch (data_type_get_count(data_type)) {
 			default: break;
 
-			case 1: return GL_RED;
-			case 2: return GL_RG;
-			case 3: return GL_RGB;
-			case 4: return GL_RGBA;
+			case 1: return data_type_is_integer(data_type) ? GL_RED_INTEGER  : GL_RED;
+			case 2: return data_type_is_integer(data_type) ? GL_RG_INTEGER   : GL_RG;
+			case 3: return data_type_is_integer(data_type) ? GL_RGB_INTEGER  : GL_RGB;
+			case 4: return data_type_is_integer(data_type) ? GL_RGBA_INTEGER : GL_RGBA;
 		} break;
 
 		case TEXTURE_TYPE_DEPTH:    return GL_DEPTH_COMPONENT;
@@ -292,11 +296,10 @@ GLenum gpu_pixel_data_format(enum Texture_Type texture_type, enum Data_Type data
 }
 
 GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_type) {
-	enum Data_Type const element_type = data_type_get_element_type(data_type);
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
 
-		case TEXTURE_TYPE_COLOR: switch (element_type) {
+		case TEXTURE_TYPE_COLOR: switch (data_type_get_element_type(data_type)) {
 			default: break;
 
 			case DATA_TYPE_R8_U:     return GL_UNSIGNED_BYTE;
@@ -316,19 +319,19 @@ GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_t
 			case DATA_TYPE_R32_F: return GL_FLOAT;
 		} break;
 
-		case TEXTURE_TYPE_DEPTH: switch (element_type) {
+		case TEXTURE_TYPE_DEPTH: switch (data_type) {
 			default: break;
 			case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
 			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
 			case DATA_TYPE_R32_F: return GL_FLOAT;
 		} break;
 
-		case TEXTURE_TYPE_STENCIL: switch (element_type) {
+		case TEXTURE_TYPE_STENCIL: switch (data_type) {
 			default: break;
 			case DATA_TYPE_R8_U: return GL_UNSIGNED_BYTE;
 		} break;
 
-		case TEXTURE_TYPE_DSTENCIL: switch (element_type) {
+		case TEXTURE_TYPE_DSTENCIL: switch (data_type) {
 			default: break;
 			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT_24_8;
 			case DATA_TYPE_R32_F: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;

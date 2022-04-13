@@ -163,6 +163,48 @@ float maths_sin(float value) { return sinf(value); }
 float maths_cos(float value) { return cosf(value); }
 float maths_ldexp(float factor, int32_t power) { return ldexpf(factor, power); }
 
+uint8_t map01_to_u8(float value) {
+	if (value < 0) { return 0; }
+	if (value > 1) { return UINT8_MAX; }
+	return (uint8_t)(value * (float)UINT8_MAX);
+}
+
+uint16_t map01_to_u16(float value) {
+	if (value < 0) { return 0; }
+	if (value > 1) { return UINT16_MAX; }
+	return (uint16_t)(value * (float)UINT16_MAX);
+}
+
+uint32_t map01_to_u32(float value) {
+	if (value < 0) { return 0; }
+	if (value > 1) { return UINT32_MAX; }
+	return (uint32_t)(value * (float)UINT32_MAX);
+}
+
+int8_t map01_to_s8(float value) {
+	if (value < -1) { return INT8_MIN; }
+	if (value >  1) { return INT8_MAX; }
+	return (value > 0)
+		? (int8_t)(-value * (float)INT8_MIN)
+		: (int8_t)( value * (float)INT8_MAX);
+}
+
+int16_t map01_to_s16(float value) {
+	if (value < -1) { return INT16_MIN; }
+	if (value >  1) { return INT16_MAX; }
+	return (value > 0)
+		? (int16_t)(-value * (float)INT16_MIN)
+		: (int16_t)( value * (float)INT16_MAX);
+}
+
+int32_t map01_to_s32(float value) {
+	if (value < -1) { return INT32_MIN; }
+	if (value >  1) { return INT32_MAX; }
+	return (value > 0)
+		? (int32_t)(-value * (float)INT32_MIN)
+		: (int32_t)( value * (float)INT32_MAX);
+}
+
 // ----- ----- ----- ----- -----
 //     any vectors
 // ----- ----- ----- ----- -----

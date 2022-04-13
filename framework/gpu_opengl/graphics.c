@@ -1,5 +1,6 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
+#include "framework/maths.h"
 
 #include "framework/containers/strings.h"
 #include "framework/containers/buffer.h"
@@ -30,12 +31,6 @@ struct Gpu_Program_Field_Internal {
 	GLint location;
 };
 
-struct Gpu_Mesh_Buffer {
-	GLuint id;
-	struct Mesh_Parameters parameters;
-	uint32_t capacity, count;
-};
-
 struct Gpu_Program {
 	GLuint id;
 	struct Hash_Table_U32 uniforms; // uniform string id : `struct Gpu_Program_Field_Internal`
@@ -50,12 +45,29 @@ struct Gpu_Texture {
 	// @idea: add an optional asset source
 };
 
+struct Gpu_Target_Texture {
+	struct Ref texture;
+	uint32_t drawbuffer;
+};
+
+struct Gpu_Target_Buffer {
+	GLuint id;
+	struct Texture_Parameters parameters;
+	uint32_t drawbuffer;
+};
+
 struct Gpu_Target {
 	GLuint id;
 	uint32_t size_x, size_y;
-	struct Array_Any textures; // `struct Ref` handles for `struct Gpu_Texture`
-	struct Array_U32 buffers;  // OpenGL ids
+	struct Array_Any textures; // `struct Gpu_Target_Texture`
+	struct Array_Any buffers;  // `struct Gpu_Target_Buffer`
 	// @idea: add an optional asset source
+};
+
+struct Gpu_Mesh_Buffer {
+	GLuint id;
+	struct Mesh_Parameters parameters;
+	uint32_t capacity, count;
 };
 
 struct Gpu_Mesh {
@@ -66,7 +78,7 @@ struct Gpu_Mesh {
 };
 
 struct Gpu_Unit {
-	struct Ref gpu_texture_ref;
+	struct Ref texture;
 };
 
 static struct Graphics_State {
@@ -79,9 +91,11 @@ static struct Graphics_State {
 	struct Ref_Table textures;
 	struct Ref_Table meshes;
 
-	struct Ref active_program_ref;
-	struct Ref active_target_ref;
-	struct Ref active_mesh_ref;
+	struct Graphics_State_Active {
+		struct Ref program;
+		struct Ref target;
+		struct Ref mesh;
+	} active;
 
 	uint32_t units_capacity;
 	struct Gpu_Unit * units;
@@ -239,8 +253,8 @@ static void gpu_program_free_internal(struct Gpu_Program * gpu_program) {
 }
 
 void gpu_program_free(struct Ref gpu_program_ref) {
-	if (ref_equals(gs_graphics_state.active_program_ref, gpu_program_ref)) {
-		gs_graphics_state.active_program_ref = c_ref_empty;
+	if (ref_equals(gs_graphics_state.active.program, gpu_program_ref)) {
+		gs_graphics_state.active.program = c_ref_empty;
 	}
 	struct Gpu_Program * gpu_program = ref_table_get(&gs_graphics_state.programs, gpu_program_ref);
 	if (gpu_program != NULL) {
@@ -354,8 +368,8 @@ static void gpu_texture_free_internal(struct Gpu_Texture * gpu_texture) {
 void gpu_texture_free(struct Ref gpu_texture_ref) {
 	for (uint32_t i = 1; i < gs_graphics_state.units_capacity; i++) {
 		struct Gpu_Unit * unit = gs_graphics_state.units + i;
-		if (ref_equals(unit->gpu_texture_ref, gpu_texture_ref)) {
-			unit->gpu_texture_ref = c_ref_empty;
+		if (ref_equals(unit->texture, gpu_texture_ref)) {
+			unit->texture = c_ref_empty;
 		}
 	}
 	struct Gpu_Texture * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
@@ -425,8 +439,8 @@ struct Ref gpu_target_init(
 	GLuint target_id;
 	glCreateFramebuffers(1, &target_id);
 
-	struct Array_Any textures = array_any_init(sizeof(struct Ref));
-	struct Array_U32 buffers = array_u32_init();
+	struct Array_Any textures = array_any_init(sizeof(struct Gpu_Target_Texture));
+	struct Array_Any buffers  = array_any_init(sizeof(struct Gpu_Target_Buffer));
 
 	// allocate exact space for the buffers
 	uint32_t textures_count = 0;
@@ -438,16 +452,21 @@ struct Ref gpu_target_init(
 	uint32_t buffers_count = parameters_count - textures_count;
 
 	array_any_resize(&textures, textures_count);
-	array_u32_resize(&buffers, buffers_count);
+	array_any_resize(&buffers,  buffers_count);
 
 	// allocate buffers
-	for (uint32_t i = 0; i < parameters_count; i++) {
+	for (uint32_t i = 0, color_index = 0; i < parameters_count; i++) {
+		bool const is_color = (parameters[i].texture_type == TEXTURE_TYPE_COLOR);
 		if (parameters[i].flags & TEXTURE_FLAG_READ) {
-			struct Ref const texture_ref = gpu_texture_allocate(size_x, size_y, parameters[i], (struct Texture_Settings){
+			// @idea: expose settings
+			struct Ref const gpu_texture_ref = gpu_texture_allocate(size_x, size_y, parameters[i], (struct Texture_Settings){
 				.wrap_x = WRAP_MODE_EDGE,
 				.wrap_y = WRAP_MODE_EDGE,
 			}, NULL);
-			array_any_push(&textures, &texture_ref);
+			array_any_push(&textures, &(struct Gpu_Target_Texture){
+				.texture = gpu_texture_ref,
+				.drawbuffer = is_color ? color_index : 0,
+			});
 		}
 		else {
 			GLuint buffer_id;
@@ -457,23 +476,22 @@ struct Ref gpu_target_init(
 				gpu_sized_internal_format(parameters[i].texture_type, parameters[i].data_type),
 				(GLsizei)size_x, (GLsizei)size_y
 			);
-			array_u32_push(&buffers, buffer_id);
+			array_any_push(&buffers, &(struct Gpu_Target_Buffer){
+				.id = buffer_id,
+				.parameters = parameters[i],
+				.drawbuffer = is_color ? color_index : 0,
+			});
 		}
+
+		if (is_color) { color_index++; }
 	}
 
 	// chart buffers
-	for (uint32_t i = 0, texture_index = 0, color_index = 0, buffer_index = 0; i < parameters_count; i++) {
-		if (!(parameters[i].flags & TEXTURE_FLAG_READ)) {
-			glNamedFramebufferRenderbuffer(
-				target_id,
-				gpu_attachment_point(parameters[i].texture_type, color_index),
-				GL_RENDERBUFFER,
-				buffers.data[buffer_index++]
-			);
-		}
-		else {
-			struct Ref const * gpu_texture_ref = array_any_at(&textures, texture_index++);
-			struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, *gpu_texture_ref);
+	for (uint32_t i = 0, texture_index = 0, buffer_index = 0, color_index = 0; i < parameters_count; i++) {
+		bool const is_color = (parameters[i].texture_type == TEXTURE_TYPE_COLOR);
+		if (parameters[i].flags & TEXTURE_FLAG_READ) {
+			struct Gpu_Target_Texture const * texture = array_any_at(&textures, texture_index++);
+			struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, texture->texture);
 			if (gpu_texture != NULL) {
 				GLint const level = 0;
 				glNamedFramebufferTexture(
@@ -484,8 +502,17 @@ struct Ref gpu_target_init(
 				);
 			}
 		}
+		else {
+			struct Gpu_Target_Buffer const * buffer = array_any_at(&buffers, buffer_index++);
+			glNamedFramebufferRenderbuffer(
+				target_id,
+				gpu_attachment_point(parameters[i].texture_type, color_index),
+				GL_RENDERBUFFER,
+				buffer->id
+			);
+		}
 
-		if (parameters[i].texture_type == TEXTURE_TYPE_COLOR) { color_index++; }
+		if (is_color) { color_index++; }
 	}
 
 	//
@@ -500,20 +527,21 @@ struct Ref gpu_target_init(
 
 static void gpu_target_free_internal(struct Gpu_Target * gpu_target) {
 	for (uint32_t i = 0; i < gpu_target->textures.count; i++) {
-		struct Ref const * gpu_texture_ref = array_any_at(&gpu_target->textures, i);
-		gpu_texture_free(*gpu_texture_ref);
+		struct Gpu_Target_Texture const * entry = array_any_at(&gpu_target->textures, i);
+		gpu_texture_free(entry->texture);
 	}
 	for (uint32_t i = 0; i < gpu_target->buffers.count; i++) {
-		glDeleteRenderbuffers(1, gpu_target->buffers.data + i);
+		struct Gpu_Target_Buffer const * entry = array_any_at(&gpu_target->buffers, i);
+		glDeleteRenderbuffers(1, &entry->id);
 	}
 	array_any_free(&gpu_target->textures);
-	array_u32_free(&gpu_target->buffers);
+	array_any_free(&gpu_target->buffers);
 	glDeleteFramebuffers(1, &gpu_target->id);
 }
 
 void gpu_target_free(struct Ref gpu_target_ref) {
-	if (ref_equals(gs_graphics_state.active_target_ref, gpu_target_ref)) {
-		gs_graphics_state.active_target_ref = c_ref_empty;
+	if (ref_equals(gs_graphics_state.active.target, gpu_target_ref)) {
+		gs_graphics_state.active.target = c_ref_empty;
 	}
 	struct Gpu_Target * gpu_target = ref_table_get(&gs_graphics_state.targets, gpu_target_ref);
 	if (gpu_target != NULL) {
@@ -534,11 +562,11 @@ struct Ref gpu_target_get_texture_ref(struct Ref gpu_target_ref, enum Texture_Ty
 	struct Gpu_Target const * gpu_target = ref_table_get(&gs_graphics_state.targets, gpu_target_ref);
 	if (gpu_target == NULL) { return c_ref_empty; }
 	for (uint32_t i = 0, color_index = 0; i < gpu_target->textures.count; i++) {
-		struct Ref const * gpu_texture_ref = array_any_at(&gpu_target->textures, i);
-		struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, *gpu_texture_ref);
+		struct Gpu_Target_Texture const * texture = array_any_at(&gpu_target->textures, i);
+		struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, texture->texture);
 		if (gpu_texture->parameters.texture_type == type) {
 			if (type == TEXTURE_TYPE_COLOR && color_index != index) { color_index++; continue; }
-			return *gpu_texture_ref;
+			return texture->texture;
 		}
 	}
 
@@ -676,8 +704,8 @@ static void gpu_mesh_free_internal(struct Gpu_Mesh * gpu_mesh) {
 }
 
 void gpu_mesh_free(struct Ref gpu_mesh_ref) {
-	if (ref_equals(gs_graphics_state.active_mesh_ref, gpu_mesh_ref)) {
-		gs_graphics_state.active_mesh_ref = c_ref_empty;
+	if (ref_equals(gs_graphics_state.active.mesh, gpu_mesh_ref)) {
+		gs_graphics_state.active.mesh = c_ref_empty;
 	}
 	struct Gpu_Mesh * gpu_mesh = ref_table_get(&gs_graphics_state.meshes, gpu_mesh_ref);
 	if (gpu_mesh != NULL) {
@@ -777,8 +805,8 @@ static uint32_t graphics_unit_find(struct Ref gpu_texture_ref) {
 	// @note: consider `id == 0` empty
 	for (uint32_t i = 1; i < gs_graphics_state.units_capacity; i++) {
 		struct Gpu_Unit const * unit = gs_graphics_state.units + i;
-		if (unit->gpu_texture_ref.id != gpu_texture_ref.id) { continue; }
-		if (unit->gpu_texture_ref.gen != gpu_texture_ref.gen) { continue; }
+		if (unit->texture.id != gpu_texture_ref.id) { continue; }
+		if (unit->texture.gen != gpu_texture_ref.gen) { continue; }
 		return i;
 	}
 	return 0;
@@ -801,7 +829,7 @@ static uint32_t gpu_unit_init(struct Ref gpu_texture_ref) {
 	}
 
 	gs_graphics_state.units[free_unit] = (struct Gpu_Unit){
-		.gpu_texture_ref = gpu_texture_ref,
+		.texture = gpu_texture_ref,
 	};
 
 	glBindTextureUnit((GLuint)free_unit, gpu_texture->id);
@@ -822,22 +850,22 @@ static uint32_t gpu_unit_init(struct Ref gpu_texture_ref) {
 // }
 
 static void gpu_select_program(struct Ref gpu_program_ref) {
-	if (ref_equals(gs_graphics_state.active_program_ref, gpu_program_ref)) { return; }
-	gs_graphics_state.active_program_ref = gpu_program_ref;
+	if (ref_equals(gs_graphics_state.active.program, gpu_program_ref)) { return; }
+	gs_graphics_state.active.program = gpu_program_ref;
 	struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, gpu_program_ref);
 	glUseProgram((gpu_program != NULL) ? gpu_program->id : 0);
 }
 
 static void gpu_select_target(struct Ref gpu_target_ref) {
-	if (ref_equals(gs_graphics_state.active_target_ref, gpu_target_ref)) { return; }
-	gs_graphics_state.active_target_ref = gpu_target_ref;
+	if (ref_equals(gs_graphics_state.active.target, gpu_target_ref)) { return; }
+	gs_graphics_state.active.target = gpu_target_ref;
 	struct Gpu_Target const * gpu_target = ref_table_get(&gs_graphics_state.targets, gpu_target_ref);
 	glBindFramebuffer(GL_FRAMEBUFFER, (gpu_target != NULL) ? gpu_target->id : 0);
 }
 
 static void gpu_select_mesh(struct Ref gpu_mesh_ref) {
-	if (ref_equals(gs_graphics_state.active_mesh_ref, gpu_mesh_ref)) { return; }
-	gs_graphics_state.active_mesh_ref = gpu_mesh_ref;
+	if (ref_equals(gs_graphics_state.active.mesh, gpu_mesh_ref)) { return; }
+	gs_graphics_state.active.mesh = gpu_mesh_ref;
 	struct Gpu_Mesh const * gpu_mesh = ref_table_get(&gs_graphics_state.meshes, gpu_mesh_ref);
 	glBindVertexArray((gpu_mesh != NULL) ? gpu_mesh->id : 0);
 }
@@ -846,7 +874,9 @@ static void gpu_upload_single_uniform(struct Gpu_Program const * gpu_program, st
 	switch (field->base.type) {
 		default: logger_to_console("unsupported field type '0x%x'\n", field->base.type); DEBUG_BREAK(); break;
 
-		case DATA_TYPE_UNIT: {
+		case DATA_TYPE_UNIT_U:
+		case DATA_TYPE_UNIT_S:
+		case DATA_TYPE_UNIT_F: {
 			GLint * units = alloca(sizeof(GLint) * field->base.array_size);
 			uint32_t units_count = 0;
 
@@ -945,22 +975,135 @@ static void gpu_set_depth_mode(struct Depth_Mode const * mode) {
 	}
 }
 
-static void gpu_clear(enum Texture_Type mask, uint32_t rgba) {
+// @note: lacks precision past [FLOAT_INT_MIN .. FLOAT_INT_MAX]
+//        but does it really matter?
+// inline static void gpu_clear_target_color_map01(GLuint target_id, struct Texture_Parameters parameters, uint32_t drawbuffer, struct vec4 color) {
+// 	switch (data_type_get_element_type(parameters.data_type)) {
+// 		case DATA_TYPE_R8_U: glClearNamedFramebufferuiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLuint[]){
+// 			map01_to_u8(color.x),  map01_to_u8(color.y),  map01_to_u8(color.z),  map01_to_u8(color.w),
+// 		}); break;
+// 
+// 		case DATA_TYPE_R16_U: glClearNamedFramebufferuiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLuint[]){
+// 			map01_to_u16(color.x), map01_to_u16(color.y), map01_to_u16(color.z), map01_to_u16(color.w),
+// 		}); break;
+// 
+// 		case DATA_TYPE_R32_U: glClearNamedFramebufferuiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLuint[]){
+// 			map01_to_u32(color.x), map01_to_u32(color.y), map01_to_u32(color.z), map01_to_u32(color.w),
+// 		}); break;
+// 
+// 		case DATA_TYPE_R8_S: glClearNamedFramebufferiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLint[]){
+// 			map01_to_s8(color.x),  map01_to_s8(color.y),  map01_to_s8(color.z),  map01_to_s8(color.w),
+// 		}); break;
+// 
+// 		case DATA_TYPE_R16_S: glClearNamedFramebufferiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLint[]){
+// 			map01_to_s16(color.x), map01_to_s16(color.y), map01_to_s16(color.z), map01_to_s16(color.w),
+// 		}); break;
+// 
+// 		case DATA_TYPE_R32_S: glClearNamedFramebufferiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLint[]){
+// 			map01_to_s32(color.x), map01_to_s32(color.y), map01_to_s32(color.z), map01_to_s32(color.w),
+// 		}); break;
+// 
+// 		default: {
+// 			glClearNamedFramebufferfv(target_id, GL_COLOR, (GLint)drawbuffer, &color.x);
+// 		} break;
+// 	}
+// }
+
+static void gpu_clear_target(GLuint target_id, struct Texture_Parameters parameters, uint32_t drawbuffer, void const * color) {
+	float const depth   = gs_graphics_state.clip_space[3];
+	GLint const stencil = 0;
+
+	switch (parameters.texture_type) {
+		case TEXTURE_TYPE_NONE: break;
+
+		// @note: demands manual control over memory layout
+		case TEXTURE_TYPE_COLOR: {
+			switch (data_type_get_element_type(parameters.data_type)) {
+				case DATA_TYPE_R8_U:
+				case DATA_TYPE_R16_U:
+				case DATA_TYPE_R32_U:
+					glClearNamedFramebufferuiv(target_id, GL_COLOR, (GLint)drawbuffer, color);
+					break;
+
+				case DATA_TYPE_R8_S:
+				case DATA_TYPE_R16_S:
+				case DATA_TYPE_R32_S:
+					glClearNamedFramebufferiv(target_id, GL_COLOR, (GLint)drawbuffer, color);
+					break;
+
+				default: {
+					glClearNamedFramebufferfv(target_id, GL_COLOR, (GLint)drawbuffer, color);
+				} break;
+			}
+		} break;
+
+		case TEXTURE_TYPE_DEPTH: {
+			glClearNamedFramebufferfv(target_id, GL_DEPTH, 0, &depth);
+		} break;
+
+		case TEXTURE_TYPE_STENCIL: {
+			glClearNamedFramebufferiv(target_id, GL_STENCIL, 0, &stencil);
+		} break;
+
+		case TEXTURE_TYPE_DSTENCIL: {
+			glClearNamedFramebufferfi(target_id, GL_DEPTH_STENCIL, 0, depth, stencil);
+		} break;
+	}
+}
+
+static void gpu_clear(enum Texture_Type mask, void const * color) {
 	if (mask == TEXTURE_TYPE_NONE) { return; }
 
-	GLbitfield clear_bitfield = 0;
-	if (mask & TEXTURE_TYPE_COLOR)   { clear_bitfield |= GL_COLOR_BUFFER_BIT; }
-	if (mask & TEXTURE_TYPE_DEPTH)   { clear_bitfield |= GL_DEPTH_BUFFER_BIT; }
-	if (mask & TEXTURE_TYPE_STENCIL) { clear_bitfield |= GL_STENCIL_BUFFER_BIT; }
+	// @idea: each color attachment might have different color;
+	//        or may be API should prove draw buffer index explicitly
+	if (ref_equals(gs_graphics_state.active.target, c_ref_empty)) {
+		struct Texture_Parameters const params[] = {
+			(struct Texture_Parameters){
+				.texture_type = TEXTURE_TYPE_COLOR,
+				.data_type = DATA_TYPE_RGB8_UNORM,
+			},
+			(struct Texture_Parameters){ // @todo: sync with the actual backbuffer
+				.texture_type = TEXTURE_TYPE_DSTENCIL,
+				.data_type = DATA_TYPE_R32_F,
+			},
+		};
 
-	glClearColor(
-		((rgba >> 24) & 0xff) / 255.0f,
-		((rgba >> 16) & 0xff) / 255.0f,
-		((rgba >>  8) & 0xff) / 255.0f,
-		((rgba >>  0) & 0xff) / 255.0f
-	);
+		for (uint32_t i = 0; i < SIZE_OF_ARRAY(params); i++) {
+			if (!(mask & params[i].texture_type)) { continue; }
+			gpu_clear_target(0, params[i], 0, color);
+		}
+	}
+	else {
+		struct Gpu_Target * gpu_target = ref_table_get(&gs_graphics_state.targets, gs_graphics_state.active.target);
+		for (uint32_t i = 0; i < gpu_target->textures.count; i++) {
+			struct Gpu_Target_Texture const * entry = array_any_at(&gpu_target->textures, i);
+			struct Gpu_Texture const * gpu_texture = ref_table_get(&gs_graphics_state.textures, entry->texture);
+			if (!(mask & gpu_texture->parameters.texture_type)) { continue; }
+			gpu_clear_target(gpu_target->id, gpu_texture->parameters, entry->drawbuffer, color);
+		}
+		for (uint32_t i = 0; i < gpu_target->buffers.count; i++) {
+			struct Gpu_Target_Buffer const * entry = array_any_at(&gpu_target->buffers, i);
+			if (!(mask & entry->parameters.texture_type)) { continue; }
+			gpu_clear_target(gpu_target->id, entry->parameters, entry->drawbuffer, color);
+		}
+	}
 
-	glClear(clear_bitfield);
+	// @note: I'm actually quite ok with the classic and less verbose approach
+	//        but it's fun to sketch out and test ideas: integer formats in this instance
+	// GLbitfield clear_bitfield = 0;
+	// if (mask & TEXTURE_TYPE_COLOR)   { clear_bitfield |= GL_COLOR_BUFFER_BIT; }
+	// if (mask & TEXTURE_TYPE_DEPTH)   { clear_bitfield |= GL_DEPTH_BUFFER_BIT; }
+	// if (mask & TEXTURE_TYPE_STENCIL) { clear_bitfield |= GL_STENCIL_BUFFER_BIT; }
+	// 
+	// glClearColor(
+	// 	((rgba >> 24) & 0xff) / 255.0f,
+	// 	((rgba >> 16) & 0xff) / 255.0f,
+	// 	((rgba >>  8) & 0xff) / 255.0f,
+	// 	((rgba >>  0) & 0xff) / 255.0f
+	// );
+	// glClearDepthf(gs_graphics_state.clip_space[3]);
+	// // glClearStencil(0);
+	// glClear(clear_bitfield);
 }
 
 //
@@ -995,7 +1138,7 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 	gpu_set_blend_mode((struct Blend_Mode[]){c_blend_mode_opaque});
 	gpu_set_depth_mode(&(struct Depth_Mode){.enabled = true, .mask = true});
 
-	gpu_clear(command->mask, command->rgba);
+	gpu_clear(command->mask, &command->color);
 }
 
 inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
@@ -1175,7 +1318,6 @@ void graphics_to_gpu_library_init(void) {
 	gs_graphics_state.clip_space[3] = supports_reverse_z ? 0.0f : 1.0f; // normalized-space far
 
 	glDepthRangef(gs_graphics_state.clip_space[2], gs_graphics_state.clip_space[3]);
-	glClearDepthf(gs_graphics_state.clip_space[3]);
 	glDepthFunc(gpu_comparison_op((gs_graphics_state.clip_space[2] > gs_graphics_state.clip_space[3]) ? COMPARISON_OP_MORE : COMPARISON_OP_LESS));
 }
 

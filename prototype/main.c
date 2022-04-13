@@ -199,8 +199,8 @@ static void prototype_draw_entities(void) {
 			array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_CLEAR,
 				.as.clear = {
-					.mask = camera->clear.mask,
-					.rgba = camera->clear.rgba,
+					.mask           = camera->clear.mask,
+					.color.rgba32_f = camera->clear.color.rgba32_f,
 				}
 			});
 		}

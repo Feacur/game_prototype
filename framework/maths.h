@@ -86,6 +86,14 @@ float maths_sin(float value);
 float maths_cos(float value);
 float maths_ldexp(float factor, int32_t power); // @note: `ldexp(a, b) == a * 2^b`
 
+uint8_t  map01_to_u8(float value);
+uint16_t map01_to_u16(float value);
+uint32_t map01_to_u32(float value);
+
+int8_t  map01_to_s8(float value);
+int16_t map01_to_s16(float value);
+int32_t map01_to_s32(float value);
+
 // ----- ----- ----- ----- -----
 //     uint32_t vectors
 // ----- ----- ----- ----- -----

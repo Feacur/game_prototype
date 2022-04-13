@@ -9,13 +9,13 @@
 			"ncp": 0.1, "fcp": 10,
 			"target": "assets/back_buffer.target",
 			"clear_mask": ["color", "depth"],
-			"clear_rgba": "0x303030ff",
+			"clear_color": [0.2, 0.2, 0.2, 1],
 		},
 		{
 			"mode": "screen",
 			"ncp": 0, "fcp": 1, "ortho": 1,
 			"clear_mask": ["color", "depth"],
-			"clear_rgba": "0x000000ff",
+			"clear_color": [0, 0, 0, 1],
 		},
 	],
 	"entities": [

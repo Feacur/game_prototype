@@ -22,14 +22,14 @@
 //
 #include "game_state.h"
 
-static uint32_t state_read_json_hex(struct JSON const * json) {
-	struct CString const value = json_as_string(json, S_NULL);
-	if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x')
-	{
-		return parse_hex_u32(value.data + 2);
-	}
-	return 0;
-}
+// static uint32_t state_read_json_hex(struct JSON const * json) {
+// 	struct CString const value = json_as_string(json, S_NULL);
+// 	if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x')
+// 	{
+// 		return parse_hex_u32(value.data + 2);
+// 	}
+// 	return 0;
+// }
 
 // ----- ----- ----- ----- -----
 //     Transform part
@@ -89,9 +89,10 @@ static void state_read_json_camera(struct JSON const * json, struct Camera * cam
 		.ortho = json_get_number(json, S_("ortho"), 0),
 	};
 	camera->clear = (struct Camera_Clear){
-		.mask = state_read_json_texture_type(json_get(json, S_("clear_mask"))),
-		.rgba = state_read_json_hex(json_get(json, S_("clear_rgba"))),
+		.mask  = state_read_json_texture_type(json_get(json, S_("clear_mask"))),
+		// .rgba = state_read_json_hex(json_get(json, S_("clear_rgba"))),
 	};
+	state_read_json_flt_n(json_get(json, S_("clear_color")), 4, &camera->clear.color.rgba32_f.x);
 
 	struct CString const target = json_get_string(json, S_("target"), S_NULL);
 	if (target.data != NULL) {

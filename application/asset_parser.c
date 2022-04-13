@@ -222,7 +222,9 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 		switch (data_type_get_element_type(uniform->type)) {
 			default: logger_to_console("unknown data type\n"); DEBUG_BREAK(); break;
 
-			case DATA_TYPE_UNIT: {
+			case DATA_TYPE_UNIT_U:
+			case DATA_TYPE_UNIT_S:
+			case DATA_TYPE_UNIT_F: {
 				state_read_json_unt_n(system, uniform_json, uniform_count, uniform_data_buffer.data);
 				gfx_uniforms_set(&result.uniforms, it.key_hash, (struct Gfx_Uniform_In){
 					.size = sizeof(struct Ref) * uniform_count,

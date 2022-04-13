@@ -223,7 +223,9 @@ uint32_t data_type_get_count(enum Data_Type value) {
 	switch (value) {
 		case DATA_TYPE_NONE: break;
 
-		case DATA_TYPE_UNIT: return 1;
+		case DATA_TYPE_UNIT_U: return 1;
+		case DATA_TYPE_UNIT_S: return 1;
+		case DATA_TYPE_UNIT_F: return 1;
 
 		case DATA_TYPE_R8_U:    return 1;
 		case DATA_TYPE_RG8_U:   return 2;
@@ -309,7 +311,9 @@ uint32_t data_type_get_size(enum Data_Type value) {
 	switch (value) {
 		case DATA_TYPE_NONE: break;
 
-		case DATA_TYPE_UNIT: return sizeof(struct Ref);
+		case DATA_TYPE_UNIT_U: return sizeof(struct Ref);
+		case DATA_TYPE_UNIT_S: return sizeof(struct Ref);
+		case DATA_TYPE_UNIT_F: return sizeof(struct Ref);
 
 		case DATA_TYPE_R8_U:    return sizeof(uint8_t);
 		case DATA_TYPE_RG8_U:   return sizeof(uint8_t) * 2;
@@ -389,6 +393,23 @@ uint32_t data_type_get_size(enum Data_Type value) {
 	}
 	logger_to_console("unknown data type\n"); DEBUG_BREAK();
 	return 0;
+}
+
+bool data_type_is_integer(enum Data_Type value) {
+	switch (data_type_get_element_type(value)) {
+		default: break;
+
+		case DATA_TYPE_R8_U:
+		case DATA_TYPE_R8_S:
+		case DATA_TYPE_R16_U:
+		case DATA_TYPE_R16_S:
+		case DATA_TYPE_R32_U:
+		case DATA_TYPE_R32_S:
+		// case DATA_TYPE_R64_U:
+		// case DATA_TYPE_R64_S:
+			return true;
+	}
+	return false;
 }
 
 //

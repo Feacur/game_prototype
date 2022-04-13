@@ -5,7 +5,10 @@
 
 enum Data_Type {
 	DATA_TYPE_NONE,
-	DATA_TYPE_UNIT,
+
+	DATA_TYPE_UNIT_U,
+	DATA_TYPE_UNIT_S,
+	DATA_TYPE_UNIT_F,
 
 	DATA_TYPE_R8_U,
 	DATA_TYPE_RG8_U,
@@ -275,6 +278,7 @@ enum Data_Type data_type_get_element_type(enum Data_Type value);
 enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels);
 uint32_t data_type_get_count(enum Data_Type value);
 uint32_t data_type_get_size(enum Data_Type value);
+bool data_type_is_integer(enum Data_Type value);
 
 //
 
