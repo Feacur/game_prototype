@@ -24,7 +24,7 @@ struct JSON {
 		struct Hash_Table_U32 table; // key string id : json value
 		struct Array_Any array;      // `struct JSON`
 		uint32_t id;
-		float number;
+		double number;
 		bool boolean;
 	} as;
 };
@@ -43,19 +43,19 @@ uint32_t json_count(struct JSON const * value);
 // -- JSON as data
 uint32_t json_as_id(struct JSON const * value);
 struct CString json_as_string(struct JSON const * value, struct CString default_value);
-float json_as_number(struct JSON const * value, float default_value);
+double json_as_number(struct JSON const * value, double default_value);
 bool json_as_boolean(struct JSON const * value, bool default_value);
 
 // -- JSON get data
 uint32_t json_get_id(struct JSON const * value, struct CString key);
 struct CString json_get_string(struct JSON const * value, struct CString key, struct CString default_value);
-float json_get_number(struct JSON const * value, struct CString key, float default_value);
+double json_get_number(struct JSON const * value, struct CString key, double default_value);
 bool json_get_boolean(struct JSON const * value, struct CString key, bool default_value);
 
 // -- JSON at data
 uint32_t json_at_id(struct JSON const * value, uint32_t index);
 struct CString json_at_string(struct JSON const * value, uint32_t index, struct CString default_value);
-float json_at_number(struct JSON const * value, uint32_t index, float default_value);
+double json_at_number(struct JSON const * value, uint32_t index, double default_value);
 bool json_at_boolean(struct JSON const * value, uint32_t index, bool default_value);
 
 //

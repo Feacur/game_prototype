@@ -23,6 +23,24 @@ uint32_t convert_bits_r32_u32(float value) {
 	return data.value_u32;
 }
 
+float convert_bits_u64_r64(uint64_t value) {
+	union {
+		uint64_t value_u64;
+		float value_r64;
+	} data;
+	data.value_u64 = value;
+	return data.value_r64;
+}
+
+uint64_t convert_bits_r64_u64(float value) {
+	union {
+		uint64_t value_u64;
+		float value_r64;
+	} data;
+	data.value_r64 = value;
+	return data.value_u64;
+}
+
 uint32_t hash_u32_bytes_fnv1(uint8_t const * value, uint64_t length) {
 	uint32_t const prime = UINT32_C(0x01000193);
 	uint32_t hash = UINT32_C(0x811c9dc5);
@@ -162,6 +180,7 @@ float maths_sqrt(float value) { return sqrtf(value); }
 float maths_sin(float value) { return sinf(value); }
 float maths_cos(float value) { return cosf(value); }
 float maths_ldexp(float factor, int32_t power) { return ldexpf(factor, power); }
+double maths_ldexp_double(double factor, int32_t power) { return ldexp(factor, power); }
 
 uint8_t map01_to_u8(float value) {
 	if (value < 0) { return 0; }

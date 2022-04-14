@@ -76,7 +76,7 @@ struct CString json_as_string(struct JSON const * value, struct CString default_
 	return strings_get(value->strings, value->as.id);
 }
 
-float json_as_number(struct JSON const * value, float default_value) {
+double json_as_number(struct JSON const * value, double default_value) {
 	if (value->type != JSON_NUMBER) { return default_value; }
 	return value->as.number;
 }
@@ -95,7 +95,7 @@ struct CString json_get_string(struct JSON const * value, struct CString key, st
 	return json_as_string(json_get(value, key), default_value);
 }
 
-float json_get_number(struct JSON const * value, struct CString key, float default_value) {
+double json_get_number(struct JSON const * value, struct CString key, double default_value) {
 	return json_as_number(json_get(value, key), default_value);
 }
 
@@ -112,7 +112,7 @@ struct CString json_at_string(struct JSON const * value, uint32_t index, struct 
 	return json_as_string(json_at(value, index), default_value);
 }
 
-float json_at_number(struct JSON const * value, uint32_t index, float default_value) {
+double json_at_number(struct JSON const * value, uint32_t index, double default_value) {
 	return json_as_number(json_at(value, index), default_value);
 }
 
@@ -295,7 +295,7 @@ static void json_parser_do_string(struct JSON_Parser * parser, struct JSON * val
 }
 
 static void json_parser_do_number(struct JSON_Parser * parser, struct JSON * value) {
-	float const number = parse_float(parser->current.text.data);
+	double const number = parse_double(parser->current.text.data);
 	*value = (struct JSON){.strings = parser->strings, .type = JSON_NUMBER, .as.number = number,};
 	json_parser_consume(parser);
 }

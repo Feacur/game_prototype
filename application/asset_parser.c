@@ -93,11 +93,11 @@ void state_read_json_flt_n(struct JSON const * json, uint32_t length, float * re
 	if (json->type == JSON_ARRAY) {
 		uint32_t const count = min_u32(length, json_count(json));
 		for (uint32_t i = 0; i < count; i++) {
-			result[i] = json_at_number(json, i, result[i]);
+			result[i] = (float)json_at_number(json, i, (double)result[i]);
 		}
 	}
 	else {
-		result[0] = json_as_number(json, result[0]);
+		result[0] = (float)json_as_number(json, (double)result[0]);
 	}
 }
 
@@ -105,11 +105,11 @@ void state_read_json_u32_n(struct JSON const * json, uint32_t length, uint32_t *
 	if (json->type == JSON_ARRAY) {
 		uint32_t const count = min_u32(length, json_count(json));
 		for (uint32_t i = 0; i < count; i++) {
-			result[i] = (uint32_t)json_at_number(json, i, (float)result[i]);
+			result[i] = (uint32_t)json_at_number(json, i, (double)result[i]);
 		}
 	}
 	else {
-		result[0] = (uint32_t)json_as_number(json, (float)result[0]);
+		result[0] = (uint32_t)json_as_number(json, (double)result[0]);
 	}
 }
 
@@ -117,11 +117,11 @@ void state_read_json_s32_n(struct JSON const * json, uint32_t length, int32_t * 
 	if (json->type == JSON_ARRAY) {
 		uint32_t const count = min_u32(length, json_count(json));
 		for (uint32_t i = 0; i < count; i++) {
-			result[i] = (int32_t)json_at_number(json, i, (float)result[i]);
+			result[i] = (int32_t)json_at_number(json, i, (double)result[i]);
 		}
 	}
 	else {
-		result[0] = (int32_t)json_as_number(json, (float)result[0]);
+		result[0] = (int32_t)json_as_number(json, (double)result[0]);
 	}
 }
 

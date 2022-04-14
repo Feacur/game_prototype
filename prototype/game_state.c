@@ -84,9 +84,9 @@ static void state_read_json_camera(struct JSON const * json, struct Camera * cam
 
 	camera->params = (struct Camera_Params){
 		.mode  = state_read_json_camera_mode(json_get(json, S_("mode"))),
-		.ncp   = json_get_number(json, S_("ncp"),   0),
-		.fcp   = json_get_number(json, S_("fcp"),   0),
-		.ortho = json_get_number(json, S_("ortho"), 0),
+		.ncp   = (float)json_get_number(json, S_("ncp"),   0),
+		.fcp   = (float)json_get_number(json, S_("fcp"),   0),
+		.ortho = (float)json_get_number(json, S_("ortho"), 0),
 	};
 	camera->clear = (struct Camera_Clear){
 		.mask  = state_read_json_texture_type(json_get(json, S_("clear_mask"))),
@@ -200,7 +200,7 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 			entity->as.text = (struct Entity_Text){
 				.font = asset_system_aquire(&gs_game.assets, font_path),
 				.message = asset_system_aquire(&gs_game.assets, message_path),
-				.size = json_get_number(json, S_("size"), 16),
+				.size = (float)json_get_number(json, S_("size"), 16),
 			};
 		} break;
 	}
