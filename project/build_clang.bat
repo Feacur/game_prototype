@@ -96,6 +96,7 @@ set warnings=%warnings% -Wno-nonportable-system-include-path
 set warnings=%warnings% -Wno-assign-enum
 set warnings=%warnings% -Wno-bad-function-cast
 set warnings=%warnings% -Wno-documentation-unknown-command
+set warnings=%warnings% -Wno-declaration-after-statement
 rem [editor-only] -Wno-unused-macros
 rem [editor-only] -Wno-unused-function
 
