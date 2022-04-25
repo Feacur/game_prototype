@@ -422,10 +422,6 @@ struct Blend_Mode const c_blend_mode_opaque = {
 };
 
 struct Blend_Mode const c_blend_mode_transparent = {
-	.rgb = {
-		.op = BLEND_OP_ADD,
-		.src = BLEND_FACTOR_SRC_ALPHA,
-		.dst = BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-	},
+	.func = BLEND_FUNC_MIX,
 	.mask = COLOR_CHANNEL_FULL,
 };

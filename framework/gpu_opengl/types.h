@@ -26,8 +26,14 @@ GLenum gpu_cull_mode(enum Cull_Mode value);
 GLenum gpu_winding_order(enum Winding_Order value);
 GLenum gpu_stencil_op(enum Stencil_Op value);
 
+/*
 GLenum gpu_blend_op(enum Blend_Op value);
 GLenum gpu_blend_factor(enum Blend_Factor value);
+*/
+struct Gpu_Blend_Func {
+	GLenum color_src, color_op, color_dst;
+	GLenum alpha_src, alpha_op, alpha_dst;
+} gpu_blend_func(enum Blend_Func value);
 
 GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index);
 

@@ -1,7 +1,7 @@
 #if !defined(GAME_GRAPHICS_TYPES)
 #define GAME_GRAPHICS_TYPES
 
-#include "framework/common.h"
+#include "framework/maths.h"
 
 enum Data_Type {
 	DATA_TYPE_NONE,
@@ -175,6 +175,16 @@ enum Stencil_Op {
 	STENCIL_OP_DECR_WRAP,
 };
 
+enum Blend_Func {
+	BLEND_FUNC_NONE,
+	BLEND_FUNC_MIX, // lerp(Drgb, Srgb, Sa), max(Da, Sa)
+	BLEND_FUNC_ADD, // D + S
+	BLEND_FUNC_SUB, // D - S
+	BLEND_FUNC_MUL, // D * S
+	BLEND_FUNC_SCR, // lerp(D, 1, S)
+};
+
+/*
 enum Blend_Op {
 	BLEND_OP_NONE,
 	BLEND_OP_ADD,
@@ -209,6 +219,12 @@ enum Blend_Factor {
 	BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA,
 };
 
+struct Blend_Func {
+	enum Blend_Op color_op; enum Blend_Factor color_src, color_dst;
+	enum Blend_Op alpha_op; enum Blend_Factor alpha_src, alpha_dst;
+};
+*/
+
 enum Color_Channel {
 	COLOR_CHANNEL_NONE  = 0,
 	COLOR_CHANNEL_RED   = (1 << 0),
@@ -226,19 +242,16 @@ struct Gpu_Program_Field {
 	bool is_property;
 };
 
-struct Blend_Func {
-	enum Blend_Op op;
-	enum Blend_Factor src, dst;
-};
-
 struct Blend_Mode {
-	struct Blend_Func rgb, a;
+	enum Blend_Func func;
 	enum Color_Channel mask;
-	uint32_t rgba;
+	struct vec4 color;
 };
 
-struct Depth_Mode {
-	bool enabled, mask;
+enum Depth_Mode {
+	DEPTH_MODE_NONE,
+	DEPTH_MODE_READ,
+	DEPTH_MODE_BOTH,
 };
 
 struct Texture_Parameters {

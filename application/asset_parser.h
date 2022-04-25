@@ -21,7 +21,7 @@ void state_read_json_u32_n(struct JSON const * json, uint32_t length, uint32_t *
 void state_read_json_s32_n(struct JSON const * json, uint32_t length, int32_t * result);
 
 struct Blend_Mode state_read_json_blend_mode(struct JSON const * json);
-struct Depth_Mode state_read_json_depth_mode(struct JSON const * json);
+enum Depth_Mode state_read_json_depth_mode(struct JSON const * json);
 
 struct Ref state_read_json_target(struct JSON const * json);
 struct Gfx_Material state_read_json_material(struct Asset_System * system, struct JSON const * json);

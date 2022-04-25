@@ -21,11 +21,7 @@ struct Camera {
 	} params;
 	struct Camera_Clear {
 		enum Texture_Type mask;
-		union {
-			struct uvec4 rgba32_u;
-			struct svec4 rgba32_s;
-			struct  vec4 rgba32_f;
-		} color;
+		struct vec4 color;
 	} clear;
 	struct Ref gpu_target_ref;
 };

@@ -68,14 +68,14 @@ void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, stru
 
 struct Gfx_Material gfx_material_init(
 	struct Ref gpu_program_ref,
-	struct Blend_Mode const * blend_mode,
-	struct Depth_Mode const * depth_mode
+	struct Blend_Mode blend_mode,
+	enum Depth_Mode depth_mode
 ) {
 	struct Gfx_Material material = {
 		.uniforms = gfx_uniforms_init(),
 		.gpu_program_ref = gpu_program_ref,
-		.blend_mode = (blend_mode != NULL) ? *blend_mode : c_blend_mode_opaque,
-		.depth_mode = (blend_mode != NULL) ? *depth_mode : (struct Depth_Mode){.enabled = true, .mask = true},
+		.blend_mode = blend_mode,
+		.depth_mode = depth_mode,
 	};
 
 	struct Hash_Table_U32 const * uniforms = gpu_program_get_uniforms(gpu_program_ref);

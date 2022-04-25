@@ -460,6 +460,7 @@ GLenum gpu_stencil_op(enum Stencil_Op value) {
 	return GL_NONE;
 }
 
+/*
 GLenum gpu_blend_op(enum Blend_Op value) {
 	switch (value) {
 		case BLEND_OP_NONE:        break;
@@ -500,6 +501,39 @@ GLenum gpu_blend_factor(enum Blend_Factor value) {
 	}
 	logger_to_console("unknown blend factor\n"); DEBUG_BREAK();
 	return GL_NONE;
+}
+*/
+
+struct Gpu_Blend_Func gpu_blend_func(enum Blend_Func value) {
+	switch (value) {
+		case BLEND_FUNC_NONE: break;
+
+		case BLEND_FUNC_MIX: return (struct Gpu_Blend_Func){
+			.color_src = GL_SRC_ALPHA, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE_MINUS_SRC_ALPHA,
+			.alpha_src = GL_ONE,       /**/ .alpha_op = GL_MAX,      /**/ .alpha_dst = GL_ONE,
+		};
+		case BLEND_FUNC_ADD: return (struct Gpu_Blend_Func){
+			.color_src = GL_ONE, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE,
+			.alpha_src = GL_ONE, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
+		};
+
+		case BLEND_FUNC_SUB: return (struct Gpu_Blend_Func){
+			.color_src = GL_ONE, /**/.color_op = GL_FUNC_REVERSE_SUBTRACT, /**/ .color_dst = GL_ONE,
+			.alpha_src = GL_ONE, /**/.alpha_op = GL_FUNC_REVERSE_SUBTRACT, /**/ .alpha_dst = GL_ONE,
+		};
+
+		case BLEND_FUNC_MUL: return (struct Gpu_Blend_Func){
+			.color_src = GL_ZERO, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_SRC_COLOR,
+			.alpha_src = GL_ZERO, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_SRC_ALPHA,
+		};
+
+		case BLEND_FUNC_SCR: return (struct Gpu_Blend_Func){
+			.color_src = GL_ONE_MINUS_DST_COLOR, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE,
+			.alpha_src = GL_ONE_MINUS_DST_ALPHA, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
+		};
+	}
+	logger_to_console("unknown blend function\n"); DEBUG_BREAK();
+	return (struct Gpu_Blend_Func){0};
 }
 
 GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index) {

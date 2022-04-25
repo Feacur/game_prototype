@@ -92,7 +92,7 @@ static void state_read_json_camera(struct JSON const * json, struct Camera * cam
 		.mask  = state_read_json_texture_type(json_get(json, S_("clear_mask"))),
 		// .rgba = state_read_json_hex(json_get(json, S_("clear_rgba"))),
 	};
-	state_read_json_flt_n(json_get(json, S_("clear_color")), 4, &camera->clear.color.rgba32_f.x);
+	state_read_json_flt_n(json_get(json, S_("clear_color")), 4, &camera->clear.color.x);
 
 	struct CString const target = json_get_string(json, S_("target"), S_NULL);
 	if (target.data != NULL) {

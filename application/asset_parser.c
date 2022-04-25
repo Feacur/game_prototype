@@ -139,14 +139,18 @@ struct Blend_Mode state_read_json_blend_mode(struct JSON const * json) {
 	return c_blend_mode_opaque;
 }
 
-struct Depth_Mode state_read_json_depth_mode(struct JSON const * json) {
-	bool const depth_write = json_get_boolean(json, S_("depth"), false);
+enum Depth_Mode state_read_json_depth_mode(struct JSON const * json) {
+	uint32_t const mode_id = json_get_id(json, S_("depth"));
 
-	if (depth_write) {
-		return (struct Depth_Mode){.enabled = true, .mask = true};
+	if (mode_id == json_find_id(json, S_("read"))) {
+		return DEPTH_MODE_READ;
 	}
 
-	return (struct Depth_Mode){0};
+	if (mode_id == json_find_id(json, S_("both"))) {
+		return DEPTH_MODE_BOTH;
+	}
+
+	return DEPTH_MODE_NONE;
 }
 
 static struct Texture_Parameters state_read_json_texture_parameters(struct JSON const * json);
@@ -186,12 +190,12 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 	struct Asset_Shader const * shader_asset = asset_system_aquire_instance(system, shader_path);
 	if (shader_asset == NULL) { return (struct Gfx_Material){0}; }
 
-	struct Blend_Mode blend_mode = state_read_json_blend_mode(json);
-	struct Depth_Mode depth_mode = state_read_json_depth_mode(json);
+	struct Blend_Mode const blend_mode = state_read_json_blend_mode(json);
+	enum Depth_Mode const depth_mode = state_read_json_depth_mode(json);
 
 	struct Gfx_Material result = gfx_material_init(
 		shader_asset->gpu_ref,
-		&blend_mode, &depth_mode
+		blend_mode, depth_mode
 	);
 
 	struct Hash_Table_U32 const * uniforms = gpu_program_get_uniforms(result.gpu_program_ref);
