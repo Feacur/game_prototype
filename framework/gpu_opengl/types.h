@@ -1,3 +1,6 @@
+#if !defined(GAME_GPU_TYPES)
+#define GAME_GPU_TYPES
+
 #include "framework/graphics/types.h"
 
 #include <KHR/khrplatform.h>
@@ -27,3 +30,5 @@ GLenum gpu_blend_op(enum Blend_Op value);
 GLenum gpu_blend_factor(enum Blend_Factor value);
 
 GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index);
+
+#endif

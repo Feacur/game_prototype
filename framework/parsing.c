@@ -25,7 +25,7 @@ float parse_float(char const * text) {
 	if (*text == '.') { text++;
 		char const * const text_start = text;
 		PARSE_INTEGER(uint32_t, mantissa)
-		exponent += (uint32_t)(text_start - text);
+		exponent += (int32_t)(text_start - text);
 	}
 
 	if (*text == 'e' || *text == 'E') { text++;
@@ -109,7 +109,7 @@ double parse_double(char const * text) {
 	if (*text == '.') { text++;
 		char const * const text_start = text;
 		PARSE_INTEGER(uint64_t, mantissa)
-		exponent += (uint64_t)(text_start - text);
+		exponent += (int32_t)(text_start - text);
 	}
 
 	if (*text == 'e' || *text == 'E') { text++;
@@ -119,8 +119,8 @@ double parse_double(char const * text) {
 			case '+': text++; exp_positive = true; break;
 		}
 
-		uint64_t exp_value = 0;
-		PARSE_INTEGER(uint64_t, exp_value)
+		uint32_t exp_value = 0;
+		PARSE_INTEGER(uint32_t, exp_value)
 		exponent += exp_value * (exp_positive * 2 - 1);
 	}
 
