@@ -4,6 +4,11 @@
 //
 #include "common.h"
 
+bool cstring_equals(struct CString v1, struct CString v2) {
+	if (v1.length != v2.length) { return false; }
+	return strncmp(v1.data, v2.data, v1.length) == 0;
+}
+
 // ----- ----- ----- ----- -----
 //     standard
 // ----- ----- ----- ----- -----
@@ -30,6 +35,10 @@ void common_qsort(void * data, size_t count, size_t value_size, int (* compare)(
 
 char const * common_strstr(char const * buffer, char const * value) {
 	return strstr(buffer, value);
+}
+
+int32_t common_strcmp(char const * buffer_1, char const * buffer_2) {
+	return strcmp(buffer_1, buffer_2);
 }
 
 int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size) {

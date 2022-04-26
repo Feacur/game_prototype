@@ -65,14 +65,14 @@ static void state_read_json_transform_rect(struct JSON const * json, struct Tran
 
 static enum Camera_Mode state_read_json_camera_mode(struct JSON const * json) {
 	if (json->type == JSON_STRING) {
-		uint32_t const id = json_as_id(json);
-		if (id == json_find_id(json, S_("screen"))) {
+		struct CString const value = json_as_string(json);
+		if (cstring_equals(value, S_("screen"))) {
 			return CAMERA_MODE_SCREEN;
 		}
-		if (id == json_find_id(json, S_("aspect_x"))) {
+		if (cstring_equals(value, S_("aspect_x"))) {
 			return CAMERA_MODE_ASPECT_X;
 		}
-		if (id == json_find_id(json, S_("aspect_y"))) {
+		if (cstring_equals(value, S_("aspect_y"))) {
 			return CAMERA_MODE_ASPECT_Y;
 		}
 	}
@@ -84,9 +84,9 @@ static void state_read_json_camera(struct JSON const * json, struct Camera * cam
 
 	camera->params = (struct Camera_Params){
 		.mode  = state_read_json_camera_mode(json_get(json, S_("mode"))),
-		.ncp   = (float)json_get_number(json, S_("ncp"),   0),
-		.fcp   = (float)json_get_number(json, S_("fcp"),   0),
-		.ortho = (float)json_get_number(json, S_("ortho"), 0),
+		.ncp   = (float)json_get_number(json, S_("ncp")),
+		.fcp   = (float)json_get_number(json, S_("fcp")),
+		.ortho = (float)json_get_number(json, S_("ortho")),
 	};
 	camera->clear = (struct Camera_Clear){
 		.mask  = state_read_json_texture_type(json_get(json, S_("clear_mask"))),
@@ -94,7 +94,7 @@ static void state_read_json_camera(struct JSON const * json, struct Camera * cam
 	};
 	state_read_json_flt_n(json_get(json, S_("clear_color")), 4, &camera->clear.color.x);
 
-	struct CString const target = json_get_string(json, S_("target"), S_NULL);
+	struct CString const target = json_get_string(json, S_("target"));
 	if (target.data != NULL) {
 		struct Asset_Target const * asset = asset_system_aquire_instance(&gs_game.assets, target);
 		camera->gpu_target_ref = (asset != NULL) ? asset->gpu_ref : c_ref_empty;
@@ -122,14 +122,14 @@ static void state_read_json_cameras(struct JSON const * json) {
 
 static enum Entity_Type state_read_json_entity_type(struct JSON const * json) {
 	if (json->type == JSON_STRING) {
-		uint32_t const id = json_as_id(json);
-		if (id == json_find_id(json, S_("mesh"))) {
+		struct CString const value = json_as_string(json);
+		if (cstring_equals(value, S_("mesh"))) {
 			return ENTITY_TYPE_MESH;
 		}
-		if (id == json_find_id(json, S_("quad_2d"))) {
+		if (cstring_equals(value, S_("quad_2d"))) {
 			return ENTITY_TYPE_QUAD_2D;
 		}
-		if (id == json_find_id(json, S_("text_2d"))) {
+		if (cstring_equals(value, S_("text_2d"))) {
 			return ENTITY_TYPE_TEXT_2D;
 		}
 	}
@@ -138,11 +138,11 @@ static enum Entity_Type state_read_json_entity_type(struct JSON const * json) {
 
 static enum Entity_Quad_Mode state_read_json_entity_quad_mode(struct JSON const * json) {
 	if (json->type == JSON_STRING) {
-		uint32_t const id = json_as_id(json);
-		if (id == json_find_id(json, S_("fit"))) {
+		struct CString const value = json_as_string(json);
+		if (cstring_equals(value, S_("fit"))) {
 			return ENTITY_QUAD_MODE_FIT;
 		}
-		if (id == json_find_id(json, S_("size"))) {
+		if (cstring_equals(value, S_("size"))) {
 			return ENTITY_QUAD_MODE_SIZE;
 		}
 	}
@@ -151,14 +151,14 @@ static enum Entity_Quad_Mode state_read_json_entity_quad_mode(struct JSON const 
 
 static enum Entity_Rotation_Mode state_read_json_entity_rotation_mode(struct JSON const * json) {
 	if (json->type == JSON_STRING) {
-		uint32_t const id = json_as_id(json);
-		if (id == json_find_id(json, S_("x"))) {
+		struct CString const value = json_as_string(json);
+		if (cstring_equals(value, S_("x"))) {
 			return ENTITY_ROTATION_MODE_X;
 		}
-		if (id == json_find_id(json, S_("y"))) {
+		if (cstring_equals(value, S_("y"))) {
 			return ENTITY_ROTATION_MODE_Y;
 		}
-		if (id == json_find_id(json, S_("z"))) {
+		if (cstring_equals(value, S_("z"))) {
 			return ENTITY_ROTATION_MODE_Z;
 		}
 	}
@@ -170,9 +170,9 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 	state_read_json_transform_rect(json_get(json, S_("rect")), &entity->rect);
 	entity->rotation_mode = state_read_json_entity_rotation_mode(json_get(json, S_("rotation_mode")));
 
-	entity->camera   = (uint32_t)json_get_number(json, S_("camera_uid"), 0) - 1;
+	entity->camera   = (uint32_t)json_get_number(json, S_("camera_uid")) - 1;
 
-	struct CString const material_path = json_get_string(json, S_("material"), S_NULL);
+	struct CString const material_path = json_get_string(json, S_("material"));
 	entity->material = asset_system_aquire(&gs_game.assets, material_path);
 
 	entity->type = state_read_json_entity_type(json_get(json, S_("type")));
@@ -180,14 +180,14 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 		case ENTITY_TYPE_NONE: break;
 
 		case ENTITY_TYPE_MESH: {
-			struct CString const model_path = json_get_string(json, S_("model"), S_NULL);
+			struct CString const model_path = json_get_string(json, S_("model"));
 			entity->as.mesh = (struct Entity_Mesh){
 				.mesh = asset_system_aquire(&gs_game.assets, model_path),
 			};
 		} break;
 
 		case ENTITY_TYPE_QUAD_2D: {
-			struct CString const uniform = json_get_string(json, S_("uniform"), S_NULL);
+			struct CString const uniform = json_get_string(json, S_("uniform"));
 			entity->as.quad = (struct Entity_Quad){
 				.texture_uniform = graphics_add_uniform_id(uniform),
 				.mode = state_read_json_entity_quad_mode(json_get(json, S_("mode"))),
@@ -195,12 +195,12 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 		} break;
 
 		case ENTITY_TYPE_TEXT_2D: {
-			struct CString const font_path = json_get_string(json, S_("font"), S_NULL);
-			struct CString const message_path = json_get_string(json, S_("message"), S_NULL);
+			struct CString const font_path = json_get_string(json, S_("font"));
+			struct CString const message_path = json_get_string(json, S_("message"));
 			entity->as.text = (struct Entity_Text){
 				.font = asset_system_aquire(&gs_game.assets, font_path),
 				.message = asset_system_aquire(&gs_game.assets, message_path),
-				.size = (float)json_get_number(json, S_("size"), 16),
+				.size = (float)json_get_number(json, S_("size")),
 			};
 		} break;
 	}

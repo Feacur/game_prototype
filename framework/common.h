@@ -16,6 +16,8 @@ struct CString {
 	char const * data;
 };
 
+bool cstring_equals(struct CString v1, struct CString v2);
+
 typedef void * Allocator(void * pointer, size_t size);
 
 // ----- ----- ----- ----- -----
@@ -30,6 +32,7 @@ void common_memcpy(void * target, void const * source, size_t size);
 int32_t common_memcmp(void const * buffer_1, void const * buffer_2, size_t size);
 void common_qsort(void * data, size_t count, size_t value_size, int (* compare)(void const * v1, void const * v2));
 char const * common_strstr(char const * buffer, char const * value);
+int32_t common_strcmp(char const * buffer_1, char const * buffer_2);
 int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size);
 
 #define INDEX_EMPTY UINT32_MAX

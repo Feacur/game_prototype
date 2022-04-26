@@ -350,8 +350,8 @@ static void main_fill_settings(struct JSON const * json, void * data) {
 	*result = (struct Main_Settings){
 		.strings = strings_init(),
 	};
-	result->config_id = strings_add(&result->strings, json_get_string(json, S_("config"), S_NULL));
-	result->scene_id = strings_add(&result->strings, json_get_string(json, S_("scene"), S_NULL));
+	result->config_id = strings_add(&result->strings, json_get_string(json, S_("config")));
+	result->scene_id = strings_add(&result->strings, json_get_string(json, S_("scene")));
 	// @note: `gs_main_settings.strings` will be freed in the `app_free` function
 }
 
@@ -359,14 +359,14 @@ static void main_fill_config(struct JSON const * json, void * data) {
 	struct Application_Config * result = data;
 	*result = (struct Application_Config){
 		.size = {
-			.x = (uint32_t)json_get_number(json, S_("size_x"), 0),
-			.y = (uint32_t)json_get_number(json, S_("size_y"), 0),
+			.x = (uint32_t)json_get_number(json, S_("size_x")),
+			.y = (uint32_t)json_get_number(json, S_("size_y")),
 		},
-		.flexible = json_get_boolean(json, S_("flexible"), false),
-		.vsync              = (int32_t)json_get_number(json, S_("vsync"), 0),
-		.frame_refresh_rate = (uint32_t)json_get_number(json, S_("frame_refresh_rate"), 0),
-		.fixed_refresh_rate = (uint32_t)json_get_number(json, S_("fixed_refresh_rate"), 0),
-		.slow_frames_limit  = (uint32_t)json_get_number(json, S_("slow_frames_limit"), 0),
+		.flexible = json_get_boolean(json, S_("flexible")),
+		.vsync              = (int32_t)json_get_number(json, S_("vsync")),
+		.frame_refresh_rate = (uint32_t)json_get_number(json, S_("frame_refresh_rate")),
+		.fixed_refresh_rate = (uint32_t)json_get_number(json, S_("fixed_refresh_rate")),
+		.slow_frames_limit  = (uint32_t)json_get_number(json, S_("slow_frames_limit")),
 	};
 }
 

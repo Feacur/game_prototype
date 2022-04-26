@@ -38,12 +38,6 @@ void json_free(struct JSON * value) {
 	// common_memset(value, 0, sizeof(*value));
 }
 
-// -- JSON find id
-uint32_t json_find_id(struct JSON const * value, struct CString text) {
-	if (value->strings == NULL) { DEBUG_BREAK(); return INDEX_EMPTY; }
-	return strings_find(value->strings, text);
-}
-
 // -- JSON get/at element
 struct JSON const * json_get(struct JSON const * value, struct CString key) {
 	if (value->type != JSON_OBJECT) { DEBUG_BREAK(); return &c_json_error; }
@@ -66,58 +60,45 @@ uint32_t json_count(struct JSON const * value) {
 }
 
 // -- JSON as data
-uint32_t json_as_id(struct JSON const * value) {
-	if (value->type != JSON_STRING) { return INDEX_EMPTY; }
-	return value->as.id;
-}
-
-struct CString json_as_string(struct JSON const * value, struct CString default_value) {
-	if (value->type != JSON_STRING) { return default_value; }
+struct CString json_as_string(struct JSON const * value) {
+	if (value->type != JSON_STRING) { return S_NULL; }
 	return strings_get(value->strings, value->as.id);
 }
 
-double json_as_number(struct JSON const * value, double default_value) {
-	if (value->type != JSON_NUMBER) { return default_value; }
+double json_as_number(struct JSON const * value) {
+	if (value->type != JSON_NUMBER) { return 0; }
 	return value->as.number;
 }
 
-bool json_as_boolean(struct JSON const * value, bool default_value) {
-	if (value->type != JSON_BOOLEAN) { return default_value; }
+bool json_as_boolean(struct JSON const * value) {
+	if (value->type != JSON_BOOLEAN) { return false; }
 	return value->as.boolean;
 }
 
 // -- JSON get data
-uint32_t json_get_id(struct JSON const * value, struct CString key) {
-	return json_as_id(json_get(value, key));
+struct CString json_get_string(struct JSON const * value, struct CString key) {
+	return json_as_string(json_get(value, key));
 }
 
-struct CString json_get_string(struct JSON const * value, struct CString key, struct CString default_value) {
-	return json_as_string(json_get(value, key), default_value);
+double json_get_number(struct JSON const * value, struct CString key) {
+	return json_as_number(json_get(value, key));
 }
 
-double json_get_number(struct JSON const * value, struct CString key, double default_value) {
-	return json_as_number(json_get(value, key), default_value);
-}
-
-bool json_get_boolean(struct JSON const * value, struct CString key, bool default_value) {
-	return json_as_boolean(json_get(value, key), default_value);
+bool json_get_boolean(struct JSON const * value, struct CString key) {
+	return json_as_boolean(json_get(value, key));
 }
 
 // -- JSON at data
-uint32_t json_at_id(struct JSON const * value, uint32_t index) {
-	return json_as_id(json_at(value, index));
+struct CString json_at_string(struct JSON const * value, uint32_t index) {
+	return json_as_string(json_at(value, index));
 }
 
-struct CString json_at_string(struct JSON const * value, uint32_t index, struct CString default_value) {
-	return json_as_string(json_at(value, index), default_value);
+double json_at_number(struct JSON const * value, uint32_t index) {
+	return json_as_number(json_at(value, index));
 }
 
-double json_at_number(struct JSON const * value, uint32_t index, double default_value) {
-	return json_as_number(json_at(value, index), default_value);
-}
-
-bool json_at_boolean(struct JSON const * value, uint32_t index, bool default_value) {
-	return json_as_boolean(json_at(value, index), default_value);
+bool json_at_boolean(struct JSON const * value, uint32_t index) {
+	return json_as_boolean(json_at(value, index));
 }
 
 //

@@ -110,7 +110,7 @@ struct Asset_Fill_Image {
 static void asset_fill_image(struct JSON const * json, void * data) {
 	struct Asset_Fill_Image * context = data;
 
-	struct CString const path = json_get_string(json, S_("path"), S_NULL);
+	struct CString const path = json_get_string(json, S_("path"));
 	struct Buffer file_buffer = platform_file_read_entire(path);
 	if (file_buffer.capacity == 0) { DEBUG_BREAK(); return; }
 

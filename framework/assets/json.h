@@ -32,31 +32,25 @@ struct JSON {
 struct JSON json_init(struct Strings * strings, char const * data);
 void json_free(struct JSON * value);
 
-// -- JSON find id
-uint32_t json_find_id(struct JSON const * value, struct CString text);
-
 // -- JSON get/at element
 struct JSON const * json_get(struct JSON const * value, struct CString key);
 struct JSON const * json_at(struct JSON const * value, uint32_t index);
 uint32_t json_count(struct JSON const * value);
 
 // -- JSON as data
-uint32_t json_as_id(struct JSON const * value);
-struct CString json_as_string(struct JSON const * value, struct CString default_value);
-double json_as_number(struct JSON const * value, double default_value);
-bool json_as_boolean(struct JSON const * value, bool default_value);
+struct CString json_as_string(struct JSON const * value);
+double json_as_number(struct JSON const * value);
+bool json_as_boolean(struct JSON const * value);
 
 // -- JSON get data
-uint32_t json_get_id(struct JSON const * value, struct CString key);
-struct CString json_get_string(struct JSON const * value, struct CString key, struct CString default_value);
-double json_get_number(struct JSON const * value, struct CString key, double default_value);
-bool json_get_boolean(struct JSON const * value, struct CString key, bool default_value);
+struct CString json_get_string(struct JSON const * value, struct CString key);
+double json_get_number(struct JSON const * value, struct CString key);
+bool json_get_boolean(struct JSON const * value, struct CString key);
 
 // -- JSON at data
-uint32_t json_at_id(struct JSON const * value, uint32_t index);
-struct CString json_at_string(struct JSON const * value, uint32_t index, struct CString default_value);
-double json_at_number(struct JSON const * value, uint32_t index, double default_value);
-bool json_at_boolean(struct JSON const * value, uint32_t index, bool default_value);
+struct CString json_at_string(struct JSON const * value, uint32_t index);
+double json_at_number(struct JSON const * value, uint32_t index);
+bool json_at_boolean(struct JSON const * value, uint32_t index);
 
 //
 extern struct JSON const c_json_true;
