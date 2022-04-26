@@ -175,15 +175,6 @@ enum Stencil_Op {
 	STENCIL_OP_DECR_WRAP,
 };
 
-enum Blend_Func {
-	BLEND_FUNC_NONE,
-	BLEND_FUNC_MIX, // lerp(Drgb, Srgb, Sa), max(Da, Sa)
-	BLEND_FUNC_ADD, // D + S
-	BLEND_FUNC_SUB, // D - S
-	BLEND_FUNC_MUL, // D * S
-	BLEND_FUNC_SCR, // lerp(D, 1, S)
-};
-
 /*
 enum Blend_Op {
 	BLEND_OP_NONE,
@@ -197,6 +188,8 @@ enum Blend_Op {
 enum Blend_Factor {
 	BLEND_FACTOR_ZERO,
 	BLEND_FACTOR_ONE,
+
+	BLEND_FACTOR_SRC_ALPHA_SATURATE,
 
 	BLEND_FACTOR_SRC_COLOR,
 	BLEND_FACTOR_SRC_ALPHA,
@@ -218,11 +211,6 @@ enum Blend_Factor {
 	BLEND_FACTOR_ONE_MINUS_SRC1_COLOR,
 	BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA,
 };
-
-struct Blend_Func {
-	enum Blend_Op color_op; enum Blend_Factor color_src, color_dst;
-	enum Blend_Op alpha_op; enum Blend_Factor alpha_src, alpha_dst;
-};
 */
 
 enum Color_Channel {
@@ -242,16 +230,19 @@ struct Gpu_Program_Field {
 	bool is_property;
 };
 
-struct Blend_Mode {
-	enum Blend_Func func;
-	enum Color_Channel mask;
-	struct vec4 color;
+enum Blend_Mode {
+	BLEND_MODE_NONE,
+	BLEND_MODE_MIX, // lerp(Drgb, Srgb, Sa), max(Da, Sa)
+	BLEND_MODE_ADD, // D + S
+	BLEND_MODE_SUB, // D - S
+	BLEND_MODE_MUL, // D * S
+	BLEND_MODE_SCR, // lerp(D, 1, S)
 };
 
 enum Depth_Mode {
 	DEPTH_MODE_NONE,
-	DEPTH_MODE_READ,
-	DEPTH_MODE_BOTH,
+	DEPTH_MODE_TRANSPARENT, // test, skip writing
+	DEPTH_MODE_OPAQUE,      // test and write
 };
 
 struct Texture_Parameters {
@@ -292,10 +283,5 @@ enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels
 uint32_t data_type_get_count(enum Data_Type value);
 uint32_t data_type_get_size(enum Data_Type value);
 bool data_type_is_integer(enum Data_Type value);
-
-//
-
-extern struct Blend_Mode const c_blend_mode_opaque;
-extern struct Blend_Mode const c_blend_mode_transparent;
 
 #endif

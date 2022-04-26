@@ -100,7 +100,10 @@ static struct Graphics_State {
 	uint32_t units_capacity;
 	struct Gpu_Unit * units;
 
-	float clip_space[4]; // origin XY; normalized-space near and far
+	struct Gpu_Clip_Space {
+		struct vec2 origin;
+		float ncp, fcp;
+	} clip_space;
 
 	struct Graphics_State_Limits {
 		uint32_t max_units_vertex_shader;
@@ -927,26 +930,21 @@ static void gpu_upload_uniforms(struct Gpu_Program const * gpu_program, struct G
 	}
 }
 
-static void gpu_set_blend_mode(struct Blend_Mode mode) {
-	glColorMask(
-		(mode.mask & COLOR_CHANNEL_RED),
-		(mode.mask & COLOR_CHANNEL_GREEN),
-		(mode.mask & COLOR_CHANNEL_BLUE),
-		(mode.mask & COLOR_CHANNEL_ALPHA)
-	);
-
-	if (mode.func == BLEND_FUNC_NONE) {
+static void gpu_set_blend_mode(enum Blend_Mode mode) {
+	if (mode == BLEND_MODE_NONE) {
 		glDisable(GL_BLEND);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 	else {
-		struct Gpu_Blend_Func const func = gpu_blend_func(mode.func);
+		struct Gpu_Blend_Mode const gpu_mode = gpu_blend_mode(mode);
 		glEnable(GL_BLEND);
-		glBlendColor(mode.color.x, mode.color.y, mode.color.z, mode.color.w);
-		glBlendEquationSeparate(func.color_op, func.alpha_op);
+		glColorMask(gpu_mode.mask[0], gpu_mode.mask[1], gpu_mode.mask[2], gpu_mode.mask[3]);
+		glBlendEquationSeparate(gpu_mode.color_op, gpu_mode.alpha_op);
 		glBlendFuncSeparate(
-			func.color_src, func.color_dst,
-			func.alpha_src, func.alpha_dst
+			gpu_mode.color_src, gpu_mode.color_dst,
+			gpu_mode.alpha_src, gpu_mode.alpha_dst
 		);
+		// glBlendColor(mode.color.x, mode.color.y, mode.color.z, mode.color.w);
 	}
 }
 
@@ -955,8 +953,11 @@ static void gpu_set_depth_mode(enum Depth_Mode mode) {
 		glDisable(GL_DEPTH_TEST);
 	}
 	else {
+		bool const reversed_z = (gs_graphics_state.clip_space.ncp > gs_graphics_state.clip_space.fcp);
+		struct Gpu_Depth_Mode const gpu_mode = gpu_depth_mode(mode, reversed_z);
 		glEnable(GL_DEPTH_TEST);
-		glDepthMask(mode == DEPTH_MODE_BOTH ? GL_TRUE : GL_FALSE);
+		glDepthMask(gpu_mode.mask);
+		glDepthFunc(gpu_mode.op);
 	}
 }
 
@@ -1108,12 +1109,12 @@ inline static void gpu_execute_target(struct GPU_Command_Target const * command)
 inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 	if (command->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
 
-	float const depth   = gs_graphics_state.clip_space[3];
+	float const depth   = gs_graphics_state.clip_space.fcp;
 	GLint const stencil = 0;
 
 	// @todo: ever need variations?
-	gpu_set_blend_mode(c_blend_mode_opaque);
-	gpu_set_depth_mode(DEPTH_MODE_BOTH);
+	gpu_set_blend_mode(BLEND_MODE_NONE);
+	gpu_set_depth_mode(DEPTH_MODE_OPAQUE);
 
 	GLbitfield clear_bitfield = 0;
 	if (command->mask & TEXTURE_TYPE_COLOR)   { clear_bitfield |= GL_COLOR_BUFFER_BIT; }
@@ -1149,7 +1150,6 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 		? command->length
 		: buffer->count;
 
-	if (command->material->blend_mode.mask == COLOR_CHANNEL_NONE) { return; }
 	gpu_set_blend_mode(command->material->blend_mode);
 	gpu_set_depth_mode(command->material->depth_mode);
 
@@ -1294,16 +1294,19 @@ void graphics_to_gpu_library_init(void) {
 	common_memset(gs_graphics_state.units, 0, sizeof(* gs_graphics_state.units) * (size_t)max_units);
 
 	// @note: manage OpenGL's clip space instead of ours
-	bool const supports_reverse_z = (gs_ogl_version >= 45) || contains_full_word(gs_graphics_state.extensions, S_("GL_ARB_clip_control"));
-	if (supports_reverse_z) { glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); }
+	bool const can_control_clip_space = (gs_ogl_version >= 45) || contains_full_word(gs_graphics_state.extensions, S_("GL_ARB_clip_control"));
+	if (can_control_clip_space) { glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); }
 
-	gs_graphics_state.clip_space[0] =                             0.0f; // origin X
-	gs_graphics_state.clip_space[1] = supports_reverse_z ? 0.0f : 1.0f; // origin Y
-	gs_graphics_state.clip_space[2] = supports_reverse_z ? 1.0f : 0.0f; // normalized-space near
-	gs_graphics_state.clip_space[3] = supports_reverse_z ? 0.0f : 1.0f; // normalized-space far
+	gs_graphics_state.clip_space = (struct Gpu_Clip_Space){
+		.origin = {
+			0.0f,
+			can_control_clip_space ? 0.0f : 1.0f,
+		},
+		.ncp = can_control_clip_space ? 1.0f : 0.0f,
+		.fcp = can_control_clip_space ? 0.0f : 1.0f,
+	};
 
-	glDepthRangef(gs_graphics_state.clip_space[2], gs_graphics_state.clip_space[3]);
-	glDepthFunc(supports_reverse_z ? GL_GREATER : GL_LESS);
+	glDepthRangef(gs_graphics_state.clip_space.ncp, gs_graphics_state.clip_space.fcp);
 }
 
 void graphics_to_gpu_library_free(void) {

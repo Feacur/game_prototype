@@ -1,6 +1,6 @@
 {
 	"shader": "assets/shaders/batcher_2d.glsl",
-	"mode": "opaque", "depth": "none",
+	"blend": "none", "depth": "none",
 	"prop_Texture": {"path": "assets/back_buffer.target", "buffer_type": ["color"]},
 	"prop_Color": [1, 1, 1, 1],
 }

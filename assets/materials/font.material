@@ -1,6 +1,6 @@
 {
 	"shader": "assets/shaders/batcher_2d.glsl",
-	"mode": "transparent", "depth": "none",
+	"blend": "mix", "depth": "none",
 	"prop_Texture": {"path": "assets/fonts/Ubuntu-Regular.ttf"},
 	"prop_Color": [1, 1, 1, 1],
 }

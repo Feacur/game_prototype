@@ -411,17 +411,3 @@ bool data_type_is_integer(enum Data_Type value) {
 	}
 	return false;
 }
-
-//
-
-// @note: MSVC issues `C2099: initializer is not a constant`
-//        when a designated initializer type is specified
-
-struct Blend_Mode const c_blend_mode_opaque = {
-	.mask = COLOR_CHANNEL_FULL,
-};
-
-struct Blend_Mode const c_blend_mode_transparent = {
-	.func = BLEND_FUNC_MIX,
-	.mask = COLOR_CHANNEL_FULL,
-};

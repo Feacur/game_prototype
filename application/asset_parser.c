@@ -125,29 +125,41 @@ void state_read_json_s32_n(struct JSON const * json, uint32_t length, int32_t * 
 	}
 }
 
-struct Blend_Mode state_read_json_blend_mode(struct JSON const * json) {
-	uint32_t const mode_id = json_get_id(json, S_("mode"));
+enum Blend_Mode state_read_json_blend_mode(struct JSON const * json) {
+	uint32_t const mode_id = json_get_id(json, S_("blend"));
 
-	if (mode_id == json_find_id(json, S_("opaque"))) {
-		return c_blend_mode_opaque;
+	if (mode_id == json_find_id(json, S_("mix"))) {
+		return BLEND_MODE_MIX;
 	}
 
-	if (mode_id == json_find_id(json, S_("transparent"))) {
-		return c_blend_mode_transparent;
+	if (mode_id == json_find_id(json, S_("add"))) {
+		return BLEND_MODE_ADD;
 	}
 
-	return c_blend_mode_opaque;
+	if (mode_id == json_find_id(json, S_("sub"))) {
+		return BLEND_MODE_SUB;
+	}
+
+	if (mode_id == json_find_id(json, S_("mul"))) {
+		return BLEND_MODE_MUL;
+	}
+
+	if (mode_id == json_find_id(json, S_("scr"))) {
+		return BLEND_MODE_SCR;
+	}
+
+	return BLEND_MODE_NONE;
 }
 
 enum Depth_Mode state_read_json_depth_mode(struct JSON const * json) {
 	uint32_t const mode_id = json_get_id(json, S_("depth"));
 
-	if (mode_id == json_find_id(json, S_("read"))) {
-		return DEPTH_MODE_READ;
+	if (mode_id == json_find_id(json, S_("transparent"))) {
+		return DEPTH_MODE_TRANSPARENT;
 	}
 
-	if (mode_id == json_find_id(json, S_("both"))) {
-		return DEPTH_MODE_BOTH;
+	if (mode_id == json_find_id(json, S_("opaque"))) {
+		return DEPTH_MODE_OPAQUE;
 	}
 
 	return DEPTH_MODE_NONE;
@@ -190,7 +202,7 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 	struct Asset_Shader const * shader_asset = asset_system_aquire_instance(system, shader_path);
 	if (shader_asset == NULL) { return (struct Gfx_Material){0}; }
 
-	struct Blend_Mode const blend_mode = state_read_json_blend_mode(json);
+	enum Blend_Mode const blend_mode = state_read_json_blend_mode(json);
 	enum Depth_Mode const depth_mode = state_read_json_depth_mode(json);
 
 	struct Gfx_Material result = gfx_material_init(

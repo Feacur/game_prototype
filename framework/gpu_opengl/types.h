@@ -30,10 +30,15 @@ GLenum gpu_stencil_op(enum Stencil_Op value);
 GLenum gpu_blend_op(enum Blend_Op value);
 GLenum gpu_blend_factor(enum Blend_Factor value);
 */
-struct Gpu_Blend_Func {
+struct Gpu_Blend_Mode {
+	GLboolean mask[4];
 	GLenum color_src, color_op, color_dst;
 	GLenum alpha_src, alpha_op, alpha_dst;
-} gpu_blend_func(enum Blend_Func value);
+} gpu_blend_mode(enum Blend_Mode value);
+
+struct Gpu_Depth_Mode {
+	GLboolean mask; GLenum op;
+} gpu_depth_mode(enum Depth_Mode value, bool reversed_z);
 
 GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index);
 
