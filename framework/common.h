@@ -40,7 +40,7 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 
 #define STRINGIFY_A_VALUE(v) #v
 #define STRINGIFY_A_MACRO(m) STRINGIFY_A_VALUE(m)
-#define TOKENIZE_A_VALUE(v1, v2) v1 ## v2
+#define TOKENIZE_A_VALUE(v1, v2) v1##v2
 #define TOKENIZE_A_MACRO(m1, m2) TOKENIZE_A_VALUE(m1, m2)
 
 #define S_(value) (struct CString){.length = sizeof("" value) - 1, .data = value,}

@@ -29,16 +29,16 @@ void gpu_library_functions_init(void * (* get)(struct CString name)) {
 			); \
 		} while (false); \
 
-	#define XMACRO(type, name) gl ## name = (type)get(S_("gl" #name));
+	#define XMACRO(type, name) gl##name = (PFNGL##type##PROC)get(S_("gl" #name));
 	#include "functions_xmacro.h"
 }
 
 void gpu_library_functions_free(void) {
-	#define XMACRO(type, name) gl ## name = NULL;
+	#define XMACRO(type, name) gl##name = NULL;
 	#include "functions_xmacro.h"
 
 	gs_ogl_version = 0;
 }
 
-#define XMACRO(type, name) type gl ## name;
+#define XMACRO(type, name) PFNGL##type##PROC gl##name;
 #include "functions_xmacro.h"

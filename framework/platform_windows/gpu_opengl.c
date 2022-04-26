@@ -56,7 +56,7 @@ static bool gpu_library_wgl_init(void) {
 	gs_gpu_library.arb.extensions = gs_gpu_library.arb.GetExtensionsString(device);
 	gs_gpu_library.ext.extensions = gs_gpu_library.ext.GetExtensionsString();
 
-#define HAS_EXT(name) contains_full_word(gs_gpu_library.ext.extensions, S_("WGL_EXT_" # name))
+#define HAS_EXT(name) contains_full_word(gs_gpu_library.ext.extensions, S_("WGL_EXT_" #name))
 	gs_gpu_library.ext.has_extension_swap_control = HAS_EXT(swap_control);
 #undef HAS_EXT
 
@@ -206,7 +206,7 @@ static int dictionary_int_int_get_value(int const * keys, int const * vals, int 
 
 static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 
-#define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" # name))
+#define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" #name))
 	if (!HAS_ARB(pixel_format)) { return NULL; }
 #undef HAS_ARB
 
@@ -339,11 +339,11 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 
 static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * formats, struct Pixel_Format const * hint) {
 
-#define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" # name))
+#define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" #name))
 	bool const has_extension_multisample = HAS_ARB(multisample);
 #undef HAS_ARB
 
-#define HAS_EXT(name) contains_full_word(gs_gpu_library.ext.extensions, S_("WGL_EXT_" # name))
+#define HAS_EXT(name) contains_full_word(gs_gpu_library.ext.extensions, S_("WGL_EXT_" #name))
 	bool const has_extension_framebuffer_sRGB = HAS_EXT(framebuffer_sRGB);
 #undef HAS_EXT
 
@@ -482,7 +482,7 @@ struct Context_Format {
 };
 
 static HGLRC create_context_arb(HDC device, HGLRC shared, struct Context_Format const * context_format) {
-#define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" # name))
+#define HAS_ARB(name) contains_full_word(gs_gpu_library.arb.extensions, S_("WGL_ARB_" #name))
 #define ADD_ATTRIBUTE(key, value) \
 	do { \
 		attributes[attributes_count++] = key; \

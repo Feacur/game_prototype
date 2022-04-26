@@ -129,7 +129,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 		if (common_strstr((char const *)asset->data, #shader_type)) {\
 			if (gs_ogl_version < (version)) { logger_to_console("'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); break; } \
 			headers[headers_count++] = (struct Section_Header){ \
-				.type = GL_ ## shader_type, \
+				.type = GL_##shader_type, \
 				.text = S_("#define " #shader_type "\n"), \
 			}; \
 		} \
