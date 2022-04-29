@@ -1,3 +1,7 @@
+#if !defined (XMACRO)
+	#define XMACRO(type, name)
+#endif
+
 // -- init
 // >= 2.0
 XMACRO(GETINTEGERV, GetIntegerv)
