@@ -20,10 +20,6 @@ XMACRO(GETSTRINGI, GetStringi)
 // >= 2.0
 XMACRO(DISABLE, Disable)
 XMACRO(ENABLE,  Enable)
-//
-//    XMACRO(DEPTHRANGE, DepthRange)
-// >= 4.1
-XMACRO(DEPTHRANGEF, DepthRangef)
 // >= 4.3
 XMACRO(DEBUGMESSAGECALLBACK, DebugMessageCallback)
 XMACRO(DEBUGMESSAGECONTROL,  DebugMessageControl)
@@ -60,8 +56,10 @@ XMACRO(CLEARNAMEDFRAMEBUFFERFI,     ClearNamedFramebufferfi)
 XMACRO(DEPTHFUNC,  DepthFunc)
 XMACRO(DEPTHMASK,  DepthMask)
 //    XMACRO(CLEARDEPTH, ClearDepth)
+//    XMACRO(DEPTHRANGE, DepthRange)
 // >= 4.1
 XMACRO(CLEARDEPTHF, ClearDepthf)
+// XMACRO(DEPTHRANGEF, DepthRangef)
 
 // -- stencil
 // >= 2.0

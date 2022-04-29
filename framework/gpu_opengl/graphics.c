@@ -1306,7 +1306,7 @@ void graphics_to_gpu_library_init(void) {
 		.fcp = can_control_clip_space ? 0.0f : 1.0f,
 	};
 
-	glDepthRangef(gs_graphics_state.clip_space.ncp, gs_graphics_state.clip_space.fcp);
+	// glDepthRangef(gs_graphics_state.clip_space.ncp, gs_graphics_state.clip_space.fcp);
 }
 
 void graphics_to_gpu_library_free(void) {

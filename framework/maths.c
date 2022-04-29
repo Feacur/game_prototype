@@ -524,7 +524,7 @@ struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 sc
 }
 
 struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, float ncp, float fcp, float ortho) {
-	float const NS_NCP = 0, NS_FCP = 1;
+	float const NS_NCP = 1, NS_FCP = 0;
 	float const reverse_depth = 1 / (fcp - ncp);
 
 	float const persp_scale_z  = r32_isinf(fcp) ? NS_FCP                    : (reverse_depth * (NS_FCP * fcp - NS_NCP * ncp));
