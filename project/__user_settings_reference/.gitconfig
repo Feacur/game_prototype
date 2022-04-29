@@ -12,7 +12,8 @@
 	name = name for commits
 	email = mail@for.commits
 [credential]
-	helper = manager
+	provider = generic
+	helper = manager-core
 [core]
 	autocrlf = true
 	editor = code --wait # VS Code as default editor
