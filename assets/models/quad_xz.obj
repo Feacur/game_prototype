@@ -1,10 +1,10 @@
-o quad
+o quad_xz
 
 # N-shaped order strip
-v -0.5 -0.5 0.0
-v -0.5  0.5 0.0
-v  0.5 -0.5 0.0
-v  0.5  0.5 0.0
+v -0.5 0.0 -0.5
+v -0.5 0.0  0.5
+v  0.5 0.0 -0.5
+v  0.5 0.0  0.5
 
 # N-shaped order strip
 vt 0.0 0.0

@@ -4,6 +4,17 @@
 #define ATTRIBUTE_TYPE_NORMAL   2
 #define ATTRIBUTE_TYPE_COLOR    3
 
+// @todo: create common GLSL code and prove `#include` functionality
+#define R32_POS_INFINITY uintBitsToFloat(0x7f800000)
+
+// @todo: push these as defines
+#define NS_NCP 1
+#define NS_FCP 0
+
+// @todo: push these as uniform data
+const float ncp = 0.1, fcp = R32_POS_INFINITY;
+const vec2 screen_size = vec2(320, 180);
+
 
 
 
@@ -35,9 +46,17 @@ uniform sampler2D prop_Texture;
 
 layout(location = 0) out vec4 out_color;
 
+float linearize_depth(float depth)
+{
+	if (isinf(fcp)) { return (NS_NCP - NS_FCP) * ncp / (depth - NS_FCP); }
+	return (NS_NCP - NS_FCP) * ncp * fcp / (depth * (fcp - ncp) - (NS_FCP * fcp - NS_NCP * ncp));
+}
+
 void main()
 {
 	vec4 texture_pixel = texture(prop_Texture, v_TexCoord);
-	out_color = (texture_pixel * prop_Color);
+	float depth = clamp(linearize_depth(gl_FragCoord.z) / 10, 0, 1);
+	out_color = texture_pixel * prop_Color;
+	out_color = mix(out_color, vec4(depth, depth, depth, 1), gl_FragCoord.x / screen_size.x > 0.5);
 }
 #endif

@@ -34,6 +34,6 @@ layout(location = 0) out vec4 out_color;
 void main()
 {
 	vec4 texture_pixel = texture(prop_Texture, v_TexCoord);
-	out_color = (texture_pixel * prop_Color);
+	out_color = texture_pixel * prop_Color;
 }
 #endif

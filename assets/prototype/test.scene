@@ -6,7 +6,7 @@
 				"euler": [0.3926990817, 0, 0],
 			},
 			"mode": "aspect_x",
-			"ncp": 0.1, "fcp": 10,
+			"ncp": 0.1, "fcp": 1e39,
 			"target": "assets/back_buffer.target",
 			"clear_mask": ["color", "depth"],
 			"clear_color": [0.2, 0.2, 0.2, 1],
@@ -21,10 +21,22 @@
 	"entities": [
 		{
 			"camera_uid": 1,
+			"transform": {
+				"pos": [0, 0.5, 0],
+			},
 			"material": "assets/materials/textured.material",
 			"type": "mesh",
 			"model": "assets/models/cube.obj",
 			"rotation_mode": "y",
+		},
+		{
+			"camera_uid": 1,
+			"transform": {
+				"scale": [1000, 1, 1000],
+			},
+			"material": "assets/materials/textured.material",
+			"type": "mesh",
+			"model": "assets/models/quad_xz.obj",
 		},
 		{
 			"camera_uid": 2,
@@ -37,20 +49,9 @@
 			"camera_uid": 2,
 			"material": "assets/materials/image.material",
 			"rect": {
-				"anchor_min": [0.5, 0.25],
-				"anchor_max": [0.5, 0.25],
-				"extents": [250, 150],
-				"pivot": [0.5, 0.5],
-			},
-			"type": "quad_2d",
-			"uniform": "prop_Texture",
-		},
-		{
-			"camera_uid": 2,
-			"material": "assets/materials/image.material",
-			"rect": {
-				"anchor_min": [0, 0],
-				"anchor_max": [0.5, 0.25],
+				"anchor_min": [0.1, 0.1],
+				"anchor_max": [0.1, 0.1],
+				"extents": [100, 100],
 				"pivot": [0.5, 0.5],
 			},
 			"type": "quad_2d",
@@ -60,8 +61,8 @@
 			"camera_uid": 2,
 			"material": "assets/materials/font.material",
 			"rect": {
-				"anchor_min": [0.5, 0.25],
-				"anchor_max": [0.5, 0.25],
+				"anchor_min": [0.6, 0.1],
+				"anchor_max": [0.6, 0.1],
 				"extents": [250, 150],
 				"pivot": [0.5, 0.5],
 			},
@@ -74,8 +75,8 @@
 			"camera_uid": 2,
 			"material": "assets/materials/font.material",
 			"rect": {
-				"anchor_min": [0.5, 0.25],
-				"anchor_max": [0.5, 0.25],
+				"anchor_min": [0.7, 0.25],
+				"anchor_max": [0.7, 0.25],
 				"extents": [250, 500],
 				"pivot": [0.5, 0.5],
 			},
