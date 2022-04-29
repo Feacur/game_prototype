@@ -23,19 +23,19 @@ uint32_t convert_bits_r32_u32(float value) {
 	return data.value_u32;
 }
 
-float convert_bits_u64_r64(uint64_t value) {
+double convert_bits_u64_r64(uint64_t value) {
 	union {
 		uint64_t value_u64;
-		float value_r64;
+		double value_r64;
 	} data;
 	data.value_u64 = value;
 	return data.value_r64;
 }
 
-uint64_t convert_bits_r64_u64(float value) {
+uint64_t convert_bits_r64_u64(double value) {
 	union {
 		uint64_t value_u64;
-		float value_r64;
+		double value_r64;
 	} data;
 	data.value_r64 = value;
 	return data.value_u64;

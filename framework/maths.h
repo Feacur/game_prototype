@@ -48,8 +48,8 @@ thus, each window precision is `(window_max - window_min) / mantissa_max`
 float convert_bits_u32_r32(uint32_t value);
 uint32_t convert_bits_r32_u32(float value);
 
-float convert_bits_u64_r64(uint64_t value);
-uint64_t convert_bits_r64_u64(float value);
+double convert_bits_u64_r64(uint64_t value);
+uint64_t convert_bits_r64_u64(double value);
 
 #define U32_TO_R32_12(value) convert_bits_u32_r32(UINT32_C(0x3f800000) | (value >> 9))
 #define U32_TO_R32_24(value) convert_bits_u32_r32(UINT32_C(0x40000000) | (value >> 9))
