@@ -86,10 +86,10 @@ void font_image_add_glyph_error(struct Font_Image *font_image, float size) {
 	hash_table_u64_set(&font_image->table, CODEPOINT_EMPTY, &(struct Font_Glyph){
 		.params = (struct Glyph_Params){
 			.full_size_x = size_error_x,
-			.rect[0] = (int32_t)maths_floor(size_error_x * 0.2f),
-			.rect[1] = (int32_t)maths_floor(size_error_y * 0.0f),
-			.rect[2] = (int32_t)maths_ceil (size_error_x * 0.9f),
-			.rect[3] = (int32_t)maths_ceil (size_error_y * 0.8f),
+			.rect[0] = (int32_t)r32_floor(size_error_x * 0.2f),
+			.rect[1] = (int32_t)r32_floor(size_error_y * 0.0f),
+			.rect[2] = (int32_t)r32_ceil (size_error_x * 0.9f),
+			.rect[3] = (int32_t)r32_ceil (size_error_y * 0.8f),
 		},
 		.usage = GLYPH_USAGE_MAX,
 	});
@@ -239,7 +239,7 @@ void font_image_render(struct Font_Image * font_image) {
 		uint32_t atlas_size_x;
 		uint32_t atlas_size_y;
 		if (font_image->buffer.size_x == 0 || font_image->buffer.size_y == 0) {
-			atlas_size_x = (uint32_t)maths_sqrt((float)minimum_area);
+			atlas_size_x = (uint32_t)r32_sqrt((float)minimum_area);
 			atlas_size_x = round_up_to_PO2_u32(atlas_size_x);
 
 			atlas_size_y = atlas_size_x;

@@ -156,7 +156,7 @@ static float make_float(uint32_t mantissa, int32_t exponent_10) {
 		mantissa /= 5; ++exponent_10;
 	}
 
-	return maths_ldexp((float)mantissa, exponent_2);
+	return r32_ldexp((float)mantissa, exponent_2);
 }
 
 static double make_double(uint64_t mantissa, int32_t exponent_10) {
@@ -185,7 +185,7 @@ static double make_double(uint64_t mantissa, int32_t exponent_10) {
 		mantissa /= 5; ++exponent_10;
 	}
 
-	return maths_ldexp_double((double)mantissa, exponent_2);
+	return r64_ldexp((double)mantissa, exponent_2);
 }
 
 #undef PARSE_INTEGER

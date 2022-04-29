@@ -102,10 +102,10 @@ struct Glyph_Params font_get_glyph_parameters(struct Font const * font, uint32_t
 
 	return (struct Glyph_Params){
 		.rect = {
-			[0] = (int32_t)maths_floor(((float)rect[0]) * scale),
-			[1] = (int32_t)maths_floor(((float)rect[1]) * scale),
-			[2] = (int32_t)maths_ceil (((float)rect[2]) * scale),
-			[3] = (int32_t)maths_ceil (((float)rect[3]) * scale),
+			[0] = (int32_t)r32_floor(((float)rect[0]) * scale),
+			[1] = (int32_t)r32_floor(((float)rect[1]) * scale),
+			[2] = (int32_t)r32_ceil (((float)rect[2]) * scale),
+			[3] = (int32_t)r32_ceil (((float)rect[3]) * scale),
 		},
 		.full_size_x = ((float)advance_width) * scale,
 	};

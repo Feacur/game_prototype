@@ -29,21 +29,21 @@ thus, each window precision is `(window_max - window_min) / mantissa_max`
 #define MATHS_PI  3.14159265359f // convert_bits_u32_r32(UINT32_C(0x40490fdb))
 #define MATHS_TAU 6.28318530718f // convert_bits_u32_r32(UINT32_C(0x40c90fdb))
 
-#define FLOAT_NAN convert_bits_u32_r32(UINT32_C(0x7fc00000)) // [0x7f800001 .. 0x7fffffff] and [0xff800001 .. 0xffffffff]
-#define FLOAT_POS_INFINITY convert_bits_u32_r32(UINT32_C(0x7f800000))
-#define FLOAT_NEG_INFINITY convert_bits_u32_r32(UINT32_C(0xff800000))
-#define FLOAT_MAX convert_bits_u32_r32(UINT32_C(0x7f7fffff)) //  3.4028237e+38
-#define FLOAT_MIN convert_bits_u32_r32(UINT32_C(0xff7fffff)) // -3.4028237e+38
-#define FLOAT_INT_MIN convert_bits_u32_r32(UINT32_C(0xcb800000)) // -16_777_216 == -2^24
-#define FLOAT_INT_MAX convert_bits_u32_r32(UINT32_C(0x4b800000)) //  16_777_216 ==  2^24
+#define R32_NAN convert_bits_u32_r32(UINT32_C(0x7fc00000)) // [0x7f800001 .. 0x7fffffff] and [0xff800001 .. 0xffffffff]
+#define R32_POS_INFINITY convert_bits_u32_r32(UINT32_C(0x7f800000))
+#define R32_NEG_INFINITY convert_bits_u32_r32(UINT32_C(0xff800000))
+#define R32_MAX convert_bits_u32_r32(UINT32_C(0x7f7fffff)) //  3.4028237e+38
+#define R32_MIN convert_bits_u32_r32(UINT32_C(0xff7fffff)) // -3.4028237e+38
+#define R32_INT_MIN convert_bits_u32_r32(UINT32_C(0xcb800000)) // -16_777_216 == -2^24
+#define R32_INT_MAX convert_bits_u32_r32(UINT32_C(0x4b800000)) //  16_777_216 ==  2^24
 
-#define DOUBLE_NAN convert_bits_u64_r64(UINT64_C(0x7ff8000000000000)) // [0x7ff0000000000001 .. 0x7fffffffffffffff] and [0xfff0000000000001 .. 0xffffffffffffffff]
-#define DOUBLE_POS_INFINITY convert_bits_u64_r64(UINT64_C(0x7ff0000000000000))
-#define DOUBLE_NEG_INFINITY convert_bits_u64_r64(UINT64_C(0xfff0000000000000))
-#define DOUBLE_MAX convert_bits_u64_r64(UINT64_C(0x7fefffffffffffff)) //  1.79769313486231570815e+308
-#define DOUBLE_MIN convert_bits_u64_r64(UINT64_C(0xffefffffffffffff)) // -1.79769313486231570815e+308
-#define DOUBLE_INT_MIN convert_bits_u64_r64(UINT64_C(0xc340000000000000)) // -9_007_199_254_740_992 == -2^53
-#define DOUBLE_INT_MAX convert_bits_u64_r64(UINT64_C(0x4340000000000000)) //  9_007_199_254_740_992 ==  2^53
+#define r64_NAN convert_bits_u64_r64(UINT64_C(0x7ff8000000000000)) // [0x7ff0000000000001 .. 0x7fffffffffffffff] and [0xfff0000000000001 .. 0xffffffffffffffff]
+#define r64_POS_INFINITY convert_bits_u64_r64(UINT64_C(0x7ff0000000000000))
+#define r64_NEG_INFINITY convert_bits_u64_r64(UINT64_C(0xfff0000000000000))
+#define r64_MAX convert_bits_u64_r64(UINT64_C(0x7fefffffffffffff)) //  1.79769313486231570815e+308
+#define r64_MIN convert_bits_u64_r64(UINT64_C(0xffefffffffffffff)) // -1.79769313486231570815e+308
+#define r64_INT_MIN convert_bits_u64_r64(UINT64_C(0xc340000000000000)) // -9_007_199_254_740_992 == -2^53
+#define r64_INT_MAX convert_bits_u64_r64(UINT64_C(0x4340000000000000)) //  9_007_199_254_740_992 ==  2^53
 
 float convert_bits_u32_r32(uint32_t value);
 uint32_t convert_bits_r32_u32(float value);
@@ -92,15 +92,23 @@ float eerp(float v1, float v2, float t);
 float eerp_stable(float v1, float v2, float t);
 float inverse_eerp(float v1, float v2, float value);
 
-bool  maths_isinf(float value);
-bool  maths_isnan(float value);
-float maths_floor(float value);
-float maths_ceil(float value);
-float maths_sqrt(float value);
-float maths_sin(float value);
-float maths_cos(float value);
-float maths_ldexp(float factor, int32_t power); // @note: `ldexp(a, b) == a * 2^b`
-double maths_ldexp_double(double factor, int32_t power); // @note: `ldexp(a, b) == a * 2^b`
+bool  r32_isinf(float value);
+bool  r32_isnan(float value);
+float r32_floor(float value);
+float r32_ceil(float value);
+float r32_sqrt(float value);
+float r32_sin(float value);
+float r32_cos(float value);
+float r32_ldexp(float factor, int32_t power); // @note: `ldexp(a, b) == a * 2^b`
+
+bool   r64_isinf(double value);
+bool   r64_isnan(double value);
+double r64_floor(double value);
+double r64_ceil(double value);
+double r64_sqrt(double value);
+double r64_sin(double value);
+double r64_cos(double value);
+double r64_ldexp(double factor, int32_t power); // @note: `ldexp(a, b) == a * 2^b`
 
 uint8_t  map01_to_u8(float value);
 uint16_t map01_to_u16(float value);

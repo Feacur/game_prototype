@@ -162,25 +162,45 @@ float eerp(float v1, float v2, float t) { return v1 * powf(v2 / v1, t); }
 float eerp_stable(float v1, float v2, float t) { return powf(v1, (1 - t)) * powf(v2, t); }
 float inverse_eerp(float v1, float v2, float value) { return logf(value / v1) / logf(v2 / v1); }
 
-bool maths_isinf(float value) {
+bool r32_isinf(float value) {
 	// @note: check all exponent bits and no mantissa bits are set
 	// uint32_t const bits = convert_bits_r32_u32(value);
 	// return (bits & UINT32_C(0x7fffffff)) == UINT32_C(0x7f800000);
 	return isinf(value);
 }
-bool maths_isnan(float value) {
+bool r32_isnan(float value) {
 	// @note: check all exponent bits and some mantissa bits are set
 	// uint32_t const bits = convert_bits_r32_u32(value);
-	// return (bits & UINT32_C(0x7f800000)) == UINT32_C(0x7f800000) && (bits & UINT32_C(0x7fffffff)) != UINT32_C(0x7f800000);
+	// return (bits & UINT32_C(0x7f800000)) == UINT32_C(0x7f800000)
+	//     && (bits & UINT32_C(0x7fffffff)) != UINT32_C(0x7f800000);
 	return isnan(value);
 }
-float maths_floor(float value) { return floorf(value); }
-float maths_ceil(float value) { return ceilf(value); }
-float maths_sqrt(float value) { return sqrtf(value); }
-float maths_sin(float value) { return sinf(value); }
-float maths_cos(float value) { return cosf(value); }
-float maths_ldexp(float factor, int32_t power) { return ldexpf(factor, power); }
-double maths_ldexp_double(double factor, int32_t power) { return ldexp(factor, power); }
+float r32_floor(float value) { return floorf(value); }
+float r32_ceil(float value) { return ceilf(value); }
+float r32_sqrt(float value) { return sqrtf(value); }
+float r32_sin(float value) { return sinf(value); }
+float r32_cos(float value) { return cosf(value); }
+float r32_ldexp(float factor, int32_t power) { return ldexpf(factor, power); }
+
+bool r64_isinf(double value) {
+	// @note: check all exponent bits and no mantissa bits are set
+	// uint64_t const bits = convert_bits_r64_u64(value);
+	// return (bits & UINT64_C(0x7fffffffffffffff)) == UINT64_C(0x7ff0000000000000);
+	return isinf(value);
+}
+bool r64_isnan(double value) {
+	// @note: check all exponent bits and some mantissa bits are set
+	// uint64_t const bits = convert_bits_r64_u64(value);
+	// return (bits & UINT64_C(0x7ff0000000000000)) == UINT64_C(0x7ff0000000000000)
+	//     && (bits & UINT64_C(0x7fffffffffffffff)) != UINT64_C(0x7ff0000000000000);
+	return isnan(value);
+}
+double r64_floor(double value) { return floor(value); }
+double r64_ceil(double value) { return ceil(value); }
+double r64_sqrt(double value) { return sqrt(value); }
+double r64_sin(double value) { return sin(value); }
+double r64_cos(double value) { return cos(value); }
+double r64_ldexp(double factor, int32_t power) { return ldexp(factor, power); }
 
 uint8_t map01_to_u8(float value) {
 	if (value < 0) { return 0; }
@@ -391,15 +411,15 @@ struct vec4 vec4_norm(struct vec4 v) {
 
 struct vec4 quat_set_axis(struct vec3 axis, float radians) {
 	float const r = radians * 0.5f;
-	float const s = maths_sin(r);
-	float const c = maths_cos(r);
+	float const s = r32_sin(r);
+	float const c = r32_cos(r);
 	return (struct vec4){axis.x * s, axis.y * s, axis.z * s, c};
 }
 
 struct vec4 quat_set_radians(struct vec3 radians) {
 	struct vec3 const r = vec3_mul(radians, (struct vec3){0.5f, 0.5f, 0.5f});
-	struct vec3 const s = (struct vec3){maths_sin(r.x), maths_sin(r.y), maths_sin(r.z)};
-	struct vec3 const c = (struct vec3){maths_cos(r.x), maths_cos(r.y), maths_cos(r.z)};
+	struct vec3 const s = (struct vec3){r32_sin(r.x), r32_sin(r.y), r32_sin(r.z)};
+	struct vec3 const c = (struct vec3){r32_cos(r.x), r32_cos(r.y), r32_cos(r.z)};
 	float const sy_cx = s.y*c.x; float const cy_sx = c.y*s.x;
 	float const cy_cx = c.y*c.x; float const sy_sx = s.y*s.x;
 	return (struct vec4){
@@ -507,11 +527,11 @@ struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, flo
 	float const NS_NCP = 0, NS_FCP = 1;
 	float const reverse_depth = 1 / (fcp - ncp);
 
-	float const persp_scale_z  = maths_isinf(fcp) ? 1                         : (reverse_depth * (NS_FCP * fcp - NS_NCP * ncp));
-	float const persp_offset_z = maths_isinf(fcp) ? ((NS_NCP - NS_FCP) * ncp) : (reverse_depth * (NS_NCP - NS_FCP) * ncp * fcp);
+	float const persp_scale_z  = r32_isinf(fcp) ? 1                         : (reverse_depth * (NS_FCP * fcp - NS_NCP * ncp));
+	float const persp_offset_z = r32_isinf(fcp) ? ((NS_NCP - NS_FCP) * ncp) : (reverse_depth * (NS_NCP - NS_FCP) * ncp * fcp);
 
-	float const ortho_scale_z  = maths_isinf(fcp) ? 0      : (reverse_depth * (NS_FCP - NS_NCP));
-	float const ortho_offset_z = maths_isinf(fcp) ? NS_NCP : (reverse_depth * (NS_NCP * fcp - NS_FCP * ncp));
+	float const ortho_scale_z  = r32_isinf(fcp) ? 0      : (reverse_depth * (NS_FCP - NS_NCP));
+	float const ortho_offset_z = r32_isinf(fcp) ? NS_NCP : (reverse_depth * (NS_NCP * fcp - NS_FCP * ncp));
 
 	float const scale_z  = lerp(persp_scale_z, ortho_scale_z, ortho);
 	float const offset_z = lerp(persp_offset_z, ortho_offset_z, ortho);

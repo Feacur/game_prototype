@@ -100,10 +100,10 @@ struct uvec2 entity_get_content_size(
 
 		case ENTITY_TYPE_TEXT_2D: {
 			int32_t const rect[] = {
-				(int32_t)maths_floor(entity->rect.anchor_min.x * (float)viewport_size_x + entity->rect.extents.x),
-				(int32_t)maths_floor(entity->rect.anchor_min.y * (float)viewport_size_y + entity->rect.extents.y),
-				(int32_t)maths_ceil (entity->rect.anchor_max.x * (float)viewport_size_x + entity->rect.extents.x),
-				(int32_t)maths_ceil (entity->rect.anchor_max.y * (float)viewport_size_y + entity->rect.extents.y),
+				(int32_t)r32_floor(entity->rect.anchor_min.x * (float)viewport_size_x + entity->rect.extents.x),
+				(int32_t)r32_floor(entity->rect.anchor_min.y * (float)viewport_size_y + entity->rect.extents.y),
+				(int32_t)r32_ceil (entity->rect.anchor_max.x * (float)viewport_size_x + entity->rect.extents.x),
+				(int32_t)r32_ceil (entity->rect.anchor_max.y * (float)viewport_size_y + entity->rect.extents.y),
 			};
 			return (struct uvec2){
 				(uint32_t)max_s32(rect[2] - rect[0], rect[0] - rect[2]),
