@@ -527,7 +527,7 @@ struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, flo
 	float const NS_NCP = 0, NS_FCP = 1;
 	float const reverse_depth = 1 / (fcp - ncp);
 
-	float const persp_scale_z  = r32_isinf(fcp) ? 1                         : (reverse_depth * (NS_FCP * fcp - NS_NCP * ncp));
+	float const persp_scale_z  = r32_isinf(fcp) ? NS_FCP                    : (reverse_depth * (NS_FCP * fcp - NS_NCP * ncp));
 	float const persp_offset_z = r32_isinf(fcp) ? ((NS_NCP - NS_FCP) * ncp) : (reverse_depth * (NS_NCP - NS_FCP) * ncp * fcp);
 
 	float const ortho_scale_z  = r32_isinf(fcp) ? 0      : (reverse_depth * (NS_FCP - NS_NCP));
