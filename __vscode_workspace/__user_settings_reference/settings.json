@@ -1,16 +1,23 @@
 // %appdata%/Code/User
 {
-	"search.quickOpen.includeHistory": false,
-	"security.workspace.trust.untrustedFiles": "open",
 	"terminal.integrated.defaultProfile.windows": "Command Prompt",
+	"search.quickOpen.includeHistory": false,
+	"debug.focusEditorOnBreak": false,
+	"debug.focusWindowOnBreak": false,
+	// security
+	"security.workspace.trust.enabled": false,
+	"security.workspace.trust.untrustedFiles": "open",
 	// workbench
 	"workbench.startupEditor": "newUntitledFile",
 	"workbench.sideBar.location": "right",
-	"workbench.commandPalette.history": 0,
-	"workbench.editor.untitled.hint": "hidden",
 	"workbench.activityBar.visible": false,
+	"workbench.editor.untitled.hint": "hidden",
 	"workbench.editor.showTabs": true,
+	"workbench.editor.restoreViewState": false,
+	"workbench.commandPalette.history": 0,
 	// editor
+	"editor.codeLens": false,
+	"editor.wordWrap": "off",
 	"editor.fontFamily": "Consolas, 'Courier New', monospace",
 	"editor.fontSize": 14,
 	"editor.tabSize": 4,
@@ -22,9 +29,21 @@
 	"editor.scrollBeyondLastColumn": 5,
 	"editor.scrollBeyondLastLine": true,
 	// diff
+	"diffEditor.codeLens": false,
+	"diffEditor.wordWrap": "off",
 	"diffEditor.maxComputationTime": 0,
 	// language: C#
 	"csharp.suppressHiddenDiagnostics": false,
+	// language: JSON
+	"[json]": {
+		"editor.codeLens": true,
+		"diffEditor.codeLens": true,
+	},
+	// language: YAML
+	"[yaml]": {
+		"editor.codeLens": true,
+		"diffEditor.codeLens": true,
+	},
 	// extensions: ms-dotnettools.csharp
 	"omnisharp.loggingLevel": "information",
 	"omnisharp.enableDecompilationSupport": true,
@@ -36,7 +55,7 @@
 	"C_Cpp.default.cppStandard": "c++11",
 	"C_Cpp.default.compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
 	"C_Cpp.default.intelliSenseMode": "clang-x64",
-	// "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.24.28314/bin/Hostx64/x64/cl.exe",
+	// "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe",
 	// "C_Cpp.default.intelliSenseMode": "msvc-x64",
 	"C_Cpp.formatting": "Disabled",
 	"C_Cpp.autoAddFileAssociations": false,

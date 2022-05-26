@@ -1,29 +1,16 @@
 // %appdata%/Sublime Text/Packages/User
 [
-	// editor: input navigation
-	{ "keys": ["ctrl+alt+left"], "command": "jump_back" },
-	{ "keys": ["ctrl+alt+right"], "command": "jump_forward" },
-	{ "keys": ["alt+up"], "command": "move",
-		"args": {"by": "stops", "empty_line": true, "forward": false}
-	},
-	{ "keys": ["alt+down"], "command": "move",
-		"args": {"by": "stops", "empty_line": true, "forward": true}
-	},
-	{ "keys": ["alt+shift+up"], "command": "move",
-		"args": {"by": "stops", "empty_line": true, "forward": false, "extend": true}
-	},
-	{ "keys": ["alt+shift+down"], "command": "move",
-		"args": {"by": "stops", "empty_line": true, "forward": true, "extend": true}
-	},
+	// unbind defaults
+	{ "keys": ["f7"], "command": "" },
+	{ "keys": ["f9"], "command": "" },
+	{ "keys": ["ctrl+f9"], "command": "" },
+	{ "keys": ["ctrl+shift+k"], "command": "" },
+	// utilities
+	{ "keys": ["ctrl+f12"], "command": "goto_definition" },
+	{ "keys": ["ctrl+shift+f12"], "command": "goto_reference" },
 	{ "keys": ["shift+escape"], "command": "show_panel",
 		"args": {"panel": "output.exec"},
 	},
-	// editor: navigation
-	{ "keys": ["alt+["], "command": "prev_result" },
-	{ "keys": ["alt+]"], "command": "next_result" },
-	{ "keys": ["ctrl+alt+["], "command": "prev_modification" },
-	{ "keys": ["ctrl+alt+]"], "command": "next_modification" },
-	// editor: interface
 	{ "keys": ["ctrl+b"], "command": "toggle_side_bar" },
 	{ "keys": ["ctrl+k", "s"], "command": "save_all" },
 	{ "keys": ["ctrl+k", "w"], "command": "close_all" },
@@ -38,15 +25,39 @@
 	{ "keys": ["alt+z"], "command": "toggle_setting",
 		"args": { "setting": "word_wrap" }
 	},
-	// editor: utils
-	{ "keys": ["ctrl+f12"], "command": "goto_definition" },
-	{ "keys": ["ctrl+shift+f12"], "command": "goto_reference" },
+	// RMB
 	{ "keys": ["ctrl+,"], "command": "context_menu" },
-	// editor: disable defaults
-	{ "keys": ["f7"], "command": "" },
-	{ "keys": ["f9"], "command": "" },
-	{ "keys": ["ctrl+f9"], "command": "" },
-	{ "keys": ["ctrl+shift+k"], "command": "" },
+	// historical navigation
+	{ "keys": ["ctrl+alt+left"], "command": "jump_back" },
+	{ "keys": ["ctrl+alt+right"], "command": "jump_forward" },
+	// contextual navigation
+	{ "keys": ["alt+["], "command": "prev_result" },
+	{ "keys": ["alt+]"], "command": "next_result" },
+	{ "keys": ["ctrl+alt+["], "command": "prev_modification" },
+	{ "keys": ["ctrl+alt+]"], "command": "next_modification" },
+	// navigate by paragraphs
+	{ "keys": ["alt+up"], "command": "move",
+		"args": {"by": "stops", "empty_line": true, "forward": false}
+	},
+	{ "keys": ["alt+down"], "command": "move",
+		"args": {"by": "stops", "empty_line": true, "forward": true}
+	},
+	{ "keys": ["alt+shift+up"], "command": "move",
+		"args": {"by": "stops", "empty_line": true, "forward": false, "extend": true}
+	},
+	{ "keys": ["alt+shift+down"], "command": "move",
+		"args": {"by": "stops", "empty_line": true, "forward": true, "extend": true}
+	},
+	// navigate words
+	// -- default
+	// navigate word parts
+	// -- default
+	// navigate brackets
+	// -- default
+	// windowing
+	// -- default
+	// edit lines
+	// -- default
 	// extensions: EasyClangComplete
 	// { "keys": ["f12"], "command": "ecc_goto_declaration" },
 	// { "keys": ["ctrl+."], "command": "ecc_show_popup_info" },

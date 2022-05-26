@@ -1,5 +1,6 @@
 // %appdata%/Sublime Text/Packages/User
 {
+	"relative_line_numbers": true,
 	"always_show_minimap_viewport": true,
 	"auto_complete_cycle": true,
 	"auto_find_in_selection": true,
@@ -43,4 +44,3 @@
 	"word_wrap": false,
 	"word_width": 0,
 }
-
