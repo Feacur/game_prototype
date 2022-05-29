@@ -1,6 +1,7 @@
 // %appdata%/Sublime Text/Packages/User
 {
 	"relative_line_numbers": true,
+	"auto_match_enabled": false,
 	"always_show_minimap_viewport": true,
 	"auto_complete_cycle": true,
 	"auto_find_in_selection": true,
@@ -11,7 +12,7 @@
 	"caret_extra_top": 0,
 	"caret_style": "blink",
 	"close_windows_when_empty": false,
-	"color_scheme": "Packages/Color Scheme - Default/Mariana.sublime-color-scheme",
+	"color_scheme": "gruvbox (Dark) (Medium).sublime-color-scheme",
 	"default_encoding": "UTF-8",
 	"detect_indentation": false,
 	"draw_white_space": "all",
@@ -22,7 +23,8 @@
 	"folder_exclude_patterns":
 	[
 	],
-	"font_face": "Consolas",
+	"font_face": "JetBrains Mono",
+	"font_options": ["no_liga", "no_clig", "no_calt"],
 	"font_size": 11,
 	"ignored_packages":
 	[
@@ -43,4 +45,5 @@
 	"scroll_past_end": true,
 	"word_wrap": false,
 	"word_width": 0,
+	"control_character_style": "names",
 }

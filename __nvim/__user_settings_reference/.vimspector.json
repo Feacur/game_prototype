@@ -1,0 +1,73 @@
+// N.B: strict JSON, no trailing commas!
+//      also it's a reference, put relevant adapters and configurations into your project or set vimspector otherwise, according to its documentation.
+//      one possibility is to set them in a NeoVim config: `let g:vimspector_adapters` and `g:vimspector_configurations` with some defaults and prompts
+{
+	"adapters": {
+		"unitydebug": {
+			"name": "unitydebug",
+			"language": ["csharp"],
+			"command": ["unitydebug"],
+			"configuration": { "name": "unity editor" },
+			"attach": { "pidSelect":"none" }
+		},
+
+		"codelldb": {
+			"name": "codelldb",
+			"language": ["c", "cpp", "rust"],
+			"command": ["codelldb", "--port", "${unusedLocalPort}"],
+			"port": "${unusedLocalPort}",
+			"configuration": { "type": "lldb" }
+		},
+
+		"opendebugad7 gdb": {
+			"name": "cppdbg",
+			"language": ["c", "cpp"],
+			"command": ["opendebugad7"],
+			"attach": { "pidProperty": "processId", "pidSelect": "ask" },
+			"configuration": {
+				"type": "cppdbg",
+				"MIMode": "gdb",
+				"MIDebuggerPath": "gdb"
+			}
+		}
+	},
+
+	"configurations": {
+		"unity editor attach": {
+			"adapter": "unitydebug",
+			"autoselect": false,
+			"configuration": {
+				"request": "attach"
+			}
+		},
+
+		"codelldb launch": {
+			"adapter": "codelldb",
+			"autoselect": false,
+			"configuration": {
+				"request": "launch", "program": "$program_executable",
+				"cwd": "${workspaceRoot}"
+			},
+			"breakpoints": {
+				"exception": {
+					"cpp_throw": "Y",
+					"cpp_catch": "N"
+				}
+			}
+		},
+
+		"opendebugad7 gdb launch": {
+			"adapter": "opendebugad7 gdb",
+			"autoselect": false,
+			"configuration": {
+				"request": "launch", "program": "$program_executable",
+				"cwd": "${workspaceRoot}"
+			},
+			"breakpoints": {
+				"exception": {
+					"all": "Y"
+				}
+			}
+		}
+	}
+}

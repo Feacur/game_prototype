@@ -51,6 +51,6 @@ goto :eof
 goto :eof
 
 :check_debugger_online
-	tasklist -fi "IMAGENAME eq remedybg.exe" -nh | find /i /n "remedybg.exe" > nul
+	tasklist -fi "IMAGENAME eq remedybg.exe" -nh | findstr "remedybg.exe" > nul
 	rem return: `errorlevel`
 goto :eof

@@ -3,15 +3,16 @@
 	"clients": {
 		"clangd": {
 			"command": [
-				"C:/Program Files/LLVM/bin/clangd.exe",
+				"clangd",
 				"--compile-commands-dir=${project_path:${folder}}",
 				"--header-insertion=never",
 				// "--log=verbose",
 			],
-			"enabled": false
-		}
+			"enabled": false,
+		},
 	},
-	"only_show_lsp_completions": true,
+	"inhibit_word_completions": true,
+	"inhibit_snippet_completions": true,
 	"show_symbol_action_links": true,
 	"auto_show_diagnostics_panel": "never",
 	"diagnostics_highlight_style": "box",

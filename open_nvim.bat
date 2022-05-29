@@ -4,22 +4,28 @@ setlocal
 
 rem |> PREPARE TOOLS
 call :check_editor || (
-	set "PATH=%PATH%;C:/Program Files/Sublime Text/"
-	call :check_editor || (
-		echo.can't find editor
-		goto :eof
-	)
+	echo.can't find editor
+	goto :eof
 )
 
 call "project/environment.bat" || ( goto :eof )
 
 rem |> DO
-start subl "__sublime_project/game_prototype.sublime-project"
+call :check_terminal_emulator && (
+	start wt nvim
+	goto :eof
+)
+start nvim
 
 rem |> FUNCTIONS
 goto :eof
 
+:check_terminal_emulator
+	where -q "wt.exe"
+	rem return: `errorlevel`
+goto :eof
+
 :check_editor
-	where -q "subl.exe"
+	where -q "nvim.exe"
 	rem return: `errorlevel`
 goto :eof

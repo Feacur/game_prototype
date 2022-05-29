@@ -144,7 +144,7 @@ rem |> FUNCTIONS
 goto :eof
 
 :check_executable_online
-	tasklist -fi "IMAGENAME eq %project%.exe" -nh | find /i /n "%project%.exe" > nul
+	tasklist -fi "IMAGENAME eq %project%.exe" -nh | findstr %project%.exe > nul
 	rem return: `errorlevel`
 goto :eof
 

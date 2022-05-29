@@ -32,6 +32,9 @@
 			"path": "../bin",
 		},
 		{
+			"path": "../__nvim",
+		},
+		{
 			"path": "../__vscode_workspace",
 		},
 	],

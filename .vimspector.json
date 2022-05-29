@@ -1,0 +1,22 @@
+// N.B: strict JSON, no trailing commas!
+{
+	"adapters": {
+	},
+
+	"configurations": {
+		"codelldb launch": {
+			"adapter": "codelldb",
+			"autoselect": false,
+			"configuration": {
+				"request": "launch", "program": "bin/game",
+				"cwd": "${workspaceRoot}"
+			},
+			"breakpoints": {
+				"exception": {
+					"cpp_throw": "Y",
+					"cpp_catch": "N"
+				}
+			}
+		}
+	}
+}

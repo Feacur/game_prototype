@@ -1,6 +1,7 @@
 // %appdata%/Code/User
 [
 	// unbind defaults
+	{ "key": "ctrl+m", "command": "-workbench.action.toggleTabsVisibility", },
 	{ "key": "ctrl+up", "command": "-scrollLineUp", },
 	{ "key": "ctrl+down", "command": "-scrollLineDown", },
 	{ "key": "alt+pageup", "command": "-scrollPageUp", },
@@ -9,6 +10,18 @@
 	{
 		"key": "ctrl+shift+r",
 		"command": "workbench.view.extension.references-view"
+	},
+	{
+		"key": "ctrl+alt+t",
+		"command": "workbench.action.toggleTabsVisibility"
+	},
+	{
+		"key": "ctrl+alt+\\",
+		"command": "workbench.action.splitEditorDown"
+	},
+	{
+		"key": "shift+f11",
+		"command": "workbench.action.toggleZenMode"
 	},
 	// RMB
 	{
@@ -165,6 +178,14 @@
 	{
 		"key": "ctrl+shift+alt+right",
 		"command": "workbench.action.moveEditorToRightGroup"
+	},
+	{
+		"key": "ctrl+shift+alt+down",
+		"command": "workbench.action.moveEditorToBelowGroup"
+	},
+	{
+		"key": "ctrl+shift+alt+up",
+		"command": "workbench.action.moveEditorToAboveGroup"
 	},
 	// edit lines
 	{

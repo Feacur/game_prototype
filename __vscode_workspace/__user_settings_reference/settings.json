@@ -1,24 +1,24 @@
+
 // %appdata%/Code/User
 {
 	"terminal.integrated.defaultProfile.windows": "Command Prompt",
 	"search.quickOpen.includeHistory": false,
 	"debug.focusEditorOnBreak": false,
 	"debug.focusWindowOnBreak": false,
-	// security
 	"security.workspace.trust.enabled": false,
 	"security.workspace.trust.untrustedFiles": "open",
-	// workbench
 	"workbench.startupEditor": "newUntitledFile",
 	"workbench.sideBar.location": "right",
 	"workbench.activityBar.visible": false,
 	"workbench.editor.untitled.hint": "hidden",
-	"workbench.editor.showTabs": true,
 	"workbench.editor.restoreViewState": false,
 	"workbench.commandPalette.history": 0,
+	"workbench.colorTheme": "Gruvbox Dark Medium",
 	// editor
-	"editor.codeLens": false,
+	"editor.codeLens": true,
 	"editor.wordWrap": "off",
-	"editor.fontFamily": "Consolas, 'Courier New', monospace",
+	"editor.fontFamily": "JetBrains Mono",
+	"editor.fontLigatures": false,
 	"editor.fontSize": 14,
 	"editor.tabSize": 4,
 	"editor.insertSpaces": false,
@@ -28,22 +28,16 @@
 	"editor.minimap.enabled": false,
 	"editor.scrollBeyondLastColumn": 5,
 	"editor.scrollBeyondLastLine": true,
+	"editor.autoClosingBrackets": "never",
+	"editor.autoClosingQuotes": "never",
+	"editor.autoClosingDelete": "never",
+	"editor.autoClosingOvertype": "never",
 	// diff
-	"diffEditor.codeLens": false,
+	"diffEditor.codeLens": true,
 	"diffEditor.wordWrap": "off",
 	"diffEditor.maxComputationTime": 0,
 	// language: C#
 	"csharp.suppressHiddenDiagnostics": false,
-	// language: JSON
-	"[json]": {
-		"editor.codeLens": true,
-		"diffEditor.codeLens": true,
-	},
-	// language: YAML
-	"[yaml]": {
-		"editor.codeLens": true,
-		"diffEditor.codeLens": true,
-	},
 	// extensions: ms-dotnettools.csharp
 	"omnisharp.loggingLevel": "information",
 	"omnisharp.enableDecompilationSupport": true,
@@ -74,3 +68,18 @@
 	],
 	"clangd.onConfigChanged": "prompt",
 }
+// extensions:
+// - ms-dotnettools.csharp
+// - unity.unity-debug
+// - jdinhlife.gruvbox
+// - ms-vscode.hexeditor
+// - slevesque.shader
+// - xadillax.viml
+// - ms-vscode.cpptools
+// - llvm-vs-code-extensions.vscode-clangd
+// - ms-vscode.cmake-tools
+// - vadimcn.vscode-lldb
+// - ms-python.python
+// - rust-lang.rust
+// - rust-lang.rust-analyzer
+// - tiehuis.zig

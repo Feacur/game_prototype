@@ -1,4 +1,6 @@
 # priority
+[framework] uniform buffers
+[framework] instancing
 [prototype] UI system
 [prototype] convenient entities system
 

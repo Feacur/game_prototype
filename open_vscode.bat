@@ -19,7 +19,7 @@ call :check_editor || (
 call "project/environment.bat" || ( goto :eof )
 
 rem |> DO
-call code "__vscode_workspace/game_prototype.code-workspace"
+start code "__vscode_workspace/game_prototype.code-workspace"
 
 rem |> FUNCTIONS
 goto :eof

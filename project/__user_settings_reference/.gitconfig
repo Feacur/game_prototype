@@ -18,6 +18,7 @@
 	autocrlf = true
 	editor = code --wait # VS Code as default editor
 [pull]
+	rebase = true
 	ff = no
 # diff and merge options
 [diff]
@@ -36,3 +37,6 @@
 # [url "https://github.com/"] # force https over ssh
 # 	insteadOf = git@github.com:
 #
+# overrides
+[includeIf "gitdir:folder"]
+	path = file_path

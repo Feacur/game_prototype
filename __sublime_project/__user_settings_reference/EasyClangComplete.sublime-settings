@@ -28,7 +28,7 @@
 	"ignore_list": [],
 	"flags_sources" : [],
 	"header_to_source_mapping": [],
-	"clang_binary" : "C:/Program Files/LLVM/bin/clang.exe",
+	"clang_binary" : "clang",
 	"use_default_includes": false,
 	"use_default_definitions": false,
 	"linter_mark_style": "fill",

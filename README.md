@@ -16,6 +16,7 @@ project ...... build scripts, debug scripts; target translation units; current c
 ```
 __sublime_project ... project, intellisense, reference settings
 __vscode_workspace .. project, intellisense, reference settings
+__nvim .............. a bunch of dotfiles to build upon
 
 you are free to use any other IDE, it's just me who didn't supply additional project files/options
 ```
@@ -34,6 +35,10 @@ you are free to use any other IDE, it's just me who didn't supply additional pro
 2) launch one of the build/debug/run commands  
    N.B. debugging in Sublime Text relies on [RemedyBG](https://remedybg.itch.io/remedybg)  
         also note, that it doesn't support relative paths yet (see `*.rdbg`)  
+
+> Neovim
+dotfiles provide debugger settings as a reference, but no convenient build process.  
+see it as an experiment taken to learn more about and study tools of unix and linux
 
 ### Third-party code used
 1) [stb](https://github.com/nothings/stb): single-file public domain (or MIT licensed) libraries for C/C++
