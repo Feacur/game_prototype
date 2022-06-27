@@ -43,9 +43,18 @@ void platform_system_init(void) {
 	};
 	if (gs_platform_system.module == NULL) { goto fail; }
 
+	// @note: might as well lock main thread
+	//        https://docs.microsoft.com/windows/win32/dxtecharts/game-timing-and-multicore-processors
+	// SetThreadAffinityMask(
+	// 	gs_platform_system.module,
+	// 	1 << GetCurrentProcessorNumber()
+	// );
+
 	// system_cache_paths();
 	system_set_process_dpi_awareness();
 	// system_enable_virtual_terminal_processing();
+
+	SetConsoleCP(CP_UTF8);
 	SetConsoleOutputCP(CP_UTF8);
 
 	if (!debug_to_system_init()) { goto fail; }

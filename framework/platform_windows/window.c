@@ -217,8 +217,8 @@ static enum Key_Code translate_virtual_key_to_application(uint8_t scan, uint8_t 
 		case VK_BACK:   return '\b';
 		case VK_TAB:    return '\t';
 		case VK_RETURN: return is_extended ? KC_NUM_ENTER : '\r';
-		case VK_ESCAPE: return 0x1b;
-		case VK_DELETE: return is_extended ? 0x7f : KC_NUM_DEC;
+		case VK_ESCAPE: return KC_ESC;
+		case VK_DELETE: return is_extended ? KC_DEL : KC_NUM_DEC;
 		// ASCII, printable characters
 		case VK_SPACE:      return ' ';
 		case VK_OEM_COMMA:  return ',';
