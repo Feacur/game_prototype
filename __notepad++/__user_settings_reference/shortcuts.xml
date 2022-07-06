@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<NotepadPlus>
+    <InternalCommands>
+        <Shortcut id="44081" Ctrl="no" Alt="no" Shift="no" Key="0" />
+        <Shortcut id="43009" Ctrl="yes" Alt="no" Shift="no" Key="77" />
+        <Shortcut id="43054" Ctrl="no" Alt="no" Shift="no" Key="0" />
+        <Shortcut id="41010" Ctrl="no" Alt="no" Shift="no" Key="0" />
+        <Shortcut id="43053" Ctrl="no" Alt="no" Shift="no" Key="0" />
+        <Shortcut id="44085" Ctrl="yes" Alt="no" Shift="no" Key="66" />
+        <Shortcut id="44011" Ctrl="no" Alt="no" Shift="yes" Key="122" />
+    </InternalCommands>
+    <Macros>
+        <Macro name="Trim Trailing Space and Save" Ctrl="no" Alt="no" Shift="no" Key="0">
+            <Action type="2" message="0" wParam="42024" lParam="0" sParam="" />
+            <Action type="2" message="0" wParam="41006" lParam="0" sParam="" />
+        </Macro>
+    </Macros>
+    <UserDefinedCommands>
+        <Command name="Get PHP help" Ctrl="no" Alt="no" Shift="no" Key="0">https://www.php.net/$(CURRENT_WORD)</Command>
+        <Command name="Wikipedia Search" Ctrl="no" Alt="no" Shift="no" Key="0">https://en.wikipedia.org/wiki/Special:Search?search=$(CURRENT_WORD)</Command>
+        <Command name="Open selected file path in new instance" Ctrl="no" Alt="no" Shift="no" Key="0">$(NPP_FULL_FILE_PATH) $(CURRENT_WORD) -nosession -multiInst</Command>
+    </UserDefinedCommands>
+    <PluginCommands />
+    <ScintillaKeys />
+</NotepadPlus>
