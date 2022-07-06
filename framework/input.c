@@ -146,7 +146,7 @@ void input_to_platform_on_key(enum Key_Code key, bool is_down) {
 
 void input_to_platform_on_codepoint(uint32_t codepoint) {
 	if (!gs_input_state.track_codepoints) { return; }
-	array_u32_push(&gs_input_state.codepoints, codepoint);
+	array_u32_push_many(&gs_input_state.codepoints, 1, &codepoint);
 }
 
 void input_to_platform_on_mouse_move(uint32_t x, uint32_t y) {

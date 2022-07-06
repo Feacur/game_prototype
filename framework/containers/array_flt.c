@@ -37,11 +37,6 @@ static void array_flt_grow_if_must(struct Array_Flt * array, uint32_t target_cou
 	}
 }
 
-void array_flt_push(struct Array_Flt * array, float value) {
-	array_flt_grow_if_must(array, array->count + 1);
-	array->data[array->count++] = value;
-}
-
 void array_flt_push_many(struct Array_Flt * array, uint32_t count, float const * value) {
 	array_flt_grow_if_must(array, array->count + count);
 	if (value != NULL) {

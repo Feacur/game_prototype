@@ -208,7 +208,7 @@ void batcher_2d_add_text(
 	uint32_t const strings_offset = (uint32_t)batcher->strings.count;
 	buffer_push_many(&batcher->strings, length + 1, data);
 
-	array_any_push(&batcher->texts, &(struct Batcher_2D_Text) {
+	array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
 		.length = length,
 		.strings_offset = strings_offset,
 		.font = font,
@@ -358,7 +358,7 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * g
 	for (uint32_t i = 0; i < batcher->batches.count; i++) {
 		struct Batcher_2D_Batch const * batch = array_any_at(&batcher->batches, i);
 
-		array_any_push(gpu_commands, &(struct GPU_Command){
+		array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
 			.type = GPU_COMMAND_TYPE_DRAW,
 			.as.draw = {
 				.material = batch->material,
@@ -396,7 +396,7 @@ static void batcher_2d_bake_pass(struct Batcher_2D * batcher) {
 	uint32_t const offset = batcher->buffer_indices.count;
 	if (batcher->batch.offset < offset) {
 		batcher->batch.length = offset - batcher->batch.offset;
-		array_any_push(&batcher->batches, &batcher->batch);
+		array_any_push_many(&batcher->batches, 1, &batcher->batch);
 
 		batcher->batch.offset = offset;
 		batcher->batch.length = 0;

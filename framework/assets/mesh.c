@@ -86,7 +86,7 @@ static void wfobj_repack(
 		if (wfobj->texcoords.count > 0) { array_flt_push_many(vertices, 2, wfobj->texcoords.data + vertex_index[1] * attributes_buffer[attribute_index]); attribute_index += 2; }
 		if (wfobj->normals.count > 0)   { array_flt_push_many(vertices, 3, wfobj->normals.data   + vertex_index[2] * attributes_buffer[attribute_index]); attribute_index += 2; }
 
-		array_u32_push(indices, vertex_id);
+		array_u32_push_many(indices, 1, &vertex_id);
 		vertex_id++;
 	}
 }

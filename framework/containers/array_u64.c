@@ -37,11 +37,6 @@ static void array_u64_grow_if_must(struct Array_U64 * array, uint32_t target_cou
 	}
 }
 
-void array_u64_push(struct Array_U64 * array, uint64_t value) {
-	array_u64_grow_if_must(array, array->count + 1);
-	array->data[array->count++] = value;
-}
-
 void array_u64_push_many(struct Array_U64 * array, uint32_t count, uint64_t const * value) {
 	array_u64_grow_if_must(array, array->count + count);
 	if (value != NULL) {

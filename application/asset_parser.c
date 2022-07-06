@@ -177,7 +177,7 @@ struct Ref state_read_json_target(struct JSON const * json) {
 	uint32_t const buffers_count = json_count(buffers_json);
 	for (uint32_t i = 0; i < buffers_count; i++) {
 		struct Texture_Parameters const texture_parameters = state_read_json_texture_parameters(json_at(buffers_json, i));
-		array_any_push(&parameters_buffer, &texture_parameters);
+		array_any_push_many(&parameters_buffer, 1, &texture_parameters);
 	}
 
 	struct Ref result = c_ref_empty;

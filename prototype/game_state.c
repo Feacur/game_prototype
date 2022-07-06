@@ -112,7 +112,7 @@ static void state_read_json_cameras(struct JSON const * json) {
 		struct Camera camera;
 		state_read_json_camera(camera_json, &camera);
 
-		array_any_push(&gs_game.cameras, &camera);
+		array_any_push_many(&gs_game.cameras, 1, &camera);
 	}
 }
 
@@ -216,7 +216,7 @@ static void state_read_json_entities(struct JSON const * json) {
 		struct Entity entity;
 		state_read_json_entity(entity_json, &entity);
 
-		array_any_push(&gs_game.entities, &entity);
+		array_any_push_many(&gs_game.entities, 1, &entity);
 	}
 }
 

@@ -52,7 +52,7 @@ void gfx_uniforms_set(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struc
 }
 
 void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct Gfx_Uniform_In value) {
-	array_any_push(&uniforms->headers, &(struct Gfx_Uniforms_Entry){
+	array_any_push_many(&uniforms->headers, 1, &(struct Gfx_Uniforms_Entry){
 		.id = uniform_id,
 		.size = value.size,
 		.offset = (uint32_t)uniforms->payload.count,

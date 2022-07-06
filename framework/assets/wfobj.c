@@ -102,7 +102,7 @@ static void wfobj_do_vertex(struct WFObj_Scanner * scanner, struct WFObj_Token *
 		float value;
 		if (wfobj_consume_float(scanner, token, &value)) {
 			if (entries >= limit) { continue; } entries++;
-			array_flt_push(buffer, value);
+			array_flt_push_many(buffer, 1, &value);
 		}
 		else { ADVANCE(); }
 	}

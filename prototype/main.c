@@ -184,7 +184,7 @@ static void prototype_draw_entities(void) {
 		if (!ref_equals(previous_gpu_target_ref, camera->gpu_target_ref)) {
 			previous_gpu_target_ref = camera->gpu_target_ref;
 			batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
-			array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
+			array_any_push_many(&gs_game.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_TARGET,
 				.as.target = {
 					.screen_size_x = screen_size.x,
@@ -196,7 +196,7 @@ static void prototype_draw_entities(void) {
 
 		if (camera->clear.mask != TEXTURE_TYPE_NONE) {
 			batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
-			array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
+			array_any_push_many(&gs_game.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_CLEAR,
 				.as.clear = {
 					.mask  = camera->clear.mask,
@@ -258,7 +258,7 @@ static void prototype_draw_entities(void) {
 					});
 
 					batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
-					array_any_push(&gs_game.gpu_commands, &(struct GPU_Command){
+					array_any_push_many(&gs_game.gpu_commands, 1, &(struct GPU_Command){
 						.type = GPU_COMMAND_TYPE_DRAW,
 						.as.draw = {
 							.material = &material->value,

@@ -252,7 +252,7 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 		}
 
 		// add
-		array_any_push(array, &entry_value);
+		array_any_push_many(array, 1, &entry_value);
 
 		// finalize
 		bool const is_comma = json_parser_match(parser, JSON_TOKEN_COMMA);

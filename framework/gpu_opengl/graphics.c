@@ -466,7 +466,7 @@ struct Ref gpu_target_init(
 				.wrap_x = WRAP_MODE_EDGE,
 				.wrap_y = WRAP_MODE_EDGE,
 			}, NULL);
-			array_any_push(&textures, &(struct Gpu_Target_Texture){
+			array_any_push_many(&textures, 1, &(struct Gpu_Target_Texture){
 				.texture = gpu_texture_ref,
 				.drawbuffer = is_color ? color_index : 0,
 			});
@@ -479,7 +479,7 @@ struct Ref gpu_target_init(
 				gpu_sized_internal_format(parameters[i].texture_type, parameters[i].data_type),
 				(GLsizei)size_x, (GLsizei)size_y
 			);
-			array_any_push(&buffers, &(struct Gpu_Target_Buffer){
+			array_any_push_many(&buffers, 1, &(struct Gpu_Target_Buffer){
 				.id = buffer_id,
 				.parameters = parameters[i],
 				.drawbuffer = is_color ? color_index : 0,
@@ -597,7 +597,7 @@ static struct Ref gpu_mesh_allocate(
 		struct Buffer const * asset_buffer = asset_buffers + i;
 
 		struct Mesh_Parameters const parameters = parameters_set[i];
-		array_any_push(&buffers, &(struct Gpu_Mesh_Buffer){
+		array_any_push_many(&buffers, 1, &(struct Gpu_Mesh_Buffer){
 			.parameters = parameters,
 		});
 

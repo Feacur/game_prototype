@@ -37,11 +37,6 @@ static void array_s32_grow_if_must(struct Array_S32 * array, uint32_t target_cou
 	}
 }
 
-void array_s32_push(struct Array_S32 * array, int32_t value) {
-	array_s32_grow_if_must(array, array->count + 1);
-	array->data[array->count++] = value;
-}
-
 void array_s32_push_many(struct Array_S32 * array, uint32_t count, int32_t const * value) {
 	array_s32_grow_if_must(array, array->count + count);
 	if (value != NULL) {

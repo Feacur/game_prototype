@@ -73,7 +73,7 @@ struct Ref ref_table_aquire(struct Ref_Table * ref_table, void const * value) {
 	// claim the entry
 	entry->id = ref_table->buffer.count;
 	ref_table->dense[ref_table->buffer.count] = ref_id;
-	array_any_push(&ref_table->buffer, value);
+	array_any_push_many(&ref_table->buffer, 1, value);
 
 	//
 	return (struct Ref){

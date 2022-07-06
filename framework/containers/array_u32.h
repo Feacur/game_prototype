@@ -15,9 +15,7 @@ void array_u32_clear(struct Array_U32 * array);
 void array_u32_resize(struct Array_U32 * array, uint32_t target_capacity);
 void array_u32_ensure(struct Array_U32 * array, uint32_t target_capacity);
 
-void array_u32_push(struct Array_U32 * array, uint32_t value);
 void array_u32_push_many(struct Array_U32 * array, uint32_t count, uint32_t const * value);
-
 void array_u32_set_many(struct Array_U32 * array, uint32_t index, uint32_t count, uint32_t const * value);
 
 uint32_t array_u32_pop(struct Array_U32 * array);
