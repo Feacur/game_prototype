@@ -22,6 +22,7 @@ struct Gfx_Uniforms gfx_uniforms_init(void) {
 void gfx_uniforms_free(struct Gfx_Uniforms * uniforms) {
 	array_any_free(&uniforms->headers);
 	buffer_free(&uniforms->payload);
+	// common_memset(uniforms, 0, sizeof(*uniforms));
 }
 
 void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {

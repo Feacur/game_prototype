@@ -17,6 +17,7 @@ void wfobj_free(struct WFObj * obj) {
 	array_flt_free(&obj->texcoords);
 	array_flt_free(&obj->normals);
 	array_u32_free(&obj->triangles);
+	// common_memset(obj, 0, sizeof(*obj));
 }
 
 //

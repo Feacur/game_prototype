@@ -13,6 +13,7 @@ void strings_free(struct Strings * strings) {
 	array_u32_free(&strings->offsets);
 	array_u32_free(&strings->lengths);
 	buffer_free(&strings->buffer);
+	// common_memset(strings, 0, sizeof(*strings));
 }
 
 uint32_t strings_find(struct Strings const * strings, struct CString value) {

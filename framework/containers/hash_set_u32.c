@@ -12,7 +12,6 @@ struct Hash_Set_U32 hash_set_u32_init(void) {
 void hash_set_u32_free(struct Hash_Set_U32 * hash_set) {
 	MEMORY_FREE(hash_set->key_hashes);
 	MEMORY_FREE(hash_set->marks);
-
 	common_memset(hash_set, 0, sizeof(*hash_set));
 }
 

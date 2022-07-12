@@ -12,7 +12,7 @@ struct Buffer buffer_init(Allocator * allocator) {
 }
 
 void buffer_free(struct Buffer * buffer) {
-	allocator_default(buffer->allocator)(buffer->data, 0);
+	default_allocator(buffer->allocator)(buffer->data, 0);
 	common_memset(buffer, 0, sizeof(*buffer));
 }
 
@@ -23,7 +23,7 @@ void buffer_clear(struct Buffer * buffer) {
 void buffer_resize(struct Buffer * buffer, size_t target_capacity) {
 	buffer->capacity = target_capacity;
 	if (buffer->count > target_capacity) { buffer->count = target_capacity; }
-	buffer->data = allocator_default(buffer->allocator)(buffer->data, target_capacity);
+	buffer->data = default_allocator(buffer->allocator)(buffer->data, target_capacity);
 }
 
 void buffer_ensure(struct Buffer * buffer, size_t target_capacity) {

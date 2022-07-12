@@ -15,7 +15,6 @@ void hash_table_u32_free(struct Hash_Table_U32 * hash_table) {
 	MEMORY_FREE(hash_table->key_hashes);
 	MEMORY_FREE(hash_table->values);
 	MEMORY_FREE(hash_table->marks);
-
 	common_memset(hash_table, 0, sizeof(*hash_table));
 }
 

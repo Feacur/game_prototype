@@ -6,7 +6,7 @@
 void * memory_reallocate(void * pointer, size_t size);
 void * memory_reallocate_trivial(void * pointer, size_t size);
 
-inline static Allocator * allocator_default(Allocator * allocator) {
+inline static Allocator * default_allocator(Allocator * allocator) {
 	return (allocator != NULL) ? allocator : memory_reallocate;
 }
 

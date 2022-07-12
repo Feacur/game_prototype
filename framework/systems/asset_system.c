@@ -35,6 +35,7 @@ void asset_system_free(struct Asset_System * system) {
 	hash_table_u32_free(&system->types);
 	hash_table_u32_free(&system->refs);
 	hash_table_u32_free(&system->map);
+	// common_memset(system, 0, sizeof(*system));
 }
 
 void asset_system_map_extension(struct Asset_System * system, struct CString type, struct CString extension) {

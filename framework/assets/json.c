@@ -34,8 +34,7 @@ void json_free(struct JSON * value) {
 
 		default: break;
 	}
-	value->type = JSON_NULL;
-	// common_memset(value, 0, sizeof(*value));
+	common_memset(value, 0, sizeof(*value));
 }
 
 // -- JSON get/at element

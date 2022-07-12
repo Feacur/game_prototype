@@ -40,6 +40,7 @@ static void asset_bytes_free(struct Asset_System * system, void * instance) {
 	struct Asset_Bytes * asset = instance;
 	(void)system;
 	MEMORY_FREE(asset->data);
+	common_memset(asset, 0, sizeof(*asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -72,6 +73,7 @@ static void asset_json_free(struct Asset_System * system, void * instance) {
 	struct Asset_JSON * asset = instance;
 	(void)system;
 	json_free(&asset->value);
+	// common_memset(asset, 0, sizeof(*asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -96,6 +98,7 @@ static void asset_shader_free(struct Asset_System * system, void * instance) {
 	struct Asset_Shader * asset = instance;
 	(void)system;
 	gpu_program_free(asset->gpu_ref);
+	common_memset(asset, 0, sizeof(*asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -135,6 +138,7 @@ static void asset_image_free(struct Asset_System * system, void * instance) {
 	struct Asset_Image * asset = instance;
 	(void)system;
 	gpu_texture_free(asset->gpu_ref);
+	common_memset(asset, 0, sizeof(*asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -165,6 +169,7 @@ static void asset_font_free(struct Asset_System * system, void * instance) {
 	font_free(asset->font);
 	font_image_free(asset->font_image);
 	gpu_texture_free(asset->gpu_ref);
+	common_memset(asset, 0, sizeof(*asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -193,6 +198,7 @@ static void asset_target_free(struct Asset_System * system, void * instance) {
 	struct Asset_Target * asset = instance;
 	(void)system;
 	gpu_target_free(asset->gpu_ref);
+	common_memset(asset, 0, sizeof(*asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -219,6 +225,7 @@ static void asset_model_free(struct Asset_System * system, void * instance) {
 	struct Asset_Model * asset = instance;
 	(void)system;
 	gpu_mesh_free(asset->gpu_ref);
+	common_memset(asset, 0, sizeof(*asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -247,6 +254,7 @@ static void asset_material_free(struct Asset_System * system, void * instance) {
 	struct Asset_Material * asset = instance;
 	(void)system;
 	gfx_material_free(&asset->value);
+	common_memset(asset, 0, sizeof(*asset));
 }
 
 //
