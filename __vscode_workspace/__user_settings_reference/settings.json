@@ -1,4 +1,3 @@
-
 // %appdata%/Code/User
 {
 	"terminal.integrated.defaultProfile.windows": "Command Prompt",
@@ -7,6 +6,8 @@
 	"debug.focusWindowOnBreak": false,
 	"security.workspace.trust.enabled": false,
 	"security.workspace.trust.untrustedFiles": "open",
+	"git.enabled": false,
+	// workbench
 	"workbench.startupEditor": "newUntitledFile",
 	"workbench.sideBar.location": "right",
 	"workbench.activityBar.visible": false,
@@ -23,7 +24,8 @@
 	"editor.tabSize": 4,
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": false,
-	"editor.lineNumbers": "on",
+	"editor.autoIndent": "full",
+	"editor.lineNumbers": "relative",
 	"editor.renderWhitespace": "all",
 	"editor.minimap.enabled": false,
 	"editor.scrollBeyondLastColumn": 5,
@@ -34,7 +36,7 @@
 	"editor.autoClosingOvertype": "never",
 	// diff
 	"diffEditor.codeLens": true,
-	"diffEditor.wordWrap": "off",
+	"diffEditor.wordWrap": "inherit",
 	"diffEditor.maxComputationTime": 0,
 	// language: C#
 	"csharp.suppressHiddenDiagnostics": false,
