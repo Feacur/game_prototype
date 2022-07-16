@@ -105,9 +105,9 @@ uint32_t memory_to_system_report(void) {
 	}
 
 	uint32_t const header_blank_offset = ((pointer_digits_count >= 8) ? (pointer_digits_count - 8) : 0);
-	logger_to_console("\n"
+	logger_to_console(
 		"> memory report%*s(bytes: %*.zu | count: %u):\n"
-		"",
+		"\n",
 		header_blank_offset, "",
 		bytes_digits_count,  gs_memory_state.bytes,
 		gs_memory_state.count

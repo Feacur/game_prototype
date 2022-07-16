@@ -371,12 +371,15 @@ static void main_fill_config(struct JSON const * json, void * data) {
 }
 
 int main (int argc, char * argv[]) {
+	logger_to_console("Bonjour!\n\n");
+
 	platform_system_init();
 
 	logger_to_console("> arguments:\n");
 	for (int i = 0; i < argc; i++) {
 		logger_to_console("  %s\n", argv[i]);
 	}
+	logger_to_console("\n");
 
 	process_json(main_fill_settings, &gs_main_settings, S_("assets/main.json"));
 

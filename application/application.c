@@ -37,21 +37,21 @@ static uint64_t get_fixed_ticks(uint64_t target_ticks) {
 }
 
 static bool application_init(void) {
-	logger_to_console("\n"
+	logger_to_console(
 		"> system status:\n"
 		"  power .. %s\n"
-		"",
+		"\n",
 		platform_system_is_powered() ? "on" : "off"
 	);
 
-	logger_to_console("\n"
+	logger_to_console(
 		"> application settings:\n"
 		"  size ......... %u x %u\n"
 		"  vsync ........ %d\n"
 		"  target rate .. %u\n"
 		"  fixed rate ... %u\n"
 		"  slow frames .. %u\n"
-		"",
+		"\n",
 		gs_app.config.size.x, gs_app.config.size.y,
 		gs_app.config.vsync,
 		gs_app.config.frame_refresh_rate,

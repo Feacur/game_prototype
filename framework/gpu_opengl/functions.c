@@ -15,13 +15,12 @@ void gpu_library_functions_init(void * (* get)(struct CString name)) {
 			gs_ogl_version = (uint32_t)(version_major * 10 + version_minor); \
 			\
 			logger_to_console( \
-				"\n" \
 				"> OpenGL info:\n" \
 				"  vendor ..... %s\n" \
 				"  renderer: .. %s\n" \
 				"  version: ... %s\n" \
 				"  shaders: ... %s\n" \
-				"", \
+				"\n", \
 				glGetString(GL_VENDOR), \
 				glGetString(GL_RENDERER), \
 				glGetString(GL_VERSION), \

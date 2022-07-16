@@ -1255,7 +1255,6 @@ void graphics_to_gpu_library_init(void) {
 	glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS,            &max_uniform_locations);
 
 	logger_to_console(
-		"\n"
 		"> OpenGL limits:\n"
 		"  units ......... %d\n"
 		"  - FS .......... %d\n"
@@ -1265,8 +1264,8 @@ void graphics_to_gpu_library_init(void) {
 		"  target size ... %d\n"
 		"  vertices ...... %d\n"
 		"  indices ....... %d\n"
-		"  uniforms .......%d\n"
-		"",
+		"  uniforms ...... %d\n"
+		"\n",
 		max_units,
 		max_units_fragment_shader,
 		max_units_vertex_shader,
@@ -1440,13 +1439,12 @@ static void __stdcall opengl_debug_message_callback(
 ) {
 	(void)userParam;
 	logger_to_console(
-		"\n"
 		"> OpenGL message '0x%x'\n"
 		"  message:  %.*s\n"
 		"  severity: %s\n"
 		"  type:     %s\n"
 		"  source:   %s\n"
-		"",
+		"\n",
 		id,
 		length, message,
 		debug_get_severity(severity),
