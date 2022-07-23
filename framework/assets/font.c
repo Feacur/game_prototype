@@ -111,7 +111,7 @@ struct Glyph_Params font_get_glyph_parameters(struct Font const * font, uint32_t
 	};
 }
 
-void font_fill_buffer(
+void font_render_glyph(
 	struct Font const * font,
 	uint32_t glyph_id, float scale,
 	uint8_t * buffer, uint32_t buffer_width,
@@ -122,7 +122,11 @@ void font_fill_buffer(
 	if (glyph_size_y == 0) { logger_to_console("'glyph_size_y == 0' doesn't make sense\n"); DEBUG_BREAK(); return; }
 
 	if (glyph_id == 0) {
-		common_memset(buffer, 0xff, glyph_size_x * glyph_size_y * sizeof(*buffer));
+		uint8_t * base_target = buffer + offset_y * buffer_width + offset_x;
+		uint32_t const bytes_to_set = glyph_size_x * sizeof(*buffer);
+		for (uint32_t y = 0; y < glyph_size_y; y++) {
+			common_memset(base_target + y * buffer_width, 0xff, bytes_to_set);
+		}
 		return;
 	}
 

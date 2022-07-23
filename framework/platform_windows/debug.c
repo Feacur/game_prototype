@@ -119,8 +119,8 @@ bool debug_to_system_init(void) {
 		.buffer  = buffer_init(memory_reallocate_trivial),
 		.scratch = buffer_init(memory_reallocate_trivial),
 	};
-	buffer_ensure(&gs_platform_debug.buffer, 4096);
-	buffer_ensure(&gs_platform_debug.buffer, 512);
+	buffer_ensure(&gs_platform_debug.buffer,  4096);
+	buffer_ensure(&gs_platform_debug.scratch, 512);
 
 	SymInitialize(GetCurrentProcess(), NULL, TRUE);
 	return true;

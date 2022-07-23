@@ -9,7 +9,6 @@
 
 #include "framework/graphics/types.c"
 #include "framework/graphics/material.c"
-#include "framework/graphics/font_image.c"
 
 #include "framework/containers/internal.c"
 #include "framework/containers/buffer.c"
@@ -34,6 +33,7 @@
 #include "framework/assets/mesh.c"
 #include "framework/assets/image.c"
 #include "framework/assets/font.c"
+#include "framework/assets/font_atlas.c"
 
 #include "framework/systems/asset_ref.c"
 #include "framework/systems/asset_system.c"

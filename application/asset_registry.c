@@ -7,12 +7,12 @@
 #include "framework/systems/asset_system.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
-#include "framework/graphics/font_image.h"
 
-#include "framework/assets/font.h"
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
 #include "framework/assets/json.h"
+#include "framework/assets/font.h"
+#include "framework/assets/font_atlas.h"
 
 #include "asset_parser.h"
 #include "utilities.h"
@@ -154,12 +154,12 @@ static void asset_font_init(struct Asset_System * system, void * instance, struc
 
 	// @note: memory ownership transfer
 	struct Font * font = font_init(&file_buffer);
-	struct Font_Image * font_image = font_image_init(font);
+	struct Font_Image * font_atlas = font_atlas_init(font);
 
 	*asset = (struct Asset_Font){
 		.font = font,
-		.font_image = font_image,
-		.gpu_ref = gpu_texture_init(font_image_get_asset(font_image)),
+		.font_atlas = font_atlas,
+		.gpu_ref = gpu_texture_init(font_atlas_get_asset(font_atlas)),
 	};
 }
 
@@ -167,7 +167,7 @@ static void asset_font_free(struct Asset_System * system, void * instance) {
 	struct Asset_Font * asset = instance;
 	(void)system;
 	font_free(asset->font);
-	font_image_free(asset->font_image);
+	font_atlas_free(asset->font_atlas);
 	gpu_texture_free(asset->gpu_ref);
 	common_memset(asset, 0, sizeof(*asset));
 }

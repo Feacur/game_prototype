@@ -24,7 +24,8 @@ void font_free(struct Font * font);
 
 uint32_t font_get_glyph_id(struct Font const * font, uint32_t codepoint);
 struct Glyph_Params font_get_glyph_parameters(struct Font const * font, uint32_t glyph_id, float scale);
-void font_fill_buffer(
+
+void font_render_glyph(
 	struct Font const * font,
 	uint32_t glyph_id, float scale,
 	uint8_t * buffer, uint32_t buffer_width,

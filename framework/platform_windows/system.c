@@ -126,6 +126,7 @@ void platform_system_update(void) {
 }
 
 void platform_system_sleep(uint32_t millis) {
+	// if (millis == 0) { YieldProcessor(); return; }
 	Sleep(millis);
 }
 
