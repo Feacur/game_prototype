@@ -250,11 +250,6 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 		FOR_HASH_SET_U64 (&batcher->fonts_cache, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
-			font_atlas_add_kerning_all(font->font_atlas);
-		}
-
-		FOR_HASH_SET_U64 (&batcher->fonts_cache, it) {
-			struct Asset_Font const * font = (void *)it.key_hash;
 			font_atlas_render(font->font_atlas);
 		}
 

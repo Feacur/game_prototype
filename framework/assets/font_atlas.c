@@ -19,7 +19,6 @@ struct Font_Image {
 	//
 	struct Font const * font;
 	struct Hash_Table_U64 table;   // `struct Font_Key` : `struct Font_Glyph`
-	struct Hash_Table_U64 kerning; // codepoints pair : offset
 	struct Array_Any scratch;
 	bool rendered;
 };
@@ -61,7 +60,6 @@ struct Font_Image * font_atlas_init(struct Font const * font) {
 		},
 		.font = font,
 		.table = hash_table_u64_init(sizeof(struct Font_Glyph)),
-		.kerning = hash_table_u64_init(sizeof(int32_t)),
 		.scratch = array_any_init(sizeof(struct Font_Symbol)),
 	};
 	return font_atlas;
@@ -70,7 +68,6 @@ struct Font_Image * font_atlas_init(struct Font const * font) {
 void font_atlas_free(struct Font_Image * font_atlas) {
 	image_free(&font_atlas->buffer);
 	hash_table_u64_free(&font_atlas->table);
-	hash_table_u64_free(&font_atlas->kerning);
 	array_any_free(&font_atlas->scratch);
 
 	common_memset(font_atlas, 0, sizeof(*font_atlas));
@@ -126,70 +123,7 @@ void font_atlas_add_glyphs_from_text(struct Font_Image * font_atlas, uint32_t le
 	}
 }
 
-inline static void font_atlas_add_kerning(struct Font_Image * font_atlas, uint32_t codepoint1, uint32_t codepoint2, uint32_t glyph1, uint32_t glyph2);
-void font_atlas_add_kerning_from_range(struct Font_Image * font_atlas, uint32_t from, uint32_t to) {
-	uint32_t * glyphs = MEMORY_ALLOCATE_ARRAY(uint32_t, to - from + 1);
-
-	uint32_t count = 0;
-	for (uint32_t codepoint = from; codepoint <= to; codepoint++) {
-		uint32_t const glyph_id = font_get_glyph_id(font_atlas->font, codepoint);
-		if (glyph_id == 0) { continue; }
-		glyphs[count] = glyph_id;
-		count++;
-	}
-
-	for (uint32_t i1 = 0; i1 < count; i1++) {
-		uint32_t const codepoint1 = from + i1;
-		uint32_t const glyph1 = glyphs[i1];
-		for (uint32_t i2 = 0; i2 < count; i2++) {
-			font_atlas_add_kerning(font_atlas, codepoint1, from + i2, glyph1, glyphs[i2]);
-		}
-	}
-
-	MEMORY_FREE(glyphs);
-}
-
-void font_atlas_add_kerning_from_text(struct Font_Image * font_atlas, uint32_t length, uint8_t const * data) {
-	uint32_t codepoints_count = 0;
-	FOR_UTF8 (length, data, it) { codepoints_count++; }
-
-	array_any_ensure(&font_atlas->scratch, codepoints_count);
-	struct Glyph_Codepoint * pairs = font_atlas->scratch.data;
-
-	uint32_t count = 0;
-	FOR_UTF8 (length, data, it) {
-		uint32_t const glyph_id = font_get_glyph_id(font_atlas->font, it.codepoint);
-		if (glyph_id == 0) { continue; }
-		pairs[count] = (struct Glyph_Codepoint){
-			.glyph = glyph_id,
-			.codepoint = it.codepoint,
-		};
-		count++;
-	}
-
-	for (uint32_t i1 = 0; i1 < count; i1++) {
-		struct Glyph_Codepoint const pair1 = pairs[i1];
-		for (uint32_t i2 = 0; i2 < count; i2++) {
-			struct Glyph_Codepoint const pair2 = pairs[i2];
-			font_atlas_add_kerning(font_atlas, pair1.codepoint, pair2.codepoint, pair1.glyph, pair2.glyph);
-		}
-	}
-}
-
 inline static struct Font_Key font_atlas_get_key(uint64_t value);
-void font_atlas_add_kerning_all(struct Font_Image * font_atlas) {
-	hash_table_u64_clear(&font_atlas->kerning);
-	FOR_HASH_TABLE_U64 (&font_atlas->table, it1) {
-		struct Font_Glyph const * glyph1 = it1.value;
-		struct Font_Key const key1 = font_atlas_get_key(it1.key_hash);
-		FOR_HASH_TABLE_U64 (&font_atlas->table, it2) {
-			struct Font_Glyph const * glyph2 = it2.value;
-			struct Font_Key const key2 = font_atlas_get_key(it2.key_hash);
-			font_atlas_add_kerning(font_atlas, key1.codepoint, key2.codepoint, glyph1->id, glyph2->id);
-		}
-	}
-}
-
 static int font_atlas_sort_comparison(void const * v1, void const * v2);
 void font_atlas_render(struct Font_Image * font_atlas) {
 	uint32_t const padding = 1;
@@ -383,11 +317,10 @@ float font_atlas_get_gap(struct Font_Image const * font_atlas, float scale) {
 }
 
 float font_atlas_get_kerning(struct Font_Image const * font_atlas, uint32_t codepoint1, uint32_t codepoint2, float scale) {
-	uint64_t const key_hash = ((uint64_t)codepoint2 << 32) | (uint64_t)codepoint1;
-	int32_t const * value = hash_table_u64_get(&font_atlas->kerning, key_hash);
-	return (value != NULL) 
-		? ((float)*value) * scale
-		: 0;
+	uint32_t const glyph_id1 = font_get_glyph_id(font_atlas->font, codepoint1);
+	uint32_t const glyph_id2 = font_get_glyph_id(font_atlas->font, codepoint2);
+	int32_t  const kerning   = font_get_kerning(font_atlas->font, glyph_id1, glyph_id2);
+	return (float)kerning * scale;
 }
 
 //
@@ -461,16 +394,6 @@ inline static void font_atlas_add_glyph(struct Font_Image * font_atlas, uint32_t
 	});
 
 	font_atlas->rendered = false;
-}
-
-inline static void font_atlas_add_kerning(struct Font_Image * font_atlas, uint32_t codepoint1, uint32_t codepoint2, uint32_t glyph1, uint32_t glyph2) {
-	uint64_t const key_hash = ((uint64_t)codepoint2 << 32) | (uint64_t)codepoint1;
-	if (hash_table_u64_get(&font_atlas->kerning, key_hash) != NULL) { return; }
-
-	int32_t const value = font_get_kerning(font_atlas->font, glyph1, glyph2);
-	if (value == 0) { return; }
-
-	hash_table_u64_set(&font_atlas->kerning, key_hash, &value);
 }
 
 #undef GLYPH_USAGE_MAX
