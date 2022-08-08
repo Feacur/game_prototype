@@ -3,6 +3,7 @@
 #include "framework/platform_system.h"
 #include "framework/platform_window.h"
 #include "framework/gpu_context.h"
+#include "framework/maths.h"
 #include "framework/input.h"
 #include "framework/logger.h"
 
@@ -73,14 +74,11 @@ static bool application_init(void) {
 	gpu_context_start_frame(gs_app.gpu_context, platform_window_get_cached_device(gs_app.window));
 
 	// setup timer, rewind it one frame
+	gs_app.ticks.per_second = platform_timer_get_ticks_per_second();
 	gpu_context_set_vsync(gs_app.gpu_context, gs_app.config.vsync);
 	int32_t const vsync_mode = gpu_context_get_vsync(gs_app.gpu_context);
-	uint64_t const target_ticks = get_target_ticks(vsync_mode);
-	gs_app.ticks = (struct Application_Ticks){
-		.elapsed     = target_ticks,
-		.per_second  = platform_timer_get_ticks_per_second(),
-		.frame_start = platform_timer_get_ticks() - target_ticks,
-	};
+	gs_app.ticks.elapsed     = get_target_ticks(vsync_mode);
+	gs_app.ticks.frame_start = platform_timer_get_ticks() - gs_app.ticks.elapsed;
 
 	if (gs_app.callbacks.init != NULL) {
 		gs_app.callbacks.init();
