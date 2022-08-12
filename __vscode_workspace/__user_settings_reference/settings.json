@@ -1,12 +1,21 @@
 // %appdata%/Code/User
 {
 	"terminal.integrated.defaultProfile.windows": "Command Prompt",
+	"terminal.integrated.enablePersistentSessions": false,
+	"terminal.integrated.shellIntegration.history": 0,
+	"debug.console.historySuggestions": false,
 	"search.quickOpen.includeHistory": false,
-	"debug.focusEditorOnBreak": false,
-	"debug.focusWindowOnBreak": false,
 	"security.workspace.trust.enabled": false,
 	"security.workspace.trust.untrustedFiles": "open",
+	"files.refactoring.autoSave": false,
+	"scm.autoReveal": false,
+	// git
 	"git.enabled": false,
+	"git.mergeEditor": false,
+	"git.autorefresh": false,
+	"git.enableStatusBarSync": false,
+	"git.detectSubmodules": false,
+	"github.gitAuthentication": false,
 	// workbench
 	"workbench.startupEditor": "newUntitledFile",
 	"workbench.sideBar.location": "right",
@@ -15,8 +24,13 @@
 	"workbench.editor.restoreViewState": false,
 	"workbench.commandPalette.history": 0,
 	"workbench.colorTheme": "Gruvbox Dark Medium",
+	"workbench.editor.preferHistoryBasedLanguageDetection": false,
+	"workbench.editor.historyBasedLanguageDetection": false,
+	"workbench.editor.focusRecentEditorAfterClose": false,
+	"workbench.editor.autoLockGroups": {
+		"terminalEditor": false
+	},
 	// editor
-	"editor.codeLens": true,
 	"editor.wordWrap": "off",
 	"editor.fontFamily": "JetBrains Mono",
 	"editor.fontLigatures": false,
@@ -24,7 +38,6 @@
 	"editor.tabSize": 4,
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": false,
-	"editor.autoIndent": "full",
 	"editor.lineNumbers": "relative",
 	"editor.renderWhitespace": "all",
 	"editor.minimap.enabled": false,
@@ -34,9 +47,9 @@
 	"editor.autoClosingQuotes": "never",
 	"editor.autoClosingDelete": "never",
 	"editor.autoClosingOvertype": "never",
+	"editor.trimAutoWhitespace": true,
 	// diff
 	"diffEditor.codeLens": true,
-	"diffEditor.wordWrap": "inherit",
 	"diffEditor.maxComputationTime": 0,
 	// language: C#
 	"csharp.suppressHiddenDiagnostics": false,
@@ -49,7 +62,7 @@
 	// extensions: ms-vscode.cpptools
 	"C_Cpp.default.cStandard": "c99",
 	"C_Cpp.default.cppStandard": "c++11",
-	"C_Cpp.default.compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+	"C_Cpp.default.compilerPath": "clangd",
 	"C_Cpp.default.intelliSenseMode": "clang-x64",
 	// "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe",
 	// "C_Cpp.default.intelliSenseMode": "msvc-x64",
@@ -62,7 +75,7 @@
 	"C_Cpp.intelliSenseCacheSize": 0,
 	"C_Cpp.intelliSenseMemoryLimit": 256,
 	// extensions: llvm-vs-code-extensions.vscode-clangd
-	"clangd.path": "C:/Program Files/LLVM/bin/clangd.exe",
+	"clangd.path": "clangd",
 	"clangd.arguments": [
 		"--compile-commands-dir=${workspaceFolder}",
 		"--header-insertion=never",

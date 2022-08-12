@@ -44,6 +44,6 @@
 	"translate_tabs_to_spaces": false,
 	"scroll_past_end": true,
 	"word_wrap": false,
-	"word_width": 0,
 	"control_character_style": "names",
+	"trim_automatic_white_space": true,
 }
