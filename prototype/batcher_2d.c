@@ -50,9 +50,9 @@ struct Batcher_2D_Vertex {
 struct Batcher_2D {
 	struct Batcher_2D_Batch batch;
 	struct Buffer strings;
-	struct Array_Any batches; // `struct Batcher_2D_Batch`
-	struct Array_Any texts;   // `struct Batcher_2D_Text`
-	struct Hash_Set_U64 fonts_cache;
+	struct Array_Any batches;        // `struct Batcher_2D_Batch`
+	struct Array_Any texts;          // `struct Batcher_2D_Text`
+	struct Hash_Set_U64 fonts_cache; // `struct Asset_Font const *`
 	//
 	struct mat4 matrix;
 	//

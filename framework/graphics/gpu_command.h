@@ -42,6 +42,7 @@ struct GPU_Command_Material {
 };
 
 struct GPU_Command_Uniform {
+	struct Ref gpu_program_ref;
 	struct Gfx_Material_Override override;
 };
 

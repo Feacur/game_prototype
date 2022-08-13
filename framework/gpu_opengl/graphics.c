@@ -1141,8 +1141,14 @@ inline static void gpu_execute_material(struct GPU_Command_Material const * comm
 }
 
 inline static void gpu_execute_uniform(struct GPU_Command_Uniform const * command) {
-	FOR_REF_TABLE (&gs_graphics_state.programs, it) {
-		gpu_upload_uniforms(it.value, command->override.uniforms, command->override.offset, command->override.count);
+	if (ref_equals(command->gpu_program_ref, c_ref_empty)) {
+		FOR_REF_TABLE (&gs_graphics_state.programs, it) {
+			gpu_upload_uniforms(it.value, command->override.uniforms, command->override.offset, command->override.count);
+		}
+	}
+	else {
+		struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, command->gpu_program_ref);
+		gpu_upload_uniforms(gpu_program, command->override.uniforms, command->override.offset, command->override.count);
 	}
 }
 

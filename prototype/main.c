@@ -290,6 +290,7 @@ static void prototype_draw_entities(void) {
 						(struct GPU_Command){
 							.type = GPU_COMMAND_TYPE_UNIFORM,
 							.as.uniform = {
+								.gpu_program_ref = material->value.gpu_program_ref,
 								.override = {
 									.uniforms = &gs_game.uniforms,
 									.offset = override_offset,
