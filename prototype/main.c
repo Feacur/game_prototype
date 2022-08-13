@@ -154,9 +154,10 @@ static void prototype_tick_entities(void) {
 static void prototype_draw_entities(void) {
 	struct uvec2 const screen_size = application_get_screen_size();
 
-	uint32_t const uniform_projection = graphics_add_uniform_id(S_("u_Projection"));
-	uint32_t const uniform_camera     = graphics_add_uniform_id(S_("u_Camera"));
-	uint32_t const uniform_transform  = graphics_add_uniform_id(S_("u_Transform"));
+	uint32_t const uniform_projection    = graphics_add_uniform_id(S_("u_Projection"));
+	uint32_t const uniform_camera        = graphics_add_uniform_id(S_("u_Camera"));
+	uint32_t const uniform_transform     = graphics_add_uniform_id(S_("u_Transform"));
+	uint32_t const uniform_viewport_size = graphics_add_uniform_id(S_("u_ViewportSize"));
 
 	// @todo: override material params per shader or material where possible
 
@@ -181,6 +182,35 @@ static void prototype_draw_entities(void) {
 		struct mat4 const mat4_camera = mat4_mul_mat(mat4_projection, mat4_inverse_camera);
 
 		// process camera
+		{
+			struct vec2 const viewport_size_r32 = {(float)viewport_size.x, (float)viewport_size.y};
+
+			uint32_t const override_offset = gs_game.uniforms.headers.count;
+			gfx_uniforms_push(&gs_game.uniforms, uniform_projection, (struct Gfx_Uniform_In){
+				.size = sizeof(mat4_projection),
+				.data = &mat4_projection,
+			});
+			gfx_uniforms_push(&gs_game.uniforms, uniform_camera, (struct Gfx_Uniform_In){
+				.size = sizeof(mat4_inverse_camera),
+				.data = &mat4_inverse_camera,
+			});
+			gfx_uniforms_push(&gs_game.uniforms, uniform_viewport_size, (struct Gfx_Uniform_In){
+				.size = sizeof(viewport_size_r32),
+				.data = &viewport_size_r32,
+			});
+
+			array_any_push_many(&gs_game.gpu_commands, 1, &(struct GPU_Command){
+				.type = GPU_COMMAND_TYPE_UNIFORM,
+				.as.uniform = {
+					.override = {
+						.uniforms = &gs_game.uniforms,
+						.offset = override_offset,
+						.count = (gs_game.uniforms.headers.count - override_offset),
+					},
+				},
+			});
+		}
+
 		if (!ref_equals(previous_gpu_target_ref, camera->gpu_target_ref)) {
 			previous_gpu_target_ref = camera->gpu_target_ref;
 			batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
@@ -201,7 +231,7 @@ static void prototype_draw_entities(void) {
 				.as.clear = {
 					.mask  = camera->clear.mask,
 					.color = camera->clear.color,
-				}
+				},
 			});
 		}
 
@@ -239,35 +269,39 @@ static void prototype_draw_entities(void) {
 				case ENTITY_TYPE_NONE: break;
 
 				case ENTITY_TYPE_MESH: {
+					batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
+
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
 					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->mesh);
 
-					// @todo: move out of the loop per-camera and global uniforms
 					uint32_t const override_offset = gs_game.uniforms.headers.count;
-					gfx_uniforms_push(&gs_game.uniforms, uniform_projection, (struct Gfx_Uniform_In){
-						.size = sizeof(mat4_projection),
-						.data = &mat4_projection,
-					});
-					gfx_uniforms_push(&gs_game.uniforms, uniform_camera, (struct Gfx_Uniform_In){
-						.size = sizeof(mat4_inverse_camera),
-						.data = &mat4_inverse_camera,
-					});
 					gfx_uniforms_push(&gs_game.uniforms, uniform_transform, (struct Gfx_Uniform_In){
 						.size = sizeof(mat4_entity),
 						.data = &mat4_entity,
 					});
 
-					batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
-					array_any_push_many(&gs_game.gpu_commands, 1, &(struct GPU_Command){
-						.type = GPU_COMMAND_TYPE_DRAW,
-						.as.draw = {
-							.material = &material->value,
-							.gpu_mesh_ref = model->gpu_ref,
-							.override = {
-								.uniforms = &gs_game.uniforms,
-								.offset = override_offset,
-								.count = (gs_game.uniforms.headers.count - override_offset),
-							}
+					array_any_push_many(&gs_game.gpu_commands, 3, (struct GPU_Command[]){
+						(struct GPU_Command){
+							.type = GPU_COMMAND_TYPE_MATERIAL,
+							.as.material = {
+								.material = &material->value,
+							},
+						},
+						(struct GPU_Command){
+							.type = GPU_COMMAND_TYPE_UNIFORM,
+							.as.uniform = {
+								.override = {
+									.uniforms = &gs_game.uniforms,
+									.offset = override_offset,
+									.count = (gs_game.uniforms.headers.count - override_offset),
+								},
+							},
+						},
+						(struct GPU_Command){
+							.type = GPU_COMMAND_TYPE_DRAW,
+							.as.draw = {
+								.gpu_mesh_ref = model->gpu_ref,
+							},
 						},
 					});
 				} break;

@@ -17,6 +17,8 @@ enum GPU_Command_Type {
 	GPU_COMMAND_TYPE_CULL,
 	GPU_COMMAND_TYPE_TARGET,
 	GPU_COMMAND_TYPE_CLEAR,
+	GPU_COMMAND_TYPE_MATERIAL,
+	GPU_COMMAND_TYPE_UNIFORM,
 	GPU_COMMAND_TYPE_DRAW,
 };
 
@@ -35,20 +37,28 @@ struct GPU_Command_Clear {
 	struct vec4 color;
 };
 
-struct GPU_Command_Draw {
+struct GPU_Command_Material {
 	struct Gfx_Material const * material;
+};
+
+struct GPU_Command_Uniform {
+	struct Gfx_Material_Override override;
+};
+
+struct GPU_Command_Draw {
 	struct Ref gpu_mesh_ref;
 	uint32_t offset, length;
-	struct Gfx_Material_Override override;
 };
 
 struct GPU_Command {
 	enum GPU_Command_Type type;
 	union {
-		struct GPU_Command_Cull   cull;
-		struct GPU_Command_Target target;
-		struct GPU_Command_Clear  clear;
-		struct GPU_Command_Draw   draw;
+		struct GPU_Command_Cull     cull;
+		struct GPU_Command_Target   target;
+		struct GPU_Command_Clear    clear;
+		struct GPU_Command_Material material;
+		struct GPU_Command_Uniform  uniform;
+		struct GPU_Command_Draw     draw;
 	} as;
 };
 

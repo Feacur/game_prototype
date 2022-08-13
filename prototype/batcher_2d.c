@@ -353,12 +353,19 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * g
 	for (uint32_t i = 0; i < batcher->batches.count; i++) {
 		struct Batcher_2D_Batch const * batch = array_any_at(&batcher->batches, i);
 
-		array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
-			.type = GPU_COMMAND_TYPE_DRAW,
-			.as.draw = {
-				.material = batch->material,
-				.gpu_mesh_ref = batcher->gpu_mesh_ref,
-				.offset = batch->offset, .length = batch->length,
+		array_any_push_many(gpu_commands, 2, (struct GPU_Command[]){
+			(struct GPU_Command){
+				.type = GPU_COMMAND_TYPE_MATERIAL,
+				.as.material = {
+					.material = batch->material,
+				},
+			},
+			(struct GPU_Command){
+				.type = GPU_COMMAND_TYPE_DRAW,
+				.as.draw = {
+					.gpu_mesh_ref = batcher->gpu_mesh_ref,
+					.offset = batch->offset, .length = batch->length,
+				},
 			},
 		});
 	}

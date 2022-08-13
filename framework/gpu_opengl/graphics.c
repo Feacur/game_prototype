@@ -1127,13 +1127,26 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 	glClear(clear_bitfield);
 }
 
-inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
+inline static void gpu_execute_material(struct GPU_Command_Material const * command) {
 	if (command->material == NULL) { logger_to_console("material is null"); DEBUG_BREAK(); return; }
 	if (ref_equals(command->material->gpu_program_ref, c_ref_empty)) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
 
 	struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, command->material->gpu_program_ref);
 	if (gpu_program == NULL) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
 
+	gpu_set_blend_mode(command->material->blend_mode);
+	gpu_set_depth_mode(command->material->depth_mode);
+	gpu_select_program(command->material->gpu_program_ref);
+	gpu_upload_uniforms(gpu_program, &command->material->uniforms, 0, command->material->uniforms.headers.count);
+}
+
+inline static void gpu_execute_uniform(struct GPU_Command_Uniform const * command) {
+	FOR_REF_TABLE (&gs_graphics_state.programs, it) {
+		gpu_upload_uniforms(it.value, command->override.uniforms, command->override.offset, command->override.count);
+	}
+}
+
+inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 	if (ref_equals(command->gpu_mesh_ref, c_ref_empty)) { logger_to_console("mesh is null"); DEBUG_BREAK(); return; }
 	struct Gpu_Mesh const * mesh = ref_table_get(&gs_graphics_state.meshes, command->gpu_mesh_ref);
 	if (mesh == NULL) { logger_to_console("mesh is null"); DEBUG_BREAK(); return; }
@@ -1150,14 +1163,7 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 		? command->length
 		: buffer->count;
 
-	gpu_set_blend_mode(command->material->blend_mode);
-	gpu_set_depth_mode(command->material->depth_mode);
-
-	gpu_select_program(command->material->gpu_program_ref);
 	gpu_select_mesh(command->gpu_mesh_ref);
-
-	gpu_upload_uniforms(gpu_program, &command->material->uniforms, 0, command->material->uniforms.headers.count);
-	gpu_upload_uniforms(gpu_program, command->override.uniforms, command->override.offset, command->override.count);
 
 	if (buffer != NULL) {
 		enum Data_Type const elements_type = buffer->parameters.type;
@@ -1191,11 +1197,13 @@ void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 	for (uint32_t i = 0; i < length; i++) {
 		struct GPU_Command const * command = commands + i;
 		switch (command->type) {
-			default:                      logger_to_console("unknown command"); DEBUG_BREAK(); break;
-			case GPU_COMMAND_TYPE_CULL:   gpu_execute_cull(&command->as.cull);     break;
-			case GPU_COMMAND_TYPE_TARGET: gpu_execute_target(&command->as.target); break;
-			case GPU_COMMAND_TYPE_CLEAR:  gpu_execute_clear(&command->as.clear);   break;
-			case GPU_COMMAND_TYPE_DRAW:   gpu_execute_draw(&command->as.draw);     break;
+			default:                        logger_to_console("unknown command"); DEBUG_BREAK(); break;
+			case GPU_COMMAND_TYPE_CULL:     gpu_execute_cull(&command->as.cull);         break;
+			case GPU_COMMAND_TYPE_TARGET:   gpu_execute_target(&command->as.target);     break;
+			case GPU_COMMAND_TYPE_CLEAR:    gpu_execute_clear(&command->as.clear);       break;
+			case GPU_COMMAND_TYPE_MATERIAL: gpu_execute_material(&command->as.material); break;
+			case GPU_COMMAND_TYPE_UNIFORM:  gpu_execute_uniform(&command->as.uniform);   break;
+			case GPU_COMMAND_TYPE_DRAW:     gpu_execute_draw(&command->as.draw);         break;
 		}
 	}
 }

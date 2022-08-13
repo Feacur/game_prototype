@@ -13,7 +13,6 @@
 
 // @todo: push these as uniform data
 const float ncp = 0.1, fcp = R32_POS_INFINITY;
-const vec2 screen_size = vec2(320, 180);
 
 
 
@@ -44,6 +43,8 @@ in vec2 v_TexCoord;
 uniform vec4 prop_Color;
 uniform sampler2D prop_Texture;
 
+uniform vec2 u_ViewportSize;
+
 layout(location = 0) out vec4 out_color;
 
 float linearize_depth(float depth)
@@ -57,6 +58,6 @@ void main()
 	vec4 texture_pixel = texture(prop_Texture, v_TexCoord);
 	float depth = clamp(linearize_depth(gl_FragCoord.z) / 10, 0, 1);
 	out_color = texture_pixel * prop_Color;
-	out_color = mix(out_color, vec4(depth, depth, depth, 1), gl_FragCoord.x / screen_size.x > 0.5);
+	out_color = mix(out_color, vec4(depth, depth, depth, 1), gl_FragCoord.x / u_ViewportSize.x > 0.5);
 }
 #endif
