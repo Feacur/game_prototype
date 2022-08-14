@@ -16,6 +16,7 @@ project ...... build scripts, debug scripts; target translation units; current c
 ```
 __sublime_project ... project, intellisense, reference settings
 __vscode_workspace .. project, intellisense, reference settings
+__notepad++ ......... a bunch of dotfiles to build upon
 __nvim .............. a bunch of dotfiles to build upon
 
 you are free to use any other IDE, it's just me who didn't supply additional project files/options

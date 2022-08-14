@@ -4,10 +4,6 @@
 			"path": "."
 		},
 		{
-			"name": "root_folder",
-			"path": "..",
-		},
-		{
 			"path": "../framework"
 		},
 		{
@@ -29,10 +25,17 @@
 			"path": "../bin"
 		},
 		{
-			"path": "../__nvim"
+			"name": "root_folder",
+			"path": "..",
 		},
 		{
 			"path": "../__sublime_project"
+		},
+		{
+			"path": "../__notepad++"
+		},
+		{
+			"path": "../__nvim"
 		},
 	],
 	"settings": {

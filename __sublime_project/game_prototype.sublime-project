@@ -5,12 +5,6 @@
 			"file_exclude_patterns": ["*.sublime-workspace"],
 		},
 		{
-			"name": "root_folder",
-			"path": "..",
-			// exclude each subfolder of the root_folder
-			"folder_include_patterns": ["."],
-		},
-		{
 			"path": "../framework",
 		},
 		{
@@ -32,10 +26,19 @@
 			"path": "../bin",
 		},
 		{
-			"path": "../__nvim",
+			"name": "root_folder",
+			"path": "..",
+			// exclude each subfolder of the root_folder
+			"folder_include_patterns": ["."],
 		},
 		{
 			"path": "../__vscode_workspace",
+		},
+		{
+			"path": "../__notepad++",
+		},
+		{
+			"path": "../__nvim",
 		},
 	],
 	"settings": {

@@ -43,7 +43,7 @@ in vec2 v_TexCoord;
 uniform vec4 prop_Color;
 uniform sampler2D prop_Texture;
 
-uniform vec2 u_ViewportSize;
+uniform uvec2 u_ViewportSize;
 
 layout(location = 0) out vec4 out_color;
 

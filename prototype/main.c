@@ -183,8 +183,6 @@ static void prototype_draw_entities(void) {
 
 		// process camera
 		{
-			struct vec2 const viewport_size_r32 = {(float)viewport_size.x, (float)viewport_size.y};
-
 			uint32_t const override_offset = gs_game.uniforms.headers.count;
 			gfx_uniforms_push(&gs_game.uniforms, uniform_projection, (struct Gfx_Uniform_In){
 				.size = sizeof(mat4_projection),
@@ -195,8 +193,8 @@ static void prototype_draw_entities(void) {
 				.data = &mat4_inverse_camera,
 			});
 			gfx_uniforms_push(&gs_game.uniforms, uniform_viewport_size, (struct Gfx_Uniform_In){
-				.size = sizeof(viewport_size_r32),
-				.data = &viewport_size_r32,
+				.size = sizeof(viewport_size),
+				.data = &viewport_size,
 			});
 
 			array_any_push_many(&gs_game.gpu_commands, 1, &(struct GPU_Command){

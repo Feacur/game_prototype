@@ -106,9 +106,10 @@ Disable Clang warnings:
 - float-equal                     (allow exact floating point values comparison)
 - reserved-id-macro               (source: third-party libs; `GL`, `KHR`; is easy to fix)
 - nonportable-system-include-path (source: third-party libs; `GL`; is easy to fix)
-- assign-enum                     (allow enum values have implicit flags cominations)
+- assign-enum                     (allow enum values have implicit flags combinations)
 - bad-function-cast               (allow casting function results without temporary assignment)
 - documentation-unknown-command   (source: clangd; `@note`; doesn't affect compilation)
+- declaration-after-statement     (allow mixing code and variables declarations)
 
 Disable MSVC warnings:
 - 5105, macro expansion producing 'defined' has undefined behavior (source: OS; `winbase.h`; is unfixable)

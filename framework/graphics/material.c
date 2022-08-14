@@ -57,8 +57,6 @@ void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, stru
 		.id = uniform_id,
 		.size = value.size,
 		.offset = (uint32_t)uniforms->payload.count,
-		// .type = uniform->type,
-		// .array_size = uniform->array_size,
 	});
 	buffer_push_many(&uniforms->payload, value.size, value.data);
 }
