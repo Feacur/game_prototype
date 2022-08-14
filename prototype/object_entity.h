@@ -5,6 +5,8 @@
 #include "framework/graphics/material.h"
 #include "framework/graphics/types.h"
 
+#include "application/components.h"
+
 #include "components.h"
 
 enum Entity_Type {

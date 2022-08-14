@@ -4,6 +4,8 @@
 #include "framework/containers/ref.h"
 #include "framework/graphics/types.h"
 
+#include "application/components.h"
+
 #include "components.h"
 
 enum Camera_Mode {

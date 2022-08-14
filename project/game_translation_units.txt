@@ -53,10 +53,11 @@ application/application.c
 application/asset_registry.c
 application/asset_parser.c
 application/utilities.c
+application/components.c
+application/batcher_2d.c
 
 prototype/object_camera.c
 prototype/object_entity.c
 prototype/game_state.c
 prototype/components.c
-prototype/batcher_2d.c
 prototype/main.c

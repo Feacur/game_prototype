@@ -18,7 +18,7 @@
 #include "framework/graphics/gpu_command.h"
 #include "framework/maths.h"
 
-#include "application/asset_types.h"
+#include "asset_types.h"
 
 // @todo: UTF-8 edge cases, different languages, LTR/RTL, ligatures, etc.
 // @idea: point to a `Gfx_Material` with an `Asset_Ref` instead

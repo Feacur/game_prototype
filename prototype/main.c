@@ -23,12 +23,13 @@
 #include "application/application.h"
 #include "application/asset_types.h"
 #include "application/utilities.h"
+#include "application/components.h"
+#include "application/batcher_2d.h"
 
 #include "object_camera.h"
 #include "object_entity.h"
 #include "game_state.h"
 #include "components.h"
-#include "batcher_2d.h"
 
 static struct Main_Settings {
 	struct Strings strings;

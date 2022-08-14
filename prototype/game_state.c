@@ -13,8 +13,9 @@
 #include "application/asset_types.h"
 #include "application/asset_registry.h"
 #include "application/asset_parser.h"
+#include "application/components.h"
+#include "application/batcher_2d.h"
 
-#include "batcher_2d.h"
 #include "components.h"
 #include "object_camera.h"
 #include "object_entity.h"

@@ -58,12 +58,13 @@
 #include "application/asset_registry.c"
 #include "application/asset_parser.c"
 #include "application/utilities.c"
+#include "application/components.c"
+#include "application/batcher_2d.c"
 
 #include "prototype/object_camera.c"
 #include "prototype/object_entity.c"
 #include "prototype/game_state.c"
 #include "prototype/components.c"
-#include "prototype/batcher_2d.c"
 #include "prototype/main.c"
 
 /*
