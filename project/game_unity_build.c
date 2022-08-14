@@ -60,6 +60,7 @@
 #include "application/utilities.c"
 #include "application/components.c"
 #include "application/batcher_2d.c"
+#include "application/renderer.c"
 
 #include "prototype/object_camera.c"
 #include "prototype/object_entity.c"

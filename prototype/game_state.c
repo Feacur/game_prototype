@@ -15,6 +15,7 @@
 #include "application/asset_parser.h"
 #include "application/components.h"
 #include "application/batcher_2d.h"
+#include "application/renderer.h"
 
 #include "components.h"
 #include "object_camera.h"
@@ -227,9 +228,6 @@ struct Game_State gs_game;
 
 void game_init(void) {
 	gs_game = (struct Game_State){
-		.batcher = batcher_2d_init(),
-		.uniforms = gfx_uniforms_init(),
-		.gpu_commands = array_any_init(sizeof(struct GPU_Command)),
 		.cameras = array_any_init(sizeof(struct Camera)),
 		.entities = array_any_init(sizeof(struct Entity)),
 		.assets = asset_system_init(),
@@ -238,13 +236,9 @@ void game_init(void) {
 }
 
 void game_free(void) {
-	batcher_2d_free(gs_game.batcher);
-
 	asset_types_free(&gs_game.assets);
 	asset_system_free(&gs_game.assets);
 
-	gfx_uniforms_free(&gs_game.uniforms);
-	array_any_free(&gs_game.gpu_commands);
 	array_any_free(&gs_game.cameras);
 	array_any_free(&gs_game.entities);
 

@@ -55,6 +55,7 @@ application/asset_parser.c
 application/utilities.c
 application/components.c
 application/batcher_2d.c
+application/renderer.c
 
 prototype/object_camera.c
 prototype/object_entity.c

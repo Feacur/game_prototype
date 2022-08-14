@@ -25,6 +25,7 @@
 #include "application/utilities.h"
 #include "application/components.h"
 #include "application/batcher_2d.h"
+#include "application/renderer.h"
 
 #include "object_camera.h"
 #include "object_entity.h"
@@ -140,6 +141,9 @@ static void prototype_init(void) {
 	});
 }
 
+static void prototype_free(void) {
+}
+
 static void prototype_tick_entities(void) {
 	// if (input_mouse(MC_LEFT)) {
 	// 	int32_t x, y;
@@ -163,7 +167,7 @@ static void prototype_draw_entities(void) {
 	// @todo: override material params per shader or material where possible
 
 	uint32_t const gpu_commands_count_estimate = gs_game.cameras.count * 2 + gs_game.entities.count;
-	array_any_ensure(&gs_game.gpu_commands, gpu_commands_count_estimate);
+	array_any_ensure(&gs_renderer.gpu_commands, gpu_commands_count_estimate);
 
 	struct Ref previous_gpu_target_ref = { // @note: deliberately wrong handle
 		.id = INDEX_EMPTY, .gen = INDEX_EMPTY,
@@ -184,27 +188,27 @@ static void prototype_draw_entities(void) {
 
 		// process camera
 		{
-			uint32_t const override_offset = gs_game.uniforms.headers.count;
-			gfx_uniforms_push(&gs_game.uniforms, uniform_projection, (struct Gfx_Uniform_In){
+			uint32_t const override_offset = gs_renderer.uniforms.headers.count;
+			gfx_uniforms_push(&gs_renderer.uniforms, uniform_projection, (struct Gfx_Uniform_In){
 				.size = sizeof(mat4_projection),
 				.data = &mat4_projection,
 			});
-			gfx_uniforms_push(&gs_game.uniforms, uniform_camera, (struct Gfx_Uniform_In){
+			gfx_uniforms_push(&gs_renderer.uniforms, uniform_camera, (struct Gfx_Uniform_In){
 				.size = sizeof(mat4_inverse_camera),
 				.data = &mat4_inverse_camera,
 			});
-			gfx_uniforms_push(&gs_game.uniforms, uniform_viewport_size, (struct Gfx_Uniform_In){
+			gfx_uniforms_push(&gs_renderer.uniforms, uniform_viewport_size, (struct Gfx_Uniform_In){
 				.size = sizeof(viewport_size),
 				.data = &viewport_size,
 			});
 
-			array_any_push_many(&gs_game.gpu_commands, 1, &(struct GPU_Command){
+			array_any_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_UNIFORM,
 				.as.uniform = {
 					.override = {
-						.uniforms = &gs_game.uniforms,
+						.uniforms = &gs_renderer.uniforms,
 						.offset = override_offset,
-						.count = (gs_game.uniforms.headers.count - override_offset),
+						.count = (gs_renderer.uniforms.headers.count - override_offset),
 					},
 				},
 			});
@@ -212,8 +216,8 @@ static void prototype_draw_entities(void) {
 
 		if (!ref_equals(previous_gpu_target_ref, camera->gpu_target_ref)) {
 			previous_gpu_target_ref = camera->gpu_target_ref;
-			batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
-			array_any_push_many(&gs_game.gpu_commands, 1, &(struct GPU_Command){
+			batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
+			array_any_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_TARGET,
 				.as.target = {
 					.screen_size_x = screen_size.x,
@@ -224,8 +228,8 @@ static void prototype_draw_entities(void) {
 		}
 
 		if (camera->clear.mask != TEXTURE_TYPE_NONE) {
-			batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
-			array_any_push_many(&gs_game.gpu_commands, 1, &(struct GPU_Command){
+			batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
+			array_any_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_CLEAR,
 				.as.clear = {
 					.mask  = camera->clear.mask,
@@ -258,28 +262,28 @@ static void prototype_draw_entities(void) {
 			);
 
 			if (entity_get_is_batched(entity)) {
-				batcher_2d_set_matrix(gs_game.batcher, (struct mat4[]){
+				batcher_2d_set_matrix(gs_renderer.batcher, (struct mat4[]){
 					mat4_mul_mat(mat4_camera, mat4_entity)
 				});
-				batcher_2d_set_material(gs_game.batcher, &material->value);
+				batcher_2d_set_material(gs_renderer.batcher, &material->value);
 			}
 
 			switch (entity->type) {
 				case ENTITY_TYPE_NONE: break;
 
 				case ENTITY_TYPE_MESH: {
-					batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
+					batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
 
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
 					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->mesh);
 
-					uint32_t const override_offset = gs_game.uniforms.headers.count;
-					gfx_uniforms_push(&gs_game.uniforms, uniform_transform, (struct Gfx_Uniform_In){
+					uint32_t const override_offset = gs_renderer.uniforms.headers.count;
+					gfx_uniforms_push(&gs_renderer.uniforms, uniform_transform, (struct Gfx_Uniform_In){
 						.size = sizeof(mat4_entity),
 						.data = &mat4_entity,
 					});
 
-					array_any_push_many(&gs_game.gpu_commands, 3, (struct GPU_Command[]){
+					array_any_push_many(&gs_renderer.gpu_commands, 3, (struct GPU_Command[]){
 						(struct GPU_Command){
 							.type = GPU_COMMAND_TYPE_MATERIAL,
 							.as.material = {
@@ -291,9 +295,9 @@ static void prototype_draw_entities(void) {
 							.as.uniform = {
 								.gpu_program_ref = material->value.gpu_program_ref,
 								.override = {
-									.uniforms = &gs_game.uniforms,
+									.uniforms = &gs_renderer.uniforms,
 									.offset = override_offset,
-									.count = (gs_game.uniforms.headers.count - override_offset),
+									.count = (gs_renderer.uniforms.headers.count - override_offset),
 								},
 							},
 						},
@@ -309,7 +313,7 @@ static void prototype_draw_entities(void) {
 				case ENTITY_TYPE_QUAD_2D: {
 					// struct Entity_Quad const * quad = &entity->as.quad;
 					batcher_2d_add_quad(
-						gs_game.batcher,
+						gs_renderer.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
 						(float[]){0,0,1,1}
 					);
@@ -320,7 +324,7 @@ static void prototype_draw_entities(void) {
 					struct Asset_Font const * font = asset_system_find_instance(&gs_game.assets, text->font);
 					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.assets, text->message);
 					batcher_2d_add_text(
-						gs_game.batcher,
+						gs_renderer.batcher,
 						entity_rect_min, entity_rect_max, entity_pivot,
 						font,
 						text->visible_length,
@@ -331,7 +335,7 @@ static void prototype_draw_entities(void) {
 			}
 		}
 	}
-	batcher_2d_issue_commands(gs_game.batcher, &gs_game.gpu_commands);
+	batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
 }
 
 static void prototype_draw_ui(void) {
@@ -343,15 +347,19 @@ static void prototype_draw_ui(void) {
 // ----- ----- ----- ----- -----
 
 static void app_init(void) {
+	renderer_init();
 	game_init();
 	prototype_init();
 }
 
 static void app_free(void) {
+	prototype_free();
+	game_free();
+	renderer_free();
+
 	// @note: free strings here, because application checks for memory leaks right after this routine
 	//        an alternative solution would be to split `application_run` into stages
 	strings_free(&gs_main_settings.strings);
-	game_free();
 }
 
 static void app_fixed_tick(void) {
@@ -363,15 +371,10 @@ static void app_frame_tick(void) {
 	prototype_tick_entities();
 
 	if (screen_size.x > 0 && screen_size.y > 0) {
-		batcher_2d_clear(gs_game.batcher);
-		gfx_uniforms_clear(&gs_game.uniforms);
-		array_any_clear(&gs_game.gpu_commands);
-
+		renderer_frame_init();
 		prototype_draw_entities();
 		prototype_draw_ui();
-
-		batcher_2d_bake(gs_game.batcher);
-		gpu_execute(gs_game.gpu_commands.count, gs_game.gpu_commands.data);
+		renderer_frame_free();
 	}
 }
 
