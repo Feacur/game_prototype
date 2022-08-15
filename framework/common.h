@@ -16,7 +16,10 @@ struct CString {
 	char const * data;
 };
 
+bool cstring_contains(struct CString v1, struct CString v2);
 bool cstring_equals(struct CString v1, struct CString v2);
+bool cstring_starts(struct CString v1, struct CString v2);
+bool cstring_ends(struct CString v1, struct CString v2);
 
 typedef void * Allocator(void * pointer, size_t size);
 

@@ -21,16 +21,15 @@ const float ncp = 0.1, fcp = R32_POS_INFINITY;
 layout(location = ATTRIBUTE_TYPE_POSITION) in vec3 a_Position;
 layout(location = ATTRIBUTE_TYPE_TEXCOORD) in vec2 a_TexCoord;
 
-uniform mat4 u_Projection;
-uniform mat4 u_Camera;
-uniform mat4 u_Transform;
+uniform mat4 u_ProjectionView;
+uniform mat4 u_Model;
 
 out vec2 v_TexCoord;
 
 void main()
 {
 	v_TexCoord = a_TexCoord;
-	gl_Position = u_Projection * u_Camera * u_Transform * vec4(a_Position, 1);
+	gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1);
 }
 #endif
 
@@ -40,8 +39,8 @@ void main()
 #if defined(FRAGMENT_SHADER)
 in vec2 v_TexCoord;
 
-uniform vec4 prop_Color;
-uniform sampler2D prop_Texture;
+uniform vec4 p_Color;
+uniform sampler2D p_Texture;
 
 uniform uvec2 u_ViewportSize;
 
@@ -55,9 +54,9 @@ float linearize_depth(float depth)
 
 void main()
 {
-	vec4 texture_pixel = texture(prop_Texture, v_TexCoord);
+	vec4 texture_pixel = texture(p_Texture, v_TexCoord);
 	float depth = clamp(linearize_depth(gl_FragCoord.z) / 10, 0, 1);
-	out_color = texture_pixel * prop_Color;
+	out_color = texture_pixel * p_Color;
 	out_color = mix(out_color, vec4(depth, depth, depth, 1), gl_FragCoord.x / u_ViewportSize.x > 0.5);
 }
 #endif

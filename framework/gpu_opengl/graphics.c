@@ -203,12 +203,14 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 			PARAM_TYPE,
 			PARAM_ARRAY_SIZE,
 			PARAM_LOCATION,
+			// PARAM_ROW_MAJOR,
 			// PARAM_NAME_LENGTH,
 		};
 		static GLenum const c_props[] = {
 			[PARAM_TYPE]        = GL_TYPE,
 			[PARAM_ARRAY_SIZE]  = GL_ARRAY_SIZE,
 			[PARAM_LOCATION]    = GL_LOCATION,
+			// [PARAM_ROW_MAJOR]   = GL_IS_ROW_MAJOR,
 			// [PARAM_NAME_LENGTH] = GL_NAME_LENGTH,
 		};
 		GLint params[SIZE_OF_ARRAY(c_props)];
@@ -217,24 +219,32 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 		GLsizei name_length;
 		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
 
-		if (params[PARAM_ARRAY_SIZE] > 1) {
-			// @todo: improve reflection/introspection/whatever;
-			//        simple arrays have names ending with a `[0]`;
-			//        more specifically the very first elememnt is tagged such a way
-			if (common_memcmp(uniform_name_buffer + name_length - 3, "[0]", 3) != 0) { continue; }
-			name_length -= 3;
+		struct CString uniform_name = {
+			.data = uniform_name_buffer,
+			.length = (uint32_t)name_length,
+		};
+
+		if (cstring_contains(uniform_name, S_("[0][0]"))) {
+			// @todo: provide a convenient API for nested arrays in GLSL
+			logger_to_console("nested arrays are not supported\n"); DEBUG_BREAK();
+			continue;
 		}
 
-		uint32_t const id = strings_add(&gs_graphics_state.uniforms, (struct CString){
-			.length = (uint32_t)name_length,
-			.data = uniform_name_buffer,
-		});
+		if (cstring_contains(uniform_name, S_("[0]."))) {
+			// @todo: provide a convenient API for array of structs in GLSL
+			logger_to_console("arrays of structs are not supported\n"); DEBUG_BREAK();
+			continue;
+		}
 
+		if (params[PARAM_ARRAY_SIZE] > 1) {
+			uniform_name.length -= 3; // arrays have suffix `[0]`
+		}
+
+		uint32_t const id = strings_add(&gs_graphics_state.uniforms, uniform_name);
 		hash_table_u32_set(&uniforms, id, &(struct Gpu_Program_Field_Internal){
 			.base = {
 				.type = interpret_gl_type(params[PARAM_TYPE]),
 				.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
-				.is_property = common_memcmp(uniform_name_buffer, "prop_", 5) == 0,
 			},
 			.location = params[PARAM_LOCATION],
 		});

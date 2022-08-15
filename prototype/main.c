@@ -159,10 +159,11 @@ static void prototype_tick_entities(void) {
 static void prototype_draw_entities(void) {
 	struct uvec2 const screen_size = application_get_screen_size();
 
-	uint32_t const uniform_projection    = graphics_add_uniform_id(S_("u_Projection"));
-	uint32_t const uniform_camera        = graphics_add_uniform_id(S_("u_Camera"));
-	uint32_t const uniform_viewport_size = graphics_add_uniform_id(S_("u_ViewportSize"));
-	uint32_t const uniform_transform     = graphics_add_uniform_id(S_("u_Transform"));
+	uint32_t const u_ProjectionView = graphics_add_uniform_id(S_("u_ProjectionView"));
+	uint32_t const u_Projection     = graphics_add_uniform_id(S_("u_Projection"));
+	uint32_t const u_View           = graphics_add_uniform_id(S_("u_View"));
+	uint32_t const u_ViewportSize   = graphics_add_uniform_id(S_("u_ViewportSize"));
+	uint32_t const u_Model          = graphics_add_uniform_id(S_("u_Model"));
 
 	uint32_t const gpu_commands_count_estimate = gs_game.cameras.count * 2 + gs_game.entities.count;
 	array_any_ensure(&gs_renderer.gpu_commands, gpu_commands_count_estimate);
@@ -180,22 +181,26 @@ static void prototype_draw_entities(void) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size.x, &viewport_size.y);
 		}
 
-		struct mat4 const mat4_projection = camera_get_projection(&camera->params, viewport_size.x, viewport_size.y);
-		struct mat4 const mat4_inverse_camera = mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
-		struct mat4 const mat4_camera = mat4_mul_mat(mat4_projection, mat4_inverse_camera);
+		struct mat4 const mat4_Projection = camera_get_projection(&camera->params, viewport_size.x, viewport_size.y);
+		struct mat4 const mat4_View = mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
+		struct mat4 const mat4_ProjectionView = mat4_mul_mat(mat4_Projection, mat4_View);
 
 		// process camera
 		{
 			uint32_t const override_offset = gs_renderer.uniforms.headers.count;
-			gfx_uniforms_push(&gs_renderer.uniforms, uniform_projection, (struct Gfx_Uniform_In){
-				.size = sizeof(mat4_projection),
-				.data = &mat4_projection,
+			gfx_uniforms_push(&gs_renderer.uniforms, u_ProjectionView, (struct Gfx_Uniform_In){
+				.size = sizeof(mat4_ProjectionView),
+				.data = &mat4_ProjectionView,
 			});
-			gfx_uniforms_push(&gs_renderer.uniforms, uniform_camera, (struct Gfx_Uniform_In){
-				.size = sizeof(mat4_inverse_camera),
-				.data = &mat4_inverse_camera,
+			gfx_uniforms_push(&gs_renderer.uniforms, u_Projection, (struct Gfx_Uniform_In){
+				.size = sizeof(mat4_Projection),
+				.data = &mat4_Projection,
 			});
-			gfx_uniforms_push(&gs_renderer.uniforms, uniform_viewport_size, (struct Gfx_Uniform_In){
+			gfx_uniforms_push(&gs_renderer.uniforms, u_View, (struct Gfx_Uniform_In){
+				.size = sizeof(mat4_View),
+				.data = &mat4_View,
+			});
+			gfx_uniforms_push(&gs_renderer.uniforms, u_ViewportSize, (struct Gfx_Uniform_In){
 				.size = sizeof(viewport_size),
 				.data = &viewport_size,
 			});
@@ -249,7 +254,7 @@ static void prototype_draw_entities(void) {
 				viewport_size.x, viewport_size.y,
 				&entity_rect_min, &entity_rect_max, &entity_pivot
 			);
-			struct mat4 const mat4_entity = mat4_set_transformation(
+			struct mat4 const mat4_Model = mat4_set_transformation(
 				(struct vec3){
 					.x = entity_pivot.x,
 					.y = entity_pivot.y,
@@ -261,7 +266,7 @@ static void prototype_draw_entities(void) {
 
 			if (entity_get_is_batched(entity)) {
 				batcher_2d_set_matrix(gs_renderer.batcher, (struct mat4[]){
-					mat4_mul_mat(mat4_camera, mat4_entity)
+					mat4_mul_mat(mat4_ProjectionView, mat4_Model)
 				});
 				batcher_2d_set_material(gs_renderer.batcher, &material->value);
 			}
@@ -276,9 +281,9 @@ static void prototype_draw_entities(void) {
 					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->mesh);
 
 					uint32_t const override_offset = gs_renderer.uniforms.headers.count;
-					gfx_uniforms_push(&gs_renderer.uniforms, uniform_transform, (struct Gfx_Uniform_In){
-						.size = sizeof(mat4_entity),
-						.data = &mat4_entity,
+					gfx_uniforms_push(&gs_renderer.uniforms, u_Model, (struct Gfx_Uniform_In){
+						.size = sizeof(mat4_Model),
+						.data = &mat4_Model,
 					});
 
 					array_any_push_many(&gs_renderer.gpu_commands, 3, (struct GPU_Command[]){

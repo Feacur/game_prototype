@@ -4,9 +4,24 @@
 //
 #include "common.h"
 
+bool cstring_contains(struct CString v1, struct CString v2) {
+	if (v1.length < v2.length) { return false; }
+	return strstr(v1.data, v2.data) != NULL;
+}
+
 bool cstring_equals(struct CString v1, struct CString v2) {
 	if (v1.length != v2.length) { return false; }
-	return strncmp(v1.data, v2.data, v1.length) == 0;
+	return strncmp(v1.data, v2.data, v2.length) == 0;
+}
+
+bool cstring_starts(struct CString v1, struct CString v2) {
+	if (v1.length < v2.length) { return false; }
+	return strncmp(v1.data, v2.data, v2.length) == 0;
+}
+
+bool cstring_ends(struct CString v1, struct CString v2) {
+	if (v1.length < v2.length) { return false; }
+	return strncmp(v1.data + v1.length - v2.length, v2.data, v2.length) == 0;
 }
 
 // ----- ----- ----- ----- -----

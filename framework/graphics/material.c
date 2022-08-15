@@ -2,6 +2,7 @@
 #include "framework/containers/hash_table_u32.h"
 #include "framework/graphics/types.h"
 #include "framework/graphics/gpu_objects.h"
+#include "framework/graphics/gpu_misc.h"
 
 #include <malloc.h>
 
@@ -70,6 +71,8 @@ struct Gfx_Material gfx_material_init(
 	enum Blend_Mode blend_mode,
 	enum Depth_Mode depth_mode
 ) {
+	struct CString const property_prefix = S_("p_");
+
 	struct Gfx_Material material = {
 		.uniforms = gfx_uniforms_init(),
 		.gpu_program_ref = gpu_program_ref,
@@ -81,8 +84,10 @@ struct Gfx_Material gfx_material_init(
 
 	uint32_t payload_bytes = 0, properties_count = 0;
 	FOR_HASH_TABLE_U32(uniforms, it) {
+		struct CString const uniform_name = graphics_get_uniform_value(it.key_hash);
+		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
+
 		struct Gpu_Program_Field const * uniform = it.value;
-		if (!uniform->is_property) { continue; }
 		payload_bytes += data_type_get_size(uniform->type) * uniform->array_size;
 		properties_count++;
 	}
@@ -91,8 +96,10 @@ struct Gfx_Material gfx_material_init(
 	buffer_resize(&material.uniforms.payload, payload_bytes);
 
 	FOR_HASH_TABLE_U32(uniforms, it) {
+		struct CString const uniform_name = graphics_get_uniform_value(it.key_hash);
+		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
+
 		struct Gpu_Program_Field const * uniform = it.value;
-		if (!uniform->is_property) { continue; }
 		gfx_uniforms_push(&material.uniforms, it.key_hash, (struct Gfx_Uniform_In){
 			.size = data_type_get_size(uniform->type) * uniform->array_size,
 		});
