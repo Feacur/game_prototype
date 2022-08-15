@@ -1,7 +1,7 @@
 {
 	"size_x": 1280,
 	"size_y": 720,
-	"flexible": false,
+	"flexible": true,
 	"vsync": 2,
 	"frame_refresh_rate": 72,
 	"fixed_refresh_rate": 50,

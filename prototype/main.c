@@ -161,10 +161,8 @@ static void prototype_draw_entities(void) {
 
 	uint32_t const uniform_projection    = graphics_add_uniform_id(S_("u_Projection"));
 	uint32_t const uniform_camera        = graphics_add_uniform_id(S_("u_Camera"));
-	uint32_t const uniform_transform     = graphics_add_uniform_id(S_("u_Transform"));
 	uint32_t const uniform_viewport_size = graphics_add_uniform_id(S_("u_ViewportSize"));
-
-	// @todo: override material params per shader or material where possible
+	uint32_t const uniform_transform     = graphics_add_uniform_id(S_("u_Transform"));
 
 	uint32_t const gpu_commands_count_estimate = gs_game.cameras.count * 2 + gs_game.entities.count;
 	array_any_ensure(&gs_renderer.gpu_commands, gpu_commands_count_estimate);

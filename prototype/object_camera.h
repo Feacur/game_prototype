@@ -9,10 +9,10 @@
 #include "components.h"
 
 enum Camera_Mode {
-	CAMERA_MODE_NONE,
-	CAMERA_MODE_SCREEN,
-	CAMERA_MODE_ASPECT_X,
-	CAMERA_MODE_ASPECT_Y,
+	CAMERA_MODE_NONE,     // map to normalized device
+	CAMERA_MODE_SCREEN,   // map one-to-one with viewport
+	CAMERA_MODE_ASPECT_X, // lock horizontal FOV, scale vertical FOV with aspect
+	CAMERA_MODE_ASPECT_Y, // lock vertical FOV, scale horizontal FOV with aspect
 };
 
 struct Camera {
