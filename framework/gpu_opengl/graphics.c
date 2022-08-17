@@ -81,10 +81,16 @@ struct Gpu_Unit {
 	struct Ref texture;
 };
 
+struct Graphics_Action {
+	struct Ref gpu_ref;
+	void (* action)(struct Ref gpu_ref);
+};
+
 static struct Graphics_State {
 	char * extensions;
 
 	struct Strings uniforms;
+	struct Array_Any actions; // `struct Graphics_Action`
 
 	struct Ref_Table programs;
 	struct Ref_Table targets;
@@ -265,7 +271,7 @@ static void gpu_program_free_internal(struct Gpu_Program * gpu_program) {
 	glDeleteProgram(gpu_program->id);
 }
 
-void gpu_program_free(struct Ref gpu_program_ref) {
+static void gpu_program_free_immediately(struct Ref gpu_program_ref) {
 	if (ref_equals(gs_graphics_state.active.program, gpu_program_ref)) {
 		gs_graphics_state.active.program = c_ref_empty;
 	}
@@ -274,6 +280,13 @@ void gpu_program_free(struct Ref gpu_program_ref) {
 		gpu_program_free_internal(gpu_program);
 		ref_table_discard(&gs_graphics_state.programs, gpu_program_ref);
 	}
+}
+
+void gpu_program_free(struct Ref gpu_program_ref) {
+	array_any_push_many(&gs_graphics_state.actions, 1, &(struct Graphics_Action){
+		.gpu_ref = gpu_program_ref,
+		.action = gpu_program_free_immediately,
+	});
 }
 
 struct Hash_Table_U32 const * gpu_program_get_uniforms(struct Ref gpu_program_ref) {
@@ -378,7 +391,7 @@ static void gpu_texture_free_internal(struct Gpu_Texture * gpu_texture) {
 	glDeleteTextures(1, &gpu_texture->id);
 }
 
-void gpu_texture_free(struct Ref gpu_texture_ref) {
+static void gpu_texture_free_immediately(struct Ref gpu_texture_ref) {
 	for (uint32_t i = 1; i < gs_graphics_state.units_capacity; i++) {
 		struct Gpu_Unit * unit = gs_graphics_state.units + i;
 		if (ref_equals(unit->texture, gpu_texture_ref)) {
@@ -390,6 +403,13 @@ void gpu_texture_free(struct Ref gpu_texture_ref) {
 		gpu_texture_free_internal(gpu_texture);
 		ref_table_discard(&gs_graphics_state.textures, gpu_texture_ref);
 	}
+}
+
+void gpu_texture_free(struct Ref gpu_texture_ref) {
+	array_any_push_many(&gs_graphics_state.actions, 1, &(struct Graphics_Action){
+		.gpu_ref = gpu_texture_ref,
+		.action = gpu_texture_free_immediately,
+	});
 }
 
 void gpu_texture_get_size(struct Ref gpu_texture_ref, uint32_t * x, uint32_t * y) {
@@ -552,7 +572,7 @@ static void gpu_target_free_internal(struct Gpu_Target * gpu_target) {
 	glDeleteFramebuffers(1, &gpu_target->id);
 }
 
-void gpu_target_free(struct Ref gpu_target_ref) {
+static void gpu_target_free_immediately(struct Ref gpu_target_ref) {
 	if (ref_equals(gs_graphics_state.active.target, gpu_target_ref)) {
 		gs_graphics_state.active.target = c_ref_empty;
 	}
@@ -561,6 +581,13 @@ void gpu_target_free(struct Ref gpu_target_ref) {
 		gpu_target_free_internal(gpu_target);
 		ref_table_discard(&gs_graphics_state.targets, gpu_target_ref);
 	}
+}
+
+void gpu_target_free(struct Ref gpu_target_ref) {
+	array_any_push_many(&gs_graphics_state.actions, 1, &(struct Graphics_Action){
+		.gpu_ref = gpu_target_ref,
+		.action = gpu_target_free_immediately,
+	});
 }
 
 void gpu_target_get_size(struct Ref gpu_target_ref, uint32_t * x, uint32_t * y) {
@@ -716,7 +743,7 @@ static void gpu_mesh_free_internal(struct Gpu_Mesh * gpu_mesh) {
 	glDeleteVertexArrays(1, &gpu_mesh->id);
 }
 
-void gpu_mesh_free(struct Ref gpu_mesh_ref) {
+static void gpu_mesh_free_immediately(struct Ref gpu_mesh_ref) {
 	if (ref_equals(gs_graphics_state.active.mesh, gpu_mesh_ref)) {
 		gs_graphics_state.active.mesh = c_ref_empty;
 	}
@@ -725,6 +752,13 @@ void gpu_mesh_free(struct Ref gpu_mesh_ref) {
 		gpu_mesh_free_internal(gpu_mesh);
 		ref_table_discard(&gs_graphics_state.meshes, gpu_mesh_ref);
 	}
+}
+
+void gpu_mesh_free(struct Ref gpu_mesh_ref) {
+	array_any_push_many(&gs_graphics_state.actions, 1, &(struct Graphics_Action){
+		.gpu_ref = gpu_mesh_ref,
+		.action = gpu_mesh_free_immediately,
+	});
 }
 
 void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
@@ -773,6 +807,14 @@ void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 
 //
 #include "framework/graphics/gpu_misc.h"
+
+void graphics_update(void) {
+	for (uint32_t i = 0; i < gs_graphics_state.actions.count; i++) {
+		struct Graphics_Action const * it = array_any_at(&gs_graphics_state.actions, i);
+		it->action(it->gpu_ref);
+	}
+	array_any_clear(&gs_graphics_state.actions);
+}
 
 uint32_t graphics_add_uniform_id(struct CString name) {
 	return strings_add(&gs_graphics_state.uniforms, name);
@@ -1261,6 +1303,8 @@ void graphics_to_gpu_library_init(void) {
 	gs_graphics_state.textures = ref_table_init(sizeof(struct Gpu_Texture));
 	gs_graphics_state.meshes   = ref_table_init(sizeof(struct Gpu_Mesh));
 
+	gs_graphics_state.actions = array_any_init(sizeof(struct Graphics_Action));
+
 	//
 	GLint max_units;
 	GLint max_units_vertex_shader, max_units_fragment_shader, max_units_compute_shader;
@@ -1333,19 +1377,20 @@ void graphics_to_gpu_library_init(void) {
 }
 
 void graphics_to_gpu_library_free(void) {
-#define GPU_FREE(data) do { \
-	if (data.buffer.count > 0) { logger_to_console("dangling \"" #data "\": %u\n", data.buffer.count - 1); } \
-	FOR_REF_TABLE (&data, it) { gpu_program_free_internal(it.value); } \
+#define GPU_FREE(data, action) do { \
+	if (data.buffer.count > 0) { logger_to_console("dangling \"" #data "\": %u\n", data.buffer.count); } \
+	FOR_REF_TABLE (&data, it) { action(it.value); } \
 	ref_table_free(&data); \
 } while (false)\
 
-	GPU_FREE(gs_graphics_state.programs);
-	GPU_FREE(gs_graphics_state.targets);
-	GPU_FREE(gs_graphics_state.textures);
-	GPU_FREE(gs_graphics_state.meshes);
+	GPU_FREE(gs_graphics_state.programs, gpu_program_free_internal);
+	GPU_FREE(gs_graphics_state.targets,  gpu_target_free_internal);
+	GPU_FREE(gs_graphics_state.textures, gpu_texture_free_internal);
+	GPU_FREE(gs_graphics_state.meshes,   gpu_mesh_free_internal);
 
 	//
 	strings_free(&gs_graphics_state.uniforms);
+	array_any_free(&gs_graphics_state.actions);
 	MEMORY_FREE(gs_graphics_state.extensions);
 	MEMORY_FREE(gs_graphics_state.units);
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));

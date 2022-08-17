@@ -1,3 +1,5 @@
+#include "framework/graphics/gpu_misc.h"
+
 #include "framework/platform_timer.h"
 #include "framework/platform_file.h"
 #include "framework/platform_system.h"
@@ -145,6 +147,8 @@ static bool application_update(void) {
 
 	platform_window_draw_frame(gs_app.window);
 	gpu_context_draw_frame(gs_app.gpu_context);
+
+	graphics_update();
 
 	platform_window_end_frame(gs_app.window);
 	gpu_context_end_frame();
