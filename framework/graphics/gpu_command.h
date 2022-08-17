@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_GPU_COMMAND)
-#define GAME_GRAPHICS_GPU_COMMAND
+#if !defined(FRAMEWORK_GRAPHICS_GPU_COMMAND)
+#define FRAMEWORK_GRAPHICS_GPU_COMMAND
 
 // interface from `gpu_*/graphics.c` to anywhere
 // - gpu draw call

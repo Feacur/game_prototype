@@ -1,5 +1,5 @@
-#if !defined(GAME_PLATFORM_SYSTEM_TO_INTERNAL)
-#define GAME_PLATFORM_SYSTEM_TO_INTERNAL
+#if !defined(FRAMEWORK_PLATFORM_WINDOWS_SYSTEM_TO_INTERNAL)
+#define FRAMEWORK_PLATFORM_WINDOWS_SYSTEM_TO_INTERNAL
 
 // interface from `system.c` to anywhere
 // - general purpose

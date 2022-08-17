@@ -1,5 +1,5 @@
-#if !defined(GAME_ASSETS_MESH)
-#define GAME_ASSETS_MESH
+#if !defined(FRAMEWORK_ASSETS_MESH)
+#define FRAMEWORK_ASSETS_MESH
 
 #include "framework/common.h"
 #include "framework/graphics/types.h"

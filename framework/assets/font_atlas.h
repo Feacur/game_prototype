@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_FONT_IMAGE)
-#define GAME_GRAPHICS_FONT_IMAGE
+#if !defined(FRAMEWORK_ASSETS_FONT_ATLAS)
+#define FRAMEWORK_ASSETS_FONT_ATLAS
 
 #include "framework/assets/font_glyph.h"
 

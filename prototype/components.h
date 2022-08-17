@@ -1,5 +1,5 @@
-#if !defined(GAME_PROTOTYPE_COMPONENTS)
-#define GAME_PROTOTYPE_COMPONENTS
+#if !defined(PROTOTYPE_COMPONENTS)
+#define PROTOTYPE_COMPONENTS
 
 #include "framework/common.h"
 

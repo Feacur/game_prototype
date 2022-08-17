@@ -1,5 +1,5 @@
-#if !defined(GAME_PLATFORM_TIMER)
-#define GAME_PLATFORM_TIMER
+#if !defined(FRAMEWORK_PLATFORM_TIMER)
+#define FRAMEWORK_PLATFORM_TIMER
 
 #include "common.h"
 

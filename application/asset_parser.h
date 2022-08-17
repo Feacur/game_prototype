@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_ASSET_JSON_PARSER)
-#define GAME_FRAMEWORK_ASSET_JSON_PARSER
+#if !defined(APPLICATION_ASSET_PARSER)
+#define APPLICATION_ASSET_PARSER
 
 #include "framework/containers/ref.h"
 #include "framework/graphics/material.h"

@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_ASSET_REF)
-#define GAME_FRAMEWORK_ASSET_REF
+#if !defined(FRAMEWORK_SYSTEMS_ASSET_REF)
+#define FRAMEWORK_SYSTEMS_ASSET_REF
 
 #include "framework/containers/ref.h"
 

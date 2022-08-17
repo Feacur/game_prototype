@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_LOGGER)
-#define GAME_FRAMEWORK_LOGGER
+#if !defined(FRAMEWORK_LOGGER)
+#define FRAMEWORK_LOGGER
 
 #include "common.h"
 

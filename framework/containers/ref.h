@@ -1,5 +1,5 @@
-#if !defined(GAME_CONTAINERS_REF)
-#define GAME_CONTAINERS_REF
+#if !defined(FRAMEWORK_CONTAINERS_REF)
+#define FRAMEWORK_CONTAINERS_REF
 
 #include "framework/common.h"
 

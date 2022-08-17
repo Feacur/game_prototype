@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_VECTOR_TYPES)
-#define GAME_FRAMEWORK_VECTOR_TYPES
+#if !defined(FRAMEWORK_VECTOR_TYPES)
+#define FRAMEWORK_VECTOR_TYPES
 
 #include "common.h"
 

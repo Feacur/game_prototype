@@ -1,5 +1,5 @@
-#if !defined(GAME_PLATFORM_DEBUG)
-#define GAME_PLATFORM_DEBUG
+#if !defined(FRAMEWORK_PLATFORM_DEBUG)
+#define FRAMEWORK_PLATFORM_DEBUG
 
 #include "common.h"
 

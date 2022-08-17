@@ -1,5 +1,5 @@
-#if !defined(GAME_APPLICATION_UTILITIES)
-#define GAME_APPLICATION_UTILITIES
+#if !defined(APPLICATION_UTILITIES)
+#define APPLICATION_UTILITIES
 
 #include "framework/common.h"
 

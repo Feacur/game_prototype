@@ -1,5 +1,5 @@
-#if !defined(GAME_PLATFORM_FILE)
-#define GAME_PLATFORM_FILE
+#if !defined(FRAMEWORK_PLATFORM_FILE)
+#define FRAMEWORK_PLATFORM_FILE
 
 #include "framework/containers/buffer.h"
 

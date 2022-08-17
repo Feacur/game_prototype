@@ -1,5 +1,5 @@
-#if !defined(GAME_ASSETS_JSON_SCANNER)
-#define GAME_ASSETS_JSON_SCANNER
+#if !defined(FRAMEWORK_ASSETS_JSON_SCANNER)
+#define FRAMEWORK_ASSETS_JSON_SCANNER
 
 #include "framework/common.h"
 

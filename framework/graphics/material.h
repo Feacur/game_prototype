@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_MATERIAL)
-#define GAME_GRAPHICS_MATERIAL
+#if !defined(FRAMEWORK_GRAPHICS_MATERIAL)
+#define FRAMEWORK_GRAPHICS_MATERIAL
 
 #include "framework/containers/buffer.h"
 #include "framework/containers/array_any.h"

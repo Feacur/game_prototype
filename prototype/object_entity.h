@@ -1,5 +1,5 @@
-#if !defined(GAME_PROTOTYPE_OBJECT_ENTITY)
-#define GAME_PROTOTYPE_OBJECT_ENTITY
+#if !defined(PROTOTYPE_OBJECT_ENTITY)
+#define PROTOTYPE_OBJECT_ENTITY
 
 #include "framework/systems/asset_ref.h"
 #include "framework/graphics/material.h"

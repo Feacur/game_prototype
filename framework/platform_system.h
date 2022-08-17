@@ -1,5 +1,5 @@
-#if !defined(GAME_PLATFORM_SYSTEM)
-#define GAME_PLATFORM_SYSTEM
+#if !defined(FRAMEWORK_PLATFORM_SYSTEM)
+#define FRAMEWORK_PLATFORM_SYSTEM
 
 #include "common.h"
 

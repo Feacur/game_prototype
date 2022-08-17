@@ -1,5 +1,5 @@
-#if !defined(GAME_ASSETS_IMAGE)
-#define GAME_ASSETS_IMAGE
+#if !defined(FRAMEWORK_ASSETS_IMAGE)
+#define FRAMEWORK_ASSETS_IMAGE
 
 #include "framework/common.h"
 #include "framework/graphics/types.h"

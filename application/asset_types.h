@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_ASSET_TYPES)
-#define GAME_FRAMEWORK_ASSET_TYPES
+#if !defined(APPLICATION_ASSET_TYPES)
+#define APPLICATION_ASSET_TYPES
 
 #include "framework/containers/ref.h"
 #include "framework/assets/json.h"

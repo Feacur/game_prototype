@@ -1,5 +1,5 @@
-#if !defined(GAME_GPU_TYPES)
-#define GAME_GPU_TYPES
+#if !defined(FRAMEWORK_GPU_OPENGL_TYPES)
+#define FRAMEWORK_GPU_OPENGL_TYPES
 
 #include "framework/graphics/types.h"
 

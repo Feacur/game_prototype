@@ -1,5 +1,5 @@
-#if !defined(GAME_CONTAINERS_Array_Flt)
-#define GAME_CONTAINERS_Array_Flt
+#if !defined(FRAMEWORK_CONTAINERS_ARRAY_FLT)
+#define FRAMEWORK_CONTAINERS_ARRAY_FLT
 
 #include "framework/common.h"
 

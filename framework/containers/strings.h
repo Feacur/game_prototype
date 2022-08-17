@@ -1,5 +1,5 @@
-#if !defined(GAME_CONTAINERS_STRINGS)
-#define GAME_CONTAINERS_STRINGS
+#if !defined(FRAMEWORK_CONTAINERS_STRINGS)
+#define FRAMEWORK_CONTAINERS_STRINGS
 
 #include "framework/containers/buffer.h"
 #include "framework/containers/array_u32.h"

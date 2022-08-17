@@ -47,7 +47,7 @@
 	#include "framework/platform_windows/debug.c"
 
 	#if defined(GAME_GRAPHICS_IS_OPENGL)
-		#include "framework/platform_windows/gpu_opengl.c"
+		#include "framework/platform_windows/gpu_library_opengl.c"
 		#include "framework/gpu_opengl/functions.c"
 		#include "framework/gpu_opengl/types.c"
 		#include "framework/gpu_opengl/graphics.c"

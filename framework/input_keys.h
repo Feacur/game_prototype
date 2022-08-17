@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_INPUT_KEYS)
-#define GAME_FRAMEWORK_INPUT_KEYS
+#if !defined(FRAMEWORK_INPUT_KEYS)
+#define FRAMEWORK_INPUT_KEYS
 
 enum Key_Code {
 	// ASCII, control characters

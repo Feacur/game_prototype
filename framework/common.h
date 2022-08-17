@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_COMMON)
-#define GAME_FRAMEWORK_COMMON
+#if !defined(FRAMEWORK_COMMON)
+#define FRAMEWORK_COMMON
 
 #include <stdbool.h>
 #include <stddef.h>

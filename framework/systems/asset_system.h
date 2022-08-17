@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_ASSET_SYSTEM)
-#define GAME_FRAMEWORK_ASSET_SYSTEM
+#if !defined(FRAMEWORK_SYSTEMS_ASSET_SYSTEM)
+#define FRAMEWORK_SYSTEMS_ASSET_SYSTEM
 
 #include "framework/containers/strings.h"
 #include "framework/containers/hash_table_u32.h"

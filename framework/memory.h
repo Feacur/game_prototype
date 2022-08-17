@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_MEMORY)
-#define GAME_FRAMEWORK_MEMORY
+#if !defined(FRAMEWORK_MEMORY)
+#define FRAMEWORK_MEMORY
 
 #include "common.h"
 

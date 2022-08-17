@@ -1,5 +1,5 @@
-#if !defined(GAME_FRAMEWORK_MATHS)
-#define GAME_FRAMEWORK_MATHS
+#if !defined(FRAMEWORK_MATHS)
+#define FRAMEWORK_MATHS
 
 #include "vector_types.h"
 

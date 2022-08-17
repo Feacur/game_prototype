@@ -1,5 +1,5 @@
-#if !defined(GAME_CONTAINERS_REF_TABLE)
-#define GAME_CONTAINERS_REF_TABLE
+#if !defined(FRAMEWORK_CONTAINERS_REF_TABLE)
+#define FRAMEWORK_CONTAINERS_REF_TABLE
 
 #include "ref.h"
 #include "array_any.h"

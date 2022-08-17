@@ -1,5 +1,5 @@
-#if !defined(GAME_PLATFORM_GPU_LIBRARY_TO_SYSTEM)
-#define GAME_PLATFORM_GPU_LIBRARY_TO_SYSTEM
+#if !defined(FRAMEWORK_PLATFORM_WINDOWS_GPU_LIBRARY_TO_SYSTEM)
+#define FRAMEWORK_PLATFORM_WINDOWS_GPU_LIBRARY_TO_SYSTEM
 
 // interface from `gpu_library_*.c` to `system.c`
 // - graphics library initialization

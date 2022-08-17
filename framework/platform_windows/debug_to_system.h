@@ -1,5 +1,5 @@
-#if !defined(GAME_PLATFORM_DEBUG_TO_SYSTEM)
-#define GAME_PLATFORM_DEBUG_TO_SYSTEM
+#if !defined(FRAMEWORK_PLATFORM_WINDOWS_DEBUG_TO_SYSTEM)
+#define FRAMEWORK_PLATFORM_WINDOWS_DEBUG_TO_SYSTEM
 
 // interface from `debug.c` to `system.c`
 // - framework initialization

@@ -1,5 +1,5 @@
-#if !defined(GAME_APPLICATION_COMPONENTS)
-#define GAME_APPLICATION_COMPONENTS
+#if !defined(APPLICATION_COMPONENTS)
+#define APPLICATION_COMPONENTS
 
 #include "framework/vector_types.h"
 

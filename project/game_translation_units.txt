@@ -44,7 +44,7 @@ framework/platform_windows/system.c
 framework/platform_windows/window.c
 framework/platform_windows/debug.c
 
-framework/platform_windows/gpu_opengl.c
+framework/platform_windows/gpu_library_opengl.c
 framework/gpu_opengl/functions.c
 framework/gpu_opengl/types.c
 framework/gpu_opengl/graphics.c

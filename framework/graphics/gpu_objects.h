@@ -1,5 +1,5 @@
-#if !defined(GAME_GRAPHICS_GPU_OBJECTS)
-#define GAME_GRAPHICS_GPU_OBJECTS
+#if !defined(FRAMEWORK_GRAPHICS_GPU_OBJECTS)
+#define FRAMEWORK_GRAPHICS_GPU_OBJECTS
 
 // interface from `gpu_*/graphics.c` to anywhere
 // - gpu objects initialization and manipulation

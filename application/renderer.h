@@ -1,5 +1,5 @@
-#if !defined(GAME_APPLICATION_RENDERER)
-#define GAME_APPLICATION_RENDERER
+#if !defined(APPLICATION_RENDERER)
+#define APPLICATION_RENDERER
 
 #include "framework/containers/array_any.h"
 #include "framework/graphics/material.h"

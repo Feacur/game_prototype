@@ -1,5 +1,5 @@
-#if !defined(GAME_ASSETS_JSON)
-#define GAME_ASSETS_JSON
+#if !defined(FRAMEWORK_ASSETS_JSON)
+#define FRAMEWORK_ASSETS_JSON
 
 #include "framework/containers/array_any.h"
 #include "framework/containers/hash_table_u32.h"

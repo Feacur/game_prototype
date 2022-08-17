@@ -1,5 +1,5 @@
-#if !defined(GAME_PROTOTYPE_OBJECT_CAMERA)
-#define GAME_PROTOTYPE_OBJECT_CAMERA
+#if !defined(PROTOTYPE_OBJECT_CAMERA)
+#define PROTOTYPE_OBJECT_CAMERA
 
 #include "framework/containers/ref.h"
 #include "framework/graphics/types.h"

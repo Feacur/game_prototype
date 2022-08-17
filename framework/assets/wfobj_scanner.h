@@ -1,5 +1,5 @@
-#if !defined(GAME_ASSETS_WFOBJ_SCANNER)
-#define GAME_ASSETS_WFOBJ_SCANNER
+#if !defined(FRAMEWORK_ASSETS_WFOBJ_SCANNER)
+#define FRAMEWORK_ASSETS_WFOBJ_SCANNER
 
 #include "framework/common.h"
 

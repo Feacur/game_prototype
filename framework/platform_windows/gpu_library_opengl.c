@@ -2,6 +2,7 @@
 #include "framework/logger.h"
 
 #include "framework/gpu_opengl/functions.h"
+#include "framework/gpu_opengl/functions_to_gpu_library.h"
 #include "framework/gpu_opengl/graphics_to_gpu_library.h"
 
 #include "system_to_internal.h"
@@ -60,7 +61,7 @@ static bool gpu_library_wgl_init(void) {
 	gs_gpu_library.ext.has_extension_swap_control = HAS_EXT(swap_control);
 #undef HAS_EXT
 
-	gpu_library_functions_init(gpu_library_get_function);
+	functions_to_gpu_library_init(gpu_library_get_function);
 
 	return true;
 }
@@ -85,7 +86,7 @@ bool gpu_library_to_system_init(void) {
 }
 
 void gpu_library_to_system_free(void) {
-	gpu_library_functions_free();
+	functions_to_gpu_library_free();
 	FreeLibrary(gs_gpu_library.handle);
 	common_memset(&gs_gpu_library, 0, sizeof(gs_gpu_library));
 }

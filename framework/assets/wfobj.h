@@ -1,5 +1,5 @@
-#if !defined(GAME_ASSETS_MESH_OBJ)
-#define GAME_ASSETS_MESH_OBJ
+#if !defined(FRAMEWORK_ASSETS_WFOBJ)
+#define FRAMEWORK_ASSETS_WFOBJ
 
 #include "framework/containers/array_flt.h"
 #include "framework/containers/array_u32.h"
