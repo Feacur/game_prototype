@@ -67,11 +67,11 @@ static bool application_init(void) {
 	if (gs_app.config.flexible) { window_settings |= WINDOW_SETTINGS_FLEXIBLE; }
 
 	gs_app.window = platform_window_init(gs_app.config.size.x, gs_app.config.size.y, window_settings);
-	if (gs_app.window == NULL) { return false; }
+	if (gs_app.window == NULL) { goto fail_window; }
 
 	platform_window_start_frame(gs_app.window);
 	gs_app.gpu_context = gpu_context_init(platform_window_get_cached_device(gs_app.window));
-	if (gs_app.gpu_context == NULL) { return false; }
+	if (gs_app.gpu_context == NULL) { goto fail_gpu_context; }
 
 	gpu_context_start_frame(gs_app.gpu_context, platform_window_get_cached_device(gs_app.window));
 
@@ -86,9 +86,16 @@ static bool application_init(void) {
 		gs_app.callbacks.init();
 	}
 
-	platform_window_end_frame(gs_app.window);
 	gpu_context_end_frame();
+	platform_window_end_frame(gs_app.window);
 	return true;
+
+	// process errors
+	fail_gpu_context:
+	platform_window_end_frame(gs_app.window);
+
+	fail_window:
+	return false;
 }
 
 static void application_free(void) {
@@ -150,6 +157,7 @@ static bool application_update(void) {
 
 	graphics_update();
 
+	// @note: resulting delta time is extremely inconsistent and stuttery
 	platform_window_end_frame(gs_app.window);
 	gpu_context_end_frame();
 
