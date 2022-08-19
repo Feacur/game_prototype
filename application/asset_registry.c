@@ -131,7 +131,7 @@ static void asset_fill_image(struct JSON const * json, void * data) {
 static void asset_image_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Image * asset = instance;
 	struct Asset_Fill_Image context = { .system = system, .result = asset };
-	process_json(asset_fill_image, &context, name);
+	process_json(name, &context, asset_fill_image);
 }
 
 static void asset_image_free(struct Asset_System * system, void * instance) {
@@ -191,7 +191,7 @@ static void asset_fill_target(struct JSON const * json, void * data) {
 static void asset_target_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Target * asset = instance;
 	struct Asset_Fill_Target context = { .system = system, .result = asset };
-	process_json(asset_fill_target, &context, name);
+	process_json(name, &context, asset_fill_target);
 }
 
 static void asset_target_free(struct Asset_System * system, void * instance) {
@@ -247,7 +247,7 @@ static void asset_fill_material(struct JSON const * json, void * data) {
 static void asset_material_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Material * asset = instance;
 	struct Asset_Fill_Material context = { .system = system, .result = asset };
-	process_json(asset_fill_material, &context, name);
+	process_json(name, &context, asset_fill_material);
 }
 
 static void asset_material_free(struct Asset_System * system, void * instance) {

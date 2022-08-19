@@ -7,7 +7,7 @@
 //
 #include "utilities.h"
 
-void process_json(void (* action)(struct JSON const * json, void * output), void * data, struct CString path) {
+void process_json(struct CString path, void * data, void (* action)(struct JSON const * json, void * output)) {
 	struct Buffer file_buffer = platform_file_read_entire(path);
 	if (file_buffer.capacity == 0) { DEBUG_BREAK(); return; }
 

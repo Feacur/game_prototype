@@ -131,7 +131,7 @@ static void prototype_tick_entities_text_2d(void) {
 // ----- ----- ----- ----- -----
 
 static void prototype_init(void) {
-	process_json(game_fill_scene, &gs_game, strings_get(&gs_main_settings.strings, gs_main_settings.scene_id));
+	process_json(strings_get(&gs_main_settings.strings, gs_main_settings.scene_id), &gs_game, game_fill_scene);
 	gpu_execute(1, &(struct GPU_Command){
 		.type = GPU_COMMAND_TYPE_CULL,
 		.as.cull = {
@@ -421,10 +421,10 @@ int main (int argc, char * argv[]) {
 	}
 	logger_to_console("\n");
 
-	process_json(main_fill_settings, &gs_main_settings, S_("assets/main.json"));
+	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
 
 	struct Application_Config config;
-	process_json(main_fill_config, &config, strings_get(&gs_main_settings.strings, gs_main_settings.config_id));
+	process_json(strings_get(&gs_main_settings.strings, gs_main_settings.config_id), &config, main_fill_config);
 
 	application_run(config, (struct Application_Callbacks){
 		.init = app_init,

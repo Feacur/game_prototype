@@ -5,6 +5,6 @@
 
 struct JSON;
 
-void process_json(void (* action)(struct JSON const * json, void * output), void * data, struct CString path);
+void process_json(struct CString path, void * data, void (* action)(struct JSON const * json, void * output));
 
 #endif
