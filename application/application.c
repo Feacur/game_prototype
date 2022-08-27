@@ -186,8 +186,6 @@ struct uvec2 application_get_screen_size(void) {
 	return result;
 }
 
-float application_get_delta_time(void) {
-	return (float)(
-		(double)gs_app.ticks.elapsed / (double)gs_app.ticks.per_second
-	);
+double application_get_delta_time(void) {
+	return (double)gs_app.ticks.elapsed / (double)gs_app.ticks.per_second;
 }

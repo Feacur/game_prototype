@@ -39,7 +39,7 @@ static struct Main_Settings {
 } gs_main_settings;
 
 static void prototype_tick_entities_rotation_mode(void) {
-	float const delta_time = application_get_delta_time();
+	float const delta_time = (float)application_get_delta_time();
 	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
 		struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
 
@@ -154,6 +154,64 @@ static void prototype_tick_entities(void) {
 	prototype_tick_entities_rotation_mode();
 	prototype_tick_entities_quad_2d();
 	prototype_tick_entities_text_2d();
+}
+
+static void prototype_display_performance(void) {
+	struct uvec2 const screen_size = application_get_screen_size();
+	struct Asset_Font const * font = asset_system_aquire_instance(&gs_game.assets, S_("assets/fonts/Ubuntu-Regular.ttf"));
+
+	uint32_t const fps = (uint32_t)(1.0 / application_get_delta_time());
+
+	char buffer[32];
+	uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, "%d", fps);
+
+	struct Entity const entity_instance = {
+		.rect = {
+			.anchor_min = {1, 1},
+			.anchor_max = {1, 1},
+			.extents = {100, 50},
+			.pivot = {1, 1},
+		},
+		.transform = c_transform_3d_default,
+	};
+	struct Entity const * entity = &entity_instance;
+
+	struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
+	entity_get_rect(
+		entity,
+		screen_size.x, screen_size.y,
+		&entity_rect_min, &entity_rect_max, &entity_pivot
+	);
+
+	batcher_2d_set_matrix(gs_renderer.batcher, (struct mat4[]){
+		mat4_mul_mat(
+			camera_get_projection(
+				&(struct Camera_Params){
+					.mode = CAMERA_MODE_SCREEN,
+					.ncp = 0, .fcp = 1, .ortho = 1,
+				},
+				screen_size.x, screen_size.y
+			),
+			mat4_set_transformation(
+				(struct vec3){
+					.x = entity_pivot.x,
+					.y = entity_pivot.y,
+					.z = entity->transform.position.z,
+				},
+				entity->transform.scale,
+				entity->transform.rotation
+			)
+		)
+	});
+
+	batcher_2d_add_text(
+		gs_renderer.batcher,
+		entity_rect_min, entity_rect_max, entity_pivot,
+		font,
+		length,
+		(uint8_t const *)buffer,
+		32
+	);
 }
 
 static void prototype_draw_entities(void) {
@@ -338,6 +396,7 @@ static void prototype_draw_entities(void) {
 			}
 		}
 	}
+	prototype_display_performance();
 	batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
 }
 

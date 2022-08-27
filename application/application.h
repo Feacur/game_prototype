@@ -32,6 +32,6 @@ struct Application_Callbacks {
 void application_run(struct Application_Config config, struct Application_Callbacks callbacks);
 
 struct uvec2 application_get_screen_size(void);
-float application_get_delta_time(void);
+double application_get_delta_time(void);
 
 #endif
