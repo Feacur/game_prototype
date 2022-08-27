@@ -34,6 +34,7 @@ struct Batcher_2D_Text {
 	uint32_t vertices_offset, indices_offset;
 	struct mat4 matrix;
 	struct rect rect;
+	struct vec2 alignment;
 	float size;
 };
 
@@ -180,7 +181,7 @@ void batcher_2d_add_quad(
 
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
-	struct rect rect,
+	struct rect rect, struct vec2 alignment,
 	struct Asset_Font const * font, uint32_t length, uint8_t const * data, float size
 ) {
 	// @todo: introduce rect bounds parameter
@@ -210,6 +211,7 @@ void batcher_2d_add_text(
 		.indices_offset  = batcher->buffer_indices.count,
 		.matrix = batcher->matrix,
 		.rect = rect,
+		.alignment = alignment,
 		.size = size,
 	});
 
@@ -264,9 +266,10 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 		float const line_height  = font_ascent - font_descent + line_gap;
 
 		struct vec2 offset = {
-			text->rect.min.x,
-			text->rect.max.y - font_ascent,
+			lerp(text->rect.min.x, text->rect.max.x, text->alignment.x),
+			lerp(text->rect.min.y, text->rect.max.y, text->alignment.y),
 		};
+		offset.y -= font_ascent;
 
 		struct Font_Glyph const * glyph_space = font_atlas_get_glyph(text->font->font_atlas, ' ', text->size);
 		struct Font_Glyph const * glyph_error = font_atlas_get_glyph(text->font->font_atlas, CODEPOINT_EMPTY, text->size);
@@ -293,7 +296,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 					break;
 
 				case '\n':
-					offset.x = text->rect.min.x; // @note: auto `\r`
+					offset.x = lerp(text->rect.min.x, text->rect.max.x, text->alignment.x); // @note: auto `\r`
 					offset.y -= line_height;
 					break;
 
