@@ -176,11 +176,12 @@ static void prototype_display_performance(void) {
 	};
 	struct Entity const * entity = &entity_instance;
 
-	struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
+	struct vec2 entity_pivot;
+	struct rect entity_rect;
 	entity_get_rect(
 		entity,
 		screen_size.x, screen_size.y,
-		&entity_rect_min, &entity_rect_max, &entity_pivot
+		&entity_pivot, &entity_rect
 	);
 
 	batcher_2d_set_matrix(gs_renderer.batcher, (struct mat4[]){
@@ -206,10 +207,8 @@ static void prototype_display_performance(void) {
 
 	batcher_2d_add_text(
 		gs_renderer.batcher,
-		entity_rect_min, entity_rect_max, entity_pivot,
-		font,
-		length,
-		(uint8_t const *)buffer,
+		entity_rect,
+		font, length, (uint8_t const *)buffer,
 		32
 	);
 }
@@ -306,12 +305,14 @@ static void prototype_draw_entities(void) {
 
 			struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
 
-			struct vec2 entity_rect_min, entity_rect_max, entity_pivot;
+			struct vec2 entity_pivot;
+			struct rect entity_rect;
 			entity_get_rect(
 				entity,
 				viewport_size.x, viewport_size.y,
-				&entity_rect_min, &entity_rect_max, &entity_pivot
+				&entity_pivot, &entity_rect
 			);
+
 			struct mat4 const mat4_Model = mat4_set_transformation(
 				(struct vec3){
 					.x = entity_pivot.x,
@@ -375,8 +376,8 @@ static void prototype_draw_entities(void) {
 					// struct Entity_Quad const * quad = &entity->as.quad;
 					batcher_2d_add_quad(
 						gs_renderer.batcher,
-						entity_rect_min, entity_rect_max, entity_pivot,
-						(float[]){0,0,1,1}
+						entity_rect,
+						(struct rect){{0,0},{1,1}}
 					);
 				} break;
 
@@ -386,10 +387,8 @@ static void prototype_draw_entities(void) {
 					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.assets, text->message);
 					batcher_2d_add_text(
 						gs_renderer.batcher,
-						entity_rect_min, entity_rect_max, entity_pivot,
-						font,
-						text->visible_length,
-						message->data,
+						entity_rect,
+						font, text->visible_length, message->data,
 						text->size
 					);
 				} break;

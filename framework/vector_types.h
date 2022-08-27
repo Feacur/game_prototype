@@ -19,6 +19,10 @@ struct mat2 { struct vec2 x, y; };
 struct mat3 { struct vec3 x, y, z; };
 struct mat4 { struct vec4 x, y, z, w; };
 
+struct urect { struct uvec2 min, max; };
+struct srect { struct svec2 min, max; };
+struct rect { struct vec2 min, max; };
+
 //
 
 extern struct vec2 const c_comp_identity;

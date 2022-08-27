@@ -22,13 +22,13 @@ void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material co
 
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
-	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot,
-	float const * uv
+	struct rect rect,
+	struct rect uv
 );
 
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
-	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot,
+	struct rect rect,
 	struct Asset_Font const * font, uint32_t length, uint8_t const * data, float size
 );
 

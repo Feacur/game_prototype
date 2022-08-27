@@ -45,7 +45,7 @@ bool entity_get_is_batched(struct Entity const * entity) {
 void entity_get_rect(
 	struct Entity const * entity,
 	uint32_t viewport_size_x, uint32_t viewport_size_y,
-	struct vec2 * min, struct vec2 * max, struct vec2 * pivot
+	struct vec2 * pivot, struct rect * rect
 ) {
 	struct vec2 const offset_min = {
 		.x = entity->rect.offset.x - entity->rect.extents.x * entity->rect.pivot.x,
@@ -57,17 +57,21 @@ void entity_get_rect(
 		.y = entity->rect.offset.y + entity->rect.extents.y * (1 - entity->rect.pivot.y),
 	};
 
-	*min = (struct vec2){
+	struct vec2 const min = {
 		entity->rect.anchor_min.x * (float)viewport_size_x + offset_min.x,
 		entity->rect.anchor_min.y * (float)viewport_size_y + offset_min.y,
 	};
-	*max = (struct vec2){
+	struct vec2 const max = {
 		entity->rect.anchor_max.x * (float)viewport_size_x + offset_max.x,
 		entity->rect.anchor_max.y * (float)viewport_size_y + offset_max.y,
 	};
 	*pivot = (struct vec2){
-		.x = lerp(min->x, max->x, entity->rect.pivot.x) + entity->transform.position.x,
-		.y = lerp(min->y, max->y, entity->rect.pivot.y) + entity->transform.position.y,
+		.x = lerp(min.x, max.x, entity->rect.pivot.x) + entity->transform.position.x,
+		.y = lerp(min.y, max.y, entity->rect.pivot.y) + entity->transform.position.y,
+	};
+	*rect = (struct rect){
+		.min = {min.x - pivot->x, min.y - pivot->y},
+		.max = {max.x - pivot->x, max.y - pivot->y},
 	};
 }
 

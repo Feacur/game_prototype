@@ -11,7 +11,7 @@ struct Font;
 
 struct Font_Glyph {
 	struct Glyph_Params params;
-	float uv[4];
+	struct rect uv;
 	uint32_t id;
 	uint8_t usage;
 };

@@ -78,15 +78,15 @@ struct Glyph_Params font_get_glyph_parameters(struct Font const * font, uint32_t
 	int advance_width, left_side_bearing;
 	stbtt_GetGlyphHMetrics(&font->font, (int)glyph_id, &advance_width, &left_side_bearing);
 
-	int rect[4]; // left, bottom, right, top
-	if (!stbtt_GetGlyphBox(&font->font, (int)glyph_id, rect + 0, rect + 1, rect + 2, rect + 3)) {
+	struct srect rect;
+	if (!stbtt_GetGlyphBox(&font->font, (int)glyph_id, &rect.min.x, &rect.min.y, &rect.max.x, &rect.max.y)) {
 		return (struct Glyph_Params){
 			.full_size_x = ((float)advance_width) * scale,
 			.is_empty = true,
 		};
 	}
 
-	if ((rect[2] <= rect[0]) || (rect[3] <= rect[1])) {
+	if ((rect.max.x <= rect.min.x) || (rect.max.y <= rect.min.y)) {
 		return (struct Glyph_Params){
 			.full_size_x = ((float)advance_width) * scale,
 			.is_empty = true,
@@ -102,10 +102,14 @@ struct Glyph_Params font_get_glyph_parameters(struct Font const * font, uint32_t
 
 	return (struct Glyph_Params){
 		.rect = {
-			[0] = (int32_t)r32_floor(((float)rect[0]) * scale),
-			[1] = (int32_t)r32_floor(((float)rect[1]) * scale),
-			[2] = (int32_t)r32_ceil (((float)rect[2]) * scale),
-			[3] = (int32_t)r32_ceil (((float)rect[3]) * scale),
+			.min = {
+				(int32_t)r32_floor(((float)rect.min.x) * scale),
+				(int32_t)r32_floor(((float)rect.min.y) * scale),
+			},
+			.max = {
+				(int32_t)r32_ceil (((float)rect.max.x) * scale),
+				(int32_t)r32_ceil (((float)rect.max.y) * scale),
+			},
 		},
 		.full_size_x = ((float)advance_width) * scale,
 	};

@@ -33,7 +33,7 @@ struct Batcher_2D_Text {
 	struct Asset_Font const * font; // @idea: use `Asset_Ref` instead
 	uint32_t vertices_offset, indices_offset;
 	struct mat4 matrix;
-	struct vec2 rect_min, rect_max, local_offset;
+	struct rect rect;
 	float size;
 };
 
@@ -145,13 +145,14 @@ static void batcher_2d_fill_quad(
 	struct Batcher_2D * batcher,
 	struct mat4 matrix,
 	uint32_t vertices_offset, uint32_t indices_offset,
-	float const * rect, float const * uv
+	struct rect rect,
+	struct rect uv
 ) {
 	array_any_set_many(&batcher->buffer_vertices, vertices_offset, 4, (struct Batcher_2D_Vertex[]){
-		batcher_2d_make_vertex(matrix, (struct vec2){rect[0], rect[1]}, (struct vec2){uv[0], uv[1]}),
-		batcher_2d_make_vertex(matrix, (struct vec2){rect[0], rect[3]}, (struct vec2){uv[0], uv[3]}),
-		batcher_2d_make_vertex(matrix, (struct vec2){rect[2], rect[1]}, (struct vec2){uv[2], uv[1]}),
-		batcher_2d_make_vertex(matrix, (struct vec2){rect[2], rect[3]}, (struct vec2){uv[2], uv[3]}),
+		batcher_2d_make_vertex(matrix, rect.min, uv.min),
+		batcher_2d_make_vertex(matrix, (struct vec2){rect.min.x, rect.max.y}, (struct vec2){uv.min.x, uv.max.y}),
+		batcher_2d_make_vertex(matrix, (struct vec2){rect.max.x, rect.min.y}, (struct vec2){uv.max.x, uv.min.y}),
+		batcher_2d_make_vertex(matrix, rect.max, uv.max),
 	});
 	array_u32_set_many(&batcher->buffer_indices, indices_offset, 3 * 2, (uint32_t[]){
 		vertices_offset + 1, vertices_offset + 0, vertices_offset + 2,
@@ -161,22 +162,15 @@ static void batcher_2d_fill_quad(
 
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
-	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot,
-	float const * uv
+	struct rect rect,
+	struct rect uv
 ) {
-	float const local_rect[] = { // @note: offset content to the bottom-left corner
-		rect_min.x - pivot.x,
-		rect_min.y - pivot.y,
-		rect_max.x - pivot.x,
-		rect_max.y - pivot.y,
-	};
-
 	uint32_t const vertex_offset = batcher->buffer_vertices.count;
 	array_any_push_many(&batcher->buffer_vertices, 4, (struct Batcher_2D_Vertex[]){
-		batcher_2d_make_vertex(batcher->matrix, (struct vec2){local_rect[0], local_rect[1]}, (struct vec2){uv[0], uv[1]}),
-		batcher_2d_make_vertex(batcher->matrix, (struct vec2){local_rect[0], local_rect[3]}, (struct vec2){uv[0], uv[3]}),
-		batcher_2d_make_vertex(batcher->matrix, (struct vec2){local_rect[2], local_rect[1]}, (struct vec2){uv[2], uv[1]}),
-		batcher_2d_make_vertex(batcher->matrix, (struct vec2){local_rect[2], local_rect[3]}, (struct vec2){uv[2], uv[3]}),
+		batcher_2d_make_vertex(batcher->matrix, rect.min, uv.min),
+		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect.min.x, rect.max.y}, (struct vec2){uv.min.x, uv.max.y}),
+		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect.max.x, rect.min.y}, (struct vec2){uv.max.x, uv.min.y}),
+		batcher_2d_make_vertex(batcher->matrix, rect.max, uv.max),
 	});
 	array_u32_push_many(&batcher->buffer_indices, 3 * 2, (uint32_t[]){
 		vertex_offset + 1, vertex_offset + 0, vertex_offset + 2,
@@ -186,7 +180,7 @@ void batcher_2d_add_quad(
 
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
-	struct vec2 rect_min, struct vec2 rect_max, struct vec2 pivot,
+	struct rect rect,
 	struct Asset_Font const * font, uint32_t length, uint8_t const * data, float size
 ) {
 	// @todo: introduce rect bounds parameter
@@ -215,11 +209,7 @@ void batcher_2d_add_text(
 		.vertices_offset = batcher->buffer_vertices.count,
 		.indices_offset  = batcher->buffer_indices.count,
 		.matrix = batcher->matrix,
-		.rect_min = rect_min, .rect_max = rect_max,
-		.local_offset = { // @note: offset content to the top-left corner, as if for LTR/TTB text
-			.x = rect_min.x - pivot.x,
-			.y = rect_max.y - pivot.y,
-		},
+		.rect = rect,
 		.size = size,
 	});
 
@@ -273,9 +263,9 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 		float const line_gap     = font_atlas_get_gap(text->font->font_atlas, scale);
 		float const line_height  = font_ascent - font_descent + line_gap;
 
-		struct vec2 offset = (struct vec2){
-			text->local_offset.x,
-			text->local_offset.y - font_ascent,
+		struct vec2 offset = {
+			text->rect.min.x,
+			text->rect.max.y - font_ascent,
 		};
 
 		struct Font_Glyph const * glyph_space = font_atlas_get_glyph(text->font->font_atlas, ' ', text->size);
@@ -303,7 +293,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 					break;
 
 				case '\n':
-					offset.x = text->local_offset.x; // @note: auto `\r`
+					offset.x = text->rect.min.x; // @note: auto `\r`
 					offset.y -= line_height;
 					break;
 
@@ -319,11 +309,15 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 						batcher,
 						text->matrix,
 						vertices_offset, indices_offset,
-						(float[]){
-							((float)glyph->params.rect[0]) + offset.x,
-							((float)glyph->params.rect[1]) + offset.y,
-							((float)glyph->params.rect[2]) + offset.x,
-							((float)glyph->params.rect[3]) + offset.y,
+						(struct rect){
+							.min = {
+								((float)glyph->params.rect.min.x) + offset.x,
+								((float)glyph->params.rect.min.y) + offset.y,
+							},
+							.max = {
+								((float)glyph->params.rect.max.x) + offset.x,
+								((float)glyph->params.rect.max.y) + offset.y,
+							},
 						},
 						glyph->uv
 					);
