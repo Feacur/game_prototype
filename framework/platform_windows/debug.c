@@ -65,7 +65,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 	IMAGEHLP_LINE64 source = {.SizeOfStruct = sizeof(source),};
 
 	HANDLE const process = GetCurrentProcess();
-	for (uint32_t i = offset; i < callstack.count; i++) {
+	for (uint32_t i = offset + 1, last = callstack.count; i < last; i++) {
 		// fetch function, source file, and line
 		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], NULL, &symbol.header);
 		BOOL const valid_source = SymGetLineFromAddr64(process, callstack.data[i], &source_offset, &source) && (source.FileName != NULL);
@@ -98,6 +98,9 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 			(source_length > 0) ? (uint32_t)source.LineNumber : 0
 		);
 		gs_platform_debug.buffer.count += written;
+
+		struct CString const cs_symbol = {.length = symbol_length, .data = symbol_data};
+		if (cstring_equals(cs_symbol, S_("main"))) { break; }
 	}
 
 	return (struct CString){
@@ -115,22 +118,24 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 #include "debug_to_system.h"
 
 bool debug_to_system_init(void) {
+	SymInitialize(GetCurrentProcess(), NULL, TRUE);
+
 	gs_platform_debug = (struct Platform_Debug){
-		.buffer  = buffer_init(memory_reallocate_trivial),
-		.scratch = buffer_init(memory_reallocate_trivial),
+		.buffer  = buffer_init(memory_reallocate_without_tracking),
+		.scratch = buffer_init(memory_reallocate_without_tracking),
 	};
 	buffer_ensure(&gs_platform_debug.buffer,  4096);
 	buffer_ensure(&gs_platform_debug.scratch, 512);
 
-	SymInitialize(GetCurrentProcess(), NULL, TRUE);
 	return true;
 }
 
 void debug_to_system_free(void) {
-	SymCleanup(GetCurrentProcess());
 	buffer_free(&gs_platform_debug.buffer);
 	buffer_free(&gs_platform_debug.scratch);
 	common_memset(&gs_platform_debug, 0, sizeof(gs_platform_debug));
+
+	SymCleanup(GetCurrentProcess());
 }
 
 #else

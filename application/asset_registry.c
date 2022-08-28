@@ -29,11 +29,16 @@ static void asset_bytes_init(struct Asset_System * system, void * instance, stru
 	(void)system;
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
-	if (file_buffer.capacity == 0) { DEBUG_BREAK(); }
+	if (file_buffer.capacity == 0) {
+		common_memset(asset, 0, sizeof(*asset));
+		DEBUG_BREAK(); return;
+	}
 
 	// @note: memory ownership transfer
-	asset->data = file_buffer.data;
-	asset->length = (uint32_t)file_buffer.count;
+	*asset = (struct Asset_Bytes){
+		.data = file_buffer.data,
+		.length = (uint32_t)file_buffer.count,
+	};
 }
 
 static void asset_bytes_free(struct Asset_System * system, void * instance) {
@@ -62,10 +67,14 @@ static void asset_json_init(struct Asset_System * system, void * instance, struc
 	(void)system;
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
-	if (file_buffer.capacity == 0) { DEBUG_BREAK(); }
+	if (file_buffer.capacity == 0) {
+		common_memset(asset, 0, sizeof(*asset));
+		DEBUG_BREAK(); return;
+	}
 
-	asset->value = json_init(&gs_asset_json_strings, (char const *)file_buffer.data);
-
+	*asset = (struct Asset_JSON){
+		.value = json_init(&gs_asset_json_strings, (char const *)file_buffer.data),
+	};
 	buffer_free(&file_buffer);
 }
 
@@ -85,13 +94,16 @@ static void asset_shader_init(struct Asset_System * system, void * instance, str
 	(void)system;
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
-	if (file_buffer.capacity == 0) { DEBUG_BREAK(); return; }
+	if (file_buffer.capacity == 0) {
+		common_memset(asset, 0, sizeof(*asset));
+		DEBUG_BREAK(); return;
+	}
 	// @todo: return error shader?
 
-	struct Ref const gpu_ref = gpu_program_init(&file_buffer);
+	*asset = (struct Asset_Shader){
+		.gpu_ref = gpu_program_init(&file_buffer),
+	};
 	buffer_free(&file_buffer);
-
-	asset->gpu_ref = gpu_ref;
 }
 
 static void asset_shader_free(struct Asset_System * system, void * instance) {
@@ -111,21 +123,26 @@ struct Asset_Fill_Image {
 };
 
 static void asset_fill_image(struct JSON const * json, void * data) {
+	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
 	struct Asset_Fill_Image * context = data;
 
 	struct CString const path = json_get_string(json, S_("path"));
 	struct Buffer file_buffer = platform_file_read_entire(path);
-	if (file_buffer.capacity == 0) { DEBUG_BREAK(); return; }
+	if (file_buffer.capacity == 0) {
+		common_memset(context->result, 0, sizeof(*context->result));
+		DEBUG_BREAK(); return;
+	}
 
 	struct Texture_Settings settings = state_read_json_texture_settings(json);
 
 	struct Image image = image_init(settings, &file_buffer);
 	buffer_free(&file_buffer);
 
-	struct Ref const gpu_ref = gpu_texture_init(&image);
+	*context->result = (struct Asset_Image){
+		.gpu_ref = gpu_texture_init(&image),
+	};
 	image_free(&image);
 
-	context->result->gpu_ref = gpu_ref;
 }
 
 static void asset_image_init(struct Asset_System * system, void * instance, struct CString name) {
@@ -150,9 +167,11 @@ static void asset_font_init(struct Asset_System * system, void * instance, struc
 	(void)system;
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
-	if (file_buffer.capacity == 0) { DEBUG_BREAK(); return; }
+	if (file_buffer.capacity == 0) {
+		common_memset(asset, 0, sizeof(*asset));
+		DEBUG_BREAK(); return;
+	}
 
-	// @note: memory ownership transfer
 	struct Font * font = font_init(&file_buffer);
 	struct Font_Image * font_atlas = font_atlas_init(font);
 
@@ -182,6 +201,7 @@ struct Asset_Fill_Target {
 };
 
 static void asset_fill_target(struct JSON const * json, void * data) {
+	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
 	struct Asset_Fill_Target * context = data;
 	*context->result = (struct Asset_Target){
 		.gpu_ref = state_read_json_target(json),
@@ -210,15 +230,18 @@ static void asset_model_init(struct Asset_System * system, void * instance, stru
 	(void)system;
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
-	if (file_buffer.capacity == 0) { DEBUG_BREAK(); return; }
+	if (file_buffer.capacity == 0) {
+		common_memset(asset, 0, sizeof(*asset));
+		DEBUG_BREAK(); return;
+	}
 
 	struct Mesh mesh = mesh_init(&file_buffer);
 	buffer_free(&file_buffer);
 
-	struct Ref const gpu_ref = gpu_mesh_init(&mesh);
+	*asset = (struct Asset_Model){
+		.gpu_ref = gpu_mesh_init(&mesh),
+	};
 	mesh_free(&mesh);
-
-	asset->gpu_ref = gpu_ref;
 }
 
 static void asset_model_free(struct Asset_System * system, void * instance) {
@@ -238,6 +261,7 @@ struct Asset_Fill_Material {
 };
 
 static void asset_fill_material(struct JSON const * json, void * data) {
+	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
 	struct Asset_Fill_Material * context = data;
 	*context->result = (struct Asset_Material){
 		.value = state_read_json_material(context->system, json),

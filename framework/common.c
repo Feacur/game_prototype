@@ -1,3 +1,6 @@
+#include "platform_debug.h"
+#include "logger.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -89,4 +92,19 @@ bool contains_full_word(char const * container, struct CString value) {
 	}
 
 	return false;
+}
+
+// ----- ----- ----- ----- -----
+//     callstack
+// ----- ----- ----- ----- -----
+
+void report_callstack(uint32_t offset) {
+	struct Callstack const callstack = platform_debug_get_callstack();
+	struct CString const stacktrace = platform_debug_get_stacktrace(callstack, offset + 1);
+	logger_to_console(
+		"> Callstack:\n"
+		"%.*s"
+		"\n",
+		stacktrace.length, stacktrace.data
+	);
 }

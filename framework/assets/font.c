@@ -34,7 +34,7 @@ static void font_memory_free(void * pointer, struct Buffer * scratch);
 #include "font_glyph.h"
 
 struct Font {
-	struct Buffer file;
+	void * data;
 	stbtt_fontinfo font;
 	int ascent, descent, line_gap;
 	struct Buffer * scratch;
@@ -48,11 +48,11 @@ struct Font * font_init(struct Buffer * buffer) {
 	*font->scratch = buffer_init(NULL);
 
 	// @note: memory ownership transfer
-	font->file = *buffer;
+	font->data = buffer->data;
 	*buffer = (struct Buffer){0};
 
 	font->font.userdata = font->scratch;
-	if (!stbtt_InitFont(&font->font, font->file.data, stbtt_GetFontOffsetForIndex(font->file.data, 0))) {
+	if (!stbtt_InitFont(&font->font, font->data, stbtt_GetFontOffsetForIndex(font->data, 0))) {
 		logger_to_console("failure: can't read font data\n"); DEBUG_BREAK();
 	}
 
@@ -65,7 +65,7 @@ struct Font * font_init(struct Buffer * buffer) {
 
 void font_free(struct Font * font) {
 	buffer_free(font->scratch); MEMORY_FREE(font->scratch);
-	buffer_free(&font->file);
+	MEMORY_FREE(font->data);
 	common_memset(font, 0, sizeof(*font));
 	MEMORY_FREE(font);
 }

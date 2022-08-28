@@ -246,7 +246,8 @@ void game_free(void) {
 }
 
 void game_fill_scene(struct JSON const * json, void * data) {
-	if (data != &gs_game) { DEBUG_BREAK(); }
+	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
+	if (data != &gs_game) { DEBUG_BREAK(); return; }
 	state_read_json_cameras(json_get(json, S_("cameras")));
 	state_read_json_entities(json_get(json, S_("entities")));
 }

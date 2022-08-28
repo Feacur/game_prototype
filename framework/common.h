@@ -94,6 +94,20 @@ bool contains_full_word(char const * container, struct CString value);
 	#define DEBUG_BREAK() (void)0
 #endif
 
+// ----- ----- ----- ----- -----
+//     callstack
+// ----- ----- ----- ----- -----
+
+void report_callstack(uint32_t offset);
+
+#if !defined(GAME_TARGET_OPTIMIZED)
+	#define REPORT_CALLSTACK(offset) report_callstack(offset)
+#endif
+
+#if !defined(DEBUG_BREAK)
+	#define REPORT_CALLSTACK(offset) (void)0
+#endif
+
 #endif
 
 // ----- ----- ----- ----- -----

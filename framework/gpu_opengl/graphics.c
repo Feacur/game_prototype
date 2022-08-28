@@ -1460,7 +1460,17 @@ static void verify_program(GLuint id) {
 
 //
 
-static char const * debug_get_source(GLenum value) {
+static char const * opengl_debug_get_severity(GLenum value) {
+	switch (value) {
+		case GL_DEBUG_SEVERITY_HIGH:         return "[crt]"; // All OpenGL Errors, shader compilation/linking errors, or highly-dangerous undefined behavior
+		case GL_DEBUG_SEVERITY_MEDIUM:       return "[err]"; // Major performance warnings, shader compilation/linking warnings, or the use of deprecated functionality
+		case GL_DEBUG_SEVERITY_LOW:          return "[wrn]"; // Redundant state change performance warning, or unimportant undefined behavior
+		case GL_DEBUG_SEVERITY_NOTIFICATION: return "[trc]"; // Anything that isn't an error or performance issue.
+	}
+	return "[???]";
+}
+
+static char const * opengl_debug_get_source(GLenum value) {
 	switch (value) {
 		case GL_DEBUG_SOURCE_API:             return "API";
 		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   return "window system";
@@ -1472,7 +1482,7 @@ static char const * debug_get_source(GLenum value) {
 	return "unknown";
 }
 
-static char const * debug_get_type(GLenum value) {
+static char const * opengl_debug_get_type(GLenum value) {
 	switch (value) {
 		case GL_DEBUG_TYPE_ERROR:               return "error";
 		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "deprecated behavior";
@@ -1487,16 +1497,6 @@ static char const * debug_get_type(GLenum value) {
 	return "unknown";
 }
 
-static char const * debug_get_severity(GLenum value) {
-	switch (value) {
-		case GL_DEBUG_SEVERITY_HIGH:         return "[crt]"; // All OpenGL Errors, shader compilation/linking errors, or highly-dangerous undefined behavior
-		case GL_DEBUG_SEVERITY_MEDIUM:       return "[err]"; // Major performance warnings, shader compilation/linking warnings, or the use of deprecated functionality
-		case GL_DEBUG_SEVERITY_LOW:          return "[wrn]"; // Redundant state change performance warning, or unimportant undefined behavior
-		case GL_DEBUG_SEVERITY_NOTIFICATION: return "[trc]"; // Anything that isn't an error or performance issue.
-	}
-	return "[???]";
-}
-
 static void __stdcall opengl_debug_message_callback(
 	GLenum source,
 	GLenum type,
@@ -1506,22 +1506,25 @@ static void __stdcall opengl_debug_message_callback(
 	const GLchar *message,
 	const void *userParam
 ) {
+#define STACKTRACE_OFFSET 4
+
 	(void)userParam;
 	logger_to_console(
 		"> OpenGL message '0x%x'\n"
-		"  message:  %.*s\n"
 		"  severity: %s\n"
-		"  type:     %s\n"
 		"  source:   %s\n"
+		"  type:     %s\n"
+		"  message:  %.*s\n"
 		"\n",
 		id,
-		length, message,
-		debug_get_severity(severity),
-		debug_get_type(type),
-		debug_get_source(source)
+		opengl_debug_get_severity(severity),
+		opengl_debug_get_source(source),
+		opengl_debug_get_type(type),
+		length, message
 	);
+	REPORT_CALLSTACK(STACKTRACE_OFFSET); DEBUG_BREAK();
 
-	DEBUG_BREAK();
+#undef STACKTRACE_OFFSET
 }
 
 /*

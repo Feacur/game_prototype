@@ -10,9 +10,6 @@
 // @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
 // @idea: use OS-native allocators instead of CRT's
 
-// @note: skip `debug.c` and `memory.c`
-#define STACKTRACE_OFFSET 2
-
 //
 #include "memory.h"
 
@@ -37,7 +34,7 @@ void * memory_reallocate(void * pointer, size_t size) {
 
 	if (pointer_header != NULL) {
 		if (pointer_header->checksum != (size_t)pointer_header) {
-			struct CString const stacktrace = platform_debug_get_stacktrace(callstack, STACKTRACE_OFFSET);
+			struct CString const stacktrace = platform_debug_get_stacktrace(callstack, 1);
 			logger_to_console("incorrect checksum: \"%.*s\"\n", stacktrace.length, stacktrace.data); DEBUG_BREAK();
 			return pointer;
 		}
@@ -52,44 +49,54 @@ void * memory_reallocate(void * pointer, size_t size) {
 		if (pointer_header->prev != NULL) { pointer_header->prev->next = pointer_header->next; }
 	}
 
+	// free
 	if (size == 0) {
 		if (pointer_header == NULL) { return NULL; }
+		// @note: zeroing payload seems extra redundant
 		// common_memset(pointer_header + 1, 0, pointer_header->size);
 		common_memset(pointer_header, 0, sizeof(*pointer_header));
 		free(pointer_header);
 		return NULL;
 	}
 
+	// allocate or reallocate
 	struct Memory_Header * reallocated_header = realloc(pointer_header, sizeof(*pointer_header) + size);
-	if (reallocated_header == NULL) {
-		struct CString const stacktrace = platform_debug_get_stacktrace(callstack, STACKTRACE_OFFSET);
-		logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data); DEBUG_BREAK();
-		return pointer;
+	if (reallocated_header != NULL) {
+		gs_memory_state.count++;
+		gs_memory_state.bytes += size;
+		*reallocated_header = (struct Memory_Header){
+			.checksum = (size_t)reallocated_header,
+			.size = size,
+			.callstack = callstack,
+		};
+
+		// track memory
+		reallocated_header->next = gs_memory_state.root;
+		if (gs_memory_state.root != NULL) { gs_memory_state.root->prev = reallocated_header; }
+		gs_memory_state.root = reallocated_header;
+
+		return reallocated_header + 1;
 	}
 
-	if (pointer_header == NULL) { common_memset(reallocated_header, 0, sizeof(*reallocated_header)); }
-
-	gs_memory_state.count++;
-	gs_memory_state.bytes += size;
-	*reallocated_header = (struct Memory_Header){
-		.checksum = (size_t)reallocated_header,
-		.size = size,
-		.callstack = callstack,
-	};
-
-	// track memory
-	reallocated_header->next = gs_memory_state.root;
-	if (gs_memory_state.root != NULL) { gs_memory_state.root->prev = reallocated_header; }
-	gs_memory_state.root = reallocated_header;
-
-	return reallocated_header + 1;
+	// failed
+	struct CString const stacktrace = platform_debug_get_stacktrace(callstack, 1);
+	logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data); DEBUG_BREAK();
+	return pointer;
 }
 
-void * memory_reallocate_trivial(void * pointer, size_t size) {
+void * memory_reallocate_without_tracking(void * pointer, size_t size) {
+	struct Callstack const callstack = platform_debug_get_callstack();
+
+	// free
 	if (size == 0) { free(pointer); return NULL; }
+
+	// allocate or reallocate
 	void * reallocated = realloc(pointer, size);
 	if (reallocated != NULL) { return reallocated; }
-	logger_to_console("'realloc' failed\n"); DEBUG_BREAK();
+
+	// failed
+	struct CString const stacktrace = platform_debug_get_stacktrace(callstack, 1);
+	logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data); DEBUG_BREAK();
 	return pointer;
 }
 
@@ -115,7 +122,7 @@ uint32_t memory_to_system_report(void) {
 	uint32_t count = 0;
 	if (gs_memory_state.root != NULL) {
 		for (struct Memory_Header * it = gs_memory_state.root; it != NULL; it = it->next) {
-			struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack, STACKTRACE_OFFSET);
+			struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack, 1);
 			logger_to_console(
 				"  [0x%0*.zx] (bytes: %*.zu) stacktrace:\n%.*s\n"
 				"",
@@ -128,5 +135,3 @@ uint32_t memory_to_system_report(void) {
 	}
 	return count;
 }
-
-#undef STACKTRACE_OFFSET

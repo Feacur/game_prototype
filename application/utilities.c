@@ -9,7 +9,7 @@
 
 void process_json(struct CString path, void * data, void (* action)(struct JSON const * json, void * output)) {
 	struct Buffer file_buffer = platform_file_read_entire(path);
-	if (file_buffer.capacity == 0) { DEBUG_BREAK(); return; }
+	if (file_buffer.capacity == 0) { action(&c_json_error, data); return; }
 
 	struct Strings strings = strings_init();
 

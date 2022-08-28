@@ -131,7 +131,8 @@ static void prototype_tick_entities_text_2d(void) {
 // ----- ----- ----- ----- -----
 
 static void prototype_init(void) {
-	process_json(strings_get(&gs_main_settings.strings, gs_main_settings.scene_id), &gs_game, game_fill_scene);
+	struct CString const scene_path = strings_get(&gs_main_settings.strings, gs_main_settings.scene_id);
+	process_json(scene_path, &gs_game, game_fill_scene);
 	gpu_execute(1, &(struct GPU_Command){
 		.type = GPU_COMMAND_TYPE_CULL,
 		.as.cull = {
@@ -444,6 +445,7 @@ static void app_frame_tick(void) {
 // ----- ----- ----- ----- -----
 
 static void main_fill_settings(struct JSON const * json, void * data) {
+	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
 	struct Main_Settings * result = data;
 	*result = (struct Main_Settings){
 		.strings = strings_init(),
@@ -454,6 +456,7 @@ static void main_fill_settings(struct JSON const * json, void * data) {
 }
 
 static void main_fill_config(struct JSON const * json, void * data) {
+	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
 	struct Application_Config * result = data;
 	*result = (struct Application_Config){
 		.size = {
@@ -469,21 +472,27 @@ static void main_fill_config(struct JSON const * json, void * data) {
 }
 
 int main (int argc, char * argv[]) {
+	bool success = false;
+
 	logger_to_console("Bonjour!\n\n");
 
 	platform_system_init();
 
-	logger_to_console("> arguments:\n");
+	logger_to_console("> Arguments:\n");
 	for (int i = 0; i < argc; i++) {
 		logger_to_console("  %s\n", argv[i]);
 	}
 	logger_to_console("\n");
 
 	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
+	if (gs_main_settings.config_id == 0) { goto finalize; }
 
-	struct Application_Config config;
-	process_json(strings_get(&gs_main_settings.strings, gs_main_settings.config_id), &config, main_fill_config);
+	struct Application_Config config = {0};
+	struct CString const config_path = strings_get(&gs_main_settings.strings, gs_main_settings.config_id);
+	process_json(config_path, &config, main_fill_config);
+	if (config.fixed_refresh_rate == 0) { goto finalize; }
 
+	success = true;
 	application_run(config, (struct Application_Callbacks){
 		.init = app_init,
 		.free = app_free,
@@ -491,6 +500,7 @@ int main (int argc, char * argv[]) {
 		.frame_tick = app_frame_tick,
 	});
 
+	finalize: if (!success) { DEBUG_BREAK(); }
 	platform_system_free();
 	return 0;
 }
