@@ -76,18 +76,18 @@ struct Batcher_2D * batcher_2d_init(void) {
 	*batcher = (struct Batcher_2D){
 		.matrix = c_mat4_identity,
 		.mesh_parameters = {
-			[0] = (struct Mesh_Parameters){
+			(struct Mesh_Parameters){
 				.type = DATA_TYPE_R32_F,
 				.flags = MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
 				.attributes_count = BATCHER_2D_ATTRIBUTES_COUNT,
 				.attributes = {
-					[0] = ATTRIBUTE_TYPE_POSITION,
-					[1] = SIZE_OF_MEMBER(struct Batcher_2D_Vertex, position) / sizeof(float),
-					[2] = ATTRIBUTE_TYPE_TEXCOORD,
-					[3] = SIZE_OF_MEMBER(struct Batcher_2D_Vertex, tex_coord) / sizeof(float),
+					ATTRIBUTE_TYPE_POSITION,
+					SIZE_OF_MEMBER(struct Batcher_2D_Vertex, position) / sizeof(float),
+					ATTRIBUTE_TYPE_TEXCOORD,
+					SIZE_OF_MEMBER(struct Batcher_2D_Vertex, tex_coord) / sizeof(float),
 				},
 			},
-			[1] = (struct Mesh_Parameters){
+			(struct Mesh_Parameters){
 				.type = DATA_TYPE_R32_U,
 				.flags = MESH_FLAG_INDEX | MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
 			},

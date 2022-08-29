@@ -97,7 +97,7 @@ void state_read_json_flt_n(struct JSON const * json, uint32_t length, float * re
 		}
 	}
 	else if (json->type == JSON_NUMBER) {
-		result[0] = (float)json_as_number(json);
+		*result = (float)json_as_number(json);
 	}
 }
 
@@ -109,7 +109,7 @@ void state_read_json_u32_n(struct JSON const * json, uint32_t length, uint32_t *
 		}
 	}
 	else if (json->type == JSON_NUMBER) {
-		result[0] = (uint32_t)json_as_number(json);
+		*result = (uint32_t)json_as_number(json);
 	}
 }
 
@@ -121,7 +121,7 @@ void state_read_json_s32_n(struct JSON const * json, uint32_t length, int32_t * 
 		}
 	}
 	else if (json->type == JSON_NUMBER) {
-		result[0] = (int32_t)json_as_number(json);
+		*result = (int32_t)json_as_number(json);
 	}
 }
 

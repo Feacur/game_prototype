@@ -52,10 +52,12 @@ struct Font_Image * font_atlas_init(struct Font const * font) {
 				.flags = TEXTURE_FLAG_MUTABLE | TEXTURE_FLAG_WRITE,
 			},
 			.settings = {
-				.swizzle[0] = SWIZZLE_OP_1,
-				.swizzle[1] = SWIZZLE_OP_1,
-				.swizzle[2] = SWIZZLE_OP_1,
-				.swizzle[3] = SWIZZLE_OP_R,
+				.swizzle = {
+					SWIZZLE_OP_1,
+					SWIZZLE_OP_1,
+					SWIZZLE_OP_1,
+					SWIZZLE_OP_R,
+				},
 			},
 		},
 		.font = font,
