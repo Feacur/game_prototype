@@ -102,57 +102,47 @@ void font_atlas_add_glyph(struct Font_Image * font_atlas, uint32_t codepoint, fl
 	font_atlas->rendered = false;
 }
 
-void font_atlas_add_glyph_error(struct Font_Image *font_atlas, float size) {
-	// @idea: reuse image space between differently sized error glyphs?
-	float const scale        = font_get_scale(font_atlas->font, size);
-	float const size_error_y = font_atlas_get_ascent(font_atlas, scale);
-	float const size_error_x = size_error_y / 2;
-
+static void font_atlas_add_empty_glyph(struct Font_Image *font_atlas, uint32_t codepoint, float size, float full_size_x, struct srect rect) {
 	uint64_t const key_hash = font_atlas_get_key_hash((struct Font_Key){
-		.codepoint = CODEPOINT_EMPTY,
+		.codepoint = codepoint,
 		.size = size,
 	});
 
+	struct Font_Glyph * glyph = hash_table_u64_get(&font_atlas->table, key_hash);
+	if (glyph != NULL) { glyph->usage = GLYPH_USAGE_MAX; return; }
+
 	hash_table_u64_set(&font_atlas->table, key_hash, &(struct Font_Glyph){
 		.params = (struct Glyph_Params){
-			.full_size_x = size_error_x,
-			.rect = {
-				.min = {
-					(int32_t)r32_floor(size_error_x * 0.2f),
-					(int32_t)r32_floor(size_error_y * 0.0f),
-				},
-				.max = {
-					(int32_t)r32_ceil (size_error_x * 0.9f),
-					(int32_t)r32_ceil (size_error_y * 0.8f),
-				},
-			},
+			.full_size_x = full_size_x,
+			.rect = rect,
 		},
 		.usage = GLYPH_USAGE_MAX,
 	});
+
+	font_atlas->rendered = false;
 }
 
-void font_atlas_add_glyphs_from_range(struct Font_Image * font_atlas, uint32_t from, uint32_t to, float size) {
-	for (uint32_t codepoint = from; codepoint <= to; codepoint++) {
-		font_atlas_add_glyph(font_atlas, codepoint, size);
-	}
-}
+void font_atlas_add_default_glyphs(struct Font_Image *font_atlas, float size) {
+	font_atlas_add_glyph(font_atlas, ' ', size);
+	struct Font_Glyph const * glyph_space = font_atlas_get_glyph(font_atlas, ' ', size);
+	float const glyph_space_size = glyph_space->params.full_size_x;
 
-void font_atlas_add_glyphs_from_text(struct Font_Image * font_atlas, uint32_t length, uint8_t const * data, float size) {
-	FOR_UTF8 (length, data, it) {
-		switch (it.codepoint) {
-			case CODEPOINT_ZERO_WIDTH_SPACE: break;
+	font_atlas_add_empty_glyph(font_atlas, CODEPOINT_EMPTY, size, glyph_space_size, (struct srect){
+		.min = {
+			(int32_t)r32_floor(glyph_space_size * 0.1f),
+			(int32_t)r32_floor(glyph_space_size * 0.0f),
+		},
+		.max = {
+			(int32_t)r32_ceil (glyph_space_size * 0.45f),
+			(int32_t)r32_ceil (glyph_space_size * 0.8f),
+		},
+	});
 
-			case ' ':
-			case '\t':
-			case CODEPOINT_NON_BREAKING_SPACE:
-				font_atlas_add_glyph(font_atlas, ' ', size);
-				break;
-
-			default: if (it.codepoint > ' ') {
-				font_atlas_add_glyph(font_atlas, it.codepoint, size);
-			} break;
-		}
-	}
+	font_atlas_add_empty_glyph(font_atlas, '\t',                         size, glyph_space_size * 4, (struct srect){0}); // @todo: expose tab scale
+	font_atlas_add_empty_glyph(font_atlas, '\r',                         size, 0,                    (struct srect){0});
+	font_atlas_add_empty_glyph(font_atlas, '\n',                         size, 0,                    (struct srect){0});
+	font_atlas_add_empty_glyph(font_atlas, CODEPOINT_ZERO_WIDTH_SPACE,   size, 0,                    (struct srect){0});
+	font_atlas_add_empty_glyph(font_atlas, CODEPOINT_NON_BREAKING_SPACE, size, glyph_space_size,     (struct srect){0});
 }
 
 inline static struct Font_Key font_atlas_get_key(uint64_t value);
@@ -162,9 +152,7 @@ void font_atlas_render(struct Font_Image * font_atlas) {
 
 	// track glyphs usage
 	FOR_HASH_TABLE_U64 (&font_atlas->table, it) {
-		if (it.key_hash == CODEPOINT_EMPTY) { continue; }
 		struct Font_Glyph * glyph = it.value;
-
 		if (glyph->usage == 0) {
 			font_atlas->rendered = false;
 			hash_table_u64_del_at(&font_atlas->table, it.current);
@@ -182,6 +170,9 @@ void font_atlas_render(struct Font_Image * font_atlas) {
 	struct Font_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(struct Font_Symbol, font_atlas->table.count);
 
 	FOR_HASH_TABLE_U64 (&font_atlas->table, it) {
+		struct Font_Key const key = font_atlas_get_key(it.key_hash);
+		if (codepoint_is_invisible(key.codepoint)) { continue; }
+
 		struct Font_Glyph const * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 

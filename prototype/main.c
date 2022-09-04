@@ -208,7 +208,7 @@ static void prototype_display_performance(void) {
 
 	batcher_2d_add_text(
 		gs_renderer.batcher,
-		entity_rect, (struct vec2){0, 1},
+		entity_rect, (struct vec2){0, 1}, false,
 		font, length, (uint8_t const *)buffer,
 		32
 	);
@@ -388,7 +388,7 @@ static void prototype_draw_entities(void) {
 					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.assets, text->message);
 					batcher_2d_add_text(
 						gs_renderer.batcher,
-						entity_rect, (struct vec2){0, 1},
+						entity_rect, (struct vec2){0, 1}, true,
 						font, text->visible_length, message->data,
 						text->size
 					);

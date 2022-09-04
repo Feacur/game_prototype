@@ -30,9 +30,12 @@
 
 struct Batcher_2D_Text {
 	uint32_t strings_from, strings_to;
-	struct Asset_Font const * font; // @idea: use `Asset_Ref` instead
 	uint32_t vertices_offset;
-	float size;
+	struct vec2 position_offset;
+	// @idea: use `Asset_Ref` instead
+	struct Asset_Font const * font; float size;
+	uint32_t breaker_codepoint;
+	float full_size_x;
 };
 
 struct Batcher_2D_Batch {
@@ -170,7 +173,7 @@ void batcher_2d_add_quad(
 
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
-	struct rect rect, struct vec2 alignment,
+	struct rect rect, struct vec2 alignment, bool wrap,
 	struct Asset_Font const * font, uint32_t length, uint8_t const * data, float size
 ) {
 	float const scale        = font_atlas_get_scale(font->font_atlas, size);
@@ -179,77 +182,135 @@ void batcher_2d_add_text(
 	float const line_gap     = font_atlas_get_gap(font->font_atlas, scale);
 	float const line_height  = font_ascent - font_descent + line_gap;
 
-	struct vec2 offset = {
-		lerp(rect.min.x, rect.max.x, alignment.x),
-		lerp(rect.min.y, rect.max.y, alignment.y),
-	};
-	offset.y -= font_ascent;
+	uint32_t const texts_offset = batcher->texts.count;
 
-	font_atlas_add_glyph(font->font_atlas, ' ', size);
-	font_atlas_add_glyph_error(font->font_atlas, size);
-	struct Font_Glyph const * glyph_space = font_atlas_get_glyph(font->font_atlas, ' ', size);
+	font_atlas_add_default_glyphs(font->font_atlas, size);
 	struct Font_Glyph const * glyph_error = font_atlas_get_glyph(font->font_atlas, CODEPOINT_EMPTY, size);
 
-	float const space_size = (glyph_space != NULL) ? glyph_space->params.full_size_x : 0;
-	float const tab_size = space_size * 4; // @todo: expose tab scale
+	// @note: other values are not supported yet
+	if (alignment.x != 0 || alignment.y != 1) { DEBUG_BREAK(); }
+	alignment = (struct vec2){0, 1};
 
-	uint32_t vertices_offset = batcher->buffer_vertices.count;
-	uint32_t strings_offset = batcher->strings.count;
+	// translate text data into crude text blocks
+	{
+		float block_width = 0;
+		uint32_t block_strings_offset = batcher->strings.count;
 
-	uint32_t previous_codepoint = 0;
-	FOR_UTF8 (length, data, it) {
-		if (offset.y >= rect.max.y) { break; }
+		uint32_t previous_codepoint = CODEPOINT_EMPTY;
+		FOR_UTF8 (length, data, it) {
+			font_atlas_add_glyph(font->font_atlas, it.codepoint, size);
 
-		switch (it.codepoint) {
-			case CODEPOINT_ZERO_WIDTH_SPACE: break;
+			struct Font_Glyph const * glyph = font_atlas_get_glyph(font->font_atlas, it.codepoint, size);
+			float const full_size_x = (glyph != NULL) ? glyph->params.full_size_x : glyph_error->params.full_size_x;
 
-			case ' ':
-			case CODEPOINT_NON_BREAKING_SPACE:
-				offset.x += space_size;
-				break;
-
-			case '\t':
-				offset.x += tab_size;
-				break;
-
-			case '\r':
-				// offset.x = lerp(rect.min.x, rect.max.x, alignment.x); // @note: see `\n`
-				break;
-
-			case '\n':
-				offset.x = lerp(rect.min.x, rect.max.x, alignment.x); // @note: auto `\r`
-				offset.y -= line_height;
-
+			block_width += full_size_x;
+			if (codepoint_is_block_break(it.codepoint)) {
 				// @todo: (?) arena/stack allocator
 				array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
-					.strings_from = strings_offset,
-					.strings_to = batcher->strings.count,
-					.font = font,
-					.vertices_offset = vertices_offset,
-					.size = size,
+					.strings_from = block_strings_offset, .strings_to = batcher->strings.count,
+					.font = font, .size = size,
+					.breaker_codepoint = it.codepoint,
+					.full_size_x = block_width,
 				});
-				vertices_offset = batcher->buffer_vertices.count;
-				strings_offset = batcher->strings.count;
-				break;
 
-			default: if (it.codepoint > ' ') {
-				if (offset.x >= rect.max.x) { break; }
+				//
+				block_width = 0;
+				block_strings_offset = batcher->strings.count;
+			}
 
-				font_atlas_add_glyph(font->font_atlas, it.codepoint, size);
-				struct Font_Glyph const * glyph = font_atlas_get_glyph(font->font_atlas, it.codepoint, size);
-				if (glyph == NULL) { glyph = glyph_error; }
-
-				if (glyph->params.is_empty) { logger_to_console("codepoint '0x%x' has empty glyph\n", it.codepoint); DEBUG_BREAK(); }
-
-				float const kerning = font_atlas_get_kerning(font->font_atlas, previous_codepoint, it.codepoint, scale);
-				float const offset_x = offset.x + kerning;
-				offset.x += glyph->params.full_size_x - kerning;
-
-				if (offset.x <= rect.min.x) { break; }
-
+			if (!codepoint_is_invisible(it.codepoint)) {
 				// @todo: (?) arena/stack allocator
-				array_u32_push_many(&batcher->strings, 1, &it.codepoint);
+				array_u32_push_many(&batcher->strings, 1, (uint32_t[]){
+					(glyph != NULL) ? it.codepoint : CODEPOINT_EMPTY,
+				});
 
+				//
+				float const kerning = font_atlas_get_kerning(font->font_atlas, previous_codepoint, it.codepoint, scale);
+				block_width -= kerning;
+			}
+
+			previous_codepoint = it.codepoint;
+		}
+
+		if (batcher->strings.count > block_strings_offset) {
+			// @todo: (?) arena/stack allocator
+			array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
+				.strings_from = block_strings_offset, .strings_to = batcher->strings.count,
+				.font = font, .size = size,
+				.full_size_x = block_width,
+			});
+		}
+	}
+
+	// adjust positions of text blocks
+	{
+		struct vec2 offset = {
+			lerp(rect.min.x, rect.max.x, alignment.x),
+			lerp(rect.min.y, rect.max.y, alignment.y),
+		};
+		offset.y -= font_ascent;
+
+		for (uint32_t block_i = texts_offset; block_i < batcher->texts.count; block_i++) {
+			struct Batcher_2D_Text * text = array_any_at(&batcher->texts, block_i);
+
+			// break line if block overflows
+			if (wrap && (offset.x + text->full_size_x > rect.max.x)) {
+				offset.x = lerp(rect.min.x, rect.max.x, alignment.x); // @note: auto `\r`
+				offset.y -= line_height;
+			}
+			text->position_offset = offset;
+
+			// process block
+			uint32_t previous_codepoint = CODEPOINT_EMPTY;
+			for (uint32_t strings_i = text->strings_from; strings_i < text->strings_to; strings_i++) {
+				uint32_t const codepoint = array_u32_at(&batcher->strings, strings_i);
+
+				struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
+
+				float const kerning = font_atlas_get_kerning(font->font_atlas, previous_codepoint, codepoint, scale);
+				previous_codepoint = codepoint;
+
+				offset.x += glyph->params.full_size_x - kerning;
+			}
+
+			// process breaker
+			{
+				struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, text->breaker_codepoint, text->size);
+				offset.x += glyph->params.full_size_x;
+				if (text->breaker_codepoint == '\n') {
+					offset.x = lerp(rect.min.x, rect.max.x, alignment.x); // @note: auto `\r`
+					offset.y -= line_height;
+				}
+			}
+		}
+	}
+
+	// translate text blocks into crude vertices
+	for (uint32_t block_i = texts_offset; block_i < batcher->texts.count; block_i++) {
+		struct Batcher_2D_Text * text = array_any_at(&batcher->texts, block_i);
+		text->vertices_offset = batcher->buffer_vertices.count;
+
+		struct vec2 offset = text->position_offset;
+		if (offset.y > rect.max.y) { text->strings_to = text->strings_from; continue; } // void entry
+		if (offset.y < rect.min.y) { batcher->texts.count = block_i;        break; }    // drop entry
+
+		uint32_t previous_codepoint = CODEPOINT_EMPTY;
+		for (uint32_t strings_i = text->strings_from; strings_i < text->strings_to; strings_i++) {
+			uint32_t const codepoint = array_u32_at(&batcher->strings, strings_i);
+
+			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
+
+			float const kerning = font_atlas_get_kerning(font->font_atlas, previous_codepoint, codepoint, scale);
+			previous_codepoint = codepoint;
+
+			float const offset_x = offset.x + kerning;
+			offset.x += glyph->params.full_size_x - kerning;
+
+
+			if (offset_x < rect.min.x) { text->strings_from = strings_i + 1; continue; } // skip glyph
+			if (offset.x > rect.max.x) { text->strings_to   = strings_i + 1; break; }    // skip glyph
+
+			if (!codepoint_is_invisible(codepoint)) {
 				batcher_2d_add_quad(
 					batcher,
 					(struct rect){
@@ -264,25 +325,8 @@ void batcher_2d_add_text(
 					},
 					(struct rect){0} // @note: UVs are delayed, see `batcher_2d_bake_texts`
 				);
-			} break;
+			}
 		}
-
-		previous_codepoint = it.codepoint;
-
-		if (offset.y <= rect.min.y) { break; }
-	}
-
-	if (batcher->strings.count > strings_offset) {
-		// @todo: (?) arena/stack allocator
-		array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
-			.strings_from = strings_offset,
-			.strings_to = batcher->strings.count,
-			.font = font,
-			.vertices_offset = vertices_offset,
-			.size = size,
-		});
-		vertices_offset = batcher->buffer_vertices.count;
-		strings_offset = batcher->strings.count;
 	}
 }
 
@@ -311,16 +355,17 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 	}
 
 	// fill quads UVs
-	for (uint32_t i = 0; i < batcher->texts.count; i++) {
-		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
-		struct Font_Glyph const * glyph_error = font_atlas_get_glyph(text->font->font_atlas, CODEPOINT_EMPTY, text->size);
-		struct rect const glyph_error_uv = glyph_error->uv;
+	for (uint32_t block_i = 0; block_i < batcher->texts.count; block_i++) {
+		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, block_i);
 		uint32_t vertices_offset = text->vertices_offset;
+
 		for (uint32_t strings_i = text->strings_from; strings_i < text->strings_to; strings_i++) {
 			uint32_t const codepoint = array_u32_at(&batcher->strings, strings_i);
+
+			if (codepoint_is_invisible(codepoint)) { continue; }
+
 			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
-			struct rect const glyph_uv = (glyph != NULL) ? glyph->uv : glyph_error_uv;
-			batcher_2d_fill_quad_uv(batcher, vertices_offset, glyph_uv);
+			batcher_2d_fill_quad_uv(batcher, vertices_offset, glyph->uv);
 			vertices_offset += 4;
 		}
 	}
