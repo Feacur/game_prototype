@@ -6,7 +6,7 @@
 
 struct Buffer;
 
-// @note: image data layout
+// @note: image layout
 // +----------+
 // |image  1,1|
 // |          |

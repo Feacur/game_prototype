@@ -5,6 +5,17 @@
 
 // @todo: tune/expose glyphs GC
 
+// @note: atlas and glyphs layout
+// +----------------+
+// |atlas        1,1|
+// |  +----------+  |
+// |  |glyph  1,1|  |
+// |  |          |  |
+// |  |0,0       |  |
+// |  +----------+  |
+// |0,0             |
+// +----------------+
+
 struct Font_Image;
 struct Image;
 struct Font;

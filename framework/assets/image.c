@@ -28,7 +28,7 @@
 #include "image.h"
 
 struct Image image_init(struct Texture_Settings settings, struct Buffer const * buffer) {
-	// @note: ensure image data layout
+	// @note: ensure image layout
 	stbi_set_flip_vertically_on_load(1);
 
 	int size_x, size_y, channels;

@@ -136,7 +136,7 @@ void font_render_glyph(
 
 	if (buffer_width == 0) { logger_to_console("'buffer_width == 0' doesn't make sense\n"); DEBUG_BREAK(); return; }
 
-	// @note: ensure glyphs data layout inside the atlas
+	// @note: ensure glyphs layout
 	// stbtt_set_flip_vertically_on_load(1);
 
 	stbtt_MakeGlyphBitmap(

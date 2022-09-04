@@ -25,6 +25,15 @@
 // @idea: static batching option; cache vertices and stuff until changed
 // @idea: add a 3d batcher
 
+// @note: quad layout
+// 1-----------3
+// |         / |
+// |       /   |
+// |     /     |
+// |   /       |
+// | /         |
+// 0-----------2
+
 #define BATCHER_2D_BUFFERS_COUNT 2
 #define BATCHER_2D_ATTRIBUTES_COUNT 2
 
@@ -134,19 +143,6 @@ void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material co
 }
 
 inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord);
-
-static void batcher_2d_fill_quad_uv(
-	struct Batcher_2D * batcher,
-	uint32_t vertices_offset,
-	struct rect uv
-) {
-	struct Batcher_2D_Vertex * vertices = array_any_at(&batcher->buffer_vertices, vertices_offset);
-	vertices[0].tex_coord = uv.min;
-	vertices[1].tex_coord = (struct vec2){uv.min.x, uv.max.y};
-	vertices[2].tex_coord = (struct vec2){uv.max.x, uv.min.y};
-	vertices[3].tex_coord = uv.max;
-}
-
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
 	struct rect rect,
@@ -160,8 +156,8 @@ void batcher_2d_add_quad(
 		batcher_2d_make_vertex(batcher->matrix, rect.max, uv.max),
 	});
 	array_u32_push_many(&batcher->buffer_indices, 3 * 2, (uint32_t[]){
-		vertex_offset + 1, vertex_offset + 0, vertex_offset + 2,
-		vertex_offset + 1, vertex_offset + 2, vertex_offset + 3
+		vertex_offset + 3, vertex_offset + 1, vertex_offset + 0,
+		vertex_offset + 0, vertex_offset + 2, vertex_offset + 3,
 	});
 }
 
@@ -359,7 +355,14 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 			if (codepoint_is_invisible(codepoint)) { continue; }
 
 			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
-			batcher_2d_fill_quad_uv(batcher, vertices_offset, glyph->uv);
+			struct rect const uv = glyph->uv;
+
+			struct Batcher_2D_Vertex * vertices = array_any_at(&batcher->buffer_vertices, vertices_offset);
+			vertices[0].tex_coord = uv.min;
+			vertices[1].tex_coord = (struct vec2){uv.min.x, uv.max.y};
+			vertices[2].tex_coord = (struct vec2){uv.max.x, uv.min.y};
+			vertices[3].tex_coord = uv.max;
+
 			vertices_offset += 4;
 		}
 	}
