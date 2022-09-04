@@ -433,10 +433,9 @@ static void app_frame_tick(void) {
 	prototype_tick_entities();
 
 	if (screen_size.x > 0 && screen_size.y > 0) {
-		renderer_frame_init();
 		prototype_draw_entities();
 		prototype_draw_ui();
-		renderer_frame_free();
+		renderer_update();
 	}
 }
 
