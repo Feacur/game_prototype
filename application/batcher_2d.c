@@ -198,6 +198,8 @@ void batcher_2d_add_text(
 
 	uint32_t previous_codepoint = 0;
 	FOR_UTF8 (length, data, it) {
+		if (offset.y >= rect.max.y) { break; }
+
 		switch (it.codepoint) {
 			case CODEPOINT_ZERO_WIDTH_SPACE: break;
 
@@ -231,7 +233,7 @@ void batcher_2d_add_text(
 				break;
 
 			default: if (it.codepoint > ' ') {
-				// if (offset.x >= text->rect.max.x) { break; }
+				if (offset.x >= rect.max.x) { break; }
 
 				font_atlas_add_glyph(font->font_atlas, it.codepoint, size);
 				struct Font_Glyph const * glyph = font_atlas_get_glyph(font->font_atlas, it.codepoint, size);
@@ -243,7 +245,7 @@ void batcher_2d_add_text(
 				float const offset_x = offset.x + kerning;
 				offset.x += glyph->params.full_size_x - kerning;
 
-				// if (offset.x <= rect.min.x) { break; }
+				if (offset.x <= rect.min.x) { break; }
 
 				// @todo: (?) arena/stack allocator
 				array_u32_push_many(&batcher->strings, 1, &it.codepoint);
@@ -266,6 +268,8 @@ void batcher_2d_add_text(
 		}
 
 		previous_codepoint = it.codepoint;
+
+		if (offset.y <= rect.min.y) { break; }
 	}
 
 	if (batcher->strings.count > strings_offset) {
