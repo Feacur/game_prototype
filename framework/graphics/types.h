@@ -232,6 +232,7 @@ struct Gpu_Program_Field {
 enum Blend_Mode {
 	BLEND_MODE_NONE,
 	BLEND_MODE_MIX, // lerp(Drgb, Srgb, Sa), max(Da, Sa)
+	BLEND_MODE_PMA, // Drgb * (1 - Sa) + Srgb, max(Da, Sa)
 	BLEND_MODE_ADD, // D + S
 	BLEND_MODE_SUB, // D - S
 	BLEND_MODE_MUL, // D * S

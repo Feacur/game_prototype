@@ -515,6 +515,13 @@ struct Gpu_Blend_Mode gpu_blend_mode(enum Blend_Mode value) {
 			.color_src = GL_SRC_ALPHA, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE_MINUS_SRC_ALPHA,
 			.alpha_src = GL_ONE,       /**/ .alpha_op = GL_MAX,      /**/ .alpha_dst = GL_ONE,
 		};
+
+		case BLEND_MODE_PMA: return (struct Gpu_Blend_Mode){
+			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
+			.color_src = GL_ONE, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE_MINUS_SRC_ALPHA,
+			.alpha_src = GL_ONE, /**/ .alpha_op = GL_MAX,      /**/ .alpha_dst = GL_ONE,
+		};
+
 		case BLEND_MODE_ADD: return (struct Gpu_Blend_Mode){
 			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
 			.color_src = GL_ONE, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE,

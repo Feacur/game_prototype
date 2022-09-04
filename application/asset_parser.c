@@ -132,6 +132,10 @@ enum Blend_Mode state_read_json_blend_mode(struct JSON const * json) {
 		return BLEND_MODE_MIX;
 	}
 
+	if (cstring_equals(blend, S_("pma"))) {
+		return BLEND_MODE_PMA;
+	}
+
 	if (cstring_equals(blend, S_("add"))) {
 		return BLEND_MODE_ADD;
 	}
