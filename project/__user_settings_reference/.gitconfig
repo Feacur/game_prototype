@@ -17,6 +17,7 @@
 [core]
 	autocrlf = true
 	editor = code --wait # VS Code as default editor
+	# compression = 9
 [pull]
 	rebase = true
 	ff = no
