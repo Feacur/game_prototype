@@ -19,7 +19,8 @@ struct Font_Glyph {
 struct Font_Image * font_atlas_init(struct Font const * font);
 void font_atlas_free(struct Font_Image * font_atlas);
 
-void font_atlas_add_glyph_error(struct Font_Image *font_atlas, float size);
+void font_atlas_add_glyph(struct Font_Image * font_atlas, uint32_t codepoint, float size);
+void font_atlas_add_glyph_error(struct Font_Image * font_atlas, float size);
 void font_atlas_add_glyphs_from_range(struct Font_Image * font_atlas, uint32_t from, uint32_t to, float size);
 void font_atlas_add_glyphs_from_text(struct Font_Image * font_atlas, uint32_t length, uint8_t const * data, float size);
 void font_atlas_render(struct Font_Image * font_atlas);

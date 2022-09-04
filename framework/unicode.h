@@ -22,7 +22,7 @@ inline static bool codepoint_is_visible(uint32_t codepoint) {
 		case CODEPOINT_NON_BREAKING_SPACE:
 			return false;
 	}
-	return (codepoint > ' ') ;
+	return (codepoint > ' ');
 }
 
 bool utf8_iterate(uint32_t length, uint8_t const * data, struct UTF8_Iterator * it);

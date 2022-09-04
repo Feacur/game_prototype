@@ -77,6 +77,31 @@ void font_atlas_free(struct Font_Image * font_atlas) {
 }
 
 inline static uint64_t font_atlas_get_key_hash(struct Font_Key value);
+void font_atlas_add_glyph(struct Font_Image * font_atlas, uint32_t codepoint, float size) {
+	uint64_t const key_hash = font_atlas_get_key_hash((struct Font_Key){
+		.codepoint = codepoint,
+		.size = size,
+	});
+
+	struct Font_Glyph * glyph = hash_table_u64_get(&font_atlas->table, key_hash);
+	if (glyph != NULL) { glyph->usage = GLYPH_USAGE_MAX; return; }
+
+	uint32_t const glyph_id = font_get_glyph_id(font_atlas->font, codepoint);
+	if (glyph_id == 0) { logger_to_console("font misses a glyph for codepoint '0x%x'\n", codepoint); DEBUG_BREAK(); return; }
+
+	struct Glyph_Params const glyph_params = font_get_glyph_parameters(
+		font_atlas->font, glyph_id, font_get_scale(font_atlas->font, size)
+	);
+
+	hash_table_u64_set(&font_atlas->table, key_hash, &(struct Font_Glyph){
+		.params = glyph_params,
+		.id = glyph_id,
+		.usage = GLYPH_USAGE_MAX,
+	});
+
+	font_atlas->rendered = false;
+}
+
 void font_atlas_add_glyph_error(struct Font_Image *font_atlas, float size) {
 	// @idea: reuse image space between differently sized error glyphs?
 	float const scale        = font_get_scale(font_atlas->font, size);
@@ -106,7 +131,6 @@ void font_atlas_add_glyph_error(struct Font_Image *font_atlas, float size) {
 	});
 }
 
-inline static void font_atlas_add_glyph(struct Font_Image * font_atlas, uint32_t codepoint, float size);
 void font_atlas_add_glyphs_from_range(struct Font_Image * font_atlas, uint32_t from, uint32_t to, float size) {
 	for (uint32_t codepoint = from; codepoint <= to; codepoint++) {
 		font_atlas_add_glyph(font_atlas, codepoint, size);
@@ -383,31 +407,6 @@ inline static uint64_t font_atlas_get_key_hash(struct Font_Key value) {
 	} data;
 	data.value_key = value;
 	return data.value_u64;
-}
-
-inline static void font_atlas_add_glyph(struct Font_Image * font_atlas, uint32_t codepoint, float size) {
-	uint64_t const key_hash = font_atlas_get_key_hash((struct Font_Key){
-		.codepoint = codepoint,
-		.size = size,
-	});
-
-	struct Font_Glyph * glyph = hash_table_u64_get(&font_atlas->table, key_hash);
-	if (glyph != NULL) { glyph->usage = GLYPH_USAGE_MAX; return; }
-
-	uint32_t const glyph_id = font_get_glyph_id(font_atlas->font, codepoint);
-	if (glyph_id == 0) { logger_to_console("font misses a glyph for codepoint '0x%x'\n", codepoint); DEBUG_BREAK(); return; }
-
-	struct Glyph_Params const glyph_params = font_get_glyph_parameters(
-		font_atlas->font, glyph_id, font_get_scale(font_atlas->font, size)
-	);
-
-	hash_table_u64_set(&font_atlas->table, key_hash, &(struct Font_Glyph){
-		.params = glyph_params,
-		.id = glyph_id,
-		.usage = GLYPH_USAGE_MAX,
-	});
-
-	font_atlas->rendered = false;
 }
 
 #undef GLYPH_USAGE_MAX

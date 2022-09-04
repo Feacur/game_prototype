@@ -29,12 +29,9 @@
 #define BATCHER_2D_ATTRIBUTES_COUNT 2
 
 struct Batcher_2D_Text {
-	uint32_t length, strings_offset;
+	uint32_t strings_from, strings_to;
 	struct Asset_Font const * font; // @idea: use `Asset_Ref` instead
-	uint32_t vertices_offset, indices_offset;
-	struct mat4 matrix;
-	struct rect rect;
-	struct vec2 alignment;
+	uint32_t vertices_offset;
 	float size;
 };
 
@@ -50,7 +47,7 @@ struct Batcher_2D_Vertex {
 
 struct Batcher_2D {
 	struct Batcher_2D_Batch batch;
-	struct Buffer strings;
+	struct Array_U32 strings;
 	struct Array_Any batches;        // `struct Batcher_2D_Batch`
 	struct Array_Any texts;          // `struct Batcher_2D_Text`
 	struct Hash_Set_U64 fonts_cache; // `struct Asset_Font const *`
@@ -92,7 +89,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 				.flags = MESH_FLAG_INDEX | MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
 			},
 		},
-		.strings         = buffer_init(NULL),
+		.strings         = array_u32_init(),
 		.batches         = array_any_init(sizeof(struct Batcher_2D_Batch)),
 		.texts           = array_any_init(sizeof(struct Batcher_2D_Text)),
 		.buffer_vertices = array_any_init(sizeof(struct Batcher_2D_Vertex)),
@@ -117,7 +114,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 void batcher_2d_free(struct Batcher_2D * batcher) {
 	gpu_mesh_free(batcher->gpu_mesh_ref);
 	//
-	buffer_free(&batcher->strings);
+	array_u32_free(&batcher->strings);
 	array_any_free(&batcher->batches);
 	array_any_free(&batcher->texts);
 	hash_set_u64_free(&batcher->fonts_cache);
@@ -141,24 +138,16 @@ void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material co
 
 inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord);
 
-// @todo: deduplicate quad methods?
-static void batcher_2d_fill_quad(
+static void batcher_2d_fill_quad_uv(
 	struct Batcher_2D * batcher,
-	struct mat4 matrix,
-	uint32_t vertices_offset, uint32_t indices_offset,
-	struct rect rect,
+	uint32_t vertices_offset,
 	struct rect uv
 ) {
-	array_any_set_many(&batcher->buffer_vertices, vertices_offset, 4, (struct Batcher_2D_Vertex[]){
-		batcher_2d_make_vertex(matrix, rect.min, uv.min),
-		batcher_2d_make_vertex(matrix, (struct vec2){rect.min.x, rect.max.y}, (struct vec2){uv.min.x, uv.max.y}),
-		batcher_2d_make_vertex(matrix, (struct vec2){rect.max.x, rect.min.y}, (struct vec2){uv.max.x, uv.min.y}),
-		batcher_2d_make_vertex(matrix, rect.max, uv.max),
-	});
-	array_u32_set_many(&batcher->buffer_indices, indices_offset, 3 * 2, (uint32_t[]){
-		vertices_offset + 1, vertices_offset + 0, vertices_offset + 2,
-		vertices_offset + 1, vertices_offset + 2, vertices_offset + 3
-	});
+	struct Batcher_2D_Vertex * vertices = array_any_at(&batcher->buffer_vertices, vertices_offset);
+	vertices[0].tex_coord = uv.min;
+	vertices[1].tex_coord = (struct vec2){uv.min.x, uv.max.y};
+	vertices[2].tex_coord = (struct vec2){uv.max.x, uv.min.y};
+	vertices[3].tex_coord = uv.max;
 }
 
 void batcher_2d_add_quad(
@@ -184,55 +173,121 @@ void batcher_2d_add_text(
 	struct rect rect, struct vec2 alignment,
 	struct Asset_Font const * font, uint32_t length, uint8_t const * data, float size
 ) {
-	// @todo: introduce rect bounds parameter
-	//        introduce scroll offset parameter
-	//        check bounds, reserve only visible
-	//        >
-	//        need to know vertices at this point
-	//        UVs can be postponed
-	// @idea: decode UTF-8 once into an array
-	uint32_t codepoints_count = 0;
+	float const scale        = font_atlas_get_scale(font->font_atlas, size);
+	float const font_ascent  = font_atlas_get_ascent(font->font_atlas, scale);
+	float const font_descent = font_atlas_get_descent(font->font_atlas, scale);
+	float const line_gap     = font_atlas_get_gap(font->font_atlas, scale);
+	float const line_height  = font_ascent - font_descent + line_gap;
+
+	struct vec2 offset = {
+		lerp(rect.min.x, rect.max.x, alignment.x),
+		lerp(rect.min.y, rect.max.y, alignment.y),
+	};
+	offset.y -= font_ascent;
+
+	font_atlas_add_glyph(font->font_atlas, ' ', size);
+	font_atlas_add_glyph_error(font->font_atlas, size);
+	struct Font_Glyph const * glyph_space = font_atlas_get_glyph(font->font_atlas, ' ', size);
+	struct Font_Glyph const * glyph_error = font_atlas_get_glyph(font->font_atlas, CODEPOINT_EMPTY, size);
+
+	float const space_size = (glyph_space != NULL) ? glyph_space->params.full_size_x : 0;
+	float const tab_size = space_size * 4; // @todo: expose tab scale
+
+	uint32_t vertices_offset = batcher->buffer_vertices.count;
+	uint32_t strings_offset = batcher->strings.count;
+
+	uint32_t previous_codepoint = 0;
 	FOR_UTF8 (length, data, it) {
-		if (!codepoint_is_visible(it.codepoint)) { continue; }
-		codepoints_count++;
+		switch (it.codepoint) {
+			case CODEPOINT_ZERO_WIDTH_SPACE: break;
+
+			case ' ':
+			case CODEPOINT_NON_BREAKING_SPACE:
+				offset.x += space_size;
+				break;
+
+			case '\t':
+				offset.x += tab_size;
+				break;
+
+			case '\r':
+				// offset.x = lerp(rect.min.x, rect.max.x, alignment.x); // @note: see `\n`
+				break;
+
+			case '\n':
+				offset.x = lerp(rect.min.x, rect.max.x, alignment.x); // @note: auto `\r`
+				offset.y -= line_height;
+
+				// @todo: (?) arena/stack allocator
+				array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
+					.strings_from = strings_offset,
+					.strings_to = batcher->strings.count,
+					.font = font,
+					.vertices_offset = vertices_offset,
+					.size = size,
+				});
+				vertices_offset = batcher->buffer_vertices.count;
+				strings_offset = batcher->strings.count;
+				break;
+
+			default: if (it.codepoint > ' ') {
+				// if (offset.x >= text->rect.max.x) { break; }
+
+				font_atlas_add_glyph(font->font_atlas, it.codepoint, size);
+				struct Font_Glyph const * glyph = font_atlas_get_glyph(font->font_atlas, it.codepoint, size);
+				if (glyph == NULL) { glyph = glyph_error; }
+
+				if (glyph->params.is_empty) { logger_to_console("codepoint '0x%x' has empty glyph\n", it.codepoint); DEBUG_BREAK(); }
+
+				float const kerning = font_atlas_get_kerning(font->font_atlas, previous_codepoint, it.codepoint, scale);
+				float const offset_x = offset.x + kerning;
+				offset.x += glyph->params.full_size_x - kerning;
+
+				// if (offset.x <= rect.min.x) { break; }
+
+				// @todo: (?) arena/stack allocator
+				array_u32_push_many(&batcher->strings, 1, &it.codepoint);
+
+				batcher_2d_add_quad(
+					batcher,
+					(struct rect){
+						.min = {
+							((float)glyph->params.rect.min.x) + offset_x,
+							((float)glyph->params.rect.min.y) + offset.y,
+						},
+						.max = {
+							((float)glyph->params.rect.max.x) + offset_x,
+							((float)glyph->params.rect.max.y) + offset.y,
+						},
+					},
+					(struct rect){0} // @note: UVs are delayed, see `batcher_2d_bake_texts`
+				);
+			} break;
+		}
+
+		previous_codepoint = it.codepoint;
 	}
-	if (codepoints_count == 0) { return; }
 
-	//
-
-	uint32_t const strings_offset = (uint32_t)batcher->strings.count;
-	buffer_push_many(&batcher->strings, length + 1, data);
-
-	array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
-		.length = length,
-		.strings_offset = strings_offset,
-		.font = font,
-		.vertices_offset = batcher->buffer_vertices.count,
-		.indices_offset  = batcher->buffer_indices.count,
-		.matrix = batcher->matrix,
-		.rect = rect,
-		.alignment = alignment,
-		.size = size,
-	});
-
-	// reserve blanks for the text
-	array_any_push_many(&batcher->buffer_vertices, codepoints_count * 4, NULL);
-	array_u32_push_many(&batcher->buffer_indices, codepoints_count * 3 * 2, NULL);
+	if (batcher->strings.count > strings_offset) {
+		// @todo: (?) arena/stack allocator
+		array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
+			.strings_from = strings_offset,
+			.strings_to = batcher->strings.count,
+			.font = font,
+			.vertices_offset = vertices_offset,
+			.size = size,
+		});
+		vertices_offset = batcher->buffer_vertices.count;
+		strings_offset = batcher->strings.count;
+	}
 }
 
 static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 	if (batcher->texts.count == 0) { return; }
 
-	// add all glyphs
-	for (uint32_t i = 0; i < batcher->texts.count; i++) {
-		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
-		uint8_t const * text_data = (uint8_t *)batcher->strings.data + text->strings_offset;
-		font_atlas_add_glyph_error(text->font->font_atlas, text->size);
-		font_atlas_add_glyphs_from_text(text->font->font_atlas, text->length, text_data, text->size);
-	}
-
-	// render an upload the atlases
+	// render and upload the atlases
 	{
+		// @todo: (?) arena/stack allocator
 		hash_set_u64_clear(&batcher->fonts_cache);
 
 		for (uint32_t i = 0; i < batcher->texts.count; i++) {
@@ -251,94 +306,25 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 		}
 	}
 
-	// fill quads
+	// fill quads UVs
 	for (uint32_t i = 0; i < batcher->texts.count; i++) {
 		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
-		uint8_t const * text_data = (uint8_t *)batcher->strings.data + text->strings_offset;
-
-		uint32_t vertices_offset = text->vertices_offset;
-		uint32_t indices_offset  = text->indices_offset;
-
-		float const scale        = font_atlas_get_scale(text->font->font_atlas, text->size);
-		float const font_ascent  = font_atlas_get_ascent(text->font->font_atlas, scale);
-		float const font_descent = font_atlas_get_descent(text->font->font_atlas, scale);
-		float const line_gap     = font_atlas_get_gap(text->font->font_atlas, scale);
-		float const line_height  = font_ascent - font_descent + line_gap;
-
-		struct vec2 offset = {
-			lerp(text->rect.min.x, text->rect.max.x, text->alignment.x),
-			lerp(text->rect.min.y, text->rect.max.y, text->alignment.y),
-		};
-		offset.y -= font_ascent;
-
-		struct Font_Glyph const * glyph_space = font_atlas_get_glyph(text->font->font_atlas, ' ', text->size);
 		struct Font_Glyph const * glyph_error = font_atlas_get_glyph(text->font->font_atlas, CODEPOINT_EMPTY, text->size);
-
-		float const space_size = (glyph_space != NULL) ? glyph_space->params.full_size_x : 0;
-		float const tab_size = space_size * 4; // @todo: expose tab scale
-
-		uint32_t previous_codepoint = 0;
-		FOR_UTF8 (text->length, text_data, it) {
-			switch (it.codepoint) {
-				case CODEPOINT_ZERO_WIDTH_SPACE: break;
-
-				case ' ':
-				case CODEPOINT_NON_BREAKING_SPACE:
-					offset.x += space_size;
-					break;
-
-				case '\t':
-					offset.x += tab_size;
-					break;
-
-				case '\r':
-					// offset.x = text->offset.x;
-					break;
-
-				case '\n':
-					offset.x = lerp(text->rect.min.x, text->rect.max.x, text->alignment.x); // @note: auto `\r`
-					offset.y -= line_height;
-					break;
-
-				default: if (it.codepoint > ' ') {
-					struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, it.codepoint, text->size);
-					if (glyph == NULL) { glyph = glyph_error; }
-
-					if (glyph->params.is_empty) { logger_to_console("codepoint '0x%x' has empty glyph\n", it.codepoint); DEBUG_BREAK(); }
-
-					offset.x += font_atlas_get_kerning(text->font->font_atlas, previous_codepoint, it.codepoint, scale);
-
-					batcher_2d_fill_quad(
-						batcher,
-						text->matrix,
-						vertices_offset, indices_offset,
-						(struct rect){
-							.min = {
-								((float)glyph->params.rect.min.x) + offset.x,
-								((float)glyph->params.rect.min.y) + offset.y,
-							},
-							.max = {
-								((float)glyph->params.rect.max.x) + offset.x,
-								((float)glyph->params.rect.max.y) + offset.y,
-							},
-						},
-						glyph->uv
-					);
-					vertices_offset += 4;
-					indices_offset += 3 * 2;
-
-					offset.x += glyph->params.full_size_x;
-				} break;
-			}
-
-			previous_codepoint = it.codepoint;
+		struct rect const glyph_error_uv = glyph_error->uv;
+		uint32_t vertices_offset = text->vertices_offset;
+		for (uint32_t strings_i = text->strings_from; strings_i < text->strings_to; strings_i++) {
+			uint32_t const codepoint = array_u32_at(&batcher->strings, strings_i);
+			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
+			struct rect const glyph_uv = (glyph != NULL) ? glyph->uv : glyph_error_uv;
+			batcher_2d_fill_quad_uv(batcher, vertices_offset, glyph_uv);
+			vertices_offset += 4;
 		}
 	}
 }
 
 void batcher_2d_clear(struct Batcher_2D * batcher) {
 	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
-	buffer_clear(&batcher->strings);
+	array_u32_clear(&batcher->strings);
 	array_any_clear(&batcher->batches);
 	array_any_clear(&batcher->texts);
 	array_any_clear(&batcher->buffer_vertices);
