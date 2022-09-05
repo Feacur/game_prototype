@@ -114,18 +114,6 @@ static void prototype_tick_entities_quad_2d(void) {
 	}
 }
 
-static void prototype_tick_entities_text_2d(void) {
-	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
-		struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
-		if (entity->type != ENTITY_TYPE_TEXT_2D) { continue; }
-		struct Entity_Text * text = &entity->as.text;
-
-		struct Asset_Bytes const * text_text = asset_system_find_instance(&gs_game.assets, text->message);
-		uint32_t const text_length = text_text->length;
-		text->visible_length = (text->visible_length + 1) % text_length;
-	}
-}
-
 // ----- ----- ----- ----- -----
 //     prototype part
 // ----- ----- ----- ----- -----
@@ -154,12 +142,12 @@ static void prototype_tick_entities(void) {
 
 	prototype_tick_entities_rotation_mode();
 	prototype_tick_entities_quad_2d();
-	prototype_tick_entities_text_2d();
 }
 
 static void prototype_display_performance(void) {
 	struct uvec2 const screen_size = application_get_screen_size();
 	struct Asset_Font const * font = asset_system_aquire_instance(&gs_game.assets, S_("assets/fonts/Ubuntu-Regular.ttf"));
+	struct Asset_Material const * material = asset_system_aquire_instance(&gs_game.assets, S_("assets/materials/Ubuntu-Regular.ttf.material"));
 
 	uint32_t const fps = (uint32_t)(1.0 / application_get_delta_time());
 
@@ -170,6 +158,7 @@ static void prototype_display_performance(void) {
 		.rect = {
 			.anchor_min = {1, 1},
 			.anchor_max = {1, 1},
+			.offset = {-5, -5},
 			.extents = {100, 50},
 			.pivot = {1, 1},
 		},
@@ -205,6 +194,7 @@ static void prototype_display_performance(void) {
 			)
 		)
 	});
+	batcher_2d_set_material(gs_renderer.batcher, &material->value);
 
 	batcher_2d_add_text(
 		gs_renderer.batcher,
@@ -389,7 +379,7 @@ static void prototype_draw_entities(void) {
 					batcher_2d_add_text(
 						gs_renderer.batcher,
 						entity_rect, text->alignment, true,
-						font, text->visible_length, message->data,
+						font, message->length, message->data,
 						text->size
 					);
 				} break;

@@ -10,6 +10,7 @@
 *.txt  text working-tree-encoding=UTF-8
 *.md   text working-tree-encoding=UTF-8
 *.ttf  binary
+*.otf  binary
 *.png  binary
 
 # project assets

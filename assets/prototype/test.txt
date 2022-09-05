@@ -1,5 +1,5 @@
-Hello, World! ASCII works fine.
-Ёмкое предложение: пчёлы делают мёд.
-Français: Liberté, égalité, fraternité.
-Marie mère de dieu! Comme ça?
-Ça marche bien, Grâce à naïve UTF-8 =)
+키스의 고유조건은 입술끼리 만나야 하고 특별한 기술은 필요치 않다
+Съешь же ещё этих мягких французских булок да выпей чаю
+The quick brown fox jumps over the lazy dog
+Portez ce vieux whisky au juge blond qui fume
+à â é è ê ë î ï ô ù û ü ÿ ç æ et œ

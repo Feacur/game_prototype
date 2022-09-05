@@ -290,6 +290,7 @@ void asset_types_init(struct Asset_System * system) {
 	asset_system_map_extension(system, S_("shader"),   S_("glsl"));
 	asset_system_map_extension(system, S_("image"),    S_("image"));
 	asset_system_map_extension(system, S_("font"),     S_("ttf"));
+	asset_system_map_extension(system, S_("font"),     S_("otf"));
 	asset_system_map_extension(system, S_("target"),   S_("target"));
 	asset_system_map_extension(system, S_("model"),    S_("obj"));
 	asset_system_map_extension(system, S_("material"), S_("material"));

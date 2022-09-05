@@ -247,11 +247,12 @@ void batcher_2d_add_text(
 				uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
 
 				struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
+				float const full_size_x = (glyph != NULL) ? glyph->params.full_size_x : glyph_error->params.full_size_x;
 
 				float const kerning = font_atlas_get_kerning(font->font_atlas, previous_codepoint, codepoint, scale);
 				previous_codepoint = codepoint;
 
-				offset.x += glyph->params.full_size_x - kerning;
+				offset.x += full_size_x - kerning;
 			}
 
 			// process breaker
@@ -334,6 +335,7 @@ void batcher_2d_add_text(
 			uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
 
 			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
+			if (glyph == NULL) { glyph = glyph_error; }
 
 			float const kerning = font_atlas_get_kerning(font->font_atlas, previous_codepoint, codepoint, scale);
 			previous_codepoint = codepoint;
