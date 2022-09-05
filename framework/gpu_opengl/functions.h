@@ -7,7 +7,7 @@
 #include <GL/glcorearb.h>
 
 #define XMACRO(type, name) extern PFNGL##type##PROC gl##name;
-#include "functions_xmacro.h"
+#include "internal/functions_xmacro.h"
 
 //
 

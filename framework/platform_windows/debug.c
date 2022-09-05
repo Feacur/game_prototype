@@ -115,7 +115,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 }
 
 //
-#include "debug_to_system.h"
+#include "internal/debug_to_system.h"
 
 bool debug_to_system_init(void) {
 	SymInitialize(GetCurrentProcess(), NULL, TRUE);

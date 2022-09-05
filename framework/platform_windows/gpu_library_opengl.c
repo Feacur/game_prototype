@@ -2,10 +2,10 @@
 #include "framework/logger.h"
 
 #include "framework/gpu_opengl/functions.h"
-#include "framework/gpu_opengl/functions_to_gpu_library.h"
-#include "framework/gpu_opengl/graphics_to_gpu_library.h"
+#include "framework/gpu_opengl/internal/functions_to_gpu_library.h"
+#include "framework/gpu_opengl/internal/graphics_to_gpu_library.h"
 
-#include "system_to_internal.h"
+#include "internal/system.h"
 
 #include <Windows.h>
 #include <GL/wgl.h>
@@ -40,7 +40,7 @@ static struct Gpu_Library {
 } gs_gpu_library;
 
 //
-#include "gpu_library_to_system.h"
+#include "internal/gpu_library_to_system.h"
 
 static void * gpu_library_get_function(struct CString name);
 static bool gpu_library_wgl_init(void) {

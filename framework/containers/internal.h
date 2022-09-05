@@ -3,6 +3,8 @@
 
 #include "framework/common.h"
 
+// @purpose: provide common containers operations
+
 #define HASH_TABLE_PO2
 
 //

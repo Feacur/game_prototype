@@ -3,8 +3,16 @@
 
 #include "framework/vector_types.h"
 
-// @note: a weird way to decouple asset, image, glyphs?
-struct Glyph_Params {
+// @purpose: decouple `font.h` and `font_atlas.h`
+
+// glyph layout
+// +----------+
+// |glyph  1,1|
+// |          |
+// |0,0       |
+// +----------+
+
+struct Font_Glyph_Params {
 	struct srect rect;
 	float full_size_x;
 	bool is_empty;

@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_GPU_OPENGL_FUNCTIONS_TO_GPU_LIBRARY)
 #define FRAMEWORK_GPU_OPENGL_FUNCTIONS_TO_GPU_LIBRARY
 
-// interface from `functions.c` to `gpu_library_opengl.c`
+// @purpose: interface from `functions.c` to `gpu_library_opengl.c`
 // - opengl functions initialization
 
 #include "framework/common.h"

@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_INTERNAL_INPUT_TO_WINDOW)
 #define FRAMEWORK_INTERNAL_INPUT_TO_WINDOW
 
-// interface from `input.c` to `system.c`
+// @purpose: interface from `input.c` to `system.c`
 // - framework initialization and manipulation
 
 #include "framework/common.h"

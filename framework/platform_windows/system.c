@@ -7,10 +7,10 @@
 #include "framework/logger.h"
 #include "framework/platform_debug.h"
 
-#include "debug_to_system.h"
-#include "timer_to_system.h"
-#include "window_to_system.h"
-#include "gpu_library_to_system.h"
+#include "internal/debug_to_system.h"
+#include "internal/timer_to_system.h"
+#include "internal/window_to_system.h"
+#include "internal/gpu_library_to_system.h"
 
 #include <Windows.h>
 #include <signal.h>
@@ -132,7 +132,7 @@ void platform_system_sleep(uint32_t millis) {
 }
 
 //
-#include "system_to_internal.h"
+#include "internal/system.h"
 
 void * system_to_internal_get_module(void) {
 	return gs_platform_system.module;

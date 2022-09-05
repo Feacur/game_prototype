@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_PLATFORM_WINDOWS_WINDOW_TO_SYSTEM)
 #define FRAMEWORK_PLATFORM_WINDOWS_WINDOW_TO_SYSTEM
 
-// interface from `window.c` to `system.c`
+// @purpose: interface from `window.c` to `system.c`
 // - framework initialization
 
 #include "framework/common.h"

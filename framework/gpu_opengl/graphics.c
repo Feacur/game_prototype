@@ -1267,7 +1267,7 @@ void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 }
 
 //
-#include "graphics_to_gpu_library.h"
+#include "internal/graphics_to_gpu_library.h"
 
 static void __stdcall opengl_debug_message_callback(
 	GLenum source,

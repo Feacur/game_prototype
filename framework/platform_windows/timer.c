@@ -22,7 +22,7 @@ uint64_t platform_timer_get_ticks_per_second(void) {
 }
 
 //
-#include "timer_to_system.h"
+#include "internal/timer_to_system.h"
 
 bool timer_to_system_init(void) {
 	return QueryPerformanceFrequency(&gs_platform_timer.ticks_per_second);

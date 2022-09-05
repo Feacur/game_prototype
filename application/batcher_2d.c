@@ -25,7 +25,7 @@
 // @idea: static batching option; cache vertices and stuff until changed
 // @idea: add a 3d batcher
 
-// @note: quad layout
+// quad layout
 // 1-----------3
 // |         / |
 // |       /   |

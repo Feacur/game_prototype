@@ -173,7 +173,7 @@ static void asset_font_init(struct Asset_System * system, void * instance, struc
 	}
 
 	struct Font * font = font_init(&file_buffer);
-	struct Font_Image * font_atlas = font_atlas_init(font);
+	struct Font_Atlas * font_atlas = font_atlas_init(font);
 
 	*asset = (struct Asset_Font){
 		.font = font,

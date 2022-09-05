@@ -6,10 +6,10 @@
 uint32_t gs_ogl_version = 0;
 
 #define XMACRO(type, name) PFNGL##type##PROC gl##name;
-#include "functions_xmacro.h"
+#include "internal/functions_xmacro.h"
 
 //
-#include "functions_to_gpu_library.h"
+#include "internal/functions_to_gpu_library.h"
 
 void functions_to_gpu_library_init(void * (* get)(struct CString name)) {
 	#define XMACRO_INIT() \
@@ -35,12 +35,12 @@ void functions_to_gpu_library_init(void * (* get)(struct CString name)) {
 		} while (false); \
 
 	#define XMACRO(type, name) gl##name = (PFNGL##type##PROC)get(S_("gl" #name));
-	#include "functions_xmacro.h"
+	#include "internal/functions_xmacro.h"
 }
 
 void functions_to_gpu_library_free(void) {
 	#define XMACRO(type, name) gl##name = NULL;
-	#include "functions_xmacro.h"
+	#include "internal/functions_xmacro.h"
 
 	gs_ogl_version = 0;
 }

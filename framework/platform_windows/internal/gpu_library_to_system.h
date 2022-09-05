@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_PLATFORM_WINDOWS_GPU_LIBRARY_TO_SYSTEM)
 #define FRAMEWORK_PLATFORM_WINDOWS_GPU_LIBRARY_TO_SYSTEM
 
-// interface from `gpu_library_*.c` to `system.c`
+// @purpose: interface from `gpu_library_*.c` to `system.c`
 // - graphics library initialization
 
 #include "framework/common.h"

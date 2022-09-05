@@ -3,7 +3,7 @@
 #include "framework/gpu_context.h"
 #include "framework/internal/input_to_window.h"
 
-#include "system_to_internal.h"
+#include "internal/system.h"
 
 #include <Windows.h>
 #include <hidusage.h>
@@ -150,7 +150,7 @@ void platform_window_toggle_borderless_fullscreen(struct Window * window) {
 }
 
 //
-#include "window_to_system.h"
+#include "internal/window_to_system.h"
 
 static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 

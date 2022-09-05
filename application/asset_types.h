@@ -6,7 +6,7 @@
 #include "framework/graphics/material.h"
 
 struct Font;
-struct Font_Image;
+struct Font_Atlas;
 
 struct Asset_Bytes {
 	uint8_t * data;
@@ -29,7 +29,7 @@ struct Asset_Font {
 	// @todo: map font size to buffer and gpu_ref pair?
 	// @idea: put differently sized glyphs onto one atlas?
 	struct Font * font;
-	struct Font_Image * font_atlas;
+	struct Font_Atlas * font_atlas;
 	struct Ref gpu_ref;
 };
 

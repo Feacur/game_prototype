@@ -3,6 +3,8 @@
 
 #include "framework/common.h"
 
+// @purpose: decouple `ref_table.h` with any other one
+
 struct Ref {
 	uint32_t id, gen;
 };
