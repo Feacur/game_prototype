@@ -76,6 +76,7 @@
 			"font": "assets/fonts/Ubuntu-Regular.ttf",
 			"message": "assets/prototype/test.txt",
 			"size": 32,
+			"alignment": [0.5, 0.5],
 		},
 		{
 			"camera_uid": 2,
@@ -102,6 +103,7 @@
 			"font": "assets/fonts/Ubuntu-Regular.ttf",
 			"message": "assets/prototype/test.txt",
 			"size": 16,
+			"alignment": [0, 1],
 		},
 		{
 			"camera_uid": 2,

@@ -204,6 +204,7 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 				.message = asset_system_aquire(&gs_game.assets, message_path),
 				.size = (float)json_get_number(json, S_("size")),
 			};
+			state_read_json_flt_n(json_get(json, S_("alignment")), 2, &entity->as.text.alignment.x);
 		} break;
 	}
 }

@@ -43,6 +43,7 @@ struct Entity_Text {
 	struct Asset_Ref message;
 	uint32_t visible_length;
 	float size;
+	struct vec2 alignment;
 };
 
 struct Entity {

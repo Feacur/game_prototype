@@ -5,6 +5,8 @@
 //
 #include "unicode.h"
 
+#define CODEPOINT_EMPTY UINT32_MAX
+
 uint32_t utf8_codepoint_length(uint8_t const * value) {
 	uint8_t const octet = value[0];
 	if ((octet & 0x80) == 0x00) { return 1; }
@@ -44,3 +46,5 @@ bool utf8_iterate(uint32_t length, uint8_t const * data, struct UTF8_Iterator * 
 	}
 	return false;
 }
+
+#undef CODEPOINT_EMPTY

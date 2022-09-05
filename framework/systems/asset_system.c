@@ -75,7 +75,7 @@ void asset_system_del_type(struct Asset_System * system, struct CString type) {
 	if (type.length == 0) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
 
 	uint32_t const type_id = strings_find(&system->strings, type);
-	if (type_id == INDEX_EMPTY) { logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK(); return; }
+	if (type_id == c_string_id_empty) { logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK(); return; }
 
 	{
 		struct Asset_Type * asset_type = hash_table_u32_get(&system->types, type_id);
@@ -100,7 +100,7 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 		.length = extension_length,
 		.data = extension_name,
 	});
-	if (extension_id == INDEX_EMPTY) {
+	if (extension_id == c_string_id_empty) {
 		logger_to_console("unknown extension: %.*s\n", extension_length, extension_name); DEBUG_BREAK();
 		return c_asset_ref_empty;
 	}

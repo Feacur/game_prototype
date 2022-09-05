@@ -3,7 +3,6 @@
 
 #include "common.h"
 
-#define CODEPOINT_EMPTY              '\0'
 #define CODEPOINT_ZERO_WIDTH_SPACE   0x0000200b
 #define CODEPOINT_NON_BREAKING_SPACE 0x000000a0
 
@@ -17,6 +16,9 @@ uint32_t utf8_codepoint_decode(uint8_t const * value, uint32_t length);
 
 inline static bool codepoint_is_invisible(uint32_t codepoint) {
 	switch (codepoint) {
+		case '\0':
+			return false;
+
 		case CODEPOINT_ZERO_WIDTH_SPACE:
 		case CODEPOINT_NON_BREAKING_SPACE:
 			return true;
