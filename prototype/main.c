@@ -149,17 +149,18 @@ static void prototype_display_performance(void) {
 	struct Asset_Font const * font = asset_system_aquire_instance(&gs_game.assets, S_("assets/fonts/Ubuntu-Regular.ttf"));
 	struct Asset_Material const * material = asset_system_aquire_instance(&gs_game.assets, S_("assets/materials/Ubuntu-Regular.ttf.material"));
 
-	uint32_t const fps = (uint32_t)(1.0 / application_get_delta_time());
+	double const delta_time = application_get_delta_time();
+	uint32_t const fps = (uint32_t)r64_floor(1.0 / delta_time);
 
 	char buffer[32];
-	uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, "%d", fps);
+	uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, " FPS: %03d (%.5f ms)", fps, delta_time);
 
 	struct Entity const entity_instance = {
 		.rect = {
 			.anchor_min = {1, 1},
 			.anchor_max = {1, 1},
 			.offset = {-5, -5},
-			.extents = {100, 50},
+			.extents = {150, 20},
 			.pivot = {1, 1},
 		},
 		.transform = c_transform_3d_default,
@@ -200,7 +201,7 @@ static void prototype_display_performance(void) {
 		gs_renderer.batcher,
 		entity_rect, (struct vec2){1, 1}, false,
 		font, length, (uint8_t const *)buffer,
-		32
+		16
 	);
 }
 

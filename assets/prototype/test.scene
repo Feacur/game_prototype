@@ -121,5 +121,17 @@
 			"uniform": "p_Texture",
 			"mode": "size",
 		},
+		{
+			"camera_uid": 2,
+			"material": "assets/materials/Ubuntu-Regular.ttf.material",
+			"rect": {
+				"anchor_min": [0, 1],
+				"anchor_max": [0, 1],
+				"pivot": [0, 1],
+			},
+			"type": "quad_2d",
+			"uniform": "p_Texture",
+			"mode": "size",
+		},
 	],
 }
