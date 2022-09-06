@@ -66,6 +66,7 @@
 #include "prototype/object_entity.c"
 #include "prototype/game_state.c"
 #include "prototype/components.c"
+#include "prototype/ui.c"
 #include "prototype/main.c"
 
 /*

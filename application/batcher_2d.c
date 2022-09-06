@@ -164,7 +164,7 @@ void batcher_2d_add_quad(
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
 	struct rect rect, struct vec2 alignment, bool wrap,
-	struct Asset_Font const * font, uint32_t length, uint8_t const * data, float size
+	struct Asset_Font const * font, struct CString value, float size
 ) {
 	float const scale        = font_atlas_get_scale(font->font_atlas, size);
 	float const font_ascent  = font_atlas_get_ascent(font->font_atlas, scale);
@@ -182,7 +182,7 @@ void batcher_2d_add_text(
 		float block_width = 0;
 		uint32_t block_strings_offset = batcher->codepoints.count;
 
-		FOR_UTF8 (length, data, it) {
+		FOR_UTF8 (value.length, (uint8_t const *)value.data, it) {
 			font_atlas_add_glyph(font->font_atlas, it.codepoint, size);
 
 			struct Font_Glyph const * glyph = font_atlas_get_glyph(font->font_atlas, it.codepoint, size);
@@ -446,8 +446,8 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * g
 void batcher_2d_bake(struct Batcher_2D * batcher) {
 	batcher_2d_bake_texts(batcher);
 	gpu_mesh_update(batcher->gpu_mesh_ref, &(struct Mesh){
-		.count      = BATCHER_2D_BUFFERS_COUNT,
-		.buffers    = (struct Buffer[BATCHER_2D_BUFFERS_COUNT]){
+		.count = BATCHER_2D_BUFFERS_COUNT,
+		.buffers = (struct Buffer[BATCHER_2D_BUFFERS_COUNT]){
 			(struct Buffer){
 				.data = batcher->buffer_vertices.data,
 				.count = sizeof(struct Batcher_2D_Vertex) * batcher->buffer_vertices.count,

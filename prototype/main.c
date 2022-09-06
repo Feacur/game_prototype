@@ -31,6 +31,7 @@
 #include "object_entity.h"
 #include "game_state.h"
 #include "components.h"
+#include "ui.h"
 
 static struct Main_Settings {
 	struct Strings strings;
@@ -144,68 +145,7 @@ static void prototype_tick_entities(void) {
 	prototype_tick_entities_quad_2d();
 }
 
-static void prototype_display_performance(void) {
-	struct uvec2 const screen_size = application_get_screen_size();
-	struct Asset_Font const * font = asset_system_aquire_instance(&gs_game.assets, S_("assets/fonts/Ubuntu-Regular.ttf"));
-	struct Asset_Material const * material = asset_system_aquire_instance(&gs_game.assets, S_("assets/materials/Ubuntu-Regular.ttf.material"));
-
-	double const delta_time = application_get_delta_time();
-	uint32_t const fps = (uint32_t)r64_floor(1.0 / delta_time);
-
-	char buffer[32];
-	uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, " FPS: %03d (%.5f ms)", fps, delta_time);
-
-	struct Entity const entity_instance = {
-		.rect = {
-			.anchor_min = {1, 1},
-			.anchor_max = {1, 1},
-			.offset = {-5, -5},
-			.extents = {150, 20},
-			.pivot = {1, 1},
-		},
-		.transform = c_transform_3d_default,
-	};
-	struct Entity const * entity = &entity_instance;
-
-	struct vec2 entity_pivot;
-	struct rect entity_rect;
-	entity_get_rect(
-		entity,
-		screen_size.x, screen_size.y,
-		&entity_pivot, &entity_rect
-	);
-
-	batcher_2d_set_matrix(gs_renderer.batcher, (struct mat4[]){
-		mat4_mul_mat(
-			camera_get_projection(
-				&(struct Camera_Params){
-					.mode = CAMERA_MODE_SCREEN,
-					.ncp = 0, .fcp = 1, .ortho = 1,
-				},
-				screen_size.x, screen_size.y
-			),
-			mat4_set_transformation(
-				(struct vec3){
-					.x = entity_pivot.x,
-					.y = entity_pivot.y,
-					.z = entity->transform.position.z,
-				},
-				entity->transform.scale,
-				entity->transform.rotation
-			)
-		)
-	});
-	batcher_2d_set_material(gs_renderer.batcher, &material->value);
-
-	batcher_2d_add_text(
-		gs_renderer.batcher,
-		entity_rect, (struct vec2){1, 1}, false,
-		font, length, (uint8_t const *)buffer,
-		16
-	);
-}
-
-static void prototype_draw_entities(void) {
+static void prototype_draw_objects(void) {
 	struct uvec2 const screen_size = application_get_screen_size();
 
 	uint32_t const u_ProjectionView = graphics_add_uniform_id(S_("u_ProjectionView"));
@@ -377,22 +317,40 @@ static void prototype_draw_entities(void) {
 					struct Entity_Text const * text = &entity->as.text;
 					struct Asset_Font const * font = asset_system_find_instance(&gs_game.assets, text->font);
 					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.assets, text->message);
+					struct CString const value = {
+						.length = message->length,
+						.data = (char const *)message->data,
+					};
 					batcher_2d_add_text(
 						gs_renderer.batcher,
 						entity_rect, text->alignment, true,
-						font, message->length, message->data,
-						text->size
+						font, value, text->size
 					);
 				} break;
 			}
 		}
 	}
-	prototype_display_performance();
 	batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
 }
 
 static void prototype_draw_ui(void) {
-	// struct uvec2 const screen_size = application_get_screen_size();
+	ui_start_frame();
+	{
+		double const delta_time = application_get_delta_time();
+		uint32_t const fps = (uint32_t)r64_floor(1.0 / delta_time);
+
+		char buffer[32];
+		uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, "FPS: %03d (%.5f ms)", fps, delta_time);
+		struct CString const text = (struct CString){.length = length, .data = buffer};
+
+		//
+		struct uvec2 const screen_size = application_get_screen_size();
+		struct rect const rect = {
+			.max = {(float)screen_size.x, (float)screen_size.y}
+		};
+		ui_text(rect, text, (struct vec2){1, 1}, false, 16);
+	}
+	ui_end_frame();
 }
 
 // ----- ----- ----- ----- -----
@@ -402,11 +360,18 @@ static void prototype_draw_ui(void) {
 static void app_init(void) {
 	renderer_init();
 	game_init();
+
+	ui_init(S_("assets/shaders/batcher_2d.glsl"));
+	ui_set_font(S_("assets/fonts/Ubuntu-Regular.ttf"));
+
 	prototype_init();
 }
 
 static void app_free(void) {
 	prototype_free();
+
+	ui_free();
+
 	game_free();
 	renderer_free();
 
@@ -424,9 +389,10 @@ static void app_frame_tick(void) {
 	prototype_tick_entities();
 
 	if (screen_size.x > 0 && screen_size.y > 0) {
-		prototype_draw_entities();
+		renderer_start_frame();
+		prototype_draw_objects();
 		prototype_draw_ui();
-		renderer_update();
+		renderer_end_frame();
 	}
 }
 

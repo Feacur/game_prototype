@@ -17,6 +17,7 @@ extern struct Renderer {
 void renderer_init(void);
 void renderer_free(void);
 
-void renderer_update(void);
+void renderer_start_frame(void);
+void renderer_end_frame(void);
 
 #endif

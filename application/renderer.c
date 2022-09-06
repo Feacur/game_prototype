@@ -36,10 +36,14 @@ void renderer_free(void) {
 	common_memset(&gs_renderer, 0, sizeof(gs_renderer));
 }
 
-void renderer_update(void) {
-	batcher_2d_bake(gs_renderer.batcher);
-	gpu_execute(gs_renderer.gpu_commands.count, gs_renderer.gpu_commands.data);
+void renderer_start_frame(void) {
 	batcher_2d_clear(gs_renderer.batcher);
 	gfx_uniforms_clear(&gs_renderer.uniforms);
 	array_any_clear(&gs_renderer.gpu_commands);
+}
+
+void renderer_end_frame(void) {
+	// batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
+	batcher_2d_bake(gs_renderer.batcher);
+	gpu_execute(gs_renderer.gpu_commands.count, gs_renderer.gpu_commands.data);
 }

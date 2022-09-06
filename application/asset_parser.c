@@ -220,6 +220,7 @@ struct Gfx_Material state_read_json_material(struct Asset_System * system, struc
 
 	struct Hash_Table_U32 const * uniforms = gpu_program_get_uniforms(result.gpu_program_ref);
 
+	// @todo: arena/stack allocator
 	struct Array_Any uniform_data_buffer = array_any_init(sizeof(uint8_t));
 
 	FOR_HASH_TABLE_U32(uniforms, it) {

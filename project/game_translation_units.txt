@@ -61,4 +61,5 @@ prototype/object_camera.c
 prototype/object_entity.c
 prototype/game_state.c
 prototype/components.c
+prototype/ui.c
 prototype/main.c
