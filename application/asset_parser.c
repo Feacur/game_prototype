@@ -69,13 +69,15 @@ enum Wrap_Mode state_read_json_wrap_mode(struct JSON const * json) {
 }
 
 struct Texture_Settings state_read_json_texture_settings(struct JSON const * json) {
-	return (struct Texture_Settings){
+	struct Texture_Settings result = {
 		.mipmap        = state_read_json_filter_mode(json_get(json, S_("mipmap"))),
 		.minification  = state_read_json_filter_mode(json_get(json, S_("minification"))),
 		.magnification = state_read_json_filter_mode(json_get(json, S_("magnification"))),
 		.wrap_x        = state_read_json_wrap_mode(json_get(json, S_("wrap_x"))),
 		.wrap_y        = state_read_json_wrap_mode(json_get(json, S_("wrap_y"))),
 	};
+	state_read_json_flt_n(json_get(json, S_("border")), 4, &result.border.x);
+	return result;
 }
 
 static void state_read_json_uniform_texture(struct Asset_System * system, struct JSON const * json, struct Ref * result);

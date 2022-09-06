@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_GRAPHICS_TYPES)
 #define FRAMEWORK_GRAPHICS_TYPES
 
-#include "framework/maths.h"
+#include "framework/vector_types.h"
 
 enum Data_Type {
 	DATA_TYPE_NONE,
@@ -255,6 +255,7 @@ struct Texture_Settings {
 	enum Filter_Mode mipmap, minification, magnification;
 	enum Wrap_Mode wrap_x, wrap_y;
 	enum Swizzle_Op swizzle[4];
+	struct vec4 border;
 };
 
 enum Attribute_Type {

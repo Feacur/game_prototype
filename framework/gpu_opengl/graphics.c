@@ -367,6 +367,8 @@ static struct Ref gpu_texture_allocate(
 		gpu_swizzle_op(settings.swizzle[3], 3),
 	});
 
+	glTextureParameterfv(texture_id, GL_TEXTURE_BORDER_COLOR, &settings.border.x);
+
 	//
 	return ref_table_aquire(&gs_graphics_state.textures, &(struct Gpu_Texture){
 		.id = texture_id,
