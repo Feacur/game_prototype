@@ -8,7 +8,7 @@
 
 struct UTF8_Iterator {
 	uint32_t current, next;
-	uint32_t codepoint;
+	uint32_t codepoint, previous;
 };
 
 uint32_t utf8_codepoint_length(uint8_t const * value);

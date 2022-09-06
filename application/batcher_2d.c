@@ -182,7 +182,6 @@ void batcher_2d_add_text(
 		float block_width = 0;
 		uint32_t block_strings_offset = batcher->codepoints.count;
 
-		uint32_t previous_codepoint = '\0';
 		FOR_UTF8 (length, data, it) {
 			font_atlas_add_glyph(font->font_atlas, it.codepoint, size);
 
@@ -209,11 +208,9 @@ void batcher_2d_add_text(
 				array_u32_push_many(&batcher->codepoints, 1, &it.codepoint);
 
 				//
-				float const kerning = font_atlas_get_kerning(font->font_atlas, previous_codepoint, it.codepoint, scale);
-				block_width -= kerning;
+				float const kerning = font_atlas_get_kerning(font->font_atlas, it.previous, it.codepoint, scale);
+				block_width += kerning;
 			}
-
-			previous_codepoint = it.codepoint;
 		}
 
 		if (batcher->codepoints.count > block_strings_offset) {
@@ -242,17 +239,15 @@ void batcher_2d_add_text(
 			text->position = offset;
 
 			// process block
-			uint32_t previous_codepoint = '\0';
 			for (uint32_t strings_i = text->codepoints_from; strings_i < text->codepoints_to; strings_i++) {
 				uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
+				uint32_t const previous = (strings_i > text->codepoints_from) ? array_u32_at(&batcher->codepoints, strings_i - 1) : '\0';
 
 				struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
 				float const full_size_x = (glyph != NULL) ? glyph->params.full_size_x : glyph_error->params.full_size_x;
 
-				float const kerning = font_atlas_get_kerning(font->font_atlas, previous_codepoint, codepoint, scale);
-				previous_codepoint = codepoint;
-
-				offset.x += full_size_x - kerning;
+				float const kerning = font_atlas_get_kerning(font->font_atlas, previous, codepoint, scale);
+				offset.x += full_size_x + kerning;
 			}
 
 			// process breaker
@@ -330,18 +325,16 @@ void batcher_2d_add_text(
 		if (offset.y > rect.max.y) { text->codepoints_to = text->codepoints_from; continue; } // void entry
 		if (offset.y < rect.min.y) { batcher->texts.count = block_i;              break; }    // drop rest
 
-		uint32_t previous_codepoint = '\0';
 		for (uint32_t strings_i = text->codepoints_from; strings_i < text->codepoints_to; strings_i++) {
 			uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
+				uint32_t const previous = (strings_i > text->codepoints_from) ? array_u32_at(&batcher->codepoints, strings_i - 1) : '\0';
 
 			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
-			if (glyph == NULL) { glyph = glyph_error; }
+			struct Font_Glyph_Params const params = (glyph != NULL) ? glyph->params : glyph_error->params;
 
-			float const kerning = font_atlas_get_kerning(font->font_atlas, previous_codepoint, codepoint, scale);
-			previous_codepoint = codepoint;
-
+			float const kerning = font_atlas_get_kerning(font->font_atlas, previous, codepoint, scale);
 			float const offset_x = offset.x + kerning;
-			offset.x += glyph->params.full_size_x - kerning;
+			offset.x += params.full_size_x + kerning;
 
 			if (offset_x < rect.min.x) { text->codepoints_from = strings_i + 1; continue; } // skip glyph
 			if (offset.x > rect.max.x) { text->codepoints_to   = strings_i;     break; }    // drop rest
@@ -351,12 +344,12 @@ void batcher_2d_add_text(
 					batcher,
 					(struct rect){
 						.min = {
-							((float)glyph->params.rect.min.x) + offset_x,
-							((float)glyph->params.rect.min.y) + offset.y,
+							((float)params.rect.min.x) + offset_x,
+							((float)params.rect.min.y) + offset.y,
 						},
 						.max = {
-							((float)glyph->params.rect.max.x) + offset_x,
-							((float)glyph->params.rect.max.y) + offset.y,
+							((float)params.rect.max.x) + offset_x,
+							((float)params.rect.max.y) + offset.y,
 						},
 					},
 					(struct rect){0} // @note: UVs are delayed, see `batcher_2d_bake_texts`

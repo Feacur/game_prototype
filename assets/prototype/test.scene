@@ -24,6 +24,7 @@
 		},
 	],
 	"entities": [
+		// -- some 3d
 		{
 			"camera_uid": 1,
 			"transform": {
@@ -51,19 +52,7 @@
 		// 	"uniform": "p_Texture",
 		// 	"mode": "fit",
 		// },
-		{
-			"camera_uid": 2,
-			"material": "assets/materials/image.material",
-			"rect": {
-				"anchor_min": [0, 0],
-				"anchor_max": [0, 0],
-				"offset": [5, 5],
-				"extents": [560, 180],
-				"pivot": [0, 0],
-			},
-			"type": "quad_2d",
-			"uniform": "p_Texture",
-		},
+		// -- texts
 		{
 			"camera_uid": 2,
 			"material": "assets/materials/NotoSerifKR-Regular.otf.material",
@@ -78,37 +67,25 @@
 			"font": "assets/fonts/NotoSerifKR-Regular.otf",
 			"message": "assets/prototype/test.txt",
 			"size": 32,
-			"alignment": [0.5, 0.5],
-		},
-		{
-			"camera_uid": 2,
-			"material": "assets/materials/image.material",
-			"rect": {
-				"anchor_min": [0, 0.5],
-				"anchor_max": [0, 0.5],
-				"offset": [5, 5],
-				"extents": [280, 90],
-				"pivot": [0, 0.5],
-			},
-			"type": "quad_2d",
-			"uniform": "p_Texture",
+			"alignment": [0, 0],
 		},
 		{
 			"camera_uid": 2,
 			"material": "assets/materials/NotoSerifKR-Regular.otf.material",
 			"rect": {
-				"anchor_min": [0, 0.5],
-				"anchor_max": [0, 0.5],
-				"offset": [5, 5],
+				"anchor_min": [0.5, 1],
+				"anchor_max": [0.5, 1],
+				"offset": [0, -5],
 				"extents": [280, 90],
-				"pivot": [0, 0.5],
+				"pivot": [0.5, 1],
 			},
 			"type": "text_2d",
 			"font": "assets/fonts/NotoSerifKR-Regular.otf",
 			"message": "assets/prototype/test.txt",
 			"size": 16,
-			"alignment": [0.5, 0.5],
+			"alignment": [0.5, 1],
 		},
+		// -- fonts atlases
 		{
 			"camera_uid": 2,
 			"material": "assets/materials/NotoSerifKR-Regular.otf.material",
