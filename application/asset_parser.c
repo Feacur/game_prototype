@@ -41,6 +41,7 @@ enum Filter_Mode state_read_json_filter_mode(struct JSON const * json) {
 			return FILTER_MODE_LERP;
 		}
 	}
+	logger_to_console("unknown filter mode\n");
 	return FILTER_MODE_NONE;
 }
 
@@ -63,6 +64,7 @@ enum Wrap_Mode state_read_json_wrap_mode(struct JSON const * json) {
 			return WRAP_MODE_MIRROR_REPEAT;
 		}
 	}
+	logger_to_console("unknown wrap mode\n");
 	return WRAP_MODE_NONE;
 }
 

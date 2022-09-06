@@ -2,5 +2,6 @@
 	"shader": "assets/shaders/test.glsl",
 	"blend": "none", "depth": "opaque",
 	"p_Texture": {"path": "assets/images/test.image"},
+	"p_Texture_OS": [0, 0, 10, 10],
 	"p_Color": [0.2, 0.6, 1, 1],
 }
