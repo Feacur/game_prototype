@@ -97,21 +97,25 @@ struct uvec2 entity_get_content_size(
 			gpu_texture_get_size(*gpu_texture_ref, &texture_size_x, &texture_size_y);
 
 			return (struct uvec2){
-				texture_size_x,
-				texture_size_y
+				(uint32_t)r32_floor((float)texture_size_x * clamp_r32(quad->view.max.x - quad->view.min.x, 0, 1)),
+				(uint32_t)r32_floor((float)texture_size_y * clamp_r32(quad->view.max.y - quad->view.min.y, 0, 1)),
 			};
 		} // break;
 
 		case ENTITY_TYPE_TEXT_2D: {
-			int32_t const rect[] = {
-				(int32_t)r32_floor(entity->rect.anchor_min.x * (float)viewport_size_x + entity->rect.extents.x),
-				(int32_t)r32_floor(entity->rect.anchor_min.y * (float)viewport_size_y + entity->rect.extents.y),
-				(int32_t)r32_ceil (entity->rect.anchor_max.x * (float)viewport_size_x + entity->rect.extents.x),
-				(int32_t)r32_ceil (entity->rect.anchor_max.y * (float)viewport_size_y + entity->rect.extents.y),
+			struct srect const rect = {
+				.min = {
+					(int32_t)r32_floor((float)viewport_size_x * entity->rect.anchor_min.x + entity->rect.extents.x),
+					(int32_t)r32_floor((float)viewport_size_y * entity->rect.anchor_min.y + entity->rect.extents.y),
+				},
+				.max = {
+					(int32_t)r32_ceil ((float)viewport_size_x * entity->rect.anchor_max.x + entity->rect.extents.x),
+					(int32_t)r32_ceil ((float)viewport_size_y * entity->rect.anchor_max.y + entity->rect.extents.y),
+				},
 			};
 			return (struct uvec2){
-				(uint32_t)max_s32(rect[2] - rect[0], rect[0] - rect[2]),
-				(uint32_t)max_s32(rect[3] - rect[1], rect[1] - rect[3]),
+				(uint32_t)max_s32(rect.max.x - rect.min.x, rect.min.x - rect.max.x),
+				(uint32_t)max_s32(rect.max.y - rect.min.y, rect.min.y - rect.max.y),
 			};
 		} // break;
 	}

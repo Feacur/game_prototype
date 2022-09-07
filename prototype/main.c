@@ -305,11 +305,11 @@ static void prototype_draw_objects(void) {
 				} break;
 
 				case ENTITY_TYPE_QUAD_2D: {
-					// struct Entity_Quad const * quad = &entity->as.quad;
+					struct Entity_Quad const * quad = &entity->as.quad;
 					batcher_2d_add_quad(
 						gs_renderer.batcher,
 						entity_rect,
-						(struct rect){{0,0},{1,1}}
+						quad->view
 					);
 				} break;
 

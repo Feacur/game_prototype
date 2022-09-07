@@ -194,6 +194,7 @@ static void state_read_json_entity(struct JSON const * json, struct Entity * ent
 				.texture_uniform = graphics_add_uniform_id(uniform),
 				.mode = state_read_json_entity_quad_mode(json_get(json, S_("mode"))),
 			};
+			state_read_json_flt_n(json_get(json, S_("view")), 4, &entity->as.quad.view.min.x);
 		} break;
 
 		case ENTITY_TYPE_TEXT_2D: {
