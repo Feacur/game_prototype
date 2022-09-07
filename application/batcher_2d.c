@@ -444,6 +444,13 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * g
 }
 
 void batcher_2d_bake(struct Batcher_2D * batcher) {
+	if (batcher->batches.count > 0) {
+		logger_to_console("unissued batches\n"); DEBUG_BREAK();
+	}
+	if (batcher->batch.offset < batcher->buffer_indices.count) {
+		logger_to_console("unissued indices\n"); DEBUG_BREAK();
+	}
+
 	batcher_2d_bake_texts(batcher);
 	gpu_mesh_update(batcher->gpu_mesh_ref, &(struct Mesh){
 		.count = BATCHER_2D_BUFFERS_COUNT,

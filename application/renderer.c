@@ -43,7 +43,6 @@ void renderer_start_frame(void) {
 }
 
 void renderer_end_frame(void) {
-	// batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
 	batcher_2d_bake(gs_renderer.batcher);
 	gpu_execute(gs_renderer.gpu_commands.count, gs_renderer.gpu_commands.data);
 }
