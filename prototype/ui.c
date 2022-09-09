@@ -61,18 +61,18 @@ void ui_start_frame(void) {
 		},
 		screen_size.x, screen_size.y
 	);
-	batcher_2d_set_matrix(gs_renderer.batcher, &mat4_Projection);
+	batcher_2d_set_matrix(gs_renderer.batcher_2d, &mat4_Projection);
 }
 
 void ui_end_frame(void) {
-	batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
+	batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 }
 
 void ui_text(struct rect rect, struct CString value, struct vec2 alignment, bool wrap, float size) {
 	struct Asset_Font const * asset_font = asset_system_find_instance(&gs_game.assets, gs_ui.font_asset_ref);
-	batcher_2d_set_material(gs_renderer.batcher, &gs_ui.font_material);
+	batcher_2d_set_material(gs_renderer.batcher_2d, &gs_ui.font_material);
 	batcher_2d_add_text(
-		gs_renderer.batcher,
+		gs_renderer.batcher_2d,
 		rect, alignment, wrap,
 		asset_font, value, size
 	);

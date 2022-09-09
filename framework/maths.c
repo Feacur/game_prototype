@@ -489,6 +489,14 @@ z = quat_transform(q, {0,0,1})
 }
 
 // ----- ----- ----- ----- -----
+//     complex
+// ----- ----- ----- ----- -----
+
+struct vec2 comp_set_radians(float radians) {
+	return (struct vec2){r32_cos(radians), r32_sin(radians)};
+}
+
+// ----- ----- ----- ----- -----
 //     matrices
 // ----- ----- ----- ----- -----
 

@@ -7,7 +7,7 @@
 struct Batcher_2D;
 
 extern struct Renderer {
-	struct Batcher_2D * batcher;
+	struct Batcher_2D * batcher_2d;
 	struct Gfx_Uniforms uniforms;
 	struct Array_Any gpu_commands; // `struct GPU_Command`
 } gs_renderer;

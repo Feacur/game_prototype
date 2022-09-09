@@ -4,7 +4,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
 
-#include "json_scanner.h"
+#include "internal/json_scanner.h"
 
 // @note: JSON is based off of rfc8259
 
@@ -42,7 +42,7 @@ struct JSON const * json_get(struct JSON const * value, struct CString key) {
 	if (value->type != JSON_OBJECT) { DEBUG_BREAK(); return &c_json_error; }
 	if (value->strings == NULL) { DEBUG_BREAK(); return &c_json_error; }
 	uint32_t const key_id = strings_find(value->strings, key);
-	if (key_id == c_string_id_empty) { return &c_json_null; }
+	if (key_id == 0) { return &c_json_null; }
 	void const * result = hash_table_u32_get(&value->as.table, key_id);
 	return (result != NULL) ? result : &c_json_null;
 }

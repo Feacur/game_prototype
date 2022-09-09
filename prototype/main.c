@@ -20,9 +20,9 @@
 #include "framework/assets/font.h"
 #include "framework/assets/json.h"
 
+#include "application/json_read.h"
 #include "application/application.h"
 #include "application/asset_types.h"
-#include "application/utilities.h"
 #include "application/components.h"
 #include "application/batcher_2d.h"
 #include "application/renderer.h"
@@ -79,7 +79,7 @@ static void prototype_tick_entities_quad_2d(void) {
 		// @todo: precalculate all cameras?
 		struct Camera const * camera = array_any_at(&gs_game.cameras, entity->camera);
 		struct uvec2 viewport_size = screen_size;
-		if (!ref_equals(camera->gpu_target_ref, c_ref_empty)) {
+		if (!ref_equals(camera->gpu_target_ref, (struct Ref){0})) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size.x, &viewport_size.y);
 		}
 
@@ -166,7 +166,7 @@ static void prototype_draw_objects(void) {
 
 		// prepare camera
 		struct uvec2 viewport_size = screen_size;
-		if (!ref_equals(camera->gpu_target_ref, c_ref_empty)) {
+		if (!ref_equals(camera->gpu_target_ref, (struct Ref){0})) {
 			gpu_target_get_size(camera->gpu_target_ref, &viewport_size.x, &viewport_size.y);
 		}
 
@@ -208,7 +208,7 @@ static void prototype_draw_objects(void) {
 
 		if (!ref_equals(previous_gpu_target_ref, camera->gpu_target_ref)) {
 			previous_gpu_target_ref = camera->gpu_target_ref;
-			batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
+			batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 			array_any_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_TARGET,
 				.as.target = {
@@ -220,7 +220,7 @@ static void prototype_draw_objects(void) {
 		}
 
 		if (camera->clear.mask != TEXTURE_TYPE_NONE) {
-			batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
+			batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 			array_any_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_CLEAR,
 				.as.clear = {
@@ -256,17 +256,17 @@ static void prototype_draw_objects(void) {
 			);
 
 			if (entity_get_is_batched(entity)) {
-				batcher_2d_set_matrix(gs_renderer.batcher, (struct mat4[]){
+				batcher_2d_set_matrix(gs_renderer.batcher_2d, (struct mat4[]){
 					mat4_mul_mat(mat4_ProjectionView, mat4_Model)
 				});
-				batcher_2d_set_material(gs_renderer.batcher, &material->value);
+				batcher_2d_set_material(gs_renderer.batcher_2d, &material->value);
 			}
 
 			switch (entity->type) {
 				case ENTITY_TYPE_NONE: break;
 
 				case ENTITY_TYPE_MESH: {
-					batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
+					batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
 					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->mesh);
@@ -307,7 +307,7 @@ static void prototype_draw_objects(void) {
 				case ENTITY_TYPE_QUAD_2D: {
 					struct Entity_Quad const * quad = &entity->as.quad;
 					batcher_2d_add_quad(
-						gs_renderer.batcher,
+						gs_renderer.batcher_2d,
 						entity_rect,
 						quad->view
 					);
@@ -322,7 +322,7 @@ static void prototype_draw_objects(void) {
 						.data = (char const *)message->data,
 					};
 					batcher_2d_add_text(
-						gs_renderer.batcher,
+						gs_renderer.batcher_2d,
 						entity_rect, text->alignment, true,
 						font, value, text->size
 					);
@@ -330,7 +330,7 @@ static void prototype_draw_objects(void) {
 			}
 		}
 	}
-	batcher_2d_issue_commands(gs_renderer.batcher, &gs_renderer.gpu_commands);
+	batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 }
 
 static void prototype_draw_ui(void) {

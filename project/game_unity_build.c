@@ -22,20 +22,18 @@
 #include "framework/containers/hash_table_u64.c"
 #include "framework/containers/hash_set_u32.c"
 #include "framework/containers/hash_set_u64.c"
-#include "framework/containers/ref.c"
 #include "framework/containers/ref_table.c"
 #include "framework/containers/strings.c"
 
-#include "framework/assets/wfobj_scanner.c"
+#include "framework/assets/internal/wfobj_scanner.c"
+#include "framework/assets/internal/json_scanner.c"
 #include "framework/assets/wfobj.c"
-#include "framework/assets/json_scanner.c"
 #include "framework/assets/json.c"
 #include "framework/assets/mesh.c"
 #include "framework/assets/image.c"
 #include "framework/assets/font.c"
 #include "framework/assets/font_atlas.c"
 
-#include "framework/systems/asset_ref.c"
 #include "framework/systems/asset_system.c"
 
 #define GAME_GRAPHICS_IS_OPENGL
@@ -54,10 +52,11 @@
 	#endif
 #endif
 
+#include "application/json_read.c"
+#include "application/json_read_types.c"
+#include "application/json_read_asset.c"
 #include "application/application.c"
 #include "application/asset_registry.c"
-#include "application/asset_parser.c"
-#include "application/utilities.c"
 #include "application/components.c"
 #include "application/batcher_2d.c"
 #include "application/renderer.c"

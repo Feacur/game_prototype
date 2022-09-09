@@ -56,7 +56,7 @@ float linearize_depth(float depth)
 void main()
 {
 	vec4 texture_pixel = texture(p_Texture, v_TexCoord * p_Texture_OS.zw + p_Texture_OS.xy);
-	float depth = clamp(linearize_depth(gl_FragCoord.z) / 10, 0, 1);
+	float depth = clamp(gl_FragCoord.z * 25, 0, 1);
 	out_color = texture_pixel * p_Color;
 	out_color = mix(out_color, vec4(depth, depth, depth, 1), gl_FragCoord.x / u_ViewportSize.x < 0.5);
 }

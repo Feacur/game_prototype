@@ -24,7 +24,7 @@ uint32_t strings_find(struct Strings const * strings, struct CString value) {
 		}
 		offset += strings->lengths.data[i] + 1;
 	}
-	return c_string_id_empty;
+	return 0;
 }
 
 uint32_t strings_add(struct Strings * strings, struct CString value) {
@@ -52,7 +52,3 @@ struct CString strings_get(struct Strings const * strings, uint32_t id) {
 		.data = (char const *)((uint8_t *)strings->buffer.data + strings->offsets.data[index]),
 	};
 }
-
-//
-
-uint32_t const c_string_id_empty = 0;

@@ -21,6 +21,16 @@ struct Transform_Rect {
 	struct vec2 pivot;
 };
 
+// ----- ----- ----- ----- -----
+//     Serialization
+// ----- ----- ----- ----- -----
+
+struct JSON;
+
+void json_read_transform_3d(struct JSON const * json, struct Transform_3D * transform);
+void json_read_transform_2d(struct JSON const * json, struct Transform_2D * transform);
+void json_read_transform_rect(struct JSON const * json, struct Transform_Rect * transform);
+
 //
 
 extern struct Transform_3D const c_transform_3d_default;

@@ -14,8 +14,9 @@
 #include "framework/assets/font.h"
 #include "framework/assets/font_atlas.h"
 
-#include "asset_parser.h"
-#include "utilities.h"
+#include "json_read.h"
+#include "json_read_types.h"
+#include "json_read_asset.h"
 
 //
 #include "asset_types.h"
@@ -133,7 +134,7 @@ static void asset_fill_image(struct JSON const * json, void * data) {
 		DEBUG_BREAK(); return;
 	}
 
-	struct Texture_Settings settings = state_read_json_texture_settings(json);
+	struct Texture_Settings settings = json_read_texture_settings(json);
 
 	struct Image image = image_init(settings, &file_buffer);
 	buffer_free(&file_buffer);
@@ -204,7 +205,7 @@ static void asset_fill_target(struct JSON const * json, void * data) {
 	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
 	struct Asset_Fill_Target * context = data;
 	*context->result = (struct Asset_Target){
-		.gpu_ref = state_read_json_target(json),
+		.gpu_ref = json_read_target(json),
 	};
 }
 
@@ -263,8 +264,12 @@ struct Asset_Fill_Material {
 static void asset_fill_material(struct JSON const * json, void * data) {
 	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
 	struct Asset_Fill_Material * context = data;
+
+	struct Gfx_Material material;
+	json_read_material(context->system, json, &material);
+
 	*context->result = (struct Asset_Material){
-		.value = state_read_json_material(context->system, json),
+		.value = material,
 	};
 }
 

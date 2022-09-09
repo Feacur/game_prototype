@@ -3,6 +3,8 @@
 
 #include "framework/containers/ref.h"
 
+// @purpose: decouple `asset_system.h` with any other one
+
 struct Asset_Ref {
 	struct Ref instance_ref;
 	uint32_t type_id, name_id;
@@ -13,7 +15,5 @@ inline static bool asset_ref_equals(struct Asset_Ref v1, struct Asset_Ref v2) {
 	    && v1.type_id == v2.type_id
 	    && v1.name_id == v2.name_id;
 }
-
-extern struct Asset_Ref const c_asset_ref_empty;
 
 #endif

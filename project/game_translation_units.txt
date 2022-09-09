@@ -22,20 +22,18 @@ framework/containers/hash_table_u32.c
 framework/containers/hash_table_u64.c
 framework/containers/hash_set_u32.c
 framework/containers/hash_set_u64.c
-framework/containers/ref.c
 framework/containers/ref_table.c
 framework/containers/strings.c
 
-framework/assets/wfobj_scanner.c
+framework/assets/internal/wfobj_scanner.c
+framework/assets/internal/json_scanner.c
 framework/assets/wfobj.c
-framework/assets/json_scanner.c
 framework/assets/json.c
 framework/assets/mesh.c
 framework/assets/image.c
 framework/assets/font.c
 framework/assets/font_atlas.c
 
-framework/systems/asset_ref.c
 framework/systems/asset_system.c
 
 framework/platform_windows/timer.c
@@ -49,10 +47,11 @@ framework/gpu_opengl/functions.c
 framework/gpu_opengl/types.c
 framework/gpu_opengl/graphics.c
 
+application/json_read.c
+application/json_read_types.c
+application/json_read_asset.c
 application/application.c
 application/asset_registry.c
-application/asset_parser.c
-application/utilities.c
 application/components.c
 application/batcher_2d.c
 application/renderer.c

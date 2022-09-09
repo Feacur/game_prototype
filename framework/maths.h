@@ -210,6 +210,12 @@ struct vec3 quat_transform(struct vec4 q, struct vec3 v);
 void        quat_get_axes(struct vec4 q, struct vec3 * x, struct vec3 * y, struct vec3 * z);
 
 // ----- ----- ----- ----- -----
+//     complex
+// ----- ----- ----- ----- -----
+
+struct vec2 comp_set_radians(float radians);
+
+// ----- ----- ----- ----- -----
 //     matrices
 // ----- ----- ----- ----- -----
 

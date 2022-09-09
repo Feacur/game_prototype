@@ -2,7 +2,7 @@
 #include "framework/logger.h"
 #include "framework/parsing.h"
 
-#include "wfobj_scanner.h"
+#include "internal/wfobj_scanner.h"
 
 //
 #include "wfobj.h"

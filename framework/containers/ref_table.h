@@ -10,7 +10,7 @@ struct Ref_Table_Iterator {
 	void * value;
 };
 
-// @note: `struct Ref` is zero-initializable
+// @note: `(struct Ref){0}` is a NULL handler
 struct Ref_Table {
 	struct Array_Any buffer;
 	// handles table

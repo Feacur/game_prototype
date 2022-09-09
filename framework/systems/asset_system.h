@@ -7,7 +7,7 @@
 
 #include "asset_ref.h"
 
-// @note: `struct Asset_Ref` is zero-initializable
+// @note: `(struct Asset_Ref){0}` is a NULL handler
 struct Asset_System {
 	struct Strings strings; // extensions, types, names
 	struct Hash_Table_U32 types; // type string id : callbacks and instances
