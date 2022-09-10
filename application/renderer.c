@@ -10,7 +10,7 @@
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_command.h"
 
-#include "application/json_read_asset.h"
+#include "application/json_load.h"
 #include "application/asset_types.h"
 #include "application/asset_registry.h"
 #include "application/components.h"

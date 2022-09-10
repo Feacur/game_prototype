@@ -1,6 +1,7 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
 #include "framework/maths.h"
+#include "framework/json_read.h"
 #include "framework/platform_file.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
@@ -14,9 +15,7 @@
 #include "framework/assets/font.h"
 #include "framework/assets/font_atlas.h"
 
-#include "json_read.h"
-#include "json_read_types.h"
-#include "json_read_asset.h"
+#include "json_load.h"
 
 //
 #include "asset_types.h"
@@ -266,7 +265,7 @@ static void asset_fill_material(struct JSON const * json, void * data) {
 	struct Asset_Fill_Material * context = data;
 
 	struct Gfx_Material material;
-	json_read_material(context->system, json, &material);
+	json_load_gfx_material(context->system, json, &material);
 
 	*context->result = (struct Asset_Material){
 		.value = material,

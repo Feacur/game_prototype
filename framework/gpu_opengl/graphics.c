@@ -26,8 +26,8 @@
 // @idea: use dedicated samplers instead of texture defaults
 // @idea: support older OpenGL versions (pre direct state access, which is 4.5)
 
-struct Gpu_Program_Field_Internal {
-	struct Gpu_Program_Field base;
+struct Gpu_Uniform_Internal {
+	struct Gpu_Uniform base;
 	GLint location;
 };
 
@@ -201,7 +201,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	glGetProgramInterfaceiv(program_id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
 	GLchar * uniform_name_buffer = alloca(sizeof(GLchar) * (size_t)uniform_name_buffer_length);
 
-	struct Hash_Table_U32 uniforms = hash_table_u32_init(sizeof(struct Gpu_Program_Field_Internal));
+	struct Hash_Table_U32 uniforms = hash_table_u32_init(sizeof(struct Gpu_Uniform_Internal));
 	hash_table_u32_resize(&uniforms, (uint32_t)uniforms_count);
 
 	for (GLint i = 0; i < uniforms_count; i++) {
@@ -247,7 +247,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 		}
 
 		uint32_t const id = strings_add(&gs_graphics_state.uniforms, uniform_name);
-		hash_table_u32_set(&uniforms, id, &(struct Gpu_Program_Field_Internal){
+		hash_table_u32_set(&uniforms, id, &(struct Gpu_Uniform_Internal){
 			.base = {
 				.type = interpret_gl_type(params[PARAM_TYPE]),
 				.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
@@ -927,7 +927,7 @@ static void gpu_select_mesh(struct Ref gpu_mesh_ref) {
 	glBindVertexArray((gpu_mesh != NULL) ? gpu_mesh->id : 0);
 }
 
-static void gpu_upload_single_uniform(struct Gpu_Program const * gpu_program, struct Gpu_Program_Field_Internal const * field, void const * data) {
+static void gpu_upload_single_uniform(struct Gpu_Program const * gpu_program, struct Gpu_Uniform_Internal const * field, void const * data) {
 	switch (field->base.type) {
 		default: logger_to_console("unsupported field type '0x%x'\n", field->base.type); DEBUG_BREAK(); break;
 
@@ -975,7 +975,7 @@ static void gpu_upload_uniforms(struct Gpu_Program const * gpu_program, struct G
 	for (uint32_t i = offset, last = offset + count; i < last; i++) {
 		struct Gfx_Uniforms_Entry const * entry = array_any_at(&uniforms->headers, i);
 
-		struct Gpu_Program_Field_Internal const * uniform = hash_table_u32_get(&gpu_program->uniforms, entry->id);
+		struct Gpu_Uniform_Internal const * uniform = hash_table_u32_get(&gpu_program->uniforms, entry->id);
 		if (uniform == NULL) { continue; }
 
 		if (data_type_get_size(uniform->base.type) * uniform->base.array_size != entry->size) { continue; }

@@ -1,10 +1,85 @@
-#include "framework/assets/json.h"
+#include "framework/maths.h"
 #include "framework/logger.h"
+#include "framework/parsing.h"
+#include "framework/json_read.h"
+#include "framework/containers/buffer.h"
+#include "framework/containers/strings.h"
+#include "framework/assets/json.h"
+#include "framework/graphics/gpu_objects.h"
+
+#include "platform_file.h"
 
 #include "json_read.h"
 
 //
-#include "json_read_types.h"
+
+void process_json(struct CString path, void * data, void (* action)(struct JSON const * json, void * output)) {
+	struct Buffer file_buffer = platform_file_read_entire(path);
+	if (file_buffer.capacity == 0) { action(&c_json_error, data); return; }
+
+	struct Strings strings = strings_init();
+
+	struct JSON json = json_init(&strings, (char const *)file_buffer.data);
+	buffer_free(&file_buffer);
+
+	action(&json, data);
+
+	json_free(&json);
+	strings_free(&strings);
+}
+
+// ----- ----- ----- ----- -----
+//     common
+// ----- ----- ----- ----- -----
+
+uint32_t json_read_hex(struct JSON const * json) {
+	struct CString const value = json_as_string(json);
+	if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x')
+	{
+		return parse_hex_u32(value.data + 2);
+	}
+	return parse_hex_u32(value.data);
+}
+
+void json_read_many_flt(struct JSON const * json, uint32_t length, float * result) {
+	if (json->type == JSON_ARRAY) {
+		uint32_t const count = min_u32(length, json_count(json));
+		for (uint32_t i = 0; i < count; i++) {
+			result[i] = (float)json_at_number(json, i);
+		}
+	}
+	else if (json->type == JSON_NUMBER) {
+		*result = (float)json_as_number(json);
+	}
+}
+
+void json_read_many_u32(struct JSON const * json, uint32_t length, uint32_t * result) {
+	if (json->type == JSON_ARRAY) {
+		uint32_t const count = min_u32(length, json_count(json));
+		for (uint32_t i = 0; i < count; i++) {
+			result[i] = (uint32_t)json_at_number(json, i);
+		}
+	}
+	else if (json->type == JSON_NUMBER) {
+		*result = (uint32_t)json_as_number(json);
+	}
+}
+
+void json_read_many_s32(struct JSON const * json, uint32_t length, int32_t * result) {
+	if (json->type == JSON_ARRAY) {
+		uint32_t const count = min_u32(length, json_count(json));
+		for (uint32_t i = 0; i < count; i++) {
+			result[i] = (int32_t)json_at_number(json, i);
+		}
+	}
+	else if (json->type == JSON_NUMBER) {
+		*result = (int32_t)json_as_number(json);
+	}
+}
+
+// ----- ----- ----- ----- -----
+//     graphics types
+// ----- ----- ----- ----- -----
 
 enum Texture_Type json_read_texture_type(struct JSON const * json) {
 	enum Texture_Type texture_type = TEXTURE_TYPE_NONE;
@@ -123,7 +198,7 @@ struct Texture_Parameters json_read_texture_parameters(struct JSON const * json)
 		};
 	}
 
-	fail: logger_to_console("unknown texture type\n"); DEBUG_BREAK();
+	fail: logger_to_console("unknown texture parameters\n"); DEBUG_BREAK();
 	return (struct Texture_Parameters){0};
 }
 
@@ -137,4 +212,39 @@ struct Texture_Settings json_read_texture_settings(struct JSON const * json) {
 	};
 	json_read_many_flt(json_get(json, S_("border")), 4, &result.border.x);
 	return result;
+}
+
+// ----- ----- ----- ----- -----
+//     graphics objects
+// ----- ----- ----- ----- -----
+
+struct Ref json_read_target(struct JSON const * json) {
+	if (json->type != JSON_OBJECT) { goto fail; }
+
+	struct JSON const * buffers_json = json_get(json, S_("buffers"));
+	if (buffers_json->type != JSON_ARRAY) { goto fail; }
+
+	// @todo: arena/stack allocator
+	struct Array_Any parameters_buffer = array_any_init(sizeof(struct Texture_Parameters));
+
+	uint32_t const buffers_count = json_count(buffers_json);
+	for (uint32_t i = 0; i < buffers_count; i++) {
+		struct Texture_Parameters const texture_parameters = json_read_texture_parameters(json_at(buffers_json, i));
+		array_any_push_many(&parameters_buffer, 1, &texture_parameters);
+	}
+
+	struct Ref result = (struct Ref){0};
+	if (parameters_buffer.count > 0) {
+		uint32_t const size_x = (uint32_t)json_get_number(json, S_("size_x"));
+		uint32_t const size_y = (uint32_t)json_get_number(json, S_("size_y"));
+		if (size_x > 0 && size_y > 0) {
+			result = gpu_target_init(size_x, size_y, parameters_buffer.count, parameters_buffer.data);
+		}
+	}
+
+	array_any_free(&parameters_buffer);
+	return result;
+
+	fail: logger_to_console("failed to read target\n"); DEBUG_BREAK();
+	return (struct Ref){0};
 }

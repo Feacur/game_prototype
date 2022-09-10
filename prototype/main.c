@@ -1,5 +1,6 @@
 #include "framework/memory.h"
 #include "framework/unicode.h"
+#include "framework/json_read.h"
 #include "framework/platform_system.h"
 #include "framework/platform_file.h"
 #include "framework/logger.h"
@@ -20,7 +21,7 @@
 #include "framework/assets/font.h"
 #include "framework/assets/json.h"
 
-#include "application/json_read.h"
+#include "application/json_load.h"
 #include "application/application.h"
 #include "application/asset_types.h"
 #include "application/components.h"

@@ -22,11 +22,10 @@ struct Hash_Table_U32;
 //     GPU program part
 // ----- ----- ----- ----- -----
 
-struct Gpu_Program_Field;
 struct Ref gpu_program_init(struct Buffer const * asset);
 void gpu_program_free(struct Ref gpu_program_ref);
 
-// uniform string id : `struct Gpu_Program_Field`
+// uniform string id : `struct Gpu_Uniform`
 struct Hash_Table_U32 const * gpu_program_get_uniforms(struct Ref gpu_program_ref);
 
 // ----- ----- ----- ----- -----

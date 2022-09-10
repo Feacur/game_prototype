@@ -6,6 +6,7 @@ framework/unicode.c
 framework/vector_types.c
 framework/logger.c
 framework/parsing.c
+framework/json_read.c
 
 framework/graphics/types.c
 framework/graphics/material.c
@@ -47,9 +48,7 @@ framework/gpu_opengl/functions.c
 framework/gpu_opengl/types.c
 framework/gpu_opengl/graphics.c
 
-application/json_read.c
-application/json_read_types.c
-application/json_read_asset.c
+application/json_load.c
 application/application.c
 application/asset_registry.c
 application/components.c

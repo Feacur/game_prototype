@@ -87,7 +87,7 @@ struct Gfx_Material gfx_material_init(
 		struct CString const uniform_name = graphics_get_uniform_value(it.key_hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 
-		struct Gpu_Program_Field const * uniform = it.value;
+		struct Gpu_Uniform const * uniform = it.value;
 		payload_bytes += data_type_get_size(uniform->type) * uniform->array_size;
 		properties_count++;
 	}
@@ -99,7 +99,7 @@ struct Gfx_Material gfx_material_init(
 		struct CString const uniform_name = graphics_get_uniform_value(it.key_hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 
-		struct Gpu_Program_Field const * uniform = it.value;
+		struct Gpu_Uniform const * uniform = it.value;
 		gfx_uniforms_push(&material.uniforms, it.key_hash, (struct Gfx_Uniform_In){
 			.size = data_type_get_size(uniform->type) * uniform->array_size,
 		});

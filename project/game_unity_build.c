@@ -6,6 +6,7 @@
 #include "framework/vector_types.c"
 #include "framework/logger.c"
 #include "framework/parsing.c"
+#include "framework/json_read.c"
 
 #include "framework/graphics/types.c"
 #include "framework/graphics/material.c"
@@ -52,9 +53,7 @@
 	#endif
 #endif
 
-#include "application/json_read.c"
-#include "application/json_read_types.c"
-#include "application/json_read_asset.c"
+#include "application/json_load.c"
 #include "application/application.c"
 #include "application/asset_registry.c"
 #include "application/components.c"

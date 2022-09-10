@@ -224,7 +224,7 @@ enum Color_Channel {
 	COLOR_CHANNEL_FULL = COLOR_CHANNEL_RED | COLOR_CHANNEL_GREEN | COLOR_CHANNEL_BLUE | COLOR_CHANNEL_ALPHA,
 };
 
-struct Gpu_Program_Field {
+struct Gpu_Uniform {
 	enum Data_Type type;
 	uint32_t array_size;
 };
