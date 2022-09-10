@@ -54,3 +54,5 @@ goto :eof
 	tasklist -fi "IMAGENAME eq remedybg.exe" -nh | findstr "remedybg.exe" > nul
 	rem return: `errorlevel`
 goto :eof
+
+endlocal
