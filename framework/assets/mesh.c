@@ -4,7 +4,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/array_flt.h"
 #include "framework/containers/array_u32.h"
-#include "wfobj.h"
+#include "internal/wfobj.h"
 
 //
 #include "mesh.h"

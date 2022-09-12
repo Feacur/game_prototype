@@ -28,7 +28,7 @@
 
 #include "framework/assets/internal/wfobj_scanner.c"
 #include "framework/assets/internal/json_scanner.c"
-#include "framework/assets/wfobj.c"
+#include "framework/assets/internal/wfobj.c"
 #include "framework/assets/json.c"
 #include "framework/assets/mesh.c"
 #include "framework/assets/image.c"
