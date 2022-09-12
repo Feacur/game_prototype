@@ -381,7 +381,7 @@ struct vec4 vec4_norm(struct vec4 v) {
     sin(angle)*axis + cos(angle)
     e^(axis * angle)
 
-(!) make notice, it's `angle`, not `angle/2`
+(!) notice, it's `angle` yet, not `angle/2`
 
 --- the general concept used to rotate a vector `V` around an `axis` of rotation by an `angle`
     * split the vector into two parts
@@ -406,7 +406,7 @@ struct vec4 vec4_norm(struct vec4 v) {
               = e^(axis * a/2) * (V_para + V_perp) * e^(-axis * a/2)
               = e^(axis * a/2) * V * e^(-axis * a/2)
 
-(!) make notice, it's `angle/2` now
+(!) notice, it's `angle/2` now
     `quat_transform` relies on this format: no need to figure out `V_perp` and `V_para`
     which allows us rotating arbitrary vectors around arbitrary axes by arbitrary angles
 */

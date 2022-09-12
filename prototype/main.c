@@ -40,6 +40,38 @@ static struct Main_Settings {
 	uint32_t scene_id;
 } gs_main_settings;
 
+static void prototype_tick_cameras(void) {
+	struct uvec2 const screen_size = application_get_screen_size();
+	for (uint32_t camera_i = 0; camera_i < gs_game.cameras.count; camera_i++) {
+		struct Camera * camera = array_any_at(&gs_game.cameras, camera_i);
+		camera->cached_size = screen_size;
+		if (!ref_equals(camera->gpu_target_ref, (struct Ref){0})) {
+			gpu_target_get_size(camera->gpu_target_ref, &camera->cached_size.x, &camera->cached_size.y);
+		}
+	}
+}
+
+static void prototype_tick_entities_rect(void) {
+	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
+		struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
+
+		if (entity->type == ENTITY_TYPE_NONE) { continue; }
+		if (entity->type == ENTITY_TYPE_MESH) { continue; }
+
+		struct Camera const * camera = array_any_at(&gs_game.cameras, entity->camera);
+		struct uvec2 const viewport_size = camera->cached_size;
+
+		struct vec2 entity_pivot;
+		transform_rect_get_pivot_and_rect(
+			&entity->rect,
+			viewport_size.x, viewport_size.y,
+			&entity_pivot, &entity->cached_rect
+		);
+		entity->transform.position.x = entity_pivot.x;
+		entity->transform.position.y = entity_pivot.y;
+	}
+}
+
 static void prototype_tick_entities_rotation_mode(void) {
 	float const delta_time = (float)application_get_delta_time();
 	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
@@ -70,21 +102,16 @@ static void prototype_tick_entities_rotation_mode(void) {
 }
 
 static void prototype_tick_entities_quad_2d(void) {
-	struct uvec2 const screen_size = application_get_screen_size();
 	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
 		struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
+
 		if (entity->type != ENTITY_TYPE_QUAD_2D) { continue; }
 		struct Entity_Quad * quad = &entity->as.quad;
 		if (quad->mode == ENTITY_QUAD_MODE_NONE) { continue; }
 
-		// @todo: precalculate all cameras?
 		struct Camera const * camera = array_any_at(&gs_game.cameras, entity->camera);
-		struct uvec2 viewport_size = screen_size;
-		if (!ref_equals(camera->gpu_target_ref, (struct Ref){0})) {
-			gpu_target_get_size(camera->gpu_target_ref, &viewport_size.x, &viewport_size.y);
-		}
+		struct uvec2 const viewport_size = camera->cached_size;
 
-		//
 		struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
 		struct uvec2 const content_size = entity_get_content_size(entity, &material->value, viewport_size.x, viewport_size.y);
 		if (content_size.x == 0 || content_size.y == 0) { break; }
@@ -142,6 +169,8 @@ static void prototype_tick_entities(void) {
 	// 	logger_to_console("delta: %d %d\n", x, y);
 	// }
 
+	prototype_tick_cameras();
+	prototype_tick_entities_rect();
 	prototype_tick_entities_rotation_mode();
 	prototype_tick_entities_quad_2d();
 }
@@ -164,12 +193,7 @@ static void prototype_draw_objects(void) {
 
 	for (uint32_t camera_i = 0; camera_i < gs_game.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&gs_game.cameras, camera_i);
-
-		// prepare camera
-		struct uvec2 viewport_size = screen_size;
-		if (!ref_equals(camera->gpu_target_ref, (struct Ref){0})) {
-			gpu_target_get_size(camera->gpu_target_ref, &viewport_size.x, &viewport_size.y);
-		}
+		struct uvec2 const viewport_size = camera->cached_size;
 
 		struct mat4 const mat4_Projection = camera_get_projection(&camera->params, viewport_size.x, viewport_size.y);
 		struct mat4 const mat4_View = mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
@@ -233,34 +257,27 @@ static void prototype_draw_objects(void) {
 
 		// draw entities
 		for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
-			struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
+			struct Entity const * entity = array_any_at(&gs_game.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
 
 			struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
 
-			struct vec2 entity_pivot;
-			struct rect entity_rect;
-			entity_get_rect(
-				entity,
-				viewport_size.x, viewport_size.y,
-				&entity_pivot, &entity_rect
-			);
-
 			struct mat4 const mat4_Model = mat4_set_transformation(
-				(struct vec3){
-					.x = entity_pivot.x,
-					.y = entity_pivot.y,
-					.z = entity->transform.position.z,
-				},
+				entity->transform.position,
 				entity->transform.scale,
 				entity->transform.rotation
 			);
 
-			if (entity_get_is_batched(entity)) {
-				batcher_2d_set_matrix(gs_renderer.batcher_2d, (struct mat4[]){
-					mat4_mul_mat(mat4_ProjectionView, mat4_Model)
-				});
-				batcher_2d_set_material(gs_renderer.batcher_2d, &material->value);
+			switch (entity->type) {
+				case ENTITY_TYPE_NONE: break;
+				case ENTITY_TYPE_MESH: break;
+
+				case ENTITY_TYPE_QUAD_2D:
+				case ENTITY_TYPE_TEXT_2D: {
+					struct mat4 const matrix = mat4_mul_mat(mat4_ProjectionView, mat4_Model);
+					batcher_2d_set_matrix(gs_renderer.batcher_2d, &matrix);
+					batcher_2d_set_material(gs_renderer.batcher_2d, &material->value);
+				} break;
 			}
 
 			switch (entity->type) {
@@ -309,7 +326,7 @@ static void prototype_draw_objects(void) {
 					struct Entity_Quad const * quad = &entity->as.quad;
 					batcher_2d_add_quad(
 						gs_renderer.batcher_2d,
-						entity_rect,
+						entity->cached_rect,
 						quad->view
 					);
 				} break;
@@ -324,7 +341,7 @@ static void prototype_draw_objects(void) {
 					};
 					batcher_2d_add_text(
 						gs_renderer.batcher_2d,
-						entity_rect, text->alignment, true,
+						entity->cached_rect, text->alignment, true,
 						font, value, text->size
 					);
 				} break;

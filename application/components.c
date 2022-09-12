@@ -8,7 +8,44 @@
 #include "components.h"
 
 // ----- ----- ----- ----- -----
-//     Transform part
+//     API
+// ----- ----- ----- ----- -----
+
+void transform_rect_get_pivot_and_rect(
+	struct Transform_Rect const * transform_rect,
+	uint32_t parent_size_x, uint32_t parent_size_y,
+	struct vec2 * out_pivot, struct rect * out_rect
+) {
+	struct vec2 const offset_min = {
+		.x = transform_rect->offset.x - transform_rect->extents.x * transform_rect->pivot.x,
+		.y = transform_rect->offset.y - transform_rect->extents.y * transform_rect->pivot.y,
+	};
+	struct vec2 const offset_max = {
+		.x = transform_rect->offset.x + transform_rect->extents.x * (1 - transform_rect->pivot.x),
+		.y = transform_rect->offset.y + transform_rect->extents.y * (1 - transform_rect->pivot.y),
+	};
+
+	struct vec2 const min = {
+		transform_rect->anchor_min.x * (float)parent_size_x + offset_min.x,
+		transform_rect->anchor_min.y * (float)parent_size_y + offset_min.y,
+	};
+	struct vec2 const max = {
+		transform_rect->anchor_max.x * (float)parent_size_x + offset_max.x,
+		transform_rect->anchor_max.y * (float)parent_size_y + offset_max.y,
+	};
+
+	*out_pivot = (struct vec2){
+		.x = lerp(min.x, max.x, transform_rect->pivot.x),
+		.y = lerp(min.y, max.y, transform_rect->pivot.y),
+	};
+	*out_rect = (struct rect){
+		.min = {min.x - out_pivot->x, min.y - out_pivot->y},
+		.max = {max.x - out_pivot->x, max.y - out_pivot->y},
+	};
+}
+
+// ----- ----- ----- ----- -----
+//     Serialization
 // ----- ----- ----- ----- -----
 
 void json_read_transform_3d(struct JSON const * json, struct Transform_3D * transform) {

@@ -18,6 +18,8 @@ struct JSON json_init(struct Strings * strings, char const * data) {
 
 void json_free(struct JSON * value) {
 	switch (value->type) {
+		default: break;
+
 		case JSON_OBJECT: {
 			struct Hash_Table_U32 * table = &value->as.table;
 			FOR_HASH_TABLE_U32 (table, it) { json_free(it.value); }
@@ -31,8 +33,6 @@ void json_free(struct JSON * value) {
 			}
 			array_any_free(array);
 		} break;
-
-		default: break;
 	}
 	common_memset(value, 0, sizeof(*value));
 }
@@ -282,14 +282,14 @@ static void json_parser_do_number(struct JSON_Parser * parser, struct JSON * val
 
 static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * value) {
 	switch (parser->current.type) {
+		default: break;
+
 		case JSON_TOKEN_STRING: json_parser_do_string(parser, value); return;
 		case JSON_TOKEN_NUMBER: json_parser_do_number(parser, value); return;
 
 		case JSON_TOKEN_TRUE:  *value = c_json_true;  json_parser_consume(parser); return;
 		case JSON_TOKEN_FALSE: *value = c_json_false; json_parser_consume(parser); return;
 		case JSON_TOKEN_NULL:  *value = c_json_null;  json_parser_consume(parser); return;
-
-		default: break;
 	}
 
 	if (json_parser_match(parser, JSON_TOKEN_LEFT_BRACE)) {

@@ -60,22 +60,15 @@ struct Entity {
 		struct Entity_Quad quad;
 		struct Entity_Text text;
 	} as;
+	//
+	struct rect cached_rect;
 };
 
 //
 
-bool entity_get_is_screen_space(struct Entity const * entity);
-bool entity_get_is_batched(struct Entity const * entity);
-
-void entity_get_rect(
-	struct Entity const * entity,
-	uint32_t viewport_size_x, uint32_t viewport_size_y,
-	struct vec2 * pivot, struct rect * rect
-);
-
 struct uvec2 entity_get_content_size(
 	struct Entity const * entity, struct Gfx_Material const * material,
-	uint32_t viewport_size_x, uint32_t viewport_size_y
+	uint32_t parent_size_x, uint32_t parent_size_y
 );
 
 #endif

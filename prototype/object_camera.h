@@ -17,6 +17,7 @@ enum Camera_Mode {
 
 struct Camera {
 	struct Transform_3D transform;
+	//
 	struct Camera_Params {
 		enum Camera_Mode mode;
 		float ncp, fcp, ortho;
@@ -26,6 +27,8 @@ struct Camera {
 		struct vec4 color;
 	} clear;
 	struct Ref gpu_target_ref;
+	//
+	struct uvec2 cached_size;
 };
 
 //
