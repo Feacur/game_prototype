@@ -1,5 +1,6 @@
 #include "framework/maths.h"
 #include "framework/logger.h"
+#include "framework/graphics/gpu_misc.h"
 
 //
 #include "object_camera.h"
@@ -13,21 +14,21 @@ struct mat4 camera_get_projection(
 			return c_mat4_identity;
 
 		case CAMERA_MODE_SCREEN:
-			return mat4_set_projection(
+			return graphics_set_projection_mat4(
 				(struct vec2){2 / (float)viewport_size_x, 2 / (float)viewport_size_y},
 				(struct vec2){-1, -1},
 				params->ncp, params->fcp, params->ortho
 			);
 
 		case CAMERA_MODE_ASPECT_X:
-			return mat4_set_projection(
+			return graphics_set_projection_mat4(
 				(struct vec2){1, (float)viewport_size_x / (float)viewport_size_y},
 				(struct vec2){0, 0},
 				params->ncp, params->fcp, params->ortho
 			);
 
 		case CAMERA_MODE_ASPECT_Y:
-			return mat4_set_projection(
+			return graphics_set_projection_mat4(
 				(struct vec2){(float)viewport_size_y / (float)viewport_size_x, 1},
 				(struct vec2){0, 0},
 				params->ncp, params->fcp, params->ortho

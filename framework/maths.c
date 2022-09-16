@@ -255,10 +255,10 @@ i = jk = -kj
 j = ki = -ik
 k = ij = -ji
 
-> vectors cross product
+> vectors cross product, `v1 x v2 = |v1| * |v2| * sin(a) * n`
 ii = jj = kk = ijk =  0 == sin(0)
 
-> vectors dot product
+> vectors dot product,   `v1 . v2 = |v1| * |v2| * cos(a)`
 ii = jj = kk = ijk =  1 == cos(0)
 
 > quaternions multiplication
@@ -533,17 +533,20 @@ struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 sc
 	};
 }
 
-struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, float ncp, float fcp, float ortho) {
-	float const NS_NCP = 1, NS_FCP = 0;
-	float const reverse_depth = 1 / (fcp - ncp);
+struct mat4 mat4_set_projection(
+	struct vec2 scale_xy, struct vec2 offset_xy,
+	float view_near, float view_far, float ortho,
+	float ndc_near, float ndc_far
+) {
+	float const reverse_depth = 1 / (view_far - view_near);
 
-	float const persp_scale_z  = r32_isinf(fcp) ? NS_FCP                    : (reverse_depth * (NS_FCP * fcp - NS_NCP * ncp));
-	float const persp_offset_z = r32_isinf(fcp) ? ((NS_NCP - NS_FCP) * ncp) : (reverse_depth * (NS_NCP - NS_FCP) * ncp * fcp);
+	float const persp_scale_z  = r32_isinf(view_far) ? ndc_far                            : (reverse_depth * (ndc_far * view_far - ndc_near * view_near));
+	float const persp_offset_z = r32_isinf(view_far) ? ((ndc_near - ndc_far) * view_near) : (reverse_depth * (ndc_near - ndc_far) * view_near * view_far);
 
-	float const ortho_scale_z  = r32_isinf(fcp) ? 0      : (reverse_depth * (NS_FCP - NS_NCP));
-	float const ortho_offset_z = r32_isinf(fcp) ? NS_NCP : (reverse_depth * (NS_NCP * fcp - NS_FCP * ncp));
+	float const ortho_scale_z  = r32_isinf(view_far) ? 0        : (reverse_depth * (ndc_far - ndc_near));
+	float const ortho_offset_z = r32_isinf(view_far) ? ndc_near : (reverse_depth * (ndc_near * view_far - ndc_far * view_near));
 
-	float const scale_z  = lerp(persp_scale_z, ortho_scale_z, ortho);
+	float const scale_z  = lerp(persp_scale_z,  ortho_scale_z,  ortho);
 	float const offset_z = lerp(persp_offset_z, ortho_offset_z, ortho);
 	float const zw = 1 - ortho;
 	float const ww = ortho;
@@ -557,13 +560,8 @@ struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, flo
 
 /*
 > inputs
-* ncp: world-space near clipping plane
-* fcp: world-space far clipping plane
-* ortho: [0 .. 1], where 0 is perspective mode, 1 is orthographic mode
-
-> settings
-* NS_NCP: normalized-space near clipping plane
-* NS_FCP: normalized-space far clipping plane
+* ortho: [0 .. 1], where 0 is full perspective mode, 1 is full orthographic mode
+* NDC: stands for normalized device space, which is the output of a projection
 
 > logic
 * XYZ: world-space vector
@@ -571,11 +569,11 @@ struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, flo
 --- orthograhic
     XYZ' = (offset + scale * XYZ) / 1
     XY scale: from [-scale_xy .. scale_xy] to [-1 .. 1]
-    Z  scale: from [ncp .. fcp]            to [NS_NCP .. NS_FCP]
+    Z  scale: from [view_near .. view_far] to [ndc_near .. ndc_far]
 --- perspective
     XYZ' = (offset + scale * XYZ) / Z
     XY scale; from [-scale_xy .. scale_xy] to [-1 .. 1]
-    Z  scale; from [ncp .. fcp]            to [NS_NCP .. NS_FCP]
+    Z  scale; from [view_near .. view_far] to [ndc_near .. ndc_far]
 */
 }
 

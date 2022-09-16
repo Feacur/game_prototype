@@ -221,7 +221,12 @@ struct vec2 comp_set_radians(float radians);
 
 struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
 struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
-struct mat4 mat4_set_projection(struct vec2 scale_xy, struct vec2 offset_xy, float ncp, float fcp, float ortho);
+
+struct mat4 mat4_set_projection(
+	struct vec2 scale_xy, struct vec2 offset_xy,
+	float view_near, float view_far, float ortho,
+	float ndc_near, float ndc_far
+);
 
 struct mat4 mat4_inverse_transformation(struct mat4 m);
 struct vec4 mat4_mul_vec(struct mat4 m, struct vec4 v);

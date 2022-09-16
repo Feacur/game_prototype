@@ -1,20 +1,10 @@
-// @todo: automate locations
-#define ATTRIBUTE_TYPE_POSITION 0
-#define ATTRIBUTE_TYPE_TEXCOORD 1
-#define ATTRIBUTE_TYPE_NORMAL   2
-#define ATTRIBUTE_TYPE_COLOR    3
-
-
-
-
 #if defined(VERTEX_SHADER)
 layout(location = ATTRIBUTE_TYPE_POSITION) in vec2 a_Position;
 layout(location = ATTRIBUTE_TYPE_TEXCOORD) in vec2 a_TexCoord;
 
 out vec2 v_TexCoord;
 
-void main()
-{
+void main() {
 	v_TexCoord = a_TexCoord;
 	gl_Position = vec4(a_Position, 0, 1);
 }
@@ -31,8 +21,7 @@ uniform sampler2D p_Texture;
 
 layout(location = 0) out vec4 out_color;
 
-void main()
-{
+void main() {
 	vec4 texture_pixel = texture(p_Texture, v_TexCoord);
 	out_color = texture_pixel * p_Color;
 }

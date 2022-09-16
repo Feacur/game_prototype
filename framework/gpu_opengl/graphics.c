@@ -108,7 +108,8 @@ static struct Graphics_State {
 
 	struct Gpu_Clip_Space {
 		struct vec2 origin;
-		float ncp, fcp;
+		float depth_near, depth_far;
+		float ndc_near, ndc_far;
 	} clip_space;
 
 	struct Graphics_State_Limits {
@@ -137,18 +138,42 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	do { \
 		if (common_strstr((char const *)asset->data, #shader_type)) {\
 			if (gs_ogl_version < (version)) { logger_to_console("'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); break; } \
-			headers[headers_count++] = (struct Section_Header){ \
+			sections[sections_count++] = (struct Section_Header){ \
 				.type = GL_##shader_type, \
-				.text = S_("#define " #shader_type "\n"), \
+				.text = S_("#define " #shader_type "\n\n"), \
 			}; \
 		} \
 	} while (false) \
 
-	// a mandatory version header
-	GLchar glsl_version[20];
-	GLint glsl_version_length = (GLint)logger_to_buffer(
-		SIZE_OF_ARRAY(glsl_version), glsl_version, "#version %d core\n",
-		(gs_ogl_version > 33) ? gs_ogl_version * 10 : 330
+	// header
+	GLchar header[256];
+	uint32_t header_length = logger_to_buffer(
+		SIZE_OF_ARRAY(header), header, ""
+		"#version %u core\n"
+		"\n"
+		"#define ATTRIBUTE_TYPE_POSITION %u\n"
+		"#define ATTRIBUTE_TYPE_TEXCOORD %u\n"
+		"#define ATTRIBUTE_TYPE_NORMAL   %u\n"
+		"#define ATTRIBUTE_TYPE_COLOR    %u\n"
+		"\n"
+		"#define DEPTH_NEAR %g\n"
+		"#define DEPTH_FAR  %g\n"
+		"#define NDC_NEAR %g\n"
+		"#define NDC_FAR  %g\n"
+		// "\n"
+		// "#define R32_POS_INFINITY uintBitsToFloat(0x7f800000)\n"
+		"\n",
+		(gs_ogl_version > 33) ? gs_ogl_version * 10 : 330,
+		//
+		ATTRIBUTE_TYPE_POSITION,
+		ATTRIBUTE_TYPE_TEXCOORD,
+		ATTRIBUTE_TYPE_NORMAL,
+		ATTRIBUTE_TYPE_COLOR,
+		//
+		(double)gs_graphics_state.clip_space.depth_near,
+		(double)gs_graphics_state.clip_space.depth_far,
+		(double)gs_graphics_state.clip_space.ndc_near,
+		(double)gs_graphics_state.clip_space.ndc_far
 	);
 
 	// section headers, per shader type
@@ -157,8 +182,8 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 		struct CString text;
 	};
 
-	uint32_t headers_count = 0;
-	struct Section_Header headers[4];
+	uint32_t sections_count = 0;
+	struct Section_Header sections[4];
 	ADD_SECTION_HEADER(VERTEX_SHADER, 20);
 	ADD_SECTION_HEADER(FRAGMENT_SHADER, 20);
 	ADD_SECTION_HEADER(GEOMETRY_SHADER, 32);
@@ -166,11 +191,11 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 
 	// compile shader objects
 	GLuint shader_ids[4];
-	for (uint32_t i = 0; i < headers_count; i++) {
-		GLchar const * code[]   = {glsl_version,        headers[i].text.data,          (GLchar *)asset->data};
-		GLint const    length[] = {glsl_version_length, (GLint)headers[i].text.length, (GLint)asset->count};
+	for (uint32_t i = 0; i < sections_count; i++) {
+		GLchar const * code[]   = {header,               sections[i].text.data,          (GLchar *)asset->data};
+		GLint const    length[] = {(GLint)header_length, (GLint)sections[i].text.length, (GLint)asset->count};
 
-		GLuint shader_id = glCreateShader(headers[i].type);
+		GLuint shader_id = glCreateShader(sections[i].type);
 		glShaderSource(shader_id, SIZE_OF_ARRAY(code), code, length);
 		glCompileShader(shader_id);
 		verify_shader(shader_id);
@@ -180,7 +205,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 
 	// link shader objects into a program
 	GLuint program_id = glCreateProgram();
-	for (uint32_t i = 0; i < headers_count; i++) {
+	for (uint32_t i = 0; i < sections_count; i++) {
 		glAttachShader(program_id, shader_ids[i]);
 	}
 
@@ -188,7 +213,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 	verify_program(program_id);
 
 	// free redundant resources
-	for (uint32_t i = 0; i < headers_count; i++) {
+	for (uint32_t i = 0; i < sections_count; i++) {
 		glDetachShader(program_id, shader_ids[i]);
 		glDeleteShader(shader_ids[i]);
 	}
@@ -830,6 +855,17 @@ struct CString graphics_get_uniform_value(uint32_t value) {
 	return strings_get(&gs_graphics_state.uniforms, value);
 }
 
+struct mat4 graphics_set_projection_mat4(
+	struct vec2 scale_xy, struct vec2 offset_xy,
+	float view_near, float view_far, float ortho
+) {
+	return mat4_set_projection(
+		scale_xy, offset_xy,
+		view_near, view_far, ortho,
+		gs_graphics_state.clip_space.ndc_near, gs_graphics_state.clip_space.ndc_far
+	);
+}
+
 // static void graphics_stencil_test(void) {
 // 	enum Comparison_Op comparison_op = COMPARISON_OP_NONE;
 // 	uint32_t comparison_ref = 0;
@@ -1007,7 +1043,7 @@ static void gpu_set_depth_mode(enum Depth_Mode mode) {
 		glDisable(GL_DEPTH_TEST);
 	}
 	else {
-		bool const reversed_z = (gs_graphics_state.clip_space.ncp > gs_graphics_state.clip_space.fcp);
+		bool const reversed_z = (gs_graphics_state.clip_space.depth_near > gs_graphics_state.clip_space.depth_far);
 		struct Gpu_Depth_Mode const gpu_mode = gpu_depth_mode(mode, reversed_z);
 		glEnable(GL_DEPTH_TEST);
 		glDepthMask(gpu_mode.mask);
@@ -1163,7 +1199,7 @@ inline static void gpu_execute_target(struct GPU_Command_Target const * command)
 inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 	if (command->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
 
-	float const depth   = gs_graphics_state.clip_space.fcp;
+	float const depth   = gs_graphics_state.clip_space.depth_far;
 	GLint const stencil = 0;
 
 	// @todo: ever need variations?
@@ -1366,16 +1402,19 @@ void graphics_to_gpu_library_init(void) {
 	bool const can_control_clip_space = (gs_ogl_version >= 45) || contains_full_word(gs_graphics_state.extensions, S_("GL_ARB_clip_control"));
 	if (can_control_clip_space) { glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); }
 
+	bool const reverse_z = true || can_control_clip_space;
 	gs_graphics_state.clip_space = (struct Gpu_Clip_Space){
 		.origin = {
-			0.0f,
-			can_control_clip_space ? 0.0f : 1.0f,
+			0,
+			can_control_clip_space ? 0 : 1,
 		},
-		.ncp = can_control_clip_space ? 1.0f : 0.0f,
-		.fcp = can_control_clip_space ? 0.0f : 1.0f,
+		.depth_near = reverse_z ? 1 : 0,
+		.depth_far  = reverse_z ? 0 : 1,
+		.ndc_near   = can_control_clip_space ? 0 : -1,
+		.ndc_far    = can_control_clip_space ? 1 :  1,
 	};
 
-	// glDepthRangef(gs_graphics_state.clip_space.ncp, gs_graphics_state.clip_space.fcp);
+	glDepthRangef(gs_graphics_state.clip_space.depth_near, gs_graphics_state.clip_space.depth_far);
 }
 
 void graphics_to_gpu_library_free(void) {

@@ -59,7 +59,7 @@ XMACRO(DEPTHMASK,  DepthMask)
 //    XMACRO(DEPTHRANGE, DepthRange)
 // >= 4.1
 XMACRO(CLEARDEPTHF, ClearDepthf)
-// XMACRO(DEPTHRANGEF, DepthRangef)
+XMACRO(DEPTHRANGEF, DepthRangef)
 
 // -- stencil
 // >= 2.0
