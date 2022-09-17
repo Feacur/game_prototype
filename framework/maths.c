@@ -512,6 +512,35 @@ struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, str
 		{axis_z.x,   axis_z.y,   axis_z.z,   0},
 		{position.x, position.y, position.z, 1},
 	};
+
+/*
+notice, designated initializer's looks have nothing to do with ordering
+- which is a programming concept, not mathematical (concerning multiplication)
+- matrix structures have explicit vector components (treat them as you please)
+
+row-major order means interpreting contiguous memory like this
++---------------+
+|x_x x_y x_z x_w| -> axis_x
++---------------+
+|y_x y_y y_z y_w| -> axis_y
++---------------+
+|z_x z_y z_z z_w| -> axis_z
++---------------+
+|w_x w_y w_z w_w| -> position
++---------------+
+
+while column-major order means doing it that way around
+ axis_x  axis_z
+ |       |
++---------------+
+|x_x|y_x|z_x|w_x|
+|x_y|y_y|z_y|w_y|
+|x_z|y_z|z_z|w_z|
+|x_w|y_w|z_w|w_w|
++---------------+
+     |       |
+     axis_y  position
+*/
 }
 
 struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation) {
@@ -601,12 +630,26 @@ struct vec4 mat4_mul_vec(struct mat4 m, struct vec4 v) {
 	};
 
 /*
-+---------------+    +---+
-|x_x|y_x|z_x|w_x|    |v_x|
-|x_y|y_y|z_y|w_y| \/ |v_y|
-|x_z|y_z|z_z|w_z| /\ |v_z|
-|x_w|y_w|z_w|w_w|    |v_w|
-+---------------+    +---+
+for what it's worth, matrix multiplication is basically doing dot product of left-hand side's rows with right-hand side's columns
+
+notice, arguments order of the function mimics this notation
++---------------+    +---+    +---+
+|x_x|y_x|z_x|w_x|    |v_x|    |r_x|
+|x_y|y_y|z_y|w_y| \/ |v_y| == |r_y|
+|x_z|y_z|z_z|w_z| /\ |v_z| == |r_z|
+|x_w|y_w|z_w|w_w|    |v_w|    |r_w|
++---------------+    +---+    +---+
+
+but effectively, `M x V == transpose(transpose(V) x transpose(M))`
+                    +---------------+
+                    |x_x x_y x_z x_w|
+                    +---------------+
++---------------+   |y_x y_y y_z y_w|   +---------------+
+|v_x v_y v_z v_w| x +---------------+ = |r_x r_y r_z r_w|
++---------------+   |z_x z_y z_z z_w|   +---------------+
+                    +---------------+
+                    |w_x w_y w_z w_w|
+                    +---------------+
 */
 }
 

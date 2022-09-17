@@ -1414,7 +1414,14 @@ void graphics_to_gpu_library_init(void) {
 		.ndc_far    = can_control_clip_space ? 1 :  1,
 	};
 
+	// @todo: check if swapping `ndc_near` and `ndc_far` is any better
 	glDepthRangef(gs_graphics_state.clip_space.depth_near, gs_graphics_state.clip_space.depth_far);
+
+	// if (reverse_z) {
+	// 	float const temp = gs_graphics_state.clip_space.ndc_near;
+	// 	gs_graphics_state.clip_space.ndc_near = gs_graphics_state.clip_space.ndc_far;
+	// 	gs_graphics_state.clip_space.ndc_far = temp;
+	// }
 }
 
 void graphics_to_gpu_library_free(void) {

@@ -52,9 +52,7 @@ void * memory_reallocate(void * pointer, size_t size) {
 	// free
 	if (size == 0) {
 		if (pointer_header == NULL) { return NULL; }
-		// @note: zeroing payload seems extra redundant
-		// common_memset(pointer_header + 1, 0, pointer_header->size);
-		common_memset(pointer_header, 0, sizeof(*pointer_header));
+		common_memset(pointer_header, 0, sizeof(*pointer_header) + pointer_header->size);
 		free(pointer_header);
 		return NULL;
 	}
