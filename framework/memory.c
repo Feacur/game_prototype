@@ -101,35 +101,43 @@ void * memory_reallocate_without_tracking(void * pointer, size_t size) {
 //
 #include "framework/internal/memory_to_system.h"
 
-uint32_t memory_to_system_report(void) {
+bool memory_to_system_cleanup(void) {
+	if (gs_memory_state.root == NULL) { return false; }
+
 	uint32_t const pointer_digits_count = 12;
 
 	uint32_t bytes_digits_count = 0;
-	for (size_t v = gs_memory_state.bytes; v > 0; v = v / 10) {
-		bytes_digits_count++;
+	{
+		for (size_t v = gs_memory_state.bytes; v > 0; v = v / 10) {
+			bytes_digits_count++;
+		}
+
+		uint32_t const header_blank_offset = ((pointer_digits_count >= 8) ? (pointer_digits_count - 8) : 0);
+		logger_to_console(
+			"> Memory report%*s(bytes: %*.zu | count: %u):\n"
+			,
+			header_blank_offset, "",
+			bytes_digits_count,  gs_memory_state.bytes,
+			gs_memory_state.count
+		);
 	}
 
-	uint32_t const header_blank_offset = ((pointer_digits_count >= 8) ? (pointer_digits_count - 8) : 0);
-	logger_to_console(
-		"> Memory report%*s(bytes: %*.zu | count: %u):\n"
-		,
-		header_blank_offset, "",
-		bytes_digits_count,  gs_memory_state.bytes,
-		gs_memory_state.count
-	);
-	uint32_t count = 0;
-	if (gs_memory_state.root != NULL) {
-		for (struct Memory_Header * it = gs_memory_state.root; it != NULL; it = it->next) {
-			struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack, 1);
-			logger_to_console(
-				"  [0x%0*.zx] (bytes: %*.zu) stacktrace:\n%.*s\n"
-				"",
-				pointer_digits_count, (size_t)(it + 1),
-				bytes_digits_count,   it->size,
-				stacktrace.length,    stacktrace.data
-			);
-			count++;
-		}
+	for (struct Memory_Header const * it = gs_memory_state.root; it != NULL; it = it->next) {
+		struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack, 1);
+		logger_to_console(
+			"  [0x%0*.zx] (bytes: %*.zu) stacktrace:\n"
+			"%.*s"
+			,
+			pointer_digits_count, (size_t)(it + 1),
+			bytes_digits_count,   it->size,
+			stacktrace.length,    stacktrace.data
+		);
 	}
-	return count;
+
+	while (gs_memory_state.root != NULL) {
+		void * pointer = (gs_memory_state.root + 1);
+		memory_reallocate(pointer, 0);
+	}
+
+	return true;
 }

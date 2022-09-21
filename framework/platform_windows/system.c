@@ -85,7 +85,7 @@ void platform_system_free(void) {
 	window_to_system_free();
 	timer_to_system_free();
 
-	if (memory_to_system_report() > 0) { DEBUG_BREAK(); }
+	if (memory_to_system_cleanup()) { DEBUG_BREAK(); }
 	debug_to_system_free();
 }
 

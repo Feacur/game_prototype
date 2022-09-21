@@ -6,6 +6,6 @@
 
 #include "framework/common.h"
 
-uint32_t memory_to_system_report(void);
+bool memory_to_system_cleanup(void);
 
 #endif
