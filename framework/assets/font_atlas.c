@@ -293,10 +293,10 @@ void font_atlas_render(struct Font_Atlas * font_atlas) {
 			}
 
 			if (font_atlas->buffer.size_x < offset_x + glyph_size_x - 1) {
-				logger_to_console("can't fit a glyph into the buffer"); DEBUG_BREAK(); continue;
+				logger_to_console("can't fit a glyph into the buffer\n"); DEBUG_BREAK(); continue;
 			}
 			if (font_atlas->buffer.size_y < offset_y + glyph_size_y - 1) {
-				logger_to_console("can't fit a glyph into the buffer"); DEBUG_BREAK(); continue;
+				logger_to_console("can't fit a glyph into the buffer\n"); DEBUG_BREAK(); continue;
 			}
 
 			//

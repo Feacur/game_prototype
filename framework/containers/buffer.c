@@ -57,7 +57,7 @@ void buffer_align(struct Buffer * buffer) {
 }
 
 void buffer_set_many(struct Buffer * buffer, size_t index, size_t count, void const * value) {
-	if (index + count > buffer->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
+	if (index + count > buffer->count) { logger_to_console("out of bounds\n"); DEBUG_BREAK(); return; }
 	common_memcpy(
 		(uint8_t *)buffer->data + index,
 		value, count

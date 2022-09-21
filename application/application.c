@@ -44,7 +44,7 @@ static bool application_init(void) {
 	logger_to_console(
 		"> system status:\n"
 		"  power .. %s\n"
-		"\n",
+		,
 		platform_system_is_powered() ? "on" : "off"
 	);
 
@@ -55,7 +55,7 @@ static bool application_init(void) {
 		"  target rate .. %u\n"
 		"  fixed rate ... %u\n"
 		"  slow frames .. %u\n"
-		"\n",
+		,
 		gs_app.config.size.x, gs_app.config.size.y,
 		gs_app.config.vsync,
 		gs_app.config.target_refresh_rate,

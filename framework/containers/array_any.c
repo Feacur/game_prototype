@@ -52,7 +52,7 @@ void array_any_push_many(struct Array_Any * array, uint32_t count, void const * 
 }
 
 void array_any_set_many(struct Array_Any * array, uint32_t index, uint32_t count, void const * value) {
-	if (index + count > array->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
+	if (index + count > array->count) { logger_to_console("out of bounds\n"); DEBUG_BREAK(); return; }
 	common_memcpy(
 		(uint8_t *)array->data + array->value_size * index,
 		value,

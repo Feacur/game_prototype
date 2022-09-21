@@ -50,7 +50,7 @@ void array_u64_push_many(struct Array_U64 * array, uint32_t count, uint64_t cons
 }
 
 void array_u64_set_many(struct Array_U64 * array, uint32_t index, uint32_t count, uint64_t const * value) {
-	if (index + count > array->count) { logger_to_console("out of bounds"); DEBUG_BREAK(); return; }
+	if (index + count > array->count) { logger_to_console("out of bounds\n"); DEBUG_BREAK(); return; }
 	common_memcpy(
 		array->data + index,
 		value,

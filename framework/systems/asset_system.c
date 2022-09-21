@@ -39,9 +39,9 @@ void asset_system_free(struct Asset_System * system) {
 }
 
 void asset_system_map_extension(struct Asset_System * system, struct CString type, struct CString extension) {
-	if (type.data == NULL) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
+	if (type.data == NULL) { logger_to_console("empty type\n"); DEBUG_BREAK(); return; }
 
-	if (extension.length == 0) { logger_to_console("empty extension"); DEBUG_BREAK(); return; }
+	if (extension.length == 0) { logger_to_console("empty extension\n"); DEBUG_BREAK(); return; }
 
 	uint32_t const type_id = strings_add(&system->strings, type);
 	uint32_t const extension_id = strings_add(&system->strings, extension);
@@ -55,7 +55,7 @@ bool asset_system_match_type(struct Asset_System * system, struct Asset_Ref asse
 }
 
 void asset_system_set_type(struct Asset_System * system, struct CString type, struct Asset_Callbacks callbacks, uint32_t value_size) {
-	if (type.data == NULL) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
+	if (type.data == NULL) { logger_to_console("empty type\n"); DEBUG_BREAK(); return; }
 
 	if (callbacks.type_init != NULL) {
 		callbacks.type_init();
@@ -72,7 +72,7 @@ void asset_system_set_type(struct Asset_System * system, struct CString type, st
 }
 
 void asset_system_del_type(struct Asset_System * system, struct CString type) {
-	if (type.data == NULL) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
+	if (type.data == NULL) { logger_to_console("empty type\n"); DEBUG_BREAK(); return; }
 
 	uint32_t const type_id = strings_find(&system->strings, type);
 	if (type_id == 0) { logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK(); return; }
@@ -86,11 +86,11 @@ void asset_system_del_type(struct Asset_System * system, struct CString type) {
 }
 
 struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CString name) {
-	if (name.data == NULL) { logger_to_console("empty name"); goto fail; }
+	if (name.data == NULL) { logger_to_console("empty name\n"); goto fail; }
 
 	//
 	uint32_t const extension_length = asset_system_get_extension_from_name(name);
-	if (extension_length == 0) { logger_to_console("empty extension"); goto fail; }
+	if (extension_length == 0) { logger_to_console("empty extension\n"); goto fail; }
 
 	char const * extension_name = name.data + (name.length - extension_length);
 
@@ -153,7 +153,7 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 
 void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_ref) {
 	if (asset_ref_equals(asset_ref, (struct Asset_Ref){0})) {
-		logger_to_console("empty asset ref"); DEBUG_BREAK();
+		logger_to_console("empty asset ref\n"); DEBUG_BREAK();
 		return;
 	}
 
@@ -175,7 +175,7 @@ void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_r
 
 void * asset_system_find_instance(struct Asset_System * system, struct Asset_Ref asset_ref) {
 	if (asset_ref_equals(asset_ref, (struct Asset_Ref){0})) {
-		logger_to_console("empty asset ref"); DEBUG_BREAK();
+		logger_to_console("empty asset ref\n"); DEBUG_BREAK();
 		return NULL;
 	}
 

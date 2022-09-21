@@ -44,7 +44,7 @@ struct Buffer platform_file_read_entire(struct CString path) {
 
 	// process errors
 	fail_path:
-	logger_to_console("path is empty");
+	logger_to_console("file path is empty\n");
 	return (struct Buffer){0};
 }
 

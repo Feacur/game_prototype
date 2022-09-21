@@ -104,7 +104,7 @@ void report_callstack(uint32_t offset) {
 	logger_to_console(
 		"> Callstack:\n"
 		"%.*s"
-		"\n",
+		,
 		stacktrace.length, stacktrace.data
 	);
 }

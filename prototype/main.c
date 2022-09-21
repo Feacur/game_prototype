@@ -149,7 +149,7 @@ static void prototype_tick_entities_quad_2d(void) {
 
 static void prototype_init(void) {
 	if (gs_main_settings.scene_id == 0) {
-		logger_to_console("> No scene to initialize with\n\n");
+		logger_to_console("no scene to initialize with\n");
 		return;
 	}
 
@@ -484,7 +484,7 @@ static void main_run_application(void) {
 	struct CString const config_path = strings_get(&gs_main_settings.strings, gs_main_settings.config_id);
 	process_json(config_path, &config, main_fill_config);
 
-	logger_to_console("> Launched application\n\n");
+	logger_to_console("launched application\n");
 	application_run(config, (struct Application_Callbacks){
 		.init = app_init,
 		.free = app_free,
@@ -493,7 +493,7 @@ static void main_run_application(void) {
 		//
 		.window_close = app_window_close,
 	});
-	logger_to_console("> Application has ended\n\n");
+	logger_to_console("application has ended\n");
 
 	finalize:
 	strings_free(&gs_main_settings.strings);
@@ -501,17 +501,16 @@ static void main_run_application(void) {
 	return;
 
 	// process errors
-	fail: logger_to_console("> Failed to launch application\n\n");
+	fail: logger_to_console("failed to launch application\n");
 	platform_system_sleep(1000);
 	goto finalize;
 }
 
 int main (int argc, char * argv[]) {
-	logger_to_console("> Arguments:\n");
+	logger_to_console("> main arguments:\n");
 	for (int i = 0; i < argc; i++) {
 		logger_to_console("  %s\n", argv[i]);
 	}
-	logger_to_console("\n");
 
 	platform_system_init((struct Platform_Callbacks){
 		.quit = app_platform_quit,

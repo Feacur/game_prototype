@@ -482,7 +482,7 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset) 
 		);
 	}
 	else {
-		logger_to_console("trying to reallocate an immutable buffer"); DEBUG_BREAK();
+		logger_to_console("trying to reallocate an immutable buffer\n"); DEBUG_BREAK();
 		// @todo: completely recreate object instead of using a mutable storage?
 	}
 }
@@ -1379,7 +1379,7 @@ void graphics_to_gpu_library_init(void) {
 		"  vertices ...... %d\n"
 		"  indices ....... %d\n"
 		"  uniforms ...... %d\n"
-		"\n",
+		,
 		max_units,
 		max_units_fragment_shader,
 		max_units_vertex_shader,
@@ -1571,7 +1571,7 @@ static void __stdcall opengl_debug_message_callback(
 		"  source:   %s\n"
 		"  type:     %s\n"
 		"  message:  %.*s\n"
-		"\n",
+		,
 		id,
 		opengl_debug_get_severity(severity),
 		opengl_debug_get_source(source),

@@ -290,7 +290,7 @@ static void system_signal_handler(int value) {
 	logger_to_console(
 		"> System signal '0x%x'\n"
 		"  type: %s\n"
-		"\n",
+		,
 		value,
 		system_signal_get_type(value)
 	);

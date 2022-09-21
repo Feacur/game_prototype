@@ -26,7 +26,7 @@ void functions_to_gpu_library_init(void * (* get)(struct CString name)) {
 				"  renderer: .. %s\n" \
 				"  version: ... %s\n" \
 				"  shaders: ... %s\n" \
-				"\n", \
+				, \
 				glGetString(GL_VENDOR), \
 				glGetString(GL_RENDERER), \
 				glGetString(GL_VERSION), \
