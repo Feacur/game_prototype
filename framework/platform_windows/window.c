@@ -15,6 +15,9 @@
 #include "framework/platform_window.h"
 
 struct Window {
+	struct Window_Config config;
+	struct Window_Callbacks callbacks;
+	//
 	HWND handle;
 	uint32_t size_x, size_y;
 	bool raw_input;
@@ -27,7 +30,7 @@ struct Window {
 };
 
 static void platform_window_internal_toggle_raw_input(struct Window * window, bool state);
-struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Window_Settings settings) {
+struct Window * platform_window_init(struct Window_Config config, struct Window_Callbacks callbacks) {
 	// @note: initial styles are bound to have some implicit flags
 	//        thus we strip those off using `SetWindowLongPtr` after the `CreateWindowEx`
 	//        [!] initialize invisible, without `WS_VISIBLE` being set
@@ -35,15 +38,15 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 	DWORD target_style = WS_CLIPSIBLINGS | WS_CAPTION;
 	DWORD const target_ex_style = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
 
-	if (settings & WINDOW_SETTINGS_MINIMIZE) { target_style |= WS_MINIMIZEBOX; }
-	if (settings & WINDOW_SETTINGS_MAXIMIZE) { target_style |= WS_MAXIMIZEBOX; }
-	if (settings & WINDOW_SETTINGS_FLEXIBLE) { target_style |= WS_SIZEBOX; }
+	if (config.settings & WINDOW_SETTINGS_MINIMIZE) { target_style |= WS_MINIMIZEBOX; }
+	if (config.settings & WINDOW_SETTINGS_MAXIMIZE) { target_style |= WS_MAXIMIZEBOX; }
+	if (config.settings & WINDOW_SETTINGS_FLEXIBLE) { target_style |= WS_SIZEBOX; }
 
-	if (settings & (WINDOW_SETTINGS_MINIMIZE | WINDOW_SETTINGS_MAXIMIZE | WINDOW_SETTINGS_FLEXIBLE)) {
+	if (config.settings & (WINDOW_SETTINGS_MINIMIZE | WINDOW_SETTINGS_MAXIMIZE | WINDOW_SETTINGS_FLEXIBLE)) {
 		target_style |= WS_SYSMENU;
 	}
 
-	RECT target_rect = {.right = (LONG)size_x, .bottom = (LONG)size_y};
+	RECT target_rect = {.right = (LONG)config.size_x, .bottom = (LONG)config.size_y};
 	AdjustWindowRectExForDpi(
 		&target_rect, target_style, FALSE, target_ex_style,
 		GetDpiForSystem()
@@ -74,6 +77,8 @@ struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Wind
 	RECT client_rect;
 	GetClientRect(handle, &client_rect);
 	*window = (struct Window){
+		.config = config,
+		.callbacks = callbacks,
 		.handle = handle,
 		.size_x = (uint32_t)(client_rect.right - client_rect.left),
 		.size_y = (uint32_t)(client_rect.bottom - client_rect.top),
@@ -598,9 +603,11 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		}
 
 		case WM_CLOSE: { // sent immediately
-			platform_window_internal_toggle_raw_input(window, false);
-			window->handle = NULL;
-			DestroyWindow(hwnd);
+			if (window->callbacks.close == NULL || window->callbacks.close()) {
+				platform_window_internal_toggle_raw_input(window, false);
+				window->handle = NULL;
+				DestroyWindow(hwnd);
+			}
 			return 0;
 			// OS window is being closed through the OS API; we clear the handle reference
 			// in order to prevent WM_DESTROY freeing the application window

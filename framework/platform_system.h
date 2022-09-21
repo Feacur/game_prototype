@@ -3,12 +3,17 @@
 
 #include "common.h"
 
-void platform_system_init(void);
+struct Platform_Callbacks {
+	void (* quit)(void);
+};
+
+void platform_system_init(struct Platform_Callbacks callbacks);
 void platform_system_free(void);
 
-bool platform_system_is_running(void);
+bool platform_system_is_error(void);
 bool platform_system_is_powered(void);
 void platform_system_update(void);
+void platform_system_quit(void);
 
 void platform_system_sleep(uint32_t millis);
 

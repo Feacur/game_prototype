@@ -5,7 +5,7 @@
 
 // @note: adaptive vsync mode (-1) might not make sense and is not tested
 
-// @note: actual target frame time depends both on `vsync` and `frame_refresh_rate`
+// @note: actual target frame time depends both on `vsync` and `target_refresh_rate`
 
 // @note: application accumulates frame time and calls `fixed_tick` whenever possible;
 //        the leftover time rolls over to the subsequent frames
@@ -16,10 +16,10 @@
 struct Application_Config {
 	struct uvec2 size;
 	bool flexible;
-	int32_t vsync;               // 0: off; 1+: fraction of display refresh rate
-	uint32_t frame_refresh_rate; // 0: as display; 1+: manual
-	uint32_t fixed_refresh_rate; // 0: target frame time; 1+: N times per second
-	uint32_t slow_frames_limit;  // 0: disabled; 1+: N target frames time
+	int32_t vsync;                // 0: off; 1+: fraction of display refresh rate
+	uint32_t target_refresh_rate; // 0: as display; 1+: N times per second
+	uint32_t fixed_refresh_rate;  // 0: as target; 1+: N times per second
+	uint32_t slow_frames_limit;   // 0: disabled; 1+: N target frames time
 };
 
 struct Application_Callbacks {
@@ -27,6 +27,8 @@ struct Application_Callbacks {
 	void (* free)(void);
 	void (* fixed_tick)(void);
 	void (* frame_tick)(void);
+	//
+	bool (* window_close)(void);
 };
 
 void application_run(struct Application_Config config, struct Application_Callbacks callbacks);

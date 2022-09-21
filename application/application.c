@@ -13,8 +13,9 @@
 #include "application.h"
 
 static struct Application {
-	struct Application_Callbacks callbacks;
 	struct Application_Config config;
+	struct Application_Callbacks callbacks;
+
 	struct Window * window;
 	struct Gpu_Context * gpu_context;
 
@@ -27,9 +28,9 @@ static struct Application {
 
 static uint64_t get_target_ticks(int32_t vsync_mode) {
 	uint32_t const vsync_factor = (vsync_mode > 0) ? (uint32_t)vsync_mode : 1;
-	uint32_t const refresh_rate = ((vsync_mode != 0) || (gs_app.config.frame_refresh_rate == 0))
-		? platform_window_get_refresh_rate(gs_app.window, gs_app.config.frame_refresh_rate)
-		: gs_app.config.frame_refresh_rate;
+	uint32_t const refresh_rate = ((vsync_mode != 0) || (gs_app.config.target_refresh_rate == 0))
+		? platform_window_get_refresh_rate(gs_app.window, gs_app.config.target_refresh_rate)
+		: gs_app.config.target_refresh_rate;
 	return gs_app.ticks.per_second * vsync_factor / refresh_rate;
 }
 
@@ -57,16 +58,22 @@ static bool application_init(void) {
 		"\n",
 		gs_app.config.size.x, gs_app.config.size.y,
 		gs_app.config.vsync,
-		gs_app.config.frame_refresh_rate,
+		gs_app.config.target_refresh_rate,
 		gs_app.config.fixed_refresh_rate,
 		gs_app.config.slow_frames_limit
 	);
 
 	// setup window
-	enum Window_Settings window_settings = WINDOW_SETTINGS_MINIMIZE;
-	if (gs_app.config.flexible) { window_settings |= WINDOW_SETTINGS_FLEXIBLE; }
+	struct Window_Config window_config = {
+		.size_x = gs_app.config.size.x,
+		.size_y = gs_app.config.size.y,
+		.settings = WINDOW_SETTINGS_MINIMIZE,
+	};
+	if (gs_app.config.flexible) { window_config.settings |= WINDOW_SETTINGS_FLEXIBLE; }
 
-	gs_app.window = platform_window_init(gs_app.config.size.x, gs_app.config.size.y, window_settings);
+	gs_app.window = platform_window_init(window_config, (struct Window_Callbacks){
+		.close = gs_app.callbacks.window_close,
+	});
 	if (gs_app.window == NULL) { goto fail_window; }
 
 	platform_window_start_frame(gs_app.window);
@@ -108,7 +115,7 @@ static void application_free(void) {
 static bool application_update(void) {
 	// application and platform are ready
 	if (gs_app.window == NULL) { return false; }
-	if (!platform_system_is_running()) { return false; }
+	if (platform_system_is_error()) { return false; }
 
 	// reset per-frame data / poll platform events
 	platform_system_update();

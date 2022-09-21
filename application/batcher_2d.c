@@ -166,6 +166,8 @@ void batcher_2d_add_text(
 	struct rect rect, struct vec2 alignment, bool wrap,
 	struct Asset_Font const * font, struct CString value, float size
 ) {
+	if (font->font_atlas == NULL) { return; }
+
 	float const scale        = font_atlas_get_scale(font->font_atlas, size);
 	float const font_ascent  = font_atlas_get_ascent(font->font_atlas, scale);
 	float const font_descent = font_atlas_get_descent(font->font_atlas, scale);

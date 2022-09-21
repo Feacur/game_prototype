@@ -12,7 +12,16 @@ enum Window_Settings {
 	WINDOW_SETTINGS_FLEXIBLE = (1 << 2),
 };
 
-struct Window * platform_window_init(uint32_t size_x, uint32_t size_y, enum Window_Settings settings);
+struct Window_Config {
+	uint32_t size_x, size_y;
+	enum Window_Settings settings;
+};
+
+struct Window_Callbacks {
+	bool (* close)(void);
+};
+
+struct Window * platform_window_init(struct Window_Config config, struct Window_Callbacks callbacks);
 void platform_window_free(struct Window * window);
 
 bool platform_window_exists(struct Window const * window);

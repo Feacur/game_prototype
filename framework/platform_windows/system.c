@@ -15,21 +15,24 @@
 #include <Windows.h>
 #include <signal.h>
 
+//
+#include "framework/platform_system.h"
+
 static struct Platform_System {
+	struct Platform_Callbacks callbacks;
+
 	HMODULE module;
 	HANDLE process;
 	HANDLE thread;
-	bool should_close;
-} gs_platform_system;
 
-//
-#include "framework/platform_system.h"
+	bool has_error;
+} gs_platform_system;
 
 // static void system_cache_paths(void);
 static void system_set_process_dpi_awareness(void);
 // static void system_enable_virtual_terminal_processing(void);
 static void system_signal_handler(int value);
-void platform_system_init(void) {
+void platform_system_init(struct Platform_Callbacks callbacks) {
 	signal(SIGABRT, system_signal_handler);
 	signal(SIGFPE,  system_signal_handler);
 	signal(SIGILL,  system_signal_handler);
@@ -38,6 +41,7 @@ void platform_system_init(void) {
 	signal(SIGTERM, system_signal_handler);
 
 	gs_platform_system = (struct Platform_System){
+		.callbacks = callbacks,
 		.module = GetModuleHandle(NULL),
 		.process = GetCurrentProcess(),
 		.thread  = GetCurrentThread(),
@@ -65,9 +69,11 @@ void platform_system_init(void) {
 	if (!input_to_system_init()) { goto fail; }
 
 	return;
+
+	// process errors
 	fail: DEBUG_BREAK();
 	logger_to_console("failed to initialize the system module\n");
-	gs_platform_system.should_close = true;
+	gs_platform_system.has_error = true;
 	// common_exit_failure();
 }
 
@@ -100,8 +106,8 @@ bool platform_system_is_powered(void) {
 	// https://docs.microsoft.com/windows-hardware/design/component-guidelines/battery-saver
 }
 
-bool platform_system_is_running(void) {
-	return !gs_platform_system.should_close;
+bool platform_system_is_error(void) {
+	return gs_platform_system.has_error;
 }
 
 void platform_system_update(void) {
@@ -109,8 +115,9 @@ void platform_system_update(void) {
 
 	for (MSG message; PeekMessage(&message, NULL, 0, 0, PM_REMOVE); /*empty*/) {
 		if (message.message == WM_QUIT) {
-			gs_platform_system.should_close = true;
-			DEBUG_BREAK();
+			if (gs_platform_system.callbacks.quit != NULL) {
+				gs_platform_system.callbacks.quit();
+			}
 			continue;
 		}
 		TranslateMessage(&message);
@@ -124,6 +131,10 @@ void platform_system_update(void) {
 	//    GetKeyboardState(key_states);
 
 	input_to_platform_after_update();
+}
+
+void platform_system_quit(void) {
+	PostQuitMessage(0);
 }
 
 void platform_system_sleep(uint32_t millis) {
@@ -285,7 +296,7 @@ static void system_signal_handler(int value) {
 	);
 	REPORT_CALLSTACK(STACKTRACE_OFFSET); DEBUG_BREAK();
 
-	gs_platform_system.should_close = true;
+	gs_platform_system.has_error = true;
 
 	// http://www.cplusplus.com/reference/csignal/signal/
 #undef STACKTRACE_OFFSET

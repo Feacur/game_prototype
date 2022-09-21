@@ -198,6 +198,7 @@ struct Texture_Parameters json_read_texture_parameters(struct JSON const * json)
 		};
 	}
 
+	// process errors
 	fail: logger_to_console("unknown texture parameters\n"); DEBUG_BREAK();
 	return (struct Texture_Parameters){0};
 }
@@ -245,6 +246,7 @@ struct Ref json_read_target(struct JSON const * json) {
 	array_any_free(&parameters_buffer);
 	return result;
 
+	// process errors
 	fail: logger_to_console("failed to read target\n"); DEBUG_BREAK();
 	return (struct Ref){0};
 }

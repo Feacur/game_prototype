@@ -24,6 +24,7 @@ struct uvec2 entity_get_content_size(
 
 			struct Gfx_Uniform_Out const value = gfx_uniforms_get(&material->uniforms, quad->texture_uniform);
 			struct Ref const * gpu_texture_ref = value.data;
+			if (gpu_texture_ref == NULL) { goto fail; }
 
 			uint32_t texture_size_x, texture_size_y;
 			gpu_texture_get_size(*gpu_texture_ref, &texture_size_x, &texture_size_y);
@@ -53,5 +54,9 @@ struct uvec2 entity_get_content_size(
 	}
 
 	logger_to_console("unknown entity type"); DEBUG_BREAK();
+	return (struct uvec2){0};
+
+	// process errors
+	fail:
 	return (struct uvec2){0};
 }

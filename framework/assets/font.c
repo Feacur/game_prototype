@@ -63,6 +63,7 @@ struct Font * font_init(struct Buffer * buffer) {
 }
 
 void font_free(struct Font * font) {
+	if (font == NULL) { logger_to_console("freeing NULL font\n"); return; }
 	buffer_free(font->scratch); MEMORY_FREE(font->scratch);
 	MEMORY_FREE(font->data);
 	common_memset(font, 0, sizeof(*font));

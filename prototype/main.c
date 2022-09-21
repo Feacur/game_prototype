@@ -148,6 +148,11 @@ static void prototype_tick_entities_quad_2d(void) {
 // ----- ----- ----- ----- -----
 
 static void prototype_init(void) {
+	if (gs_main_settings.scene_id == 0) {
+		logger_to_console("> No scene to initialize with\n\n");
+		return;
+	}
+
 	struct CString const scene_path = strings_get(&gs_main_settings.strings, gs_main_settings.scene_id);
 	process_json(scene_path, &gs_game, game_fill_scene);
 	gpu_execute(1, &(struct GPU_Command){
@@ -177,6 +182,25 @@ static void prototype_tick_entities(void) {
 
 static void prototype_draw_objects(void) {
 	struct uvec2 const screen_size = application_get_screen_size();
+
+	if (gs_game.cameras.count == 0) {
+		array_any_push_many(&gs_renderer.gpu_commands, 2, (struct GPU_Command[]){
+			{
+				.type = GPU_COMMAND_TYPE_TARGET,
+				.as.target = {
+					.screen_size_x = screen_size.x,
+					.screen_size_y = screen_size.y,
+				},
+			},
+			{
+				.type = GPU_COMMAND_TYPE_CLEAR,
+				.as.clear = {
+					.mask  = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH | TEXTURE_TYPE_STENCIL,
+				},
+			},
+		});
+		return;
+	}
 
 	uint32_t const u_ProjectionView = graphics_add_uniform_id(S_("u_ProjectionView"));
 	uint32_t const u_Projection     = graphics_add_uniform_id(S_("u_Projection"));
@@ -375,6 +399,8 @@ static void prototype_draw_ui(void) {
 //     app callbacks part
 // ----- ----- ----- ----- -----
 
+static bool gs_skip_application;
+
 static void app_init(void) {
 	renderer_init();
 	game_init();
@@ -392,10 +418,6 @@ static void app_free(void) {
 
 	game_free();
 	renderer_free();
-
-	// @note: free strings here, because application checks for memory leaks right after this routine
-	//        an alternative solution would be to split `application_run` into stages
-	strings_free(&gs_main_settings.strings);
 }
 
 static void app_fixed_tick(void) {
@@ -414,19 +436,28 @@ static void app_frame_tick(void) {
 	}
 }
 
+static void app_platform_quit(void) {
+	gs_skip_application = true;
+}
+
+static bool app_window_close(void) {
+	gs_skip_application = !input_key(KC_SHIFT);
+	return true;
+}
+
 // ----- ----- ----- ----- -----
 //     main part
 // ----- ----- ----- ----- -----
 
 static void main_fill_settings(struct JSON const * json, void * data) {
 	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
+	if (data != &gs_main_settings) { DEBUG_BREAK(); return; }
 	struct Main_Settings * result = data;
 	*result = (struct Main_Settings){
 		.strings = strings_init(),
 	};
 	result->config_id = strings_add(&result->strings, json_get_string(json, S_("config")));
 	result->scene_id = strings_add(&result->strings, json_get_string(json, S_("scene")));
-	// @note: `gs_main_settings.strings` will be freed in the `app_free` function
 }
 
 static void main_fill_config(struct JSON const * json, void * data) {
@@ -438,43 +469,58 @@ static void main_fill_config(struct JSON const * json, void * data) {
 			.y = (uint32_t)json_get_number(json, S_("size_y")),
 		},
 		.flexible = json_get_boolean(json, S_("flexible")),
-		.vsync              = (int32_t)json_get_number(json, S_("vsync")),
-		.frame_refresh_rate = (uint32_t)json_get_number(json, S_("frame_refresh_rate")),
-		.fixed_refresh_rate = (uint32_t)json_get_number(json, S_("fixed_refresh_rate")),
-		.slow_frames_limit  = (uint32_t)json_get_number(json, S_("slow_frames_limit")),
+		.vsync               = (int32_t)json_get_number(json, S_("vsync")),
+		.target_refresh_rate = (uint32_t)json_get_number(json, S_("target_refresh_rate")),
+		.fixed_refresh_rate  = (uint32_t)json_get_number(json, S_("fixed_refresh_rate")),
+		.slow_frames_limit   = (uint32_t)json_get_number(json, S_("slow_frames_limit")),
 	};
 }
 
+static void main_run_application(void) {
+	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
+	if (gs_main_settings.config_id == 0) { goto fail; }
+
+	struct Application_Config config = {0};
+	struct CString const config_path = strings_get(&gs_main_settings.strings, gs_main_settings.config_id);
+	process_json(config_path, &config, main_fill_config);
+
+	logger_to_console("> Launched application\n\n");
+	application_run(config, (struct Application_Callbacks){
+		.init = app_init,
+		.free = app_free,
+		.fixed_tick = app_fixed_tick,
+		.frame_tick = app_frame_tick,
+		//
+		.window_close = app_window_close,
+	});
+	logger_to_console("> Application has ended\n\n");
+
+	finalize:
+	strings_free(&gs_main_settings.strings);
+	common_memset(&gs_main_settings, 0, sizeof(gs_main_settings));
+	return;
+
+	// process errors
+	fail: logger_to_console("> Failed to launch application\n\n");
+	platform_system_sleep(1000);
+	goto finalize;
+}
+
 int main (int argc, char * argv[]) {
-	bool success = false;
-
-	logger_to_console("Bonjour!\n\n");
-
-	platform_system_init();
-
 	logger_to_console("> Arguments:\n");
 	for (int i = 0; i < argc; i++) {
 		logger_to_console("  %s\n", argv[i]);
 	}
 	logger_to_console("\n");
 
-	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
-	if (gs_main_settings.config_id == 0) { goto finalize; }
-
-	struct Application_Config config = {0};
-	struct CString const config_path = strings_get(&gs_main_settings.strings, gs_main_settings.config_id);
-	process_json(config_path, &config, main_fill_config);
-	if (config.fixed_refresh_rate == 0) { goto finalize; }
-
-	success = true;
-	application_run(config, (struct Application_Callbacks){
-		.init = app_init,
-		.free = app_free,
-		.fixed_tick = app_fixed_tick,
-		.frame_tick = app_frame_tick,
+	platform_system_init((struct Platform_Callbacks){
+		.quit = app_platform_quit,
 	});
 
-	finalize: if (!success) { DEBUG_BREAK(); }
+	while (!gs_skip_application && !platform_system_is_error()) {
+		main_run_application();
+	}
+
 	platform_system_free();
 	return 0;
 }

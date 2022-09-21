@@ -39,7 +39,7 @@ void asset_system_free(struct Asset_System * system) {
 }
 
 void asset_system_map_extension(struct Asset_System * system, struct CString type, struct CString extension) {
-	if (type.length == 0) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
+	if (type.data == NULL) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
 
 	if (extension.length == 0) { logger_to_console("empty extension"); DEBUG_BREAK(); return; }
 
@@ -55,7 +55,7 @@ bool asset_system_match_type(struct Asset_System * system, struct Asset_Ref asse
 }
 
 void asset_system_set_type(struct Asset_System * system, struct CString type, struct Asset_Callbacks callbacks, uint32_t value_size) {
-	if (type.length == 0) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
+	if (type.data == NULL) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
 
 	if (callbacks.type_init != NULL) {
 		callbacks.type_init();
@@ -72,7 +72,7 @@ void asset_system_set_type(struct Asset_System * system, struct CString type, st
 }
 
 void asset_system_del_type(struct Asset_System * system, struct CString type) {
-	if (type.length == 0) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
+	if (type.data == NULL) { logger_to_console("empty type"); DEBUG_BREAK(); return; }
 
 	uint32_t const type_id = strings_find(&system->strings, type);
 	if (type_id == 0) { logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK(); return; }
@@ -86,8 +86,7 @@ void asset_system_del_type(struct Asset_System * system, struct CString type) {
 }
 
 struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CString name) {
-	if (name.length == 0) { logger_to_console("empty name"); goto fail; }
-	// if (name.data == NULL) { logger_to_console("empty name"); goto fail; }
+	if (name.data == NULL) { logger_to_console("empty name"); goto fail; }
 
 	//
 	uint32_t const extension_length = asset_system_get_extension_from_name(name);
@@ -147,6 +146,7 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 		.name_id = name_id,
 	};
 
+	// process errors
 	fail: DEBUG_BREAK();
 	return (struct Asset_Ref){0};
 }

@@ -32,6 +32,7 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 	);
 
 	struct Hash_Table_U32 const * gpu_program_uniforms = gpu_program_get_uniforms(result->gpu_program_ref);
+	if (gpu_program_uniforms == NULL) { goto fail; }
 
 	// @todo: arena/stack allocator
 	struct Array_Any uniform_data_buffer = array_any_init(sizeof(uint8_t));
@@ -99,7 +100,8 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 	array_any_free(&uniform_data_buffer);
 	return;
 
-	fail: logger_to_console("failed to load gfx material asset\n"); DEBUG_BREAK();
+	// process errors
+	fail: logger_to_console("failed to load gfx material asset\n");
 	*result = (struct Gfx_Material){0};
 }
 
@@ -137,7 +139,8 @@ static struct Ref json_load_texture(struct Asset_System * system, struct JSON co
 	logger_to_console("unknown texture asset type\n"); DEBUG_BREAK();
 	return (struct Ref){0};
 
-	fail: logger_to_console("failed to load texture asset\n"); DEBUG_BREAK();
+	// process errors
+	fail: logger_to_console("failed to load texture asset\n");
 	return (struct Ref){0};
 }
 

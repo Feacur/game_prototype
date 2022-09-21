@@ -824,7 +824,7 @@ void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 		}
 		else {
 			// @todo: completely recreate object instead of using a mutable storage?
-			logger_to_console("trying to reallocate an immutable buffer"); DEBUG_BREAK();
+			logger_to_console("trying to reallocate an immutable buffer\n"); DEBUG_BREAK();
 			continue;
 		}
 
@@ -1197,7 +1197,7 @@ inline static void gpu_execute_target(struct GPU_Command_Target const * command)
 }
 
 inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
-	if (command->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty"); DEBUG_BREAK(); return; }
+	if (command->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty\n"); DEBUG_BREAK(); return; }
 
 	float const depth   = gs_graphics_state.clip_space.depth_far;
 	GLint const stencil = 0;
@@ -1218,16 +1218,22 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 }
 
 inline static void gpu_execute_material(struct GPU_Command_Material const * command) {
-	if (command->material == NULL) { logger_to_console("material is null"); DEBUG_BREAK(); return; }
-	if (ref_equals(command->material->gpu_program_ref, (struct Ref){0})) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
+	if (command->material == NULL) { goto fail; }
+	if (ref_equals(command->material->gpu_program_ref, (struct Ref){0})) { goto fail; }
 
 	struct Gpu_Program const * gpu_program = ref_table_get(&gs_graphics_state.programs, command->material->gpu_program_ref);
-	if (gpu_program == NULL) { logger_to_console("program is null"); DEBUG_BREAK(); return; }
+	if (gpu_program == NULL) {  goto fail; }
 
 	gpu_set_blend_mode(command->material->blend_mode);
 	gpu_set_depth_mode(command->material->depth_mode);
 	gpu_select_program(command->material->gpu_program_ref);
 	gpu_upload_uniforms(gpu_program, &command->material->uniforms, 0, command->material->uniforms.headers.count);
+
+	return;
+
+	// process errors
+	fail: // logger_to_console("failed to set material\n");
+	gpu_select_program((struct Ref){0});
 }
 
 inline static void gpu_execute_uniform(struct GPU_Command_Uniform const * command) {
@@ -1243,10 +1249,12 @@ inline static void gpu_execute_uniform(struct GPU_Command_Uniform const * comman
 }
 
 inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
-	if (ref_equals(command->gpu_mesh_ref, (struct Ref){0})) { logger_to_console("mesh is null"); DEBUG_BREAK(); return; }
+	if (ref_equals(command->gpu_mesh_ref, (struct Ref){0})) { return; }
+
 	struct Gpu_Mesh const * mesh = ref_table_get(&gs_graphics_state.meshes, command->gpu_mesh_ref);
-	if (mesh == NULL) { logger_to_console("mesh is null"); DEBUG_BREAK(); return; }
-	if (mesh->elements_index == INDEX_EMPTY) { logger_to_console("mesh has no elements buffer"); DEBUG_BREAK(); return; }
+	if (mesh == NULL) { return; }
+
+	if (mesh->elements_index == INDEX_EMPTY) { logger_to_console("mesh has no elements buffer\n"); DEBUG_BREAK(); return; }
 
 	//
 	struct Gpu_Mesh_Buffer const * buffer = array_any_at(&mesh->buffers, mesh->elements_index);
@@ -1275,7 +1283,7 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 		);
 	}
 	else {
-		logger_to_console("not implemented"); DEBUG_BREAK();
+		logger_to_console("not implemented\n"); DEBUG_BREAK();
 		// @todo: implement
 		// uint32_t const elements_offset = (command->length != 0)
 		// 	? command->offset * 3
@@ -1293,7 +1301,7 @@ void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 	for (uint32_t i = 0; i < length; i++) {
 		struct GPU_Command const * command = commands + i;
 		switch (command->type) {
-			default:                        logger_to_console("unknown command"); DEBUG_BREAK(); break;
+			default:                        logger_to_console("unknown command\n"); DEBUG_BREAK(); break;
 			case GPU_COMMAND_TYPE_CULL:     gpu_execute_cull(&command->as.cull);         break;
 			case GPU_COMMAND_TYPE_TARGET:   gpu_execute_target(&command->as.target);     break;
 			case GPU_COMMAND_TYPE_CLEAR:    gpu_execute_clear(&command->as.clear);       break;

@@ -67,6 +67,7 @@ struct Font_Atlas * font_atlas_init(struct Font const * font) {
 }
 
 void font_atlas_free(struct Font_Atlas * font_atlas) {
+	if (font_atlas == NULL) { logger_to_console("freeing NULL font atlas\n"); return; }
 	image_free(&font_atlas->buffer);
 	hash_table_u64_free(&font_atlas->table);
 	array_any_free(&font_atlas->scratch);
