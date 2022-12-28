@@ -9,6 +9,9 @@
 	"security.workspace.trust.untrustedFiles": "open",
 	"files.refactoring.autoSave": false,
 	"scm.autoReveal": false,
+	// files
+	"files.trimFinalNewlines": false,
+	"files.trimTrailingWhitespace": false,
 	// git
 	"git.enabled": false,
 	"git.mergeEditor": false,
@@ -48,9 +51,12 @@
 	"editor.autoClosingDelete": "never",
 	"editor.autoClosingOvertype": "never",
 	"editor.trimAutoWhitespace": true,
+	"editor.unicodeHighlight.invisibleCharacters": false,
+	"editor.unicodeHighlight.ambiguousCharacters": false,
 	// diff
 	"diffEditor.codeLens": true,
 	"diffEditor.maxComputationTime": 0,
+	"diffEditor.maxFileSize": 0,
 	// language: C#
 	"csharp.suppressHiddenDiagnostics": false,
 	// extensions: ms-dotnettools.csharp
@@ -95,6 +101,5 @@
 // - ms-vscode.cmake-tools
 // - vadimcn.vscode-lldb
 // - ms-python.python
-// - rust-lang.rust
 // - rust-lang.rust-analyzer
 // - tiehuis.zig

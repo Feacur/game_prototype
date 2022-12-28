@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Open in VSCode",
+    "target": "file",
+    "action": {
+      "type": "process",
+      "path": "C:\\Program Files\\Microsoft VS Code\\Code.exe",
+      "args": "\"$filepath\"",
+      "showOutput": false,
+      "waitForExit": false
+    }
+  },
+  {
+    "name": "Open in Sublime",
+    "target": "file",
+    "action": {
+      "type": "process",
+      "path": "C:\\Program Files\\Sublime Text\\sublime_text.exe",
+      "args": "\"$filepath\"",
+      "showOutput": false,
+      "waitForExit": false
+    }
+  }
+]

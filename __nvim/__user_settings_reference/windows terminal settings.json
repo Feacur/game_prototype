@@ -7,6 +7,14 @@
         {
             "command": 
             {
+                "action": "adjustFontSize",
+                "delta": -1
+            },
+            "keys": "ctrl+minus"
+        },
+        {
+            "command": 
+            {
                 "action": "quakeMode"
             },
             "keys": "win+`"
@@ -197,10 +205,6 @@
         },
         {
             "command": "unbound",
-            "keys": "ctrl+alt+7"
-        },
-        {
-            "command": "unbound",
             "keys": "ctrl+alt+8"
         },
         {
@@ -233,7 +237,7 @@
         },
         {
             "command": "unbound",
-            "keys": "ctrl+`"
+            "keys": "ctrl+alt+7"
         },
         {
             "command": "unbound",
@@ -288,24 +292,31 @@
             "keys": "ctrl+alt+0"
         },
         {
+            "command": "unbound",
+            "keys": "win+ctrl+alt+7"
+        },
+        {
+            "command": "unbound",
+            "keys": "backspace"
+        },
+        {
+            "command": "unbound",
+            "keys": "win+ctrl+alt+8"
+        },
+        {
+            "command": "unbound",
+            "keys": "ctrl+shift+m"
+        },
+        {
+            "command": "unbound",
+            "keys": "enter"
+        },
+        {
             "command": "find"
         },
         {
             "command": "toggleFullscreen",
             "keys": "alt+enter"
-        },
-        {
-            "command": 
-            {
-                "action": "scrollUp"
-            },
-            "keys": "ctrl+alt+up"
-        },
-        {
-            "command": 
-            {
-                "action": "globalSummon"
-            }
         },
         {
             "command": 
@@ -317,6 +328,13 @@
         {
             "command": 
             {
+                "action": "scrollUp"
+            },
+            "keys": "ctrl+alt+up"
+        },
+        {
+            "command": 
+            {
                 "action": "commandPalette"
             },
             "keys": "win+\\"
@@ -324,10 +342,8 @@
         {
             "command": 
             {
-                "action": "adjustFontSize",
-                "delta": -1
-            },
-            "keys": "ctrl+minus"
+                "action": "globalSummon"
+            }
         },
         {
             "command": 
@@ -345,16 +361,16 @@
             "command": "breakIntoDebugger"
         },
         {
-            "command": "paste",
-            "keys": "win+shift+insert"
-        },
-        {
             "command": 
             {
                 "action": "copy",
                 "singleLine": false
             },
             "keys": "win+ctrl+insert"
+        },
+        {
+            "command": "paste",
+            "keys": "win+shift+insert"
         },
         {
             "command": 
