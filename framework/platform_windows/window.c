@@ -38,11 +38,11 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 	DWORD target_style = WS_CLIPSIBLINGS | WS_CAPTION;
 	DWORD const target_ex_style = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
 
-	if (config.settings & WINDOW_SETTINGS_MINIMIZE) { target_style |= WS_MINIMIZEBOX; }
-	if (config.settings & WINDOW_SETTINGS_MAXIMIZE) { target_style |= WS_MAXIMIZEBOX; }
-	if (config.settings & WINDOW_SETTINGS_FLEXIBLE) { target_style |= WS_SIZEBOX; }
+	if (config.settings & WINDOW_SETTINGS_MINIMIZE)  { target_style |= WS_MINIMIZEBOX; }
+	if (config.settings & WINDOW_SETTINGS_MAXIMIZE)  { target_style |= WS_MAXIMIZEBOX; }
+	if (config.settings & WINDOW_SETTINGS_RESIZABLE) { target_style |= WS_SIZEBOX; }
 
-	if (config.settings & (WINDOW_SETTINGS_MINIMIZE | WINDOW_SETTINGS_MAXIMIZE | WINDOW_SETTINGS_FLEXIBLE)) {
+	if (config.settings & (WINDOW_SETTINGS_MINIMIZE | WINDOW_SETTINGS_MAXIMIZE | WINDOW_SETTINGS_RESIZABLE)) {
 		target_style |= WS_SYSMENU;
 	}
 
@@ -532,13 +532,10 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		case WM_INPUT: // sent immediately
 			return handle_message_input_raw(window, wParam, lParam);
 
-		case WM_INPUT_DEVICE_CHANGE: // sent immediately
-			switch (wParam) {
-				case GIDC_ARRIVAL: break;
-				case GIDC_REMOVAL: break;
-			}
-			// the handle is `lParam`
-			return 0;
+		case WM_INPUT_DEVICE_CHANGE: switch (wParam) { // sent immediately
+			case GIDC_ARRIVAL: return 0;
+			case GIDC_REMOVAL: return 0;
+		} break;
 
 		case WM_SYSKEYUP:
 		case WM_SYSKEYDOWN:
@@ -591,8 +588,24 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			// }
 			window->size_x = (uint32_t)LOWORD(lParam);
 			window->size_y = (uint32_t)HIWORD(lParam);
+
+			if (window->callbacks.resize != NULL) {
+				window->callbacks.resize();
+			}
 			return 0;
 		}
+
+		case WM_MOVE: { // sent immediately
+			if (window->callbacks.resize != NULL) {
+				window->callbacks.resize();
+			}
+			return 0;
+		}
+
+		// case WM_SYSCOMMAND: switch (wParam & 0xFFF0) { // sent immediately
+		// 	case SC_MOVE: return 0;
+		// 	case SC_SIZE: return 0;
+		// } break;
 
 		case WM_KILLFOCUS: { // sent immediately
 			if (!window->ignore_once_WM_KILLFOCUS) {

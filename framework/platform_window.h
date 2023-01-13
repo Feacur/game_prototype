@@ -1,24 +1,20 @@
 #if !defined(FRAMEWORK_PLATFORM_WINDOW)
 #define FRAMEWORK_PLATFORM_WINDOW
 
-#include "common.h"
+#include "window_callbacks.h"
 
 struct Window;
 
 enum Window_Settings {
 	WINDOW_SETTINGS_NONE = 0,
-	WINDOW_SETTINGS_MINIMIZE = (1 << 0),
-	WINDOW_SETTINGS_MAXIMIZE = (1 << 1),
-	WINDOW_SETTINGS_FLEXIBLE = (1 << 2),
+	WINDOW_SETTINGS_MINIMIZE  = (1 << 0),
+	WINDOW_SETTINGS_MAXIMIZE  = (1 << 1),
+	WINDOW_SETTINGS_RESIZABLE = (1 << 2),
 };
 
 struct Window_Config {
 	uint32_t size_x, size_y;
 	enum Window_Settings settings;
-};
-
-struct Window_Callbacks {
-	bool (* close)(void);
 };
 
 struct Window * platform_window_init(struct Window_Config config, struct Window_Callbacks callbacks);

@@ -399,7 +399,7 @@ static void prototype_draw_ui(void) {
 //     app callbacks part
 // ----- ----- ----- ----- -----
 
-static bool gs_skip_application;
+static bool gs_main_exit;
 
 static void app_init(void) {
 	renderer_init();
@@ -424,10 +424,13 @@ static void app_fixed_tick(void) {
 }
 
 static void app_frame_tick(void) {
+	if (input_key(KC_ALT) && input_key(KC_F4)) {
+		gs_main_exit = !input_key(KC_SHIFT);
+		application_exit();
+	}
+
 	struct uvec2 const screen_size = application_get_screen_size();
-
 	prototype_tick_entities();
-
 	if (screen_size.x > 0 && screen_size.y > 0) {
 		renderer_start_frame();
 		prototype_draw_objects();
@@ -437,12 +440,18 @@ static void app_frame_tick(void) {
 }
 
 static void app_platform_quit(void) {
-	gs_skip_application = true;
+	gs_main_exit = true;
+	application_exit();
 }
 
 static bool app_window_close(void) {
-	gs_skip_application = !input_key(KC_SHIFT);
+	gs_main_exit = !input_key(KC_SHIFT);
 	return true;
+}
+
+static void app_window_resize(void) {
+	if (!application_is_inited()) { return; }
+	application_update();
 }
 
 // ----- ----- ----- ----- -----
@@ -468,7 +477,7 @@ static void main_fill_config(struct JSON const * json, void * data) {
 			.x = (uint32_t)json_get_number(json, S_("size_x")),
 			.y = (uint32_t)json_get_number(json, S_("size_y")),
 		},
-		.flexible = json_get_boolean(json, S_("flexible")),
+		.resizable = json_get_boolean(json, S_("resizable")),
 		.vsync               = (int32_t)json_get_number(json, S_("vsync")),
 		.target_refresh_rate = (uint32_t)json_get_number(json, S_("target_refresh_rate")),
 		.fixed_refresh_rate  = (uint32_t)json_get_number(json, S_("fixed_refresh_rate")),
@@ -490,8 +499,10 @@ static void main_run_application(void) {
 		.free = app_free,
 		.fixed_tick = app_fixed_tick,
 		.frame_tick = app_frame_tick,
-		//
-		.window_close = app_window_close,
+		.window_callbacks = {
+			.close = app_window_close,
+			.resize = app_window_resize,
+		},
 	});
 	logger_to_console("application has ended\n");
 
@@ -516,7 +527,7 @@ int main (int argc, char * argv[]) {
 		.quit = app_platform_quit,
 	});
 
-	while (!gs_skip_application && !platform_system_is_error()) {
+	while (!gs_main_exit && !platform_system_is_error()) {
 		main_run_application();
 	}
 

@@ -145,6 +145,16 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 		} \
 	} while (false) \
 
+	uint32_t glsl_version = 0;
+	switch (gs_ogl_version) {
+		case 20: glsl_version = 110; break;
+		case 21: glsl_version = 120; break;
+		case 30: glsl_version = 130; break;
+		case 31: glsl_version = 140; break;
+		case 32: glsl_version = 150; break;
+		default: glsl_version = gs_ogl_version * 10; break;
+	}
+
 	// header
 	GLchar header[256];
 	uint32_t header_length = logger_to_buffer(
@@ -163,7 +173,7 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 		// "\n"
 		// "#define R32_POS_INFINITY uintBitsToFloat(0x7f800000)\n"
 		"\n",
-		(gs_ogl_version > 33) ? gs_ogl_version * 10 : 330,
+		glsl_version,
 		//
 		ATTRIBUTE_TYPE_POSITION,
 		ATTRIBUTE_TYPE_TEXCOORD,
@@ -184,10 +194,10 @@ struct Ref gpu_program_init(struct Buffer const * asset) {
 
 	uint32_t sections_count = 0;
 	struct Section_Header sections[4];
-	ADD_SECTION_HEADER(VERTEX_SHADER, 20);
+	ADD_SECTION_HEADER(VERTEX_SHADER,   20);
 	ADD_SECTION_HEADER(FRAGMENT_SHADER, 20);
 	ADD_SECTION_HEADER(GEOMETRY_SHADER, 32);
-	ADD_SECTION_HEADER(COMPUTE_SHADER, 43);
+	ADD_SECTION_HEADER(COMPUTE_SHADER,  43);
 
 	// compile shader objects
 	GLuint shader_ids[4];

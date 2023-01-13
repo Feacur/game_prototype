@@ -16,6 +16,7 @@ static struct Application {
 	struct Application_Config config;
 	struct Application_Callbacks callbacks;
 
+	bool is_inited, should_exit;
 	struct Window * window;
 	struct Gpu_Context * gpu_context;
 
@@ -69,11 +70,9 @@ static bool application_init(void) {
 		.size_y = gs_app.config.size.y,
 		.settings = WINDOW_SETTINGS_MINIMIZE,
 	};
-	if (gs_app.config.flexible) { window_config.settings |= WINDOW_SETTINGS_FLEXIBLE; }
+	if (gs_app.config.resizable) { window_config.settings |= WINDOW_SETTINGS_RESIZABLE; }
 
-	gs_app.window = platform_window_init(window_config, (struct Window_Callbacks){
-		.close = gs_app.callbacks.window_close,
-	});
+	gs_app.window = platform_window_init(window_config, gs_app.callbacks.window_callbacks);
 	if (gs_app.window == NULL) { goto fail_window; }
 
 	platform_window_start_frame(gs_app.window);
@@ -95,6 +94,8 @@ static bool application_init(void) {
 
 	gpu_context_end_frame();
 	platform_window_end_frame(gs_app.window);
+
+	gs_app.is_inited = true;
 	return true;
 
 	// process errors
@@ -112,28 +113,42 @@ static void application_free(void) {
 	common_memset(&gs_app, 0, sizeof(gs_app));
 }
 
-static bool application_update(void) {
+static void application_begin_frame(void) {
+	platform_window_start_frame(gs_app.window);
+	gpu_context_start_frame(gs_app.gpu_context, platform_window_get_cached_device(gs_app.window));
+}
+
+static void application_draw_frame(void) {
+	platform_window_draw_frame(gs_app.window);
+	gpu_context_draw_frame(gs_app.gpu_context);
+
+	graphics_update();
+}
+
+static void application_end_frame(void) {
+	platform_window_end_frame(gs_app.window);
+	gpu_context_end_frame();
+}
+
+void application_update(void) {
 	// application and platform are ready
-	if (gs_app.window == NULL) { return false; }
-	if (platform_system_is_error()) { return false; }
+	if (gs_app.window == NULL) { goto exit; }
+	if (platform_system_is_error()) { goto exit; }
 
 	// reset per-frame data / poll platform events
 	platform_system_update();
 
 	// window might be closed by platform
-	if (!platform_window_exists(gs_app.window)) { return false; }
+	if (!platform_window_exists(gs_app.window)) { goto exit; }
 
 	// process application-side input
-	if (input_key(KC_ALT)) {
-		if (input_key_transition(KC_F4, true)) { return false; }
-		if (input_key_transition(KC_ENTER, true)) {
-			platform_window_toggle_borderless_fullscreen(gs_app.window);
-		}
+	if (input_key(KC_ALT) && input_key_transition(KC_ENTER, true)) {
+		platform_window_toggle_borderless_fullscreen(gs_app.window);
 	}
 
-	platform_window_start_frame(gs_app.window);
-	gpu_context_start_frame(gs_app.gpu_context, platform_window_get_cached_device(gs_app.window));
+	application_begin_frame();
 
+	// @note: resulting delta time is extremely inconsistent and stuttery
 	uint64_t const timer_ticks  = platform_timer_get_ticks();
 	int32_t  const vsync_mode   = gpu_context_get_vsync(gs_app.gpu_context);
 	uint64_t const target_ticks = get_target_ticks(vsync_mode);
@@ -148,7 +163,7 @@ static bool application_update(void) {
 
 	// @note: probably should limit this too?
 	gs_app.ticks.fixed_accumulator += gs_app.ticks.elapsed;
-	while (gs_app.ticks.fixed_accumulator > fixed_ticks) {
+	while (fixed_ticks > 0 && gs_app.ticks.fixed_accumulator > fixed_ticks) {
 		gs_app.ticks.fixed_accumulator -= fixed_ticks;
 		if (gs_app.callbacks.fixed_tick != NULL) {
 			gs_app.callbacks.fixed_tick();
@@ -157,16 +172,10 @@ static bool application_update(void) {
 
 	if (gs_app.callbacks.frame_tick != NULL) {
 		gs_app.callbacks.frame_tick();
+		application_draw_frame();
 	}
 
-	platform_window_draw_frame(gs_app.window);
-	gpu_context_draw_frame(gs_app.gpu_context);
-
-	graphics_update();
-
-	// @note: resulting delta time is extremely inconsistent and stuttery
-	platform_window_end_frame(gs_app.window);
-	gpu_context_end_frame();
+	application_end_frame();
 
 	if (vsync_mode == 0) {
 		uint64_t const frame_end_ticks = gs_app.ticks.frame_start + target_ticks;
@@ -175,16 +184,22 @@ static bool application_update(void) {
 		}
 	}
 
-	return true;
+	return;
+	exit: gs_app.should_exit = true;
 }
 
 void application_run(struct Application_Config config, struct Application_Callbacks callbacks) {
 	gs_app.config = config;
 	gs_app.callbacks = callbacks;
+	gs_app.should_exit = false;
 	if (application_init()) {
-		while (application_update()) { }
+		while (!gs_app.should_exit) { application_update(); }
 		application_free();
 	}
+}
+
+void application_exit(void) {
+	gs_app.should_exit = true;
 }
 
 struct uvec2 application_get_screen_size(void) {
@@ -196,3 +211,5 @@ struct uvec2 application_get_screen_size(void) {
 double application_get_delta_time(void) {
 	return (double)gs_app.ticks.elapsed / (double)gs_app.ticks.per_second;
 }
+
+bool application_is_inited(void) { return gs_app.is_inited; }
