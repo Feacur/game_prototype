@@ -157,6 +157,8 @@ XMACRO(DELETETEXTURES, DeleteTextures)
 //    XMACRO(GENTEXTURES,   GenTextures)
 //    XMACRO(TEXPARAMETERI, TexParameteri)
 //    XMACRO(TEXSUBIMAGE2D, TexSubImage2D)
+// >= 3.0
+//    XMACRO(GENERATEMIPMAP, GenerateMipmap)
 // >= 4.2
 //    XMACRO(TEXSTORAGE2D, TexStorage2D)
 // >= 4.5
@@ -168,6 +170,7 @@ XMACRO(TEXTUREPARAMETERF,  TextureParameterf)
 XMACRO(TEXTUREPARAMETERFV, TextureParameterfv)
 XMACRO(TEXTURESUBIMAGE2D,  TextureSubImage2D)
 XMACRO(BINDTEXTUREUNIT,    BindTextureUnit)
+XMACRO(GENERATETEXTUREMIPMAP, GenerateTextureMipmap)
 
 // -- target
 // >= 3.0

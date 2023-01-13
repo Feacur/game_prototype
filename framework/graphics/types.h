@@ -103,20 +103,19 @@ enum Wrap_Mode {
 };
 
 enum Texture_Type {
-	TEXTURE_TYPE_NONE     = 0,
-	TEXTURE_TYPE_COLOR    = (1 << 0),
-	TEXTURE_TYPE_DEPTH    = (1 << 1),
-	TEXTURE_TYPE_STENCIL  = (1 << 2),
+	TEXTURE_TYPE_NONE    = 0,
+	TEXTURE_TYPE_COLOR   = (1 << 0),
+	TEXTURE_TYPE_DEPTH   = (1 << 1),
+	TEXTURE_TYPE_STENCIL = (1 << 2),
 	// shorthands
 	TEXTURE_TYPE_DSTENCIL = TEXTURE_TYPE_DEPTH | TEXTURE_TYPE_STENCIL,
 };
 
 enum Texture_Flag {
-	TEXTURE_FLAG_NONE     = 0,
-	TEXTURE_FLAG_MUTABLE  = (1 << 0),
-	TEXTURE_FLAG_WRITE    = (1 << 1),
-	TEXTURE_FLAG_READ     = (1 << 2),
-	TEXTURE_FLAG_INTERNAL = (1 << 3),
+	TEXTURE_FLAG_NONE    = 0,
+	TEXTURE_FLAG_MUTABLE = (1 << 0),
+	TEXTURE_FLAG_WRITE   = (1 << 1),
+	TEXTURE_FLAG_READ    = (1 << 2),
 };
 
 enum Swizzle_Op {
@@ -220,7 +219,7 @@ enum Color_Channel {
 	COLOR_CHANNEL_BLUE  = (1 << 2),
 	COLOR_CHANNEL_ALPHA = (1 << 3),
 	// shorthands
-	COLOR_CHANNEL_RGB = COLOR_CHANNEL_RED | COLOR_CHANNEL_GREEN | COLOR_CHANNEL_BLUE,
+	COLOR_CHANNEL_RGB  = COLOR_CHANNEL_RED | COLOR_CHANNEL_GREEN | COLOR_CHANNEL_BLUE,
 	COLOR_CHANNEL_FULL = COLOR_CHANNEL_RED | COLOR_CHANNEL_GREEN | COLOR_CHANNEL_BLUE | COLOR_CHANNEL_ALPHA,
 };
 
@@ -252,6 +251,7 @@ struct Texture_Parameters {
 };
 
 struct Texture_Settings {
+	uint32_t max_lod;
 	enum Filter_Mode mipmap, minification, magnification;
 	enum Wrap_Mode wrap_x, wrap_y;
 	enum Swizzle_Op swizzle[4];

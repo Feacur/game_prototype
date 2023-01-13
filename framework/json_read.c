@@ -211,6 +211,7 @@ struct Texture_Settings json_read_texture_settings(struct JSON const * json) {
 		.wrap_x        = json_read_wrap_mode(json_get(json, S_("wrap_x"))),
 		.wrap_y        = json_read_wrap_mode(json_get(json, S_("wrap_y"))),
 	};
+	json_read_many_u32(json_get(json, S_("max_lod")), 1, &result.max_lod);
 	json_read_many_flt(json_get(json, S_("border")), 4, &result.border.x);
 	return result;
 }

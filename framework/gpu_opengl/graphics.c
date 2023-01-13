@@ -327,7 +327,7 @@ static struct Ref gpu_texture_allocate(
 	uint32_t size_x, uint32_t size_y,
 	struct Texture_Parameters parameters,
 	struct Texture_Settings settings,
-	void const * data
+	uint32_t max_lod
 ) {
 	if (size_x > gs_graphics_state.limits.max_texture_size) {
 		logger_to_console("requested size is too large\n"); DEBUG_BREAK();
@@ -339,51 +339,45 @@ static struct Ref gpu_texture_allocate(
 		size_y = gs_graphics_state.limits.max_texture_size;
 	}
 
+	GLenum const internalformat = gpu_sized_internal_format(parameters.texture_type, parameters.data_type);
+	GLenum const format = gpu_pixel_data_format(parameters.texture_type, parameters.data_type);
+	GLenum const type = gpu_pixel_data_type(parameters.texture_type, parameters.data_type);
+
 	GLuint texture_id;
 	glCreateTextures(GL_TEXTURE_2D, 1, &texture_id);
 
 	// allocate buffer
-	GLint const level = 0;
-	if (data == NULL && !(parameters.flags & (TEXTURE_FLAG_WRITE | TEXTURE_FLAG_READ | TEXTURE_FLAG_INTERNAL))) {
-		logger_to_console("non-internal storage should have initial data\n"); DEBUG_BREAK();
-	}
-	else if (parameters.flags & TEXTURE_FLAG_MUTABLE) {
+	if (parameters.flags & TEXTURE_FLAG_MUTABLE) {
+		uint32_t lod_size_x = size_x;
+		uint32_t lod_size_y = size_y;
 		glBindTexture(GL_TEXTURE_2D, texture_id);
-		glTexImage2D(
-			GL_TEXTURE_2D, level,
-			(GLint)gpu_sized_internal_format(parameters.texture_type, parameters.data_type),
-			(GLsizei)size_x, (GLsizei)size_y, 0,
-			gpu_pixel_data_format(parameters.texture_type, parameters.data_type),
-			gpu_pixel_data_type(parameters.texture_type, parameters.data_type),
-			data
-		);
+		for (uint32_t lod = 0; lod <= max_lod; lod++) {
+			glTexImage2D(
+				GL_TEXTURE_2D, (GLint)lod, (GLint)internalformat,
+				(GLsizei)lod_size_x, (GLsizei)lod_size_y, 0,
+				format, type, NULL
+			);
+			lod_size_x = max_u32(1, lod_size_x / 2);
+			lod_size_y = max_u32(1, lod_size_y / 2);
+		}
 	}
 	else if (size_x > 0 && size_y > 0) {
-		GLsizei const levels = 1;
 		glTextureStorage2D(
-			texture_id, levels,
-			gpu_sized_internal_format(parameters.texture_type, parameters.data_type),
+			texture_id, (GLsizei)(max_lod + 1), internalformat,
 			(GLsizei)size_x, (GLsizei)size_y
 		);
-		if (data != NULL) {
-			glTextureSubImage2D(
-				texture_id, level,
-				0, 0, (GLsizei)size_x, (GLsizei)size_y,
-				gpu_pixel_data_format(parameters.texture_type, parameters.data_type),
-				gpu_pixel_data_type(parameters.texture_type, parameters.data_type),
-				data
-			);
-		}
 	}
 	else {
 		logger_to_console("immutable storage should have non-zero size\n"); DEBUG_BREAK();
 	}
 
 	// chart buffer
+	glTextureParameteri(texture_id, GL_TEXTURE_MAX_LEVEL, (GLint)max_lod);
 	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(settings.mipmap, settings.minification));
 	glTextureParameteri(texture_id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(settings.magnification));
 	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(settings.wrap_x));
 	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings.wrap_y));
+	// glTextureParameterf(texture_id, GL_TEXTURE_LOD_BIAS, 0);
 
 	glTextureParameteriv(texture_id, GL_TEXTURE_SWIZZLE_RGBA, (GLint[]){
 		gpu_swizzle_op(settings.swizzle[0], 0),
@@ -404,13 +398,28 @@ static struct Ref gpu_texture_allocate(
 	});
 }
 
+static void gpu_texture_upload(struct Ref gpu_texture_ref, struct Image const * asset) {
+	struct Gpu_Texture * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
+	glTextureSubImage2D(
+		gpu_texture->id, 0,
+		0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y,
+		gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.data_type),
+		gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
+		asset->data
+	);
+	glGenerateTextureMipmap(gpu_texture->id);
+}
+
 struct Ref gpu_texture_init(struct Image const * asset) {
 	struct Ref const gpu_texture_ref = gpu_texture_allocate(
-		asset->size_x, asset->size_y, asset->parameters, asset->settings, asset->data
+		asset->size_x, asset->size_y, asset->parameters, asset->settings, asset->settings.max_lod
 	);
 
-	gpu_texture_update(gpu_texture_ref, asset);
+	if (!(asset->parameters.flags & TEXTURE_FLAG_WRITE) && asset->data != NULL) {
+		gpu_texture_upload(gpu_texture_ref, asset);
+	}
 
+	gpu_texture_update(gpu_texture_ref, asset);
 	return gpu_texture_ref;
 }
 
@@ -451,6 +460,11 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset) 
 	struct Gpu_Texture * gpu_texture = ref_table_get(&gs_graphics_state.textures, gpu_texture_ref);
 	if (gpu_texture == NULL) { return; }
 
+	if (!(gpu_texture->parameters.flags & TEXTURE_FLAG_WRITE)) {
+		// logger_to_console("trying to write into a read-only buffer\n"); DEBUG_BREAK();
+		return;
+	}
+
 	// @todo: compare texture and asset parameters?
 
 	if (asset->data == NULL) { return; }
@@ -459,13 +473,7 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset) 
 
 	GLint const level = 0;
 	if (gpu_texture->size_x >= asset->size_x && gpu_texture->size_y >= asset->size_y) {
-		glTextureSubImage2D(
-			gpu_texture->id, level,
-			0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y,
-			gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.data_type),
-			gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
-			asset->data
-		);
+		gpu_texture_upload(gpu_texture_ref, asset);
 	}
 	else if (gpu_texture->parameters.flags & TEXTURE_FLAG_MUTABLE) {
 		// logger_to_console("WARNING! reallocating a buffer\n");
@@ -480,6 +488,7 @@ void gpu_texture_update(struct Ref gpu_texture_ref, struct Image const * asset) 
 			gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
 			asset->data
 		);
+		glGenerateTextureMipmap(gpu_texture->id);
 	}
 	else {
 		logger_to_console("trying to reallocate an immutable buffer\n"); DEBUG_BREAK();
@@ -522,7 +531,7 @@ struct Ref gpu_target_init(
 			struct Ref const gpu_texture_ref = gpu_texture_allocate(size_x, size_y, parameters[i], (struct Texture_Settings){
 				.wrap_x = WRAP_MODE_EDGE,
 				.wrap_y = WRAP_MODE_EDGE,
-			}, NULL);
+			}, 0);
 			array_any_push_many(&textures, 1, &(struct Gpu_Target_Texture){
 				.texture = gpu_texture_ref,
 				.drawbuffer = is_color ? color_index : 0,
@@ -668,20 +677,19 @@ static struct Ref gpu_mesh_allocate(
 		struct Gpu_Mesh_Buffer * buffer = array_any_at(&buffers, i);
 		glCreateBuffers(1, &buffer->id);
 
-		if (asset_buffer->data == NULL && !(parameters.flags & (MESH_FLAG_WRITE | MESH_FLAG_READ | MESH_FLAG_INTERNAL))) {
-			logger_to_console("non-internal storage should have initial data\n"); DEBUG_BREAK();
-		}
-		else if (parameters.flags & MESH_FLAG_MUTABLE) {
+		if (parameters.flags & MESH_FLAG_MUTABLE) {
 			glNamedBufferData(
 				buffer->id,
-				(GLsizeiptr)asset_buffer->count, asset_buffer->data,
+				(GLsizeiptr)asset_buffer->count,
+				(parameters.flags & MESH_FLAG_WRITE) ? NULL : asset_buffer->data,
 				gpu_mesh_usage_pattern(parameters.flags)
 			);
 		}
 		else if (asset_buffer->count != 0) {
 			glNamedBufferStorage(
 				buffer->id,
-				(GLsizeiptr)asset_buffer->count, asset_buffer->data,
+				(GLsizeiptr)asset_buffer->count,
+				(parameters.flags & MESH_FLAG_WRITE) ? NULL : asset_buffer->data,
 				gpu_mesh_immutable_flag(parameters.flags)
 			);
 		}
@@ -797,7 +805,10 @@ void gpu_mesh_update(struct Ref gpu_mesh_ref, struct Mesh const * asset) {
 		// @todo: compare mesh and asset parameters?
 		// struct Mesh_Parameters const * asset_parameters = asset->parameters + i;
 
-		if (!(parameters.flags & MESH_FLAG_WRITE)) { continue; }
+		if (!(parameters.flags & MESH_FLAG_WRITE)) {
+			// logger_to_console("trying to write into a read-only buffer\n"); DEBUG_BREAK();
+			continue;
+		}
 
 		struct Buffer const * asset_buffer = asset->buffers + i;
 		if (asset_buffer->count == 0) { continue; }

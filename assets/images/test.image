@@ -5,4 +5,5 @@
 	"mipmap": "lerp",
 	"minification": "lerp",
 	"magnification": "point",
+	"max_lod": 5,
 }
