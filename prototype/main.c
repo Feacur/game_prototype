@@ -449,11 +449,6 @@ static bool app_window_close(void) {
 	return true;
 }
 
-static void app_window_resize(void) {
-	if (!application_is_inited()) { return; }
-	application_update();
-}
-
 // ----- ----- ----- ----- -----
 //     main part
 // ----- ----- ----- ----- -----
@@ -501,7 +496,6 @@ static void main_run_application(void) {
 		.frame_tick = app_frame_tick,
 		.window_callbacks = {
 			.close = app_window_close,
-			.resize = app_window_resize,
 		},
 	});
 	logger_to_console("application has ended\n");

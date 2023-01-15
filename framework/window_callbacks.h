@@ -5,7 +5,6 @@
 
 struct Window_Callbacks {
 	bool (* close)(void);
-	void (* resize)(void);
 };
 
 #endif

@@ -19,7 +19,6 @@ struct Window {
 	struct Window_Callbacks callbacks;
 	//
 	HWND handle;
-	uint32_t size_x, size_y;
 	bool raw_input;
 	// fullscreen
 	WINDOWPLACEMENT pre_fullscreen_position;
@@ -27,6 +26,10 @@ struct Window {
 	// transient
 	HDC frame_cached_device;
 	bool ignore_once_WM_KILLFOCUS;
+	// move
+	uint8_t move_mode;
+	LONG move_offset_x, move_offset_y;
+	LONG move_min_x, move_min_y;
 };
 
 static void platform_window_internal_toggle_raw_input(struct Window * window, bool state);
@@ -74,14 +77,11 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 	if (window == NULL) { goto fail_window; }
 	if (!SetProp(handle, TEXT(HANDLE_PROP_WINDOW_NAME), window)) { goto fail_window; }
 
-	RECT client_rect;
-	GetClientRect(handle, &client_rect);
+	RECT client_rect; GetClientRect(handle, &client_rect);
 	*window = (struct Window){
 		.config = config,
 		.callbacks = callbacks,
 		.handle = handle,
-		.size_x = (uint32_t)(client_rect.right - client_rect.left),
-		.size_y = (uint32_t)(client_rect.bottom - client_rect.top),
 	};
 
 	platform_window_internal_toggle_raw_input(window, true);
@@ -115,6 +115,13 @@ bool platform_window_exists(struct Window const * window) {
 	return window->handle != NULL;
 }
 
+static void platform_window_internal_handle_moving(struct Window *window);
+static void platform_window_internal_handle_sizing(struct Window *window);
+void platform_window_update(struct Window * window) {
+	platform_window_internal_handle_moving(window);
+	platform_window_internal_handle_sizing(window);
+}
+
 void platform_window_start_frame(struct Window * window) {
 	if (window->frame_cached_device != NULL) { DEBUG_BREAK(); return; }
 
@@ -135,8 +142,9 @@ void * platform_window_get_cached_device(struct Window * window) {
 }
 
 void platform_window_get_size(struct Window const * window, uint32_t * size_x, uint32_t * size_y) {
-	*size_x = window->size_x;
-	*size_y = window->size_y;
+	RECT client_rect; GetClientRect(window->handle, &client_rect);
+	*size_x = (uint32_t)(client_rect.right - client_rect.left);
+	*size_y = (uint32_t)(client_rect.bottom - client_rect.top);
 }
 
 uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value) {
@@ -178,6 +186,117 @@ void window_to_system_free(void) {
 }
 
 //
+
+static void platform_window_internal_syscommand_move(struct Window * window, uint8_t mode) {
+	window->move_mode = (mode == HTCAPTION) ? 0xff : 0;
+
+	POINT pos; GetCursorPos(&pos);
+	RECT rect; GetWindowRect(window->handle, &rect);
+
+	window->move_offset_x = (rect.left - pos.x);
+	window->move_offset_y = (rect.top - pos.y);
+}
+
+static void platform_window_internal_syscommand_size(struct Window * window, uint8_t mode) {
+	window->move_mode = mode;
+
+	POINT pos; GetCursorPos(&pos);
+	RECT rect; GetWindowRect(window->handle, &rect);
+
+	switch (mode) {
+		case WMSZ_LEFT:
+		case WMSZ_TOPLEFT:
+		case WMSZ_BOTTOMLEFT:
+			window->move_offset_x = (rect.left - pos.x); break;
+		case WMSZ_RIGHT:
+		case WMSZ_TOPRIGHT:
+		case WMSZ_BOTTOMRIGHT:
+			window->move_offset_x = (rect.right - pos.x); break;
+	}
+
+	switch (mode) {
+		case WMSZ_TOP:
+		case WMSZ_TOPLEFT:
+		case WMSZ_TOPRIGHT:
+			window->move_offset_y = (rect.top - pos.y); break;
+		case WMSZ_BOTTOM:
+		case WMSZ_BOTTOMLEFT:
+		case WMSZ_BOTTOMRIGHT:
+			window->move_offset_y = (rect.bottom - pos.y); break;
+	}
+}
+
+static void platform_window_internal_handle_moving(struct Window * window) {
+	if (window->move_mode != 0xff) { return; }
+	if (!(GetKeyState(VK_LBUTTON) & 0x80)) {
+		window->move_mode = 0;
+	}
+
+	POINT pos; GetCursorPos(&pos);
+	RECT rect; GetWindowRect(window->handle, &rect);
+
+	pos.x += window->move_offset_x;
+	pos.y += window->move_offset_y;
+
+	MoveWindow(
+		window->handle,
+		pos.x, pos.y,
+		rect.right - rect.left,
+		rect.bottom - rect.top,
+		FALSE
+	);
+}
+
+static void platform_window_internal_handle_sizing(struct Window * window) {
+	if (window->move_mode == 0) { return; }
+	if (!(GetKeyState(VK_LBUTTON) & 0x80)) {
+		window->move_mode = 0;
+	}
+
+	POINT pos; GetCursorPos(&pos);
+	RECT rect; GetWindowRect(window->handle, &rect);
+
+	pos.x += window->move_offset_x;
+	pos.y += window->move_offset_y;
+
+	switch (window->move_mode) {
+		case WMSZ_LEFT:
+		case WMSZ_TOPLEFT:
+		case WMSZ_BOTTOMLEFT:
+			rect.left = (pos.x + window->move_min_x <= rect.right)
+				? pos.x : rect.right - window->move_min_x;
+			break;
+		case WMSZ_RIGHT:
+		case WMSZ_TOPRIGHT:
+		case WMSZ_BOTTOMRIGHT:
+			rect.right = (pos.x - window->move_min_x >= rect.left)
+				? pos.x : rect.left + window->move_min_x;
+			break;
+	}
+
+	switch (window->move_mode) {
+		case WMSZ_TOP:
+		case WMSZ_TOPLEFT:
+		case WMSZ_TOPRIGHT:
+			rect.top = (pos.y + window->move_min_y <= rect.bottom)
+				? pos.y : rect.bottom - window->move_min_y;
+			break;
+		case WMSZ_BOTTOM:
+		case WMSZ_BOTTOMLEFT:
+		case WMSZ_BOTTOMRIGHT:
+			rect.bottom = (pos.y - window->move_min_y >= rect.top)
+				? pos.y : rect.top + window->move_min_y;
+			break;
+	}
+
+	MoveWindow(
+		window->handle,
+		rect.left, rect.top,
+		rect.right - rect.left,
+		rect.bottom - rect.top,
+		FALSE
+	);
+}
 
 static void platform_window_internal_toggle_borderless_fullscreen(struct Window * window) {
 	LONG_PTR const window_style = GetWindowLongPtr(window->handle, GWL_STYLE);
@@ -362,6 +481,9 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 	if (!window->raw_input) { return; }
 
+	uint32_t size_x, size_y;
+	platform_window_get_size(window, &size_x, &size_y);
+
 	bool const is_virtual_desktop = (data->usFlags & MOUSE_VIRTUAL_DESKTOP);
 	int const display_height = GetSystemMetrics(is_virtual_desktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
 	int const display_width  = GetSystemMetrics(is_virtual_desktop ? SM_CXVIRTUALSCREEN : SM_CXSCREEN);
@@ -383,7 +505,7 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 
 	//
 	input_to_platform_on_mouse_move((uint32_t)screen.x, (uint32_t)(display_height - screen.y - 1));
-	input_to_platform_on_mouse_move_window((uint32_t)client.x, window->size_y - (uint32_t)client.y - 1);
+	input_to_platform_on_mouse_move_window((uint32_t)client.x, size_y - (uint32_t)client.y - 1);
 
 	//
 	if ((data->usButtonFlags & RI_MOUSE_HWHEEL)) {
@@ -481,6 +603,9 @@ static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wPar
 static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam, LPARAM lParam, bool client_space, float wheel_mask_x, float wheel_mask_y) {
 	if (window->raw_input) { return 0; }
 
+	uint32_t size_x, size_y;
+	platform_window_get_size(window, &size_x, &size_y);
+
 	int const display_height = GetSystemMetrics(SM_CYSCREEN);
 
 	//
@@ -499,7 +624,7 @@ static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam,
 
 	//
 	input_to_platform_on_mouse_move((uint32_t)screen.x, (uint32_t)(display_height - screen.y - 1));
-	input_to_platform_on_mouse_move_window((uint32_t)client.x, window->size_y - (uint32_t)client.y - 1);
+	input_to_platform_on_mouse_move_window((uint32_t)client.x, size_y - (uint32_t)client.y - 1);
 
 	//
 	float const wheel_delta = (float)GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
@@ -529,6 +654,13 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 	if (window == NULL) { return DefWindowProc(hwnd, message, wParam, lParam); }
 
 	switch (message) {
+		case WM_GETMINMAXINFO: { // sent immediately
+			MINMAXINFO const info = *(MINMAXINFO *)lParam;
+			window->move_min_x = info.ptMinTrackSize.x;
+			window->move_min_y = info.ptMinTrackSize.y;
+			return 0;
+		}
+
 		case WM_INPUT: // sent immediately
 			return handle_message_input_raw(window, wParam, lParam);
 
@@ -580,32 +712,10 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		case WM_MOUSEHWHEEL: // sent immediately
 			return handle_message_input_mouse(window, wParam, lParam, false, 1, 0);
 
-		case WM_SIZE: { // sent immediately
-			// switch (wParam) {
-			// 	case SIZE_RESTORED:  break;
-			// 	case SIZE_MINIMIZED: break;
-			// 	case SIZE_MAXIMIZED: break;
-			// }
-			window->size_x = (uint32_t)LOWORD(lParam);
-			window->size_y = (uint32_t)HIWORD(lParam);
-
-			if (window->callbacks.resize != NULL) {
-				window->callbacks.resize();
-			}
-			return 0;
-		}
-
-		case WM_MOVE: { // sent immediately
-			if (window->callbacks.resize != NULL) {
-				window->callbacks.resize();
-			}
-			return 0;
-		}
-
-		// case WM_SYSCOMMAND: switch (wParam & 0xFFF0) { // sent immediately
-		// 	case SC_MOVE: return 0;
-		// 	case SC_SIZE: return 0;
-		// } break;
+		case WM_SYSCOMMAND: switch (wParam & 0xfff0) { // sent immediately
+			case SC_MOVE: platform_window_internal_syscommand_move(window, wParam & 0x000f); return 0;
+			case SC_SIZE: platform_window_internal_syscommand_size(window, wParam & 0x000f); return 0;
+		} break;
 
 		case WM_KILLFOCUS: { // sent immediately
 			if (!window->ignore_once_WM_KILLFOCUS) {

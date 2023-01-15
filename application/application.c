@@ -140,6 +140,7 @@ void application_update(void) {
 
 	// window might be closed by platform
 	if (!platform_window_exists(gs_app.window)) { goto exit; }
+	platform_window_update(gs_app.window);
 
 	// process application-side input
 	if (input_key(KC_ALT) && input_key_transition(KC_ENTER, true)) {

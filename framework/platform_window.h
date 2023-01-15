@@ -21,6 +21,7 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 void platform_window_free(struct Window * window);
 
 bool platform_window_exists(struct Window const * window);
+void platform_window_update(struct Window * window);
 void platform_window_start_frame(struct Window * window);
 void platform_window_draw_frame(struct Window * window);
 void platform_window_end_frame(struct Window * window);
