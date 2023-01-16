@@ -26,10 +26,21 @@ struct Window {
 	// transient
 	HDC frame_cached_device;
 	bool ignore_once_WM_KILLFOCUS;
-	// move
-	uint8_t move_mode;
-	LONG move_offset_x, move_offset_y;
-	LONG move_min_x, move_min_y;
+	// command
+	enum Window_Command {
+		WINDOW_COMMAND_NONE,
+		WINDOW_COMMAND_SIZE_LEFT,
+		WINDOW_COMMAND_SIZE_RIGHT,
+		WINDOW_COMMAND_SIZE_TOP,
+		WINDOW_COMMAND_SIZE_TOPLEFT,
+		WINDOW_COMMAND_SIZE_TOPRIGHT,
+		WINDOW_COMMAND_SIZE_BOTTOM,
+		WINDOW_COMMAND_SIZE_BOTTOMLEFT,
+		WINDOW_COMMAND_SIZE_BOTTOMRIGHT,
+		WINDOW_COMMAND_MOVE,
+	} command;
+	LONG command_offset_x, command_offset_y;
+	LONG command_min_x, command_min_y;
 };
 
 static void platform_window_internal_toggle_raw_input(struct Window * window, bool state);
@@ -188,17 +199,30 @@ void window_to_system_free(void) {
 //
 
 static void platform_window_internal_syscommand_move(struct Window * window, uint8_t mode) {
-	window->move_mode = (mode == HTCAPTION) ? 0xff : 0;
+	if (window->command != WINDOW_COMMAND_NONE) { return; }
+	if (mode != HTCAPTION) { return; }
+	window->command = WINDOW_COMMAND_MOVE;
 
 	POINT pos; GetCursorPos(&pos);
 	RECT rect; GetWindowRect(window->handle, &rect);
 
-	window->move_offset_x = (rect.left - pos.x);
-	window->move_offset_y = (rect.top - pos.y);
+	window->command_offset_x = (rect.left - pos.x);
+	window->command_offset_y = (rect.top - pos.y);
 }
 
 static void platform_window_internal_syscommand_size(struct Window * window, uint8_t mode) {
-	window->move_mode = mode;
+	if (window->command != WINDOW_COMMAND_NONE) { return; }
+	switch (mode) {
+		case WMSZ_LEFT:        window->command = WINDOW_COMMAND_SIZE_LEFT; break;
+		case WMSZ_RIGHT:       window->command = WINDOW_COMMAND_SIZE_RIGHT; break;
+		case WMSZ_TOP:         window->command = WINDOW_COMMAND_SIZE_TOP; break;
+		case WMSZ_TOPLEFT:     window->command = WINDOW_COMMAND_SIZE_TOPLEFT; break;
+		case WMSZ_TOPRIGHT:    window->command = WINDOW_COMMAND_SIZE_TOPRIGHT; break;
+		case WMSZ_BOTTOM:      window->command = WINDOW_COMMAND_SIZE_BOTTOM; break;
+		case WMSZ_BOTTOMLEFT:  window->command = WINDOW_COMMAND_SIZE_BOTTOMLEFT; break;
+		case WMSZ_BOTTOMRIGHT: window->command = WINDOW_COMMAND_SIZE_BOTTOMRIGHT; break;
+		default: return;
+	}
 
 	POINT pos; GetCursorPos(&pos);
 	RECT rect; GetWindowRect(window->handle, &rect);
@@ -207,36 +231,36 @@ static void platform_window_internal_syscommand_size(struct Window * window, uin
 		case WMSZ_LEFT:
 		case WMSZ_TOPLEFT:
 		case WMSZ_BOTTOMLEFT:
-			window->move_offset_x = (rect.left - pos.x); break;
+			window->command_offset_x = (rect.left - pos.x); break;
 		case WMSZ_RIGHT:
 		case WMSZ_TOPRIGHT:
 		case WMSZ_BOTTOMRIGHT:
-			window->move_offset_x = (rect.right - pos.x); break;
+			window->command_offset_x = (rect.right - pos.x); break;
 	}
 
 	switch (mode) {
 		case WMSZ_TOP:
 		case WMSZ_TOPLEFT:
 		case WMSZ_TOPRIGHT:
-			window->move_offset_y = (rect.top - pos.y); break;
+			window->command_offset_y = (rect.top - pos.y); break;
 		case WMSZ_BOTTOM:
 		case WMSZ_BOTTOMLEFT:
 		case WMSZ_BOTTOMRIGHT:
-			window->move_offset_y = (rect.bottom - pos.y); break;
+			window->command_offset_y = (rect.bottom - pos.y); break;
 	}
 }
 
 static void platform_window_internal_handle_moving(struct Window * window) {
-	if (window->move_mode != 0xff) { return; }
-	if (!(GetKeyState(VK_LBUTTON) & 0x80)) {
-		window->move_mode = 0;
+	if (window->command != WINDOW_COMMAND_MOVE) { return; }
+	if (!(GetKeyState(VK_LBUTTON) & 0x80)) { // !input_mouse(MC_LEFT)
+		window->command = WINDOW_COMMAND_NONE;
 	}
 
 	POINT pos; GetCursorPos(&pos);
 	RECT rect; GetWindowRect(window->handle, &rect);
 
-	pos.x += window->move_offset_x;
-	pos.y += window->move_offset_y;
+	pos.x += window->command_offset_x;
+	pos.y += window->command_offset_y;
 
 	MoveWindow(
 		window->handle,
@@ -248,44 +272,47 @@ static void platform_window_internal_handle_moving(struct Window * window) {
 }
 
 static void platform_window_internal_handle_sizing(struct Window * window) {
-	if (window->move_mode == 0) { return; }
-	if (!(GetKeyState(VK_LBUTTON) & 0x80)) {
-		window->move_mode = 0;
+	if (window->command < WINDOW_COMMAND_SIZE_LEFT) { return; }
+	if (window->command > WINDOW_COMMAND_SIZE_BOTTOMRIGHT) { return; }
+	if (!(GetKeyState(VK_LBUTTON) & 0x80)) { // !input_mouse(MC_LEFT)
+		window->command = WINDOW_COMMAND_NONE;
 	}
 
 	POINT pos; GetCursorPos(&pos);
 	RECT rect; GetWindowRect(window->handle, &rect);
 
-	pos.x += window->move_offset_x;
-	pos.y += window->move_offset_y;
+	pos.x += window->command_offset_x;
+	pos.y += window->command_offset_y;
 
-	switch (window->move_mode) {
-		case WMSZ_LEFT:
-		case WMSZ_TOPLEFT:
-		case WMSZ_BOTTOMLEFT:
-			rect.left = (pos.x + window->move_min_x <= rect.right)
-				? pos.x : rect.right - window->move_min_x;
+	switch (window->command) {
+		default: break;
+		case WINDOW_COMMAND_SIZE_LEFT:
+		case WINDOW_COMMAND_SIZE_TOPLEFT:
+		case WINDOW_COMMAND_SIZE_BOTTOMLEFT:
+			rect.left = (pos.x + window->command_min_x <= rect.right)
+				? pos.x : rect.right - window->command_min_x;
 			break;
-		case WMSZ_RIGHT:
-		case WMSZ_TOPRIGHT:
-		case WMSZ_BOTTOMRIGHT:
-			rect.right = (pos.x - window->move_min_x >= rect.left)
-				? pos.x : rect.left + window->move_min_x;
+		case WINDOW_COMMAND_SIZE_RIGHT:
+		case WINDOW_COMMAND_SIZE_TOPRIGHT:
+		case WINDOW_COMMAND_SIZE_BOTTOMRIGHT:
+			rect.right = (pos.x - window->command_min_x >= rect.left)
+				? pos.x : rect.left + window->command_min_x;
 			break;
 	}
 
-	switch (window->move_mode) {
-		case WMSZ_TOP:
-		case WMSZ_TOPLEFT:
-		case WMSZ_TOPRIGHT:
-			rect.top = (pos.y + window->move_min_y <= rect.bottom)
-				? pos.y : rect.bottom - window->move_min_y;
+	switch (window->command) {
+		default: break;
+		case WINDOW_COMMAND_SIZE_TOP:
+		case WINDOW_COMMAND_SIZE_TOPLEFT:
+		case WINDOW_COMMAND_SIZE_TOPRIGHT:
+			rect.top = (pos.y + window->command_min_y <= rect.bottom)
+				? pos.y : rect.bottom - window->command_min_y;
 			break;
-		case WMSZ_BOTTOM:
-		case WMSZ_BOTTOMLEFT:
-		case WMSZ_BOTTOMRIGHT:
-			rect.bottom = (pos.y - window->move_min_y >= rect.top)
-				? pos.y : rect.top + window->move_min_y;
+		case WINDOW_COMMAND_SIZE_BOTTOM:
+		case WINDOW_COMMAND_SIZE_BOTTOMLEFT:
+		case WINDOW_COMMAND_SIZE_BOTTOMRIGHT:
+			rect.bottom = (pos.y - window->command_min_y >= rect.top)
+				? pos.y : rect.top + window->command_min_y;
 			break;
 	}
 
@@ -656,8 +683,8 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 	switch (message) {
 		case WM_GETMINMAXINFO: { // sent immediately
 			MINMAXINFO const info = *(MINMAXINFO *)lParam;
-			window->move_min_x = info.ptMinTrackSize.x;
-			window->move_min_y = info.ptMinTrackSize.y;
+			window->command_min_x = info.ptMinTrackSize.x;
+			window->command_min_y = info.ptMinTrackSize.y;
 			return 0;
 		}
 
