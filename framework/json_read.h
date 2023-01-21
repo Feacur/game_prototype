@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_JSON_READ)
 #define FRAMEWORK_JSON_READ
 
-#include "framework/containers/ref.h"
+#include "framework/containers/handle.h"
 #include "framework/graphics/types.h"
 
 struct JSON;

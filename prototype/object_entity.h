@@ -1,7 +1,7 @@
 #if !defined(PROTOTYPE_OBJECT_ENTITY)
 #define PROTOTYPE_OBJECT_ENTITY
 
-#include "framework/systems/asset_ref.h"
+#include "framework/systems/asset_handle.h"
 #include "framework/graphics/material.h"
 #include "framework/graphics/types.h"
 

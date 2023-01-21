@@ -7,7 +7,7 @@
 #include "framework/containers/array_any.h"
 #include "framework/containers/array_flt.h"
 #include "framework/containers/array_u32.h"
-#include "framework/containers/ref.h"
+#include "framework/containers/handle.h"
 
 #include "framework/assets/mesh.h"
 #include "framework/assets/font_atlas.h"

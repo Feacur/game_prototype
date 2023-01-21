@@ -5,9 +5,9 @@
 #include "framework/containers/hash_table_u32.h"
 #include "framework/containers/ref_table.h"
 
-#include "asset_ref.h"
+#include "asset_handle.h"
 
-// @note: `(struct Asset_Ref){0}` is a NULL handler
+// @note: `(struct Asset_Ref){0}` is a NULL handle
 struct Asset_System {
 	struct Strings strings; // extensions, types, names
 	struct Hash_Table_U32 types; // type string id : callbacks and instances

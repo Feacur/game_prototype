@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_CONTAINERS_REF_TABLE)
 #define FRAMEWORK_CONTAINERS_REF_TABLE
 
-#include "ref.h"
+#include "handle.h"
 #include "array_any.h"
 
 struct Ref_Table_Iterator {
@@ -10,7 +10,7 @@ struct Ref_Table_Iterator {
 	void * value;
 };
 
-// @note: `(struct Ref){0}` is a NULL handler
+// @note: `(struct Ref){0}` is a NULL handle
 struct Ref_Table {
 	struct Array_Any buffer;
 	// handles table

@@ -1,7 +1,7 @@
-#if !defined(FRAMEWORK_SYSTEMS_ASSET_REF)
-#define FRAMEWORK_SYSTEMS_ASSET_REF
+#if !defined(FRAMEWORK_SYSTEMS_ASSET_HANDLE)
+#define FRAMEWORK_SYSTEMS_ASSET_HANDLE
 
-#include "framework/containers/ref.h"
+#include "framework/containers/handle.h"
 
 // @purpose: decouple `asset_system.h` with any other one
 

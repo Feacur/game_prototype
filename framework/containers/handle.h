@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_CONTAINERS_REF)
-#define FRAMEWORK_CONTAINERS_REF
+#if !defined(FRAMEWORK_CONTAINERS_HANDLE)
+#define FRAMEWORK_CONTAINERS_HANDLE
 
 #include "framework/common.h"
 

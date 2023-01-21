@@ -1,7 +1,7 @@
 #if !defined(PROTOTYPE_OBJECT_CAMERA)
 #define PROTOTYPE_OBJECT_CAMERA
 
-#include "framework/containers/ref.h"
+#include "framework/containers/handle.h"
 #include "framework/graphics/types.h"
 
 #include "application/components.h"
