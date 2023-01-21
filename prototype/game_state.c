@@ -55,9 +55,9 @@ static void json_read_camera(struct JSON const * json, struct Camera * camera) {
 	struct CString const target = json_get_string(json, S_("target"));
 	if (target.data != NULL) {
 		struct Asset_Target const * asset = asset_system_aquire_instance(&gs_game.assets, target);
-		camera->gpu_target_ref = (asset != NULL) ? asset->gpu_ref : (struct Ref){0};
+		camera->gpu_target_handle = (asset != NULL) ? asset->gpu_handle : (struct Handle){0};
 	}
-	else { camera->gpu_target_ref = (struct Ref){0}; }
+	else { camera->gpu_target_handle = (struct Handle){0}; }
 }
 
 static void json_read_cameras(struct JSON const * json) {
@@ -133,7 +133,7 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 	entity->camera   = (uint32_t)json_get_number(json, S_("camera_uid")) - 1;
 
 	struct CString const material_path = json_get_string(json, S_("material"));
-	entity->material = asset_system_aquire(&gs_game.assets, material_path);
+	entity->material_asset_handle = asset_system_aquire(&gs_game.assets, material_path);
 
 	entity->type = json_read_entity_type(json_get(json, S_("type")));
 	switch (entity->type) {
@@ -142,7 +142,7 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 		case ENTITY_TYPE_MESH: {
 			struct CString const model_path = json_get_string(json, S_("model"));
 			entity->as.mesh = (struct Entity_Mesh){
-				.mesh = asset_system_aquire(&gs_game.assets, model_path),
+				.asset_handle = asset_system_aquire(&gs_game.assets, model_path),
 			};
 		} break;
 
@@ -159,8 +159,8 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 			struct CString const font_path = json_get_string(json, S_("font"));
 			struct CString const message_path = json_get_string(json, S_("message"));
 			entity->as.text = (struct Entity_Text){
-				.font = asset_system_aquire(&gs_game.assets, font_path),
-				.message = asset_system_aquire(&gs_game.assets, message_path),
+				.font_asset_handle = asset_system_aquire(&gs_game.assets, font_path),
+				.message_asset_handle = asset_system_aquire(&gs_game.assets, message_path),
 				.size = (float)json_get_number(json, S_("size")),
 			};
 			json_read_many_flt(json_get(json, S_("alignment")), 2, &entity->as.text.alignment.x);

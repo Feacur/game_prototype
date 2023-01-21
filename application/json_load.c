@@ -13,7 +13,7 @@
 //
 #include "json_load.h"
 
-static void json_load_many_texture(struct Asset_System * system, struct JSON const * json, uint32_t length, struct Ref * result);
+static void json_load_many_texture(struct Asset_System * system, struct JSON const * json, uint32_t length, struct Handle * result);
 void json_load_gfx_material(struct Asset_System * system, struct JSON const * json, struct Gfx_Material * result) {
 	if (json->type != JSON_OBJECT) { goto fail; }
 
@@ -27,11 +27,11 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 	enum Depth_Mode const depth_mode = json_read_depth_mode(json_get(json, S_("depth")));
 
 	*result = gfx_material_init(
-		shader_asset->gpu_ref,
+		shader_asset->gpu_handle,
 		blend_mode, depth_mode
 	);
 
-	struct Hash_Table_U32 const * gpu_program_uniforms = gpu_program_get_uniforms(result->gpu_program_ref);
+	struct Hash_Table_U32 const * gpu_program_uniforms = gpu_program_get_uniforms(result->gpu_program_handle);
 	if (gpu_program_uniforms == NULL) { goto fail; }
 
 	// @todo: arena/stack allocator
@@ -66,7 +66,7 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 			case DATA_TYPE_UNIT_F: {
 				json_load_many_texture(system, uniform_json, uniform_count, uniform_data_buffer.data);
 				gfx_uniforms_set(&result->uniforms, it.key_hash, (struct Gfx_Uniform_In){
-					.size = sizeof(struct Ref) * uniform_count,
+					.size = sizeof(struct Handle) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
 			} break;
@@ -107,44 +107,44 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 
 //
 
-static struct Ref json_load_texture(struct Asset_System * system, struct JSON const * json) {
+static struct Handle json_load_texture(struct Asset_System * system, struct JSON const * json) {
 	if (json->type != JSON_OBJECT) { goto fail; }
 
 	struct CString const path = json_get_string(json, S_("path"));
 	if (path.data == NULL) { goto fail; }
 
-	struct Asset_Ref const asset_ref = asset_system_aquire(system, path);
-	if (asset_ref_equals(asset_ref, (struct Asset_Ref){0})) { goto fail; }
+	struct Asset_Handle const asset_handle = asset_system_aquire(system, path);
+	if (asset_handle_is_null(asset_handle)) { goto fail; }
 
-	void const * instance = asset_system_find_instance(system, asset_ref);
+	void const * instance = asset_system_find_instance(system, asset_handle);
 	if (instance == NULL) { goto fail; }
 
-	if (asset_system_match_type(system, asset_ref, S_("image"))) {
+	if (asset_system_match_type(system, asset_handle, S_("image"))) {
 		struct Asset_Image const * asset = instance;
-		return asset->gpu_ref;
+		return asset->gpu_handle;
 	}
 
-	if (asset_system_match_type(system, asset_ref, S_("target"))) {
+	if (asset_system_match_type(system, asset_handle, S_("target"))) {
 		struct Asset_Target const * asset = instance;
 		enum Texture_Type const texture_type = json_read_texture_type(json_get(json, S_("buffer_type")));
 		uint32_t const index = (uint32_t)json_get_number(json, S_("index"));
-		return gpu_target_get_texture_ref(asset->gpu_ref, texture_type, index);
+		return gpu_target_get_texture_handle(asset->gpu_handle, texture_type, index);
 	}
 
-	if (asset_system_match_type(system, asset_ref, S_("font"))) {
+	if (asset_system_match_type(system, asset_handle, S_("font"))) {
 		struct Asset_Font const * asset = instance;
-		return asset->gpu_ref;
+		return asset->gpu_handle;
 	}
 
 	logger_to_console("unknown texture asset type\n"); DEBUG_BREAK();
-	return (struct Ref){0};
+	return (struct Handle){0};
 
 	// process errors
 	fail: logger_to_console("failed to load texture asset\n");
-	return (struct Ref){0};
+	return (struct Handle){0};
 }
 
-static void json_load_many_texture(struct Asset_System * system, struct JSON const * json, uint32_t length, struct Ref * result) {
+static void json_load_many_texture(struct Asset_System * system, struct JSON const * json, uint32_t length, struct Handle * result) {
 	if (json->type == JSON_ARRAY) {
 		uint32_t const count = min_u32(length, json_count(json));
 		for (uint32_t i = 0; i < count; i++) {

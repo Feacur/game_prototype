@@ -26,7 +26,7 @@ struct Camera {
 		enum Texture_Type mask;
 		struct vec4 color;
 	} clear;
-	struct Ref gpu_target_ref;
+	struct Handle gpu_target_handle;
 	//
 	struct uvec2 cached_size;
 };

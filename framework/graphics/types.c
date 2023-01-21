@@ -311,9 +311,9 @@ uint32_t data_type_get_size(enum Data_Type value) {
 	switch (value) {
 		case DATA_TYPE_NONE: break;
 
-		case DATA_TYPE_UNIT_U: return sizeof(struct Ref);
-		case DATA_TYPE_UNIT_S: return sizeof(struct Ref);
-		case DATA_TYPE_UNIT_F: return sizeof(struct Ref);
+		case DATA_TYPE_UNIT_U: return sizeof(struct Handle);
+		case DATA_TYPE_UNIT_S: return sizeof(struct Handle);
+		case DATA_TYPE_UNIT_F: return sizeof(struct Handle);
 
 		case DATA_TYPE_R8_U:    return sizeof(uint8_t);
 		case DATA_TYPE_RG8_U:   return sizeof(uint8_t) * 2;

@@ -45,8 +45,8 @@ static void prototype_tick_cameras(void) {
 	for (uint32_t camera_i = 0; camera_i < gs_game.cameras.count; camera_i++) {
 		struct Camera * camera = array_any_at(&gs_game.cameras, camera_i);
 		camera->cached_size = screen_size;
-		if (!ref_equals(camera->gpu_target_ref, (struct Ref){0})) {
-			gpu_target_get_size(camera->gpu_target_ref, &camera->cached_size.x, &camera->cached_size.y);
+		if (!handle_is_null(camera->gpu_target_handle)) {
+			gpu_target_get_size(camera->gpu_target_handle, &camera->cached_size.x, &camera->cached_size.y);
 		}
 	}
 }
@@ -112,7 +112,7 @@ static void prototype_tick_entities_quad_2d(void) {
 		struct Camera const * camera = array_any_at(&gs_game.cameras, entity->camera);
 		struct uvec2 const viewport_size = camera->cached_size;
 
-		struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
+		struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material_asset_handle);
 		struct uvec2 const content_size = entity_get_content_size(entity, &material->value, viewport_size.x, viewport_size.y);
 		if (content_size.x == 0 || content_size.y == 0) { break; }
 
@@ -211,7 +211,7 @@ static void prototype_draw_objects(void) {
 	uint32_t const gpu_commands_count_estimate = gs_game.cameras.count * 2 + gs_game.entities.count;
 	array_any_ensure(&gs_renderer.gpu_commands, gpu_commands_count_estimate);
 
-	struct Ref previous_gpu_target_ref = { // @note: deliberately wrong handle
+	struct Handle previous_gpu_target_handle = { // @note: deliberately wrong handle
 		.id = INDEX_EMPTY, .gen = INDEX_EMPTY,
 	};
 
@@ -255,15 +255,15 @@ static void prototype_draw_objects(void) {
 			});
 		}
 
-		if (!ref_equals(previous_gpu_target_ref, camera->gpu_target_ref)) {
-			previous_gpu_target_ref = camera->gpu_target_ref;
+		if (!handle_equals(previous_gpu_target_handle, camera->gpu_target_handle)) {
+			previous_gpu_target_handle = camera->gpu_target_handle;
 			batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 			array_any_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_TARGET,
 				.as.target = {
 					.screen_size_x = screen_size.x,
 					.screen_size_y = screen_size.y,
-					.gpu_ref = camera->gpu_target_ref,
+					.handle = camera->gpu_target_handle,
 				},
 			});
 		}
@@ -284,7 +284,7 @@ static void prototype_draw_objects(void) {
 			struct Entity const * entity = array_any_at(&gs_game.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
 
-			struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material);
+			struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material_asset_handle);
 
 			struct mat4 const mat4_Model = mat4_set_transformation(
 				entity->transform.position,
@@ -311,7 +311,7 @@ static void prototype_draw_objects(void) {
 					batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
-					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->mesh);
+					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->asset_handle);
 
 					uint32_t const override_offset = gs_renderer.uniforms.headers.count;
 					gfx_uniforms_push(&gs_renderer.uniforms, u_Model, (struct Gfx_Uniform_In){
@@ -329,7 +329,7 @@ static void prototype_draw_objects(void) {
 						(struct GPU_Command){
 							.type = GPU_COMMAND_TYPE_UNIFORM,
 							.as.uniform = {
-								.gpu_program_ref = material->value.gpu_program_ref,
+								.program_handle = material->value.gpu_program_handle,
 								.override = {
 									.uniforms = &gs_renderer.uniforms,
 									.offset = override_offset,
@@ -340,7 +340,7 @@ static void prototype_draw_objects(void) {
 						(struct GPU_Command){
 							.type = GPU_COMMAND_TYPE_DRAW,
 							.as.draw = {
-								.gpu_mesh_ref = model->gpu_ref,
+								.mesh_handle = model->gpu_handle,
 							},
 						},
 					});
@@ -357,8 +357,8 @@ static void prototype_draw_objects(void) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
-					struct Asset_Font const * font = asset_system_find_instance(&gs_game.assets, text->font);
-					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.assets, text->message);
+					struct Asset_Font const * font = asset_system_find_instance(&gs_game.assets, text->font_asset_handle);
+					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.assets, text->message_asset_handle);
 					struct CString const value = {
 						.length = message->length,
 						.data = (char const *)message->data,

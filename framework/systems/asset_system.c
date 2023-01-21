@@ -5,7 +5,7 @@
 
 struct Asset_Type {
 	struct Asset_Callbacks callbacks;
-	struct Ref_Table instances;
+	struct Handle_Table instances;
 };
 
 struct Asset_Entry {
@@ -22,7 +22,7 @@ struct Asset_System asset_system_init(void) {
 	return (struct Asset_System){
 		.strings = strings_init(),
 		.types = hash_table_u32_init(sizeof(struct Asset_Type)),
-		.refs = hash_table_u32_init(sizeof(struct Ref)),
+		.handles = hash_table_u32_init(sizeof(struct Handle)),
 		.map = hash_table_u32_init(sizeof(uint32_t)),
 	};
 }
@@ -33,7 +33,7 @@ void asset_system_free(struct Asset_System * system) {
 	}
 	strings_free(&system->strings);
 	hash_table_u32_free(&system->types);
-	hash_table_u32_free(&system->refs);
+	hash_table_u32_free(&system->handles);
 	hash_table_u32_free(&system->map);
 	// common_memset(system, 0, sizeof(*system));
 }
@@ -49,8 +49,8 @@ void asset_system_map_extension(struct Asset_System * system, struct CString typ
 	hash_table_u32_set(&system->map, extension_id, &type_id);
 }
 
-bool asset_system_match_type(struct Asset_System * system, struct Asset_Ref asset_ref, struct CString type) {
-	struct CString const asset_type = strings_get(&system->strings, asset_ref.type_id);
+bool asset_system_match_type(struct Asset_System * system, struct Asset_Handle handle, struct CString type) {
+	struct CString const asset_type = strings_get(&system->strings, handle.type_id);
 	return cstring_equals(asset_type, type);
 }
 
@@ -63,7 +63,7 @@ void asset_system_set_type(struct Asset_System * system, struct CString type, st
 
 	struct Asset_Type asset_type = {
 		.callbacks = callbacks,
-		.instances = ref_table_init(SIZE_OF_MEMBER(struct Asset_Entry, header) + value_size),
+		.instances = handle_table_init(SIZE_OF_MEMBER(struct Asset_Entry, header) + value_size),
 	};
 
 	uint32_t const type_id = strings_add(&system->strings, type);
@@ -85,7 +85,7 @@ void asset_system_del_type(struct Asset_System * system, struct CString type) {
 	hash_table_u32_del(&system->types, type_id);
 }
 
-struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CString name) {
+struct Asset_Handle asset_system_aquire(struct Asset_System * system, struct CString name) {
 	if (name.data == NULL) { logger_to_console("empty name\n"); goto fail; }
 
 	//
@@ -112,10 +112,10 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 
 	//
 	uint32_t name_id = strings_add(&system->strings, name);
-	struct Ref const * instance_ref_ptr = hash_table_u32_get(&system->refs, name_id);
-	if (instance_ref_ptr != NULL) {
-		return (struct Asset_Ref){
-			.instance_ref = *instance_ref_ptr,
+	struct Handle const * instance_handle_ptr = hash_table_u32_get(&system->handles, name_id);
+	if (instance_handle_ptr != NULL) {
+		return (struct Asset_Handle){
+			.instance_handle = *instance_handle_ptr,
 			.type_id = *type_id,
 			.name_id = name_id,
 		};
@@ -130,88 +130,88 @@ struct Asset_Ref asset_system_aquire(struct Asset_System * system, struct CStrin
 	}
 
 	//
-	struct Ref const instance_ref = ref_table_aquire(&asset_type->instances, NULL);
-	hash_table_u32_set(&system->refs, name_id, &instance_ref);
+	struct Handle const instance_handle = handle_table_aquire(&asset_type->instances, NULL);
+	hash_table_u32_set(&system->handles, name_id, &instance_handle);
 
-	struct Asset_Entry * entry = ref_table_get(&asset_type->instances, instance_ref);
+	struct Asset_Entry * entry = handle_table_get(&asset_type->instances, instance_handle);
 	entry->header.name_id = name_id;
 
 	if (asset_type->callbacks.init != NULL) {
 		asset_type->callbacks.init(system, entry->payload, name);
 	}
 
-	return (struct Asset_Ref){
-		.instance_ref = instance_ref,
+	return (struct Asset_Handle){
+		.instance_handle = instance_handle,
 		.type_id = *type_id,
 		.name_id = name_id,
 	};
 
 	// process errors
 	fail: DEBUG_BREAK();
-	return (struct Asset_Ref){0};
+	return (struct Asset_Handle){0};
 }
 
-void asset_system_discard(struct Asset_System * system, struct Asset_Ref asset_ref) {
-	if (asset_ref_equals(asset_ref, (struct Asset_Ref){0})) {
-		logger_to_console("empty asset ref\n"); DEBUG_BREAK();
+void asset_system_discard(struct Asset_System * system, struct Asset_Handle handle) {
+	if (asset_handle_is_null(handle)) {
+		logger_to_console("null asset handle\n"); DEBUG_BREAK();
 		return;
 	}
 
 	//
-	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, asset_ref.type_id);
+	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, handle.type_id);
 	if (asset_type == NULL) {
-		struct CString const type = strings_get(&system->strings, asset_ref.type_id);
+		struct CString const type = strings_get(&system->strings, handle.type_id);
 		logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK();
 	}
 
 	//
-	hash_table_u32_del(&system->refs, asset_ref.name_id);
+	hash_table_u32_del(&system->handles, handle.name_id);
 	if (asset_type->callbacks.free != NULL) {
-		struct Asset_Entry * entry = ref_table_get(&asset_type->instances, asset_ref.instance_ref);
+		struct Asset_Entry * entry = handle_table_get(&asset_type->instances, handle.instance_handle);
 		asset_type->callbacks.free(system, entry->payload);
-		ref_table_discard(&asset_type->instances, asset_ref.instance_ref);
+		handle_table_discard(&asset_type->instances, handle.instance_handle);
 	}
 }
 
-void * asset_system_find_instance(struct Asset_System * system, struct Asset_Ref asset_ref) {
-	if (asset_ref_equals(asset_ref, (struct Asset_Ref){0})) {
-		logger_to_console("empty asset ref\n"); DEBUG_BREAK();
+void * asset_system_find_instance(struct Asset_System * system, struct Asset_Handle handle) {
+	if (asset_handle_is_null(handle)) {
+		logger_to_console("null asset handle\n"); DEBUG_BREAK();
 		return NULL;
 	}
 
 	//
-	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, asset_ref.type_id);
+	struct Asset_Type * asset_type = hash_table_u32_get(&system->types, handle.type_id);
 	if (asset_type == NULL) {
-		struct CString const type = strings_get(&system->strings, asset_ref.type_id);
+		struct CString const type = strings_get(&system->strings, handle.type_id);
 		logger_to_console("unknown type: %.*s\n", type.length, type.data); DEBUG_BREAK();
 	}
 
 	//
-	struct Asset_Entry * entry = ref_table_get(&asset_type->instances, asset_ref.instance_ref);
+	struct Asset_Entry * entry = handle_table_get(&asset_type->instances, handle.instance_handle);
 	return entry->payload;
 }
 
 void * asset_system_aquire_instance(struct Asset_System * system, struct CString name) {
-	struct Asset_Ref const asset_ref = asset_system_aquire(system, name);
-	return asset_system_find_instance(system, asset_ref);
+	struct Asset_Handle const handle = asset_system_aquire(system, name);
+	return asset_system_find_instance(system, handle);
 }
 
-struct CString asset_system_get_name(struct Asset_System * system, struct Asset_Ref asset_ref) {
-	return strings_get(&system->strings, asset_ref.name_id);
+struct CString asset_system_get_name(struct Asset_System * system, struct Asset_Handle handle) {
+	return strings_get(&system->strings, handle.name_id);
 }
 
 //
 
 static void asset_system_del_type_internal(struct Asset_System * system, struct Asset_Type * asset_type) {
-	FOR_REF_TABLE (&asset_type->instances, it) {
+	FOR_HANDLE_TABLE (&asset_type->instances, it) {
 		struct Asset_Entry * entry = it.value;
-		hash_table_u32_del(&system->refs, entry->header.name_id);
+		hash_table_u32_del(&system->handles, entry->header.name_id);
 		if (asset_type->callbacks.free != NULL) {
 			asset_type->callbacks.free(system, entry->payload);
 		}
 	}
 
-	ref_table_free(&asset_type->instances);
+	handle_table_free(&asset_type->instances);
 	if (asset_type->callbacks.type_free != NULL) {
 		asset_type->callbacks.type_free();
 	}

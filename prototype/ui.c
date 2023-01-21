@@ -13,18 +13,18 @@
 #include "ui.h"
 
 static struct UI {
-	struct Asset_Ref shader_asset_ref;
+	struct Asset_Handle shader_asset_handle;
 	struct Gfx_Material font_material;
 	//
-	struct Asset_Ref font_asset_ref;
+	struct Asset_Handle font_asset_handle;
 } gs_ui;
 
 void ui_init(struct CString shader_name) {
-	gs_ui.shader_asset_ref = asset_system_aquire(&gs_game.assets, shader_name);
-	struct Asset_Shader const * asset_shader = asset_system_find_instance(&gs_game.assets, gs_ui.shader_asset_ref);
+	gs_ui.shader_asset_handle = asset_system_aquire(&gs_game.assets, shader_name);
+	struct Asset_Shader const * asset_shader = asset_system_find_instance(&gs_game.assets, gs_ui.shader_asset_handle);
 
 	//
-	gs_ui.font_material = gfx_material_init(asset_shader->gpu_ref, BLEND_MODE_MIX, DEPTH_MODE_NONE);
+	gs_ui.font_material = gfx_material_init(asset_shader->gpu_handle, BLEND_MODE_MIX, DEPTH_MODE_NONE);
 
 	//
 	struct vec4 const p_Color_value = {1, 1, 1, 1};
@@ -41,14 +41,14 @@ void ui_free(void) {
 }
 
 void ui_set_font(struct CString name) {
-	gs_ui.font_asset_ref = asset_system_aquire(&gs_game.assets, name);
-	struct Asset_Font const * asset_font = asset_system_find_instance(&gs_game.assets, gs_ui.font_asset_ref);
+	gs_ui.font_asset_handle = asset_system_aquire(&gs_game.assets, name);
+	struct Asset_Font const * asset_font = asset_system_find_instance(&gs_game.assets, gs_ui.font_asset_handle);
 
 	//
 	uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
 	gfx_uniforms_set(&gs_ui.font_material.uniforms, p_Texture, (struct Gfx_Uniform_In){
-		.size = sizeof(asset_font->gpu_ref),
-		.data = &asset_font->gpu_ref,
+		.size = sizeof(asset_font->gpu_handle),
+		.data = &asset_font->gpu_handle,
 	});
 }
 
@@ -69,7 +69,7 @@ void ui_end_frame(void) {
 }
 
 void ui_text(struct rect rect, struct CString value, struct vec2 alignment, bool wrap, float size) {
-	struct Asset_Font const * asset_font = asset_system_find_instance(&gs_game.assets, gs_ui.font_asset_ref);
+	struct Asset_Font const * asset_font = asset_system_find_instance(&gs_game.assets, gs_ui.font_asset_handle);
 	batcher_2d_set_material(gs_renderer.batcher_2d, &gs_ui.font_material);
 	batcher_2d_add_text(
 		gs_renderer.batcher_2d,

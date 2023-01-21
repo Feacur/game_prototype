@@ -1,6 +1,6 @@
 # -
-[framework] make Ref_Table and Ref zero-initializable
-[framework] reuse Array_Any code for Ref_Table
+[framework] make Handle_Table and Ref zero-initializable
+[framework] reuse Array_Any code for Handle_Table
 [framework] introduce macros for iterators
 [framework] free GPU objects with a macro
 [framework] rename some functions `graphics_*` into `gpu_*`

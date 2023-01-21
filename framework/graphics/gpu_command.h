@@ -29,7 +29,7 @@ struct GPU_Command_Cull {
 
 struct GPU_Command_Target {
 	uint32_t screen_size_x, screen_size_y;
-	struct Ref gpu_ref;
+	struct Handle handle;
 };
 
 struct GPU_Command_Clear {
@@ -42,12 +42,12 @@ struct GPU_Command_Material {
 };
 
 struct GPU_Command_Uniform {
-	struct Ref gpu_program_ref;
+	struct Handle program_handle;
 	struct Gfx_Material_Override override;
 };
 
 struct GPU_Command_Draw {
-	struct Ref gpu_mesh_ref;
+	struct Handle mesh_handle;
 	uint32_t offset, length;
 };
 

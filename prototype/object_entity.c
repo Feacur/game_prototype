@@ -23,11 +23,11 @@ struct uvec2 entity_get_content_size(
 			struct Entity_Quad const * quad = &entity->as.quad;
 
 			struct Gfx_Uniform_Out const value = gfx_uniforms_get(&material->uniforms, quad->texture_uniform);
-			struct Ref const * gpu_texture_ref = value.data;
-			if (gpu_texture_ref == NULL) { goto fail; }
+			struct Handle const * gpu_texture_handle = value.data;
+			if (gpu_texture_handle == NULL) { goto fail; }
 
 			uint32_t texture_size_x, texture_size_y;
-			gpu_texture_get_size(*gpu_texture_ref, &texture_size_x, &texture_size_y);
+			gpu_texture_get_size(*gpu_texture_handle, &texture_size_x, &texture_size_y);
 
 			return (struct uvec2){
 				(uint32_t)r32_floor((float)texture_size_x * clamp_r32(quad->view.max.x - quad->view.min.x, 0, 1)),

@@ -71,7 +71,7 @@ struct Batcher_2D {
 	struct Array_U32 buffer_indices;
 	//
 	struct Mesh_Parameters mesh_parameters[BATCHER_2D_BUFFERS_COUNT];
-	struct Ref gpu_mesh_ref;
+	struct Handle gpu_mesh_handle;
 };
 
 static void batcher_2d_bake_pass(struct Batcher_2D * batcher);
@@ -108,7 +108,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 	};
 
 	//
-	batcher->gpu_mesh_ref = gpu_mesh_init(&(struct Mesh){
+	batcher->gpu_mesh_handle = gpu_mesh_init(&(struct Mesh){
 		.count      = BATCHER_2D_BUFFERS_COUNT,
 		.buffers    = (struct Buffer[BATCHER_2D_BUFFERS_COUNT]){0},
 		.parameters = batcher->mesh_parameters,
@@ -118,7 +118,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 }
 
 void batcher_2d_free(struct Batcher_2D * batcher) {
-	gpu_mesh_free(batcher->gpu_mesh_ref);
+	gpu_mesh_free(batcher->gpu_mesh_handle);
 	//
 	array_u32_free(&batcher->codepoints);
 	array_any_free(&batcher->batches);
@@ -381,7 +381,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 		FOR_HASH_SET_U64 (&batcher->fonts_cache, it) {
 			struct Asset_Font const * font = (void *)it.key_hash;
-			gpu_texture_update(font->gpu_ref, font_atlas_get_asset(font->font_atlas));
+			gpu_texture_update(font->gpu_handle, font_atlas_get_asset(font->font_atlas));
 		}
 	}
 
@@ -436,7 +436,7 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * g
 			(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_DRAW,
 				.as.draw = {
-					.gpu_mesh_ref = batcher->gpu_mesh_ref,
+					.mesh_handle = batcher->gpu_mesh_handle,
 					.offset = batch->offset, .length = batch->length,
 				},
 			},
@@ -454,7 +454,7 @@ void batcher_2d_bake(struct Batcher_2D * batcher) {
 	}
 
 	batcher_2d_bake_texts(batcher);
-	gpu_mesh_update(batcher->gpu_mesh_ref, &(struct Mesh){
+	gpu_mesh_update(batcher->gpu_mesh_handle, &(struct Mesh){
 		.count = BATCHER_2D_BUFFERS_COUNT,
 		.buffers = (struct Buffer[BATCHER_2D_BUFFERS_COUNT]){
 			(struct Buffer){

@@ -18,27 +18,27 @@ struct Asset_JSON {
 };
 
 struct Asset_Shader {
-	struct Ref gpu_ref;
+	struct Handle gpu_handle;
 };
 
 struct Asset_Image {
-	struct Ref gpu_ref;
+	struct Handle gpu_handle;
 };
 
 struct Asset_Font {
-	// @todo: map font size to buffer and gpu_ref pair?
+	// @todo: map font size to buffer and gpu_handle pair?
 	// @idea: put differently sized glyphs onto one atlas?
 	struct Font * font;
 	struct Font_Atlas * font_atlas;
-	struct Ref gpu_ref;
+	struct Handle gpu_handle;
 };
 
 struct Asset_Target {
-	struct Ref gpu_ref;
+	struct Handle gpu_handle;
 };
 
 struct Asset_Model {
-	struct Ref gpu_ref;
+	struct Handle gpu_handle;
 };
 
 struct Asset_Material {

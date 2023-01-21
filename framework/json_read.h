@@ -35,6 +35,6 @@ struct Texture_Settings json_read_texture_settings(struct JSON const * json);
 //     graphics objects
 // ----- ----- ----- ----- -----
 
-struct Ref json_read_target(struct JSON const * json);
+struct Handle json_read_target(struct JSON const * json);
 
 #endif

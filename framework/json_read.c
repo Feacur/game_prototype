@@ -220,7 +220,7 @@ struct Texture_Settings json_read_texture_settings(struct JSON const * json) {
 //     graphics objects
 // ----- ----- ----- ----- -----
 
-struct Ref json_read_target(struct JSON const * json) {
+struct Handle json_read_target(struct JSON const * json) {
 	if (json->type != JSON_OBJECT) { goto fail; }
 
 	struct JSON const * buffers_json = json_get(json, S_("buffers"));
@@ -235,7 +235,7 @@ struct Ref json_read_target(struct JSON const * json) {
 		array_any_push_many(&parameters_buffer, 1, &texture_parameters);
 	}
 
-	struct Ref result = (struct Ref){0};
+	struct Handle result = (struct Handle){0};
 	if (parameters_buffer.count > 0) {
 		uint32_t const size_x = (uint32_t)json_get_number(json, S_("size_x"));
 		uint32_t const size_y = (uint32_t)json_get_number(json, S_("size_y"));
@@ -249,5 +249,5 @@ struct Ref json_read_target(struct JSON const * json) {
 
 	// process errors
 	fail: logger_to_console("failed to read target\n"); DEBUG_BREAK();
-	return (struct Ref){0};
+	return (struct Handle){0};
 }

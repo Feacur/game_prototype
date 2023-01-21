@@ -101,7 +101,7 @@ static void asset_shader_init(struct Asset_System * system, void * instance, str
 	// @todo: return error shader?
 
 	*asset = (struct Asset_Shader){
-		.gpu_ref = gpu_program_init(&file_buffer),
+		.gpu_handle = gpu_program_init(&file_buffer),
 	};
 	buffer_free(&file_buffer);
 }
@@ -109,7 +109,7 @@ static void asset_shader_init(struct Asset_System * system, void * instance, str
 static void asset_shader_free(struct Asset_System * system, void * instance) {
 	struct Asset_Shader * asset = instance;
 	(void)system;
-	gpu_program_free(asset->gpu_ref);
+	gpu_program_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
 
@@ -142,7 +142,7 @@ static void asset_fill_image(struct JSON const * json, void * data) {
 	buffer_free(&file_buffer);
 
 	*context->result = (struct Asset_Image){
-		.gpu_ref = gpu_texture_init(&image),
+		.gpu_handle = gpu_texture_init(&image),
 	};
 	image_free(&image);
 
@@ -157,7 +157,7 @@ static void asset_image_init(struct Asset_System * system, void * instance, stru
 static void asset_image_free(struct Asset_System * system, void * instance) {
 	struct Asset_Image * asset = instance;
 	(void)system;
-	gpu_texture_free(asset->gpu_ref);
+	gpu_texture_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
 
@@ -181,7 +181,7 @@ static void asset_font_init(struct Asset_System * system, void * instance, struc
 	*asset = (struct Asset_Font){
 		.font = font,
 		.font_atlas = font_atlas,
-		.gpu_ref = gpu_texture_init(font_atlas_get_asset(font_atlas)),
+		.gpu_handle = gpu_texture_init(font_atlas_get_asset(font_atlas)),
 	};
 }
 
@@ -190,7 +190,7 @@ static void asset_font_free(struct Asset_System * system, void * instance) {
 	(void)system;
 	font_free(asset->font);
 	font_atlas_free(asset->font_atlas);
-	gpu_texture_free(asset->gpu_ref);
+	gpu_texture_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
 
@@ -211,7 +211,7 @@ static void asset_fill_target(struct JSON const * json, void * data) {
 	}
 
 	*context->result = (struct Asset_Target){
-		.gpu_ref = json_read_target(json),
+		.gpu_handle = json_read_target(json),
 	};
 }
 
@@ -224,7 +224,7 @@ static void asset_target_init(struct Asset_System * system, void * instance, str
 static void asset_target_free(struct Asset_System * system, void * instance) {
 	struct Asset_Target * asset = instance;
 	(void)system;
-	gpu_target_free(asset->gpu_ref);
+	gpu_target_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
 
@@ -246,7 +246,7 @@ static void asset_model_init(struct Asset_System * system, void * instance, stru
 	buffer_free(&file_buffer);
 
 	*asset = (struct Asset_Model){
-		.gpu_ref = gpu_mesh_init(&mesh),
+		.gpu_handle = gpu_mesh_init(&mesh),
 	};
 	mesh_free(&mesh);
 }
@@ -254,7 +254,7 @@ static void asset_model_init(struct Asset_System * system, void * instance, stru
 static void asset_model_free(struct Asset_System * system, void * instance) {
 	struct Asset_Model * asset = instance;
 	(void)system;
-	gpu_mesh_free(asset->gpu_ref);
+	gpu_mesh_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
 

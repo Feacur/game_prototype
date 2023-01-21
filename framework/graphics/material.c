@@ -69,7 +69,7 @@ void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, stru
 // ----- ----- ----- ----- -----
 
 struct Gfx_Material gfx_material_init(
-	struct Ref gpu_program_ref,
+	struct Handle gpu_program_handle,
 	enum Blend_Mode blend_mode,
 	enum Depth_Mode depth_mode
 ) {
@@ -77,12 +77,12 @@ struct Gfx_Material gfx_material_init(
 
 	struct Gfx_Material material = {
 		.uniforms = gfx_uniforms_init(),
-		.gpu_program_ref = gpu_program_ref,
+		.gpu_program_handle = gpu_program_handle,
 		.blend_mode = blend_mode,
 		.depth_mode = depth_mode,
 	};
 
-	struct Hash_Table_U32 const * uniforms = gpu_program_get_uniforms(gpu_program_ref);
+	struct Hash_Table_U32 const * uniforms = gpu_program_get_uniforms(gpu_program_handle);
 	if (uniforms == NULL) { goto fail; }
 
 	uint32_t payload_bytes = 0, properties_count = 0;
