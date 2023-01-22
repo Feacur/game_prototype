@@ -69,21 +69,29 @@ void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, stru
 // ----- ----- ----- ----- -----
 
 struct Gfx_Material gfx_material_init(
-	struct Handle gpu_program_handle,
 	enum Blend_Mode blend_mode,
 	enum Depth_Mode depth_mode
 ) {
-	struct CString const property_prefix = S_("p_");
-
-	struct Gfx_Material material = {
+	return (struct Gfx_Material){
 		.uniforms = gfx_uniforms_init(),
-		.gpu_program_handle = gpu_program_handle,
 		.blend_mode = blend_mode,
 		.depth_mode = depth_mode,
 	};
+}
 
-	struct Hash_Table_U32 const * uniforms = gpu_program_get_uniforms(gpu_program_handle);
-	if (uniforms == NULL) { goto fail; }
+void gfx_material_free(struct Gfx_Material * material) {
+	gfx_uniforms_free(&material->uniforms);
+	common_memset(material, 0, sizeof(*material));
+}
+
+void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_handle) {
+	struct CString const property_prefix = S_("p_");
+
+	gfx_uniforms_clear(&material->uniforms);
+
+	material->gpu_program_handle = gpu_handle;
+	struct Hash_Table_U32 const * uniforms = gpu_program_get_uniforms(gpu_handle);
+	if (uniforms == NULL) { return; }
 
 	uint32_t payload_bytes = 0, properties_count = 0;
 	FOR_HASH_TABLE_U32(uniforms, it) {
@@ -95,29 +103,17 @@ struct Gfx_Material gfx_material_init(
 		properties_count++;
 	}
 
-	array_any_resize(&material.uniforms.headers, sizeof(struct Gfx_Uniforms_Entry) * properties_count);
-	buffer_resize(&material.uniforms.payload, payload_bytes);
-	common_memset(material.uniforms.payload.data, 0, payload_bytes);
+	array_any_resize(&material->uniforms.headers, sizeof(struct Gfx_Uniforms_Entry) * properties_count);
+	buffer_resize(&material->uniforms.payload, payload_bytes);
+	common_memset(material->uniforms.payload.data, 0, payload_bytes);
 
 	FOR_HASH_TABLE_U32(uniforms, it) {
 		struct CString const uniform_name = graphics_get_uniform_value(it.key_hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 
 		struct Gpu_Uniform const * uniform = it.value;
-		gfx_uniforms_push(&material.uniforms, it.key_hash, (struct Gfx_Uniform_In){
+		gfx_uniforms_push(&material->uniforms, it.key_hash, (struct Gfx_Uniform_In){
 			.size = data_type_get_size(uniform->type) * uniform->array_size,
 		});
 	}
-
-	finalize:
-	return material;
-
-	// process errors
-	fail: logger_to_console("failed to initialize material\n");
-	goto finalize;
-}
-
-void gfx_material_free(struct Gfx_Material * material) {
-	gfx_uniforms_free(&material->uniforms);
-	common_memset(material, 0, sizeof(*material));
 }

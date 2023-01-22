@@ -1,17 +1,21 @@
 #if !defined(PROTOTYPE_UI)
 #define PROTOTYPE_UI
 
-#include "framework/vector_types.h"
+#include "application/components.h"
 
 struct Asset_System;
 
-void ui_init(struct CString shader_name);
+void ui_init(void);
 void ui_free(void);
 
 void ui_start_frame(void);
 void ui_end_frame(void);
 
+void ui_set_transform(struct Transform_Rect transform_rect);
+
+void ui_set_shader(struct CString name);
 void ui_set_font(struct CString name);
-void ui_text(struct rect rect, struct CString value, struct vec2 alignment, bool wrap, float size);
+
+void ui_text(struct CString value, struct vec2 alignment, bool wrap, float size);
 
 #endif

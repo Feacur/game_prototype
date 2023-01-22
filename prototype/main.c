@@ -375,23 +375,22 @@ static void prototype_draw_objects(void) {
 	batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 }
 
+static struct CString prototype_get_fps_cstring(void) {
+	static char buffer[32];
+
+	double const delta_time = application_get_delta_time();
+	uint32_t const fps = (uint32_t)r64_floor(1.0 / delta_time);
+
+	uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, "FPS: %03d (%.5f ms)", fps, delta_time);
+	return (struct CString){.length = length, .data = buffer};
+}
+
 static void prototype_draw_ui(void) {
 	ui_start_frame();
-	{
-		double const delta_time = application_get_delta_time();
-		uint32_t const fps = (uint32_t)r64_floor(1.0 / delta_time);
 
-		char buffer[32];
-		uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, "FPS: %03d (%.5f ms)", fps, delta_time);
-		struct CString const text = (struct CString){.length = length, .data = buffer};
+	ui_set_transform((struct Transform_Rect){.anchor_max = (struct vec2){1, 1}});
+	ui_text(prototype_get_fps_cstring(), (struct vec2){1, 1}, false, 16);
 
-		//
-		struct uvec2 const screen_size = application_get_screen_size();
-		struct rect const rect = {
-			.max = {(float)screen_size.x, (float)screen_size.y}
-		};
-		ui_text(rect, text, (struct vec2){1, 1}, false, 16);
-	}
 	ui_end_frame();
 }
 
@@ -405,7 +404,8 @@ static void app_init(void) {
 	renderer_init();
 	game_init();
 
-	ui_init(S_("assets/shaders/batcher_2d.glsl"));
+	ui_init();
+	ui_set_shader(S_("assets/shaders/batcher_2d.glsl"));
 	ui_set_font(S_("assets/fonts/Ubuntu-Regular.ttf"));
 
 	prototype_init();

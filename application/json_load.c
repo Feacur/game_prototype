@@ -26,10 +26,8 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 	enum Blend_Mode const blend_mode = json_read_blend_mode(json_get(json, S_("blend")));
 	enum Depth_Mode const depth_mode = json_read_depth_mode(json_get(json, S_("depth")));
 
-	*result = gfx_material_init(
-		shader_asset->gpu_handle,
-		blend_mode, depth_mode
-	);
+	*result = gfx_material_init(blend_mode, depth_mode);
+	gfx_material_set_shader(result, shader_asset->gpu_handle);
 
 	struct Hash_Table_U32 const * gpu_program_uniforms = gpu_program_get_uniforms(result->gpu_program_handle);
 	if (gpu_program_uniforms == NULL) { goto fail; }

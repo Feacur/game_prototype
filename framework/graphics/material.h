@@ -45,17 +45,19 @@ void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, stru
 // ----- ----- ----- ----- -----
 
 struct Gfx_Material {
-	struct Handle gpu_program_handle;
 	enum Blend_Mode blend_mode;
 	enum Depth_Mode depth_mode;
 	struct Gfx_Uniforms uniforms;
+	//
+	struct Handle gpu_program_handle;
 };
 
 struct Gfx_Material gfx_material_init(
-	struct Handle gpu_program_handle,
 	enum Blend_Mode blend_mode,
 	enum Depth_Mode depth_mode
 );
 void gfx_material_free(struct Gfx_Material * material);
+
+void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_handle);
 
 #endif
