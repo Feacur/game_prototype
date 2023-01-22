@@ -16,15 +16,18 @@
 static struct UI {
 	struct Gfx_Material font_material;
 	struct Asset_Handle font_asset_handle;
-	struct mat4 mat4_ProjectionView;
-	struct Transform_Rect transform_rect;
+	//
+	struct mat4 camera;
 	struct vec2 pivot;
 	struct rect rect;
 } gs_ui;
 
 void ui_init(void) {
-	gs_ui.font_material = gfx_material_init(BLEND_MODE_MIX, DEPTH_MODE_NONE);
-	gs_ui.transform_rect = c_transform_rect_default;
+	gs_ui = (struct UI){
+		.font_material = gfx_material_init(),
+	};
+	gs_ui.font_material.blend_mode = BLEND_MODE_MIX;
+	gs_ui.font_material.depth_mode = DEPTH_MODE_NONE;
 }
 
 void ui_free(void) {
@@ -34,7 +37,7 @@ void ui_free(void) {
 
 void ui_start_frame(void) {
 	struct uvec2 const screen_size = application_get_screen_size();
-	gs_ui.mat4_ProjectionView = camera_get_projection(
+	gs_ui.camera = camera_get_projection(
 		&(struct Camera_Params){
 			.mode = CAMERA_MODE_SCREEN,
 			.ncp = 0, .fcp = 1, .ortho = 1,
@@ -55,7 +58,7 @@ void ui_set_transform(struct Transform_Rect transform_rect) {
 		&gs_ui.pivot, &gs_ui.rect
 	);
 
-	struct mat4 matrix = gs_ui.mat4_ProjectionView;
+	struct mat4 matrix = gs_ui.camera;
 	matrix.w.x += gs_ui.pivot.x;
 	matrix.w.y += gs_ui.pivot.y;
 	batcher_2d_set_matrix(gs_renderer.batcher_2d, &matrix);

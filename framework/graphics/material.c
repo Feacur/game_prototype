@@ -68,14 +68,9 @@ void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, stru
 //     material
 // ----- ----- ----- ----- -----
 
-struct Gfx_Material gfx_material_init(
-	enum Blend_Mode blend_mode,
-	enum Depth_Mode depth_mode
-) {
+struct Gfx_Material gfx_material_init(void) {
 	return (struct Gfx_Material){
 		.uniforms = gfx_uniforms_init(),
-		.blend_mode = blend_mode,
-		.depth_mode = depth_mode,
 	};
 }
 

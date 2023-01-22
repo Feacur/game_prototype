@@ -42,10 +42,7 @@ struct Gfx_Material {
 	struct Handle gpu_program_handle;
 };
 
-struct Gfx_Material gfx_material_init(
-	enum Blend_Mode blend_mode,
-	enum Depth_Mode depth_mode
-);
+struct Gfx_Material gfx_material_init(void);
 void gfx_material_free(struct Gfx_Material * material);
 
 void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_handle);

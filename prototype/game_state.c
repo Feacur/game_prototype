@@ -130,7 +130,7 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 	json_read_transform_rect(json_get(json, S_("rect")), &entity->rect);
 	entity->rotation_mode = json_read_entity_rotation_mode(json_get(json, S_("rotation_mode")));
 
-	entity->camera   = (uint32_t)json_get_number(json, S_("camera_uid")) - 1;
+	entity->camera = (uint32_t)json_get_number(json, S_("camera_uid")) - 1;
 
 	struct CString const material_path = json_get_string(json, S_("material"));
 	entity->material_asset_handle = asset_system_aquire(&gs_game.assets, material_path);

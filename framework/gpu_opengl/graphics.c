@@ -1239,22 +1239,18 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 }
 
 inline static void gpu_execute_material(struct GPU_Command_Material const * command) {
-	if (command->material == NULL) { goto fail; }
-	if (handle_is_null(command->material->gpu_program_handle)) { goto fail; }
+	struct Handle const gpu_program_handle = (command->material != NULL)
+		? command->material->gpu_program_handle
+		: (struct Handle){0};
 
-	struct Gpu_Program const * gpu_program = handle_table_get(&gs_graphics_state.programs, command->material->gpu_program_handle);
-	if (gpu_program == NULL) {  goto fail; }
-
+	gpu_select_program(gpu_program_handle);
 	gpu_set_blend_mode(command->material->blend_mode);
 	gpu_set_depth_mode(command->material->depth_mode);
-	gpu_select_program(command->material->gpu_program_handle);
-	gpu_upload_uniforms(gpu_program, &command->material->uniforms, 0, command->material->uniforms.headers.count);
 
-	return;
-
-	// process errors
-	fail: // logger_to_console("failed to set material\n");
-	gpu_select_program((struct Handle){0});
+	struct Gpu_Program const * gpu_program = handle_table_get(&gs_graphics_state.programs, gpu_program_handle);
+	if (gpu_program != NULL) {
+		gpu_upload_uniforms(gpu_program, &command->material->uniforms, 0, command->material->uniforms.headers.count);
+	}
 }
 
 inline static void gpu_execute_uniform(struct GPU_Command_Uniform const * command) {
