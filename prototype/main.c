@@ -226,22 +226,10 @@ static void prototype_draw_objects(void) {
 		// process camera
 		{
 			uint32_t const override_offset = gs_renderer.uniforms.headers.count;
-			gfx_uniforms_push(&gs_renderer.uniforms, u_ProjectionView, (struct Gfx_Uniform_In){
-				.size = sizeof(mat4_ProjectionView),
-				.data = &mat4_ProjectionView,
-			});
-			gfx_uniforms_push(&gs_renderer.uniforms, u_Projection, (struct Gfx_Uniform_In){
-				.size = sizeof(mat4_Projection),
-				.data = &mat4_Projection,
-			});
-			gfx_uniforms_push(&gs_renderer.uniforms, u_View, (struct Gfx_Uniform_In){
-				.size = sizeof(mat4_View),
-				.data = &mat4_View,
-			});
-			gfx_uniforms_push(&gs_renderer.uniforms, u_ViewportSize, (struct Gfx_Uniform_In){
-				.size = sizeof(viewport_size),
-				.data = &viewport_size,
-			});
+			gfx_uniforms_push(&gs_renderer.uniforms, u_ProjectionView, A_(mat4_ProjectionView));
+			gfx_uniforms_push(&gs_renderer.uniforms, u_Projection,     A_(mat4_Projection));
+			gfx_uniforms_push(&gs_renderer.uniforms, u_View,           A_(mat4_View));
+			gfx_uniforms_push(&gs_renderer.uniforms, u_ViewportSize,   A_(viewport_size));
 
 			array_any_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_UNIFORM,
@@ -314,10 +302,7 @@ static void prototype_draw_objects(void) {
 					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->asset_handle);
 
 					uint32_t const override_offset = gs_renderer.uniforms.headers.count;
-					gfx_uniforms_push(&gs_renderer.uniforms, u_Model, (struct Gfx_Uniform_In){
-						.size = sizeof(mat4_Model),
-						.data = &mat4_Model,
-					});
+					gfx_uniforms_push(&gs_renderer.uniforms, u_Model, A_(mat4_Model));
 
 					array_any_push_many(&gs_renderer.gpu_commands, 3, (struct GPU_Command[]){
 						(struct GPU_Command){

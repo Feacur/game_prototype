@@ -50,12 +50,6 @@ void buffer_push_many(struct Buffer * buffer, size_t count, void const * value) 
 	buffer->count += count;
 }
 
-void buffer_align(struct Buffer * buffer) {
-	size_t const target_count = align_u64(buffer->count);
-	buffer_grow_if_must(buffer, target_count);
-	buffer->count = target_count;
-}
-
 void buffer_set_many(struct Buffer * buffer, size_t index, size_t count, void const * value) {
 	if (index + count > buffer->count) { logger_to_console("out of bounds\n"); DEBUG_BREAK(); return; }
 	common_memcpy(

@@ -22,7 +22,7 @@ struct uvec2 entity_get_content_size(
 		case ENTITY_TYPE_QUAD_2D: {
 			struct Entity_Quad const * quad = &entity->as.quad;
 
-			struct Gfx_Uniform_Out const value = gfx_uniforms_get(&material->uniforms, quad->texture_uniform);
+			struct CArray_Mut const value = gfx_uniforms_get(&material->uniforms, quad->texture_uniform);
 			struct Handle const * gpu_texture_handle = value.data;
 			if (gpu_texture_handle == NULL) { goto fail; }
 

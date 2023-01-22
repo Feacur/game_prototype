@@ -21,24 +21,14 @@ struct Gfx_Uniforms {
 	struct Buffer payload;
 };
 
-struct Gfx_Uniform_In {
-	uint32_t size;
-	void const * data;
-};
-
-struct Gfx_Uniform_Out {
-	uint32_t size;
-	void * data;
-};
-
 struct Gfx_Uniforms gfx_uniforms_init(void);
 void gfx_uniforms_free(struct Gfx_Uniforms * uniforms);
 
 void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms);
 
-struct Gfx_Uniform_Out gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, uint32_t uniform_id);
-void gfx_uniforms_set(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct Gfx_Uniform_In value);
-void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct Gfx_Uniform_In value);
+struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, uint32_t uniform_id);
+void gfx_uniforms_set(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct CArray value);
+void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct CArray value);
 
 // ----- ----- ----- ----- -----
 //     material

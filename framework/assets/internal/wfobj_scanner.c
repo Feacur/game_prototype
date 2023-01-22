@@ -86,18 +86,18 @@ static enum WFObj_Token_Type wfobj_scanner_check_keyword(struct WFObj_Scanner * 
 
 static enum WFObj_Token_Type wfobj_scanner_identifier_type(struct WFObj_Scanner * scanner) {
 	switch (scanner->start[0]) {
-		case 'f': return wfobj_scanner_check_keyword(scanner, 1, S_EMPTY, WFOBJ_TOKEN_FACE);
-		case 'g': return wfobj_scanner_check_keyword(scanner, 1, S_EMPTY, WFOBJ_TOKEN_GROUP);
-		case 'o': return wfobj_scanner_check_keyword(scanner, 1, S_EMPTY, WFOBJ_TOKEN_OBJECT);
-		case 's': return wfobj_scanner_check_keyword(scanner, 1, S_EMPTY, WFOBJ_TOKEN_SMOOTH);
+		case 'f': return wfobj_scanner_check_keyword(scanner, 1, S_(""), WFOBJ_TOKEN_FACE);
+		case 'g': return wfobj_scanner_check_keyword(scanner, 1, S_(""), WFOBJ_TOKEN_GROUP);
+		case 'o': return wfobj_scanner_check_keyword(scanner, 1, S_(""), WFOBJ_TOKEN_OBJECT);
+		case 's': return wfobj_scanner_check_keyword(scanner, 1, S_(""), WFOBJ_TOKEN_SMOOTH);
 		case 'v':
 			if (scanner->current - scanner->start > 1) {
 				switch (scanner->start[1]) {
-					case 't': return wfobj_scanner_check_keyword(scanner, 2, S_EMPTY, WFOBJ_TOKEN_TEXCOORD);
-					case 'n': return wfobj_scanner_check_keyword(scanner, 2, S_EMPTY, WFOBJ_TOKEN_NORMAL);
+					case 't': return wfobj_scanner_check_keyword(scanner, 2, S_(""), WFOBJ_TOKEN_TEXCOORD);
+					case 'n': return wfobj_scanner_check_keyword(scanner, 2, S_(""), WFOBJ_TOKEN_NORMAL);
 				}
 			}
-			return wfobj_scanner_check_keyword(scanner, 1, S_EMPTY, WFOBJ_TOKEN_POSITION);
+			return wfobj_scanner_check_keyword(scanner, 1, S_(""), WFOBJ_TOKEN_POSITION);
 	}
 	return WFOBJ_TOKEN_IDENTIFIER;
 }

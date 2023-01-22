@@ -63,7 +63,7 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 			case DATA_TYPE_UNIT_S:
 			case DATA_TYPE_UNIT_F: {
 				json_load_many_texture(system, uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&result->uniforms, it.key_hash, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result->uniforms, it.key_hash, (struct CArray){
 					.size = sizeof(struct Handle) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -71,7 +71,7 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 
 			case DATA_TYPE_R32_U: {
 				json_read_many_u32(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&result->uniforms, it.key_hash, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result->uniforms, it.key_hash, (struct CArray){
 					.size = sizeof(uint32_t) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -79,7 +79,7 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 
 			case DATA_TYPE_R32_S: {
 				json_read_many_s32(uniform_json,uniform_count,  uniform_data_buffer.data);
-				gfx_uniforms_set(&result->uniforms, it.key_hash, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result->uniforms, it.key_hash, (struct CArray){
 					.size = sizeof(int32_t) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -87,7 +87,7 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 
 			case DATA_TYPE_R32_F: {
 				json_read_many_flt(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&result->uniforms, it.key_hash, (struct Gfx_Uniform_In){
+				gfx_uniforms_set(&result->uniforms, it.key_hash, (struct CArray){
 					.size = sizeof(float) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});

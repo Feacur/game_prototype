@@ -60,7 +60,7 @@ uint32_t json_count(struct JSON const * value) {
 
 // -- JSON as data
 struct CString json_as_string(struct JSON const * value) {
-	if (value->type != JSON_STRING) { return S_NULL; }
+	if (value->type != JSON_STRING) { return (struct CString){0}; }
 	return strings_get(value->strings, value->as.id);
 }
 

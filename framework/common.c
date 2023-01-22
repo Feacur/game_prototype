@@ -7,6 +7,28 @@
 //
 #include "common.h"
 
+// ----- ----- ----- ----- -----
+//     array
+// ----- ----- ----- ----- -----
+
+struct CArray carray_const(struct CArray_Mut value) {
+	return (struct CArray){
+		.size = value.size,
+		.data = value.data,
+	};
+}
+
+// ----- ----- ----- ----- -----
+//     string
+// ----- ----- ----- ----- -----
+
+struct CString cstring_const(struct CString_Mut value) {
+	return (struct CString){
+		.length = value.length,
+		.data = value.data,
+	};
+}
+
 bool cstring_contains(struct CString v1, struct CString v2) {
 	if (v1.length < v2.length) { return false; }
 	return strstr(v1.data, v2.data) != NULL;
@@ -31,9 +53,8 @@ bool cstring_ends(struct CString v1, struct CString v2) {
 //     standard
 // ----- ----- ----- ----- -----
 
-void common_exit_failure(void) {
-	exit(EXIT_FAILURE);
-}
+__declspec(noreturn) void common_exit_success(void) { exit(EXIT_SUCCESS); }
+__declspec(noreturn) void common_exit_failure(void) { exit(EXIT_FAILURE); }
 
 void common_memset(void * target, uint8_t value, size_t size) {
 	memset(target, value, size);

@@ -147,7 +147,7 @@ void debug_to_system_free(void) {
 #include "framework/platform_debug.h"
 
 struct Callstack platform_debug_get_callstack(void) { return (struct Callstack){0}; }
-struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_t offset) { (void)callstack; (void)offset; return S_NULL; }
+struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_t offset) { (void)callstack; (void)offset; return (struct CString){0}; }
 
 //
 #include "debug_to_system.h"

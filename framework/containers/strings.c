@@ -47,10 +47,10 @@ uint32_t strings_add(struct Strings * strings, struct CString value) {
 }
 
 struct CString strings_get(struct Strings const * strings, uint32_t id) {
-	if (id > strings->lengths.count) { return S_NULL; }
+	if (id > strings->lengths.count) { return (struct CString){0}; }
 	uint32_t const index = id - 1;
 	return (struct CString){
 		.length = strings->lengths.data[index],
-		.data = (char const *)((uint8_t *)strings->buffer.data + strings->offsets.data[index]),
+		.data = (char const *)strings->buffer.data + strings->offsets.data[index],
 	};
 }

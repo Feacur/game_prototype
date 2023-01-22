@@ -11,23 +11,51 @@
 // #define NORETURN_POSTFIX
 // #endif
 
+// ----- ----- ----- ----- -----
+//     array
+// ----- ----- ----- ----- -----
+
+struct CArray {
+	size_t size;
+	void const * data;
+};
+
+struct CArray_Mut {
+	size_t size;
+	void * data;
+};
+
+struct CArray carray_const(struct CArray_Mut value);
+
+#define A_(value) (struct CArray){.size = sizeof(value), .data = &value}
+
+// ----- ----- ----- ----- -----
+//     string
+// ----- ----- ----- ----- -----
+
 struct CString {
 	uint32_t length;
 	char const * data;
 };
 
+struct CString_Mut {
+	uint32_t length;
+	char * data;
+};
+
+struct CString cstring_const(struct CString_Mut value);
 bool cstring_contains(struct CString v1, struct CString v2);
 bool cstring_equals(struct CString v1, struct CString v2);
 bool cstring_starts(struct CString v1, struct CString v2);
 bool cstring_ends(struct CString v1, struct CString v2);
 
-typedef void * Allocator(void * pointer, size_t size);
+#define S_(value) (struct CString){.length = sizeof(value) - 1, .data = "" value}
 
 // ----- ----- ----- ----- -----
 //     standard
 // ----- ----- ----- ----- -----
 
-__declspec(noreturn)
+void common_exit_success(void);
 void common_exit_failure(void);
 
 void common_memset(void * target, uint8_t value, size_t size);
@@ -44,14 +72,12 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 //     utilities
 // ----- ----- ----- ----- -----
 
+typedef void * Allocator(void * pointer, size_t size);
+
 #define STRINGIFY_A_VALUE(v) #v
 #define STRINGIFY_A_MACRO(m) STRINGIFY_A_VALUE(m)
 #define TOKENIZE_A_VALUE(v1, v2) v1##v2
 #define TOKENIZE_A_MACRO(m1, m2) TOKENIZE_A_VALUE(m1, m2)
-
-#define S_(value) (struct CString){.length = sizeof("" value) - 1, .data = value,}
-#define S_NULL (struct CString){0}
-#define S_EMPTY S_("")
 
 #define FILE_AND_LINE __FILE__ ":" STRINGIFY_A_MACRO(__LINE__)
 #define S_FILE_AND_LINE S_(FILE_AND_LINE)

@@ -67,12 +67,9 @@ void ui_set_shader(struct CString name) {
 	gfx_material_set_shader(&gs_ui.font_material, gpu_handle);
 
 	//
-	struct vec4 const p_Color_value = {1, 1, 1, 1};
+	struct vec4 const color = {1, 1, 1, 1};
 	uint32_t const p_Color = graphics_add_uniform_id(S_("p_Color"));
-	gfx_uniforms_set(&gs_ui.font_material.uniforms, p_Color, (struct Gfx_Uniform_In){
-		.size = sizeof(p_Color_value),
-		.data = &p_Color_value.x,
-	});
+	gfx_uniforms_set(&gs_ui.font_material.uniforms, p_Color, A_(color));
 }
 
 void ui_set_font(struct CString name) {
@@ -82,10 +79,7 @@ void ui_set_font(struct CString name) {
 
 	//
 	uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
-	gfx_uniforms_set(&gs_ui.font_material.uniforms, p_Texture, (struct Gfx_Uniform_In){
-		.size = sizeof(gpu_handle),
-		.data = &gpu_handle,
-	});
+	gfx_uniforms_set(&gs_ui.font_material.uniforms, p_Texture, A_(gpu_handle));
 }
 
 void ui_text(struct CString value, struct vec2 alignment, bool wrap, float size) {
