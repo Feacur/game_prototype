@@ -2,5 +2,5 @@
 	"shader": "assets/shaders/batcher_2d.glsl",
 	"blend": "none", "depth": "none",
 	"p_Texture": {"path": "assets/images/test.image"},
-	"p_Color": [0.2, 0.6, 1, 1],
+	"p_Tint": [0.2, 0.6, 1, 1],
 }

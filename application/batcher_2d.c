@@ -35,13 +35,13 @@
 // 0-----------2
 
 #define BATCHER_2D_BUFFERS_COUNT 2
-#define BATCHER_2D_ATTRIBUTES_COUNT 2
+#define BATCHER_2D_ATTRIBUTES_COUNT 3
 
 struct Batcher_2D_Text {
 	uint32_t codepoints_from, codepoints_to;
 	uint32_t buffer_vertices_offset;
 	// @idea: use `Asset_Ref` instead
-	struct Asset_Font const * font; float size;
+	struct Asset_Font const * cached_font; float size;
 	// @note: local to `batcher_2d_add_text`
 	uint32_t breaker_codepoint;
 	struct vec2 position;
@@ -56,6 +56,7 @@ struct Batcher_2D_Batch {
 struct Batcher_2D_Vertex {
 	struct vec2 position;
 	struct vec2 tex_coord;
+	struct vec4 color;
 };
 
 struct Batcher_2D {
@@ -65,6 +66,7 @@ struct Batcher_2D {
 	struct Array_Any texts;          // `struct Batcher_2D_Text`
 	struct Hash_Set_U64 fonts_cache; // `struct Asset_Font const *`
 	//
+	struct vec4 color;
 	struct mat4 matrix;
 	//
 	struct Array_Any buffer_vertices; // `struct Batcher_2D_Vertex`
@@ -82,6 +84,7 @@ static void batcher_2d_bake_pass(struct Batcher_2D * batcher);
 struct Batcher_2D * batcher_2d_init(void) {
 	struct Batcher_2D * batcher = MEMORY_ALLOCATE(struct Batcher_2D);
 	*batcher = (struct Batcher_2D){
+		.color = (struct vec4){1, 1, 1, 1},
 		.matrix = c_mat4_identity,
 		.mesh_parameters = {
 			(struct Mesh_Parameters){
@@ -93,6 +96,8 @@ struct Batcher_2D * batcher_2d_init(void) {
 					SIZE_OF_MEMBER(struct Batcher_2D_Vertex, position) / sizeof(float),
 					ATTRIBUTE_TYPE_TEXCOORD,
 					SIZE_OF_MEMBER(struct Batcher_2D_Vertex, tex_coord) / sizeof(float),
+					ATTRIBUTE_TYPE_COLOR,
+					SIZE_OF_MEMBER(struct Batcher_2D_Vertex, color) / sizeof(float),
 				},
 			},
 			(struct Mesh_Parameters){
@@ -131,8 +136,12 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	MEMORY_FREE(batcher);
 }
 
-void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const * matrix) {
-	batcher->matrix = (matrix != NULL) ? *matrix : c_mat4_identity;
+void batcher_2d_set_color(struct Batcher_2D * batcher, struct vec4 value) {
+	batcher->color = value;
+}
+
+void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const value) {
+	batcher->matrix = value;
 }
 
 void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material const * material) {
@@ -142,18 +151,19 @@ void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material co
 	batcher->batch.material = material;
 }
 
-inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord);
+inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord, struct vec4 color);
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
 	struct rect rect,
 	struct rect uv
 ) {
 	uint32_t const vertex_offset = batcher->buffer_vertices.count;
+	struct vec4 const color = batcher->color;
 	array_any_push_many(&batcher->buffer_vertices, 4, (struct Batcher_2D_Vertex[]){
-		batcher_2d_make_vertex(batcher->matrix, rect.min, uv.min),
-		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect.min.x, rect.max.y}, (struct vec2){uv.min.x, uv.max.y}),
-		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect.max.x, rect.min.y}, (struct vec2){uv.max.x, uv.min.y}),
-		batcher_2d_make_vertex(batcher->matrix, rect.max, uv.max),
+		batcher_2d_make_vertex(batcher->matrix, rect.min, uv.min, color),
+		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect.min.x, rect.max.y}, (struct vec2){uv.min.x, uv.max.y}, color),
+		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect.max.x, rect.min.y}, (struct vec2){uv.max.x, uv.min.y}, color),
+		batcher_2d_make_vertex(batcher->matrix, rect.max, uv.max, color),
 	});
 	array_u32_push_many(&batcher->buffer_indices, 3 * 2, (uint32_t[]){
 		vertex_offset + 3, vertex_offset + 1, vertex_offset + 0,
@@ -166,6 +176,7 @@ void batcher_2d_add_text(
 	struct rect rect, struct vec2 alignment, bool wrap,
 	struct Asset_Font const * font, struct CString value, float size
 ) {
+	if (font == NULL) { return; }
 	if (font->font_atlas == NULL) { return; }
 
 	float const scale        = font_atlas_get_scale(font->font_atlas, size);
@@ -195,7 +206,7 @@ void batcher_2d_add_text(
 				// @todo: (?) arena/stack allocator
 				array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
 					.codepoints_from = block_strings_offset, .codepoints_to = batcher->codepoints.count,
-					.font = font, .size = size,
+					.cached_font = font, .size = size,
 					.breaker_codepoint = it.codepoint,
 					.full_size_x = block_width,
 				});
@@ -219,7 +230,7 @@ void batcher_2d_add_text(
 			// @todo: (?) arena/stack allocator
 			array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
 				.codepoints_from = block_strings_offset, .codepoints_to = batcher->codepoints.count,
-				.font = font, .size = size,
+				.cached_font = font, .size = size,
 				.full_size_x = block_width,
 			});
 		}
@@ -245,7 +256,7 @@ void batcher_2d_add_text(
 				uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
 				uint32_t const previous = (strings_i > text->codepoints_from) ? array_u32_at(&batcher->codepoints, strings_i - 1) : '\0';
 
-				struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
+				struct Font_Glyph const * glyph = font_atlas_get_glyph(text->cached_font->font_atlas, codepoint, text->size);
 				float const full_size_x = (glyph != NULL) ? glyph->params.full_size_x : glyph_error->params.full_size_x;
 
 				float const kerning = font_atlas_get_kerning(font->font_atlas, previous, codepoint, scale);
@@ -254,7 +265,7 @@ void batcher_2d_add_text(
 
 			// process breaker
 			{
-				struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, text->breaker_codepoint, text->size);
+				struct Font_Glyph const * glyph = font_atlas_get_glyph(text->cached_font->font_atlas, text->breaker_codepoint, text->size);
 				offset.x += glyph->params.full_size_x;
 				if (text->breaker_codepoint == '\n') {
 					offset.x = rect.min.x; // @note: auto `\r`
@@ -331,7 +342,7 @@ void batcher_2d_add_text(
 			uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
 				uint32_t const previous = (strings_i > text->codepoints_from) ? array_u32_at(&batcher->codepoints, strings_i - 1) : '\0';
 
-			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
+			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->cached_font->font_atlas, codepoint, text->size);
 			struct Font_Glyph_Params const params = (glyph != NULL) ? glyph->params : glyph_error->params;
 
 			float const kerning = font_atlas_get_kerning(font->font_atlas, previous, codepoint, scale);
@@ -371,7 +382,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 		for (uint32_t i = 0; i < batcher->texts.count; i++) {
 			struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
-			hash_set_u64_set(&batcher->fonts_cache, (uint64_t)text->font);
+			hash_set_u64_set(&batcher->fonts_cache, (uint64_t)text->cached_font);
 		}
 
 		FOR_HASH_SET_U64 (&batcher->fonts_cache, it) {
@@ -390,7 +401,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, block_i);
 		uint32_t vertices_offset = text->buffer_vertices_offset;
 
-		struct Font_Glyph const * glyph_error = font_atlas_get_glyph(text->font->font_atlas, '\0', text->size);
+		struct Font_Glyph const * glyph_error = font_atlas_get_glyph(text->cached_font->font_atlas, '\0', text->size);
 		struct rect const glyph_error_uv = glyph_error->uv;
 
 		for (uint32_t strings_i = text->codepoints_from; strings_i < text->codepoints_to; strings_i++) {
@@ -398,7 +409,7 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 			if (codepoint_is_invisible(codepoint)) { continue; }
 
-			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->font->font_atlas, codepoint, text->size);
+			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->cached_font->font_atlas, codepoint, text->size);
 			struct rect const uv = (glyph != NULL) ? glyph->uv : glyph_error_uv;
 
 			struct Batcher_2D_Vertex * vertices = array_any_at(&batcher->buffer_vertices, vertices_offset);
@@ -472,14 +483,19 @@ void batcher_2d_bake(struct Batcher_2D * batcher) {
 
 //
 
-inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord) {
+inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord, struct vec4 color) {
 	return (struct Batcher_2D_Vertex){
 		.position = {
 			m.x.x * position.x + m.y.x * position.y + m.w.x,
 			m.x.y * position.x + m.y.y * position.y + m.w.y,
 		},
 		.tex_coord = tex_coord,
+		.color = color,
 	};
+
+/*
+	.position = mat4_mul_vec(m, position as vec4);
+*/
 }
 
 static void batcher_2d_bake_pass(struct Batcher_2D * batcher) {

@@ -17,7 +17,8 @@ struct Array_Any;
 struct Batcher_2D * batcher_2d_init(void);
 void batcher_2d_free(struct Batcher_2D * batcher);
 
-void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const * matrix);
+void batcher_2d_set_color(struct Batcher_2D * batcher, struct vec4 const value);
+void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const value);
 void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material const * material);
 
 void batcher_2d_add_quad(

@@ -2,5 +2,5 @@
 	"shader": "assets/shaders/batcher_2d.glsl",
 	"blend": "mix", "depth": "none",
 	"p_Texture": {"path": "assets/fonts/NotoSerifKR-Regular.otf"},
-	"p_Color": [1, 1, 1, 1],
+	"p_Tint": [1, 1, 1, 1],
 }

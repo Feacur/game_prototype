@@ -215,6 +215,8 @@ static void prototype_draw_objects(void) {
 		.id = INDEX_EMPTY, .gen = INDEX_EMPTY,
 	};
 
+	batcher_2d_set_color(gs_renderer.batcher_2d, (struct vec4){1, 1, 1, 1});
+
 	for (uint32_t camera_i = 0; camera_i < gs_game.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&gs_game.cameras, camera_i);
 		struct uvec2 const viewport_size = camera->cached_size;
@@ -287,7 +289,7 @@ static void prototype_draw_objects(void) {
 				case ENTITY_TYPE_QUAD_2D:
 				case ENTITY_TYPE_TEXT_2D: {
 					struct mat4 const matrix = mat4_mul_mat(mat4_ProjectionView, mat4_Model);
-					batcher_2d_set_matrix(gs_renderer.batcher_2d, &matrix);
+					batcher_2d_set_matrix(gs_renderer.batcher_2d, matrix);
 					batcher_2d_set_material(gs_renderer.batcher_2d, &material->value);
 				} break;
 			}
@@ -373,7 +375,17 @@ static struct CString prototype_get_fps_cstring(void) {
 static void prototype_draw_ui(void) {
 	ui_start_frame();
 
+	ui_set_transform((struct Transform_Rect){
+		.anchor_min = (struct vec2){1, 1},
+		.anchor_max = (struct vec2){1, 1},
+		.extents = (struct vec2){200, 100},
+		.pivot = (struct vec2){1, 1},
+	});
+	ui_set_color((struct vec4){0.4f, 0.4f, 0.4f, 1});
+	ui_quad((struct rect){.max = {1, 1}});
+
 	ui_set_transform((struct Transform_Rect){.anchor_max = (struct vec2){1, 1}});
+	ui_set_color((struct vec4){0.8f, 0.8f, 0.8f, 1});
 	ui_text(prototype_get_fps_cstring(), (struct vec2){1, 1}, false, 16);
 
 	ui_end_frame();
@@ -391,6 +403,7 @@ static void app_init(void) {
 
 	ui_init();
 	ui_set_shader(S_("assets/shaders/batcher_2d.glsl"));
+	ui_set_image(S_("assets/images/ui.image"));
 	ui_set_font(S_("assets/fonts/Ubuntu-Regular.ttf"));
 
 	prototype_init();

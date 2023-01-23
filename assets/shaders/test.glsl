@@ -19,7 +19,7 @@ void main() {
 #if defined(FRAGMENT_SHADER)
 in vec2 v_TexCoord;
 
-uniform vec4 p_Color;
+uniform vec4 p_Tint;
 uniform sampler2D p_Texture;
 uniform vec4 p_Texture_OS;
 
@@ -45,7 +45,7 @@ float visualize_depth(float depth, float factor) {
 void main() {
 	vec4 texture_pixel = texture(p_Texture, v_TexCoord * p_Texture_OS.zw + p_Texture_OS.xy);
 	float depth = visualize_depth(gl_FragCoord.z, 20);
-	out_color = texture_pixel * p_Color;
+	out_color = texture_pixel * p_Tint;
 	out_color = mix(out_color, vec4(depth, depth, depth, 1), gl_FragCoord.x / u_ViewportSize.x < 0.5);
 }
 #endif
