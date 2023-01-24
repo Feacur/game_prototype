@@ -175,10 +175,10 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 		"\n",
 		glsl_version,
 		//
-		ATTRIBUTE_TYPE_POSITION,
-		ATTRIBUTE_TYPE_TEXCOORD,
-		ATTRIBUTE_TYPE_NORMAL,
-		ATTRIBUTE_TYPE_COLOR,
+		ATTRIBUTE_TYPE_POSITION - 1,
+		ATTRIBUTE_TYPE_TEXCOORD - 1,
+		ATTRIBUTE_TYPE_NORMAL - 1,
+		ATTRIBUTE_TYPE_COLOR - 1,
 		//
 		(double)gs_graphics_state.clip_space.depth_near,
 		(double)gs_graphics_state.clip_space.depth_far,
@@ -726,8 +726,9 @@ static struct Handle gpu_mesh_allocate(
 
 		// vertex buffer
 		uint32_t all_attributes_size = 0;
-		for (uint32_t atti = 0; atti < parameters.attributes_count; atti++) {
-			all_attributes_size += parameters.attributes[atti * 2 + 1] * data_type_get_size(parameters.type);
+		for (uint32_t atti = 0; atti < ATTRIBUTE_TYPE_INTERNAL_COUNT; atti++) {
+			uint32_t count = parameters.attributes[atti * 2 + 1];
+			all_attributes_size += count * data_type_get_size(parameters.type);
 		}
 
 		GLuint buffer_index = 0;
@@ -735,17 +736,22 @@ static struct Handle gpu_mesh_allocate(
 		glVertexArrayVertexBuffer(mesh_id, buffer_index, buffer->id, buffer_start, (GLsizei)all_attributes_size);
 
 		uint32_t attribute_offset = 0;
-		for (uint32_t atti = 0; atti < parameters.attributes_count; atti++) {
-			GLuint location = (GLuint)parameters.attributes[atti * 2];
-			uint32_t size = parameters.attributes[atti * 2 + 1];
+		for (uint32_t atti = 0; atti < ATTRIBUTE_TYPE_INTERNAL_COUNT; atti++) {
+			enum Attribute_Type const type = (enum Attribute_Type)parameters.attributes[atti * 2];
+			if (type == ATTRIBUTE_TYPE_NONE) { continue; }
+
+			uint32_t count = parameters.attributes[atti * 2 + 1];
+			if (count == 0) { continue; }
+
+			GLuint const location = (GLuint)(type - 1);
 			glEnableVertexArrayAttrib(mesh_id, location);
 			glVertexArrayAttribBinding(mesh_id, location, buffer_index);
 			glVertexArrayAttribFormat(
 				mesh_id, location,
-				(GLint)size, gpu_data_type(parameters.type),
+				(GLint)count, gpu_data_type(parameters.type),
 				GL_FALSE, (GLuint)attribute_offset
 			);
-			attribute_offset += size * data_type_get_size(parameters.type);
+			attribute_offset += count * data_type_get_size(parameters.type);
 		}
 	}
 

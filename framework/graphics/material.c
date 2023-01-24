@@ -31,8 +31,8 @@ void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {
 	buffer_clear(&uniforms->payload);
 }
 
-struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, uint32_t uniform_id) {
-	for (uint32_t i = 0; i < uniforms->headers.count; i++) {
+struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, uint32_t uniform_id, uint32_t offset) {
+	for (uint32_t i = offset; i < uniforms->headers.count; i++) {
 		struct Gfx_Uniforms_Entry const * entry = array_any_at(&uniforms->headers, i);
 		if (entry->id != uniform_id) { continue; }
 		return (struct CArray_Mut){
@@ -40,13 +40,17 @@ struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, uint32_
 			.size = entry->size,
 		};
 	}
-	struct CString const uniform_name = graphics_get_uniform_value(uniform_id);
-	logger_to_console("material doesn't have uniform '%.*s'\n", uniform_name.length, uniform_name.data);
 	return (struct CArray_Mut){0};
 }
 
 void gfx_uniforms_set(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct CArray value) {
-	struct CArray_Mut field = gfx_uniforms_get(uniforms, uniform_id);
+	struct CArray_Mut field = gfx_uniforms_get(uniforms, uniform_id, 0);
+	if (field.data == NULL) {
+		struct CString const uniform_name = graphics_get_uniform_value(uniform_id);
+		logger_to_console("creating uniform '%.*s'\n", uniform_name.length, uniform_name.data);
+		gfx_uniforms_push(uniforms, uniform_id, value);
+		return;
+	}
 	if (field.size >= value.size) {
 		common_memcpy(field.data, value.data, value.size);
 		return;

@@ -21,6 +21,8 @@ void batcher_2d_set_color(struct Batcher_2D * batcher, struct vec4 const value);
 void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const value);
 void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material const * material);
 
+void batcher_2d_uniforms_push(struct Batcher_2D * batcher, uint32_t uniform_id, struct CArray value);
+
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
 	struct rect rect,

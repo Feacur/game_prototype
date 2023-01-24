@@ -26,13 +26,13 @@
 // @idea: add a 3d batcher
 
 // quad layout
-// 1-----------3
+// 3-----------2
 // |         / |
 // |       /   |
 // |     /     |
 // |   /       |
 // | /         |
-// 0-----------2
+// 0-----------1
 
 #define BATCHER_2D_BUFFERS_COUNT 2
 #define BATCHER_2D_ATTRIBUTES_COUNT 3
@@ -49,8 +49,9 @@ struct Batcher_2D_Text {
 };
 
 struct Batcher_2D_Batch {
-	uint32_t offset, length;
 	struct Gfx_Material const * material; // @idea: internalize materials if async
+	uint32_t indices_offset, indices_length;
+	uint32_t uniform_offset, uniform_length;
 };
 
 struct Batcher_2D_Vertex {
@@ -60,6 +61,8 @@ struct Batcher_2D_Vertex {
 };
 
 struct Batcher_2D {
+	struct Gfx_Uniforms uniforms;
+	//
 	struct Batcher_2D_Batch batch;
 	struct Array_U32 codepoints;
 	struct Array_Any batches;        // `struct Batcher_2D_Batch`
@@ -84,13 +87,13 @@ static void batcher_2d_bake_pass(struct Batcher_2D * batcher);
 struct Batcher_2D * batcher_2d_init(void) {
 	struct Batcher_2D * batcher = MEMORY_ALLOCATE(struct Batcher_2D);
 	*batcher = (struct Batcher_2D){
+		.uniforms = gfx_uniforms_init(),
 		.color = (struct vec4){1, 1, 1, 1},
 		.matrix = c_mat4_identity,
 		.mesh_parameters = {
 			(struct Mesh_Parameters){
 				.type = DATA_TYPE_R32_F,
 				.flags = MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
-				.attributes_count = BATCHER_2D_ATTRIBUTES_COUNT,
 				.attributes = {
 					ATTRIBUTE_TYPE_POSITION,
 					SIZE_OF_MEMBER(struct Batcher_2D_Vertex, position) / sizeof(float),
@@ -132,6 +135,8 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	array_any_free(&batcher->buffer_vertices);
 	array_u32_free(&batcher->buffer_indices);
 	//
+	gfx_uniforms_free(&batcher->uniforms);
+	//
 	common_memset(batcher, 0, sizeof(*batcher));
 	MEMORY_FREE(batcher);
 }
@@ -151,6 +156,14 @@ void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material co
 	batcher->batch.material = material;
 }
 
+void batcher_2d_uniforms_push(struct Batcher_2D * batcher, uint32_t uniform_id, struct CArray value) {
+	struct CArray_Mut const field = gfx_uniforms_get(&batcher->uniforms, uniform_id, batcher->batch.uniform_offset);
+	if (field.data != NULL) {
+		batcher_2d_bake_pass(batcher);
+	}
+	gfx_uniforms_push(&batcher->uniforms, uniform_id, value);
+}
+
 inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord, struct vec4 color);
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
@@ -161,13 +174,13 @@ void batcher_2d_add_quad(
 	struct vec4 const color = batcher->color;
 	array_any_push_many(&batcher->buffer_vertices, 4, (struct Batcher_2D_Vertex[]){
 		batcher_2d_make_vertex(batcher->matrix, rect.min, uv.min, color),
-		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect.min.x, rect.max.y}, (struct vec2){uv.min.x, uv.max.y}, color),
 		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect.max.x, rect.min.y}, (struct vec2){uv.max.x, uv.min.y}, color),
 		batcher_2d_make_vertex(batcher->matrix, rect.max, uv.max, color),
+		batcher_2d_make_vertex(batcher->matrix, (struct vec2){rect.min.x, rect.max.y}, (struct vec2){uv.min.x, uv.max.y}, color),
 	});
 	array_u32_push_many(&batcher->buffer_indices, 3 * 2, (uint32_t[]){
-		vertex_offset + 3, vertex_offset + 1, vertex_offset + 0,
-		vertex_offset + 0, vertex_offset + 2, vertex_offset + 3,
+		vertex_offset + 0, vertex_offset + 1, vertex_offset + 2,
+		vertex_offset + 2, vertex_offset + 3, vertex_offset + 0,
 	});
 }
 
@@ -414,9 +427,9 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 
 			struct Batcher_2D_Vertex * vertices = array_any_at(&batcher->buffer_vertices, vertices_offset);
 			vertices[0].tex_coord = uv.min;
-			vertices[1].tex_coord = (struct vec2){uv.min.x, uv.max.y};
-			vertices[2].tex_coord = (struct vec2){uv.max.x, uv.min.y};
-			vertices[3].tex_coord = uv.max;
+			vertices[1].tex_coord = (struct vec2){uv.max.x, uv.min.y};
+			vertices[2].tex_coord = uv.max;
+			vertices[3].tex_coord = (struct vec2){uv.min.x, uv.max.y};
 
 			vertices_offset += 4;
 		}
@@ -430,6 +443,7 @@ void batcher_2d_clear(struct Batcher_2D * batcher) {
 	array_any_clear(&batcher->texts);
 	array_any_clear(&batcher->buffer_vertices);
 	array_u32_clear(&batcher->buffer_indices);
+	gfx_uniforms_clear(&batcher->uniforms);
 }
 
 void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * gpu_commands) {
@@ -437,21 +451,36 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * g
 	for (uint32_t i = 0; i < batcher->batches.count; i++) {
 		struct Batcher_2D_Batch const * batch = array_any_at(&batcher->batches, i);
 
-		array_any_push_many(gpu_commands, 2, (struct GPU_Command[]){
-			(struct GPU_Command){
-				.type = GPU_COMMAND_TYPE_MATERIAL,
-				.as.material = {
-					.material = batch->material,
-				},
+		array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
+			.type = GPU_COMMAND_TYPE_MATERIAL,
+			.as.material = {
+				.material = batch->material,
 			},
-			(struct GPU_Command){
+		});
+
+		if (batch->uniform_length > 0) {
+			array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
+				.type = GPU_COMMAND_TYPE_UNIFORM,
+				.as.uniform = {
+					.program_handle = batch->material->gpu_program_handle,
+					.override = {
+						.uniforms = &batcher->uniforms,
+						.offset = batch->uniform_offset,
+						.count = batch->uniform_length,
+					},
+				},
+			});
+		}
+
+		if (batch->indices_length > 0) {
+			array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_DRAW,
 				.as.draw = {
 					.mesh_handle = batcher->gpu_mesh_handle,
-					.offset = batch->offset, .length = batch->length,
+					.offset = batch->indices_offset, .length = batch->indices_length,
 				},
-			},
-		});
+			});
+		}
 	}
 	array_any_clear(&batcher->batches);
 }
@@ -460,7 +489,7 @@ void batcher_2d_bake(struct Batcher_2D * batcher) {
 	if (batcher->batches.count > 0) {
 		logger_to_console("unissued batches\n"); DEBUG_BREAK();
 	}
-	if (batcher->batch.offset < batcher->buffer_indices.count) {
+	if (batcher->batch.indices_offset < batcher->buffer_indices.count) {
 		logger_to_console("unissued indices\n"); DEBUG_BREAK();
 	}
 
@@ -500,11 +529,16 @@ inline static struct Batcher_2D_Vertex batcher_2d_make_vertex(struct mat4 m, str
 
 static void batcher_2d_bake_pass(struct Batcher_2D * batcher) {
 	uint32_t const offset = batcher->buffer_indices.count;
-	if (batcher->batch.offset < offset) {
-		batcher->batch.length = offset - batcher->batch.offset;
+	uint32_t const u_offset = batcher->uniforms.headers.count;
+	if (batcher->batch.indices_offset < offset || batcher->batch.uniform_offset < offset) {
+		batcher->batch.indices_length = offset - batcher->batch.indices_offset;
+		batcher->batch.uniform_length = u_offset - batcher->batch.uniform_offset;
 		array_any_push_many(&batcher->batches, 1, &batcher->batch);
 
-		batcher->batch.offset = offset;
-		batcher->batch.length = 0;
+		batcher->batch.indices_offset = offset;
+		batcher->batch.uniform_offset = u_offset;
+
+		batcher->batch.indices_length = 0;
+		batcher->batch.uniform_length = 0;
 	}
 }

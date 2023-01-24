@@ -33,6 +33,7 @@ struct Mesh mesh_init(struct Buffer const * buffer) {
 	wfobj_repack(&wfobj, &vertices, &attributes, &indices);
 	wfobj_free(&wfobj);
 
+	array_u32_push_many(&attributes, 2, (uint32_t[]){0, 0});
 	struct Mesh mesh = mesh_construct(&vertices, &attributes, &indices);
 	array_u32_free(&attributes);
 
@@ -60,12 +61,12 @@ static void wfobj_repack(
 	*attributes = array_u32_init();
 	*indices    = array_u32_init();
 
-	uint32_t attributes_buffer[MAX_MESH_ATTRIBUTES];
+	uint32_t attributes_buffer[MESH_ATTRIBUTES_CAPACITY];
 	uint32_t attributes_count = 0;
 
 	if (wfobj->positions.count > 0) { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_POSITION; attributes_buffer[attributes_count++] = 3; }
 	if (wfobj->texcoords.count > 0) { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_TEXCOORD; attributes_buffer[attributes_count++] = 2; }
-	if (wfobj->normals.count > 0)   { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_NORMAL;   attributes_buffer[attributes_count++] = 3; }
+	if (wfobj->normals.count   > 0) { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_NORMAL;   attributes_buffer[attributes_count++] = 3; }
 
 	array_u32_push_many(attributes, attributes_count, attributes_buffer);
 
@@ -120,12 +121,14 @@ static struct Mesh mesh_construct(
 	//
 	mesh.parameters[0] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_R32_F,
-		.attributes_count = attributes->count / 2,
 	};
 	mesh.parameters[1] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_R32_U,
 		.flags = MESH_FLAG_INDEX,
 	};
+
 	common_memcpy(mesh.parameters[0].attributes, attributes->data, sizeof(*attributes->data) * attributes->count);
+	common_memset(mesh.parameters[0].attributes + attributes->count, 0, sizeof(*attributes->data) * (MESH_ATTRIBUTES_CAPACITY - attributes->count));
+
 	return mesh;
 }

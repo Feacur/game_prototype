@@ -26,7 +26,7 @@ void gfx_uniforms_free(struct Gfx_Uniforms * uniforms);
 
 void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms);
 
-struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, uint32_t uniform_id);
+struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, uint32_t uniform_id, uint32_t offset);
 void gfx_uniforms_set(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct CArray value);
 void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct CArray value);
 

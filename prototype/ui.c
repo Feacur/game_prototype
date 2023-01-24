@@ -1,6 +1,7 @@
 #include "framework/systems/asset_system.h"
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_misc.h"
+#include "framework/graphics/gpu_command.h"
 #include "framework/maths.h"
 
 #include "application/application.h"
@@ -14,8 +15,7 @@
 #include "ui.h"
 
 static struct UI {
-	struct Gfx_Material image_material;
-	struct Gfx_Material font_material;
+	struct Gfx_Material material;
 	struct Asset_Handle font_asset_handle;
 	struct Asset_Handle image_asset_handle;
 	//
@@ -23,59 +23,49 @@ static struct UI {
 	struct vec2 pivot;
 	struct rect rect;
 	//
-	struct Asset_Image const * cached_image;
-	struct Asset_Font const * cached_font;
+	void const * cached_texture;
 } gs_ui;
 
 void ui_init(void) {
 	gs_ui = (struct UI){
-		.image_material = gfx_material_init(),
-		.font_material = gfx_material_init(),
+		.material = gfx_material_init(),
 	};
-	gs_ui.image_material.blend_mode = BLEND_MODE_MIX;
-	gs_ui.image_material.depth_mode = DEPTH_MODE_NONE;
-	gs_ui.font_material.blend_mode = BLEND_MODE_MIX;
-	gs_ui.font_material.depth_mode = DEPTH_MODE_NONE;
+	gs_ui.material.blend_mode = BLEND_MODE_MIX;
+	gs_ui.material.depth_mode = DEPTH_MODE_NONE;
 }
 
 void ui_free(void) {
-	gfx_material_free(&gs_ui.image_material);
-	gfx_material_free(&gs_ui.font_material);
+	gfx_material_free(&gs_ui.material);
 	common_memset(&gs_ui, 0, sizeof(gs_ui));
 }
 
-static void ui_internal_update_tint(void) {
-	struct vec4 const color = {1, 1, 1, 1};
-	uint32_t const p_Tint = graphics_add_uniform_id(S_("p_Tint"));
-	gfx_uniforms_set(&gs_ui.image_material.uniforms, p_Tint, A_(color));
-	gfx_uniforms_set(&gs_ui.font_material.uniforms, p_Tint, A_(color));
-}
-
-static void ui_internal_update_image(void) {
+static void ui_internal_push_image(void) {
 	if (asset_handle_is_null(gs_ui.image_asset_handle)) { return; }
 	struct Asset_Image const * asset = asset_system_find_instance(&gs_game.assets, gs_ui.image_asset_handle);
 
-	if (gs_ui.cached_image == asset) { return; }
-	gs_ui.cached_image = asset;
+	if (gs_ui.cached_texture == asset) { return; }
+	gs_ui.cached_texture = asset;
 
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
 	uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
-	gfx_uniforms_set(&gs_ui.image_material.uniforms, p_Texture, A_(gpu_handle));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Texture, A_(gpu_handle));
 }
 
-static void ui_internal_update_font(void) {
+static void ui_internal_push_font(void) {
 	if (asset_handle_is_null(gs_ui.font_asset_handle)) { return; }
 	struct Asset_Font const * asset = asset_system_find_instance(&gs_game.assets, gs_ui.font_asset_handle);
 
-	if (gs_ui.cached_font == asset) { return; }
-	gs_ui.cached_font = asset;
+	if (gs_ui.cached_texture == asset) { return; }
+	gs_ui.cached_texture = asset;
 
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
 	uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
-	gfx_uniforms_set(&gs_ui.font_material.uniforms, p_Texture, A_(gpu_handle));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Texture, A_(gpu_handle));
 }
 
 void ui_start_frame(void) {
+	batcher_2d_set_material(gs_renderer.batcher_2d, &gs_ui.material);
+
 	struct uvec2 const screen_size = application_get_screen_size();
 	gs_ui.camera = camera_get_projection(
 		&(struct Camera_Params){
@@ -85,9 +75,7 @@ void ui_start_frame(void) {
 		screen_size.x, screen_size.y
 	);
 
-	ui_internal_update_tint();
-	ui_internal_update_image();
-	ui_internal_update_font();
+	gs_ui.cached_texture = NULL;
 }
 
 void ui_end_frame(void) {
@@ -123,33 +111,39 @@ void ui_set_color(struct vec4 color) {
 void ui_set_shader(struct CString name) {
 	struct Asset_Shader const * asset_shader = asset_system_aquire_instance(&gs_game.assets, name);
 	struct Handle const gpu_handle = asset_shader ? asset_shader->gpu_handle : (struct Handle){0};
-	gfx_material_set_shader(&gs_ui.image_material, gpu_handle);
-	gfx_material_set_shader(&gs_ui.font_material, gpu_handle);
+	gfx_material_set_shader(&gs_ui.material, gpu_handle);
 
-	ui_internal_update_image();
-	ui_internal_update_font();
+	{
+		struct vec4 const vec4_Tint = {1, 1, 1, 1};
+		uint32_t const p_Tint = graphics_add_uniform_id(S_("p_Tint"));
+		gfx_uniforms_set(&gs_ui.material.uniforms, p_Tint, A_(vec4_Tint));
+	}
+
+	{
+		struct Handle const h_Texture = {0};
+		uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
+		gfx_uniforms_set(&gs_ui.material.uniforms, p_Texture, A_(h_Texture));
+	}
 }
 
 void ui_set_image(struct CString name) {
 	gs_ui.image_asset_handle = asset_system_aquire(&gs_game.assets, name);
-	ui_internal_update_image();
 }
 
 void ui_set_font(struct CString name) {
 	gs_ui.font_asset_handle = asset_system_aquire(&gs_game.assets, name);
-	ui_internal_update_font();
 }
 
 void ui_quad(struct rect uv) {
-	batcher_2d_set_material(gs_renderer.batcher_2d, &gs_ui.image_material);
+	ui_internal_push_image();
 	batcher_2d_add_quad(gs_renderer.batcher_2d, gs_ui.rect, uv);
 }
 
 void ui_text(struct CString value, struct vec2 alignment, bool wrap, float size) {
-	batcher_2d_set_material(gs_renderer.batcher_2d, &gs_ui.font_material);
+	ui_internal_push_font();
 	batcher_2d_add_text(
 		gs_renderer.batcher_2d,
 		gs_ui.rect, alignment, wrap,
-		gs_ui.cached_font, value, size
+		gs_ui.cached_texture, value, size
 	);
 }

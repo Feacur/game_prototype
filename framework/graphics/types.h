@@ -259,6 +259,7 @@ struct Texture_Settings {
 };
 
 enum Attribute_Type {
+	ATTRIBUTE_TYPE_NONE,
 	ATTRIBUTE_TYPE_POSITION,
 	ATTRIBUTE_TYPE_TEXCOORD,
 	ATTRIBUTE_TYPE_NORMAL,
@@ -267,13 +268,12 @@ enum Attribute_Type {
 	ATTRIBUTE_TYPE_INTERNAL_COUNT,
 };
 
-#define MAX_MESH_ATTRIBUTES (2 * ATTRIBUTE_TYPE_INTERNAL_COUNT)
+#define MESH_ATTRIBUTES_CAPACITY (2 * ATTRIBUTE_TYPE_INTERNAL_COUNT)
 
 struct Mesh_Parameters {
 	enum Data_Type type;
 	enum Mesh_Flag flags;
-	uint32_t attributes_count;
-	uint32_t attributes[MAX_MESH_ATTRIBUTES];
+	uint32_t attributes[MESH_ATTRIBUTES_CAPACITY];
 };
 
 //
