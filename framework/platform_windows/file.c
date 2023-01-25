@@ -30,11 +30,11 @@ struct Buffer platform_file_read_entire(struct CString path) {
 	if (size == 0) { goto finalize; }
 
 	buffer_resize(&buffer, size + 1);
-	buffer.count = platform_file_read(file, buffer.data, size);
-	buffer_push_many(&buffer, 1, "\0"); buffer.count--;
+	buffer.size = platform_file_read(file, buffer.data, size);
+	buffer_push_many(&buffer, 1, "\0"); buffer.size--;
 
-	if (buffer.count != size) {
-		logger_to_console("read failure: %zu / %zu bytes; \"%.*s\"\n", buffer.count, size, path.length, path.data);
+	if (buffer.size != size) {
+		logger_to_console("read failure: %zu / %zu bytes; \"%.*s\"\n", buffer.size, size, path.length, path.data);
 		buffer_free(&buffer);
 	}
 

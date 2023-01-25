@@ -203,7 +203,7 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 	GLuint shader_ids[4];
 	for (uint32_t i = 0; i < sections_count; i++) {
 		GLchar const * code[]   = {header,               sections[i].text.data,          (GLchar *)asset->data};
-		GLint const    length[] = {(GLint)header_length, (GLint)sections[i].text.length, (GLint)asset->count};
+		GLint const    length[] = {(GLint)header_length, (GLint)sections[i].text.length, (GLint)asset->size};
 
 		GLuint shader_id = glCreateShader(sections[i].type);
 		glShaderSource(shader_id, SIZE_OF_ARRAY(code), code, length);
@@ -690,15 +690,15 @@ static struct Handle gpu_mesh_allocate(
 		if (parameters.flags & MESH_FLAG_MUTABLE) {
 			glNamedBufferData(
 				buffer->id,
-				(GLsizeiptr)asset_buffer->count,
+				(GLsizeiptr)asset_buffer->size,
 				(parameters.flags & MESH_FLAG_WRITE) ? NULL : asset_buffer->data,
 				gpu_mesh_usage_pattern(parameters.flags)
 			);
 		}
-		else if (asset_buffer->count != 0) {
+		else if (asset_buffer->size != 0) {
 			glNamedBufferStorage(
 				buffer->id,
-				(GLsizeiptr)asset_buffer->count,
+				(GLsizeiptr)asset_buffer->size,
 				(parameters.flags & MESH_FLAG_WRITE) ? NULL : asset_buffer->data,
 				gpu_mesh_immutable_flag(parameters.flags)
 			);
@@ -709,7 +709,7 @@ static struct Handle gpu_mesh_allocate(
 		}
 
 		// @note: deliberately using count instead of capacity, so as to drop junk data
-		buffer->capacity = (uint32_t)asset_buffer->count / data_type_get_size(parameters.type);
+		buffer->capacity = (uint32_t)asset_buffer->size / data_type_get_size(parameters.type);
 		buffer->count = (asset_buffer->data != NULL) ? buffer->capacity : 0;
 	}
 
@@ -827,16 +827,16 @@ void gpu_mesh_update(struct Handle handle, struct Mesh const * asset) {
 		}
 
 		struct Buffer const * asset_buffer = asset->buffers + i;
-		if (asset_buffer->count == 0) { continue; }
+		if (asset_buffer->size == 0) { continue; }
 		if (asset_buffer->data == NULL) { continue; }
 
 		uint32_t const data_type_size = data_type_get_size(parameters.type);
-		uint32_t const elements_count = (uint32_t)asset_buffer->count / data_type_size;
+		uint32_t const elements_count = (uint32_t)asset_buffer->size / data_type_size;
 
 		if (buffer->capacity >= elements_count) {
 			glNamedBufferSubData(
 				buffer->id, 0,
-				(GLsizeiptr)asset_buffer->count,
+				(GLsizeiptr)asset_buffer->size,
 				asset_buffer->data
 			);
 		}
@@ -845,7 +845,7 @@ void gpu_mesh_update(struct Handle handle, struct Mesh const * asset) {
 			buffer->capacity = elements_count;
 			glNamedBufferData(
 				buffer->id,
-				(GLsizeiptr)asset_buffer->count, asset_buffer->data,
+				(GLsizeiptr)asset_buffer->size, asset_buffer->data,
 				gpu_mesh_usage_pattern(parameters.flags)
 			);
 		}

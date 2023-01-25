@@ -32,7 +32,7 @@ struct Image image_init(struct Texture_Settings settings, struct Buffer const * 
 	stbi_set_flip_vertically_on_load(1);
 
 	int size_x, size_y, channels;
-	uint8_t * image_bytes = (uint8_t *)stbi_load_from_memory(buffer->data, (int)buffer->count, &size_x, &size_y, &channels, 0);
+	uint8_t * image_bytes = (uint8_t *)stbi_load_from_memory(buffer->data, (int)buffer->size, &size_x, &size_y, &channels, 0);
 
 	return (struct Image){
 		.capacity = (uint32_t)(size_x * size_y),

@@ -498,11 +498,11 @@ void batcher_2d_bake(struct Batcher_2D * batcher) {
 		.buffers = (struct Buffer[BATCHER_2D_BUFFERS_COUNT]){
 			(struct Buffer){
 				.data = batcher->buffer_vertices.data,
-				.count = sizeof(struct Batcher_2D_Vertex) * batcher->buffer_vertices.count,
+				.size = sizeof(struct Batcher_2D_Vertex) * batcher->buffer_vertices.count,
 			},
 			(struct Buffer){
 				.data = batcher->buffer_indices.data,
-				.count = sizeof(*batcher->buffer_indices.data) * batcher->buffer_indices.count,
+				.size = sizeof(*batcher->buffer_indices.data) * batcher->buffer_indices.count,
 			},
 		},
 		.parameters = batcher->mesh_parameters,

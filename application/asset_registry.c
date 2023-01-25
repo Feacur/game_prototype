@@ -37,7 +37,7 @@ static void asset_bytes_init(struct Asset_System * system, void * instance, stru
 	// @note: memory ownership transfer
 	*asset = (struct Asset_Bytes){
 		.data = file_buffer.data,
-		.length = (uint32_t)file_buffer.count,
+		.length = (uint32_t)file_buffer.size,
 	};
 }
 

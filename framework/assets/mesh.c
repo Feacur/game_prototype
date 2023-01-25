@@ -111,12 +111,12 @@ static struct Mesh mesh_construct(
 	mesh.buffers[0] = (struct Buffer){
 		.data = vertices->data,
 		.capacity = sizeof(float) * vertices->capacity,
-		.count = sizeof(float) * vertices->count,
+		.size = sizeof(float) * vertices->count,
 	};
 	mesh.buffers[1] = (struct Buffer){
 		.data = indices->data,
 		.capacity = sizeof(uint32_t) * indices->capacity,
-		.count = sizeof(uint32_t) * indices->count,
+		.size = sizeof(uint32_t) * indices->count,
 	};
 	//
 	mesh.parameters[0] = (struct Mesh_Parameters){

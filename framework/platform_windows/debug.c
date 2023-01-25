@@ -49,8 +49,8 @@ struct Callstack platform_debug_get_callstack(void) {
 }
 
 struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_t offset) {
-	gs_platform_debug.buffer.count = 0;
-	gs_platform_debug.scratch.count = 0;
+	gs_platform_debug.buffer.size = 0;
+	gs_platform_debug.scratch.size = 0;
 
 	union {
 		SYMBOL_INFO header;
@@ -86,26 +86,26 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 	#endif
 
 		// reserve output buffer
-		buffer_ensure(&gs_platform_debug.buffer, gs_platform_debug.buffer.count + 1 + symbol_length + 4 + source_length + 16);
+		buffer_ensure(&gs_platform_debug.buffer, gs_platform_debug.buffer.size + 1 + symbol_length + 4 + source_length + 16);
 
 		// fill the buffer
 		uint32_t const written = logger_to_buffer(
-			(uint32_t)(gs_platform_debug.buffer.capacity - gs_platform_debug.buffer.count),
-			(char *)gs_platform_debug.buffer.data + gs_platform_debug.buffer.count,
+			(uint32_t)(gs_platform_debug.buffer.capacity - gs_platform_debug.buffer.size),
+			(char *)gs_platform_debug.buffer.data + gs_platform_debug.buffer.size,
 			"%.*s at '%.*s:%u'\n",
 			symbol_length, symbol_data,
 			source_length, source_data,
 			(source_length > 0) ? (uint32_t)source.LineNumber : 0
 		);
-		gs_platform_debug.buffer.count += written;
+		gs_platform_debug.buffer.size += written;
 
 		struct CString const cs_symbol = {.length = symbol_length, .data = symbol_data};
 		if (cstring_equals(cs_symbol, S_("main"))) { break; }
 	}
 
 	return (struct CString){
-		.length = (uint32_t)gs_platform_debug.buffer.count,
-		.data = (gs_platform_debug.buffer.count > 0)
+		.length = (uint32_t)gs_platform_debug.buffer.size,
+		.data = (gs_platform_debug.buffer.size > 0)
 			? gs_platform_debug.buffer.data
 			: NULL,
 	};

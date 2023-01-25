@@ -147,7 +147,7 @@ void font_render_glyph(
 	);
 
 	// @todo: arena/stack allocator
-	buffer_ensure(font->scratch, font->scratch->count);
+	buffer_ensure(font->scratch, font->scratch->size);
 	buffer_clear(font->scratch);
 }
 
@@ -177,11 +177,11 @@ int32_t font_get_kerning(struct Font const * font, uint32_t glyph_id1, uint32_t 
 
 static void * font_memory_allocate(size_t size, struct Buffer * scratch) {
 	// @note: grow count, even past capacity
-	size_t const offset = scratch->count;
-	scratch->count += size;
+	size_t const offset = scratch->size;
+	scratch->size += size;
 
 	// @note: use the scratch buffer until it's memory should be reallocated
-	if (scratch->count > scratch->capacity) { return MEMORY_ALLOCATE_SIZE(size); }
+	if (scratch->size > scratch->capacity) { return MEMORY_ALLOCATE_SIZE(size); }
 	return (uint8_t *)scratch->data + offset;
 }
 
