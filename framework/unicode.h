@@ -27,7 +27,7 @@ inline static bool codepoint_is_invisible(uint32_t codepoint) {
 	return false;
 }
 
-inline static bool codepoint_is_block_break(uint32_t codepoint) {
+inline static bool codepoint_is_word_break(uint32_t codepoint) {
 	switch (codepoint) {
 		case CODEPOINT_ZERO_WIDTH_SPACE:
 		case ' ':

@@ -35,10 +35,9 @@
 // 0-----------1
 
 #define BATCHER_2D_BUFFERS_COUNT 2
-#define BATCHER_2D_ATTRIBUTES_COUNT 3
 
-struct Batcher_2D_Text {
-	uint32_t codepoints_from, codepoints_to;
+struct Batcher_2D_Word {
+	uint32_t codepoints_offset, codepoints_end;
 	uint32_t buffer_vertices_offset;
 	// @idea: use `Asset_Ref` instead
 	struct Asset_Font const * cached_font; float size;
@@ -66,7 +65,7 @@ struct Batcher_2D {
 	struct Batcher_2D_Batch batch;
 	struct Array_U32 codepoints;
 	struct Array_Any batches;        // `struct Batcher_2D_Batch`
-	struct Array_Any texts;          // `struct Batcher_2D_Text`
+	struct Array_Any words;          // `struct Batcher_2D_Word`
 	struct Hash_Set_U64 fonts_cache; // `struct Asset_Font const *`
 	//
 	struct vec4 color;
@@ -110,7 +109,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 		},
 		.codepoints      = array_u32_init(),
 		.batches         = array_any_init(sizeof(struct Batcher_2D_Batch)),
-		.texts           = array_any_init(sizeof(struct Batcher_2D_Text)),
+		.words           = array_any_init(sizeof(struct Batcher_2D_Word)),
 		.buffer_vertices = array_any_init(sizeof(struct Batcher_2D_Vertex)),
 		.buffer_indices  = array_u32_init(),
 	};
@@ -130,7 +129,7 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	//
 	array_u32_free(&batcher->codepoints);
 	array_any_free(&batcher->batches);
-	array_any_free(&batcher->texts);
+	array_any_free(&batcher->words);
 	hash_set_u64_free(&batcher->fonts_cache);
 	array_any_free(&batcher->buffer_vertices);
 	array_u32_free(&batcher->buffer_indices);
@@ -198,15 +197,15 @@ void batcher_2d_add_text(
 	float const line_gap     = font_atlas_get_gap(font->font_atlas, scale);
 	float const line_height  = font_ascent - font_descent + line_gap;
 
-	uint32_t const texts_offset = batcher->texts.count;
+	uint32_t const words_offset = batcher->words.count;
 
 	font_atlas_add_default_glyphs(font->font_atlas, size);
 	struct Font_Glyph const * glyph_error = font_atlas_get_glyph(font->font_atlas, '\0', size);
 
-	// translate text data into crude text blocks
+	// break text into words
 	{
-		float block_width = 0;
-		uint32_t block_strings_offset = batcher->codepoints.count;
+		float word_width = 0;
+		uint32_t codepoints_offset = batcher->codepoints.count;
 
 		FOR_UTF8 (value.length, (uint8_t const *)value.data, it) {
 			font_atlas_add_glyph(font->font_atlas, it.codepoint, size);
@@ -214,19 +213,19 @@ void batcher_2d_add_text(
 			struct Font_Glyph const * glyph = font_atlas_get_glyph(font->font_atlas, it.codepoint, size);
 			float const full_size_x = (glyph != NULL) ? glyph->params.full_size_x : glyph_error->params.full_size_x;
 
-			block_width += full_size_x;
-			if (codepoint_is_block_break(it.codepoint)) {
+			word_width += full_size_x;
+			if (codepoint_is_word_break(it.codepoint)) {
 				// @todo: (?) arena/stack allocator
-				array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
-					.codepoints_from = block_strings_offset, .codepoints_to = batcher->codepoints.count,
+				array_any_push_many(&batcher->words, 1, &(struct Batcher_2D_Word) {
+					.codepoints_offset = codepoints_offset, .codepoints_end = batcher->codepoints.count,
 					.cached_font = font, .size = size,
 					.breaker_codepoint = it.codepoint,
-					.full_size_x = block_width,
+					.full_size_x = word_width,
 				});
 
 				//
-				block_width = 0;
-				block_strings_offset = batcher->codepoints.count;
+				word_width = 0;
+				codepoints_offset = batcher->codepoints.count;
 			}
 
 			if (!codepoint_is_invisible(it.codepoint)) {
@@ -235,41 +234,41 @@ void batcher_2d_add_text(
 
 				//
 				float const kerning = font_atlas_get_kerning(font->font_atlas, it.previous, it.codepoint, scale);
-				block_width += kerning;
+				word_width += kerning;
 			}
 		}
 
-		if (batcher->codepoints.count > block_strings_offset) {
+		if (batcher->codepoints.count > codepoints_offset) {
 			// @todo: (?) arena/stack allocator
-			array_any_push_many(&batcher->texts, 1, &(struct Batcher_2D_Text) {
-				.codepoints_from = block_strings_offset, .codepoints_to = batcher->codepoints.count,
+			array_any_push_many(&batcher->words, 1, &(struct Batcher_2D_Word) {
+				.codepoints_offset = codepoints_offset, .codepoints_end = batcher->codepoints.count,
 				.cached_font = font, .size = size,
-				.full_size_x = block_width,
+				.full_size_x = word_width,
 			});
 		}
 	}
 
-	// position text blocks as for alignment {0, 1}
+	// position words as for alignment {0, 1}
 	{
 		struct vec2 offset = {rect.min.x, rect.max.y};
 		offset.y -= font_ascent;
 
-		for (uint32_t block_i = texts_offset; block_i < batcher->texts.count; block_i++) {
-			struct Batcher_2D_Text * text = array_any_at(&batcher->texts, block_i);
+		for (uint32_t word_i = words_offset; word_i < batcher->words.count; word_i++) {
+			struct Batcher_2D_Word * word = array_any_at(&batcher->words, word_i);
 
-			// break line if block overflows
-			if (wrap && (offset.x + text->full_size_x > rect.max.x)) {
+			// break line if word overflows
+			if (wrap && (offset.x + word->full_size_x > rect.max.x)) {
 				offset.x = rect.min.x; // @note: auto `\r`
 				offset.y -= line_height;
 			}
-			text->position = offset;
+			word->position = offset;
 
-			// process block
-			for (uint32_t strings_i = text->codepoints_from; strings_i < text->codepoints_to; strings_i++) {
+			// process word
+			for (uint32_t strings_i = word->codepoints_offset; strings_i < word->codepoints_end; strings_i++) {
 				uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
-				uint32_t const previous = (strings_i > text->codepoints_from) ? array_u32_at(&batcher->codepoints, strings_i - 1) : '\0';
+				uint32_t const previous = (strings_i > word->codepoints_offset) ? array_u32_at(&batcher->codepoints, strings_i - 1) : '\0';
 
-				struct Font_Glyph const * glyph = font_atlas_get_glyph(text->cached_font->font_atlas, codepoint, text->size);
+				struct Font_Glyph const * glyph = font_atlas_get_glyph(word->cached_font->font_atlas, codepoint, word->size);
 				float const full_size_x = (glyph != NULL) ? glyph->params.full_size_x : glyph_error->params.full_size_x;
 
 				float const kerning = font_atlas_get_kerning(font->font_atlas, previous, codepoint, scale);
@@ -278,9 +277,9 @@ void batcher_2d_add_text(
 
 			// process breaker
 			{
-				struct Font_Glyph const * glyph = font_atlas_get_glyph(text->cached_font->font_atlas, text->breaker_codepoint, text->size);
+				struct Font_Glyph const * glyph = font_atlas_get_glyph(word->cached_font->font_atlas, word->breaker_codepoint, word->size);
 				offset.x += glyph->params.full_size_x;
-				if (text->breaker_codepoint == '\n') {
+				if (word->breaker_codepoint == '\n') {
 					offset.x = rect.min.x; // @note: auto `\r`
 					offset.y -= line_height;
 				}
@@ -288,7 +287,7 @@ void batcher_2d_add_text(
 		}
 	}
 
-	// align text blocks
+	// align words
 	{
 		struct vec2 const error_margins = {
 			0.0001f * (1 - 2*alignment.x),
@@ -299,71 +298,71 @@ void batcher_2d_add_text(
 			rect.max.y - rect.min.y,
 		};
 
-		uint32_t line_offset = texts_offset;
+		uint32_t line_offset = words_offset;
 		uint32_t lines_count = 1;
 		float line_position_y = 0;
 		float line_width = 0;
 
-		for (uint32_t block_i = texts_offset; block_i < batcher->texts.count; block_i++) {
-			struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, block_i);
+		for (uint32_t word_i = words_offset; word_i < batcher->words.count; word_i++) {
+			struct Batcher_2D_Word const * word = array_any_at(&batcher->words, word_i);
 
-			if (line_position_y != text->position.y) {
+			if (line_position_y != word->position.y) {
 				float const offset = lerp(0, rect_size.x - line_width, alignment.x) + error_margins.x;
-				for (uint32_t i = line_offset; i < block_i; i++) {
-					struct Batcher_2D_Text * aligned_text = array_any_at(&batcher->texts, i);
+				for (uint32_t i = line_offset; i < word_i; i++) {
+					struct Batcher_2D_Word * aligned_text = array_any_at(&batcher->words, i);
 					aligned_text->position.x += offset;
 				}
-				line_offset = block_i;
+				line_offset = word_i;
 				lines_count++;
 
 				//
-				line_position_y = text->position.y;
+				line_position_y = word->position.y;
 				line_width = 0;
 			}
 
-			line_width += text->full_size_x;
+			line_width += word->full_size_x;
 		}
 
 		{
 			float const offset = lerp(0, rect_size.x - line_width, alignment.x) + error_margins.x;
-			for (uint32_t i = line_offset; i < batcher->texts.count; i++) {
-				struct Batcher_2D_Text * aligned_text = array_any_at(&batcher->texts, i);
-				aligned_text->position.x += offset;
+			for (uint32_t i = line_offset; i < batcher->words.count; i++) {
+				struct Batcher_2D_Word * word = array_any_at(&batcher->words, i);
+				word->position.x += offset;
 			}
 		}
 
 		{
 			float const height = (float)lines_count * line_height;
 			float const offset = lerp((height - rect_size.y) - line_height, 0, alignment.y) + error_margins.y;
-			for (uint32_t i = texts_offset; i < batcher->texts.count; i++) {
-				struct Batcher_2D_Text * aligned_text = array_any_at(&batcher->texts, i);
-				aligned_text->position.y += offset;
+			for (uint32_t i = words_offset; i < batcher->words.count; i++) {
+				struct Batcher_2D_Word * word = array_any_at(&batcher->words, i);
+				word->position.y += offset;
 			}
 		}
 	}
 
-	// translate text blocks into crude vertices
-	for (uint32_t block_i = texts_offset; block_i < batcher->texts.count; block_i++) {
-		struct Batcher_2D_Text * text = array_any_at(&batcher->texts, block_i);
-		text->buffer_vertices_offset = batcher->buffer_vertices.count;
+	// translate words into vertices
+	for (uint32_t word_i = words_offset; word_i < batcher->words.count; word_i++) {
+		struct Batcher_2D_Word * word = array_any_at(&batcher->words, word_i);
+		word->buffer_vertices_offset = batcher->buffer_vertices.count;
 
-		struct vec2 offset = text->position;
-		if (offset.y > rect.max.y) { text->codepoints_to = text->codepoints_from; continue; } // void entry
-		if (offset.y < rect.min.y) { batcher->texts.count = block_i;              break; }    // drop rest
+		struct vec2 offset = word->position;
+		if (offset.y > rect.max.y) { word->codepoints_end = word->codepoints_offset; continue; } // void entry
+		if (offset.y < rect.min.y) { batcher->words.count = word_i;                  break; }    // drop rest
 
-		for (uint32_t strings_i = text->codepoints_from; strings_i < text->codepoints_to; strings_i++) {
+		for (uint32_t strings_i = word->codepoints_offset; strings_i < word->codepoints_end; strings_i++) {
 			uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
-				uint32_t const previous = (strings_i > text->codepoints_from) ? array_u32_at(&batcher->codepoints, strings_i - 1) : '\0';
+				uint32_t const previous = (strings_i > word->codepoints_offset) ? array_u32_at(&batcher->codepoints, strings_i - 1) : '\0';
 
-			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->cached_font->font_atlas, codepoint, text->size);
+			struct Font_Glyph const * glyph = font_atlas_get_glyph(word->cached_font->font_atlas, codepoint, word->size);
 			struct Font_Glyph_Params const params = (glyph != NULL) ? glyph->params : glyph_error->params;
 
 			float const kerning = font_atlas_get_kerning(font->font_atlas, previous, codepoint, scale);
 			float const offset_x = offset.x + kerning;
 			offset.x += params.full_size_x + kerning;
 
-			if (offset_x < rect.min.x) { text->codepoints_from = strings_i + 1; continue; } // skip glyph
-			if (offset.x > rect.max.x) { text->codepoints_to   = strings_i;     break; }    // drop rest
+			if (offset_x < rect.min.x) { word->codepoints_offset = strings_i + 1; continue; } // skip glyph
+			if (offset.x > rect.max.x) { word->codepoints_end    = strings_i;     break; }    // drop rest
 
 			if (!codepoint_is_invisible(codepoint)) {
 				batcher_2d_add_quad(
@@ -385,17 +384,17 @@ void batcher_2d_add_text(
 	}
 }
 
-static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
-	if (batcher->texts.count == 0) { return; }
+static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
+	if (batcher->words.count == 0) { return; }
 
 	// render and upload the atlases
 	{
 		// @todo: (?) arena/stack allocator
 		hash_set_u64_clear(&batcher->fonts_cache);
 
-		for (uint32_t i = 0; i < batcher->texts.count; i++) {
-			struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, i);
-			hash_set_u64_set(&batcher->fonts_cache, (uint64_t)text->cached_font);
+		for (uint32_t i = 0; i < batcher->words.count; i++) {
+			struct Batcher_2D_Word const * word = array_any_at(&batcher->words, i);
+			hash_set_u64_set(&batcher->fonts_cache, (uint64_t)word->cached_font);
 		}
 
 		FOR_HASH_SET_U64 (&batcher->fonts_cache, it) {
@@ -410,19 +409,19 @@ static void batcher_2d_bake_texts(struct Batcher_2D * batcher) {
 	}
 
 	// fill quads UVs
-	for (uint32_t block_i = 0; block_i < batcher->texts.count; block_i++) {
-		struct Batcher_2D_Text const * text = array_any_at(&batcher->texts, block_i);
-		uint32_t vertices_offset = text->buffer_vertices_offset;
+	for (uint32_t word_i = 0; word_i < batcher->words.count; word_i++) {
+		struct Batcher_2D_Word const * word = array_any_at(&batcher->words, word_i);
+		uint32_t vertices_offset = word->buffer_vertices_offset;
 
-		struct Font_Glyph const * glyph_error = font_atlas_get_glyph(text->cached_font->font_atlas, '\0', text->size);
+		struct Font_Glyph const * glyph_error = font_atlas_get_glyph(word->cached_font->font_atlas, '\0', word->size);
 		struct rect const glyph_error_uv = glyph_error->uv;
 
-		for (uint32_t strings_i = text->codepoints_from; strings_i < text->codepoints_to; strings_i++) {
+		for (uint32_t strings_i = word->codepoints_offset; strings_i < word->codepoints_end; strings_i++) {
 			uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
 
 			if (codepoint_is_invisible(codepoint)) { continue; }
 
-			struct Font_Glyph const * glyph = font_atlas_get_glyph(text->cached_font->font_atlas, codepoint, text->size);
+			struct Font_Glyph const * glyph = font_atlas_get_glyph(word->cached_font->font_atlas, codepoint, word->size);
 			struct rect const uv = (glyph != NULL) ? glyph->uv : glyph_error_uv;
 
 			struct Batcher_2D_Vertex * vertices = array_any_at(&batcher->buffer_vertices, vertices_offset);
@@ -440,7 +439,7 @@ void batcher_2d_clear(struct Batcher_2D * batcher) {
 	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
 	array_u32_clear(&batcher->codepoints);
 	array_any_clear(&batcher->batches);
-	array_any_clear(&batcher->texts);
+	array_any_clear(&batcher->words);
 	array_any_clear(&batcher->buffer_vertices);
 	array_u32_clear(&batcher->buffer_indices);
 	gfx_uniforms_clear(&batcher->uniforms);
@@ -493,7 +492,7 @@ void batcher_2d_bake(struct Batcher_2D * batcher) {
 		logger_to_console("unissued indices\n"); DEBUG_BREAK();
 	}
 
-	batcher_2d_bake_texts(batcher);
+	batcher_2d_bake_words(batcher);
 	gpu_mesh_update(batcher->gpu_mesh_handle, &(struct Mesh){
 		.count = BATCHER_2D_BUFFERS_COUNT,
 		.buffers = (struct Buffer[BATCHER_2D_BUFFERS_COUNT]){
@@ -502,7 +501,7 @@ void batcher_2d_bake(struct Batcher_2D * batcher) {
 				.count = sizeof(struct Batcher_2D_Vertex) * batcher->buffer_vertices.count,
 			},
 			(struct Buffer){
-				.data = (uint8_t *)batcher->buffer_indices.data,
+				.data = batcher->buffer_indices.data,
 				.count = sizeof(*batcher->buffer_indices.data) * batcher->buffer_indices.count,
 			},
 		},

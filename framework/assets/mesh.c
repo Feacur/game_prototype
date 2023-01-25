@@ -109,12 +109,12 @@ static struct Mesh mesh_construct(
 	};
 	//
 	mesh.buffers[0] = (struct Buffer){
-		.data = (uint8_t *)vertices->data,
+		.data = vertices->data,
 		.capacity = sizeof(float) * vertices->capacity,
 		.count = sizeof(float) * vertices->count,
 	};
 	mesh.buffers[1] = (struct Buffer){
-		.data = (uint8_t *)indices->data,
+		.data = indices->data,
 		.capacity = sizeof(uint32_t) * indices->capacity,
 		.count = sizeof(uint32_t) * indices->count,
 	};
