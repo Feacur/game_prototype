@@ -278,7 +278,7 @@ void batcher_2d_add_text(
 			// process breaker
 			{
 				struct Font_Glyph const * glyph = font_atlas_get_glyph(word->cached_font->font_atlas, word->breaker_codepoint, word->size);
-				offset.x += glyph->params.full_size_x;
+				offset.x += (glyph != NULL) ? glyph->params.full_size_x : 0;
 				if (word->breaker_codepoint == '\n') {
 					offset.x = rect.min.x; // @note: auto `\r`
 					offset.y -= line_height;

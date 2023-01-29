@@ -27,8 +27,11 @@ struct Font_Glyph {
 	uint8_t usage;
 };
 
-struct Font_Atlas * font_atlas_init(struct Font const * font);
+struct Font_Atlas * font_atlas_init(void);
 void font_atlas_free(struct Font_Atlas * font_atlas);
+
+struct Font const * font_atlas_get_font(struct Font_Atlas const * font_atlas, uint32_t codepoint);
+void font_atlas_set_font(struct Font_Atlas * font_atlas, struct Font const * font, uint32_t from, uint32_t to);
 
 void font_atlas_add_glyph(struct Font_Atlas * font_atlas, uint32_t codepoint, float size);
 void font_atlas_add_default_glyphs(struct Font_Atlas * font_atlas, float size);
