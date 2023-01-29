@@ -37,7 +37,7 @@ rem |> PREPARE PROJECT
 set project_folder=%cd%
 set binary_folder=bin
 
-call %func% check_executable_online && (
+call %func% check_exe_online && (
 	rem @todo: mind potential live reloading; hot reloading is safe, though
 	echo.executable "%project%.exe" is running
 	goto :eof
@@ -82,7 +82,7 @@ if exist "temp/*.tmp" del "temp\\*.tmp" /q
 call %func% get_millis time_comp
 if %build_mode% == normal ( rem compile a set of translation units, then link them
 	rem @note: the folder may contain outdated objects
-	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem for each line %%v in the file
+	for /f %%v in (%project_folder%/translation_units_%project%.txt) do ( rem for each line %%v in the file
 		set object_file_name=%%~v
 		set object_file_name=!object_file_name:/=_!
 		set object_file_name=!object_file_name:.c=!
@@ -90,7 +90,7 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 	)
 	call %func% get_millis time_link
 	set objects=
-	for /f %%v in (%project_folder%/%project%_translation_units.txt) do ( rem for each line %%v in the file
+	for /f %%v in (%project_folder%/translation_units_%project%.txt) do ( rem for each line %%v in the file
 		set object_file_name=%%~v
 		set object_file_name=!object_file_name:/=_!
 		set object_file_name=!object_file_name:.c=!
@@ -98,13 +98,13 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 	)
 	lld-link !objects! %linker% -out:"%project%.exe" || ( goto error )
 ) else if %build_mode% == unity ( rem compile as a unity build, then link separately
-	clang -std=c99 -c %compiler% "%project_folder%/%project%_unity_build.c" -o"./temp/%project%_unity_build.o" || ( goto error )
+	clang -std=c99 -c %compiler% "%project_folder%/translation_units_%project%.c" -o"./temp/unity_build_%project%.o" || ( goto error )
 	call %func% get_millis time_link
-	lld-link "./temp/%project%_unity_build.o" %linker% -out:"%project%.exe" || ( goto error )
+	lld-link "./temp/unity_build_%project%.o" %linker% -out:"%project%.exe" || ( goto error )
 ) else if %build_mode% == unity_link ( rem compile and link as a unity build
 	rem @note: this option is less preferable as it ignores already setup environment
 	call %func% get_millis time_link
-	clang -std=c99 %compiler% "%project_folder%/%project%_unity_build.c" -o"./%project%.exe" -Wl,%linker: =,% || ( goto error )
+	clang -std=c99 %compiler% "%project_folder%/translation_units_%project%.c" -o"./%project%.exe" -Wl,%linker: =,% || ( goto error )
 )
 
 :error
@@ -114,9 +114,9 @@ popd
 rem |> REPORT
 call %func% get_millis time_done
 if [%time_link%] == [] ( set time_link=%time_done% )
-call %func% report_millis_delta "prep .." time_zero time_comp "ms"
-call %func% report_millis_delta "comp .." time_comp time_link "ms"
-call %func% report_millis_delta "link .." time_link time_done "ms"
+call %func% report_millis_delta "prep .." time_zero time_comp
+call %func% report_millis_delta "comp .." time_comp time_link
+call %func% report_millis_delta "link .." time_link time_done
 
 rem |> FUNCTIONS
 goto :eof

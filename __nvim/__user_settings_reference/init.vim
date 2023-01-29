@@ -657,7 +657,7 @@ lsp_capabilities = require('cmp_nvim_lsp').update_capabilities(lsp_capabilities)
 
 -- plugin: nvim-lspconfig
 local custom_lsp_attach = function(client, buffer)
-	-- @todo: curate keymaps per server
+	-- @todo: handle separate keymaps per server
 	vim.api.nvim_buf_set_keymap(buffer, 'n', '<f12>',      '<cmd>lua vim.lsp.buf.definition()<CR>',  {noremap = true, silent=true})
 	vim.api.nvim_buf_set_keymap(buffer, 'n', '<S-f12>',    '<cmd>lua vim.lsp.buf.references()<CR>',  {noremap = true, silent=true})
 	vim.api.nvim_buf_set_keymap(buffer, 'n', '<leader>h',  '<cmd>lua vim.lsp.buf.hover()<CR>',       {noremap = true, silent=true})

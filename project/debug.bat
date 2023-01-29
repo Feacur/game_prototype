@@ -3,6 +3,8 @@ chcp 65001 > nul
 setlocal enabledelayedexpansion
 echo.debugging with RemedyBG...
 
+set func=%cd%/functions.bat
+
 rem [any]
 set project=%1
 if [%project%] == [] ( set project=game )
@@ -27,11 +29,11 @@ if not exist "../%binary_folder%/%project%.exe" (
 
 rem |> DO
 pushd ..
-if exist "%project_folder%/%project%.rdbg" (
-	call :check_debugger_online || (
-		start remedybg -q "%project_folder%/%project%.rdbg"
+if exist "%project_folder%/debug_%project%.rdbg" (
+	call %func% check_exe_online remedybg || (
+		start remedybg -q "%project_folder%/debug_%project%.rdbg"
 		:wait_for_debugger
-		call :check_debugger_online || goto wait_for_debugger
+		call %func% check_exe_online remedybg || goto wait_for_debugger
 	)
 	rem instead of the `-g` flag, command it to start: existing instances should be drived too
 	start remedybg.exe start-debugging
@@ -47,11 +49,6 @@ goto :eof
 
 :check_debugger_exists
 	where -q "remedybg.exe"
-	rem return: `errorlevel`
-goto :eof
-
-:check_debugger_online
-	tasklist -fi "IMAGENAME eq remedybg.exe" -nh | findstr "remedybg.exe" > nul
 	rem return: `errorlevel`
 goto :eof
 

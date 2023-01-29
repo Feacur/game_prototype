@@ -19,7 +19,8 @@ rem |> Environment
 set VSLANG=1033
 call :check_environment && ( call "vcvarsall.bat" x64 > nul & goto msvc_found )
 
-pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/" && (
+rem C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/
+pushd "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/" && (
 	call :check_environment && ( call "vcvarsall.bat" x64 > nul & popd & goto msvc_found ) || popd
 )
 
@@ -36,6 +37,8 @@ call :check_msvc || (
 
 rem |> Clang
 call :check_clang || (
+	rem https://github.com/llvm/llvm-project/releases/tag/llvmorg-14.0.6 - with MSVC 2019
+	rem https://github.com/llvm/llvm-project/releases/tag/llvmorg-15.0.7 - with MSVC 2022
 	set "PATH=%PATH%;C:/Program Files/LLVM/bin/"
 	call :check_clang || (
 		echo.can't find Clang's compiler/linker

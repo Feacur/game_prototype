@@ -7,7 +7,7 @@ call :%*
 rem |> FUNCTIONS
 goto :eof
 
-:get_millis
+:get_millis # out
 	rem @note: `time` is locale-dependent and can have leading space
 	set local_time=%time: =%
 
@@ -35,12 +35,13 @@ goto :eof
 	set "%~1=%millis%"
 goto :eof
 
-:report_millis_delta
-	set /a delta = (86400000 + %~3 - %~2) %% 86400000
-	echo.%~1 %delta% %~4
+:report_millis_delta # tag, from, to
+	set /a delta = (%~3 - %~2)
+	if %delta% lss 0 set /a delta = 0 - %delta%
+	echo.%~1 %delta% ms
 goto :eof
 
-:check_executable_online
-	tasklist -fi "IMAGENAME eq %project%.exe" -nh | findstr %project%.exe > nul
+:check_exe_online # name
+	tasklist -fi "IMAGENAME eq %~1.exe" -nh | findstr %~1.exe > nul
 	rem return: `errorlevel`
 goto :eof

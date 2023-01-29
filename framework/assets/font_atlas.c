@@ -23,7 +23,6 @@ struct Font_Atlas {
 };
 
 // @note: supposed to be the same size as `uint64_t`
-// @todo: static assert
 struct Font_Key {
 	uint32_t codepoint;
 	float size; // @note: differs from scale

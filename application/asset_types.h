@@ -26,8 +26,6 @@ struct Asset_Image {
 };
 
 struct Asset_Font {
-	// @todo: map font size to buffer and gpu_handle pair?
-	// @idea: put differently sized glyphs onto one atlas?
 	struct Font * font;
 	struct Font_Atlas * font_atlas;
 	struct Handle gpu_handle;
