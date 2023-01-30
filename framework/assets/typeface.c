@@ -30,7 +30,7 @@ static void font_memory_free(void * pointer, struct Buffer * scratch);
 #endif
 
 //
-#include "font.h"
+#include "typeface.h"
 
 struct Font {
 	void * data;

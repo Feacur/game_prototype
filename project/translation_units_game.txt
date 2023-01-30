@@ -32,7 +32,7 @@ framework/assets/internal/wfobj.c
 framework/assets/json.c
 framework/assets/mesh.c
 framework/assets/image.c
-framework/assets/font.c
+framework/assets/typeface.c
 framework/assets/font_atlas.c
 
 framework/systems/asset_system.c

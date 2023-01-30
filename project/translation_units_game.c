@@ -33,7 +33,7 @@
 #include "framework/assets/json.c"
 #include "framework/assets/mesh.c"
 #include "framework/assets/image.c"
-#include "framework/assets/font.c"
+#include "framework/assets/typeface.c"
 #include "framework/assets/font_atlas.c"
 
 #include "framework/systems/asset_system.c"

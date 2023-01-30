@@ -5,7 +5,7 @@
 #include "framework/containers/hash_table_u64.h"
 
 #include "framework/assets/image.h"
-#include "framework/assets/font.h"
+#include "framework/assets/typeface.h"
 
 #include "framework/memory.h"
 #include "framework/logger.h"

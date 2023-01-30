@@ -3,7 +3,7 @@
 
 #include "framework/vector_types.h"
 
-// @purpose: decouple `font.h` and `font_atlas.h`
+// @purpose: decouple `typeface.h` and `font_atlas.h`
 
 // glyph layout
 // +----------+

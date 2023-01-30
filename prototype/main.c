@@ -18,7 +18,7 @@
 
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
-#include "framework/assets/font.h"
+#include "framework/assets/typeface.h"
 #include "framework/assets/json.h"
 
 #include "application/json_load.h"

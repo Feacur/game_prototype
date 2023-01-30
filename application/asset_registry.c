@@ -12,7 +12,7 @@
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
 #include "framework/assets/json.h"
-#include "framework/assets/font.h"
+#include "framework/assets/typeface.h"
 #include "framework/assets/font_atlas.h"
 
 #include "json_load.h"
