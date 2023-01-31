@@ -62,8 +62,8 @@ static struct Handle json_load_texture(struct Asset_System * system, struct JSON
 		return gpu_target_get_texture_handle(asset->gpu_handle, texture_type, index);
 	}
 
-	if (asset_system_match_type(system, asset_handle, S_("font"))) {
-		struct Asset_Font const * asset = instance;
+	if (asset_system_match_type(system, asset_handle, S_("fonts"))) {
+		struct Asset_Fonts const * asset = instance;
 		return asset->gpu_handle;
 	}
 

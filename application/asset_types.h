@@ -25,8 +25,11 @@ struct Asset_Image {
 	struct Handle gpu_handle;
 };
 
-struct Asset_Font {
-	struct Font * font;
+struct Asset_Typeface {
+	struct Font * typeface;
+};
+
+struct Asset_Fonts {
 	struct Font_Atlas * font_atlas;
 	struct Handle gpu_handle;
 };

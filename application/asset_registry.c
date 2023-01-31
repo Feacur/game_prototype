@@ -117,13 +117,13 @@ static void asset_shader_free(struct Asset_System * system, void * instance) {
 //     Asset image part
 // ----- ----- ----- ----- -----
 
-struct Asset_Fill_Image {
+struct Asset_Image_Context {
 	struct Asset_System * system;
 	struct Asset_Image * result;
 };
 
-static void asset_fill_image(struct JSON const * json, void * data) {
-	struct Asset_Fill_Image * context = data;
+static void asset_image_fill(struct JSON const * json, void * data) {
+	struct Asset_Image_Context * context = data;
 	if (json->type == JSON_ERROR) {
 		common_memset(context->result, 0, sizeof(*context->result));
 		return;
@@ -150,8 +150,8 @@ static void asset_fill_image(struct JSON const * json, void * data) {
 
 static void asset_image_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Image * asset = instance;
-	struct Asset_Fill_Image context = { .system = system, .result = asset };
-	process_json(name, &context, asset_fill_image);
+	struct Asset_Image_Context context = { .system = system, .result = asset };
+	process_json(name, &context, asset_image_fill);
 }
 
 static void asset_image_free(struct Asset_System * system, void * instance) {
@@ -162,11 +162,11 @@ static void asset_image_free(struct Asset_System * system, void * instance) {
 }
 
 // ----- ----- ----- ----- -----
-//     Asset font part
+//     Asset typeface part
 // ----- ----- ----- ----- -----
 
-static void asset_font_init(struct Asset_System * system, void * instance, struct CString name) {
-	struct Asset_Font * asset = instance;
+static void asset_typeface_init(struct Asset_System * system, void * instance, struct CString name) {
+	struct Asset_Typeface * asset = instance;
 	(void)system;
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
@@ -176,20 +176,59 @@ static void asset_font_init(struct Asset_System * system, void * instance, struc
 	}
 
 	struct Font * font = font_init(&file_buffer);
-	struct Font_Atlas * font_atlas = font_atlas_init();
-	font_atlas_set_font(font_atlas, font, 0, UINT32_MAX);
 
-	*asset = (struct Asset_Font){
-		.font = font,
-		.font_atlas = font_atlas,
-		.gpu_handle = gpu_texture_init(font_atlas_get_asset(font_atlas)),
+	*asset = (struct Asset_Typeface){
+		.typeface = font,
 	};
 }
 
-static void asset_font_free(struct Asset_System * system, void * instance) {
-	struct Asset_Font * asset = instance;
+static void asset_typeface_free(struct Asset_System * system, void * instance) {
+	struct Asset_Typeface * asset = instance;
 	(void)system;
-	font_free(asset->font);
+	font_free(asset->typeface);
+	common_memset(asset, 0, sizeof(*asset));
+}
+
+// ----- ----- ----- ----- -----
+//     Asset font part
+// ----- ----- ----- ----- -----
+
+struct Asset_Fonts_Context {
+	struct Asset_System * system;
+	struct Asset_Fonts * result;
+};
+
+static void asset_fonts_fill(struct JSON const * json, void * data) {
+	struct Asset_Fonts_Context * context = data;
+	if (json->type == JSON_ERROR) {
+		common_memset(context->result, 0, sizeof(*context->result));
+		return;
+	}
+
+	struct Font_Atlas * font_atlas = font_atlas_init();
+
+	// @todo: track handles
+	struct CString const path = json_get_string(json, S_("path"));
+	struct Asset_Handle const handle = asset_system_aquire(context->system, path);
+	struct Asset_Typeface const * asset = asset_system_find_instance(context->system, handle);
+	font_atlas_set_typeface(font_atlas, asset->typeface, 0, UINT32_MAX);
+
+	*context->result = (struct Asset_Fonts){
+		.font_atlas = font_atlas,
+		.gpu_handle = gpu_texture_init(font_atlas_get_asset(font_atlas)),
+	};
+	
+}
+
+static void asset_fonts_init(struct Asset_System * system, void * instance, struct CString name) {
+	struct Asset_Fonts * asset = instance;
+	struct Asset_Fonts_Context context = { .system = system, .result = asset };
+	process_json(name, &context, asset_fonts_fill);
+}
+
+static void asset_fonts_free(struct Asset_System * system, void * instance) {
+	struct Asset_Fonts * asset = instance;
+	(void)system;
 	font_atlas_free(asset->font_atlas);
 	gpu_texture_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
@@ -199,13 +238,13 @@ static void asset_font_free(struct Asset_System * system, void * instance) {
 // -- Asset target part
 // ----- ----- ----- ----- -----
 
-struct Asset_Fill_Target {
+struct Asset_Target_Context {
 	struct Asset_System * system;
 	struct Asset_Target * result;
 };
 
-static void asset_fill_target(struct JSON const * json, void * data) {
-	struct Asset_Fill_Target * context = data;
+static void asset_target_fill(struct JSON const * json, void * data) {
+	struct Asset_Target_Context * context = data;
 	if (json->type == JSON_ERROR) {
 		common_memset(context->result, 0, sizeof(*context->result));
 		return;
@@ -218,8 +257,8 @@ static void asset_fill_target(struct JSON const * json, void * data) {
 
 static void asset_target_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Target * asset = instance;
-	struct Asset_Fill_Target context = { .system = system, .result = asset };
-	process_json(name, &context, asset_fill_target);
+	struct Asset_Target_Context context = { .system = system, .result = asset };
+	process_json(name, &context, asset_target_fill);
 }
 
 static void asset_target_free(struct Asset_System * system, void * instance) {
@@ -263,13 +302,13 @@ static void asset_model_free(struct Asset_System * system, void * instance) {
 // -- Asset material part
 // ----- ----- ----- ----- -----
 
-struct Asset_Fill_Material {
+struct Asset_Material_Context {
 	struct Asset_System * system;
 	struct Asset_Material * result;
 };
 
-static void asset_fill_material(struct JSON const * json, void * data) {
-	struct Asset_Fill_Material * context = data;
+static void asset_material_fill(struct JSON const * json, void * data) {
+	struct Asset_Material_Context * context = data;
 	if (json->type == JSON_ERROR) {
 		common_memset(context->result, 0, sizeof(*context->result));
 		return;
@@ -285,8 +324,8 @@ static void asset_fill_material(struct JSON const * json, void * data) {
 
 static void asset_material_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Material * asset = instance;
-	struct Asset_Fill_Material context = { .system = system, .result = asset };
-	process_json(name, &context, asset_fill_material);
+	struct Asset_Material_Context context = { .system = system, .result = asset };
+	process_json(name, &context, asset_material_fill);
 }
 
 static void asset_material_free(struct Asset_System * system, void * instance) {
@@ -304,8 +343,9 @@ void asset_types_init(struct Asset_System * system) {
 	asset_system_map_extension(system, S_("json"),     S_("json"));
 	asset_system_map_extension(system, S_("shader"),   S_("glsl"));
 	asset_system_map_extension(system, S_("image"),    S_("image"));
-	asset_system_map_extension(system, S_("font"),     S_("ttf"));
-	asset_system_map_extension(system, S_("font"),     S_("otf"));
+	asset_system_map_extension(system, S_("typeface"), S_("ttf"));
+	asset_system_map_extension(system, S_("typeface"), S_("otf"));
+	asset_system_map_extension(system, S_("fonts"),    S_("fonts"));
 	asset_system_map_extension(system, S_("target"),   S_("target"));
 	asset_system_map_extension(system, S_("model"),    S_("obj"));
 	asset_system_map_extension(system, S_("material"), S_("material"));
@@ -332,10 +372,15 @@ void asset_types_init(struct Asset_System * system) {
 		.free = asset_image_free,
 	}, sizeof(struct Asset_Image));
 
-	asset_system_set_type(system, S_("font"), (struct Asset_Callbacks){
-		.init = asset_font_init,
-		.free = asset_font_free,
-	}, sizeof(struct Asset_Font));
+	asset_system_set_type(system, S_("typeface"), (struct Asset_Callbacks){
+		.init = asset_typeface_init,
+		.free = asset_typeface_free,
+	}, sizeof(struct Asset_Typeface));
+
+	asset_system_set_type(system, S_("fonts"), (struct Asset_Callbacks){
+		.init = asset_fonts_init,
+		.free = asset_fonts_free,
+	}, sizeof(struct Asset_Fonts));
 
 	asset_system_set_type(system, S_("target"), (struct Asset_Callbacks){
 		.init = asset_target_init,
@@ -358,7 +403,8 @@ void asset_types_free(struct Asset_System * system) {
 	asset_system_del_type(system, S_("json"));
 	asset_system_del_type(system, S_("shader"));
 	asset_system_del_type(system, S_("image"));
-	asset_system_del_type(system, S_("font"));
+	asset_system_del_type(system, S_("typeface"));
+	asset_system_del_type(system, S_("fonts"));
 	asset_system_del_type(system, S_("target"));
 	asset_system_del_type(system, S_("model"));
 	asset_system_del_type(system, S_("material"));

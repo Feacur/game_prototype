@@ -16,8 +16,11 @@
 # project assets
 /assets/**/*.obj  text eol=lf
 /assets/**/*.glsl text eol=lf diff=cpp
-/assets/**/*.txt  text eol=lf working-tree-encoding=UTF-8
-/assets/**/*.json text eol=lf working-tree-encoding=UTF-8
+/assets/**/*.image text eol=lf working-tree-encoding=UTF-8
+/assets/**/*.fonts text eol=lf working-tree-encoding=UTF-8
+/assets/**/*.scene text eol=lf working-tree-encoding=UTF-8
+/assets/**/*.target text eol=lf working-tree-encoding=UTF-8
+/assets/**/*.material text eol=lf working-tree-encoding=UTF-8
 
 # project
 /project/**/*.rdbg binary

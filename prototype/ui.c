@@ -53,7 +53,7 @@ static void ui_internal_push_image(void) {
 
 static void ui_internal_push_font(void) {
 	if (asset_handle_is_null(gs_ui.font_asset_handle)) { return; }
-	struct Asset_Font const * asset = asset_system_find_instance(&gs_game.assets, gs_ui.font_asset_handle);
+	struct Asset_Fonts const * asset = asset_system_find_instance(&gs_game.assets, gs_ui.font_asset_handle);
 
 	if (gs_ui.cached_texture == asset) { return; }
 	gs_ui.cached_texture = asset;

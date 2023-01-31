@@ -24,14 +24,14 @@ struct Font_Glyph {
 	struct Font_Glyph_Params params;
 	struct rect uv;
 	uint32_t id;
-	uint8_t usage;
+	uint8_t gc_timeout;
 };
 
 struct Font_Atlas * font_atlas_init(void);
 void font_atlas_free(struct Font_Atlas * font_atlas);
 
-struct Font const * font_atlas_get_font(struct Font_Atlas const * font_atlas, uint32_t codepoint);
-void font_atlas_set_font(struct Font_Atlas * font_atlas, struct Font const * font, uint32_t from, uint32_t to);
+struct Font const * font_atlas_get_typeface(struct Font_Atlas const * font_atlas, uint32_t codepoint);
+void font_atlas_set_typeface(struct Font_Atlas * font_atlas, struct Font const * font, uint32_t codepoint_from, uint32_t codepoint_to);
 
 void font_atlas_add_glyph(struct Font_Atlas * font_atlas, uint32_t codepoint, float size);
 void font_atlas_add_default_glyphs(struct Font_Atlas * font_atlas, float size);

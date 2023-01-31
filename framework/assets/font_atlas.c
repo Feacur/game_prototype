@@ -11,14 +11,18 @@
 #include "framework/logger.h"
 #include "framework/unicode.h"
 
-#define GLYPH_USAGE_MAX UINT8_MAX
+#define GLYPH_GC_TIMEOUT_MAX UINT8_MAX
+
+struct Font_Atlas_Range {
+	uint32_t codepoint;
+	struct Font const * font;
+};
 
 struct Font_Atlas {
 	struct Image buffer;
 	//
-	struct Font const * font;
+	struct Array_Any fonts; // `struct Font_Atlas_Range`
 	struct Hash_Table_U64 table; // `struct Font_Key` : `struct Font_Glyph`
-	struct Array_Any scratch;
 	bool rendered;
 };
 
@@ -58,8 +62,8 @@ struct Font_Atlas * font_atlas_init(void) {
 				},
 			},
 		},
+		.fonts = array_any_init(sizeof(struct Font_Atlas_Range)),
 		.table = hash_table_u64_init(sizeof(struct Font_Glyph)),
-		.scratch = array_any_init(sizeof(struct Font_Symbol)),
 	};
 	return font_atlas;
 }
@@ -67,21 +71,28 @@ struct Font_Atlas * font_atlas_init(void) {
 void font_atlas_free(struct Font_Atlas * font_atlas) {
 	if (font_atlas == NULL) { logger_to_console("freeing NULL font atlas\n"); return; }
 	image_free(&font_atlas->buffer);
+	array_any_free(&font_atlas->fonts);
 	hash_table_u64_free(&font_atlas->table);
-	array_any_free(&font_atlas->scratch);
 
 	common_memset(font_atlas, 0, sizeof(*font_atlas));
 	MEMORY_FREE(font_atlas);
 }
 
-struct Font const * font_atlas_get_font(struct Font_Atlas const * font_atlas, uint32_t codepoint) {
-	(void)codepoint;
-	return font_atlas->font;
+struct Font const * font_atlas_get_typeface(struct Font_Atlas const * font_atlas, uint32_t codepoint) {
+	for (uint32_t i = 0; i < font_atlas->fonts.count; i++) {
+		struct Font_Atlas_Range const * range = array_any_at(&font_atlas->fonts, i);
+		if (codepoint >= range->codepoint) { return range->font; }
+	}
+	return NULL;
 }
 
-void font_atlas_set_font(struct Font_Atlas * font_atlas, struct Font const * font, uint32_t from, uint32_t to) {
-	(void)(to - from);
-	font_atlas->font = font;
+void font_atlas_set_typeface(struct Font_Atlas * font_atlas, struct Font const * font, uint32_t codepoint_from, uint32_t codepoint_to) {
+	(void)(codepoint_to - codepoint_from);
+	if (font_atlas->fonts.count == 0) { array_any_push_many(&font_atlas->fonts, 1, NULL); }
+	struct Font_Atlas_Range * range = array_any_at(&font_atlas->fonts, 0);
+	*range = (struct Font_Atlas_Range){
+		.font = font,
+	};
 }
 
 inline static uint64_t font_atlas_get_key_hash(struct Font_Key value);
@@ -92,9 +103,9 @@ void font_atlas_add_glyph(struct Font_Atlas * font_atlas, uint32_t codepoint, fl
 	});
 
 	struct Font_Glyph * glyph = hash_table_u64_get(&font_atlas->table, key_hash);
-	if (glyph != NULL) { glyph->usage = GLYPH_USAGE_MAX; return; }
+	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
-	struct Font const * font = font_atlas_get_font(font_atlas, codepoint);
+	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
 	if (font == NULL) { logger_to_console("font misses a font for codepoint '0x%x'\n", codepoint); return; }
 
 	uint32_t const glyph_id = font_get_glyph_id(font, codepoint);
@@ -107,7 +118,7 @@ void font_atlas_add_glyph(struct Font_Atlas * font_atlas, uint32_t codepoint, fl
 	hash_table_u64_set(&font_atlas->table, key_hash, &(struct Font_Glyph){
 		.params = glyph_params,
 		.id = glyph_id,
-		.usage = GLYPH_USAGE_MAX,
+		.gc_timeout = GLYPH_GC_TIMEOUT_MAX,
 	});
 
 	font_atlas->rendered = false;
@@ -120,14 +131,14 @@ static void font_atlas_add_default_glyph(struct Font_Atlas *font_atlas, uint32_t
 	});
 
 	struct Font_Glyph * glyph = hash_table_u64_get(&font_atlas->table, key_hash);
-	if (glyph != NULL) { glyph->usage = GLYPH_USAGE_MAX; return; }
+	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
 	hash_table_u64_set(&font_atlas->table, key_hash, &(struct Font_Glyph){
 		.params = (struct Font_Glyph_Params){
 			.full_size_x = full_size_x,
 			.rect = rect,
 		},
-		.usage = GLYPH_USAGE_MAX,
+		.gc_timeout = GLYPH_GC_TIMEOUT_MAX,
 	});
 
 	font_atlas->rendered = false;
@@ -170,13 +181,13 @@ void font_atlas_render(struct Font_Atlas * font_atlas) {
 	// track glyphs usage
 	FOR_HASH_TABLE_U64 (&font_atlas->table, it) {
 		struct Font_Glyph * glyph = it.value;
-		if (glyph->usage == 0) {
+		if (glyph->gc_timeout == 0) {
 			font_atlas->rendered = false;
 			hash_table_u64_del_at(&font_atlas->table, it.current);
 			continue;
 		}
 
-		glyph->usage--;
+		glyph->gc_timeout--;
 	}
 
 	if (font_atlas->rendered) { return; }
@@ -292,7 +303,7 @@ void font_atlas_render(struct Font_Atlas * font_atlas) {
 			struct Font_Symbol const * symbol = symbols_to_render + i;
 			struct Font_Glyph_Params const * params = &symbol->glyph->params;
 
-			struct Font const * font = font_atlas_get_font(font_atlas, symbol->key.codepoint);
+			struct Font const * font = font_atlas_get_typeface(font_atlas, symbol->key.codepoint);
 			if (font == NULL) { continue; }
 
 			uint32_t const glyph_size_x = (uint32_t)(params->rect.max.x - params->rect.min.x);
@@ -368,14 +379,14 @@ struct Font_Glyph const * font_atlas_get_glyph(struct Font_Atlas * const font_at
 
 float font_atlas_get_scale(struct Font_Atlas const * font_atlas, float size) {
 	uint32_t const codepoint = 0;
-	struct Font const * font = font_atlas_get_font(font_atlas, codepoint);
+	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
 	if (font == NULL) { return 1; }
 	return font_get_scale(font, size);
 }
 
 float font_atlas_get_ascent(struct Font_Atlas const * font_atlas, float scale) {
 	uint32_t const codepoint = 0;
-	struct Font const * font = font_atlas_get_font(font_atlas, codepoint);
+	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
 	if (font == NULL) { return 0; }
 	int32_t const value = font_get_ascent(font);
 	return ((float)value) * scale;
@@ -383,7 +394,7 @@ float font_atlas_get_ascent(struct Font_Atlas const * font_atlas, float scale) {
 
 float font_atlas_get_descent(struct Font_Atlas const * font_atlas, float scale) {
 	uint32_t const codepoint = 0;
-	struct Font const * font = font_atlas_get_font(font_atlas, codepoint);
+	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
 	if (font == NULL) { return 0; }
 	int32_t const value = font_get_descent(font);
 	return ((float)value) * scale;
@@ -391,7 +402,7 @@ float font_atlas_get_descent(struct Font_Atlas const * font_atlas, float scale) 
 
 float font_atlas_get_gap(struct Font_Atlas const * font_atlas, float scale) {
 	uint32_t const codepoint = 0;
-	struct Font const * font = font_atlas_get_font(font_atlas, codepoint);
+	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
 	if (font == NULL) { return 0; }
 	int32_t const value = font_get_gap(font);
 	return ((float)value) * scale;
@@ -399,7 +410,7 @@ float font_atlas_get_gap(struct Font_Atlas const * font_atlas, float scale) {
 
 float font_atlas_get_kerning(struct Font_Atlas const * font_atlas, uint32_t codepoint1, uint32_t codepoint2, float scale) {
 	uint32_t const codepoint = 0;
-	struct Font const * font = font_atlas_get_font(font_atlas, codepoint);
+	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
 	if (font == NULL) { return 0; }
 	uint32_t const glyph_id1 = font_get_glyph_id(font, codepoint1);
 	uint32_t const glyph_id2 = font_get_glyph_id(font, codepoint2);
@@ -452,4 +463,4 @@ inline static uint64_t font_atlas_get_key_hash(struct Font_Key value) {
 	return data.value_u64;
 }
 
-#undef GLYPH_USAGE_MAX
+#undef GLYPH_GC_TIMEOUT_MAX

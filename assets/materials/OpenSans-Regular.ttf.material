@@ -1,6 +1,0 @@
-{
-	"shader": "assets/shaders/batcher_2d.glsl",
-	"blend": "mix", "depth": "none",
-	"p_Texture": {"path": "assets/fonts/OpenSans-Regular.ttf"},
-	"p_Tint": [1, 1, 1, 1],
-}

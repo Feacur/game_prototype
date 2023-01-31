@@ -1,6 +1,6 @@
 {
 	"shader": "assets/shaders/batcher_2d.glsl",
 	"blend": "mix", "depth": "none",
-	"p_Texture": {"path": "assets/fonts/JetBrainsMono-Regular.ttf"},
+	"p_Texture": {"path": "assets/fonts/font.fonts"},
 	"p_Tint": [1, 1, 1, 1],
 }

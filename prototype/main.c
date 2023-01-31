@@ -344,7 +344,7 @@ static void prototype_draw_objects(void) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
-					struct Asset_Font const * font = asset_system_find_instance(&gs_game.assets, text->font_asset_handle);
+					struct Asset_Fonts const * fonts = asset_system_find_instance(&gs_game.assets, text->fonts_asset_handle);
 					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.assets, text->message_asset_handle);
 					struct CString const value = {
 						.length = message->length,
@@ -353,7 +353,7 @@ static void prototype_draw_objects(void) {
 					batcher_2d_add_text(
 						gs_renderer.batcher_2d,
 						entity->cached_rect, text->alignment, true,
-						font, value, text->size
+						fonts, value, text->size
 					);
 				} break;
 			}
@@ -404,7 +404,7 @@ static void app_init(void) {
 	ui_init();
 	ui_set_shader(S_("assets/shaders/batcher_2d.glsl"));
 	ui_set_image(S_("assets/images/ui.image"));
-	ui_set_font(S_("assets/fonts/Ubuntu-Regular.ttf"));
+	ui_set_font(S_("assets/fonts/font.fonts"));
 
 	prototype_init();
 }
