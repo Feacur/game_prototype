@@ -1,3 +1,8 @@
 {
-	"path": "assets/fonts/NotoSerifKR-Regular.otf",
+	"ranges": [
+		{
+			"path": "assets/fonts/JetBrainsMono-Regular.ttf",
+			"from": 0, "to": 4294967295,
+		},
+	],
 }

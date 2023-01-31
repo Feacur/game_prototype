@@ -198,6 +198,18 @@ struct Asset_Fonts_Context {
 	struct Asset_Fonts * result;
 };
 
+static void json_load_fonts(struct Asset_System * system, struct JSON const * json, struct Font_Atlas * fonts) {
+	if (json->type != JSON_OBJECT) { return; }
+
+	struct CString const path = json_get_string(json, S_("path"));
+	uint32_t const from = (uint32_t)json_get_number(json, S_("from"));
+	uint32_t const to   = (uint32_t)json_get_number(json, S_("to"));
+
+	struct Asset_Handle const handle = asset_system_aquire(system, path);
+	struct Asset_Typeface const * asset = asset_system_find_instance(system, handle);
+	font_atlas_set_typeface(fonts, asset->typeface, from, to);
+}
+
 static void asset_fonts_fill(struct JSON const * json, void * data) {
 	struct Asset_Fonts_Context * context = data;
 	if (json->type == JSON_ERROR) {
@@ -208,10 +220,14 @@ static void asset_fonts_fill(struct JSON const * json, void * data) {
 	struct Font_Atlas * font_atlas = font_atlas_init();
 
 	// @todo: track handles
-	struct CString const path = json_get_string(json, S_("path"));
-	struct Asset_Handle const handle = asset_system_aquire(context->system, path);
-	struct Asset_Typeface const * asset = asset_system_find_instance(context->system, handle);
-	font_atlas_set_typeface(font_atlas, asset->typeface, 0, UINT32_MAX);
+	struct JSON const * ranges = json_get(json, S_("ranges"));
+	if (ranges->type == JSON_ARRAY) {
+		uint32_t const count = json_count(ranges);
+		for (uint32_t i = 0; i < count; i++) {
+			struct JSON const * range = json_at(ranges, i);
+			json_load_fonts(context->system, range, font_atlas);
+		}
+	}
 
 	*context->result = (struct Asset_Fonts){
 		.font_atlas = font_atlas,

@@ -67,7 +67,7 @@
 			"type": "text_2d",
 			"fonts": "assets/fonts/font.fonts",
 			"message": "assets/prototype/test.txt",
-			"size": 32,
+			"size": 24,
 			"alignment": [0, 0],
 		},
 		{
@@ -83,7 +83,7 @@
 			"type": "text_2d",
 			"fonts": "assets/fonts/font.fonts",
 			"message": "assets/prototype/test.txt",
-			"size": 16,
+			"size": 12,
 			"alignment": [0.5, 1],
 		},
 		// -- fonts atlases
