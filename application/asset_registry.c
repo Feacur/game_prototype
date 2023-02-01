@@ -198,18 +198,6 @@ struct Asset_Fonts_Context {
 	struct Asset_Fonts * result;
 };
 
-static void json_load_fonts(struct Asset_System * system, struct JSON const * json, struct Font_Atlas * fonts) {
-	if (json->type != JSON_OBJECT) { return; }
-
-	struct CString const path = json_get_string(json, S_("path"));
-	uint32_t const from = (uint32_t)json_get_number(json, S_("from"));
-	uint32_t const to   = (uint32_t)json_get_number(json, S_("to"));
-
-	struct Asset_Handle const handle = asset_system_aquire(system, path);
-	struct Asset_Typeface const * asset = asset_system_find_instance(system, handle);
-	font_atlas_set_typeface(fonts, asset->typeface, from, to);
-}
-
 static void asset_fonts_fill(struct JSON const * json, void * data) {
 	struct Asset_Fonts_Context * context = data;
 	if (json->type == JSON_ERROR) {

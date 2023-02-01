@@ -61,6 +61,7 @@ void common_memset(void * target, uint8_t value, size_t size) {
 }
 
 void common_memcpy(void * target, void const * source, size_t size) {
+	if (source == NULL) { return; }
 	memcpy(target, source, size);
 }
 

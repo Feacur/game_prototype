@@ -85,13 +85,11 @@ bool hash_table_u32_set(struct Hash_Table_U32 * hash_table, uint32_t key_hash, v
 	if (is_new) { hash_table->count++; }
 
 	hash_table->key_hashes[key_index] = key_hash;
-	if (value != NULL) {
-		common_memcpy(
-			(uint8_t *)hash_table->values + hash_table->value_size * key_index,
-			value,
-			hash_table->value_size
-		);
-	}
+	common_memcpy(
+		(uint8_t *)hash_table->values + hash_table->value_size * key_index,
+		value,
+		hash_table->value_size
+	);
 	hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
 	
 	return is_new;

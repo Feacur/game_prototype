@@ -41,21 +41,30 @@ static void buffer_grow_if_must(struct Buffer * buffer, size_t target_size) {
 
 void buffer_push_many(struct Buffer * buffer, size_t size, void const * value) {
 	buffer_grow_if_must(buffer, buffer->size + size);
-	if (value != NULL) {
-		common_memcpy(
-			(uint8_t *)buffer->data + buffer->size,
-			value, size
-		);
-	}
+	//
+	uint8_t * end = (uint8_t *)buffer->data + buffer->size;
+	common_memcpy(end, value, size);
 	buffer->size += size;
 }
 
 void buffer_set_many(struct Buffer * buffer, size_t offset, size_t size, void const * value) {
 	if (offset + size > buffer->size) { logger_to_console("out of bounds\n"); DEBUG_BREAK(); return; }
-	common_memcpy(
-		(uint8_t *)buffer->data + offset,
-		value, size
-	);
+	uint8_t * at = (uint8_t *)buffer->data + offset;
+	//
+	common_memcpy(at, value, size);
+}
+
+void buffer_insert_many(struct Buffer * buffer, size_t offset, size_t size, void const * value) {
+	if (offset > buffer->size) { logger_to_console("out of bounds\n"); DEBUG_BREAK(); return; }
+	buffer_grow_if_must(buffer, buffer->size + size);
+	//
+	uint8_t * end = (uint8_t *)buffer->data + buffer->size;
+	uint8_t * at  = (uint8_t *)buffer->data + offset;
+	for (uint8_t * it = end; it > at; it -= 1) {
+		common_memcpy(it, it - size, 1);
+	}
+	common_memcpy(at, value, size);
+	buffer->size += size;
 }
 
 void * buffer_pop(struct Buffer * buffer, size_t size) {

@@ -17,6 +17,7 @@ void array_u64_ensure(struct Array_U64 * array, uint32_t target_capacity);
 
 void array_u64_push_many(struct Array_U64 * array, uint32_t count, uint64_t const * value);
 void array_u64_set_many(struct Array_U64 * array, uint32_t index, uint32_t count, uint64_t const * value);
+void array_u64_insert_many(struct Array_U64 * array, uint32_t index, uint32_t count, uint64_t const * value);
 
 uint64_t array_u64_pop(struct Array_U64 * array);
 uint64_t array_u64_peek(struct Array_U64 const * array, uint32_t offset);

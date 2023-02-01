@@ -18,6 +18,7 @@ void buffer_ensure(struct Buffer * buffer, size_t target_capacity);
 
 void buffer_push_many(struct Buffer * buffer, size_t size, void const * value);
 void buffer_set_many(struct Buffer * buffer, size_t offset, size_t size, void const * value);
+void buffer_insert_many(struct Buffer * buffer, size_t offset, size_t size, void const * value);
 
 void * buffer_pop(struct Buffer * buffer, size_t size);
 void * buffer_peek(struct Buffer const * buffer, size_t offset);

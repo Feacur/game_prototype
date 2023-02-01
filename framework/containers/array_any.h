@@ -18,6 +18,7 @@ void array_any_ensure(struct Array_Any * array, uint32_t target_capacity);
 
 void array_any_push_many(struct Array_Any * array, uint32_t count, void const * value);
 void array_any_set_many(struct Array_Any * array, uint32_t index, uint32_t count, void const * value);
+void array_any_insert_many(struct Array_Any * array, uint32_t index, uint32_t count, void const * value);
 
 void * array_any_pop(struct Array_Any * array);
 void * array_any_peek(struct Array_Any const * array, uint32_t offset);

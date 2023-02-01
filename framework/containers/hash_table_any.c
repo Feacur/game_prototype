@@ -111,13 +111,11 @@ bool hash_table_any_set(struct Hash_Table_Any * hash_table, void const * key, ui
 		key,
 		hash_table->key_size
 	);
-	if (value != NULL) {
-		common_memcpy(
-			(uint8_t *)hash_table->values + hash_table->value_size * key_index,
-			value,
-			hash_table->value_size
-		);
-	}
+	common_memcpy(
+		(uint8_t *)hash_table->values + hash_table->value_size * key_index,
+		value,
+		hash_table->value_size
+	);
 	hash_table->marks[key_index] = HASH_TABLE_MARK_FULL;
 	
 	return is_new;

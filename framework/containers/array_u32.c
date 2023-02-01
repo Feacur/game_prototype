@@ -39,23 +39,32 @@ static void array_u32_grow_if_must(struct Array_U32 * array, uint32_t target_cou
 
 void array_u32_push_many(struct Array_U32 * array, uint32_t count, uint32_t const * value) {
 	array_u32_grow_if_must(array, array->count + count);
-	if (value != NULL) {
-		common_memcpy(
-			array->data + array->count,
-			value,
-			sizeof(*array->data) * count
-		);
-	}
+	uint32_t const size = sizeof(*array->data) * count;
+	uint32_t * end = array->data + array->count;
+	common_memcpy(end, value, size);
 	array->count += count;
 }
 
 void array_u32_set_many(struct Array_U32 * array, uint32_t index, uint32_t count, uint32_t const * value) {
 	if (index + count > array->count) { logger_to_console("out of bounds\n"); DEBUG_BREAK(); return; }
-	common_memcpy(
-		array->data + index,
-		value,
-		sizeof(*array->data) * count
-	);
+	//
+	uint32_t const size = sizeof(*array->data) * count;
+	uint32_t * at = array->data + index;
+	common_memcpy(at, value, size);
+}
+
+void array_u32_insert_many(struct Array_U32 * array, uint32_t index, uint32_t count, uint32_t const * value) {
+	if (index > array->count) { logger_to_console("out of bounds\n"); DEBUG_BREAK(); return; }
+	array_u32_grow_if_must(array, array->count + count);
+	//
+	uint32_t const size = sizeof(*array->data) * count;
+	uint32_t * end = array->data + array->count;
+	uint32_t * at  = array->data + index;
+	for (uint32_t * it = end; it > at; it -= 1) {
+		common_memcpy(it, it - count, sizeof(*array->data));
+	}
+	common_memcpy(at, value, size);
+	array->count += count;
 }
 
 uint32_t array_u32_pop(struct Array_U32 * array) {

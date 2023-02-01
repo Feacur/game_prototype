@@ -7,6 +7,7 @@
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/material.h"
+#include "framework/assets/font_atlas.h"
 
 #include "asset_types.h"
 
@@ -34,6 +35,18 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 
 	// process errors
 	fail: logger_to_console("failed to load gfx material asset\n");
+}
+
+void json_load_fonts(struct Asset_System * system, struct JSON const * json, struct Font_Atlas * fonts) {
+	if (json->type != JSON_OBJECT) { return; }
+
+	struct CString const path = json_get_string(json, S_("path"));
+	uint32_t const from = (uint32_t)json_get_number(json, S_("from"));
+	uint32_t const to   = (uint32_t)json_get_number(json, S_("to"));
+
+	struct Asset_Handle const handle = asset_system_aquire(system, path);
+	struct Asset_Typeface const * asset = asset_system_find_instance(system, handle);
+	font_atlas_set_typeface(fonts, asset->typeface, from, to);
 }
 
 //
