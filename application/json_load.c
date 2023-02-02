@@ -7,7 +7,7 @@
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/material.h"
-#include "framework/assets/font_atlas.h"
+#include "framework/assets/glyph_atlas.h"
 
 #include "asset_types.h"
 

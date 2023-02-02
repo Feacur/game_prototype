@@ -34,7 +34,7 @@ static void typeface_memory_free(void * pointer, struct Buffer * scratch);
 
 struct Typeface {
 	void * data;
-	stbtt_fontinfo font;
+	stbtt_fontinfo api;
 	int ascent, descent, line_gap;
 	struct Buffer * scratch;
 };
@@ -50,20 +50,20 @@ struct Typeface * typeface_init(struct Buffer * buffer) {
 	typeface->data = buffer->data;
 	*buffer = (struct Buffer){0};
 
-	typeface->font.userdata = typeface->scratch;
-	if (!stbtt_InitFont(&typeface->font, typeface->data, stbtt_GetFontOffsetForIndex(typeface->data, 0))) {
+	typeface->api.userdata = typeface->scratch;
+	if (!stbtt_InitFont(&typeface->api, typeface->data, stbtt_GetFontOffsetForIndex(typeface->data, 0))) {
 		logger_to_console("failure: can't read typeface data\n"); DEBUG_BREAK();
 	}
 
-	if (!stbtt_GetFontVMetricsOS2(&typeface->font, &typeface->ascent, &typeface->descent, &typeface->line_gap)) {
-		stbtt_GetFontVMetrics(&typeface->font, &typeface->ascent, &typeface->descent, &typeface->line_gap);
+	if (!stbtt_GetFontVMetricsOS2(&typeface->api, &typeface->ascent, &typeface->descent, &typeface->line_gap)) {
+		stbtt_GetFontVMetrics(&typeface->api, &typeface->ascent, &typeface->descent, &typeface->line_gap);
 	}
 
 	return typeface;
 }
 
 void typeface_free(struct Typeface * typeface) {
-	if (typeface == NULL) { logger_to_console("freeing NULL font\n"); return; }
+	if (typeface == NULL) { logger_to_console("freeing NULL typeface\n"); return; }
 	buffer_free(typeface->scratch); MEMORY_FREE(typeface->scratch);
 	MEMORY_FREE(typeface->data);
 	common_memset(typeface, 0, sizeof(*typeface));
@@ -71,15 +71,15 @@ void typeface_free(struct Typeface * typeface) {
 }
 
 uint32_t typeface_get_glyph_id(struct Typeface const * typeface, uint32_t codepoint) {
-	return (uint32_t)stbtt_FindGlyphIndex(&typeface->font, (int)codepoint);
+	return (uint32_t)stbtt_FindGlyphIndex(&typeface->api, (int)codepoint);
 }
 
 struct Typeface_Glyph_Params typeface_get_glyph_parameters(struct Typeface const * typeface, uint32_t glyph_id, float scale) {
 	int advance_width, left_side_bearing;
-	stbtt_GetGlyphHMetrics(&typeface->font, (int)glyph_id, &advance_width, &left_side_bearing);
+	stbtt_GetGlyphHMetrics(&typeface->api, (int)glyph_id, &advance_width, &left_side_bearing);
 
 	struct srect rect;
-	if (!stbtt_GetGlyphBox(&typeface->font, (int)glyph_id, &rect.min.x, &rect.min.y, &rect.max.x, &rect.max.y)) {
+	if (!stbtt_GetGlyphBox(&typeface->api, (int)glyph_id, &rect.min.x, &rect.min.y, &rect.max.x, &rect.max.y)) {
 		return (struct Typeface_Glyph_Params){
 			.full_size_x = ((float)advance_width) * scale,
 			.is_empty = true,
@@ -93,7 +93,7 @@ struct Typeface_Glyph_Params typeface_get_glyph_parameters(struct Typeface const
 		};
 	}
 
-	if (stbtt_IsGlyphEmpty(&typeface->font, (int)glyph_id)) {
+	if (stbtt_IsGlyphEmpty(&typeface->api, (int)glyph_id)) {
 		return (struct Typeface_Glyph_Params){
 			.full_size_x = ((float)advance_width) * scale,
 			.is_empty = true,
@@ -140,7 +140,7 @@ void typeface_render_glyph(
 	// stbtt_set_flip_vertically_on_load(1);
 
 	stbtt_MakeGlyphBitmap(
-		&typeface->font, buffer + offset_y * buffer_width + offset_x,
+		&typeface->api, buffer + offset_y * buffer_width + offset_x,
 		(int)glyph_size_x, (int)glyph_size_y, (int)buffer_width,
 		scale, scale,
 		(int)glyph_id
@@ -152,8 +152,8 @@ void typeface_render_glyph(
 }
 
 float typeface_get_scale(struct Typeface const * typeface, float pixels_size) {
-	if (pixels_size > 0) { return stbtt_ScaleForPixelHeight(&typeface->font, pixels_size); }
-	if (pixels_size < 0) { return stbtt_ScaleForMappingEmToPixels(&typeface->font, -pixels_size); }
+	if (pixels_size > 0) { return stbtt_ScaleForPixelHeight(&typeface->api, pixels_size); }
+	if (pixels_size < 0) { return stbtt_ScaleForMappingEmToPixels(&typeface->api, -pixels_size); }
 	return 0;
 }
 
@@ -170,7 +170,7 @@ int32_t typeface_get_gap(struct Typeface const * typeface) {
 }
 
 int32_t typeface_get_kerning(struct Typeface const * typeface, uint32_t glyph_id1, uint32_t glyph_id2) {
-	return (int32_t)stbtt_GetGlyphKernAdvance(&typeface->font, (int)glyph_id1, (int)glyph_id2);
+	return (int32_t)stbtt_GetGlyphKernAdvance(&typeface->api, (int)glyph_id1, (int)glyph_id2);
 }
 
 //
