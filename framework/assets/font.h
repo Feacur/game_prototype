@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_GLYPH_ATLAS)
-#define FRAMEWORK_ASSETS_GLYPH_ATLAS
+#if !defined(FRAMEWORK_ASSETS_FONT)
+#define FRAMEWORK_ASSETS_FONT
 
 #include "framework/assets/glyph_params.h"
 
@@ -16,7 +16,7 @@
 // |0,0             |
 // +----------------+
 
-struct Glyph_Atlas;
+struct Font;
 struct Image;
 struct Typeface;
 
@@ -27,23 +27,23 @@ struct Glyph {
 	uint8_t gc_timeout;
 };
 
-struct Glyph_Atlas * glyph_atlas_init(void);
-void glyph_atlas_free(struct Glyph_Atlas * glyph_atlas);
+struct Font * font_init(void);
+void font_free(struct Font * font);
 
-struct Typeface const * glyph_atlas_get_typeface(struct Glyph_Atlas const * glyph_atlas, uint32_t codepoint);
-void glyph_atlas_set_typeface(struct Glyph_Atlas * glyph_atlas, struct Typeface const * typeface, uint32_t codepoint_from, uint32_t codepoint_to);
+struct Typeface const * font_get_typeface(struct Font const * font, uint32_t codepoint);
+void font_set_typeface(struct Font * font, struct Typeface const * typeface, uint32_t codepoint_from, uint32_t codepoint_to);
 
-void glyph_atlas_add_glyph(struct Glyph_Atlas * glyph_atlas, uint32_t codepoint, float size);
-void glyph_atlas_add_defaults(struct Glyph_Atlas * glyph_atlas, float size);
-void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas);
+void font_add_glyph(struct Font * font, uint32_t codepoint, float size);
+void font_add_defaults(struct Font * font, float size);
+void font_render(struct Font * font);
 
-struct Image const * glyph_atlas_get_asset(struct Glyph_Atlas const * glyph_atlas);
-struct Glyph const * glyph_atlas_get_glyph(struct Glyph_Atlas * const glyph_atlas, uint32_t codepoint, float size);
+struct Image const * font_get_asset(struct Font const * font);
+struct Glyph const * font_get_glyph(struct Font * const font, uint32_t codepoint, float size);
 
-float glyph_atlas_get_scale(struct Glyph_Atlas const * glyph_atlas, float size);
-float glyph_atlas_get_ascent(struct Glyph_Atlas const * glyph_atlas, float scale);
-float glyph_atlas_get_descent(struct Glyph_Atlas const * glyph_atlas, float scale);
-float glyph_atlas_get_gap(struct Glyph_Atlas const * glyph_atlas, float scale);
-float glyph_atlas_get_kerning(struct Glyph_Atlas const * glyph_atlas, uint32_t codepoint1, uint32_t codepoint2, float scale);
+float font_get_scale(struct Font const * font, float size);
+float font_get_ascent(struct Font const * font, float scale);
+float font_get_descent(struct Font const * font, float scale);
+float font_get_gap(struct Font const * font, float scale);
+float font_get_kerning(struct Font const * font, uint32_t codepoint1, uint32_t codepoint2, float scale);
 
 #endif

@@ -156,10 +156,10 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 		} break;
 
 		case ENTITY_TYPE_TEXT_2D: {
-			struct CString const glyphs_path = json_get_string(json, S_("glyphs"));
+			struct CString const glyphs_path = json_get_string(json, S_("font"));
 			struct CString const message_path = json_get_string(json, S_("message"));
 			entity->as.text = (struct Entity_Text){
-				.glyph_atlas_asset_handle = asset_system_aquire(&gs_game.assets, glyphs_path),
+				.font_asset_handle = asset_system_aquire(&gs_game.assets, glyphs_path),
 				.message_asset_handle = asset_system_aquire(&gs_game.assets, message_path),
 				.size = (float)json_get_number(json, S_("size")),
 			};

@@ -6,7 +6,7 @@
 #include "framework/graphics/material.h"
 
 struct Typeface;
-struct Glyph_Atlas;
+struct Font;
 
 struct Asset_Bytes {
 	uint8_t * data;
@@ -30,7 +30,7 @@ struct Asset_Typeface {
 };
 
 struct Asset_Glyph_Atlas {
-	struct Glyph_Atlas * glyph_atlas;
+	struct Font * font;
 	struct Handle gpu_handle;
 };
 

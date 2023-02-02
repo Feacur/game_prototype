@@ -193,19 +193,19 @@ static void asset_typeface_free(struct Asset_System * system, void * instance) {
 //     Asset glyph atlas part
 // ----- ----- ----- ----- -----
 
-struct Asset_Glyph_Atlas_Context {
+struct Asset_font_Context {
 	struct Asset_System * system;
 	struct Asset_Glyph_Atlas * result;
 };
 
-static void asset_glyph_atlas_fill(struct JSON const * json, void * data) {
-	struct Asset_Glyph_Atlas_Context * context = data;
+static void asset_font_fill(struct JSON const * json, void * data) {
+	struct Asset_font_Context * context = data;
 	if (json->type == JSON_ERROR) {
 		common_memset(context->result, 0, sizeof(*context->result));
 		return;
 	}
 
-	struct Glyph_Atlas * glyph_atlas = glyph_atlas_init();
+	struct Font * font = font_init();
 
 	// @todo: track handles
 	struct JSON const * ranges = json_get(json, S_("ranges"));
@@ -213,27 +213,27 @@ static void asset_glyph_atlas_fill(struct JSON const * json, void * data) {
 		uint32_t const count = json_count(ranges);
 		for (uint32_t i = 0; i < count; i++) {
 			struct JSON const * range = json_at(ranges, i);
-			json_load_glyph_atlas_range(context->system, range, glyph_atlas);
+			json_load_font_range(context->system, range, font);
 		}
 	}
 
 	*context->result = (struct Asset_Glyph_Atlas){
-		.glyph_atlas = glyph_atlas,
-		.gpu_handle = gpu_texture_init(glyph_atlas_get_asset(glyph_atlas)),
+		.font = font,
+		.gpu_handle = gpu_texture_init(font_get_asset(font)),
 	};
 	
 }
 
-static void asset_glyph_atlas_init(struct Asset_System * system, void * instance, struct CString name) {
+static void asset_font_init(struct Asset_System * system, void * instance, struct CString name) {
 	struct Asset_Glyph_Atlas * asset = instance;
-	struct Asset_Glyph_Atlas_Context context = { .system = system, .result = asset };
-	process_json(name, &context, asset_glyph_atlas_fill);
+	struct Asset_font_Context context = { .system = system, .result = asset };
+	process_json(name, &context, asset_font_fill);
 }
 
-static void asset_glyph_atlas_free(struct Asset_System * system, void * instance) {
+static void asset_font_free(struct Asset_System * system, void * instance) {
 	struct Asset_Glyph_Atlas * asset = instance;
 	(void)system;
-	glyph_atlas_free(asset->glyph_atlas);
+	font_free(asset->font);
 	gpu_texture_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
@@ -349,7 +349,7 @@ void asset_types_init(struct Asset_System * system) {
 	asset_system_map_extension(system, S_("image"),    S_("image"));
 	asset_system_map_extension(system, S_("typeface"), S_("ttf"));
 	asset_system_map_extension(system, S_("typeface"), S_("otf"));
-	asset_system_map_extension(system, S_("glyphs"),   S_("glyphs"));
+	asset_system_map_extension(system, S_("font"),     S_("font"));
 	asset_system_map_extension(system, S_("target"),   S_("target"));
 	asset_system_map_extension(system, S_("model"),    S_("obj"));
 	asset_system_map_extension(system, S_("material"), S_("material"));
@@ -381,9 +381,9 @@ void asset_types_init(struct Asset_System * system) {
 		.free = asset_typeface_free,
 	}, sizeof(struct Asset_Typeface));
 
-	asset_system_set_type(system, S_("glyphs"), (struct Asset_Callbacks){
-		.init = asset_glyph_atlas_init,
-		.free = asset_glyph_atlas_free,
+	asset_system_set_type(system, S_("font"), (struct Asset_Callbacks){
+		.init = asset_font_init,
+		.free = asset_font_free,
 	}, sizeof(struct Asset_Glyph_Atlas));
 
 	asset_system_set_type(system, S_("target"), (struct Asset_Callbacks){
@@ -408,7 +408,7 @@ void asset_types_free(struct Asset_System * system) {
 	asset_system_del_type(system, S_("shader"));
 	asset_system_del_type(system, S_("image"));
 	asset_system_del_type(system, S_("typeface"));
-	asset_system_del_type(system, S_("glyphs"));
+	asset_system_del_type(system, S_("font"));
 	asset_system_del_type(system, S_("target"));
 	asset_system_del_type(system, S_("model"));
 	asset_system_del_type(system, S_("material"));

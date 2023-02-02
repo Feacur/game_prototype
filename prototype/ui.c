@@ -16,7 +16,7 @@
 
 static struct UI {
 	struct Gfx_Material material;
-	struct Asset_Handle glyph_atlas_asset_handle;
+	struct Asset_Handle font_asset_handle;
 	struct Asset_Handle image_asset_handle;
 	//
 	struct mat4 camera;
@@ -52,8 +52,8 @@ static void ui_internal_push_image(void) {
 }
 
 static void ui_internal_push_glyph_atlas(void) {
-	if (asset_handle_is_null(gs_ui.glyph_atlas_asset_handle)) { return; }
-	struct Asset_Glyph_Atlas const * asset = asset_system_find_instance(&gs_game.assets, gs_ui.glyph_atlas_asset_handle);
+	if (asset_handle_is_null(gs_ui.font_asset_handle)) { return; }
+	struct Asset_Glyph_Atlas const * asset = asset_system_find_instance(&gs_game.assets, gs_ui.font_asset_handle);
 
 	if (gs_ui.cached_texture == asset) { return; }
 	gs_ui.cached_texture = asset;
@@ -131,7 +131,7 @@ void ui_set_image(struct CString name) {
 }
 
 void ui_set_glyph_atlas(struct CString name) {
-	gs_ui.glyph_atlas_asset_handle = asset_system_aquire(&gs_game.assets, name);
+	gs_ui.font_asset_handle = asset_system_aquire(&gs_game.assets, name);
 }
 
 void ui_quad(struct rect uv) {

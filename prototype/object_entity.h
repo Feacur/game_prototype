@@ -40,7 +40,7 @@ struct Entity_Quad {
 };
 
 struct Entity_Text {
-	struct Asset_Handle glyph_atlas_asset_handle;
+	struct Asset_Handle font_asset_handle;
 	struct Asset_Handle message_asset_handle;
 	float size;
 	struct vec2 alignment;

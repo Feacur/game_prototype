@@ -37,7 +37,7 @@ void json_load_gfx_material(struct Asset_System * system, struct JSON const * js
 	fail: logger_to_console("failed to load gfx material asset\n");
 }
 
-void json_load_glyph_atlas_range(struct Asset_System * system, struct JSON const * json, struct Glyph_Atlas * glyph_atlas) {
+void json_load_font_range(struct Asset_System * system, struct JSON const * json, struct Font * font) {
 	if (json->type != JSON_OBJECT) { return; }
 
 	struct CString const path = json_get_string(json, S_("path"));
@@ -46,7 +46,7 @@ void json_load_glyph_atlas_range(struct Asset_System * system, struct JSON const
 
 	struct Asset_Handle const handle = asset_system_aquire(system, path);
 	struct Asset_Typeface const * asset = asset_system_find_instance(system, handle);
-	glyph_atlas_set_typeface(glyph_atlas, asset->typeface, from, to);
+	font_set_typeface(font, asset->typeface, from, to);
 }
 
 //
@@ -75,7 +75,7 @@ static struct Handle json_load_texture(struct Asset_System * system, struct JSON
 		return gpu_target_get_texture_handle(asset->gpu_handle, texture_type, index);
 	}
 
-	if (asset_system_match_type(system, asset_handle, S_("glyphs"))) {
+	if (asset_system_match_type(system, asset_handle, S_("font"))) {
 		struct Asset_Glyph_Atlas const * asset = instance;
 		return asset->gpu_handle;
 	}

@@ -189,18 +189,18 @@ void batcher_2d_add_text(
 	struct Asset_Glyph_Atlas const * glyph_atlases, struct CString value, float size
 ) {
 	if (glyph_atlases == NULL) { return; }
-	if (glyph_atlases->glyph_atlas == NULL) { return; }
+	if (glyph_atlases->font == NULL) { return; }
 
-	float const scale       = glyph_atlas_get_scale(glyph_atlases->glyph_atlas, size);
-	float const ascent      = glyph_atlas_get_ascent(glyph_atlases->glyph_atlas, scale);
-	float const descent     = glyph_atlas_get_descent(glyph_atlases->glyph_atlas, scale);
-	float const line_gap    = glyph_atlas_get_gap(glyph_atlases->glyph_atlas, scale);
+	float const scale       = font_get_scale(glyph_atlases->font, size);
+	float const ascent      = font_get_ascent(glyph_atlases->font, scale);
+	float const descent     = font_get_descent(glyph_atlases->font, scale);
+	float const line_gap    = font_get_gap(glyph_atlases->font, scale);
 	float const line_height = ascent - descent + line_gap;
 
 	uint32_t const words_offset = batcher->words.count;
 
-	glyph_atlas_add_defaults(glyph_atlases->glyph_atlas, size);
-	struct Glyph const * glyph_error = glyph_atlas_get_glyph(glyph_atlases->glyph_atlas, '\0', size);
+	font_add_defaults(glyph_atlases->font, size);
+	struct Glyph const * glyph_error = font_get_glyph(glyph_atlases->font, '\0', size);
 
 	// break text into words
 	{
@@ -208,9 +208,9 @@ void batcher_2d_add_text(
 		uint32_t codepoints_offset = batcher->codepoints.count;
 
 		FOR_UTF8 (value.length, (uint8_t const *)value.data, it) {
-			glyph_atlas_add_glyph(glyph_atlases->glyph_atlas, it.codepoint, size);
+			font_add_glyph(glyph_atlases->font, it.codepoint, size);
 
-			struct Glyph const * glyph = glyph_atlas_get_glyph(glyph_atlases->glyph_atlas, it.codepoint, size);
+			struct Glyph const * glyph = font_get_glyph(glyph_atlases->font, it.codepoint, size);
 			float const full_size_x = (glyph != NULL) ? glyph->params.full_size_x : glyph_error->params.full_size_x;
 
 			word_width += full_size_x;
@@ -233,7 +233,7 @@ void batcher_2d_add_text(
 				array_u32_push_many(&batcher->codepoints, 1, &it.codepoint);
 
 				//
-				float const kerning = glyph_atlas_get_kerning(glyph_atlases->glyph_atlas, it.previous, it.codepoint, scale);
+				float const kerning = font_get_kerning(glyph_atlases->font, it.previous, it.codepoint, scale);
 				word_width += kerning;
 			}
 		}
@@ -268,16 +268,16 @@ void batcher_2d_add_text(
 				uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
 				uint32_t const previous = (strings_i > word->codepoints_offset) ? array_u32_at(&batcher->codepoints, strings_i - 1) : '\0';
 
-				struct Glyph const * glyph = glyph_atlas_get_glyph(word->cached_glyph_atlas->glyph_atlas, codepoint, word->size);
+				struct Glyph const * glyph = font_get_glyph(word->cached_glyph_atlas->font, codepoint, word->size);
 				float const full_size_x = (glyph != NULL) ? glyph->params.full_size_x : glyph_error->params.full_size_x;
 
-				float const kerning = glyph_atlas_get_kerning(glyph_atlases->glyph_atlas, previous, codepoint, scale);
+				float const kerning = font_get_kerning(glyph_atlases->font, previous, codepoint, scale);
 				offset.x += full_size_x + kerning;
 			}
 
 			// process breaker
 			{
-				struct Glyph const * glyph = glyph_atlas_get_glyph(word->cached_glyph_atlas->glyph_atlas, word->breaker_codepoint, word->size);
+				struct Glyph const * glyph = font_get_glyph(word->cached_glyph_atlas->font, word->breaker_codepoint, word->size);
 				offset.x += (glyph != NULL) ? glyph->params.full_size_x : 0;
 				if (word->breaker_codepoint == '\n') {
 					offset.x = rect.min.x; // @note: auto `\r`
@@ -354,10 +354,10 @@ void batcher_2d_add_text(
 			uint32_t const codepoint = array_u32_at(&batcher->codepoints, strings_i);
 				uint32_t const previous = (strings_i > word->codepoints_offset) ? array_u32_at(&batcher->codepoints, strings_i - 1) : '\0';
 
-			struct Glyph const * glyph = glyph_atlas_get_glyph(word->cached_glyph_atlas->glyph_atlas, codepoint, word->size);
+			struct Glyph const * glyph = font_get_glyph(word->cached_glyph_atlas->font, codepoint, word->size);
 			struct Glyph_Params const params = (glyph != NULL) ? glyph->params : glyph_error->params;
 
-			float const kerning = glyph_atlas_get_kerning(glyph_atlases->glyph_atlas, previous, codepoint, scale);
+			float const kerning = font_get_kerning(glyph_atlases->font, previous, codepoint, scale);
 			float const offset_x = offset.x + kerning;
 			offset.x += params.full_size_x + kerning;
 
@@ -398,13 +398,13 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 		}
 
 		FOR_HASH_SET_U64 (&batcher->cached_glyph_atlases, it) {
-			struct Asset_Glyph_Atlas const * glyph_atlas = (void *)it.key_hash;
-			glyph_atlas_render(glyph_atlas->glyph_atlas);
+			struct Asset_Glyph_Atlas const * font = (void *)it.key_hash;
+			font_render(font->font);
 		}
 
 		FOR_HASH_SET_U64 (&batcher->cached_glyph_atlases, it) {
-			struct Asset_Glyph_Atlas const * glyph_atlas = (void *)it.key_hash;
-			gpu_texture_update(glyph_atlas->gpu_handle, glyph_atlas_get_asset(glyph_atlas->glyph_atlas));
+			struct Asset_Glyph_Atlas const * font = (void *)it.key_hash;
+			gpu_texture_update(font->gpu_handle, font_get_asset(font->font));
 		}
 	}
 
@@ -413,7 +413,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 		struct Batcher_2D_Word const * word = array_any_at(&batcher->words, word_i);
 		uint32_t vertices_offset = word->buffer_vertices_offset;
 
-		struct Glyph const * glyph_error = glyph_atlas_get_glyph(word->cached_glyph_atlas->glyph_atlas, '\0', word->size);
+		struct Glyph const * glyph_error = font_get_glyph(word->cached_glyph_atlas->font, '\0', word->size);
 		struct rect const glyph_error_uv = glyph_error->uv;
 
 		for (uint32_t strings_i = word->codepoints_offset; strings_i < word->codepoints_end; strings_i++) {
@@ -421,7 +421,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 
 			if (codepoint_is_invisible(codepoint)) { continue; }
 
-			struct Glyph const * glyph = glyph_atlas_get_glyph(word->cached_glyph_atlas->glyph_atlas, codepoint, word->size);
+			struct Glyph const * glyph = font_get_glyph(word->cached_glyph_atlas->font, codepoint, word->size);
 			struct rect const uv = (glyph != NULL) ? glyph->uv : glyph_error_uv;
 
 			struct Batcher_2D_Vertex * vertices = array_any_at(&batcher->buffer_vertices, vertices_offset);

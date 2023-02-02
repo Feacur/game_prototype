@@ -1,6 +1,6 @@
 {
 	"shader": "assets/shaders/batcher_2d.glsl",
 	"blend": "mix", "depth": "none",
-	"p_Texture": {"path": "assets/glyph_atlas.glyphs"},
+	"p_Texture": {"path": "assets/glyph_atlas.font"},
 	"p_Tint": [1, 1, 1, 1],
 }

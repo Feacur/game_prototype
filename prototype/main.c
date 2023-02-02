@@ -344,7 +344,7 @@ static void prototype_draw_objects(void) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
-					struct Asset_Glyph_Atlas const * glyph_atlas = asset_system_find_instance(&gs_game.assets, text->glyph_atlas_asset_handle);
+					struct Asset_Glyph_Atlas const * font = asset_system_find_instance(&gs_game.assets, text->font_asset_handle);
 					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.assets, text->message_asset_handle);
 					struct CString const value = {
 						.length = message->length,
@@ -353,7 +353,7 @@ static void prototype_draw_objects(void) {
 					batcher_2d_add_text(
 						gs_renderer.batcher_2d,
 						entity->cached_rect, text->alignment, true,
-						glyph_atlas, value, text->size
+						font, value, text->size
 					);
 				} break;
 			}
@@ -404,7 +404,7 @@ static void app_init(void) {
 	ui_init();
 	ui_set_shader(S_("assets/shaders/batcher_2d.glsl"));
 	ui_set_image(S_("assets/images/ui.image"));
-	ui_set_glyph_atlas(S_("assets/glyph_atlas.glyphs"));
+	ui_set_glyph_atlas(S_("assets/glyph_atlas.font"));
 
 	prototype_init();
 }
