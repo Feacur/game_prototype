@@ -14,7 +14,7 @@
 #define GLYPH_GC_TIMEOUT_MAX UINT8_MAX
 
 struct Font_Atlas_Range {
-	uint32_t codepoint;
+	uint32_t from, to;
 	struct Font const * font;
 };
 
@@ -79,20 +79,21 @@ void font_atlas_free(struct Font_Atlas * font_atlas) {
 }
 
 struct Font const * font_atlas_get_typeface(struct Font_Atlas const * font_atlas, uint32_t codepoint) {
-	for (uint32_t i = 0; i < font_atlas->fonts.count; i++) {
-		struct Font_Atlas_Range const * range = array_any_at(&font_atlas->fonts, i);
-		if (codepoint >= range->codepoint) { return range->font; }
+	for (uint32_t i = font_atlas->fonts.count; i > 0; i--) {
+		struct Font_Atlas_Range const * range = array_any_at(&font_atlas->fonts, i - 1);
+		if (codepoint < range->from) { continue; }
+		if (codepoint > range->to) { continue; }
+		return range->font;
 	}
 	return NULL;
 }
 
 void font_atlas_set_typeface(struct Font_Atlas * font_atlas, struct Font const * font, uint32_t codepoint_from, uint32_t codepoint_to) {
-	(void)(codepoint_to - codepoint_from);
-	if (font_atlas->fonts.count == 0) { array_any_push_many(&font_atlas->fonts, 1, NULL); }
-	struct Font_Atlas_Range * range = array_any_at(&font_atlas->fonts, 0);
-	*range = (struct Font_Atlas_Range){
+	array_any_push_many(&font_atlas->fonts, 1, &(struct Font_Atlas_Range){
+		.from = codepoint_from,
+		.to = codepoint_to,
 		.font = font,
-	};
+	});
 }
 
 inline static uint64_t font_atlas_get_key_hash(struct Font_Key value);
