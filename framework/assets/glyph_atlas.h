@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_ASSETS_GLYPH_ATLAS)
 #define FRAMEWORK_ASSETS_GLYPH_ATLAS
 
-#include "framework/assets/typeface_glyph_params.h"
+#include "framework/assets/glyph_params.h"
 
 // @todo: tune/expose glyphs GC
 
@@ -20,8 +20,8 @@ struct Glyph_Atlas;
 struct Image;
 struct Typeface;
 
-struct Typeface_Glyph {
-	struct Typeface_Glyph_Params params;
+struct Glyph {
+	struct Glyph_Params params;
 	struct rect uv;
 	uint32_t id;
 	uint8_t gc_timeout;
@@ -34,11 +34,11 @@ struct Typeface const * glyph_atlas_get_typeface(struct Glyph_Atlas const * glyp
 void glyph_atlas_set_typeface(struct Glyph_Atlas * glyph_atlas, struct Typeface const * typeface, uint32_t codepoint_from, uint32_t codepoint_to);
 
 void glyph_atlas_add_glyph(struct Glyph_Atlas * glyph_atlas, uint32_t codepoint, float size);
-void glyph_atlas_add_default_glyphs(struct Glyph_Atlas * glyph_atlas, float size);
+void glyph_atlas_add_defaults(struct Glyph_Atlas * glyph_atlas, float size);
 void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas);
 
 struct Image const * glyph_atlas_get_asset(struct Glyph_Atlas const * glyph_atlas);
-struct Typeface_Glyph const * glyph_atlas_get_glyph(struct Glyph_Atlas * const glyph_atlas, uint32_t codepoint, float size);
+struct Glyph const * glyph_atlas_get_glyph(struct Glyph_Atlas * const glyph_atlas, uint32_t codepoint, float size);
 
 float glyph_atlas_get_scale(struct Glyph_Atlas const * glyph_atlas, float size);
 float glyph_atlas_get_ascent(struct Glyph_Atlas const * glyph_atlas, float scale);

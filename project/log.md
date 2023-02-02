@@ -2,8 +2,8 @@
 - [feature] immediate UI framework
 - [tech] imUI transformations stack
 - [tech] handle GPU uniforms through buffers
-- [tech] render text via - multichannel - SDF fonts
-- [tech] optionally generate font ligatures at the time of decoding UTF-8
+- [tech] render text via - multichannel - SDF glyphs
+- [tech] optionally generate ligature codepoints at the time of decoding UTF-8
 - [tech] track materials' textures as assets
 - [tech] region-based memory allocator
 - [feature] default shaders in case of compilation errors

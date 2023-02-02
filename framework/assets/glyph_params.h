@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_TYPEFACE_GLYPH)
-#define FRAMEWORK_ASSETS_TYPEFACE_GLYPH
+#if !defined(FRAMEWORK_ASSETS_GLYPH_PARAMS)
+#define FRAMEWORK_ASSETS_GLYPH_PARAMS
 
 #include "framework/vector_types.h"
 
@@ -12,7 +12,7 @@
 // |0,0       |
 // +----------+
 
-struct Typeface_Glyph_Params {
+struct Glyph_Params {
 	struct srect rect;
 	float full_size_x;
 	bool is_empty;

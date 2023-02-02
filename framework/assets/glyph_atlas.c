@@ -13,7 +13,7 @@
 
 #define GLYPH_GC_TIMEOUT_MAX UINT8_MAX
 
-struct Glyph_Atlas_Range {
+struct Typeface_Range {
 	uint32_t from, to;
 	struct Typeface const * typeface;
 };
@@ -21,8 +21,8 @@ struct Glyph_Atlas_Range {
 struct Glyph_Atlas {
 	struct Image buffer;
 	//
-	struct Array_Any ranges; // `struct Glyph_Atlas_Range`
-	struct Hash_Table_U64 table; // `struct Typeface_Key` : `struct Typeface_Glyph`
+	struct Array_Any ranges; // `struct Typeface_Range`
+	struct Hash_Table_U64 table; // `struct Typeface_Key` : `struct Glyph`
 	bool rendered;
 };
 
@@ -37,7 +37,7 @@ struct Typeface_Key {
 
 struct Typeface_Symbol {
 	struct Typeface_Key key;
-	struct Typeface_Glyph * glyph; // @note: a short-lived pointer into a `Glyph_Atlas` table
+	struct Glyph * glyph; // @note: a short-lived pointer into a `Glyph_Atlas` table
 };
 
 struct Glyph_Codepoint {
@@ -62,8 +62,8 @@ struct Glyph_Atlas * glyph_atlas_init(void) {
 				},
 			},
 		},
-		.ranges = array_any_init(sizeof(struct Glyph_Atlas_Range)),
-		.table = hash_table_u64_init(sizeof(struct Typeface_Glyph)),
+		.ranges = array_any_init(sizeof(struct Typeface_Range)),
+		.table = hash_table_u64_init(sizeof(struct Glyph)),
 	};
 	return glyph_atlas;
 }
@@ -80,7 +80,7 @@ void glyph_atlas_free(struct Glyph_Atlas * glyph_atlas) {
 
 struct Typeface const * glyph_atlas_get_typeface(struct Glyph_Atlas const * glyph_atlas, uint32_t codepoint) {
 	for (uint32_t i = glyph_atlas->ranges.count; i > 0; i--) {
-		struct Glyph_Atlas_Range const * range = array_any_at(&glyph_atlas->ranges, i - 1);
+		struct Typeface_Range const * range = array_any_at(&glyph_atlas->ranges, i - 1);
 		if (codepoint < range->from) { continue; }
 		if (codepoint > range->to) { continue; }
 		return range->typeface;
@@ -89,7 +89,7 @@ struct Typeface const * glyph_atlas_get_typeface(struct Glyph_Atlas const * glyp
 }
 
 void glyph_atlas_set_typeface(struct Glyph_Atlas * glyph_atlas, struct Typeface const * typeface, uint32_t codepoint_from, uint32_t codepoint_to) {
-	array_any_push_many(&glyph_atlas->ranges, 1, &(struct Glyph_Atlas_Range){
+	array_any_push_many(&glyph_atlas->ranges, 1, &(struct Typeface_Range){
 		.from = codepoint_from,
 		.to = codepoint_to,
 		.typeface = typeface,
@@ -103,7 +103,7 @@ void glyph_atlas_add_glyph(struct Glyph_Atlas * glyph_atlas, uint32_t codepoint,
 		.size = size,
 	});
 
-	struct Typeface_Glyph * glyph = hash_table_u64_get(&glyph_atlas->table, key_hash);
+	struct Glyph * glyph = hash_table_u64_get(&glyph_atlas->table, key_hash);
 	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
 	struct Typeface const * typeface = glyph_atlas_get_typeface(glyph_atlas, codepoint);
@@ -112,11 +112,11 @@ void glyph_atlas_add_glyph(struct Glyph_Atlas * glyph_atlas, uint32_t codepoint,
 	uint32_t const glyph_id = typeface_get_glyph_id(typeface, codepoint);
 	if (glyph_id == 0) { logger_to_console("glyph atlas misses a glyph for codepoint '0x%x'\n", codepoint); }
 
-	struct Typeface_Glyph_Params const glyph_params = typeface_get_glyph_parameters(
+	struct Glyph_Params const glyph_params = typeface_get_glyph_parameters(
 		typeface, glyph_id, typeface_get_scale(typeface, size)
 	);
 
-	hash_table_u64_set(&glyph_atlas->table, key_hash, &(struct Typeface_Glyph){
+	hash_table_u64_set(&glyph_atlas->table, key_hash, &(struct Glyph){
 		.params = glyph_params,
 		.id = glyph_id,
 		.gc_timeout = GLYPH_GC_TIMEOUT_MAX,
@@ -125,17 +125,17 @@ void glyph_atlas_add_glyph(struct Glyph_Atlas * glyph_atlas, uint32_t codepoint,
 	glyph_atlas->rendered = false;
 }
 
-static void glyph_atlas_add_default_glyph(struct Glyph_Atlas *glyph_atlas, uint32_t codepoint, float size, float full_size_x, struct srect rect) {
+static void glyph_atlas_add_default(struct Glyph_Atlas *glyph_atlas, uint32_t codepoint, float size, float full_size_x, struct srect rect) {
 	uint64_t const key_hash = glyph_atlas_get_key_hash((struct Typeface_Key){
 		.codepoint = codepoint,
 		.size = size,
 	});
 
-	struct Typeface_Glyph * glyph = hash_table_u64_get(&glyph_atlas->table, key_hash);
+	struct Glyph * glyph = hash_table_u64_get(&glyph_atlas->table, key_hash);
 	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
-	hash_table_u64_set(&glyph_atlas->table, key_hash, &(struct Typeface_Glyph){
-		.params = (struct Typeface_Glyph_Params){
+	hash_table_u64_set(&glyph_atlas->table, key_hash, &(struct Glyph){
+		.params = (struct Glyph_Params){
 			.full_size_x = full_size_x,
 			.rect = rect,
 		},
@@ -145,14 +145,14 @@ static void glyph_atlas_add_default_glyph(struct Glyph_Atlas *glyph_atlas, uint3
 	glyph_atlas->rendered = false;
 }
 
-void glyph_atlas_add_default_glyphs(struct Glyph_Atlas *glyph_atlas, float size) {
+void glyph_atlas_add_defaults(struct Glyph_Atlas *glyph_atlas, float size) {
 	float const scale       = glyph_atlas_get_scale(glyph_atlas, size);
 	float const ascent      = glyph_atlas_get_ascent(glyph_atlas, scale);
 	float const descent     = glyph_atlas_get_descent(glyph_atlas, scale);
 	float const line_gap    = glyph_atlas_get_gap(glyph_atlas, scale);
 	float const line_height = ascent - descent + line_gap;
 
-	glyph_atlas_add_default_glyph(glyph_atlas, '\0', size, line_height / 2, (struct srect){
+	glyph_atlas_add_default(glyph_atlas, '\0', size, line_height / 2, (struct srect){
 		.min = {
 			(int32_t)r32_floor(line_height * 0.1f),
 			(int32_t)r32_floor(line_height * 0.0f),
@@ -164,14 +164,14 @@ void glyph_atlas_add_default_glyphs(struct Glyph_Atlas *glyph_atlas, float size)
 	});
 
 	glyph_atlas_add_glyph(glyph_atlas, ' ', size);
-	struct Typeface_Glyph const * glyph_space = glyph_atlas_get_glyph(glyph_atlas, ' ', size);
+	struct Glyph const * glyph_space = glyph_atlas_get_glyph(glyph_atlas, ' ', size);
 	float const glyph_space_size = (glyph_space != NULL) ? glyph_space->params.full_size_x : 0;
 
-	glyph_atlas_add_default_glyph(glyph_atlas, '\t',                         size, glyph_space_size * 4, (struct srect){0}); // @todo: expose tab scale
-	glyph_atlas_add_default_glyph(glyph_atlas, '\r',                         size, 0,                    (struct srect){0});
-	glyph_atlas_add_default_glyph(glyph_atlas, '\n',                         size, 0,                    (struct srect){0});
-	glyph_atlas_add_default_glyph(glyph_atlas, CODEPOINT_ZERO_WIDTH_SPACE,   size, 0,                    (struct srect){0});
-	glyph_atlas_add_default_glyph(glyph_atlas, CODEPOINT_NON_BREAKING_SPACE, size, glyph_space_size,     (struct srect){0});
+	glyph_atlas_add_default(glyph_atlas, '\t',                         size, glyph_space_size * 4, (struct srect){0}); // @todo: expose tab scale
+	glyph_atlas_add_default(glyph_atlas, '\r',                         size, 0,                    (struct srect){0});
+	glyph_atlas_add_default(glyph_atlas, '\n',                         size, 0,                    (struct srect){0});
+	glyph_atlas_add_default(glyph_atlas, CODEPOINT_ZERO_WIDTH_SPACE,   size, 0,                    (struct srect){0});
+	glyph_atlas_add_default(glyph_atlas, CODEPOINT_NON_BREAKING_SPACE, size, glyph_space_size,     (struct srect){0});
 }
 
 inline static struct Typeface_Key glyph_atlas_get_key(uint64_t value);
@@ -181,7 +181,7 @@ void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas) {
 
 	// track glyphs usage
 	FOR_HASH_TABLE_U64 (&glyph_atlas->table, it) {
-		struct Typeface_Glyph * glyph = it.value;
+		struct Glyph * glyph = it.value;
 		if (glyph->gc_timeout == 0) {
 			glyph_atlas->rendered = false;
 			hash_table_u64_del_at(&glyph_atlas->table, it.current);
@@ -199,7 +199,7 @@ void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas) {
 	struct Typeface_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(struct Typeface_Symbol, glyph_atlas->table.count);
 
 	FOR_HASH_TABLE_U64 (&glyph_atlas->table, it) {
-		struct Typeface_Glyph * glyph = it.value;
+		struct Glyph * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 		if (glyph->id == 0) { continue; }
 
@@ -216,7 +216,7 @@ void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas) {
 	common_qsort(symbols_to_render, symbols_count, sizeof(*symbols_to_render), glyph_atlas_sort_comparison);
 
 	// append with a virtual error glyph
-	struct Typeface_Glyph error_glyph = {
+	struct Glyph error_glyph = {
 		.params.rect.max = {1, 1},
 	};
 	symbols_to_render[symbols_count++] = (struct Typeface_Symbol){
@@ -229,7 +229,7 @@ void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas) {
 		uint32_t minimum_area = 0;
 		for (uint32_t i = 0; i < symbols_count; i++) {
 			struct Typeface_Symbol const * symbol = symbols_to_render + i;
-			struct Typeface_Glyph_Params const * params = &symbol->glyph->params;
+			struct Glyph_Params const * params = &symbol->glyph->params;
 			uint32_t const glyph_size_x = (uint32_t)(params->rect.max.x - params->rect.min.x);
 			uint32_t const glyph_size_y = (uint32_t)(params->rect.max.y - params->rect.min.y);
 			minimum_area += (glyph_size_x + padding) * (glyph_size_y + padding);
@@ -264,7 +264,7 @@ void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas) {
 		for (uint32_t i = 0; i < symbols_count; i++) {
 
 			struct Typeface_Symbol const * symbol = symbols_to_render + i;
-			struct Typeface_Glyph_Params const * params = &symbol->glyph->params;
+			struct Glyph_Params const * params = &symbol->glyph->params;
 
 			uint32_t const glyph_size_x = (uint32_t)(params->rect.max.x - params->rect.min.x);
 			uint32_t const glyph_size_y = (uint32_t)(params->rect.max.y - params->rect.min.y);
@@ -302,7 +302,7 @@ void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas) {
 		uint32_t offset_x = padding, offset_y = padding;
 		for (uint32_t i = 0; i < symbols_count; i++) {
 			struct Typeface_Symbol const * symbol = symbols_to_render + i;
-			struct Typeface_Glyph_Params const * params = &symbol->glyph->params;
+			struct Glyph_Params const * params = &symbol->glyph->params;
 
 			struct Typeface const * typeface = glyph_atlas_get_typeface(glyph_atlas, symbol->key.codepoint);
 			if (typeface == NULL) { continue; }
@@ -326,7 +326,7 @@ void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas) {
 			}
 
 			//
-			struct Typeface_Glyph * glyph = symbol->glyph;
+			struct Glyph * glyph = symbol->glyph;
 			glyph->uv = (struct rect){
 				.min = {
 					(float)(offset_x)                / (float)glyph_atlas->buffer.size_x,
@@ -354,7 +354,7 @@ void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas) {
 
 	// reuse error glyph UVs
 	FOR_HASH_TABLE_U64 (&glyph_atlas->table, it) {
-		struct Typeface_Glyph * glyph = it.value;
+		struct Glyph * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 		if (glyph->id != 0) { continue; }
 
@@ -369,7 +369,7 @@ struct Image const * glyph_atlas_get_asset(struct Glyph_Atlas const * glyph_atla
 	return &glyph_atlas->buffer;
 }
 
-struct Typeface_Glyph const * glyph_atlas_get_glyph(struct Glyph_Atlas * const glyph_atlas, uint32_t codepoint, float size) {
+struct Glyph const * glyph_atlas_get_glyph(struct Glyph_Atlas * const glyph_atlas, uint32_t codepoint, float size) {
 	return hash_table_u64_get(&glyph_atlas->table, glyph_atlas_get_key_hash((struct Typeface_Key){
 		.codepoint = codepoint,
 		.size = size,

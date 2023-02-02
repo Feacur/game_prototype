@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_ASSETS_TYPEFACE)
 #define FRAMEWORK_ASSETS_TYPEFACE
 
-#include "typeface_glyph_params.h"
+#include "glyph_params.h"
 
 // @note: `typeface_init` takes memory ownership of the buffer
 
@@ -12,7 +12,7 @@ struct Typeface * typeface_init(struct Buffer * buffer);
 void typeface_free(struct Typeface * typeface);
 
 uint32_t typeface_get_glyph_id(struct Typeface const * typeface, uint32_t codepoint);
-struct Typeface_Glyph_Params typeface_get_glyph_parameters(struct Typeface const * typeface, uint32_t glyph_id, float scale);
+struct Glyph_Params typeface_get_glyph_parameters(struct Typeface const * typeface, uint32_t glyph_id, float scale);
 
 void typeface_render_glyph(
 	struct Typeface const * typeface,

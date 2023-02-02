@@ -74,33 +74,33 @@ uint32_t typeface_get_glyph_id(struct Typeface const * typeface, uint32_t codepo
 	return (uint32_t)stbtt_FindGlyphIndex(&typeface->api, (int)codepoint);
 }
 
-struct Typeface_Glyph_Params typeface_get_glyph_parameters(struct Typeface const * typeface, uint32_t glyph_id, float scale) {
+struct Glyph_Params typeface_get_glyph_parameters(struct Typeface const * typeface, uint32_t glyph_id, float scale) {
 	int advance_width, left_side_bearing;
 	stbtt_GetGlyphHMetrics(&typeface->api, (int)glyph_id, &advance_width, &left_side_bearing);
 
 	struct srect rect;
 	if (!stbtt_GetGlyphBox(&typeface->api, (int)glyph_id, &rect.min.x, &rect.min.y, &rect.max.x, &rect.max.y)) {
-		return (struct Typeface_Glyph_Params){
+		return (struct Glyph_Params){
 			.full_size_x = ((float)advance_width) * scale,
 			.is_empty = true,
 		};
 	}
 
 	if ((rect.max.x <= rect.min.x) || (rect.max.y <= rect.min.y)) {
-		return (struct Typeface_Glyph_Params){
+		return (struct Glyph_Params){
 			.full_size_x = ((float)advance_width) * scale,
 			.is_empty = true,
 		};
 	}
 
 	if (stbtt_IsGlyphEmpty(&typeface->api, (int)glyph_id)) {
-		return (struct Typeface_Glyph_Params){
+		return (struct Glyph_Params){
 			.full_size_x = ((float)advance_width) * scale,
 			.is_empty = true,
 		};
 	}
 
-	return (struct Typeface_Glyph_Params){
+	return (struct Glyph_Params){
 		.rect = {
 			.min = {
 				(int32_t)r32_floor(((float)rect.min.x) * scale),
