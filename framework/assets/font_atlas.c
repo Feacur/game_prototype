@@ -13,21 +13,21 @@
 
 #define GLYPH_GC_TIMEOUT_MAX UINT8_MAX
 
-struct Font_Atlas_Range {
+struct Glyph_Atlas_Range {
 	uint32_t from, to;
-	struct Font const * font;
+	struct Typeface const * typeface;
 };
 
-struct Font_Atlas {
+struct Glyph_Atlas {
 	struct Image buffer;
 	//
-	struct Array_Any fonts; // `struct Font_Atlas_Range`
-	struct Hash_Table_U64 table; // `struct Font_Key` : `struct Font_Glyph`
+	struct Array_Any ranges; // `struct Glyph_Atlas_Range`
+	struct Hash_Table_U64 table; // `struct Typeface_Key` : `struct Typeface_Glyph`
 	bool rendered;
 };
 
 // @note: supposed to be the same size as `uint64_t`
-struct Font_Key {
+struct Typeface_Key {
 	uint32_t codepoint;
 	float size; // @note: differs from scale
 };
@@ -35,18 +35,18 @@ struct Font_Key {
 //
 #include "font_atlas.h"
 
-struct Font_Symbol {
-	struct Font_Key key;
-	struct Font_Glyph * glyph; // @note: a short-lived pointer into a `Font_Image` table
+struct Typeface_Symbol {
+	struct Typeface_Key key;
+	struct Typeface_Glyph * glyph; // @note: a short-lived pointer into a `Glyph_Atlas` table
 };
 
 struct Glyph_Codepoint {
 	uint32_t glyph, codepoint;
 };
 
-struct Font_Atlas * font_atlas_init(void) {
-	struct Font_Atlas * font_atlas = MEMORY_ALLOCATE(struct Font_Atlas);
-	*font_atlas = (struct Font_Atlas){
+struct Glyph_Atlas * glyph_atlas_init(void) {
+	struct Glyph_Atlas * glyph_atlas = MEMORY_ALLOCATE(struct Glyph_Atlas);
+	*glyph_atlas = (struct Glyph_Atlas){
 		.buffer = {
 			.parameters = {
 				.texture_type = TEXTURE_TYPE_COLOR,
@@ -62,97 +62,97 @@ struct Font_Atlas * font_atlas_init(void) {
 				},
 			},
 		},
-		.fonts = array_any_init(sizeof(struct Font_Atlas_Range)),
-		.table = hash_table_u64_init(sizeof(struct Font_Glyph)),
+		.ranges = array_any_init(sizeof(struct Glyph_Atlas_Range)),
+		.table = hash_table_u64_init(sizeof(struct Typeface_Glyph)),
 	};
-	return font_atlas;
+	return glyph_atlas;
 }
 
-void font_atlas_free(struct Font_Atlas * font_atlas) {
-	if (font_atlas == NULL) { logger_to_console("freeing NULL font atlas\n"); return; }
-	image_free(&font_atlas->buffer);
-	array_any_free(&font_atlas->fonts);
-	hash_table_u64_free(&font_atlas->table);
+void glyph_atlas_free(struct Glyph_Atlas * glyph_atlas) {
+	if (glyph_atlas == NULL) { logger_to_console("freeing NULL glyph atlas\n"); return; }
+	image_free(&glyph_atlas->buffer);
+	array_any_free(&glyph_atlas->ranges);
+	hash_table_u64_free(&glyph_atlas->table);
 
-	common_memset(font_atlas, 0, sizeof(*font_atlas));
-	MEMORY_FREE(font_atlas);
+	common_memset(glyph_atlas, 0, sizeof(*glyph_atlas));
+	MEMORY_FREE(glyph_atlas);
 }
 
-struct Font const * font_atlas_get_typeface(struct Font_Atlas const * font_atlas, uint32_t codepoint) {
-	for (uint32_t i = font_atlas->fonts.count; i > 0; i--) {
-		struct Font_Atlas_Range const * range = array_any_at(&font_atlas->fonts, i - 1);
+struct Typeface const * glyph_atlas_get_typeface(struct Glyph_Atlas const * glyph_atlas, uint32_t codepoint) {
+	for (uint32_t i = glyph_atlas->ranges.count; i > 0; i--) {
+		struct Glyph_Atlas_Range const * range = array_any_at(&glyph_atlas->ranges, i - 1);
 		if (codepoint < range->from) { continue; }
 		if (codepoint > range->to) { continue; }
-		return range->font;
+		return range->typeface;
 	}
 	return NULL;
 }
 
-void font_atlas_set_typeface(struct Font_Atlas * font_atlas, struct Font const * font, uint32_t codepoint_from, uint32_t codepoint_to) {
-	array_any_push_many(&font_atlas->fonts, 1, &(struct Font_Atlas_Range){
+void glyph_atlas_set_typeface(struct Glyph_Atlas * glyph_atlas, struct Typeface const * typeface, uint32_t codepoint_from, uint32_t codepoint_to) {
+	array_any_push_many(&glyph_atlas->ranges, 1, &(struct Glyph_Atlas_Range){
 		.from = codepoint_from,
 		.to = codepoint_to,
-		.font = font,
+		.typeface = typeface,
 	});
 }
 
-inline static uint64_t font_atlas_get_key_hash(struct Font_Key value);
-void font_atlas_add_glyph(struct Font_Atlas * font_atlas, uint32_t codepoint, float size) {
-	uint64_t const key_hash = font_atlas_get_key_hash((struct Font_Key){
+inline static uint64_t glyph_atlas_get_key_hash(struct Typeface_Key value);
+void glyph_atlas_add_glyph(struct Glyph_Atlas * glyph_atlas, uint32_t codepoint, float size) {
+	uint64_t const key_hash = glyph_atlas_get_key_hash((struct Typeface_Key){
 		.codepoint = codepoint,
 		.size = size,
 	});
 
-	struct Font_Glyph * glyph = hash_table_u64_get(&font_atlas->table, key_hash);
+	struct Typeface_Glyph * glyph = hash_table_u64_get(&glyph_atlas->table, key_hash);
 	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
-	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
-	if (font == NULL) { logger_to_console("font misses a font for codepoint '0x%x'\n", codepoint); return; }
+	struct Typeface const * typeface = glyph_atlas_get_typeface(glyph_atlas, codepoint);
+	if (typeface == NULL) { logger_to_console("glyph atlas misses a typeface for codepoint '0x%x'\n", codepoint); return; }
 
-	uint32_t const glyph_id = font_get_glyph_id(font, codepoint);
-	if (glyph_id == 0) { logger_to_console("font misses a glyph for codepoint '0x%x'\n", codepoint); }
+	uint32_t const glyph_id = typeface_get_glyph_id(typeface, codepoint);
+	if (glyph_id == 0) { logger_to_console("glyph atlas misses a glyph for codepoint '0x%x'\n", codepoint); }
 
-	struct Font_Glyph_Params const glyph_params = font_get_glyph_parameters(
-		font, glyph_id, font_get_scale(font, size)
+	struct Typeface_Glyph_Params const glyph_params = typeface_get_glyph_parameters(
+		typeface, glyph_id, typeface_get_scale(typeface, size)
 	);
 
-	hash_table_u64_set(&font_atlas->table, key_hash, &(struct Font_Glyph){
+	hash_table_u64_set(&glyph_atlas->table, key_hash, &(struct Typeface_Glyph){
 		.params = glyph_params,
 		.id = glyph_id,
 		.gc_timeout = GLYPH_GC_TIMEOUT_MAX,
 	});
 
-	font_atlas->rendered = false;
+	glyph_atlas->rendered = false;
 }
 
-static void font_atlas_add_default_glyph(struct Font_Atlas *font_atlas, uint32_t codepoint, float size, float full_size_x, struct srect rect) {
-	uint64_t const key_hash = font_atlas_get_key_hash((struct Font_Key){
+static void glyph_atlas_add_default_glyph(struct Glyph_Atlas *glyph_atlas, uint32_t codepoint, float size, float full_size_x, struct srect rect) {
+	uint64_t const key_hash = glyph_atlas_get_key_hash((struct Typeface_Key){
 		.codepoint = codepoint,
 		.size = size,
 	});
 
-	struct Font_Glyph * glyph = hash_table_u64_get(&font_atlas->table, key_hash);
+	struct Typeface_Glyph * glyph = hash_table_u64_get(&glyph_atlas->table, key_hash);
 	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
-	hash_table_u64_set(&font_atlas->table, key_hash, &(struct Font_Glyph){
-		.params = (struct Font_Glyph_Params){
+	hash_table_u64_set(&glyph_atlas->table, key_hash, &(struct Typeface_Glyph){
+		.params = (struct Typeface_Glyph_Params){
 			.full_size_x = full_size_x,
 			.rect = rect,
 		},
 		.gc_timeout = GLYPH_GC_TIMEOUT_MAX,
 	});
 
-	font_atlas->rendered = false;
+	glyph_atlas->rendered = false;
 }
 
-void font_atlas_add_default_glyphs(struct Font_Atlas *font_atlas, float size) {
-	float const scale        = font_atlas_get_scale(font_atlas, size);
-	float const font_ascent  = font_atlas_get_ascent(font_atlas, scale);
-	float const font_descent = font_atlas_get_descent(font_atlas, scale);
-	float const line_gap     = font_atlas_get_gap(font_atlas, scale);
-	float const line_height  = font_ascent - font_descent + line_gap;
+void glyph_atlas_add_default_glyphs(struct Glyph_Atlas *glyph_atlas, float size) {
+	float const scale       = glyph_atlas_get_scale(glyph_atlas, size);
+	float const ascent      = glyph_atlas_get_ascent(glyph_atlas, scale);
+	float const descent     = glyph_atlas_get_descent(glyph_atlas, scale);
+	float const line_gap    = glyph_atlas_get_gap(glyph_atlas, scale);
+	float const line_height = ascent - descent + line_gap;
 
-	font_atlas_add_default_glyph(font_atlas, '\0', size, line_height / 2, (struct srect){
+	glyph_atlas_add_default_glyph(glyph_atlas, '\0', size, line_height / 2, (struct srect){
 		.min = {
 			(int32_t)r32_floor(line_height * 0.1f),
 			(int32_t)r32_floor(line_height * 0.0f),
@@ -163,63 +163,63 @@ void font_atlas_add_default_glyphs(struct Font_Atlas *font_atlas, float size) {
 		},
 	});
 
-	font_atlas_add_glyph(font_atlas, ' ', size);
-	struct Font_Glyph const * glyph_space = font_atlas_get_glyph(font_atlas, ' ', size);
+	glyph_atlas_add_glyph(glyph_atlas, ' ', size);
+	struct Typeface_Glyph const * glyph_space = glyph_atlas_get_glyph(glyph_atlas, ' ', size);
 	float const glyph_space_size = (glyph_space != NULL) ? glyph_space->params.full_size_x : 0;
 
-	font_atlas_add_default_glyph(font_atlas, '\t',                         size, glyph_space_size * 4, (struct srect){0}); // @todo: expose tab scale
-	font_atlas_add_default_glyph(font_atlas, '\r',                         size, 0,                    (struct srect){0});
-	font_atlas_add_default_glyph(font_atlas, '\n',                         size, 0,                    (struct srect){0});
-	font_atlas_add_default_glyph(font_atlas, CODEPOINT_ZERO_WIDTH_SPACE,   size, 0,                    (struct srect){0});
-	font_atlas_add_default_glyph(font_atlas, CODEPOINT_NON_BREAKING_SPACE, size, glyph_space_size,     (struct srect){0});
+	glyph_atlas_add_default_glyph(glyph_atlas, '\t',                         size, glyph_space_size * 4, (struct srect){0}); // @todo: expose tab scale
+	glyph_atlas_add_default_glyph(glyph_atlas, '\r',                         size, 0,                    (struct srect){0});
+	glyph_atlas_add_default_glyph(glyph_atlas, '\n',                         size, 0,                    (struct srect){0});
+	glyph_atlas_add_default_glyph(glyph_atlas, CODEPOINT_ZERO_WIDTH_SPACE,   size, 0,                    (struct srect){0});
+	glyph_atlas_add_default_glyph(glyph_atlas, CODEPOINT_NON_BREAKING_SPACE, size, glyph_space_size,     (struct srect){0});
 }
 
-inline static struct Font_Key font_atlas_get_key(uint64_t value);
-static int font_atlas_sort_comparison(void const * v1, void const * v2);
-void font_atlas_render(struct Font_Atlas * font_atlas) {
+inline static struct Typeface_Key glyph_atlas_get_key(uint64_t value);
+static int glyph_atlas_sort_comparison(void const * v1, void const * v2);
+void glyph_atlas_render(struct Glyph_Atlas * glyph_atlas) {
 	uint32_t const padding = 1;
 
 	// track glyphs usage
-	FOR_HASH_TABLE_U64 (&font_atlas->table, it) {
-		struct Font_Glyph * glyph = it.value;
+	FOR_HASH_TABLE_U64 (&glyph_atlas->table, it) {
+		struct Typeface_Glyph * glyph = it.value;
 		if (glyph->gc_timeout == 0) {
-			font_atlas->rendered = false;
-			hash_table_u64_del_at(&font_atlas->table, it.current);
+			glyph_atlas->rendered = false;
+			hash_table_u64_del_at(&glyph_atlas->table, it.current);
 			continue;
 		}
 
 		glyph->gc_timeout--;
 	}
 
-	if (font_atlas->rendered) { return; }
-	font_atlas->rendered = true;
+	if (glyph_atlas->rendered) { return; }
+	glyph_atlas->rendered = true;
 
 	// collect visible glyphs
 	uint32_t symbols_count = 0;
-	struct Font_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(struct Font_Symbol, font_atlas->table.count);
+	struct Typeface_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(struct Typeface_Symbol, glyph_atlas->table.count);
 
-	FOR_HASH_TABLE_U64 (&font_atlas->table, it) {
-		struct Font_Glyph * glyph = it.value;
+	FOR_HASH_TABLE_U64 (&glyph_atlas->table, it) {
+		struct Typeface_Glyph * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 		if (glyph->id == 0) { continue; }
 
-		struct Font_Key const key = font_atlas_get_key(it.key_hash);
+		struct Typeface_Key const key = glyph_atlas_get_key(it.key_hash);
 		if (codepoint_is_invisible(key.codepoint)) { continue; }
 
-		symbols_to_render[symbols_count++] = (struct Font_Symbol){
+		symbols_to_render[symbols_count++] = (struct Typeface_Symbol){
 			.key = key,
 			.glyph = glyph,
 		};
 	}
 
 	// sort glyphs by height, then by width
-	common_qsort(symbols_to_render, symbols_count, sizeof(*symbols_to_render), font_atlas_sort_comparison);
+	common_qsort(symbols_to_render, symbols_count, sizeof(*symbols_to_render), glyph_atlas_sort_comparison);
 
 	// append with a virtual error glyph
-	struct Font_Glyph error_glyph = {
+	struct Typeface_Glyph error_glyph = {
 		.params.rect.max = {1, 1},
 	};
-	symbols_to_render[symbols_count++] = (struct Font_Symbol){
+	symbols_to_render[symbols_count++] = (struct Typeface_Symbol){
 		.glyph = &error_glyph,
 	};
 
@@ -228,8 +228,8 @@ void font_atlas_render(struct Font_Atlas * font_atlas) {
 		// estimate the very minimum area
 		uint32_t minimum_area = 0;
 		for (uint32_t i = 0; i < symbols_count; i++) {
-			struct Font_Symbol const * symbol = symbols_to_render + i;
-			struct Font_Glyph_Params const * params = &symbol->glyph->params;
+			struct Typeface_Symbol const * symbol = symbols_to_render + i;
+			struct Typeface_Glyph_Params const * params = &symbol->glyph->params;
 			uint32_t const glyph_size_x = (uint32_t)(params->rect.max.x - params->rect.min.x);
 			uint32_t const glyph_size_y = (uint32_t)(params->rect.max.y - params->rect.min.y);
 			minimum_area += (glyph_size_x + padding) * (glyph_size_y + padding);
@@ -238,7 +238,7 @@ void font_atlas_render(struct Font_Atlas * font_atlas) {
 		// estimate required atlas dimesions
 		uint32_t atlas_size_x;
 		uint32_t atlas_size_y;
-		if (font_atlas->buffer.size_x == 0 || font_atlas->buffer.size_y == 0) {
+		if (glyph_atlas->buffer.size_x == 0 || glyph_atlas->buffer.size_y == 0) {
 			atlas_size_x = (uint32_t)r32_sqrt((float)minimum_area);
 			atlas_size_x = round_up_to_PO2_u32(atlas_size_x);
 
@@ -248,12 +248,12 @@ void font_atlas_render(struct Font_Atlas * font_atlas) {
 			}
 		}
 		else {
-			atlas_size_y = font_atlas->buffer.size_y;
+			atlas_size_y = glyph_atlas->buffer.size_y;
 
 			atlas_size_x = minimum_area / atlas_size_y;
 			atlas_size_x = round_up_to_PO2_u32(atlas_size_y);
-			if (atlas_size_x < font_atlas->buffer.size_x) {
-				atlas_size_x = font_atlas->buffer.size_x;
+			if (atlas_size_x < glyph_atlas->buffer.size_x) {
+				atlas_size_x = glyph_atlas->buffer.size_x;
 			}
 		}
 
@@ -263,8 +263,8 @@ void font_atlas_render(struct Font_Atlas * font_atlas) {
 		uint32_t offset_x = padding, offset_y = padding;
 		for (uint32_t i = 0; i < symbols_count; i++) {
 
-			struct Font_Symbol const * symbol = symbols_to_render + i;
-			struct Font_Glyph_Params const * params = &symbol->glyph->params;
+			struct Typeface_Symbol const * symbol = symbols_to_render + i;
+			struct Typeface_Glyph_Params const * params = &symbol->glyph->params;
 
 			uint32_t const glyph_size_x = (uint32_t)(params->rect.max.x - params->rect.min.x);
 			uint32_t const glyph_size_y = (uint32_t)(params->rect.max.y - params->rect.min.y);
@@ -291,57 +291,57 @@ void font_atlas_render(struct Font_Atlas * font_atlas) {
 			offset_x += glyph_size_x + padding;
 		}
 
-		image_ensure(&font_atlas->buffer, atlas_size_x, atlas_size_y);
+		image_ensure(&glyph_atlas->buffer, atlas_size_x, atlas_size_y);
 	}
 
 	// render glyphs into the atlas, assuming they shall fit
-	uint32_t const buffer_data_size = data_type_get_size(font_atlas->buffer.parameters.data_type);
-	common_memset(font_atlas->buffer.data, 0, font_atlas->buffer.size_x * font_atlas->buffer.size_y * buffer_data_size);
+	uint32_t const buffer_data_size = data_type_get_size(glyph_atlas->buffer.parameters.data_type);
+	common_memset(glyph_atlas->buffer.data, 0, glyph_atlas->buffer.size_x * glyph_atlas->buffer.size_y * buffer_data_size);
 	{
 		uint32_t line_height = 0;
 		uint32_t offset_x = padding, offset_y = padding;
 		for (uint32_t i = 0; i < symbols_count; i++) {
-			struct Font_Symbol const * symbol = symbols_to_render + i;
-			struct Font_Glyph_Params const * params = &symbol->glyph->params;
+			struct Typeface_Symbol const * symbol = symbols_to_render + i;
+			struct Typeface_Glyph_Params const * params = &symbol->glyph->params;
 
-			struct Font const * font = font_atlas_get_typeface(font_atlas, symbol->key.codepoint);
-			if (font == NULL) { continue; }
+			struct Typeface const * typeface = glyph_atlas_get_typeface(glyph_atlas, symbol->key.codepoint);
+			if (typeface == NULL) { continue; }
 
 			uint32_t const glyph_size_x = (uint32_t)(params->rect.max.x - params->rect.min.x);
 			uint32_t const glyph_size_y = (uint32_t)(params->rect.max.y - params->rect.min.y);
 
 			if (line_height == 0) { line_height = glyph_size_y; }
 
-			if (offset_x + glyph_size_x + padding > font_atlas->buffer.size_x) {
+			if (offset_x + glyph_size_x + padding > glyph_atlas->buffer.size_x) {
 				offset_x = padding;
 				offset_y += line_height + padding;
 				line_height = glyph_size_y;
 			}
 
-			if (font_atlas->buffer.size_x < offset_x + glyph_size_x - 1) {
+			if (glyph_atlas->buffer.size_x < offset_x + glyph_size_x - 1) {
 				logger_to_console("can't fit a glyph into the buffer\n"); DEBUG_BREAK(); continue;
 			}
-			if (font_atlas->buffer.size_y < offset_y + glyph_size_y - 1) {
+			if (glyph_atlas->buffer.size_y < offset_y + glyph_size_y - 1) {
 				logger_to_console("can't fit a glyph into the buffer\n"); DEBUG_BREAK(); continue;
 			}
 
 			//
-			struct Font_Glyph * glyph = symbol->glyph;
+			struct Typeface_Glyph * glyph = symbol->glyph;
 			glyph->uv = (struct rect){
 				.min = {
-					(float)(offset_x)                / (float)font_atlas->buffer.size_x,
-					(float)(offset_y)                / (float)font_atlas->buffer.size_y,
+					(float)(offset_x)                / (float)glyph_atlas->buffer.size_x,
+					(float)(offset_y)                / (float)glyph_atlas->buffer.size_y,
 				},
 				.max = {
-					(float)(offset_x + glyph_size_x) / (float)font_atlas->buffer.size_x,
-					(float)(offset_y + glyph_size_y) / (float)font_atlas->buffer.size_y,
+					(float)(offset_x + glyph_size_x) / (float)glyph_atlas->buffer.size_x,
+					(float)(offset_y + glyph_size_y) / (float)glyph_atlas->buffer.size_y,
 				},
 			};
 
-			font_render_glyph(
-				font,
-				glyph->id, font_get_scale(font, symbol->key.size),
-				font_atlas->buffer.data, font_atlas->buffer.size_x,
+			typeface_render_glyph(
+				typeface,
+				glyph->id, typeface_get_scale(typeface, symbol->key.size),
+				glyph_atlas->buffer.data, glyph_atlas->buffer.size_x,
 				glyph_size_x, glyph_size_y,
 				offset_x, offset_y
 			);
@@ -353,24 +353,24 @@ void font_atlas_render(struct Font_Atlas * font_atlas) {
 	MEMORY_FREE(symbols_to_render);
 
 	// reuse error glyph UVs
-	FOR_HASH_TABLE_U64 (&font_atlas->table, it) {
-		struct Font_Glyph * glyph = it.value;
+	FOR_HASH_TABLE_U64 (&glyph_atlas->table, it) {
+		struct Typeface_Glyph * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 		if (glyph->id != 0) { continue; }
 
-		struct Font_Key const key = font_atlas_get_key(it.key_hash);
+		struct Typeface_Key const key = glyph_atlas_get_key(it.key_hash);
 		if (codepoint_is_invisible(key.codepoint)) { continue; }
 
 		glyph->uv = error_glyph.uv;
 	}
 }
 
-struct Image const * font_atlas_get_asset(struct Font_Atlas const * font_atlas) {
-	return &font_atlas->buffer;
+struct Image const * glyph_atlas_get_asset(struct Glyph_Atlas const * glyph_atlas) {
+	return &glyph_atlas->buffer;
 }
 
-struct Font_Glyph const * font_atlas_get_glyph(struct Font_Atlas * const font_atlas, uint32_t codepoint, float size) {
-	return hash_table_u64_get(&font_atlas->table, font_atlas_get_key_hash((struct Font_Key){
+struct Typeface_Glyph const * glyph_atlas_get_glyph(struct Glyph_Atlas * const glyph_atlas, uint32_t codepoint, float size) {
+	return hash_table_u64_get(&glyph_atlas->table, glyph_atlas_get_key_hash((struct Typeface_Key){
 		.codepoint = codepoint,
 		.size = size,
 	}));
@@ -378,52 +378,52 @@ struct Font_Glyph const * font_atlas_get_glyph(struct Font_Atlas * const font_at
 
 // 
 
-float font_atlas_get_scale(struct Font_Atlas const * font_atlas, float size) {
+float glyph_atlas_get_scale(struct Glyph_Atlas const * glyph_atlas, float size) {
 	uint32_t const codepoint = 0;
-	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
-	if (font == NULL) { return 1; }
-	return font_get_scale(font, size);
+	struct Typeface const * typeface = glyph_atlas_get_typeface(glyph_atlas, codepoint);
+	if (typeface == NULL) { return 1; }
+	return typeface_get_scale(typeface, size);
 }
 
-float font_atlas_get_ascent(struct Font_Atlas const * font_atlas, float scale) {
+float glyph_atlas_get_ascent(struct Glyph_Atlas const * glyph_atlas, float scale) {
 	uint32_t const codepoint = 0;
-	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
-	if (font == NULL) { return 0; }
-	int32_t const value = font_get_ascent(font);
+	struct Typeface const * typeface = glyph_atlas_get_typeface(glyph_atlas, codepoint);
+	if (typeface == NULL) { return 0; }
+	int32_t const value = typeface_get_ascent(typeface);
 	return ((float)value) * scale;
 }
 
-float font_atlas_get_descent(struct Font_Atlas const * font_atlas, float scale) {
+float glyph_atlas_get_descent(struct Glyph_Atlas const * glyph_atlas, float scale) {
 	uint32_t const codepoint = 0;
-	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
-	if (font == NULL) { return 0; }
-	int32_t const value = font_get_descent(font);
+	struct Typeface const * typeface = glyph_atlas_get_typeface(glyph_atlas, codepoint);
+	if (typeface == NULL) { return 0; }
+	int32_t const value = typeface_get_descent(typeface);
 	return ((float)value) * scale;
 }
 
-float font_atlas_get_gap(struct Font_Atlas const * font_atlas, float scale) {
+float glyph_atlas_get_gap(struct Glyph_Atlas const * glyph_atlas, float scale) {
 	uint32_t const codepoint = 0;
-	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
-	if (font == NULL) { return 0; }
-	int32_t const value = font_get_gap(font);
+	struct Typeface const * typeface = glyph_atlas_get_typeface(glyph_atlas, codepoint);
+	if (typeface == NULL) { return 0; }
+	int32_t const value = typeface_get_gap(typeface);
 	return ((float)value) * scale;
 }
 
-float font_atlas_get_kerning(struct Font_Atlas const * font_atlas, uint32_t codepoint1, uint32_t codepoint2, float scale) {
+float glyph_atlas_get_kerning(struct Glyph_Atlas const * glyph_atlas, uint32_t codepoint1, uint32_t codepoint2, float scale) {
 	uint32_t const codepoint = 0;
-	struct Font const * font = font_atlas_get_typeface(font_atlas, codepoint);
-	if (font == NULL) { return 0; }
-	uint32_t const glyph_id1 = font_get_glyph_id(font, codepoint1);
-	uint32_t const glyph_id2 = font_get_glyph_id(font, codepoint2);
-	int32_t  const kerning   = font_get_kerning(font, glyph_id1, glyph_id2);
+	struct Typeface const * typeface = glyph_atlas_get_typeface(glyph_atlas, codepoint);
+	if (typeface == NULL) { return 0; }
+	uint32_t const glyph_id1 = typeface_get_glyph_id(typeface, codepoint1);
+	uint32_t const glyph_id2 = typeface_get_glyph_id(typeface, codepoint2);
+	int32_t  const kerning   = typeface_get_kerning(typeface, glyph_id1, glyph_id2);
 	return (float)kerning * scale;
 }
 
 //
 
-static int font_atlas_sort_comparison(void const * v1, void const * v2) {
-	struct Font_Symbol const * s1 = v1;
-	struct Font_Symbol const * s2 = v2;
+static int glyph_atlas_sort_comparison(void const * v1, void const * v2) {
+	struct Typeface_Symbol const * s1 = v1;
+	struct Typeface_Symbol const * s2 = v2;
 
 	struct srect const r1 = s1->glyph->params.rect;
 	struct srect const r2 = s2->glyph->params.rect;
@@ -446,19 +446,19 @@ static int font_atlas_sort_comparison(void const * v1, void const * v2) {
 	return 0;
 }
 
-inline static struct Font_Key font_atlas_get_key(uint64_t value) {
+inline static struct Typeface_Key glyph_atlas_get_key(uint64_t value) {
 	union {
 		uint64_t value_u64;
-		struct Font_Key value_key;
+		struct Typeface_Key value_key;
 	} data;
 	data.value_u64 = value;
 	return data.value_key;
 }
 
-inline static uint64_t font_atlas_get_key_hash(struct Font_Key value) {
+inline static uint64_t glyph_atlas_get_key_hash(struct Typeface_Key value) {
 	union {
 		uint64_t value_u64;
-		struct Font_Key value_key;
+		struct Typeface_Key value_key;
 	} data;
 	data.value_key = value;
 	return data.value_u64;

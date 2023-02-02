@@ -10,28 +10,28 @@
 		// * [U+0080-U+00FF] extended
 		{
 			"from": 0, "to": 4294967295,
-			"path": "assets/fonts/JetBrainsMono-Regular.ttf",
+			"path": "assets/typefaces/JetBrainsMono-Regular.ttf",
 		},
 
 		// -- Hangul Jamo --
 		// U+1100-U+11FF
 		{
 			"from": 4352, "to": 4606,
-			"path": "assets/fonts/NotoSerifKR-Regular.otf",
+			"path": "assets/typefaces/NotoSerifKR-Regular.otf",
 		},
 
 		// -- Hangul Compatability Jamo --
 		// U+3130-U+318F
 		{
 			"from": 12592, "to": 12687,
-			"path": "assets/fonts/NotoSerifKR-Regular.otf",
+			"path": "assets/typefaces/NotoSerifKR-Regular.otf",
 		},
 
 		// -- Hangul Jamo Extended-A --
 		// U+A960-U+A97F
 		{
 			"from": 43360, "to": 43391,
-			"path": "assets/fonts/NotoSerifKR-Regular.otf",
+			"path": "assets/typefaces/NotoSerifKR-Regular.otf",
 		},
 
 		// -- Hangul Syllables --
@@ -43,14 +43,14 @@
 		// * [U+11A8-U+11C2] 26 final   consonants
 		{
 			"from": 44033, "to": 55203,
-			"path": "assets/fonts/NotoSerifKR-Regular.otf",
+			"path": "assets/typefaces/NotoSerifKR-Regular.otf",
 		},
 
 		// -- Hangul Jamo Extended-B --
 		// U+D7B0-U+D7FF
 		{
 			"from": 55216, "to": 55295,
-			"path": "assets/fonts/NotoSerifKR-Regular.otf",
+			"path": "assets/typefaces/NotoSerifKR-Regular.otf",
 		},
 	],
 }

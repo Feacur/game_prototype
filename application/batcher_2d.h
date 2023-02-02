@@ -7,7 +7,7 @@
 struct Batcher_2D;
 
 struct Gfx_Material;
-struct Asset_Font;
+struct Asset_Glyph_Atlas;
 struct Array_Any;
 
 struct Batcher_2D * batcher_2d_init(void);
@@ -28,7 +28,7 @@ void batcher_2d_add_quad(
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
 	struct rect rect, struct vec2 alignment, bool wrap,
-	struct Asset_Fonts const * fonts, struct CString value, float size
+	struct Asset_Glyph_Atlas const * glyph_atlas, struct CString value, float size
 );
 
 void batcher_2d_clear(struct Batcher_2D * batcher);

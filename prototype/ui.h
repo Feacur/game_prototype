@@ -16,7 +16,7 @@ void ui_set_color(struct vec4 color);
 
 void ui_set_shader(struct CString name);
 void ui_set_image(struct CString name);
-void ui_set_font(struct CString name);
+void ui_set_glyph_atlas(struct CString name);
 
 void ui_quad(struct rect uv);
 void ui_text(struct CString value, struct vec2 alignment, bool wrap, float size);

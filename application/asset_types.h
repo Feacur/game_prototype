@@ -5,8 +5,8 @@
 #include "framework/assets/json.h"
 #include "framework/graphics/material.h"
 
-struct Font;
-struct Font_Atlas;
+struct Typeface;
+struct Glyph_Atlas;
 
 struct Asset_Bytes {
 	uint8_t * data;
@@ -26,11 +26,11 @@ struct Asset_Image {
 };
 
 struct Asset_Typeface {
-	struct Font * typeface;
+	struct Typeface * typeface;
 };
 
-struct Asset_Fonts {
-	struct Font_Atlas * font_atlas;
+struct Asset_Glyph_Atlas {
+	struct Glyph_Atlas * glyph_atlas;
 	struct Handle gpu_handle;
 };
 

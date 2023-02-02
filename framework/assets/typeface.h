@@ -1,31 +1,31 @@
-#if !defined(FRAMEWORK_ASSETS_FONT)
-#define FRAMEWORK_ASSETS_FONT
+#if !defined(FRAMEWORK_ASSETS_TYPEFACE)
+#define FRAMEWORK_ASSETS_TYPEFACE
 
-#include "font_glyph_params.h"
+#include "typeface_glyph_params.h"
 
-// @note: `font_init` takes memory ownership of the buffer
+// @note: `typeface_init` takes memory ownership of the buffer
 
-struct Font;
+struct Typeface;
 struct Buffer;
 
-struct Font * font_init(struct Buffer * buffer);
-void font_free(struct Font * font);
+struct Typeface * typeface_init(struct Buffer * buffer);
+void typeface_free(struct Typeface * typeface);
 
-uint32_t font_get_glyph_id(struct Font const * font, uint32_t codepoint);
-struct Font_Glyph_Params font_get_glyph_parameters(struct Font const * font, uint32_t glyph_id, float scale);
+uint32_t typeface_get_glyph_id(struct Typeface const * typeface, uint32_t codepoint);
+struct Typeface_Glyph_Params typeface_get_glyph_parameters(struct Typeface const * typeface, uint32_t glyph_id, float scale);
 
-void font_render_glyph(
-	struct Font const * font,
+void typeface_render_glyph(
+	struct Typeface const * typeface,
 	uint32_t glyph_id, float scale,
 	uint8_t * buffer, uint32_t buffer_width,
 	uint32_t glyph_size_x, uint32_t glyph_size_y,
 	uint32_t offset_x, uint32_t offset_y
 );
 
-float font_get_scale(struct Font const * font, float size);
-int32_t font_get_ascent(struct Font const * font);
-int32_t font_get_descent(struct Font const * font);
-int32_t font_get_gap(struct Font const * font);
-int32_t font_get_kerning(struct Font const * font, uint32_t glyph_id1, uint32_t glyph_id2);
+float typeface_get_scale(struct Typeface const * typeface, float size);
+int32_t typeface_get_ascent(struct Typeface const * typeface);
+int32_t typeface_get_descent(struct Typeface const * typeface);
+int32_t typeface_get_gap(struct Typeface const * typeface);
+int32_t typeface_get_kerning(struct Typeface const * typeface, uint32_t glyph_id1, uint32_t glyph_id2);
 
 #endif
