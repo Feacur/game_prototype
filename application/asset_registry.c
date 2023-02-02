@@ -13,7 +13,7 @@
 #include "framework/assets/image.h"
 #include "framework/assets/json.h"
 #include "framework/assets/typeface.h"
-#include "framework/assets/glyph_atlas.h"
+#include "framework/assets/font.h"
 
 #include "json_load.h"
 

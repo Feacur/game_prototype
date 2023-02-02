@@ -10,7 +10,7 @@
 #include "framework/containers/handle.h"
 
 #include "framework/assets/mesh.h"
-#include "framework/assets/glyph_atlas.h"
+#include "framework/assets/font.h"
 
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_objects.h"

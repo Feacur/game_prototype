@@ -33,7 +33,7 @@ framework/assets/json.c
 framework/assets/mesh.c
 framework/assets/image.c
 framework/assets/typeface.c
-framework/assets/glyph_atlas.c
+framework/assets/font.c
 
 framework/systems/asset_system.c
 

@@ -33,7 +33,7 @@ struct Typeface_Key {
 };
 
 //
-#include "glyph_atlas.h"
+#include "font.h"
 
 struct Typeface_Symbol {
 	struct Typeface_Key key;

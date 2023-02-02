@@ -34,7 +34,7 @@
 #include "framework/assets/mesh.c"
 #include "framework/assets/image.c"
 #include "framework/assets/typeface.c"
-#include "framework/assets/glyph_atlas.c"
+#include "framework/assets/font.c"
 
 #include "framework/systems/asset_system.c"
 
