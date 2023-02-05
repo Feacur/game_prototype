@@ -4,9 +4,25 @@
 		"clangd": {
 			"command": [
 				"clangd",
-				"--compile-commands-dir=${project_path:${folder}}",
+				"--compile-commands-dir=${project_path:${folder:${file_path}}}",
 				"--header-insertion=never",
 				// "--log=verbose",
+			],
+			"enabled": false,
+		},
+		"omnisharp": {
+			"command": [
+				"omnisharp",
+				"--languageserver",
+				"--source=${project_path:${folder:${file_path}}}",
+				// "--verbose",
+			],
+			"enabled": false,
+		},
+		"rust-analyzer": {
+			"command": [
+				"rust-analyzer",
+				// "--verbose",
 			],
 			"enabled": false,
 		},

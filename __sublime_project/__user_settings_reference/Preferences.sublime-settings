@@ -25,7 +25,7 @@
 	],
 	"font_face": "JetBrains Mono",
 	"font_options": ["no_liga", "no_clig", "no_calt"],
-	"font_size": 11,
+	"font_size": 12,
 	"ignored_packages":
 	[
 		"EasyClangComplete",
