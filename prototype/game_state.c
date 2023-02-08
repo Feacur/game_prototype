@@ -54,7 +54,7 @@ static void json_read_camera(struct JSON const * json, struct Camera * camera) {
 
 	struct CString const target = json_get_string(json, S_("target"));
 	if (target.data != NULL) {
-		struct Asset_Target const * asset = asset_system_aquire_instance(&gs_game.assets, target);
+		struct Asset_Target const * asset = asset_system_aquire_instance(target);
 		camera->gpu_target_handle = (asset != NULL) ? asset->gpu_handle : (struct Handle){0};
 	}
 	else { camera->gpu_target_handle = (struct Handle){0}; }
@@ -133,7 +133,7 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 	entity->camera = (uint32_t)json_get_number(json, S_("camera_uid")) - 1;
 
 	struct CString const material_path = json_get_string(json, S_("material"));
-	entity->material_asset_handle = asset_system_aquire(&gs_game.assets, material_path);
+	entity->material_asset_handle = asset_system_aquire(material_path);
 
 	entity->type = json_read_entity_type(json_get(json, S_("type")));
 	switch (entity->type) {
@@ -142,7 +142,7 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 		case ENTITY_TYPE_MESH: {
 			struct CString const model_path = json_get_string(json, S_("model"));
 			entity->as.mesh = (struct Entity_Mesh){
-				.asset_handle = asset_system_aquire(&gs_game.assets, model_path),
+				.asset_handle = asset_system_aquire(model_path),
 			};
 		} break;
 
@@ -159,8 +159,8 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 			struct CString const glyphs_path = json_get_string(json, S_("font"));
 			struct CString const message_path = json_get_string(json, S_("message"));
 			entity->as.text = (struct Entity_Text){
-				.font_asset_handle = asset_system_aquire(&gs_game.assets, glyphs_path),
-				.message_asset_handle = asset_system_aquire(&gs_game.assets, message_path),
+				.font_asset_handle = asset_system_aquire(glyphs_path),
+				.message_asset_handle = asset_system_aquire(message_path),
 				.size = (float)json_get_number(json, S_("size")),
 			};
 			json_read_many_flt(json_get(json, S_("alignment")), 2, &entity->as.text.alignment.x);
@@ -190,14 +190,14 @@ void game_init(void) {
 	gs_game = (struct Game_State){
 		.cameras = array_any_init(sizeof(struct Camera)),
 		.entities = array_any_init(sizeof(struct Entity)),
-		.assets = asset_system_init(),
 	};
-	asset_types_init(&gs_game.assets);
+	asset_system_init();
+	asset_types_init();
 }
 
 void game_free(void) {
-	asset_types_free(&gs_game.assets);
-	asset_system_free(&gs_game.assets);
+	asset_types_free();
+	asset_system_free();
 
 	array_any_free(&gs_game.cameras);
 	array_any_free(&gs_game.entities);

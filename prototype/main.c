@@ -112,7 +112,7 @@ static void prototype_tick_entities_quad_2d(void) {
 		struct Camera const * camera = array_any_at(&gs_game.cameras, entity->camera);
 		struct uvec2 const viewport_size = camera->cached_size;
 
-		struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material_asset_handle);
+		struct Asset_Material const * material = asset_system_find_instance(entity->material_asset_handle);
 		struct uvec2 const content_size = entity_get_content_size(entity, &material->value, viewport_size.x, viewport_size.y);
 		if (content_size.x == 0 || content_size.y == 0) { break; }
 
@@ -274,7 +274,7 @@ static void prototype_draw_objects(void) {
 			struct Entity const * entity = array_any_at(&gs_game.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
 
-			struct Asset_Material const * material = asset_system_find_instance(&gs_game.assets, entity->material_asset_handle);
+			struct Asset_Material const * material = asset_system_find_instance(entity->material_asset_handle);
 
 			struct mat4 const mat4_Model = mat4_set_transformation(
 				entity->transform.position,
@@ -301,7 +301,7 @@ static void prototype_draw_objects(void) {
 					batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
-					struct Asset_Model const * model = asset_system_find_instance(&gs_game.assets, mesh->asset_handle);
+					struct Asset_Model const * model = asset_system_find_instance(mesh->asset_handle);
 
 					uint32_t const override_offset = gs_renderer.uniforms.headers.count;
 					gfx_uniforms_push(&gs_renderer.uniforms, u_Model, A_(mat4_Model));
@@ -344,8 +344,8 @@ static void prototype_draw_objects(void) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
-					struct Asset_Glyph_Atlas const * font = asset_system_find_instance(&gs_game.assets, text->font_asset_handle);
-					struct Asset_Bytes const * message = asset_system_find_instance(&gs_game.assets, text->message_asset_handle);
+					struct Asset_Glyph_Atlas const * font = asset_system_find_instance(text->font_asset_handle);
+					struct Asset_Bytes const * message = asset_system_find_instance(text->message_asset_handle);
 					struct CString const value = {
 						.length = message->length,
 						.data = (char const *)message->data,

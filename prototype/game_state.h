@@ -7,7 +7,6 @@
 struct JSON;
 
 extern struct Game_State {
-	struct Asset_System assets;
 	struct Array_Any cameras;  // `struct Camera`
 	struct Array_Any entities; // `struct Entity`
 } gs_game;

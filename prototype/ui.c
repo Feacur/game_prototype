@@ -41,7 +41,7 @@ void ui_free(void) {
 
 static void ui_internal_push_image(void) {
 	if (asset_handle_is_null(gs_ui.image_asset_handle)) { return; }
-	struct Asset_Image const * asset = asset_system_find_instance(&gs_game.assets, gs_ui.image_asset_handle);
+	struct Asset_Image const * asset = asset_system_find_instance(gs_ui.image_asset_handle);
 
 	if (gs_ui.cached_texture == asset) { return; }
 	gs_ui.cached_texture = asset;
@@ -53,7 +53,7 @@ static void ui_internal_push_image(void) {
 
 static void ui_internal_push_glyph_atlas(void) {
 	if (asset_handle_is_null(gs_ui.font_asset_handle)) { return; }
-	struct Asset_Glyph_Atlas const * asset = asset_system_find_instance(&gs_game.assets, gs_ui.font_asset_handle);
+	struct Asset_Glyph_Atlas const * asset = asset_system_find_instance(gs_ui.font_asset_handle);
 
 	if (gs_ui.cached_texture == asset) { return; }
 	gs_ui.cached_texture = asset;
@@ -109,7 +109,7 @@ void ui_set_color(struct vec4 color) {
 }
 
 void ui_set_shader(struct CString name) {
-	struct Asset_Shader const * asset_shader = asset_system_aquire_instance(&gs_game.assets, name);
+	struct Asset_Shader const * asset_shader = asset_system_aquire_instance(name);
 	struct Handle const gpu_handle = asset_shader ? asset_shader->gpu_handle : (struct Handle){0};
 	gfx_material_set_shader(&gs_ui.material, gpu_handle);
 
@@ -127,11 +127,11 @@ void ui_set_shader(struct CString name) {
 }
 
 void ui_set_image(struct CString name) {
-	gs_ui.image_asset_handle = asset_system_aquire(&gs_game.assets, name);
+	gs_ui.image_asset_handle = asset_system_aquire(name);
 }
 
 void ui_set_glyph_atlas(struct CString name) {
-	gs_ui.font_asset_handle = asset_system_aquire(&gs_game.assets, name);
+	gs_ui.font_asset_handle = asset_system_aquire(name);
 }
 
 void ui_quad(struct rect uv) {
