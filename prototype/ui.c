@@ -2,6 +2,7 @@
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/gpu_command.h"
+#include "framework/systems/material_system.h"
 #include "framework/maths.h"
 
 #include "application/application.h"
@@ -15,7 +16,7 @@
 #include "ui.h"
 
 static struct UI {
-	struct Gfx_Material material;
+	struct Handle material;
 	struct Asset_Handle font_asset_handle;
 	struct Asset_Handle image_asset_handle;
 	//
@@ -28,20 +29,22 @@ static struct UI {
 
 void ui_init(void) {
 	gs_ui = (struct UI){
-		.material = gfx_material_init(),
+		.material = material_system_aquire(),
 	};
-	gs_ui.material.blend_mode = BLEND_MODE_MIX;
-	gs_ui.material.depth_mode = DEPTH_MODE_NONE;
+
+	struct Gfx_Material * material = material_system_take(gs_ui.material);
+	material->blend_mode = BLEND_MODE_MIX;
+	material->depth_mode = DEPTH_MODE_NONE;
 }
 
 void ui_free(void) {
-	gfx_material_free(&gs_ui.material);
+	material_system_discard(gs_ui.material);
 	common_memset(&gs_ui, 0, sizeof(gs_ui));
 }
 
 static void ui_internal_push_image(void) {
 	if (asset_handle_is_null(gs_ui.image_asset_handle)) { return; }
-	struct Asset_Image const * asset = asset_system_find_instance(gs_ui.image_asset_handle);
+	struct Asset_Image const * asset = asset_system_take(gs_ui.image_asset_handle);
 
 	if (gs_ui.cached_texture == asset) { return; }
 	gs_ui.cached_texture = asset;
@@ -53,7 +56,7 @@ static void ui_internal_push_image(void) {
 
 static void ui_internal_push_glyph_atlas(void) {
 	if (asset_handle_is_null(gs_ui.font_asset_handle)) { return; }
-	struct Asset_Glyph_Atlas const * asset = asset_system_find_instance(gs_ui.font_asset_handle);
+	struct Asset_Glyph_Atlas const * asset = asset_system_take(gs_ui.font_asset_handle);
 
 	if (gs_ui.cached_texture == asset) { return; }
 	gs_ui.cached_texture = asset;
@@ -64,7 +67,7 @@ static void ui_internal_push_glyph_atlas(void) {
 }
 
 void ui_start_frame(void) {
-	batcher_2d_set_material(gs_renderer.batcher_2d, &gs_ui.material);
+	batcher_2d_set_material(gs_renderer.batcher_2d, gs_ui.material);
 
 	struct uvec2 const screen_size = application_get_screen_size();
 	gs_ui.camera = camera_get_projection(
@@ -111,18 +114,20 @@ void ui_set_color(struct vec4 color) {
 void ui_set_shader(struct CString name) {
 	struct Asset_Shader const * asset_shader = asset_system_aquire_instance(name);
 	struct Handle const gpu_handle = asset_shader ? asset_shader->gpu_handle : (struct Handle){0};
-	gfx_material_set_shader(&gs_ui.material, gpu_handle);
+
+	struct Gfx_Material * material = material_system_take(gs_ui.material);
+	gfx_material_set_shader(material, gpu_handle);
 
 	{
 		struct vec4 const vec4_Tint = {1, 1, 1, 1};
 		uint32_t const p_Tint = graphics_add_uniform_id(S_("p_Tint"));
-		gfx_uniforms_set(&gs_ui.material.uniforms, p_Tint, A_(vec4_Tint));
+		gfx_uniforms_set(&material->uniforms, p_Tint, A_(vec4_Tint));
 	}
 
 	{
 		struct Handle const h_Texture = {0};
 		uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
-		gfx_uniforms_set(&gs_ui.material.uniforms, p_Texture, A_(h_Texture));
+		gfx_uniforms_set(&material->uniforms, p_Texture, A_(h_Texture));
 	}
 }
 

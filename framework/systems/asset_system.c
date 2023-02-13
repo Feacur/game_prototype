@@ -159,12 +159,6 @@ struct Asset_Handle asset_system_aquire(struct CString name) {
 }
 
 void asset_system_discard(struct Asset_Handle handle) {
-	if (asset_handle_is_null(handle)) {
-		logger_to_console("null asset handle\n"); DEBUG_BREAK();
-		return;
-	}
-
-	//
 	struct Asset_Type * asset_type = hash_table_u32_get(&gs_asset_system.types, handle.type_id);
 	if (asset_type == NULL) {
 		struct CString const type = strings_get(&gs_asset_system.strings, handle.type_id);
@@ -180,13 +174,7 @@ void asset_system_discard(struct Asset_Handle handle) {
 	}
 }
 
-void * asset_system_find_instance(struct Asset_Handle handle) {
-	if (asset_handle_is_null(handle)) {
-		logger_to_console("null asset handle\n"); DEBUG_BREAK();
-		return NULL;
-	}
-
-	//
+void * asset_system_take(struct Asset_Handle handle) {
 	struct Asset_Type * asset_type = hash_table_u32_get(&gs_asset_system.types, handle.type_id);
 	if (asset_type == NULL) {
 		struct CString const type = strings_get(&gs_asset_system.strings, handle.type_id);
@@ -200,7 +188,7 @@ void * asset_system_find_instance(struct Asset_Handle handle) {
 
 void * asset_system_aquire_instance(struct CString name) {
 	struct Asset_Handle const handle = asset_system_aquire(name);
-	return asset_system_find_instance(handle);
+	return asset_system_take(handle);
 }
 
 struct CString asset_system_get_name(struct Asset_Handle handle) {

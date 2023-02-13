@@ -30,12 +30,6 @@ void handle_table_discard(struct Handle_Table * handle_table, struct Handle hand
 void * handle_table_get(struct Handle_Table * handle_table, struct Handle handle);
 void handle_table_set(struct Handle_Table * handle_table, struct Handle handle, void const * value);
 
-bool handle_table_exists(struct Handle_Table * handle_table, struct Handle handle);
-
-uint32_t handle_table_get_count(struct Handle_Table * handle_table);
-struct Handle handle_table_handle_at(struct Handle_Table * handle_table, uint32_t index);
-void * handle_table_value_at(struct Handle_Table * handle_table, uint32_t index);
-
 bool handle_table_iterate(struct Handle_Table const * handle_table, struct Handle_Table_Iterator * iterator);
 
 #define FOR_HANDLE_TABLE(data, it) for ( \

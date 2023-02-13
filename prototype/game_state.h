@@ -2,7 +2,6 @@
 #define PROTOTYPE_GAME_STATE
 
 #include "framework/containers/array_any.h"
-#include "framework/systems/asset_system.h"
 
 struct JSON;
 

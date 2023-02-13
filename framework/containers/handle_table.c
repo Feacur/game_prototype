@@ -83,12 +83,13 @@ struct Handle handle_table_aquire(struct Handle_Table * handle_table, void const
 }
 
 void handle_table_discard(struct Handle_Table * handle_table, struct Handle handle) {
+	if (handle.id == 0)                            { DEBUG_BREAK(); return; }
 	if (handle.id > handle_table->buffer.capacity) { DEBUG_BREAK(); return; }
 
 	uint32_t const handle_id = handle.id - 1;
 	struct Handle * entry = handle_table->sparse + handle_id;
 	if (handle_id  != handle_table->dense[entry->id]) { DEBUG_BREAK(); return; }
-	if (handle.gen != entry->gen)                  { DEBUG_BREAK(); return; }
+	if (handle.gen != entry->gen)                     { DEBUG_BREAK(); return; }
 
 	// invalidate the entry
 	entry->gen++;
@@ -116,58 +117,27 @@ void handle_table_discard(struct Handle_Table * handle_table, struct Handle hand
 }
 
 void * handle_table_get(struct Handle_Table * handle_table, struct Handle handle) {
-	if (handle.id == 0) { return NULL; }
+	if (handle.id == 0)                            { return NULL; }
 	if (handle.id > handle_table->buffer.capacity) { return NULL; }
 
 	uint32_t const handle_id = handle.id - 1;
 	struct Handle const * entry = handle_table->sparse + handle_id;
 	if (handle_id  != handle_table->dense[entry->id]) { return NULL; }
-	if (handle.gen != entry->gen)                  { return NULL; }
+	if (handle.gen != entry->gen)                     { return NULL; }
 
 	return array_any_at(&handle_table->buffer, entry->id);
 }
 
 void handle_table_set(struct Handle_Table * handle_table, struct Handle handle, void const * value) {
-	if (handle.id == 0) { return; }
+	if (handle.id == 0)                            { DEBUG_BREAK(); return; }
 	if (handle.id > handle_table->buffer.capacity) { DEBUG_BREAK(); return; }
 
 	uint32_t const handle_id = handle.id - 1;
 	struct Handle const * entry = handle_table->sparse + handle_id;
 	if (handle_id  != handle_table->dense[entry->id]) { DEBUG_BREAK(); return; }
-	if (handle.gen != entry->gen)                  { DEBUG_BREAK(); return; }
+	if (handle.gen != entry->gen)                     { DEBUG_BREAK(); return; }
 
 	array_any_set_many(&handle_table->buffer, entry->id, 1, value);
-}
-
-bool handle_table_exists(struct Handle_Table * handle_table, struct Handle handle) {
-	if (handle.id == 0) { return false; }
-	if (handle.id > handle_table->buffer.capacity) { return false; }
-
-	uint32_t const handle_id = handle.id - 1;
-	struct Handle const * entry = handle_table->sparse + handle_id;
-	if (handle_id  != handle_table->dense[entry->id]) { return false; }
-	if (handle.gen != entry->gen)                  { return false; }
-
-	return true;
-}
-
-uint32_t handle_table_get_count(struct Handle_Table * handle_table) {
-	return handle_table->buffer.count;
-}
-
-struct Handle handle_table_handle_at(struct Handle_Table * handle_table, uint32_t index) {
-	if (index >= handle_table->buffer.count) { return (struct Handle){0}; }
-	uint32_t const sparse_index = handle_table->dense[index];
-	return (struct Handle){
-		.id = sparse_index + 1,
-		.gen = handle_table->sparse[sparse_index].gen,
-	};
-}
-
-void * handle_table_value_at(struct Handle_Table * handle_table, uint32_t index) {
-	if (index >= handle_table->buffer.count) { return NULL; }
-	uint32_t const sparse_index = handle_table->dense[index];
-	return array_any_at(&handle_table->buffer, sparse_index);
 }
 
 bool handle_table_iterate(struct Handle_Table const * handle_table, struct Handle_Table_Iterator * iterator) {

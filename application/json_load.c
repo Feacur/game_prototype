@@ -4,6 +4,7 @@
 #include "framework/json_read.h"
 #include "framework/containers/hash_table_u32.h"
 #include "framework/systems/asset_system.h"
+#include "framework/systems/material_system.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/material.h"
@@ -15,12 +16,13 @@
 #include "json_load.h"
 
 static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * material);
-void json_load_gfx_material(struct JSON const * json, struct Gfx_Material * result) {
+struct Handle json_load_gfx_material(struct JSON const * json) {
+	struct Handle handle = material_system_aquire();
 	if (json->type != JSON_OBJECT) { goto fail; }
 
-	*result = gfx_material_init();
-	result->blend_mode = json_read_blend_mode(json_get(json, S_("blend")));
-	result->depth_mode = json_read_depth_mode(json_get(json, S_("depth")));
+	struct Gfx_Material * material = material_system_take(handle);
+	material->blend_mode = json_read_blend_mode(json_get(json, S_("blend")));
+	material->depth_mode = json_read_depth_mode(json_get(json, S_("depth")));
 
 	struct CString const shader_path = json_get_string(json, S_("shader"));
 	if (shader_path.data == NULL) { goto fail; }
@@ -28,13 +30,14 @@ void json_load_gfx_material(struct JSON const * json, struct Gfx_Material * resu
 	struct Asset_Shader const * shader_asset = asset_system_aquire_instance(shader_path);
 	if (shader_asset == NULL) { goto fail; }
 
-	gfx_material_set_shader(result, shader_asset->gpu_handle);
-	json_fill_uniforms(json, result);
+	gfx_material_set_shader(material, shader_asset->gpu_handle);
+	json_fill_uniforms(json, material);
 
-	return;
+	return handle;
 
 	// process errors
 	fail: logger_to_console("failed to load gfx material asset\n");
+	return handle;
 }
 
 void json_load_font_range(struct JSON const * json, struct Font * font) {
@@ -45,7 +48,7 @@ void json_load_font_range(struct JSON const * json, struct Font * font) {
 	uint32_t const to   = (uint32_t)json_get_number(json, S_("to"));
 
 	struct Asset_Handle const handle = asset_system_aquire(path);
-	struct Asset_Typeface const * asset = asset_system_find_instance(handle);
+	struct Asset_Typeface const * asset = asset_system_take(handle);
 	font_set_typeface(font, asset->typeface, from, to);
 }
 
@@ -60,7 +63,7 @@ static struct Handle json_load_texture(struct JSON const * json) {
 	struct Asset_Handle const asset_handle = asset_system_aquire(path);
 	if (asset_handle_is_null(asset_handle)) { goto fail; }
 
-	void const * instance = asset_system_find_instance(asset_handle);
+	void const * instance = asset_system_take(asset_handle);
 	if (instance == NULL) { goto fail; }
 
 	if (asset_system_match_type(asset_handle, S_("image"))) {

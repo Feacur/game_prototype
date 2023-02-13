@@ -10,8 +10,6 @@
 #include "types.h"
 #include "material_override.h"
 
-struct Gfx_Material;
-
 enum GPU_Command_Type {
 	GPU_COMMAND_TYPE_NONE,
 	GPU_COMMAND_TYPE_CULL,
@@ -38,7 +36,7 @@ struct GPU_Command_Clear {
 };
 
 struct GPU_Command_Material {
-	struct Gfx_Material const * material;
+	struct Handle handle;
 };
 
 struct GPU_Command_Uniform {

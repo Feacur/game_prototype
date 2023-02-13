@@ -3,7 +3,6 @@
 
 #include "framework/containers/handle.h"
 #include "framework/assets/json.h"
-#include "framework/graphics/material.h"
 
 struct Typeface;
 struct Font;
@@ -43,7 +42,7 @@ struct Asset_Model {
 };
 
 struct Asset_Material {
-	struct Gfx_Material value;
+	struct Handle handle;
 };
 
 #endif

@@ -6,6 +6,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
 #include "framework/systems/asset_system.h"
+#include "framework/systems/material_system.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
 
@@ -26,7 +27,6 @@
 
 static void asset_bytes_init(void * instance, struct CString name) {
 	struct Asset_Bytes * asset = instance;
-	(void)system;
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
@@ -43,7 +43,6 @@ static void asset_bytes_init(void * instance, struct CString name) {
 
 static void asset_bytes_free(void * instance) {
 	struct Asset_Bytes * asset = instance;
-	(void)system;
 	MEMORY_FREE(asset->data);
 	common_memset(asset, 0, sizeof(*asset));
 }
@@ -64,7 +63,6 @@ static void asset_json_type_free(void) {
 
 static void asset_json_init(void * instance, struct CString name) {
 	struct Asset_JSON * asset = instance;
-	(void)system;
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
@@ -80,7 +78,6 @@ static void asset_json_init(void * instance, struct CString name) {
 
 static void asset_json_free(void * instance) {
 	struct Asset_JSON * asset = instance;
-	(void)system;
 	json_free(&asset->value);
 	// common_memset(asset, 0, sizeof(*asset));
 }
@@ -91,7 +88,6 @@ static void asset_json_free(void * instance) {
 
 static void asset_shader_init(void * instance, struct CString name) {
 	struct Asset_Shader * asset = instance;
-	(void)system;
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
@@ -306,11 +302,10 @@ static void asset_material_fill(struct JSON const * json, void * data) {
 		return;
 	}
 
-	struct Gfx_Material material;
-	json_load_gfx_material(json, &material);
+	struct Handle handle = json_load_gfx_material(json);
 
 	*context->result = (struct Asset_Material){
-		.value = material,
+		.handle = handle,
 	};
 }
 
@@ -322,7 +317,7 @@ static void asset_material_init(void * instance, struct CString name) {
 
 static void asset_material_free(void * instance) {
 	struct Asset_Material * asset = instance;
-	gfx_material_free(&asset->value);
+	material_system_discard(asset->handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
 

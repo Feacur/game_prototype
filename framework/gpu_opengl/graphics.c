@@ -16,6 +16,8 @@
 #include "framework/graphics/material.h"
 #include "framework/graphics/material_override.h"
 
+#include "framework/systems/material_system.h"
+
 #include "functions.h"
 #include "types.h"
 
@@ -1245,17 +1247,18 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 }
 
 inline static void gpu_execute_material(struct GPU_Command_Material const * command) {
-	struct Handle const gpu_program_handle = (command->material != NULL)
-		? command->material->gpu_program_handle
+	struct Gfx_Material const * material = material_system_take(command->handle);
+	struct Handle const gpu_program_handle = (material != NULL)
+		? material->gpu_program_handle
 		: (struct Handle){0};
 
 	gpu_select_program(gpu_program_handle);
-	gpu_set_blend_mode(command->material->blend_mode);
-	gpu_set_depth_mode(command->material->depth_mode);
+	gpu_set_blend_mode(material->blend_mode);
+	gpu_set_depth_mode(material->depth_mode);
 
 	struct Gpu_Program const * gpu_program = handle_table_get(&gs_graphics_state.programs, gpu_program_handle);
 	if (gpu_program != NULL) {
-		gpu_upload_uniforms(gpu_program, &command->material->uniforms, 0, command->material->uniforms.headers.count);
+		gpu_upload_uniforms(gpu_program, &material->uniforms, 0, material->uniforms.headers.count);
 	}
 }
 

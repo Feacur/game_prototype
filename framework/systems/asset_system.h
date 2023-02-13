@@ -26,7 +26,7 @@ void asset_system_del_type(struct CString type);
 struct Asset_Handle asset_system_aquire(struct CString name);
 void asset_system_discard(struct Asset_Handle handle);
 
-void * asset_system_find_instance(struct Asset_Handle handle);
+void * asset_system_take(struct Asset_Handle handle);
 void * asset_system_aquire_instance(struct CString name);
 
 struct CString asset_system_get_name(struct Asset_Handle handle);

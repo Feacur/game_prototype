@@ -16,6 +16,9 @@
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/gpu_command.h"
+
+#include "framework/systems/material_system.h"
+
 #include "framework/maths.h"
 
 #include "asset_types.h"
@@ -48,7 +51,7 @@ struct Batcher_2D_Word {
 };
 
 struct Batcher_2D_Batch {
-	struct Gfx_Material const * material; // @idea: internalize materials if async
+	struct Handle material;
 	uint32_t indices_offset, indices_length;
 	uint32_t uniform_offset, uniform_length;
 };
@@ -148,11 +151,11 @@ void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const value)
 	batcher->matrix = value;
 }
 
-void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material const * material) {
-	if (batcher->batch.material != material) {
+void batcher_2d_set_material(struct Batcher_2D * batcher, struct Handle handle) {
+	if (!handle_equals(batcher->batch.material, handle)) {
 		batcher_2d_bake_pass(batcher);
 	}
-	batcher->batch.material = material;
+	batcher->batch.material = handle;
 }
 
 void batcher_2d_uniforms_push(struct Batcher_2D * batcher, uint32_t uniform_id, struct CArray value) {
@@ -453,15 +456,16 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * g
 		array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
 			.type = GPU_COMMAND_TYPE_MATERIAL,
 			.as.material = {
-				.material = batch->material,
+				.handle = batch->material,
 			},
 		});
 
 		if (batch->uniform_length > 0) {
+			struct Gfx_Material const * material = material_system_take(batch->material);
 			array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_UNIFORM,
 				.as.uniform = {
-					.program_handle = batch->material->gpu_program_handle,
+					.program_handle = material->gpu_program_handle,
 					.override = {
 						.uniforms = &batcher->uniforms,
 						.offset = batch->uniform_offset,

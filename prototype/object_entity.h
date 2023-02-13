@@ -2,7 +2,6 @@
 #define PROTOTYPE_OBJECT_ENTITY
 
 #include "framework/systems/asset_handle.h"
-#include "framework/graphics/material.h"
 #include "framework/graphics/types.h"
 
 #include "application/components.h"
@@ -67,7 +66,7 @@ struct Entity {
 //
 
 struct uvec2 entity_get_content_size(
-	struct Entity const * entity, struct Gfx_Material const * material,
+	struct Entity const * entity, struct Handle material_handle,
 	uint32_t parent_size_x, uint32_t parent_size_y
 );
 

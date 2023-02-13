@@ -4,9 +4,9 @@
 #include "framework/containers/strings.h"
 #include "framework/assets/json.h"
 #include "framework/graphics/gpu_misc.h"
+#include "framework/systems/asset_system.h"
 
 #include "application/json_load.h"
-#include "application/asset_registry.h"
 #include "application/asset_types.h"
 
 #include "components.h"
@@ -191,14 +191,9 @@ void game_init(void) {
 		.cameras = array_any_init(sizeof(struct Camera)),
 		.entities = array_any_init(sizeof(struct Entity)),
 	};
-	asset_system_init();
-	asset_types_init();
 }
 
 void game_free(void) {
-	asset_types_free();
-	asset_system_free();
-
 	array_any_free(&gs_game.cameras);
 	array_any_free(&gs_game.entities);
 

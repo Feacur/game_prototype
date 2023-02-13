@@ -3,10 +3,10 @@
 
 #include "framework/vector_types.h"
 #include "framework/graphics/types.h"
+#include "framework/containers/handle.h"
 
 struct Batcher_2D;
 
-struct Gfx_Material;
 struct Asset_Glyph_Atlas;
 struct Array_Any;
 
@@ -15,7 +15,7 @@ void batcher_2d_free(struct Batcher_2D * batcher);
 
 void batcher_2d_set_color(struct Batcher_2D * batcher, struct vec4 const value);
 void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const value);
-void batcher_2d_set_material(struct Batcher_2D * batcher, struct Gfx_Material const * material);
+void batcher_2d_set_material(struct Batcher_2D * batcher, struct Handle handle);
 
 void batcher_2d_uniforms_push(struct Batcher_2D * batcher, uint32_t uniform_id, struct CArray value);
 
