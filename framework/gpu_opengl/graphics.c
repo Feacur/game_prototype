@@ -133,6 +133,16 @@ static struct Graphics_State {
 //     GPU program part
 // ----- ----- ----- ----- -----
 
+static void gpu_program_on_aquire(struct Gpu_Program * gpu_program) {
+	gpu_program->id = glCreateProgram();
+	gpu_program->uniforms = hash_table_u32_init(sizeof(struct Gpu_Uniform_Internal));
+}
+
+static void gpu_program_on_discard(struct Gpu_Program * gpu_program) {
+	hash_table_u32_free(&gpu_program->uniforms);
+	glDeleteProgram(gpu_program->id);
+}
+
 static void verify_shader(GLuint id);
 static void verify_program(GLuint id);
 struct Handle gpu_program_init(struct Buffer const * asset) {
@@ -146,6 +156,8 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 			}; \
 		} \
 	} while (false) \
+
+	struct Gpu_Program program; gpu_program_on_aquire(&program);
 
 	uint32_t glsl_version = 0;
 	switch (gs_ogl_version) {
@@ -216,30 +228,28 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 	}
 
 	// link shader objects into a program
-	GLuint program_id = glCreateProgram();
 	for (uint32_t i = 0; i < sections_count; i++) {
-		glAttachShader(program_id, shader_ids[i]);
+		glAttachShader(program.id, shader_ids[i]);
 	}
 
-	glLinkProgram(program_id);
-	verify_program(program_id);
+	glLinkProgram(program.id);
+	verify_program(program.id);
 
 	// free redundant resources
 	for (uint32_t i = 0; i < sections_count; i++) {
-		glDetachShader(program_id, shader_ids[i]);
+		glDetachShader(program.id, shader_ids[i]);
 		glDeleteShader(shader_ids[i]);
 	}
 
 	// introspect the program
 	GLint uniforms_count;
-	glGetProgramInterfaceiv(program_id, GL_UNIFORM, GL_ACTIVE_RESOURCES, &uniforms_count);
+	glGetProgramInterfaceiv(program.id, GL_UNIFORM, GL_ACTIVE_RESOURCES, &uniforms_count);
 	
 	GLint uniform_name_buffer_length; // includes zero-terminator
-	glGetProgramInterfaceiv(program_id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
+	glGetProgramInterfaceiv(program.id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
 	GLchar * uniform_name_buffer = alloca(sizeof(GLchar) * (size_t)uniform_name_buffer_length);
 
-	struct Hash_Table_U32 uniforms = hash_table_u32_init(sizeof(struct Gpu_Uniform_Internal));
-	hash_table_u32_resize(&uniforms, (uint32_t)uniforms_count);
+	hash_table_u32_resize(&program.uniforms, (uint32_t)uniforms_count);
 
 	for (GLint i = 0; i < uniforms_count; i++) {
 		enum Param {
@@ -257,10 +267,10 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 			// [PARAM_NAME_LENGTH] = GL_NAME_LENGTH,
 		};
 		GLint params[SIZE_OF_ARRAY(c_props)];
-		glGetProgramResourceiv(program_id, GL_UNIFORM, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
+		glGetProgramResourceiv(program.id, GL_UNIFORM, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
 
 		GLsizei name_length;
-		glGetProgramResourceName(program_id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
+		glGetProgramResourceName(program.id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
 
 		struct CString uniform_name = {
 			.data = uniform_name_buffer,
@@ -284,7 +294,7 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 		}
 
 		uint32_t const id = strings_add(&gs_graphics_state.uniforms, uniform_name);
-		hash_table_u32_set(&uniforms, id, &(struct Gpu_Uniform_Internal){
+		hash_table_u32_set(&program.uniforms, id, &(struct Gpu_Uniform_Internal){
 			.base = {
 				.type = interpret_gl_type(params[PARAM_TYPE]),
 				.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
@@ -294,18 +304,10 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 	}
 
 	//
-	return handle_table_aquire(&gs_graphics_state.programs, &(struct Gpu_Program){
-		.id = program_id,
-		.uniforms = uniforms, // @note: memory ownership transfer
-	});
+	return handle_table_aquire(&gs_graphics_state.programs, &program);
 	// https://www.khronos.org/opengl/wiki/Program_Introspection
 
 #undef ADD_HEADER
-}
-
-static void gpu_program_free_internal(struct Gpu_Program * gpu_program) {
-	hash_table_u32_free(&gpu_program->uniforms);
-	glDeleteProgram(gpu_program->id);
 }
 
 static void gpu_program_free_immediately(struct Handle handle) {
@@ -314,7 +316,7 @@ static void gpu_program_free_immediately(struct Handle handle) {
 	}
 	struct Gpu_Program * gpu_program = handle_table_get(&gs_graphics_state.programs, handle);
 	if (gpu_program != NULL) {
-		gpu_program_free_internal(gpu_program);
+		gpu_program_on_discard(gpu_program);
 		handle_table_discard(&gs_graphics_state.programs, handle);
 	}
 }
@@ -334,6 +336,14 @@ struct Hash_Table_U32 const * gpu_program_get_uniforms(struct Handle handle) {
 // ----- ----- ----- ----- -----
 //     GPU texture part
 // ----- ----- ----- ----- -----
+
+static void gpu_texture_on_aquire(struct Gpu_Texture * gpu_texture) {
+	glCreateTextures(GL_TEXTURE_2D, 1, &gpu_texture->id);
+}
+
+static void gpu_texture_on_discard(struct Gpu_Texture * gpu_texture) {
+	glDeleteTextures(1, &gpu_texture->id);
+}
 
 static struct Handle gpu_texture_allocate(
 	uint32_t size_x, uint32_t size_y,
@@ -355,14 +365,17 @@ static struct Handle gpu_texture_allocate(
 	GLenum const format = gpu_pixel_data_format(parameters.texture_type, parameters.data_type);
 	GLenum const type = gpu_pixel_data_type(parameters.texture_type, parameters.data_type);
 
-	GLuint texture_id;
-	glCreateTextures(GL_TEXTURE_2D, 1, &texture_id);
+	struct Gpu_Texture texture; gpu_texture_on_aquire(&texture);
+	texture.size_x     = size_x;
+	texture.size_y     = size_y;
+	texture.parameters = parameters;
+	texture.settings   = settings;
 
 	// allocate buffer
 	if (parameters.flags & TEXTURE_FLAG_MUTABLE) {
 		uint32_t lod_size_x = size_x;
 		uint32_t lod_size_y = size_y;
-		glBindTexture(GL_TEXTURE_2D, texture_id);
+		glBindTexture(GL_TEXTURE_2D, texture.id);
 		for (uint32_t lod = 0; lod <= max_lod; lod++) {
 			glTexImage2D(
 				GL_TEXTURE_2D, (GLint)lod, (GLint)internalformat,
@@ -375,7 +388,7 @@ static struct Handle gpu_texture_allocate(
 	}
 	else if (size_x > 0 && size_y > 0) {
 		glTextureStorage2D(
-			texture_id, (GLsizei)(max_lod + 1), internalformat,
+			texture.id, (GLsizei)(max_lod + 1), internalformat,
 			(GLsizei)size_x, (GLsizei)size_y
 		);
 	}
@@ -384,30 +397,24 @@ static struct Handle gpu_texture_allocate(
 	}
 
 	// chart buffer
-	glTextureParameteri(texture_id, GL_TEXTURE_MAX_LEVEL, (GLint)max_lod);
-	glTextureParameteri(texture_id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(settings.mipmap, settings.minification));
-	glTextureParameteri(texture_id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(settings.magnification));
-	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(settings.wrap_x));
-	glTextureParameteri(texture_id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings.wrap_y));
-	// glTextureParameterf(texture_id, GL_TEXTURE_LOD_BIAS, 0);
+	glTextureParameteri(texture.id, GL_TEXTURE_MAX_LEVEL, (GLint)max_lod);
+	glTextureParameteri(texture.id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(settings.mipmap, settings.minification));
+	glTextureParameteri(texture.id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(settings.magnification));
+	glTextureParameteri(texture.id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(settings.wrap_x));
+	glTextureParameteri(texture.id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings.wrap_y));
+	// glTextureParameterf(texture.id, GL_TEXTURE_LOD_BIAS, 0);
 
-	glTextureParameteriv(texture_id, GL_TEXTURE_SWIZZLE_RGBA, (GLint[]){
+	glTextureParameteriv(texture.id, GL_TEXTURE_SWIZZLE_RGBA, (GLint[]){
 		gpu_swizzle_op(settings.swizzle[0], 0),
 		gpu_swizzle_op(settings.swizzle[1], 1),
 		gpu_swizzle_op(settings.swizzle[2], 2),
 		gpu_swizzle_op(settings.swizzle[3], 3),
 	});
 
-	glTextureParameterfv(texture_id, GL_TEXTURE_BORDER_COLOR, &settings.border.x);
+	glTextureParameterfv(texture.id, GL_TEXTURE_BORDER_COLOR, &settings.border.x);
 
 	//
-	return handle_table_aquire(&gs_graphics_state.textures, &(struct Gpu_Texture){
-		.id = texture_id,
-		.size_x = size_x,
-		.size_y = size_y,
-		.parameters = parameters,
-		.settings = settings,
-	});
+	return handle_table_aquire(&gs_graphics_state.textures, &texture);
 }
 
 static void gpu_texture_upload(struct Handle handle, struct Image const * asset) {
@@ -435,10 +442,6 @@ struct Handle gpu_texture_init(struct Image const * asset) {
 	return handle;
 }
 
-static void gpu_texture_free_internal(struct Gpu_Texture * gpu_texture) {
-	glDeleteTextures(1, &gpu_texture->id);
-}
-
 static void gpu_texture_free_immediately(struct Handle handle) {
 	for (uint32_t i = 1; i < gs_graphics_state.units_capacity; i++) {
 		struct Gpu_Unit * unit = gs_graphics_state.units + i;
@@ -448,7 +451,7 @@ static void gpu_texture_free_immediately(struct Handle handle) {
 	}
 	struct Gpu_Texture * gpu_texture = handle_table_get(&gs_graphics_state.textures, handle);
 	if (gpu_texture != NULL) {
-		gpu_texture_free_internal(gpu_texture);
+		gpu_texture_on_discard(gpu_texture);
 		handle_table_discard(&gs_graphics_state.textures, handle);
 	}
 }
@@ -512,101 +515,13 @@ void gpu_texture_update(struct Handle handle, struct Image const * asset) {
 //     GPU target part
 // ----- ----- ----- ----- -----
 
-struct Handle gpu_target_init(
-	uint32_t size_x, uint32_t size_y,
-	uint32_t parameters_count,
-	struct Texture_Parameters const * parameters
-) {
-	GLuint target_id;
-	glCreateFramebuffers(1, &target_id);
-
-	struct Array_Any textures = array_any_init(sizeof(struct Gpu_Target_Texture));
-	struct Array_Any buffers  = array_any_init(sizeof(struct Gpu_Target_Buffer));
-
-	// allocate exact space for the buffers
-	uint32_t textures_count = 0;
-	for (uint32_t i = 0; i < parameters_count; i++) {
-		if (parameters[i].flags & TEXTURE_FLAG_READ) {
-			textures_count++;
-		}
-	}
-	uint32_t buffers_count = parameters_count - textures_count;
-
-	array_any_resize(&textures, textures_count);
-	array_any_resize(&buffers,  buffers_count);
-
-	// allocate buffers
-	for (uint32_t i = 0, color_index = 0; i < parameters_count; i++) {
-		bool const is_color = (parameters[i].texture_type == TEXTURE_TYPE_COLOR);
-		if (parameters[i].flags & TEXTURE_FLAG_READ) {
-			// @idea: expose settings
-			struct Handle const handle = gpu_texture_allocate(size_x, size_y, parameters[i], (struct Texture_Settings){
-				.wrap_x = WRAP_MODE_EDGE,
-				.wrap_y = WRAP_MODE_EDGE,
-			}, 0);
-			array_any_push_many(&textures, 1, &(struct Gpu_Target_Texture){
-				.handle = handle,
-				.drawbuffer = is_color ? color_index : 0,
-			});
-		}
-		else {
-			GLuint buffer_id;
-			glCreateRenderbuffers(1, &buffer_id);
-			glNamedRenderbufferStorage(
-				buffer_id,
-				gpu_sized_internal_format(parameters[i].texture_type, parameters[i].data_type),
-				(GLsizei)size_x, (GLsizei)size_y
-			);
-			array_any_push_many(&buffers, 1, &(struct Gpu_Target_Buffer){
-				.id = buffer_id,
-				.parameters = parameters[i],
-				.drawbuffer = is_color ? color_index : 0,
-			});
-		}
-
-		if (is_color) { color_index++; }
-	}
-
-	// chart buffers
-	for (uint32_t i = 0, texture_index = 0, buffer_index = 0, color_index = 0; i < parameters_count; i++) {
-		bool const is_color = (parameters[i].texture_type == TEXTURE_TYPE_COLOR);
-		if (parameters[i].flags & TEXTURE_FLAG_READ) {
-			struct Gpu_Target_Texture const * texture = array_any_at(&textures, texture_index++);
-			struct Gpu_Texture const * gpu_texture = handle_table_get(&gs_graphics_state.textures, texture->handle);
-			if (gpu_texture != NULL) {
-				GLint const level = 0;
-				glNamedFramebufferTexture(
-					target_id,
-					gpu_attachment_point(parameters[i].texture_type, color_index),
-					gpu_texture->id,
-					level
-				);
-			}
-		}
-		else {
-			struct Gpu_Target_Buffer const * buffer = array_any_at(&buffers, buffer_index++);
-			glNamedFramebufferRenderbuffer(
-				target_id,
-				gpu_attachment_point(parameters[i].texture_type, color_index),
-				GL_RENDERBUFFER,
-				buffer->id
-			);
-		}
-
-		if (is_color) { color_index++; }
-	}
-
-	//
-	return handle_table_aquire(&gs_graphics_state.targets, &(struct Gpu_Target){
-		.id = target_id,
-		.size_x = size_x,
-		.size_y = size_y,
-		.textures = textures, // @note: memory ownership transfer
-		.buffers = buffers, // @note: memory ownership transfer
-	});
+static void gpu_target_on_aquire(struct Gpu_Target * gpu_target) {
+	glCreateFramebuffers(1, &gpu_target->id);
+	gpu_target->textures = array_any_init(sizeof(struct Gpu_Target_Texture));
+	gpu_target->buffers  = array_any_init(sizeof(struct Gpu_Target_Buffer));
 }
 
-static void gpu_target_free_internal(struct Gpu_Target * gpu_target) {
+static void gpu_target_on_discard(struct Gpu_Target * gpu_target) {
 	for (uint32_t i = 0; i < gpu_target->textures.count; i++) {
 		struct Gpu_Target_Texture const * entry = array_any_at(&gpu_target->textures, i);
 		gpu_texture_free(entry->handle);
@@ -620,20 +535,106 @@ static void gpu_target_free_internal(struct Gpu_Target * gpu_target) {
 	glDeleteFramebuffers(1, &gpu_target->id);
 }
 
+struct Handle gpu_target_init(
+	uint32_t size_x, uint32_t size_y,
+	uint32_t parameters_count,
+	struct Texture_Parameters const * parameters
+) {
+	struct Gpu_Target target; gpu_target_on_aquire(&target);
+	target.size_x = size_x;
+	target.size_y = size_y;
+
+	// allocate exact space for the buffers
+	uint32_t textures_count = 0;
+	for (uint32_t i = 0; i < parameters_count; i++) {
+		if (parameters[i].flags & TEXTURE_FLAG_READ) {
+			textures_count++;
+		}
+	}
+	uint32_t buffers_count = parameters_count - textures_count;
+
+	array_any_resize(&target.textures, textures_count);
+	array_any_resize(&target.buffers,  buffers_count);
+
+	// allocate buffers
+	for (uint32_t i = 0, color_index = 0; i < parameters_count; i++) {
+		bool const is_color = (parameters[i].texture_type == TEXTURE_TYPE_COLOR);
+		if (parameters[i].flags & TEXTURE_FLAG_READ) {
+			// @idea: expose settings
+			struct Handle const handle = gpu_texture_allocate(size_x, size_y, parameters[i], (struct Texture_Settings){
+				.wrap_x = WRAP_MODE_EDGE,
+				.wrap_y = WRAP_MODE_EDGE,
+			}, 0);
+			array_any_push_many(&target.textures, 1, &(struct Gpu_Target_Texture){
+				.handle = handle,
+				.drawbuffer = is_color ? color_index : 0,
+			});
+		}
+		else {
+			GLuint buffer_id;
+			glCreateRenderbuffers(1, &buffer_id);
+			glNamedRenderbufferStorage(
+				buffer_id,
+				gpu_sized_internal_format(parameters[i].texture_type, parameters[i].data_type),
+				(GLsizei)size_x, (GLsizei)size_y
+			);
+			array_any_push_many(&target.buffers, 1, &(struct Gpu_Target_Buffer){
+				.id = buffer_id,
+				.parameters = parameters[i],
+				.drawbuffer = is_color ? color_index : 0,
+			});
+		}
+
+		if (is_color) { color_index++; }
+	}
+
+	// chart buffers
+	for (uint32_t i = 0, texture_index = 0, buffer_index = 0, color_index = 0; i < parameters_count; i++) {
+		bool const is_color = (parameters[i].texture_type == TEXTURE_TYPE_COLOR);
+		if (parameters[i].flags & TEXTURE_FLAG_READ) {
+			struct Gpu_Target_Texture const * texture = array_any_at(&target.textures, texture_index++);
+			struct Gpu_Texture const * gpu_texture = handle_table_get(&gs_graphics_state.textures, texture->handle);
+			if (gpu_texture != NULL) {
+				GLint const level = 0;
+				glNamedFramebufferTexture(
+					target.id,
+					gpu_attachment_point(parameters[i].texture_type, color_index),
+					gpu_texture->id,
+					level
+				);
+			}
+		}
+		else {
+			struct Gpu_Target_Buffer const * buffer = array_any_at(&target.buffers, buffer_index++);
+			glNamedFramebufferRenderbuffer(
+				target.id,
+				gpu_attachment_point(parameters[i].texture_type, color_index),
+				GL_RENDERBUFFER,
+				buffer->id
+			);
+		}
+
+		if (is_color) { color_index++; }
+	}
+
+	//
+	return handle_table_aquire(&gs_graphics_state.targets, &target);
+}
+
 static void gpu_target_free_immediately(struct Handle handle) {
 	if (handle_equals(gs_graphics_state.active.target_handle, handle)) {
 		gs_graphics_state.active.target_handle = (struct Handle){0};
 	}
 	struct Gpu_Target * gpu_target = handle_table_get(&gs_graphics_state.targets, handle);
 	if (gpu_target != NULL) {
-		gpu_target_free_internal(gpu_target);
+		gpu_target_on_discard(gpu_target);
 		handle_table_discard(&gs_graphics_state.targets, handle);
 	}
 }
 
-void gpu_target_free(struct Handle hndle) {
+void gpu_target_free(struct Handle handle) {
 	array_any_push_many(&gs_graphics_state.actions, 1, &(struct Graphics_Action){
-		.handle = hndle,
+		.handle = handle,
 		.action = gpu_target_free_immediately,
 	});
 }
@@ -666,27 +667,39 @@ struct Handle gpu_target_get_texture_handle(struct Handle handle, enum Texture_T
 //     GPU mesh part
 // ----- ----- ----- ----- -----
 
+static void gpu_mesh_on_aquire(struct Gpu_Mesh * gpu_mesh) {
+	glCreateVertexArrays(1, &gpu_mesh->id);
+	gpu_mesh->buffers = array_any_init(sizeof(struct Gpu_Mesh_Buffer));
+	gpu_mesh->elements_index = INDEX_EMPTY;
+}
+
+static void gpu_mesh_on_discard(struct Gpu_Mesh * gpu_mesh) {
+	for (uint32_t i = 0; i < gpu_mesh->buffers.count; i++) {
+		struct Gpu_Mesh_Buffer const * buffer = array_any_at(&gpu_mesh->buffers, i);
+		glDeleteBuffers(1, &buffer->id);
+	}
+	array_any_free(&gpu_mesh->buffers);
+	glDeleteVertexArrays(1, &gpu_mesh->id);
+}
+
 static struct Handle gpu_mesh_allocate(
 	uint32_t buffers_count,
 	struct Buffer * asset_buffers,
 	struct Mesh_Parameters const * parameters_set
 ) {
-	GLuint mesh_id;
-	glCreateVertexArrays(1, &mesh_id);
-
-	struct Array_Any buffers = array_any_init(sizeof(struct Gpu_Mesh_Buffer));
-	array_any_resize(&buffers, buffers_count);
+	struct Gpu_Mesh mesh; gpu_mesh_on_aquire(&mesh);
+	array_any_resize(&mesh.buffers, buffers_count);
 
 	// allocate buffers
 	for (uint32_t i = 0; i < buffers_count; i++) {
 		struct Buffer const * asset_buffer = asset_buffers + i;
 
 		struct Mesh_Parameters const parameters = parameters_set[i];
-		array_any_push_many(&buffers, 1, &(struct Gpu_Mesh_Buffer){
+		array_any_push_many(&mesh.buffers, 1, &(struct Gpu_Mesh_Buffer){
 			.parameters = parameters,
 		});
 
-		struct Gpu_Mesh_Buffer * buffer = array_any_at(&buffers, i);
+		struct Gpu_Mesh_Buffer * buffer = array_any_at(&mesh.buffers, i);
 		glCreateBuffers(1, &buffer->id);
 
 		if (parameters.flags & MESH_FLAG_MUTABLE) {
@@ -717,12 +730,12 @@ static struct Handle gpu_mesh_allocate(
 
 	// chart buffers
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct Gpu_Mesh_Buffer const * buffer = array_any_at(&buffers, i);
+		struct Gpu_Mesh_Buffer const * buffer = array_any_at(&mesh.buffers, i);
 		struct Mesh_Parameters const parameters = buffer->parameters;
 
 		// element buffer
 		if (parameters.flags & MESH_FLAG_INDEX) {
-			glVertexArrayElementBuffer(mesh_id, buffer->id);
+			glVertexArrayElementBuffer(mesh.id, buffer->id);
 			continue;
 		}
 
@@ -735,7 +748,7 @@ static struct Handle gpu_mesh_allocate(
 
 		GLuint buffer_index = 0;
 		GLintptr buffer_start = 0;
-		glVertexArrayVertexBuffer(mesh_id, buffer_index, buffer->id, buffer_start, (GLsizei)all_attributes_size);
+		glVertexArrayVertexBuffer(mesh.id, buffer_index, buffer->id, buffer_start, (GLsizei)all_attributes_size);
 
 		uint32_t attribute_offset = 0;
 		for (uint32_t atti = 0; atti < ATTRIBUTE_TYPE_INTERNAL_COUNT; atti++) {
@@ -746,10 +759,10 @@ static struct Handle gpu_mesh_allocate(
 			if (count == 0) { continue; }
 
 			GLuint const location = (GLuint)(type - 1);
-			glEnableVertexArrayAttrib(mesh_id, location);
-			glVertexArrayAttribBinding(mesh_id, location, buffer_index);
+			glEnableVertexArrayAttrib(mesh.id, location);
+			glVertexArrayAttribBinding(mesh.id, location, buffer_index);
 			glVertexArrayAttribFormat(
-				mesh_id, location,
+				mesh.id, location,
 				(GLint)count, gpu_data_type(parameters.type),
 				GL_FALSE, (GLuint)attribute_offset
 			);
@@ -758,24 +771,19 @@ static struct Handle gpu_mesh_allocate(
 	}
 
 	//
-	uint32_t elements_index = INDEX_EMPTY;
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct Gpu_Mesh_Buffer const * buffer = array_any_at(&buffers, i);
+		struct Gpu_Mesh_Buffer const * buffer = array_any_at(&mesh.buffers, i);
 		struct Mesh_Parameters const parameters = buffer->parameters;
 		if (parameters.flags & MESH_FLAG_INDEX) {
-			elements_index = i;
+			mesh.elements_index = i;
 			break;
 		}
 	}
-	if (elements_index == INDEX_EMPTY) {
+	if (mesh.elements_index == INDEX_EMPTY) {
 		logger_to_console("no element buffer\n"); DEBUG_BREAK();
 	}
 
-	return handle_table_aquire(&gs_graphics_state.meshes, &(struct Gpu_Mesh){
-		.id = mesh_id,
-		.buffers = buffers,
-		.elements_index = elements_index,
-	});
+	return handle_table_aquire(&gs_graphics_state.meshes, &mesh);
 }
 
 struct Handle gpu_mesh_init(struct Mesh const * asset) {
@@ -787,22 +795,13 @@ struct Handle gpu_mesh_init(struct Mesh const * asset) {
 	return handle;
 }
 
-static void gpu_mesh_free_internal(struct Gpu_Mesh * gpu_mesh) {
-	for (uint32_t i = 0; i < gpu_mesh->buffers.count; i++) {
-		struct Gpu_Mesh_Buffer const * buffer = array_any_at(&gpu_mesh->buffers, i);
-		glDeleteBuffers(1, &buffer->id);
-	}
-	array_any_free(&gpu_mesh->buffers);
-	glDeleteVertexArrays(1, &gpu_mesh->id);
-}
-
 static void gpu_mesh_free_immediately(struct Handle handle) {
 	if (handle_equals(gs_graphics_state.active.mesh_handle, handle)) {
 		gs_graphics_state.active.mesh_handle = (struct Handle){0};
 	}
 	struct Gpu_Mesh * gpu_mesh = handle_table_get(&gs_graphics_state.meshes, handle);
 	if (gpu_mesh != NULL) {
-		gpu_mesh_free_internal(gpu_mesh);
+		gpu_mesh_on_discard(gpu_mesh);
 		handle_table_discard(&gs_graphics_state.meshes, handle);
 	}
 }
@@ -1465,10 +1464,10 @@ void graphics_to_gpu_library_free(void) {
 	handle_table_free(&data); \
 } while (false)\
 
-	GPU_FREE(gs_graphics_state.programs, gpu_program_free_internal);
-	GPU_FREE(gs_graphics_state.targets,  gpu_target_free_internal);
-	GPU_FREE(gs_graphics_state.textures, gpu_texture_free_internal);
-	GPU_FREE(gs_graphics_state.meshes,   gpu_mesh_free_internal);
+	GPU_FREE(gs_graphics_state.programs, gpu_program_on_discard);
+	GPU_FREE(gs_graphics_state.targets,  gpu_target_on_discard);
+	GPU_FREE(gs_graphics_state.textures, gpu_texture_on_discard);
+	GPU_FREE(gs_graphics_state.meshes,   gpu_mesh_on_discard);
 
 	//
 	strings_free(&gs_graphics_state.uniforms);

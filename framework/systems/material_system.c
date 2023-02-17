@@ -25,8 +25,10 @@ struct Handle material_system_aquire(void) {
 
 void material_system_discard(struct Handle handle) {
 	struct Gfx_Material * entry = handle_table_get(&gs_material_system.instances, handle);
-	gfx_material_free(entry);
-	handle_table_discard(&gs_material_system.instances, handle);
+	if (entry != NULL) {
+		gfx_material_free(entry);
+		handle_table_discard(&gs_material_system.instances, handle);
+	}
 }
 
 struct Gfx_Material * material_system_take(struct Handle handle) {

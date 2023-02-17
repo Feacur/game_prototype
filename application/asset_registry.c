@@ -326,15 +326,10 @@ static void asset_material_free(void * instance) {
 
 void asset_types_init(void) {
 	asset_system_map_extension(S_("bytes"),    S_("txt"));
-	asset_system_map_extension(S_("json"),     S_("json"));
 	asset_system_map_extension(S_("shader"),   S_("glsl"));
-	asset_system_map_extension(S_("image"),    S_("image"));
 	asset_system_map_extension(S_("typeface"), S_("ttf"));
 	asset_system_map_extension(S_("typeface"), S_("otf"));
-	asset_system_map_extension(S_("font"),     S_("font"));
-	asset_system_map_extension(S_("target"),   S_("target"));
 	asset_system_map_extension(S_("model"),    S_("obj"));
-	asset_system_map_extension(S_("material"), S_("material"));
 
 	asset_system_set_type(S_("bytes"), (struct Asset_Callbacks){
 		.init = asset_bytes_init,
