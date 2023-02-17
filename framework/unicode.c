@@ -7,8 +7,7 @@
 
 #define CODEPOINT_EMPTY UINT32_MAX
 
-uint32_t utf8_codepoint_length(uint8_t const * value) {
-	uint8_t const octet = value[0];
+uint32_t utf8_codepoint_length(uint8_t octet) {
 	if ((octet & 0x80) == 0x00) { return 1; }
 	if ((octet & 0xe0) == 0xc0) { return 2; }
 	if ((octet & 0xf0) == 0xe0) { return 3; }
@@ -21,11 +20,8 @@ uint32_t utf8_codepoint_decode(uint8_t const * value, uint32_t length) {
 	uint32_t codepoint = value[0] & c_masks[length];
 	for (uint32_t i = 1; i < length; i++) {
 		uint8_t const octet = value[i];
-		if ((octet & 0xc0) == 0x80) {
-			codepoint = (codepoint << 6) | (octet & 0x3f);
-			continue;
-		}
-		return CODEPOINT_EMPTY;
+		if ((octet & 0xc0) != 0x80) { return CODEPOINT_EMPTY; }
+		codepoint = (codepoint << 6) | (octet & 0x3f);
 	}
 	return codepoint;
 }
@@ -33,12 +29,12 @@ uint32_t utf8_codepoint_decode(uint8_t const * value, uint32_t length) {
 bool utf8_iterate(uint32_t length, uint8_t const * data, struct UTF8_Iterator * it) {
 	while (it->next < length) {
 		uint8_t const * value = data + it->next;
-		uint32_t const octets_count = utf8_codepoint_length(value);
+		uint32_t const octets_count = utf8_codepoint_length(*value);
 
 		it->current = it->next;
 		it->next += (octets_count > 0) ? octets_count : 1;
 
-		if (octets_count > 0) {
+		if (0 < octets_count && octets_count <= (length - it->current)) {
 			it->previous = it->codepoint;
 			it->codepoint = utf8_codepoint_decode(value, octets_count);
 			if (it->codepoint != CODEPOINT_EMPTY) { return true; }
