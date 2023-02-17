@@ -122,6 +122,10 @@ void platform_window_free(struct Window * window) {
 	}
 }
 
+void platform_window_focus(struct Window const * window) {
+	SetForegroundWindow(window->handle);
+}
+
 bool platform_window_exists(struct Window const * window) {
 	return window->handle != NULL;
 }
@@ -742,6 +746,13 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		case WM_SYSCOMMAND: switch (wParam & 0xfff0) { // sent immediately
 			case SC_MOVE: platform_window_internal_syscommand_move(window, wParam & 0x000f); return 0;
 			case SC_SIZE: platform_window_internal_syscommand_size(window, wParam & 0x000f); return 0;
+		} break;
+
+		// @note: handle WM_MENUCHAR to prevent beeps on [alt+key] chords
+		case WM_MENUCHAR: switch (HIWORD(wParam)) { // sent immediately
+			case MF_POPUP:
+			case MF_SYSMENU:
+				return MAKELONG(0, MNC_CLOSE);
 		} break;
 
 		case WM_KILLFOCUS: { // sent immediately

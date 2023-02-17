@@ -20,6 +20,7 @@ struct Window_Config {
 struct Window * platform_window_init(struct Window_Config config, struct Window_Callbacks callbacks);
 void platform_window_free(struct Window * window);
 
+void platform_window_focus(struct Window const * window);
 bool platform_window_exists(struct Window const * window);
 void platform_window_update(struct Window * window);
 void platform_window_start_frame(struct Window * window);

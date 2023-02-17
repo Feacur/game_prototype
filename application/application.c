@@ -74,6 +74,7 @@ static bool application_init(void) {
 
 	gs_app.window = platform_window_init(window_config, gs_app.callbacks.window_callbacks);
 	if (gs_app.window == NULL) { goto fail_window; }
+	platform_window_focus(gs_app.window);
 
 	platform_window_start_frame(gs_app.window);
 	gs_app.gpu_context = gpu_context_init(platform_window_get_cached_device(gs_app.window));
