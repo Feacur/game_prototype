@@ -23,8 +23,6 @@ static struct UI {
 	struct mat4 camera;
 	struct vec2 pivot;
 	struct rect rect;
-	//
-	void const * cached_texture;
 } gs_ui;
 
 void ui_init(void) {
@@ -43,24 +41,14 @@ void ui_free(void) {
 }
 
 static void ui_internal_push_image(void) {
-	if (asset_handle_is_null(gs_ui.image_asset_handle)) { return; }
 	struct Asset_Image const * asset = asset_system_take(gs_ui.image_asset_handle);
-
-	if (gs_ui.cached_texture == asset) { return; }
-	gs_ui.cached_texture = asset;
-
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
 	uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Texture, A_(gpu_handle));
 }
 
 static void ui_internal_push_font(void) {
-	if (asset_handle_is_null(gs_ui.font_asset_handle)) { return; }
 	struct Asset_Glyph_Atlas const * asset = asset_system_take(gs_ui.font_asset_handle);
-
-	if (gs_ui.cached_texture == asset) { return; }
-	gs_ui.cached_texture = asset;
-
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
 	uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Texture, A_(gpu_handle));
@@ -77,8 +65,6 @@ void ui_start_frame(void) {
 		},
 		screen_size.x, screen_size.y
 	);
-
-	gs_ui.cached_texture = NULL;
 }
 
 void ui_end_frame(void) {

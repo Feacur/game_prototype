@@ -61,9 +61,9 @@ void platform_file_delete(struct CString path) {
 	DeleteFile(path_valid);
 }
 
-static HANDLE platform_internal_create_file(struct CString path, enum File_Mode mode);
+static HANDLE platform_file_internal_create(struct CString path, enum File_Mode mode);
 struct File * platform_file_init(struct CString path, enum File_Mode mode) {
-	HANDLE handle = platform_internal_create_file(path, mode);
+	HANDLE handle = platform_file_internal_create(path, mode);
 	if (handle == INVALID_HANDLE_VALUE) { goto fail; }
 
 	struct File * file = MEMORY_ALLOCATE(struct File);
@@ -177,7 +177,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 
 //
 
-static HANDLE platform_internal_create_file(struct CString path, enum File_Mode mode) {
+static HANDLE platform_file_internal_create(struct CString path, enum File_Mode mode) {
 	DWORD access = 0, share = 0, creation = OPEN_EXISTING;
 	if (mode & FILE_MODE_READ) {
 		access |= GENERIC_READ;

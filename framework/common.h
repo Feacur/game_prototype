@@ -26,6 +26,7 @@ struct CArray_Mut {
 };
 
 struct CArray carray_const(struct CArray_Mut value);
+bool carray_equals(struct CArray v1, struct CArray v2);
 
 #define A_(value) (struct CArray){.size = sizeof(value), .data = &value}
 

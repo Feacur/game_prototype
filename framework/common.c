@@ -18,6 +18,12 @@ struct CArray carray_const(struct CArray_Mut value) {
 	};
 }
 
+bool carray_equals(struct CArray v1, struct CArray v2) {
+	if (v1.size != v2.size) { return false; }
+	if (v1.data == v2.data) { return true; }
+	return memcmp(v1.data, v2.data, v2.size) == 0;
+}
+
 // ----- ----- ----- ----- -----
 //     string
 // ----- ----- ----- ----- -----
@@ -36,17 +42,18 @@ bool cstring_contains(struct CString v1, struct CString v2) {
 
 bool cstring_equals(struct CString v1, struct CString v2) {
 	if (v1.length != v2.length) { return false; }
-	return strncmp(v1.data, v2.data, v2.length) == 0;
+	if (v1.data == v2.data) { return true; }
+	return memcmp(v1.data, v2.data, v2.length) == 0;
 }
 
 bool cstring_starts(struct CString v1, struct CString v2) {
 	if (v1.length < v2.length) { return false; }
-	return strncmp(v1.data, v2.data, v2.length) == 0;
+	return memcmp(v1.data, v2.data, v2.length) == 0;
 }
 
 bool cstring_ends(struct CString v1, struct CString v2) {
 	if (v1.length < v2.length) { return false; }
-	return strncmp(v1.data + v1.length - v2.length, v2.data, v2.length) == 0;
+	return memcmp(v1.data + v1.length - v2.length, v2.data, v2.length) == 0;
 }
 
 // ----- ----- ----- ----- -----
