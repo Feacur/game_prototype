@@ -466,11 +466,9 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * g
 				.type = GPU_COMMAND_TYPE_UNIFORM,
 				.as.uniform = {
 					.program_handle = material->gpu_program_handle,
-					.override = {
-						.uniforms = &batcher->uniforms,
-						.offset = batch->uniform_offset,
-						.count = batch->uniform_length,
-					},
+					.uniforms = &batcher->uniforms,
+					.offset = batch->uniform_offset,
+					.count = batch->uniform_length,
 				},
 			});
 		}

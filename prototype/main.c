@@ -12,7 +12,6 @@
 #include "framework/systems/asset_system.h"
 
 #include "framework/graphics/material.h"
-#include "framework/graphics/material_override.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/gpu_command.h"
@@ -240,11 +239,9 @@ static void prototype_draw_objects(void) {
 			array_any_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_UNIFORM,
 				.as.uniform = {
-					.override = {
-						.uniforms = &gs_renderer.uniforms,
-						.offset = override_offset,
-						.count = (gs_renderer.uniforms.headers.count - override_offset),
-					},
+					.uniforms = &gs_renderer.uniforms,
+					.offset = override_offset,
+					.count = (gs_renderer.uniforms.headers.count - override_offset),
 				},
 			});
 		}
@@ -322,11 +319,9 @@ static void prototype_draw_objects(void) {
 							.type = GPU_COMMAND_TYPE_UNIFORM,
 							.as.uniform = {
 								.program_handle = material->gpu_program_handle,
-								.override = {
-									.uniforms = &gs_renderer.uniforms,
-									.offset = override_offset,
-									.count = (gs_renderer.uniforms.headers.count - override_offset),
-								},
+								.uniforms = &gs_renderer.uniforms,
+								.offset = override_offset,
+								.count = (gs_renderer.uniforms.headers.count - override_offset),
 							},
 						},
 						(struct GPU_Command){
@@ -412,7 +407,7 @@ static void app_init(void) {
 	ui_init();
 	ui_set_shader(S_("assets/shaders/batcher_2d.glsl"));
 	ui_set_image(S_("assets/images/ui.image"));
-	ui_set_glyph_atlas(S_("assets/glyph_atlas.font"));
+	ui_set_font(S_("assets/glyph_atlas.font"));
 
 	prototype_init();
 }

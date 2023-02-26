@@ -14,7 +14,6 @@
 
 #include "framework/graphics/types.h"
 #include "framework/graphics/material.h"
-#include "framework/graphics/material_override.h"
 
 #include "framework/systems/material_system.h"
 
@@ -1264,12 +1263,12 @@ inline static void gpu_execute_material(struct GPU_Command_Material const * comm
 inline static void gpu_execute_uniform(struct GPU_Command_Uniform const * command) {
 	if (handle_is_null(command->program_handle)) {
 		FOR_HANDLE_TABLE (&gs_graphics_state.programs, it) {
-			gpu_upload_uniforms(it.value, command->override.uniforms, command->override.offset, command->override.count);
+			gpu_upload_uniforms(it.value, command->uniforms, command->offset, command->count);
 		}
 	}
 	else {
 		struct Gpu_Program const * gpu_program = handle_table_get(&gs_graphics_state.programs, command->program_handle);
-		gpu_upload_uniforms(gpu_program, command->override.uniforms, command->override.offset, command->override.count);
+		gpu_upload_uniforms(gpu_program, command->uniforms, command->offset, command->count);
 	}
 }
 

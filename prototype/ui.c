@@ -54,7 +54,7 @@ static void ui_internal_push_image(void) {
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Texture, A_(gpu_handle));
 }
 
-static void ui_internal_push_glyph_atlas(void) {
+static void ui_internal_push_font(void) {
 	if (asset_handle_is_null(gs_ui.font_asset_handle)) { return; }
 	struct Asset_Glyph_Atlas const * asset = asset_system_take(gs_ui.font_asset_handle);
 
@@ -135,7 +135,7 @@ void ui_set_image(struct CString name) {
 	gs_ui.image_asset_handle = asset_system_aquire(name);
 }
 
-void ui_set_glyph_atlas(struct CString name) {
+void ui_set_font(struct CString name) {
 	gs_ui.font_asset_handle = asset_system_aquire(name);
 }
 
@@ -145,7 +145,7 @@ void ui_quad(struct rect uv) {
 }
 
 void ui_text(struct CString value, struct vec2 alignment, bool wrap, float size) {
-	ui_internal_push_glyph_atlas();
+	ui_internal_push_font();
 	batcher_2d_add_text(
 		gs_renderer.batcher_2d,
 		gs_ui.rect, alignment, wrap,

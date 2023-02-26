@@ -8,7 +8,8 @@
 #include "framework/containers/handle.h"
 
 #include "types.h"
-#include "material_override.h"
+
+struct Gfx_Uniforms;
 
 enum GPU_Command_Type {
 	GPU_COMMAND_TYPE_NONE,
@@ -41,7 +42,8 @@ struct GPU_Command_Material {
 
 struct GPU_Command_Uniform {
 	struct Handle program_handle;
-	struct Gfx_Material_Override override;
+	struct Gfx_Uniforms const * uniforms;
+	uint32_t offset, count;
 };
 
 struct GPU_Command_Draw {
