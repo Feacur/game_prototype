@@ -17,6 +17,7 @@ enum GPU_Command_Type {
 	GPU_COMMAND_TYPE_TARGET,
 	GPU_COMMAND_TYPE_CLEAR,
 	GPU_COMMAND_TYPE_MATERIAL,
+	GPU_COMMAND_TYPE_SHADER,
 	GPU_COMMAND_TYPE_UNIFORM,
 	GPU_COMMAND_TYPE_DRAW,
 };
@@ -40,6 +41,12 @@ struct GPU_Command_Material {
 	struct Handle handle;
 };
 
+struct GPU_Command_Shader {
+	struct Handle handle;
+	enum Blend_Mode blend_mode;
+	enum Depth_Mode depth_mode;
+};
+
 struct GPU_Command_Uniform {
 	struct Handle program_handle;
 	struct Gfx_Uniforms const * uniforms;
@@ -58,6 +65,7 @@ struct GPU_Command {
 		struct GPU_Command_Target   target;
 		struct GPU_Command_Clear    clear;
 		struct GPU_Command_Material material;
+		struct GPU_Command_Shader   shader;
 		struct GPU_Command_Uniform  uniform;
 		struct GPU_Command_Draw     draw;
 	} as;

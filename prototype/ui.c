@@ -16,9 +16,9 @@
 #include "ui.h"
 
 static struct UI {
-	struct Handle material;
-	struct Asset_Handle font_asset_handle;
+	struct Asset_Handle shader_asset_handle;
 	struct Asset_Handle image_asset_handle;
+	struct Asset_Handle font_asset_handle;
 	//
 	struct mat4 camera;
 	struct vec2 pivot;
@@ -26,18 +26,20 @@ static struct UI {
 } gs_ui;
 
 void ui_init(void) {
-	gs_ui = (struct UI){
-		.material = material_system_aquire(),
-	};
-
-	struct Gfx_Material * material = material_system_take(gs_ui.material);
-	material->blend_mode = BLEND_MODE_MIX;
-	material->depth_mode = DEPTH_MODE_NONE;
+	gs_ui = (struct UI){0};
 }
 
 void ui_free(void) {
-	material_system_discard(gs_ui.material);
 	common_memset(&gs_ui, 0, sizeof(gs_ui));
+}
+
+static void ui_internal_push_shader(void) {
+	struct Asset_Shader const * shader = asset_system_take(gs_ui.shader_asset_handle);
+	batcher_2d_set_shader(
+		gs_renderer.batcher_2d,
+		shader->gpu_handle,
+		BLEND_MODE_MIX, DEPTH_MODE_NONE
+	);
 }
 
 static void ui_internal_push_image(void) {
@@ -54,9 +56,13 @@ static void ui_internal_push_font(void) {
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Texture, A_(gpu_handle));
 }
 
-void ui_start_frame(void) {
-	batcher_2d_set_material(gs_renderer.batcher_2d, gs_ui.material);
+static void ui_internal_push_tint(void) {
+	struct vec4 const vec4_Tint = {1, 1, 1, 1};
+	uint32_t const p_Tint = graphics_add_uniform_id(S_("p_Tint"));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Tint, A_(vec4_Tint));
+}
 
+void ui_start_frame(void) {
 	struct uvec2 const screen_size = application_get_screen_size();
 	gs_ui.camera = camera_get_projection(
 		&(struct Camera_Params){
@@ -98,23 +104,7 @@ void ui_set_color(struct vec4 color) {
 }
 
 void ui_set_shader(struct CString name) {
-	struct Asset_Shader const * asset_shader = asset_system_aquire_instance(name);
-	struct Handle const gpu_handle = asset_shader ? asset_shader->gpu_handle : (struct Handle){0};
-
-	struct Gfx_Material * material = material_system_take(gs_ui.material);
-	gfx_material_set_shader(material, gpu_handle);
-
-	{
-		struct vec4 const vec4_Tint = {1, 1, 1, 1};
-		uint32_t const p_Tint = graphics_add_uniform_id(S_("p_Tint"));
-		gfx_uniforms_set(&material->uniforms, p_Tint, A_(vec4_Tint));
-	}
-
-	{
-		struct Handle const h_Texture = {0};
-		uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
-		gfx_uniforms_set(&material->uniforms, p_Texture, A_(h_Texture));
-	}
+	gs_ui.shader_asset_handle = asset_system_aquire(name);
 }
 
 void ui_set_image(struct CString name) {
@@ -126,12 +116,16 @@ void ui_set_font(struct CString name) {
 }
 
 void ui_quad(struct rect uv) {
+	ui_internal_push_shader();
 	ui_internal_push_image();
+	ui_internal_push_tint();
 	batcher_2d_add_quad(gs_renderer.batcher_2d, gs_ui.rect, uv);
 }
 
 void ui_text(struct CString value, struct vec2 alignment, bool wrap, float size) {
+	ui_internal_push_shader();
 	ui_internal_push_font();
+	ui_internal_push_tint();
 	batcher_2d_add_text(
 		gs_renderer.batcher_2d,
 		gs_ui.rect, alignment, wrap,

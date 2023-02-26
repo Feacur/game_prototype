@@ -7,7 +7,6 @@
 #include "framework/containers/array_any.h"
 #include "framework/containers/array_flt.h"
 #include "framework/containers/array_u32.h"
-#include "framework/containers/handle.h"
 
 #include "framework/assets/mesh.h"
 #include "framework/assets/font.h"
@@ -52,6 +51,9 @@ struct Batcher_2D_Word {
 
 struct Batcher_2D_Batch {
 	struct Handle material;
+	struct Handle shader;
+	enum Blend_Mode blend_mode;
+	enum Depth_Mode depth_mode;
 	uint32_t indices_offset, indices_length;
 	uint32_t uniform_offset, uniform_length;
 };
@@ -170,6 +172,25 @@ void batcher_2d_set_material(struct Batcher_2D * batcher, struct Handle handle) 
 		batcher_2d_internal_bake_pass(batcher);
 	}
 	batcher->batch.material = handle;
+	batcher->batch.shader = (struct Handle){0};
+	batcher->batch.blend_mode = BLEND_MODE_NONE;
+	batcher->batch.depth_mode = DEPTH_MODE_NONE;
+}
+
+void batcher_2d_set_shader(
+	struct Batcher_2D * batcher,
+	struct Handle handle,
+	enum Blend_Mode blend_mode, enum Depth_Mode depth_mode
+) {
+	if (!handle_equals(batcher->batch.shader, handle)
+		|| batcher->batch.blend_mode != blend_mode
+		|| batcher->batch.depth_mode != depth_mode) {
+		batcher_2d_internal_bake_pass(batcher);
+	}
+	batcher->batch.material = (struct Handle){0};
+	batcher->batch.shader = handle;
+	batcher->batch.blend_mode = blend_mode;
+	batcher->batch.depth_mode = depth_mode;
 }
 
 void batcher_2d_uniforms_push(struct Batcher_2D * batcher, uint32_t uniform_id, struct CArray value) {
@@ -485,19 +506,35 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * g
 	for (uint32_t i = 0; i < batcher->batches.count; i++) {
 		struct Batcher_2D_Batch const * batch = array_any_at(&batcher->batches, i);
 
-		array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
-			.type = GPU_COMMAND_TYPE_MATERIAL,
-			.as.material = {
-				.handle = batch->material,
-			},
-		});
+		struct Handle program_handle = {0};
+		if (!handle_is_null(batch->material)) {
+			struct Gfx_Material const * material = material_system_take(batch->material);
+			program_handle = material->gpu_program_handle;
+			array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
+				.type = GPU_COMMAND_TYPE_MATERIAL,
+				.as.material = {
+					.handle = batch->material,
+				},
+			});
+		}
+
+		if (!handle_is_null(batch->shader)) {
+			program_handle = batch->shader;
+			array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
+				.type = GPU_COMMAND_TYPE_SHADER,
+				.as.shader = {
+					.handle = batch->shader,
+					.blend_mode = batch->blend_mode,
+					.depth_mode = batch->depth_mode,
+				},
+			});
+		}
 
 		if (batch->uniform_length > 0) {
-			struct Gfx_Material const * material = material_system_take(batch->material);
 			array_any_push_many(gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_UNIFORM,
 				.as.uniform = {
-					.program_handle = material->gpu_program_handle,
+					.program_handle = program_handle,
 					.uniforms = &batcher->uniforms,
 					.offset = batch->uniform_offset,
 					.count = batch->uniform_length,

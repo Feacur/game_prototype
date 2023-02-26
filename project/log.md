@@ -21,6 +21,10 @@
 
 # Changelog
 
+## 2023.02.26
+- [tech] draw ImUI without Gfx_Material
+- [bug] correctly batch shader ImUI changes
+
 ## 2023.02.02
 - [feature] allow adding multiple typefaces per glyph atlas
 

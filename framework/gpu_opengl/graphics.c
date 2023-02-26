@@ -1078,126 +1078,6 @@ static void gpu_set_depth_mode(enum Depth_Mode mode) {
 	}
 }
 
-/*
-// @note: lacks precision past [FLOAT_INT_MIN .. FLOAT_INT_MAX]
-//        but does it really matter?
-inline static void gpu_clear_target_color_map01(GLuint target_id, struct Texture_Parameters parameters, uint32_t drawbuffer, struct vec4 color) {
-	switch (data_type_get_element_type(parameters.data_type)) {
-		case DATA_TYPE_R8_U: glClearNamedFramebufferuiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLuint[]){
-			map01_to_u8(color.x),  map01_to_u8(color.y),  map01_to_u8(color.z),  map01_to_u8(color.w),
-		}); break;
-
-		case DATA_TYPE_R16_U: glClearNamedFramebufferuiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLuint[]){
-			map01_to_u16(color.x), map01_to_u16(color.y), map01_to_u16(color.z), map01_to_u16(color.w),
-		}); break;
-
-		case DATA_TYPE_R32_U: glClearNamedFramebufferuiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLuint[]){
-			map01_to_u32(color.x), map01_to_u32(color.y), map01_to_u32(color.z), map01_to_u32(color.w),
-		}); break;
-
-		case DATA_TYPE_R8_S: glClearNamedFramebufferiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLint[]){
-			map01_to_s8(color.x),  map01_to_s8(color.y),  map01_to_s8(color.z),  map01_to_s8(color.w),
-		}); break;
-
-		case DATA_TYPE_R16_S: glClearNamedFramebufferiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLint[]){
-			map01_to_s16(color.x), map01_to_s16(color.y), map01_to_s16(color.z), map01_to_s16(color.w),
-		}); break;
-
-		case DATA_TYPE_R32_S: glClearNamedFramebufferiv(target_id, GL_COLOR, (GLint)drawbuffer, (GLint[]){
-			map01_to_s32(color.x), map01_to_s32(color.y), map01_to_s32(color.z), map01_to_s32(color.w),
-		}); break;
-
-		default: {
-			glClearNamedFramebufferfv(target_id, GL_COLOR, (GLint)drawbuffer, &color.x);
-		} break;
-	}
-}
-*/
-
-/*
-static void gpu_clear_target(GLuint target_id, struct Texture_Parameters parameters, uint32_t drawbuffer, void const * color) {
-	float const depth   = gs_graphics_state.clip_space[3];
-	GLint const stencil = 0;
-
-	switch (parameters.texture_type) {
-		case TEXTURE_TYPE_NONE: break;
-
-		// @note: demands manual control over memory layout
-		case TEXTURE_TYPE_COLOR: {
-			switch (data_type_get_element_type(parameters.data_type)) {
-				case DATA_TYPE_R8_U:
-				case DATA_TYPE_R16_U:
-				case DATA_TYPE_R32_U:
-					glClearNamedFramebufferuiv(target_id, GL_COLOR, (GLint)drawbuffer, color);
-					break;
-
-				case DATA_TYPE_R8_S:
-				case DATA_TYPE_R16_S:
-				case DATA_TYPE_R32_S:
-					glClearNamedFramebufferiv(target_id, GL_COLOR, (GLint)drawbuffer, color);
-					break;
-
-				default: {
-					glClearNamedFramebufferfv(target_id, GL_COLOR, (GLint)drawbuffer, color);
-				} break;
-			}
-		} break;
-
-		case TEXTURE_TYPE_DEPTH: {
-			glClearNamedFramebufferfv(target_id, GL_DEPTH, 0, &depth);
-		} break;
-
-		case TEXTURE_TYPE_STENCIL: {
-			glClearNamedFramebufferiv(target_id, GL_STENCIL, 0, &stencil);
-		} break;
-
-		case TEXTURE_TYPE_DSTENCIL: {
-			glClearNamedFramebufferfi(target_id, GL_DEPTH_STENCIL, 0, depth, stencil);
-		} break;
-	}
-}
-*/
-
-/*
-// @note: I'm actually quite ok with the classic and less verbose approach
-//        but it's fun to sketch out and test ideas: integer formats in this instance
-
-// @idea: each color attachment might have different color;
-//        or may be API should prove draw buffer index explicitly
-
-if (handle_is_null(gs_graphics_state.active.target)) {
-	struct Texture_Parameters const params[] = {
-		(struct Texture_Parameters){
-			.texture_type = TEXTURE_TYPE_COLOR,
-			.data_type = DATA_TYPE_RGB8_UNORM,
-		},
-		(struct Texture_Parameters){ // @todo: sync with the actual backbuffer
-			.texture_type = TEXTURE_TYPE_DSTENCIL,
-			.data_type = DATA_TYPE_R32_F,
-		},
-	};
-
-	for (uint32_t i = 0; i < SIZE_OF_ARRAY(params); i++) {
-		if (!(command->mask & params[i].texture_type)) { continue; }
-		gpu_clear_target(0, params[i], 0, &command->color);
-	}
-}
-else {
-	struct Gpu_Target * gpu_target = handle_table_get(&gs_graphics_state.targets, gs_graphics_state.active.target);
-	for (uint32_t i = 0; i < gpu_target->textures.count; i++) {
-		struct Gpu_Target_Texture const * entry = array_any_at(&gpu_target->textures, i);
-		struct Gpu_Texture const * gpu_texture = handle_table_get(&gs_graphics_state.textures, entry->texture);
-		if (!(command->mask & gpu_texture->parameters.texture_type)) { continue; }
-		gpu_clear_target(gpu_target->id, gpu_texture->parameters, entry->drawbuffer, &command->color);
-	}
-	for (uint32_t i = 0; i < gpu_target->buffers.count; i++) {
-		struct Gpu_Target_Buffer const * entry = array_any_at(&gpu_target->buffers, i);
-		if (!(command->mask & entry->parameters.texture_type)) { continue; }
-		gpu_clear_target(gpu_target->id, entry->parameters, entry->drawbuffer, &command->color);
-	}
-}
-*/
-
 //
 #include "framework/graphics/gpu_command.h"
 
@@ -1258,6 +1138,12 @@ inline static void gpu_execute_material(struct GPU_Command_Material const * comm
 	if (gpu_program != NULL) {
 		gpu_upload_uniforms(gpu_program, &material->uniforms, 0, material->uniforms.headers.count);
 	}
+}
+
+inline static void gpu_execute_shader(struct GPU_Command_Shader const * command) {
+	gpu_select_program(command->handle);
+	gpu_set_blend_mode(command->blend_mode);
+	gpu_set_depth_mode(command->depth_mode);
 }
 
 inline static void gpu_execute_uniform(struct GPU_Command_Uniform const * command) {
@@ -1330,6 +1216,7 @@ void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 			case GPU_COMMAND_TYPE_TARGET:   gpu_execute_target(&command->as.target);     break;
 			case GPU_COMMAND_TYPE_CLEAR:    gpu_execute_clear(&command->as.clear);       break;
 			case GPU_COMMAND_TYPE_MATERIAL: gpu_execute_material(&command->as.material); break;
+			case GPU_COMMAND_TYPE_SHADER:   gpu_execute_shader(&command->as.shader);     break;
 			case GPU_COMMAND_TYPE_UNIFORM:  gpu_execute_uniform(&command->as.uniform);   break;
 			case GPU_COMMAND_TYPE_DRAW:     gpu_execute_draw(&command->as.draw);         break;
 		}
