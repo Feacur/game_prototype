@@ -48,7 +48,7 @@ static void ui_internal_push_image(void) {
 }
 
 static void ui_internal_push_font(void) {
-	struct Asset_Glyph_Atlas const * asset = asset_system_take(gs_ui.font_asset_handle);
+	struct Asset_Font const * asset = asset_system_take(gs_ui.font_asset_handle);
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
 	uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Texture, A_(gpu_handle));

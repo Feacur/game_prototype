@@ -406,7 +406,7 @@ static void app_init(void) {
 	ui_init();
 	ui_set_shader(S_("assets/shaders/batcher_2d.glsl"));
 	ui_set_image(S_("assets/images/ui.image"));
-	ui_set_font(S_("assets/glyph_atlas.font"));
+	ui_set_font(S_("assets/test.font"));
 
 	prototype_init();
 }

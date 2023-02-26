@@ -185,7 +185,7 @@ static void asset_typeface_free(void * instance) {
 // ----- ----- ----- ----- -----
 
 struct Asset_font_Context {
-	struct Asset_Glyph_Atlas * result;
+	struct Asset_Font * result;
 };
 
 static void asset_font_fill(struct JSON const * json, void * data) {
@@ -207,7 +207,7 @@ static void asset_font_fill(struct JSON const * json, void * data) {
 		}
 	}
 
-	*context->result = (struct Asset_Glyph_Atlas){
+	*context->result = (struct Asset_Font){
 		.font = font,
 		.gpu_handle = gpu_texture_init(font_get_asset(font)),
 	};
@@ -215,13 +215,13 @@ static void asset_font_fill(struct JSON const * json, void * data) {
 }
 
 static void asset_font_init(void * instance, struct CString name) {
-	struct Asset_Glyph_Atlas * asset = instance;
+	struct Asset_Font * asset = instance;
 	struct Asset_font_Context context = { .result = asset };
 	process_json(name, &context, asset_font_fill);
 }
 
 static void asset_font_free(void * instance) {
-	struct Asset_Glyph_Atlas * asset = instance;
+	struct Asset_Font * asset = instance;
 	font_free(asset->font);
 	gpu_texture_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
@@ -361,7 +361,7 @@ void asset_types_init(void) {
 	asset_system_set_type(S_("font"), (struct Asset_Callbacks){
 		.init = asset_font_init,
 		.free = asset_font_free,
-	}, sizeof(struct Asset_Glyph_Atlas));
+	}, sizeof(struct Asset_Font));
 
 	asset_system_set_type(S_("target"), (struct Asset_Callbacks){
 		.init = asset_target_init,

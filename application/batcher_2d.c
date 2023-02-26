@@ -67,9 +67,9 @@ struct Batcher_2D {
 	//
 	struct Batcher_2D_Batch batch;
 	struct Array_U32 codepoints;
-	struct Array_Any batches;                 // `struct Batcher_2D_Batch`
-	struct Array_Any words;                   // `struct Batcher_2D_Word`
-	struct Hash_Set_U64 cached_glyph_atlases; // `struct Asset_Handle`
+	struct Array_Any batches;  // `struct Batcher_2D_Batch`
+	struct Array_Any words;    // `struct Batcher_2D_Word`
+	struct Hash_Set_U64 fonts; // `struct Asset_Handle`
 	//
 	struct vec4 color;
 	struct mat4 matrix;
@@ -131,7 +131,7 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	array_u32_free(&batcher->codepoints);
 	array_any_free(&batcher->batches);
 	array_any_free(&batcher->words);
-	hash_set_u64_free(&batcher->cached_glyph_atlases);
+	hash_set_u64_free(&batcher->fonts);
 	array_any_free(&batcher->buffer_vertices);
 	array_u32_free(&batcher->buffer_indices);
 	//
@@ -220,7 +220,7 @@ void batcher_2d_add_text(
 	struct rect rect, struct vec2 alignment, bool wrap,
 	struct Asset_Handle font_asset_handle, struct CString value, float size
 ) {
-	struct Asset_Glyph_Atlas const * font_asset = asset_system_take(font_asset_handle);
+	struct Asset_Font const * font_asset = asset_system_take(font_asset_handle);
 	if (font_asset == NULL) { return; }
 	if (font_asset->font == NULL) { return; }
 
@@ -423,21 +423,21 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 	// render and upload the atlases
 	{
 		// @todo: (?) arena/stack allocator
-		hash_set_u64_clear(&batcher->cached_glyph_atlases);
+		hash_set_u64_clear(&batcher->fonts);
 
 		for (uint32_t i = 0; i < batcher->words.count; i++) {
 			struct Batcher_2D_Word const * word = array_any_at(&batcher->words, i);
-			struct Asset_Glyph_Atlas const * font_asset = asset_system_take(word->font_asset_handle);
-			hash_set_u64_set(&batcher->cached_glyph_atlases, (uint64_t)font_asset);
+			struct Asset_Font const * font_asset = asset_system_take(word->font_asset_handle);
+			hash_set_u64_set(&batcher->fonts, (uint64_t)font_asset);
 		}
 
-		FOR_HASH_SET_U64 (&batcher->cached_glyph_atlases, it) {
-			struct Asset_Glyph_Atlas const * font_asset = (void *)it.key_hash;
+		FOR_HASH_SET_U64 (&batcher->fonts, it) {
+			struct Asset_Font const * font_asset = (void *)it.key_hash;
 			font_render(font_asset->font);
 		}
 
-		FOR_HASH_SET_U64 (&batcher->cached_glyph_atlases, it) {
-			struct Asset_Glyph_Atlas const * font_asset = (void *)it.key_hash;
+		FOR_HASH_SET_U64 (&batcher->fonts, it) {
+			struct Asset_Font const * font_asset = (void *)it.key_hash;
 			gpu_texture_update(font_asset->gpu_handle, font_get_asset(font_asset->font));
 		}
 	}
@@ -447,7 +447,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 		struct Batcher_2D_Word const * word = array_any_at(&batcher->words, word_i);
 		uint32_t vertices_offset = word->buffer_vertices_offset;
 
-		struct Asset_Glyph_Atlas const * font_asset = asset_system_take(word->font_asset_handle);
+		struct Asset_Font const * font_asset = asset_system_take(word->font_asset_handle);
 		struct Glyph const * glyph_error = font_get_glyph(font_asset->font, '\0', word->size);
 		struct rect const glyph_error_uv = glyph_error->uv;
 

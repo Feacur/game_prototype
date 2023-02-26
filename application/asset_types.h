@@ -28,7 +28,7 @@ struct Asset_Typeface {
 	struct Typeface * typeface;
 };
 
-struct Asset_Glyph_Atlas {
+struct Asset_Font {
 	struct Font * font;
 	struct Handle gpu_handle;
 };

@@ -79,7 +79,7 @@ static struct Handle json_load_texture(struct JSON const * json) {
 	}
 
 	if (asset_system_match_type(asset_handle, S_("font"))) {
-		struct Asset_Glyph_Atlas const * asset = instance;
+		struct Asset_Font const * asset = instance;
 		return asset->gpu_handle;
 	}
 

@@ -8,7 +8,7 @@
 
 struct Batcher_2D;
 
-struct Asset_Glyph_Atlas;
+struct Asset_Font;
 struct Array_Any;
 
 struct Batcher_2D * batcher_2d_init(void);
