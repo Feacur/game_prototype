@@ -149,6 +149,6 @@ void ui_text(struct CString value, struct vec2 alignment, bool wrap, float size)
 	batcher_2d_add_text(
 		gs_renderer.batcher_2d,
 		gs_ui.rect, alignment, wrap,
-		gs_ui.cached_texture, value, size
+		gs_ui.font_asset_handle, value, size
 	);
 }

@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_CONTAINERS_REF_TABLE)
-#define FRAMEWORK_CONTAINERS_REF_TABLE
+#if !defined(FRAMEWORK_CONTAINERS_HANDLE_TABLE)
+#define FRAMEWORK_CONTAINERS_HANDLE_TABLE
 
 #include "handle.h"
 #include "array_any.h"

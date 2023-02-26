@@ -4,6 +4,7 @@
 #include "framework/vector_types.h"
 #include "framework/graphics/types.h"
 #include "framework/containers/handle.h"
+#include "framework/systems/asset_handle.h"
 
 struct Batcher_2D;
 
@@ -28,7 +29,7 @@ void batcher_2d_add_quad(
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
 	struct rect rect, struct vec2 alignment, bool wrap,
-	struct Asset_Glyph_Atlas const * font, struct CString value, float size
+	struct Asset_Handle font_asset_handle, struct CString value, float size
 );
 
 void batcher_2d_clear(struct Batcher_2D * batcher);

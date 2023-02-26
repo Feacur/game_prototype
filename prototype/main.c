@@ -344,7 +344,6 @@ static void prototype_draw_objects(void) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
-					struct Asset_Glyph_Atlas const * font = asset_system_take(text->font_asset_handle);
 					struct Asset_Bytes const * message = asset_system_take(text->message_asset_handle);
 					struct CString const value = {
 						.length = message->length,
@@ -353,7 +352,7 @@ static void prototype_draw_objects(void) {
 					batcher_2d_add_text(
 						gs_renderer.batcher_2d,
 						entity->cached_rect, text->alignment, true,
-						font, value, text->size
+						text->font_asset_handle, value, text->size
 					);
 				} break;
 			}
