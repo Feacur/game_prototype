@@ -6,7 +6,6 @@
 #include "framework/containers/strings.h"
 
 #include "framework/graphics/material.h"
-#include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_command.h"
 

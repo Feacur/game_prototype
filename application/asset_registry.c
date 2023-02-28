@@ -8,7 +8,6 @@
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
 #include "framework/graphics/gpu_objects.h"
-#include "framework/graphics/gpu_misc.h"
 
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"

@@ -21,6 +21,10 @@
 
 # Changelog
 
+## 2023.02.28
+- [tech] untie uniform names registry from the API implementation
+- [tech] allow addressing uniforms by name
+
 ## 2023.02.26
 - [tech] draw ImUI without Gfx_Material
 - [bug] correctly batch shader ImUI changes

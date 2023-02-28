@@ -8,10 +8,6 @@
 
 void graphics_update(void);
 
-uint32_t graphics_add_uniform_id(struct CString name);
-uint32_t graphics_find_uniform_id(struct CString name);
-struct CString graphics_get_uniform_value(uint32_t value);
-
 struct mat4 graphics_set_projection_mat4(
 	struct vec2 scale_xy, struct vec2 offset_xy,
 	float view_near, float view_far, float ortho

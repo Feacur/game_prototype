@@ -2,12 +2,16 @@
 #include "framework/logger.h"
 #include "framework/maths.h"
 #include "framework/json_read.h"
+
 #include "framework/containers/hash_table_u32.h"
+
+#include "framework/graphics/gpu_objects.h"
+#include "framework/graphics/material.h"
+
+#include "framework/systems/uniforms.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
-#include "framework/graphics/gpu_objects.h"
-#include "framework/graphics/gpu_misc.h"
-#include "framework/graphics/material.h"
+
 #include "framework/assets/font.h"
 
 #include "asset_types.h"
@@ -31,7 +35,7 @@ struct Handle json_load_gfx_material(struct JSON const * json) {
 	if (shader_asset == NULL) { goto fail; }
 
 	gfx_material_set_shader(material, shader_asset->gpu_handle);
-	json_fill_uniforms(json, material);
+	json_fill_uniforms(json_get(json, S_("uniforms")), material);
 
 	return handle;
 
@@ -112,7 +116,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 	FOR_HASH_TABLE_U32(gpu_program_uniforms, it) {
 		struct Gpu_Uniform const * gpu_uniform = it.value;
-		struct CString const uniform_name = graphics_get_uniform_value(it.key_hash);
+		struct CString const uniform_name = uniforms_get(it.key_hash);
 		struct JSON const * uniform_json = json_get(json, uniform_name);
 
 		if (uniform_json->type == JSON_NULL) { continue; }
@@ -138,7 +142,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 			case DATA_TYPE_UNIT_S:
 			case DATA_TYPE_UNIT_F: {
 				json_load_many_texture(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&material->uniforms, it.key_hash, (struct CArray){
+				gfx_uniforms_id_push(&material->uniforms, it.key_hash, (struct CArray){
 					.size = sizeof(struct Handle) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -146,7 +150,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 			case DATA_TYPE_R32_U: {
 				json_read_many_u32(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&material->uniforms, it.key_hash, (struct CArray){
+				gfx_uniforms_id_push(&material->uniforms, it.key_hash, (struct CArray){
 					.size = sizeof(uint32_t) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -154,7 +158,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 			case DATA_TYPE_R32_S: {
 				json_read_many_s32(uniform_json,uniform_count,  uniform_data_buffer.data);
-				gfx_uniforms_set(&material->uniforms, it.key_hash, (struct CArray){
+				gfx_uniforms_id_push(&material->uniforms, it.key_hash, (struct CArray){
 					.size = sizeof(int32_t) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});
@@ -162,7 +166,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 			case DATA_TYPE_R32_F: {
 				json_read_many_flt(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_set(&material->uniforms, it.key_hash, (struct CArray){
+				gfx_uniforms_id_push(&material->uniforms, it.key_hash, (struct CArray){
 					.size = sizeof(float) * uniform_count,
 					.data = uniform_data_buffer.data,
 				});

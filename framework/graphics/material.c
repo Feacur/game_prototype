@@ -2,7 +2,7 @@
 #include "framework/containers/hash_table_u32.h"
 #include "framework/graphics/types.h"
 #include "framework/graphics/gpu_objects.h"
-#include "framework/graphics/gpu_misc.h"
+#include "framework/systems/uniforms.h"
 
 #include <malloc.h>
 
@@ -31,37 +31,33 @@ void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {
 	buffer_clear(&uniforms->payload);
 }
 
-struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, uint32_t uniform_id, uint32_t offset) {
+struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, struct CString name, uint32_t offset) {
+	uint32_t const id = uniforms_find(name);
+	return gfx_uniforms_id_get(uniforms, id, offset);
+}
+
+void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, struct CString name, struct CArray value) {
+	uint32_t const id = uniforms_add(name);
+	gfx_uniforms_id_push(uniforms, id, value);
+}
+
+struct CArray_Mut gfx_uniforms_id_get(struct Gfx_Uniforms const * uniforms, uint32_t id, uint32_t offset) {
+	if (id == 0) { goto null; }
 	for (uint32_t i = offset; i < uniforms->headers.count; i++) {
 		struct Gfx_Uniforms_Entry const * entry = array_any_at(&uniforms->headers, i);
-		if (entry->id != uniform_id) { continue; }
+		if (entry->id != id) { continue; }
 		return (struct CArray_Mut){
 			.data = (uint8_t *)uniforms->payload.data + entry->offset,
 			.size = entry->size,
 		};
 	}
-	return (struct CArray_Mut){0};
+	null: return (struct CArray_Mut){0};
 }
 
-void gfx_uniforms_set(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct CArray value) {
-	struct CArray_Mut field = gfx_uniforms_get(uniforms, uniform_id, 0);
-	if (field.data == NULL) {
-		struct CString const uniform_name = graphics_get_uniform_value(uniform_id);
-		logger_to_console("creating uniform '%.*s'\n", uniform_name.length, uniform_name.data);
-		gfx_uniforms_push(uniforms, uniform_id, value);
-		return;
-	}
-	if (field.size >= value.size) {
-		common_memcpy(field.data, value.data, value.size);
-		return;
-	}
-	struct CString const uniform_name = graphics_get_uniform_value(uniform_id);
-	logger_to_console("data is too large for uniform '%.*s'\n", uniform_name.length, uniform_name.data);
-}
-
-void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, uint32_t uniform_id, struct CArray value) {
+void gfx_uniforms_id_push(struct Gfx_Uniforms * uniforms, uint32_t id, struct CArray value) {
+	if (id == 0) { return; }
 	array_any_push_many(&uniforms->headers, 1, &(struct Gfx_Uniforms_Entry){
-		.id = uniform_id,
+		.id = id,
 		.size = (uint32_t)value.size,
 		.offset = (uint32_t)uniforms->payload.size,
 	});
@@ -94,7 +90,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_h
 
 	uint32_t payload_bytes = 0, properties_count = 0;
 	FOR_HASH_TABLE_U32(uniforms, it) {
-		struct CString const uniform_name = graphics_get_uniform_value(it.key_hash);
+		struct CString const uniform_name = uniforms_get(it.key_hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 
 		struct Gpu_Uniform const * uniform = it.value;
@@ -107,11 +103,11 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_h
 	common_memset(material->uniforms.payload.data, 0, payload_bytes);
 
 	FOR_HASH_TABLE_U32(uniforms, it) {
-		struct CString const uniform_name = graphics_get_uniform_value(it.key_hash);
+		struct CString const uniform_name = uniforms_get(it.key_hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 
 		struct Gpu_Uniform const * uniform = it.value;
-		gfx_uniforms_push(&material->uniforms, it.key_hash, (struct CArray){
+		gfx_uniforms_id_push(&material->uniforms, it.key_hash, (struct CArray){
 			.size = data_type_get_size(uniform->type) * uniform->array_size,
 		});
 	}

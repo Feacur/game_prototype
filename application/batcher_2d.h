@@ -21,7 +21,8 @@ void batcher_2d_set_shader(
 	enum Blend_Mode blend_mode, enum Depth_Mode depth_mode
 );
 
-void batcher_2d_uniforms_push(struct Batcher_2D * batcher, uint32_t uniform_id, struct CArray value);
+void batcher_2d_uniforms_push(struct Batcher_2D * batcher, struct CString name, struct CArray value);
+void batcher_2d_uniforms_id_push(struct Batcher_2D * batcher, uint32_t id, struct CArray value);
 
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,

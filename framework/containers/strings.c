@@ -42,7 +42,7 @@ uint32_t strings_add(struct Strings * strings, struct CString value) {
 
 	array_u32_push_many(&strings->offsets, 1, &offset);
 	array_u32_push_many(&strings->lengths, 1, &value.length);
-	buffer_push_many(&strings->buffer, value.length, (uint8_t const *)value.data);
+	buffer_push_many(&strings->buffer, value.length, value.data);
 	buffer_push_many(&strings->buffer, 1, "\0");
 
 	return strings->lengths.count;

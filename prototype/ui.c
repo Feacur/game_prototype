@@ -1,8 +1,10 @@
+#include "framework/systems/uniforms.h"
 #include "framework/systems/asset_system.h"
-#include "framework/graphics/material.h"
-#include "framework/graphics/gpu_misc.h"
-#include "framework/graphics/gpu_command.h"
 #include "framework/systems/material_system.h"
+
+#include "framework/graphics/material.h"
+#include "framework/graphics/gpu_command.h"
+
 #include "framework/maths.h"
 
 #include "application/application.h"
@@ -45,21 +47,18 @@ static void ui_internal_push_shader(void) {
 static void ui_internal_push_image(void) {
 	struct Asset_Image const * asset = asset_system_take(gs_ui.image_asset_handle);
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
-	uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
-	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Texture, A_(gpu_handle));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Texture"), A_(gpu_handle));
 }
 
 static void ui_internal_push_font(void) {
 	struct Asset_Font const * asset = asset_system_take(gs_ui.font_asset_handle);
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
-	uint32_t const p_Texture = graphics_add_uniform_id(S_("p_Texture"));
-	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Texture, A_(gpu_handle));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Texture"), A_(gpu_handle));
 }
 
 static void ui_internal_push_tint(void) {
 	struct vec4 const vec4_Tint = {1, 1, 1, 1};
-	uint32_t const p_Tint = graphics_add_uniform_id(S_("p_Tint"));
-	batcher_2d_uniforms_push(gs_renderer.batcher_2d, p_Tint, A_(vec4_Tint));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Tint"), A_(vec4_Tint));
 }
 
 void ui_start_frame(void) {

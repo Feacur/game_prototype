@@ -62,11 +62,11 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 	SetConsoleCP(CP_UTF8);
 	SetConsoleOutputCP(CP_UTF8);
 
-	if (!debug_to_system_init()) { goto fail; }
-	if (!timer_to_system_init()) { goto fail; }
-	if (!window_to_system_init()) { goto fail; }
+	if (!debug_to_system_init())       { goto fail; }
+	if (!timer_to_system_init())       { goto fail; }
+	if (!window_to_system_init())      { goto fail; }
 	if (!gpu_library_to_system_init()) { goto fail; }
-	if (!input_to_system_init()) { goto fail; }
+	if (!input_to_system_init())       { goto fail; }
 
 	return;
 

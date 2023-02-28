@@ -13,9 +13,9 @@
 
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_objects.h"
-#include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/gpu_command.h"
 
+#include "framework/systems/uniforms.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
 
@@ -193,13 +193,19 @@ void batcher_2d_set_shader(
 	batcher->batch.depth_mode = depth_mode;
 }
 
-void batcher_2d_uniforms_push(struct Batcher_2D * batcher, uint32_t uniform_id, struct CArray value) {
-	struct CArray_Mut const field = gfx_uniforms_get(&batcher->uniforms, uniform_id, batcher->batch.uniform_offset);
+void batcher_2d_uniforms_push(struct Batcher_2D * batcher, struct CString name, struct CArray value) {
+	uint32_t const id = uniforms_add(name);
+	batcher_2d_uniforms_id_push(batcher, id, value);
+}
+
+void batcher_2d_uniforms_id_push(struct Batcher_2D * batcher, uint32_t id, struct CArray value) {
+	if (id == 0) { return; }
+	struct CArray_Mut const field = gfx_uniforms_id_get(&batcher->uniforms, id, batcher->batch.uniform_offset);
 	if (field.data != NULL) {
 		if (carray_equals(carray_const(field), value)) { return; }
 		batcher_2d_internal_bake_pass(batcher);
 	}
-	gfx_uniforms_push(&batcher->uniforms, uniform_id, value);
+	gfx_uniforms_id_push(&batcher->uniforms, id, value);
 }
 
 inline static struct Batcher_2D_Vertex batcher_2d_internal_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord, struct vec4 color) {

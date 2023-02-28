@@ -3,6 +3,8 @@
 
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_objects.h"
+
+#include "framework/systems/uniforms.h"
 #include "framework/systems/material_system.h"
 
 //
@@ -24,7 +26,7 @@ struct uvec2 entity_get_content_size(
 			struct Entity_Quad const * quad = &entity->as.quad;
 
 			struct Gfx_Material const * material = material_system_take(material_handle);
-			struct CArray_Mut const field = gfx_uniforms_get(&material->uniforms, quad->texture_uniform, 0);
+			struct CArray_Mut const field = gfx_uniforms_id_get(&material->uniforms, quad->uniform_id, 0);
 			struct Handle const * gpu_texture_handle = field.data;
 			if (gpu_texture_handle == NULL) { goto fail; }
 

@@ -15,6 +15,7 @@
 #include "framework/graphics/types.h"
 #include "framework/graphics/material.h"
 
+#include "framework/systems/uniforms.h"
 #include "framework/systems/material_system.h"
 
 #include "functions.h"
@@ -90,7 +91,6 @@ struct Graphics_Action {
 static struct Graphics_State {
 	char * extensions;
 
-	struct Strings uniforms;
 	struct Array_Any actions; // `struct Graphics_Action`
 
 	struct Handle_Table programs;
@@ -292,7 +292,7 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 			uniform_name.length -= 3; // arrays have suffix `[0]`
 		}
 
-		uint32_t const id = strings_add(&gs_graphics_state.uniforms, uniform_name);
+		uint32_t const id = uniforms_add(uniform_name);
 		hash_table_u32_set(&program.uniforms, id, &(struct Gpu_Uniform_Internal){
 			.base = {
 				.type = interpret_gl_type(params[PARAM_TYPE]),
@@ -870,18 +870,6 @@ void graphics_update(void) {
 	array_any_clear(&gs_graphics_state.actions);
 }
 
-uint32_t graphics_add_uniform_id(struct CString name) {
-	return strings_add(&gs_graphics_state.uniforms, name);
-}
-
-uint32_t graphics_find_uniform_id(struct CString name) {
-	return strings_find(&gs_graphics_state.uniforms, name);
-}
-
-struct CString graphics_get_uniform_value(uint32_t value) {
-	return strings_get(&gs_graphics_state.uniforms, value);
-}
-
 struct mat4 graphics_set_projection_mat4(
 	struct vec2 scale_xy, struct vec2 offset_xy,
 	float view_near, float view_far, float ortho
@@ -1252,8 +1240,6 @@ void graphics_to_gpu_library_init(void) {
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
 	gs_graphics_state.extensions = allocate_extensions_string();
 
-	gs_graphics_state.uniforms = strings_init();
-
 	// init gpu objects
 	gs_graphics_state.programs = handle_table_init(sizeof(struct Gpu_Program));
 	gs_graphics_state.targets  = handle_table_init(sizeof(struct Gpu_Target));
@@ -1356,7 +1342,6 @@ void graphics_to_gpu_library_free(void) {
 	GPU_FREE(gs_graphics_state.meshes,   gpu_mesh_on_discard);
 
 	//
-	strings_free(&gs_graphics_state.uniforms);
 	array_any_free(&gs_graphics_state.actions);
 	MEMORY_FREE(gs_graphics_state.extensions);
 	MEMORY_FREE(gs_graphics_state.units);
@@ -1378,7 +1363,8 @@ static char * allocate_extensions_string(void) {
 	buffer_resize(&string, (uint32_t)(extensions_count * 26));
 	for(GLint i = 0; i < extensions_count; i++) {
 		GLubyte const * value = glGetStringi(GL_EXTENSIONS, (GLuint)i);
-		buffer_push_many(&string, (uint32_t)strlen((char const *)value), value);
+		size_t const size = strlen((char const *)value);
+		buffer_push_many(&string, size, value);
 		buffer_push_many(&string, 1, " ");
 	}
 	buffer_push_many(&string, 1, "\0");

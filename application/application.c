@@ -1,5 +1,7 @@
 #include "framework/graphics/gpu_misc.h"
 
+#include "framework/systems/uniforms.h"
+
 #include "framework/platform_timer.h"
 #include "framework/platform_file.h"
 #include "framework/platform_system.h"
@@ -64,6 +66,8 @@ static bool application_init(void) {
 		gs_app.config.slow_frames_limit
 	);
 
+	uniforms_init();
+
 	// setup window
 	struct Window_Config window_config = {
 		.size_x = gs_app.config.size.x,
@@ -111,6 +115,7 @@ static void application_free(void) {
 	if (gs_app.callbacks.free != NULL) { gs_app.callbacks.free(); }
 	if (gs_app.gpu_context != NULL) { gpu_context_free(gs_app.gpu_context); }
 	if (gs_app.window != NULL) { platform_window_free(gs_app.window); }
+	uniforms_free();
 	common_memset(&gs_app, 0, sizeof(gs_app));
 }
 

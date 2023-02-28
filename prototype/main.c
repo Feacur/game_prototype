@@ -8,12 +8,12 @@
 #include "framework/maths.h"
 #include "framework/input.h"
 
+#include "framework/systems/uniforms.h"
 #include "framework/systems/material_system.h"
 #include "framework/systems/asset_system.h"
 
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_objects.h"
-#include "framework/graphics/gpu_misc.h"
 #include "framework/graphics/gpu_command.h"
 
 #include "framework/containers/hash_table_any.h"
@@ -205,12 +205,6 @@ static void prototype_draw_objects(void) {
 		return;
 	}
 
-	uint32_t const u_ProjectionView = graphics_add_uniform_id(S_("u_ProjectionView"));
-	uint32_t const u_Projection     = graphics_add_uniform_id(S_("u_Projection"));
-	uint32_t const u_View           = graphics_add_uniform_id(S_("u_View"));
-	uint32_t const u_ViewportSize   = graphics_add_uniform_id(S_("u_ViewportSize"));
-	uint32_t const u_Model          = graphics_add_uniform_id(S_("u_Model"));
-
 	uint32_t const gpu_commands_count_estimate = gs_game.cameras.count * 2 + gs_game.entities.count;
 	array_any_ensure(&gs_renderer.gpu_commands, gpu_commands_count_estimate);
 
@@ -222,19 +216,19 @@ static void prototype_draw_objects(void) {
 
 	for (uint32_t camera_i = 0; camera_i < gs_game.cameras.count; camera_i++) {
 		struct Camera const * camera = array_any_at(&gs_game.cameras, camera_i);
-		struct uvec2 const viewport_size = camera->cached_size;
+		struct uvec2 const u_ViewportSize = camera->cached_size;
 
-		struct mat4 const mat4_Projection = camera_get_projection(&camera->params, viewport_size.x, viewport_size.y);
-		struct mat4 const mat4_View = mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
-		struct mat4 const mat4_ProjectionView = mat4_mul_mat(mat4_Projection, mat4_View);
+		struct mat4 const u_Projection = camera_get_projection(&camera->params, u_ViewportSize.x, u_ViewportSize.y);
+		struct mat4 const u_View = mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
+		struct mat4 const u_ProjectionView = mat4_mul_mat(u_Projection, u_View);
 
 		// process camera
 		{
 			uint32_t const override_offset = gs_renderer.uniforms.headers.count;
-			gfx_uniforms_push(&gs_renderer.uniforms, u_ProjectionView, A_(mat4_ProjectionView));
-			gfx_uniforms_push(&gs_renderer.uniforms, u_Projection,     A_(mat4_Projection));
-			gfx_uniforms_push(&gs_renderer.uniforms, u_View,           A_(mat4_View));
-			gfx_uniforms_push(&gs_renderer.uniforms, u_ViewportSize,   A_(viewport_size));
+			gfx_uniforms_push(&gs_renderer.uniforms, S_("u_ProjectionView"), A_(u_ProjectionView));
+			gfx_uniforms_push(&gs_renderer.uniforms, S_("u_Projection"),     A_(u_Projection));
+			gfx_uniforms_push(&gs_renderer.uniforms, S_("u_View"),           A_(u_View));
+			gfx_uniforms_push(&gs_renderer.uniforms, S_("u_ViewportSize"),   A_(u_ViewportSize));
 
 			array_any_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_UNIFORM,
@@ -278,7 +272,7 @@ static void prototype_draw_objects(void) {
 			struct Asset_Material const * material_asset = asset_system_take(entity->material_asset_handle);
 			struct Gfx_Material const * material = material_system_take(material_asset->handle);
 
-			struct mat4 const mat4_Model = mat4_set_transformation(
+			struct mat4 const u_Model = mat4_set_transformation(
 				entity->transform.position,
 				entity->transform.scale,
 				entity->transform.rotation
@@ -290,7 +284,7 @@ static void prototype_draw_objects(void) {
 
 				case ENTITY_TYPE_QUAD_2D:
 				case ENTITY_TYPE_TEXT_2D: {
-					struct mat4 const matrix = mat4_mul_mat(mat4_ProjectionView, mat4_Model);
+					struct mat4 const matrix = mat4_mul_mat(u_ProjectionView, u_Model);
 					batcher_2d_set_matrix(gs_renderer.batcher_2d, matrix);
 					batcher_2d_set_material(gs_renderer.batcher_2d, material_asset->handle);
 				} break;
@@ -306,7 +300,7 @@ static void prototype_draw_objects(void) {
 					struct Asset_Model const * model = asset_system_take(mesh->asset_handle);
 
 					uint32_t const override_offset = gs_renderer.uniforms.headers.count;
-					gfx_uniforms_push(&gs_renderer.uniforms, u_Model, A_(mat4_Model));
+					gfx_uniforms_push(&gs_renderer.uniforms, S_("u_Model"), A_(u_Model));
 
 					array_any_push_many(&gs_renderer.gpu_commands, 3, (struct GPU_Command[]){
 						(struct GPU_Command){

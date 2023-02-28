@@ -1,7 +1,9 @@
 {
 	"shader": "assets/shaders/test.glsl",
 	"blend": "none", "depth": "opaque",
-	"p_Texture": {"path": "assets/images/test.image"},
-	"p_Texture_OS": [0, 0, 1, 1],
-	"p_Tint": [0.2, 0.6, 1, 1],
+	"uniforms": {
+		"p_Texture": {"path": "assets/images/test.image"},
+		"p_Texture_OS": [0, 0, 1, 1],
+		"p_Tint": [0.2, 0.6, 1, 1],
+	},
 }
