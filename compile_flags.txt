@@ -11,6 +11,7 @@
 -Wno-bad-function-cast
 -Wno-documentation-unknown-command
 -Wno-declaration-after-statement
+-Wno-unsafe-buffer-usage
 
 -Wno-unused-macros
 -Wno-unused-function

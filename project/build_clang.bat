@@ -68,6 +68,7 @@ set compiler=%compiler% -Wno-assign-enum
 set compiler=%compiler% -Wno-bad-function-cast
 set compiler=%compiler% -Wno-documentation-unknown-command
 set compiler=%compiler% -Wno-declaration-after-statement
+set compiler=%compiler% -Wno-unsafe-buffer-usage
 rem [editor-only] -Wno-unused-macros
 rem [editor-only] -Wno-unused-function
 

@@ -12,6 +12,7 @@
 		"HexViewer",
 		"HLSL Syntax",
 		"LSP",
+		"LSP-clangd",
 		"LSP-OmniSharp",
 		"LSP-rust-analyzer",
 		"OpenGL Shading Language (GLSL)",

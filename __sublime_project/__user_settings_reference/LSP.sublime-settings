@@ -30,7 +30,6 @@
 	"inhibit_word_completions": true,
 	"inhibit_snippet_completions": true,
 	"show_symbol_action_links": true,
-	"auto_show_diagnostics_panel": "never",
 	"diagnostics_highlight_style": "box",
 	"document_highlight_style": "fill",
 	"diagnostics_gutter_marker": "sign",

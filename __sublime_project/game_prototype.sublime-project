@@ -60,6 +60,7 @@
 			"-Wno-assign-enum",
 			"-Wno-bad-function-cast",
 			"-Wno-documentation-unknown-command",
+			"-Wno-unsafe-buffer-usage",
 			//
 			"-Wno-unused-macros",
 			"-Wno-unused-function",

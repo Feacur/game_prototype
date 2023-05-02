@@ -1,0 +1,8 @@
+// %appdata%/Sublime Text/Packages/User
+{
+	"initializationOptions" : {
+		"clangd.compile-commands-dir": "${project_path:${folder:${file_path}}}",
+		"clangd.header-insertion": "never",
+		// "clangd.log": "verbose",
+	},
+}
