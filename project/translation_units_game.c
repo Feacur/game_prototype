@@ -36,7 +36,7 @@
 #include "framework/assets/typeface.c"
 #include "framework/assets/font.c"
 
-#include "framework/systems/uniforms.c"
+#include "framework/systems/uniform_system.c"
 #include "framework/systems/material_system.c"
 #include "framework/systems/asset_system.c"
 

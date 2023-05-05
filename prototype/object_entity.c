@@ -4,7 +4,7 @@
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_objects.h"
 
-#include "framework/systems/uniforms.h"
+#include "framework/systems/uniform_system.h"
 #include "framework/systems/material_system.h"
 
 //

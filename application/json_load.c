@@ -8,7 +8,7 @@
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/material.h"
 
-#include "framework/systems/uniforms.h"
+#include "framework/systems/uniform_system.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
 
@@ -116,7 +116,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 	FOR_HASH_TABLE_U32(gpu_program_uniforms, it) {
 		struct Gpu_Uniform const * gpu_uniform = it.value;
-		struct CString const uniform_name = uniforms_get(it.key_hash);
+		struct CString const uniform_name = uniform_system_get(it.key_hash);
 		struct JSON const * uniform_json = json_get(json, uniform_name);
 
 		if (uniform_json->type == JSON_NULL) { continue; }

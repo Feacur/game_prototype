@@ -1,4 +1,4 @@
-#include "framework/systems/uniforms.h"
+#include "framework/systems/uniform_system.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
 
