@@ -30,7 +30,7 @@ enum Key_Code {
 	// KC_EM     = 0x19, // ctrl + y
 	// KC_SUB    = 0x1a, // ctrl + z
 	KC_ESC    = 0x1b, // ctrl + [, escape
-	// KC_FS     = 0x1c, // ctrl + \
+	// KC_FS     = 0x1c, // ctrl + \, [prevent escaping \n]
 	// KC_GS     = 0x1d, // ctrl + ]
 	// KC_RS     = 0x1e, // ctrl + ^
 	// KC_US     = 0x1f, // ctrl + _

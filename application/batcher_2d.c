@@ -113,6 +113,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 		.codepoints      = array_u32_init(),
 		.batches         = array_any_init(sizeof(struct Batcher_2D_Batch)),
 		.words           = array_any_init(sizeof(struct Batcher_2D_Word)),
+		.fonts           = hash_set_u64_init(),
 		.buffer_vertices = array_any_init(sizeof(struct Batcher_2D_Vertex)),
 		.buffer_indices  = array_u32_init(),
 	};
@@ -437,7 +438,7 @@ void batcher_2d_add_text(
 							((float)params.rect.max.y) + offset.y,
 						},
 					},
-					(struct rect){0} // @note: UVs are delayed, see `batcher_2d_bake_texts`
+					(struct rect){0} // @note: UVs are delayed, see `batcher_2d_bake_words`
 				);
 			}
 		}
