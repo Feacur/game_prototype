@@ -114,12 +114,12 @@ static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token 
 	parser->panic = true;
 
 	static struct CString const c_json_token_names[] = {
-		[JSON_TOKEN_ERROR_IDENTIFIER]          = S_("identifier"),
-		[JSON_TOKEN_ERROR_UNKNOWN_CHARACTER]   = S_("unknown character"),
-		[JSON_TOKEN_ERROR_UNTERMINATED_STRING] = S_("unterminated string"),
-		[JSON_TOKEN_ERROR_UNESCAPED_CONTROL]   = S_("unescaped control"),
-		[JSON_TOKEN_ERROR_MALFORMED_UNICODE]   = S_("malformed unicode"),
-		[JSON_TOKEN_EOF]                       = S_("eof"),
+		[JSON_TOKEN_ERROR_IDENTIFIER]          = S__("identifier"),
+		[JSON_TOKEN_ERROR_UNKNOWN_CHARACTER]   = S__("unknown character"),
+		[JSON_TOKEN_ERROR_UNTERMINATED_STRING] = S__("unterminated string"),
+		[JSON_TOKEN_ERROR_UNESCAPED_CONTROL]   = S__("unescaped control"),
+		[JSON_TOKEN_ERROR_MALFORMED_UNICODE]   = S__("malformed unicode"),
+		[JSON_TOKEN_EOF]                       = S__("eof"),
 	};
 
 	struct CString const reason = c_json_token_names[token->type];

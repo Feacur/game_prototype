@@ -1311,12 +1311,12 @@ void graphics_to_gpu_library_init(void) {
 	gs_graphics_state.clip_space = (struct Gpu_Clip_Space){
 		.origin = {
 			0,
-			can_control_clip_space ? 0 : 1,
+			can_control_clip_space ? 0.0f : 1.0f,
 		},
-		.depth_near = reverse_z ? 1 : 0,
-		.depth_far  = reverse_z ? 0 : 1,
-		.ndc_near   = can_control_clip_space ? 0 : -1,
-		.ndc_far    = can_control_clip_space ? 1 :  1,
+		.depth_near = reverse_z ? 1.0f : 0.0f,
+		.depth_far  = reverse_z ? 0.0f : 1.0f,
+		.ndc_near   = can_control_clip_space ? 0.0f : -1.0f,
+		.ndc_far    = can_control_clip_space ? 1.0f :  1.0f,
 	};
 
 	// @todo: check if swapping `ndc_near` and `ndc_far` is any better

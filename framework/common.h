@@ -50,7 +50,10 @@ bool cstring_equals(struct CString v1, struct CString v2);
 bool cstring_starts(struct CString v1, struct CString v2);
 bool cstring_ends(struct CString v1, struct CString v2);
 
-#define S_(value) (struct CString){.length = sizeof(value) - 1, .data = "" value}
+// @note: MSVC issues `C2099: initializer is not a constant`
+//        when a designated initializer type is specified
+#define S__(value) {.length = sizeof(value) - 1, .data = "" value}
+#define S_(value) (struct CString)S__(value)
 
 // ----- ----- ----- ----- -----
 //     standard
