@@ -5,6 +5,7 @@
 #include "wfobj_scanner.h"
 
 struct WFObj_Scanner wfobj_scanner_init(char const * text) {
+	if (text == NULL) { text = ""; }
 	return (struct WFObj_Scanner){
 		.start = text,
 		.current = text,

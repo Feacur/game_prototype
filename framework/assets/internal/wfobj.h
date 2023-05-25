@@ -11,7 +11,9 @@ struct WFObj {
 	struct Array_U32 triangles;
 };
 
-struct WFObj wfobj_init(char const * text);
+struct WFObj wfobj_init(void);
 void wfobj_free(struct WFObj * obj);
+
+struct WFObj wfobj_parse(char const * text);
 
 #endif

@@ -12,9 +12,8 @@
 //
 #include "json.h"
 
-static struct JSON json_parser_process(char const * data);
-struct JSON json_init(char const * data) {
-	return json_parser_process(data);
+struct JSON json_init(void) {
+	return (struct JSON){0};
 }
 
 void json_free(struct JSON * value) {
@@ -61,7 +60,7 @@ uint32_t json_count(struct JSON const * value) {
 // -- JSON as data
 struct CString json_as_string(struct JSON const * value) {
 	if (value->type != JSON_STRING) { return (struct CString){0}; }
-	return string_system_get(value->as.id);
+	return string_system_get(value->as.string_id);
 }
 
 double json_as_number(struct JSON const * value) {
@@ -108,7 +107,7 @@ struct JSON_Parser {
 	bool error, panic;
 };
 
-static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token const * token, char const * message) {
+static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token const * token, struct CString message) {
 	parser->error = true;
 
 	if (parser->panic) { return; }
@@ -129,15 +128,15 @@ static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token 
 	logger_to_console(" [line: %u]", token->line + 1);
 	logger_to_console(" [context: '%.*s']", token->text.length, token->text.data);
 	if (reason.data != NULL) { logger_to_console(" [%.*s]", reason.length, reason.data); }
-	if (message != NULL) { logger_to_console(": %s", message); }
+	if (message.data != NULL) { logger_to_console(": %.*s", message.length, message.data); }
 	logger_to_console("\n");
 }
 
-static void json_parser_error_previous(struct JSON_Parser * parser, char const * message) {
+static void json_parser_error_previous(struct JSON_Parser * parser, struct CString message) {
 	json_parser_error_at(parser, &parser->previous, message);
 }
 
-static void json_parser_error_current(struct JSON_Parser * parser, char const * message) {
+static void json_parser_error_current(struct JSON_Parser * parser, struct CString message) {
 	json_parser_error_at(parser, &parser->current, message);
 }
 
@@ -153,7 +152,7 @@ static void json_parser_consume(struct JSON_Parser * parser) {
 			case JSON_TOKEN_ERROR_UNTERMINATED_STRING:
 			case JSON_TOKEN_ERROR_UNESCAPED_CONTROL:
 			case JSON_TOKEN_ERROR_MALFORMED_UNICODE:
-				json_parser_error_current(parser, "scanner error");
+				json_parser_error_current(parser, S_("scanner error"));
 				continue;
 
 			default: return;
@@ -199,12 +198,12 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		struct JSON entry_key;
 		json_parser_do_value(parser, &entry_key);
 		if (entry_key.type != JSON_STRING) {
-			json_parser_error_current(parser, "expected string");
+			json_parser_error_current(parser, S_("expected string"));
 			goto synchronization_point;
 		}
 
 		if (!json_parser_match(parser, JSON_TOKEN_COLON)) {
-			json_parser_error_previous(parser, "expected ':'");
+			json_parser_error_previous(parser, S_("expected ':'"));
 			goto synchronization_point;
 		}
 
@@ -215,9 +214,9 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		}
 
 		// add
-		bool const is_new = hash_table_u32_set(table, entry_key.as.id, &entry_value);
+		bool const is_new = hash_table_u32_set(table, entry_key.as.string_id, &entry_value);
 		if (!is_new) {
-			struct CString const key = string_system_get(entry_key.as.id);
+			struct CString const key = string_system_get(entry_key.as.string_id);
 			logger_to_console("key duplicate: \"%.*s\"\n", key.length, key.data);
 			DEBUG_BREAK();
 		}
@@ -226,7 +225,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		bool const is_comma = json_parser_match(parser, JSON_TOKEN_COMMA);
 		if (json_parser_match(parser, scope)) { break; }
 		if (is_comma) { continue; }
-		json_parser_error_previous(parser, "expected ',' or '}'");
+		json_parser_error_previous(parser, S_("expected ',' or '}'"));
 
 		synchronization_point:
 		json_parser_synchronize_object(parser);
@@ -256,7 +255,7 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 		bool const is_comma = json_parser_match(parser, JSON_TOKEN_COMMA);
 		if (json_parser_match(parser, scope)) { break; }
 		if (is_comma) { continue; }
-		json_parser_error_previous(parser, "expected ',' or ']'");
+		json_parser_error_previous(parser, S_("expected ',' or ']'"));
 
 		synchronization_point:
 		json_parser_synchronize_array(parser);
@@ -269,7 +268,7 @@ static void json_parser_do_string(struct JSON_Parser * parser, struct JSON * val
 		.data = parser->current.text.data + 1,
 	};
 	uint32_t const string_id = string_system_add(cstring);
-	*value = (struct JSON){.type = JSON_STRING, .as.id = string_id};
+	*value = (struct JSON){.type = JSON_STRING, .as.string_id = string_id};
 	json_parser_consume(parser);
 }
 
@@ -299,37 +298,30 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 		json_parser_do_array(parser, value); return;
 	}
 
-	json_parser_error_current(parser, "expected value");
+	json_parser_error_current(parser, S_("expected value"));
 	*value = c_json_error;
 }
 
-static struct JSON json_parser_process(char const * data) {
-	if (data == NULL) { return c_json_error; }
-
+struct JSON json_parse(char const * data) {
 	struct JSON_Parser parser = {
 		.scanner = json_scanner_init(data),
 	};
 	json_parser_consume(&parser);
 
-	struct JSON value;
-	if (parser.current.type == JSON_TOKEN_EOF) {
-		value = c_json_null;
-		goto finalize;
-	}
-
-	json_parser_do_value(&parser, &value);
+	struct JSON value = json_init();
 	if (parser.current.type != JSON_TOKEN_EOF) {
-		json_parser_error_current(&parser, "expected eof");
+		json_parser_do_value(&parser, &value);
+		if (parser.current.type != JSON_TOKEN_EOF) {
+			json_parser_error_current(&parser, S_("expected eof"));
+		}
 	}
 
 	if (parser.error) {
 		DEBUG_BREAK();
 		json_free(&value);
 		value = c_json_error;
-		goto finalize;
 	}
 
-	finalize:
 	json_scanner_free(&parser.scanner);
 	return value;
 }

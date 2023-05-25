@@ -5,6 +5,7 @@
 #include "json_scanner.h"
 
 struct JSON_Scanner json_scanner_init(char const * text) {
+	if (text == NULL) { text = ""; }
 	return (struct JSON_Scanner){
 		.start = text,
 		.current = text,

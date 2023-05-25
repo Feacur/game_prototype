@@ -60,7 +60,7 @@ static void asset_json_init(void * instance, struct CString name) {
 	}
 
 	*asset = (struct Asset_JSON){
-		.value = json_init((char const *)file_buffer.data),
+		.value = json_parse((char const *)file_buffer.data),
 	};
 	buffer_free(&file_buffer);
 }

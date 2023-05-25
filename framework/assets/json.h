@@ -21,14 +21,16 @@ struct JSON {
 	union {
 		struct Hash_Table_U32 table; // key string id : `struct JSON`
 		struct Array_Any array;      // `struct JSON`
-		uint32_t id;
+		uint32_t string_id;
 		double number;
 		bool boolean;
 	} as;
 };
 
-struct JSON json_init(char const * data);
+struct JSON json_init(void);
 void json_free(struct JSON * value);
+
+struct JSON json_parse(char const * data);
 
 // -- JSON get/at element
 struct JSON const * json_get(struct JSON const * value, struct CString key);

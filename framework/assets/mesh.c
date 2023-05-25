@@ -23,7 +23,7 @@ static struct Mesh mesh_construct(
 );
 
 struct Mesh mesh_init(struct Buffer const * buffer) {
-	struct WFObj wfobj = wfobj_init((char const *)buffer->data);
+	struct WFObj wfobj = wfobj_parse((char const *)buffer->data);
 
 	//
 	struct Array_Flt vertices;

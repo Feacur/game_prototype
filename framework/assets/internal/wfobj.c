@@ -7,9 +7,13 @@
 //
 #include "wfobj.h"
 
-inline static struct WFObj wfobj_init_internal(char const * text);
-struct WFObj wfobj_init(char const * text) {
-	return wfobj_init_internal(text);
+struct WFObj wfobj_init(void) {
+	return (struct WFObj){
+		.positions = array_flt_init(),
+		.texcoords = array_flt_init(),
+		.normals   = array_flt_init(),
+		.triangles = array_u32_init(),
+	};
 }
 
 void wfobj_free(struct WFObj * obj) {
@@ -168,15 +172,10 @@ static void wfobj_do_faces(
 #undef ADVANCE
 }
 
-inline static struct WFObj wfobj_init_internal(char const * text) {
+struct WFObj wfobj_parse(char const * text) {
 #define ADVANCE() wfobj_advance(&scanner, &token)
 
-	struct WFObj result = {
-		.positions = array_flt_init(),
-		.texcoords = array_flt_init(),
-		.normals   = array_flt_init(),
-		.triangles = array_u32_init(),
-	};
+	struct WFObj result = wfobj_init();
 
 	struct WFObj_Scanner scanner;
 	struct WFObj_Token token;
