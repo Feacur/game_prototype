@@ -288,7 +288,7 @@ static void system_signal_handler(int value) {
 #define STACKTRACE_OFFSET 7
 
 	logger_to_console(
-		"> System signal '0x%x'\n"
+		"> system signal '0x%x'\n"
 		"  type: %s\n"
 		,
 		value,

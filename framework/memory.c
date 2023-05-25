@@ -16,11 +16,7 @@ struct Memory_Header {
 	struct Callstack callstack;
 };
 
-static struct Memory_State {
-	struct Memory_Header * root;
-	uint32_t count;
-	size_t bytes;
-} gs_memory_state;
+static struct Memory_Header * gs_memory;
 
 void * memory_reallocate(void * pointer, size_t size) {
 	struct Callstack const callstack = platform_debug_get_callstack();
@@ -36,12 +32,8 @@ void * memory_reallocate(void * pointer, size_t size) {
 			return pointer;
 		}
 
-		// untrack memory
-		gs_memory_state.count--;
-		gs_memory_state.bytes -= pointer_header->size;
-
 		pointer_header->checksum = 0;
-		if (gs_memory_state.root == pointer_header) { gs_memory_state.root = pointer_header->next; }
+		if (gs_memory == pointer_header) { gs_memory = pointer_header->next; }
 		if (pointer_header->next != NULL) { pointer_header->next->prev = pointer_header->prev; }
 		if (pointer_header->prev != NULL) { pointer_header->prev->next = pointer_header->next; }
 	}
@@ -57,8 +49,6 @@ void * memory_reallocate(void * pointer, size_t size) {
 	// allocate or reallocate
 	struct Memory_Header * reallocated_header = realloc(pointer_header, sizeof(*pointer_header) + size);
 	if (reallocated_header != NULL) {
-		gs_memory_state.count++;
-		gs_memory_state.bytes += size;
 		*reallocated_header = (struct Memory_Header){
 			.checksum = (size_t)reallocated_header,
 			.size = size,
@@ -66,9 +56,9 @@ void * memory_reallocate(void * pointer, size_t size) {
 		};
 
 		// track memory
-		reallocated_header->next = gs_memory_state.root;
-		if (gs_memory_state.root != NULL) { gs_memory_state.root->prev = reallocated_header; }
-		gs_memory_state.root = reallocated_header;
+		reallocated_header->next = gs_memory;
+		if (gs_memory != NULL) { gs_memory->prev = reallocated_header; }
+		gs_memory = reallocated_header;
 
 		return reallocated_header + 1;
 	}
@@ -99,27 +89,34 @@ void * memory_reallocate_without_tracking(void * pointer, size_t size) {
 #include "framework/internal/memory_to_system.h"
 
 bool memory_to_system_cleanup(void) {
-	if (gs_memory_state.root == NULL) { return false; }
+	if (gs_memory == NULL) { return false; }
 
 	uint32_t const pointer_digits_count = 12;
 
-	uint32_t bytes_digits_count = 0;
-	{
-		for (size_t v = gs_memory_state.bytes; v > 0; v = v / 10) {
-			bytes_digits_count++;
-		}
+	uint32_t total_count = 0;
+	uint64_t total_bytes = 0;
+	for (struct Memory_Header * it = gs_memory; it; it = it->next) {
+		total_count++;
+		total_bytes += it->size;
+	}
 
+	uint32_t bytes_digits_count = 0;
+	for (size_t v = total_bytes; v > 0; v = v / 10) {
+		bytes_digits_count++;
+	}
+
+	{
 		uint32_t const header_blank_offset = ((pointer_digits_count >= 8) ? (pointer_digits_count - 8) : 0);
 		logger_to_console(
-			"> Memory report%*s(bytes: %*.zu | count: %u):\n"
+			"> memory report%*s(bytes: %*.zu | count: %u):\n"
 			,
 			header_blank_offset, "",
-			bytes_digits_count,  gs_memory_state.bytes,
-			gs_memory_state.count
+			bytes_digits_count,  total_bytes,
+			total_count
 		);
 	}
 
-	for (struct Memory_Header const * it = gs_memory_state.root; it != NULL; it = it->next) {
+	for (struct Memory_Header const * it = gs_memory; it != NULL; it = it->next) {
 		struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack, 1);
 		logger_to_console(
 			"  [0x%0*.zx] (bytes: %*.zu) stacktrace:\n"
@@ -131,8 +128,8 @@ bool memory_to_system_cleanup(void) {
 		);
 	}
 
-	while (gs_memory_state.root != NULL) {
-		void * pointer = (gs_memory_state.root + 1);
+	while (gs_memory != NULL) {
+		void * pointer = (gs_memory + 1);
 		memory_reallocate(pointer, 0);
 	}
 

@@ -131,7 +131,7 @@ void report_callstack(uint32_t offset) {
 	struct Callstack const callstack = platform_debug_get_callstack();
 	struct CString const stacktrace = platform_debug_get_stacktrace(callstack, offset + 1);
 	logger_to_console(
-		"> Callstack:\n"
+		"> callstack:\n"
 		"%.*s"
 		,
 		stacktrace.length, stacktrace.data
