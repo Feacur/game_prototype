@@ -26,11 +26,11 @@ struct Font {
 	bool rendered;
 };
 
-// @note: supposed to be the same size as `uint64_t`
 struct Typeface_Key {
 	uint32_t codepoint;
 	float size; // @note: differs from scale
 };
+STATIC_ASSERT(sizeof(struct Typeface_Key) == sizeof(uint64_t), font);
 
 //
 #include "font.h"

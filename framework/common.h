@@ -78,12 +78,12 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 
 typedef void * Allocator(void * pointer, size_t size);
 
-#define STRINGIFY_A_VALUE(v) #v
-#define STRINGIFY_A_MACRO(m) STRINGIFY_A_VALUE(m)
-#define TOKENIZE_A_VALUE(v1, v2) v1##v2
-#define TOKENIZE_A_MACRO(m1, m2) TOKENIZE_A_VALUE(m1, m2)
+#define STR_TKN(v) #v
+#define STR_MCR(m) STR_TKN(m)
+#define CAT_TKN(v1, v2) v1 ## v2
+#define CAT_MCR(m1, m2) CAT_TKN(m1, m2)
 
-#define FILE_AND_LINE __FILE__ ":" STRINGIFY_A_MACRO(__LINE__)
+#define FILE_AND_LINE __FILE__ ":" STR_MCR(__LINE__)
 #define S_FILE_AND_LINE S_(FILE_AND_LINE)
 
 #define SIZE_OF_ARRAY(array) (sizeof(array) / sizeof(*array))
@@ -134,10 +134,21 @@ void report_callstack(uint32_t offset);
 	#define REPORT_CALLSTACK(offset) report_callstack(offset)
 #endif
 
-#if !defined(DEBUG_BREAK)
+#if !defined(REPORT_CALLSTACK)
 	#define REPORT_CALLSTACK(offset) (void)0
 #endif
 
+// ----- ----- ----- ----- -----
+//     callstack
+// ----- ----- ----- ----- -----
+
+#if !defined(GAME_TARGET_OPTIMIZED)
+	#define STATIC_ASSERT(condition, token) \
+		typedef char CAT_MCR(static_assert__ ## token ## _, __LINE__)[(condition)?1:-1]
+#endif
+
+#if !defined(STATIC_ASSERT)
+	#define STATIC_ASSERT(condition, token) (void)0
 #endif
 
 // ----- ----- ----- ----- -----
@@ -145,3 +156,5 @@ void report_callstack(uint32_t offset);
 // ----- ----- ----- ----- -----
 
 // https://sourceforge.net/p/predef/wiki/Home/
+
+#endif
