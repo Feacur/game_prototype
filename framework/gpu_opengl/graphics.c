@@ -15,7 +15,7 @@
 #include "framework/graphics/types.h"
 #include "framework/graphics/material.h"
 
-#include "framework/systems/uniform_system.h"
+#include "framework/systems/string_system.h"
 #include "framework/systems/material_system.h"
 
 #include "functions.h"
@@ -35,7 +35,7 @@ struct Gpu_Uniform_Internal {
 
 struct Gpu_Program {
 	GLuint id;
-	struct Hash_Table_U32 uniforms; // uniform string id : `struct Gpu_Program_Field_Internal`
+	struct Hash_Table_U32 uniforms; // uniform string id : `struct Gpu_Uniform_Internal`
 	// @idea: add an optional asset source
 };
 
@@ -292,7 +292,7 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 			uniform_name.length -= 3; // arrays have suffix `[0]`
 		}
 
-		uint32_t const id = uniform_system_add(uniform_name);
+		uint32_t const id = string_system_add(uniform_name);
 		hash_table_u32_set(&program.uniforms, id, &(struct Gpu_Uniform_Internal){
 			.base = {
 				.type = interpret_gl_type(params[PARAM_TYPE]),

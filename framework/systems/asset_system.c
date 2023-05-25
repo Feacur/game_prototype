@@ -1,18 +1,19 @@
 #include "framework/logger.h"
 
+#include "framework/systems/string_system.h"
+
 //
 #include "asset_system.h"
 
 static struct Asset_System {
-	struct Strings strings; // extensions, types, names
-	struct Hash_Table_U32 handles; // name string id : instance handle
-	struct Hash_Table_U32 types; // type string id : callbacks and instances
-	struct Hash_Table_U32 map; // extension string id : type string id
+	struct Hash_Table_U32 handles; // name string id : `struct Handle`
+	struct Hash_Table_U32 types;   // type string id : `struct Asset_Type`
+	struct Hash_Table_U32 map;     // extension string id : type string id
 } gs_asset_system;
 
 struct Asset_Type {
 	struct Asset_Callbacks callbacks;
-	struct Handle_Table instances;
+	struct Handle_Table instances; // `struct Asset_Entry`, variable type sizes
 };
 
 struct Asset_Entry {
@@ -28,7 +29,6 @@ static struct CString asset_system_name_to_extension(struct CString name);
 
 void asset_system_init(void) {
 	gs_asset_system = (struct Asset_System){
-		.strings = strings_init(),
 		.types = hash_table_u32_init(sizeof(struct Asset_Type)),
 		.handles = hash_table_u32_init(sizeof(struct Handle)),
 		.map = hash_table_u32_init(sizeof(uint32_t)),
@@ -39,7 +39,6 @@ void asset_system_free(void) {
 	FOR_HASH_TABLE_U32 (&gs_asset_system.types, it) {
 		asset_system_del_type_internal(it.value);
 	}
-	strings_free(&gs_asset_system.strings);
 	hash_table_u32_free(&gs_asset_system.types);
 	hash_table_u32_free(&gs_asset_system.handles);
 	hash_table_u32_free(&gs_asset_system.map);
@@ -47,9 +46,9 @@ void asset_system_free(void) {
 }
 
 void asset_system_map_extension(struct CString type, struct CString extension) {
-	uint32_t const type_id = strings_add(&gs_asset_system.strings, type);
+	uint32_t const type_id = string_system_add(type);
 	if (type_id == 0) { logger_to_console("empty type\n"); goto fail; }
-	uint32_t const extension_id = strings_add(&gs_asset_system.strings, extension);
+	uint32_t const extension_id = string_system_add(extension);
 	if (extension_id == 0) { logger_to_console("empty extension\n"); goto fail; }
 	hash_table_u32_set(&gs_asset_system.map, extension_id, &type_id);
 
@@ -58,12 +57,12 @@ void asset_system_map_extension(struct CString type, struct CString extension) {
 }
 
 bool asset_system_match_type(struct Asset_Handle handle, struct CString type) {
-	struct CString const asset_type = strings_get(&gs_asset_system.strings, handle.type_id);
+	struct CString const asset_type = string_system_get(handle.type_id);
 	return cstring_equals(asset_type, type);
 }
 
 void asset_system_set_type(struct CString type, struct Asset_Callbacks callbacks, uint32_t value_size) {
-	uint32_t const type_id = strings_add(&gs_asset_system.strings, type);
+	uint32_t const type_id = string_system_add(type);
 	if (type_id == 0) { logger_to_console("empty type\n"); goto fail; }
 
 	hash_table_u32_set(&gs_asset_system.types, type_id, &(struct Asset_Type){
@@ -80,7 +79,7 @@ void asset_system_set_type(struct CString type, struct Asset_Callbacks callbacks
 }
 
 void asset_system_del_type(struct CString type) {
-	uint32_t const type_id = strings_find(&gs_asset_system.strings, type);
+	uint32_t const type_id = string_system_find(type);
 	if (type_id == 0) { logger_to_console("unknown type: %.*s\n", type.length, type.data); goto fail; }
 
 	struct Asset_Type * asset_type = asset_system_get_type(type_id);
@@ -94,12 +93,12 @@ void asset_system_del_type(struct CString type) {
 }
 
 struct Asset_Handle asset_system_aquire(struct CString name) {
-	uint32_t name_id = strings_add(&gs_asset_system.strings, name);
+	uint32_t name_id = string_system_add(name);
 	if (name_id == 0) { logger_to_console("empty name\n"); goto fail; }
 
 	//
 	struct CString const extension = asset_system_name_to_extension(name);
-	uint32_t const extension_id = strings_find(&gs_asset_system.strings, extension);
+	uint32_t const extension_id = string_system_find(extension);
 	if (extension_id == 0) { logger_to_console("unknown extension: %.*s\n", extension.length, extension.data); goto fail; }
 
 	uint32_t const * type_id_ptr = hash_table_u32_get(&gs_asset_system.map, extension_id);
@@ -177,7 +176,7 @@ void * asset_system_aquire_instance(struct CString name) {
 }
 
 struct CString asset_system_get_name(struct Asset_Handle handle) {
-	return strings_get(&gs_asset_system.strings, handle.name_id);
+	return string_system_get(handle.name_id);
 }
 
 //
@@ -185,7 +184,7 @@ struct CString asset_system_get_name(struct Asset_Handle handle) {
 static struct Asset_Type * asset_system_get_type(uint32_t id) {
 	struct Asset_Type * type = hash_table_u32_get(&gs_asset_system.types, id);
 	if (type == NULL) {
-		struct CString const type_string = strings_get(&gs_asset_system.strings, id);
+		struct CString const type_string = string_system_get(id);
 		logger_to_console("unknown type: %.*s\n", type_string.length, type_string.data); DEBUG_BREAK();
 	}
 	return type;

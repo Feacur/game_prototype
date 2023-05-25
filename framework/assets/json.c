@@ -2,7 +2,8 @@
 #include "framework/parsing.h"
 
 #include "framework/containers/buffer.h"
-#include "framework/containers/strings.h"
+
+#include "framework/systems/string_system.h"
 
 #include "internal/json_scanner.h"
 
@@ -11,9 +12,9 @@
 //
 #include "json.h"
 
-static struct JSON json_init_internal(struct Strings * strings, char const * data);
-struct JSON json_init(struct Strings * strings, char const * data) {
-	return json_init_internal(strings, data);
+static struct JSON json_parser_process(char const * data);
+struct JSON json_init(char const * data) {
+	return json_parser_process(data);
 }
 
 void json_free(struct JSON * value) {
@@ -40,8 +41,7 @@ void json_free(struct JSON * value) {
 // -- JSON get/at element
 struct JSON const * json_get(struct JSON const * value, struct CString key) {
 	if (value->type != JSON_OBJECT) { DEBUG_BREAK(); return &c_json_error; }
-	if (value->strings == NULL) { DEBUG_BREAK(); return &c_json_error; }
-	uint32_t const key_id = strings_find(value->strings, key);
+	uint32_t const key_id = string_system_find(key);
 	if (key_id == 0) { return &c_json_null; }
 	void const * result = hash_table_u32_get(&value->as.table, key_id);
 	return (result != NULL) ? result : &c_json_null;
@@ -61,7 +61,7 @@ uint32_t json_count(struct JSON const * value) {
 // -- JSON as data
 struct CString json_as_string(struct JSON const * value) {
 	if (value->type != JSON_STRING) { return (struct CString){0}; }
-	return strings_get(value->strings, value->as.id);
+	return string_system_get(value->as.id);
 }
 
 double json_as_number(struct JSON const * value) {
@@ -103,7 +103,6 @@ bool json_at_boolean(struct JSON const * value, uint32_t index) {
 //
 
 struct JSON_Parser {
-	struct Strings * strings; // keys, string values
 	struct JSON_Scanner scanner;
 	struct JSON_Token previous, current;
 	bool error, panic;
@@ -115,21 +114,21 @@ static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token 
 	if (parser->panic) { return; }
 	parser->panic = true;
 
-	static char const * c_json_token_names[] = {
-		[JSON_TOKEN_ERROR_IDENTIFIER]          = "identifier",
-		[JSON_TOKEN_ERROR_UNKNOWN_CHARACTER]   = "unknown character",
-		[JSON_TOKEN_ERROR_UNTERMINATED_STRING] = "unterminated string",
-		[JSON_TOKEN_ERROR_UNESCAPED_CONTROL]   = "unescaped control",
-		[JSON_TOKEN_ERROR_MALFORMED_UNICODE]   = "malformed unicode",
-		[JSON_TOKEN_EOF]                       = "eof",
+	static struct CString const c_json_token_names[] = {
+		[JSON_TOKEN_ERROR_IDENTIFIER]          = S_("identifier"),
+		[JSON_TOKEN_ERROR_UNKNOWN_CHARACTER]   = S_("unknown character"),
+		[JSON_TOKEN_ERROR_UNTERMINATED_STRING] = S_("unterminated string"),
+		[JSON_TOKEN_ERROR_UNESCAPED_CONTROL]   = S_("unescaped control"),
+		[JSON_TOKEN_ERROR_MALFORMED_UNICODE]   = S_("malformed unicode"),
+		[JSON_TOKEN_EOF]                       = S_("eof"),
 	};
 
-	char const * const reason = c_json_token_names[token->type];
+	struct CString const reason = c_json_token_names[token->type];
 
 	logger_to_console("json");
 	logger_to_console(" [line: %u]", token->line + 1);
 	logger_to_console(" [context: '%.*s']", token->text.length, token->text.data);
-	if (reason != NULL) { logger_to_console(" [%s]", reason); }
+	if (reason.data != NULL) { logger_to_console(" [%.*s]", reason.length, reason.data); }
 	if (message != NULL) { logger_to_console(": %s", message); }
 	logger_to_console("\n");
 }
@@ -188,7 +187,7 @@ static void json_parser_synchronize_array(struct JSON_Parser * parser) {
 
 static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * value);
 static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * value) {
-	*value = (struct JSON){.strings = parser->strings, .type = JSON_OBJECT,};
+	*value = (struct JSON){.type = JSON_OBJECT};
 	struct Hash_Table_U32 * table = &value->as.table;
 	*table = hash_table_u32_init(sizeof(struct JSON));
 
@@ -218,7 +217,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		// add
 		bool const is_new = hash_table_u32_set(table, entry_key.as.id, &entry_value);
 		if (!is_new) {
-			struct CString const key = strings_get(parser->strings, entry_key.as.id);
+			struct CString const key = string_system_get(entry_key.as.id);
 			logger_to_console("key duplicate: \"%.*s\"\n", key.length, key.data);
 			DEBUG_BREAK();
 		}
@@ -235,7 +234,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 }
 
 static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * value) {
-	*value = (struct JSON){.strings = parser->strings, .type = JSON_ARRAY,};
+	*value = (struct JSON){.type = JSON_ARRAY};
 	struct Array_Any * array = &value->as.array;
 	*array = array_any_init(sizeof(struct JSON));
 
@@ -269,14 +268,14 @@ static void json_parser_do_string(struct JSON_Parser * parser, struct JSON * val
 		.length = parser->current.text.length - 2,
 		.data = parser->current.text.data + 1,
 	};
-	uint32_t const string_id = strings_add(parser->strings, cstring);
-	*value = (struct JSON){.strings = parser->strings, .type = JSON_STRING, .as.id = string_id,};
+	uint32_t const string_id = string_system_add(cstring);
+	*value = (struct JSON){.type = JSON_STRING, .as.id = string_id};
 	json_parser_consume(parser);
 }
 
 static void json_parser_do_number(struct JSON_Parser * parser, struct JSON * value) {
 	double const number = parse_double(parser->current.text.data);
-	*value = (struct JSON){.strings = parser->strings, .type = JSON_NUMBER, .as.number = number,};
+	*value = (struct JSON){.type = JSON_NUMBER, .as.number = number};
 	json_parser_consume(parser);
 }
 
@@ -304,12 +303,10 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 	*value = c_json_error;
 }
 
-static struct JSON json_init_internal(struct Strings * strings, char const * data) {
-	if (strings == NULL) { return c_json_error; }
+static struct JSON json_parser_process(char const * data) {
 	if (data == NULL) { return c_json_error; }
 
 	struct JSON_Parser parser = {
-		.strings = strings,
 		.scanner = json_scanner_init(data),
 	};
 	json_parser_consume(&parser);
@@ -338,7 +335,7 @@ static struct JSON json_init_internal(struct Strings * strings, char const * dat
 }
 
 //
-struct JSON const c_json_true  = {.type = JSON_BOOLEAN, .as.boolean = true,};
-struct JSON const c_json_false = {.type = JSON_BOOLEAN, .as.boolean = false,};
-struct JSON const c_json_null  = {.type = JSON_NULL,};
-struct JSON const c_json_error = {.type = JSON_ERROR,};
+struct JSON const c_json_true  = {.type = JSON_BOOLEAN, .as.boolean = true};
+struct JSON const c_json_false = {.type = JSON_BOOLEAN, .as.boolean = false};
+struct JSON const c_json_null  = {.type = JSON_NULL};
+struct JSON const c_json_error = {.type = JSON_ERROR};

@@ -8,7 +8,7 @@
 #include "framework/maths.h"
 #include "framework/input.h"
 
-#include "framework/systems/uniform_system.h"
+#include "framework/systems/string_system.h"
 #include "framework/systems/material_system.h"
 #include "framework/systems/asset_system.h"
 
@@ -38,7 +38,6 @@
 #include "ui.h"
 
 static struct Main_Settings {
-	struct Strings strings;
 	uint32_t config_id;
 	uint32_t scene_id;
 } gs_main_settings;
@@ -76,7 +75,7 @@ static void prototype_tick_entities_rect(void) {
 }
 
 static void prototype_tick_entities_rotation_mode(void) {
-	float const delta_time = (float)application_get_delta_time();
+	float const dt = (float)application_get_delta_time();
 	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
 		struct Entity * entity = array_any_at(&gs_game.entities, entity_i);
 
@@ -85,19 +84,19 @@ static void prototype_tick_entities_rotation_mode(void) {
 
 			case ENTITY_ROTATION_MODE_X: {
 				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
-					(struct vec3){1 * delta_time, 0, 0}
+					(struct vec3){1 * dt, 0, 0}
 				)));
 			} break;
 
 			case ENTITY_ROTATION_MODE_Y: {
 				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
-					(struct vec3){0, 1 * delta_time, 0}
+					(struct vec3){0, 1 * dt, 0}
 				)));
 			} break;
 
 			case ENTITY_ROTATION_MODE_Z: {
 				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
-					(struct vec3){0, 0, 1 * delta_time}
+					(struct vec3){0, 0, 1 * dt}
 				)));
 			} break;
 		}
@@ -156,7 +155,7 @@ static void prototype_init(void) {
 		return;
 	}
 
-	struct CString const scene_path = strings_get(&gs_main_settings.strings, gs_main_settings.scene_id);
+	struct CString const scene_path = string_system_get(gs_main_settings.scene_id);
 	process_json(scene_path, &gs_game, game_fill_scene);
 	gpu_execute(1, &(struct GPU_Command){
 		.type = GPU_COMMAND_TYPE_CULL,
@@ -358,10 +357,10 @@ static void prototype_draw_objects(void) {
 static struct CString prototype_get_fps_cstring(void) {
 	static char buffer[32];
 
-	double const delta_time = application_get_delta_time();
-	uint32_t const fps = (uint32_t)r64_floor(1.0 / delta_time);
+	double const dt = application_get_delta_time();
+	uint32_t const fps = (uint32_t)r64_floor(1.0 / dt);
 
-	uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, "FPS: %03d (%.5f ms)", fps, delta_time);
+	uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, "FPS: %03d (%.5f ms)", fps, dt);
 	return (struct CString){.length = length, .data = buffer};
 }
 
@@ -454,11 +453,9 @@ static void main_fill_settings(struct JSON const * json, void * data) {
 	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
 	if (data != &gs_main_settings) { DEBUG_BREAK(); return; }
 	struct Main_Settings * result = data;
-	*result = (struct Main_Settings){
-		.strings = strings_init(),
-	};
-	result->config_id = strings_add(&result->strings, json_get_string(json, S_("config")));
-	result->scene_id = strings_add(&result->strings, json_get_string(json, S_("scene")));
+	*result = (struct Main_Settings){0};
+	result->config_id = string_system_add(json_get_string(json, S_("config")));
+	result->scene_id = string_system_add(json_get_string(json, S_("scene")));
 }
 
 static void main_fill_config(struct JSON const * json, void * data) {
@@ -478,11 +475,12 @@ static void main_fill_config(struct JSON const * json, void * data) {
 }
 
 static void main_run_application(void) {
+	string_system_init();
 	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
 	if (gs_main_settings.config_id == 0) { goto fail; }
 
 	struct Application_Config config = {0};
-	struct CString const config_path = strings_get(&gs_main_settings.strings, gs_main_settings.config_id);
+	struct CString const config_path = string_system_get(gs_main_settings.config_id);
 	process_json(config_path, &config, main_fill_config);
 
 	logger_to_console("launched application\n");
@@ -498,7 +496,7 @@ static void main_run_application(void) {
 	logger_to_console("application has ended\n");
 
 	finalize:
-	strings_free(&gs_main_settings.strings);
+	string_system_free();
 	common_memset(&gs_main_settings, 0, sizeof(gs_main_settings));
 	return;
 

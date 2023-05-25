@@ -2,7 +2,7 @@
 #include "framework/containers/hash_table_u32.h"
 #include "framework/graphics/types.h"
 #include "framework/graphics/gpu_objects.h"
-#include "framework/systems/uniform_system.h"
+#include "framework/systems/string_system.h"
 
 #include <malloc.h>
 
@@ -32,12 +32,12 @@ void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {
 }
 
 struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, struct CString name, uint32_t offset) {
-	uint32_t const id = uniform_system_find(name);
+	uint32_t const id = string_system_find(name);
 	return gfx_uniforms_id_get(uniforms, id, offset);
 }
 
 void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, struct CString name, struct CArray value) {
-	uint32_t const id = uniform_system_add(name);
+	uint32_t const id = string_system_add(name);
 	gfx_uniforms_id_push(uniforms, id, value);
 }
 
@@ -90,7 +90,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_h
 
 	uint32_t payload_bytes = 0, properties_count = 0;
 	FOR_HASH_TABLE_U32(uniforms, it) {
-		struct CString const uniform_name = uniform_system_get(it.key_hash);
+		struct CString const uniform_name = string_system_get(it.key_hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 
 		struct Gpu_Uniform const * uniform = it.value;
@@ -103,7 +103,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_h
 	common_memset(material->uniforms.payload.data, 0, payload_bytes);
 
 	FOR_HASH_TABLE_U32(uniforms, it) {
-		struct CString const uniform_name = uniform_system_get(it.key_hash);
+		struct CString const uniform_name = string_system_get(it.key_hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 
 		struct Gpu_Uniform const * uniform = it.value;

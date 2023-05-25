@@ -17,15 +17,12 @@ void process_json(struct CString path, void * data, void (* action)(struct JSON 
 	struct Buffer file_buffer = platform_file_read_entire(path);
 	if (file_buffer.capacity == 0) { action(&c_json_error, data); return; }
 
-	struct Strings strings = strings_init();
-
-	struct JSON json = json_init(&strings, (char const *)file_buffer.data);
+	struct JSON json = json_init((char const *)file_buffer.data);
 	buffer_free(&file_buffer);
 
 	action(&json, data);
 
 	json_free(&json);
-	strings_free(&strings);
 }
 
 // ----- ----- ----- ----- -----

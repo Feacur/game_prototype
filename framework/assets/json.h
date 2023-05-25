@@ -17,11 +17,9 @@ enum JSON_Type {
 };
 
 struct JSON {
-	// @note: the same `strings` pointer is meant to be shared throughout the entire JSON tree
-	struct Strings const * strings; // keys, string values
 	enum JSON_Type type;
 	union {
-		struct Hash_Table_U32 table; // key string id : json value
+		struct Hash_Table_U32 table; // key string id : `struct JSON`
 		struct Array_Any array;      // `struct JSON`
 		uint32_t id;
 		double number;
@@ -29,7 +27,7 @@ struct JSON {
 	} as;
 };
 
-struct JSON json_init(struct Strings * strings, char const * data);
+struct JSON json_init(char const * data);
 void json_free(struct JSON * value);
 
 // -- JSON get/at element

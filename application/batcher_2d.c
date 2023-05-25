@@ -15,7 +15,7 @@
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_command.h"
 
-#include "framework/systems/uniform_system.h"
+#include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
 
@@ -195,7 +195,7 @@ void batcher_2d_set_shader(
 }
 
 void batcher_2d_uniforms_push(struct Batcher_2D * batcher, struct CString name, struct CArray value) {
-	uint32_t const id = uniform_system_add(name);
+	uint32_t const id = string_system_add(name);
 	batcher_2d_uniforms_id_push(batcher, id, value);
 }
 

@@ -25,7 +25,7 @@ void handle_table_clear(struct Handle_Table * handle_table) {
 	handle_table->free_sparse_index = 0;
 	common_memset(handle_table->dense, 0, sizeof(*handle_table->dense) * handle_table->buffer.capacity);
 	for (uint32_t i = 0; i < handle_table->buffer.capacity; i++) {
-		handle_table->sparse[i] = (struct Handle){.id = i + 1,};
+		handle_table->sparse[i] = (struct Handle){.id = i + 1};
 	}
 }
 
@@ -50,7 +50,7 @@ void handle_table_resize(struct Handle_Table * handle_table, uint32_t target_cap
 
 	common_memset(handle_table->dense + capacity, 0, sizeof(*handle_table->dense) * (handle_table->buffer.capacity - capacity));
 	for (uint32_t i = capacity; i < handle_table->buffer.capacity; i++) {
-		handle_table->sparse[i] = (struct Handle){.id = i + 1,};
+		handle_table->sparse[i] = (struct Handle){.id = i + 1};
 	}
 }
 

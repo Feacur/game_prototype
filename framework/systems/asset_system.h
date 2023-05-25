@@ -1,7 +1,6 @@
 #if !defined(FRAMEWORK_SYSTEMS_ASSET_SYSTEM)
 #define FRAMEWORK_SYSTEMS_ASSET_SYSTEM
 
-#include "framework/containers/strings.h"
 #include "framework/containers/hash_table_u32.h"
 #include "framework/containers/handle_table.h"
 

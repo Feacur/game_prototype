@@ -62,7 +62,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 	};
 
 	DWORD source_offset = 0;
-	IMAGEHLP_LINE64 source = {.SizeOfStruct = sizeof(source),};
+	IMAGEHLP_LINE64 source = {.SizeOfStruct = sizeof(source)};
 
 	HANDLE const process = GetCurrentProcess();
 	for (uint32_t i = offset + 1, last = callstack.count; i < last; i++) {

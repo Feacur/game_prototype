@@ -50,16 +50,6 @@ static void asset_bytes_free(void * instance) {
 //     Asset json part
 // ----- ----- ----- ----- -----
 
-static struct Strings gs_asset_json_strings;
-
-static void asset_json_type_init(void) {
-	gs_asset_json_strings = strings_init();
-}
-
-static void asset_json_type_free(void) {
-	strings_free(&gs_asset_json_strings);
-}
-
 static void asset_json_init(void * instance, struct CString name) {
 	struct Asset_JSON * asset = instance;
 
@@ -70,7 +60,7 @@ static void asset_json_init(void * instance, struct CString name) {
 	}
 
 	*asset = (struct Asset_JSON){
-		.value = json_init(&gs_asset_json_strings, (char const *)file_buffer.data),
+		.value = json_init((char const *)file_buffer.data),
 	};
 	buffer_free(&file_buffer);
 }
@@ -336,8 +326,6 @@ void asset_types_init(void) {
 	}, sizeof(struct Asset_Bytes));
 
 	asset_system_set_type(S_("json"), (struct Asset_Callbacks){
-		.type_init = asset_json_type_init,
-		.type_free = asset_json_type_free,
 		.init = asset_json_init,
 		.free = asset_json_free,
 	}, sizeof(struct Asset_JSON));
