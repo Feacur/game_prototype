@@ -450,36 +450,40 @@ static bool app_window_close(void) {
 // ----- ----- ----- ----- -----
 
 static void main_fill_settings(struct JSON const * json, void * data) {
-	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
-	if (data != &gs_main_settings) { DEBUG_BREAK(); return; }
 	struct Main_Settings * result = data;
 	*result = (struct Main_Settings){0};
+
+	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
+	if (data != &gs_main_settings) { DEBUG_BREAK(); return; }
+
 	result->config_id = string_system_add(json_get_string(json, S_("config")));
 	result->scene_id = string_system_add(json_get_string(json, S_("scene")));
 }
 
 static void main_fill_config(struct JSON const * json, void * data) {
-	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
 	struct Application_Config * result = data;
-	*result = (struct Application_Config){
-		.size = {
-			.x = (uint32_t)json_get_number(json, S_("size_x")),
-			.y = (uint32_t)json_get_number(json, S_("size_y")),
-		},
-		.resizable = json_get_boolean(json, S_("resizable")),
-		.vsync               = (int32_t)json_get_number(json, S_("vsync")),
-		.target_refresh_rate = (uint32_t)json_get_number(json, S_("target_refresh_rate")),
-		.fixed_refresh_rate  = (uint32_t)json_get_number(json, S_("fixed_refresh_rate")),
-		.slow_frames_limit   = (uint32_t)json_get_number(json, S_("slow_frames_limit")),
+	*result = (struct Application_Config){0};
+
+	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
+
+	result->size = (struct uvec2){
+		.x = (uint32_t)json_get_number(json, S_("size_x")),
+		.y = (uint32_t)json_get_number(json, S_("size_y")),
 	};
+	result->resizable = json_get_boolean(json, S_("resizable"));
+	result->vsync               = (int32_t)json_get_number(json, S_("vsync"));
+	result->target_refresh_rate = (uint32_t)json_get_number(json, S_("target_refresh_rate"));
+	result->fixed_refresh_rate  = (uint32_t)json_get_number(json, S_("fixed_refresh_rate"));
+	result->slow_frames_limit   = (uint32_t)json_get_number(json, S_("slow_frames_limit"));
 }
 
 static void main_run_application(void) {
 	string_system_init();
+
 	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
 	if (gs_main_settings.config_id == 0) { goto fail; }
 
-	struct Application_Config config = {0};
+	struct Application_Config config;
 	struct CString const config_path = string_system_get(gs_main_settings.config_id);
 	process_json(config_path, &config, main_fill_config);
 
@@ -497,7 +501,6 @@ static void main_run_application(void) {
 
 	finalize:
 	string_system_free();
-	common_memset(&gs_main_settings, 0, sizeof(gs_main_settings));
 	return;
 
 	// process errors
