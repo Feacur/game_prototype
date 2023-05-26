@@ -91,7 +91,7 @@ void * memory_reallocate_without_tracking(void * pointer, size_t size) {
 bool memory_to_system_cleanup(void) {
 	if (gs_memory == NULL) { return false; }
 
-	uint32_t const pointer_digits_count = 12;
+	uint32_t const pointer_digits_count = sizeof(size_t) * 2;
 
 	uint32_t total_count = 0;
 	uint64_t total_bytes = 0;
@@ -106,25 +106,26 @@ bool memory_to_system_cleanup(void) {
 	}
 
 	{
-		uint32_t const header_blank_offset = ((pointer_digits_count >= 8) ? (pointer_digits_count - 8) : 0);
+		struct CString const header = S_("memory report");
 		logger_to_console(
-			"> memory report%*s(bytes: %*.zu | count: %u):\n"
-			,
-			header_blank_offset, "",
-			bytes_digits_count,  total_bytes,
-			total_count
+			"> %-*.*s (bytes: %*.zu | count: %u):\n"
+			""
+			, pointer_digits_count + 4 // compensate for [0x]
+			, header.length, header.data
+			, bytes_digits_count,  total_bytes
+			, total_count
 		);
 	}
 
 	for (struct Memory_Header const * it = gs_memory; it != NULL; it = it->next) {
 		struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack, 1);
 		logger_to_console(
-			"  [0x%0*.zx] (bytes: %*.zu) stacktrace:\n"
+			"  [0x%.*zx] (bytes: %*.zu) stacktrace:\n"
 			"%.*s"
-			,
-			pointer_digits_count, (size_t)(it + 1),
-			bytes_digits_count,   it->size,
-			stacktrace.length,    stacktrace.data
+			""
+			, pointer_digits_count, (size_t)(it + 1)
+			, bytes_digits_count,   it->size
+			, stacktrace.length,    stacktrace.data
 		);
 	}
 

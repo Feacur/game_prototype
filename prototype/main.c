@@ -360,7 +360,7 @@ static struct CString prototype_get_fps_cstring(void) {
 	double const dt = application_get_delta_time();
 	uint32_t const fps = (uint32_t)r64_floor(1.0 / dt);
 
-	uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, "FPS: %03d (%.5f ms)", fps, dt);
+	uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, "FPS: %3d (%.5f ms)", fps, dt);
 	return (struct CString){.length = length, .data = buffer};
 }
 

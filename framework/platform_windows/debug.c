@@ -92,10 +92,11 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 		uint32_t const written = logger_to_buffer(
 			(uint32_t)(gs_platform_debug.buffer.capacity - gs_platform_debug.buffer.size),
 			(char *)gs_platform_debug.buffer.data + gs_platform_debug.buffer.size,
-			"%.*s at '%.*s:%u'\n",
-			symbol_length, symbol_data,
-			source_length, source_data,
-			(source_length > 0) ? (uint32_t)source.LineNumber : 0
+			"%.*s at '%.*s:%u'\n"
+			""
+			, symbol_length, symbol_data
+			, source_length, source_data
+			, (source_length > 0) ? (uint32_t)source.LineNumber : 0
 		);
 		gs_platform_debug.buffer.size += written;
 

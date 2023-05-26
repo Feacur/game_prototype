@@ -129,9 +129,10 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 		uint32_t const json_elements_count = max_u32(1, json_count(uniform_json));
 		if (json_elements_count != uniform_count) {
 			logger_to_console(
-				"uniform `%.*s` size mismatch: expected %u, found %u\n",
-				uniform_name.length, uniform_name.data,
-				uniform_count, json_elements_count
+				"uniform `%.*s` size mismatch: expected %u, found %u\n"
+				""
+				, uniform_name.length, uniform_name.data
+				, uniform_count, json_elements_count
 			); DEBUG_BREAK();
 		}
 

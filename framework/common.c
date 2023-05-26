@@ -133,7 +133,7 @@ void report_callstack(uint32_t offset) {
 	logger_to_console(
 		"> callstack:\n"
 		"%.*s"
-		,
-		stacktrace.length, stacktrace.data
+		""
+		, stacktrace.length, stacktrace.data
 	);
 }

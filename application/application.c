@@ -45,8 +45,8 @@ static bool application_init(void) {
 	logger_to_console(
 		"> system status:\n"
 		"  power .. %s\n"
-		,
-		platform_system_is_powered() ? "on" : "off"
+		""
+		, platform_system_is_powered() ? "on" : "off"
 	);
 
 	logger_to_console(
@@ -56,12 +56,12 @@ static bool application_init(void) {
 		"  target rate .. %u\n"
 		"  fixed rate ... %u\n"
 		"  slow frames .. %u\n"
-		,
-		gs_app.config.size.x, gs_app.config.size.y,
-		gs_app.config.vsync,
-		gs_app.config.target_refresh_rate,
-		gs_app.config.fixed_refresh_rate,
-		gs_app.config.slow_frames_limit
+		""
+		, gs_app.config.size.x, gs_app.config.size.y
+		, gs_app.config.vsync
+		, gs_app.config.target_refresh_rate
+		, gs_app.config.fixed_refresh_rate
+		, gs_app.config.slow_frames_limit
 	);
 
 	// setup window

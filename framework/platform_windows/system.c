@@ -290,9 +290,9 @@ static void system_signal_handler(int value) {
 	logger_to_console(
 		"> system signal '0x%x'\n"
 		"  type: %s\n"
-		,
-		value,
-		system_signal_get_type(value)
+		""
+		, value
+		, system_signal_get_type(value)
 	);
 	REPORT_CALLSTACK(STACKTRACE_OFFSET); DEBUG_BREAK();
 

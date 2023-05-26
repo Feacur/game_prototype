@@ -1276,16 +1276,16 @@ void graphics_to_gpu_library_init(void) {
 		"  vertices ...... %d\n"
 		"  indices ....... %d\n"
 		"  uniforms ...... %d\n"
-		,
-		max_units,
-		max_units_fragment_shader,
-		max_units_vertex_shader,
-		max_units_compute_shader,
-		max_texture_size,
-		max_renderbuffer_size,
-		max_elements_vertices,
-		max_elements_indices,
-		max_uniform_locations
+		""
+		, max_units
+		, max_units_fragment_shader
+		, max_units_vertex_shader
+		, max_units_compute_shader
+		, max_texture_size
+		, max_renderbuffer_size
+		, max_elements_vertices
+		, max_elements_indices
+		, max_uniform_locations
 	);
 
 	gs_graphics_state.limits = (struct Graphics_State_Limits){
@@ -1468,12 +1468,12 @@ static void __stdcall opengl_debug_message_callback(
 		"  source:   %s\n"
 		"  type:     %s\n"
 		"  message:  %.*s\n"
-		,
-		id,
-		opengl_debug_get_severity(severity),
-		opengl_debug_get_source(source),
-		opengl_debug_get_type(type),
-		length, message
+		""
+		, id
+		, opengl_debug_get_severity(severity)
+		, opengl_debug_get_source(source)
+		, opengl_debug_get_type(type)
+		, length, message
 	);
 	REPORT_CALLSTACK(STACKTRACE_OFFSET); DEBUG_BREAK();
 
