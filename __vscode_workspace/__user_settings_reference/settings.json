@@ -9,6 +9,7 @@
 	"security.workspace.trust.untrustedFiles": "open",
 	"files.refactoring.autoSave": false,
 	"scm.autoReveal": false,
+	"telemetry.telemetryLevel": "off",
 	// files
 	"files.trimFinalNewlines": false,
 	"files.trimTrailingWhitespace": false,

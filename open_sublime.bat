@@ -4,7 +4,7 @@ setlocal
 
 rem |> PREPARE TOOLS
 call :check_editor || (
-	set "PATH=%PATH%;C:/Program Files/Sublime Text/"
+	set "PATH=%PATH%;C:/Program Files/Sublime Text"
 	call :check_editor || (
 		echo.can't find editor
 		goto :eof
