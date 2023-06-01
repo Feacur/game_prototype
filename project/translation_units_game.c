@@ -12,7 +12,7 @@
 #include "framework/graphics/types.c"
 #include "framework/graphics/material.c"
 
-#include "framework/containers/internal.c"
+#include "framework/containers/internal/helpers.c"
 #include "framework/containers/buffer.c"
 #include "framework/containers/array_any.c"
 #include "framework/containers/array_flt.c"

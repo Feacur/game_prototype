@@ -1,6 +1,6 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
-#include "internal.h"
+#include "internal/helpers.h"
 
 //
 #include "hash_set_u32.h"

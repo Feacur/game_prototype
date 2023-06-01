@@ -6,7 +6,7 @@
 #define GROWTH_DIV 2
 
 //
-#include "internal.h"
+#include "helpers.h"
 
 uint32_t grow_capacity_value_u32(uint32_t current, uint32_t delta) {
 #if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
