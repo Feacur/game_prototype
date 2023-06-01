@@ -468,6 +468,10 @@ void gpu_texture_get_size(struct Handle handle, uint32_t * x, uint32_t * y) {
 		*x = gpu_texture->size_x;
 		*y = gpu_texture->size_y;
 	}
+	else {
+		*x = 0;
+		*y = 0;
+	}
 }
 
 void gpu_texture_update(struct Handle handle, struct Image const * asset) {

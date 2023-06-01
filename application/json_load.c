@@ -3,6 +3,7 @@
 #include "framework/maths.h"
 #include "framework/json_read.h"
 
+#include "framework/containers/buffer.h"
 #include "framework/containers/hash_table_u32.h"
 
 #include "framework/graphics/gpu_objects.h"
@@ -87,9 +88,6 @@ static struct Handle json_load_texture(struct JSON const * json) {
 		return asset->gpu_handle;
 	}
 
-	logger_to_console("unknown texture asset type\n"); DEBUG_BREAK();
-	return (struct Handle){0};
-
 	// process errors
 	fail: logger_to_console("failed to load texture asset\n");
 	return (struct Handle){0};
@@ -109,75 +107,82 @@ static void json_load_many_texture(struct JSON const * json, uint32_t length, st
 
 static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * material) {
 	struct Hash_Table_U32 const * gpu_program_uniforms = gpu_program_get_uniforms(material->gpu_program_handle);
-	if (gpu_program_uniforms == NULL) { goto fail; }
+	if (gpu_program_uniforms == NULL) { goto fail_uniforms; }
 
 	// @todo: arena/stack allocator
-	struct Array_Any uniform_data_buffer = array_any_init(sizeof(uint8_t));
+	struct Buffer uniform_data_buffer = buffer_init(NULL);
 
-	FOR_HASH_TABLE_U32(gpu_program_uniforms, it) {
-		struct Gpu_Uniform const * gpu_uniform = it.value;
-		struct CString const uniform_name = string_system_get(it.key_hash);
+	FOR_GFX_UNIFORMS(&material->uniforms, it) {
+		struct Gpu_Uniform const * gpu_uniform = hash_table_u32_get(gpu_program_uniforms, it.id);
+		struct CString const uniform_name = string_system_get(it.id);
+
+		uint32_t const uniform_bytes = data_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;
+		if (it.size != uniform_bytes) { goto fail_size; }
+
 		struct JSON const * uniform_json = json_get(json, uniform_name);
-
 		if (uniform_json->type == JSON_NULL) { continue; }
 
 		uint32_t const uniform_count = data_type_get_count(gpu_uniform->type) * gpu_uniform->array_size;
-		uint32_t const uniform_bytes = data_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;
-
-		array_any_ensure(&uniform_data_buffer, uniform_bytes);
-
 		uint32_t const json_elements_count = max_u32(1, json_count(uniform_json));
-		if (json_elements_count != uniform_count) {
-			logger_to_console(
-				"uniform `%.*s` size mismatch: expected %u, found %u\n"
-				""
-				, uniform_name.length, uniform_name.data
-				, uniform_count, json_elements_count
-			); DEBUG_BREAK();
-		}
+		if (json_elements_count != uniform_count) { goto fail_count; }
 
+		buffer_ensure(&uniform_data_buffer, it.size);
 		switch (data_type_get_element_type(gpu_uniform->type)) {
-			default: logger_to_console("unknown data type\n"); DEBUG_BREAK(); break;
+			default: goto fail_type;
 
 			case DATA_TYPE_UNIT_U:
 			case DATA_TYPE_UNIT_S:
 			case DATA_TYPE_UNIT_F: {
 				json_load_many_texture(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_id_push(&material->uniforms, it.key_hash, (struct CArray){
-					.size = sizeof(struct Handle) * uniform_count,
-					.data = uniform_data_buffer.data,
-				});
 			} break;
 
 			case DATA_TYPE_R32_U: {
 				json_read_many_u32(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_id_push(&material->uniforms, it.key_hash, (struct CArray){
-					.size = sizeof(uint32_t) * uniform_count,
-					.data = uniform_data_buffer.data,
-				});
 			} break;
 
 			case DATA_TYPE_R32_S: {
 				json_read_many_s32(uniform_json,uniform_count,  uniform_data_buffer.data);
-				gfx_uniforms_id_push(&material->uniforms, it.key_hash, (struct CArray){
-					.size = sizeof(int32_t) * uniform_count,
-					.data = uniform_data_buffer.data,
-				});
 			} break;
 
 			case DATA_TYPE_R32_F: {
 				json_read_many_flt(uniform_json, uniform_count, uniform_data_buffer.data);
-				gfx_uniforms_id_push(&material->uniforms, it.key_hash, (struct CArray){
-					.size = sizeof(float) * uniform_count,
-					.data = uniform_data_buffer.data,
-				});
 			} break;
 		}
+
+		common_memcpy(it.value, uniform_data_buffer.data, it.size);
+		continue;
+
+		// process errors
+		fail_type: DEBUG_BREAK();
+		logger_to_console("unknown data type\n");
+
+		fail_count: DEBUG_BREAK();
+		if (json_elements_count != uniform_count) {
+			logger_to_console(
+				"uniform `%.*s` length mismatch: expected %u, json %u\n"
+				""
+				, uniform_name.length, uniform_name.data
+				, uniform_count, json_elements_count
+			);
+		}
+
+		fail_size: DEBUG_BREAK();
+		if (it.size != uniform_bytes) {
+			logger_to_console(
+				"uniform `%.*s` size mismatch: expected %u, material %u\n"
+				""
+				, uniform_name.length, uniform_name.data
+				, uniform_bytes, it.size
+			);
+		}
+
+		common_memset(uniform_data_buffer.data, 0, it.size);
 	}
 
-	array_any_free(&uniform_data_buffer);
+	buffer_free(&uniform_data_buffer);
 	return;
 
 	// process errors
-	fail: logger_to_console("failed to fill uniforms\n");
+	fail_uniforms: DEBUG_BREAK();
+	logger_to_console("failed to fill uniforms\n");
 }

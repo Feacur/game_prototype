@@ -177,9 +177,9 @@ static void prototype_tick_entities(void) {
 	// }
 
 	prototype_tick_cameras();
-	prototype_tick_entities_rect();
 	prototype_tick_entities_rotation_mode();
 	prototype_tick_entities_quad_2d();
+	prototype_tick_entities_rect();
 }
 
 static void prototype_draw_objects(void) {

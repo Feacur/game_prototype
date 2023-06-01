@@ -16,6 +16,12 @@ struct Gfx_Uniforms_Entry {
 	uint32_t size, offset;
 };
 
+struct Gfx_Uniforms_Iterator {
+	uint32_t current, next;
+	uint32_t id, size;
+	void * value;
+};
+
 struct Gfx_Uniforms {
 	struct Array_Any headers; // `struct Gfx_Uniforms_Entry`
 	struct Buffer payload;
@@ -31,6 +37,13 @@ void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, struct CString name, stru
 
 struct CArray_Mut gfx_uniforms_id_get(struct Gfx_Uniforms const * uniforms, uint32_t id, uint32_t offset);
 void gfx_uniforms_id_push(struct Gfx_Uniforms * uniforms, uint32_t id, struct CArray value);
+
+bool gfx_uniforms_iterate(struct Gfx_Uniforms const * uniforms, struct Gfx_Uniforms_Iterator * iterator);
+
+#define FOR_GFX_UNIFORMS(data, it) for ( \
+	struct Gfx_Uniforms_Iterator it = {0}; \
+	gfx_uniforms_iterate(data, &it); \
+) \
 
 // ----- ----- ----- ----- -----
 //     material

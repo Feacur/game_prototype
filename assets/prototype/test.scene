@@ -91,9 +91,9 @@
 			"camera_uid": 2,
 			"material": "assets/materials/test.font.material",
 			"rect": {
-				"anchor_min": [1, 0],
-				"anchor_max": [1, 0],
-				"pivot": [1, 0],
+				"anchor_min": [0, 1],
+				"anchor_max": [0, 1],
+				"pivot": [0, 1],
 			},
 			"type": "quad_2d",
 			"view": [0, 0, 1, 1],

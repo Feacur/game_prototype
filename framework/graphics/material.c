@@ -1,4 +1,3 @@
-#include "framework/logger.h"
 #include "framework/containers/hash_table_u32.h"
 #include "framework/graphics/types.h"
 #include "framework/graphics/gpu_objects.h"
@@ -64,6 +63,20 @@ void gfx_uniforms_id_push(struct Gfx_Uniforms * uniforms, uint32_t id, struct CA
 	buffer_push_many(&uniforms->payload, value.size, value.data);
 }
 
+bool gfx_uniforms_iterate(struct Gfx_Uniforms const * uniforms, struct Gfx_Uniforms_Iterator * iterator) {
+	while (iterator->next < uniforms->headers.count) {
+		uint32_t const index = iterator->next++;
+		iterator->current = index;
+		//
+		struct Gfx_Uniforms_Entry const * entry = array_any_at(&uniforms->headers, index);
+		iterator->id = entry->id;
+		iterator->size = entry->size;
+		iterator->value = (uint8_t *)uniforms->payload.data + entry->offset;
+		return true;
+	}
+	return false;
+}
+
 // ----- ----- ----- ----- -----
 //     material
 // ----- ----- ----- ----- -----
@@ -82,8 +95,6 @@ void gfx_material_free(struct Gfx_Material * material) {
 void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_handle) {
 	struct CString const property_prefix = S_("p_");
 
-	gfx_uniforms_clear(&material->uniforms);
-
 	material->gpu_program_handle = gpu_handle;
 	struct Hash_Table_U32 const * uniforms = gpu_program_get_uniforms(gpu_handle);
 	if (uniforms == NULL) { return; }
@@ -98,9 +109,9 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_h
 		properties_count++;
 	}
 
+	gfx_uniforms_clear(&material->uniforms);
 	array_any_resize(&material->uniforms.headers, properties_count);
 	buffer_resize(&material->uniforms.payload, payload_bytes);
-	common_memset(material->uniforms.payload.data, 0, payload_bytes);
 
 	FOR_HASH_TABLE_U32(uniforms, it) {
 		struct CString const uniform_name = string_system_get(it.key_hash);
@@ -111,4 +122,5 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_h
 			.size = data_type_get_size(uniform->type) * uniform->array_size,
 		});
 	}
+	common_memset(material->uniforms.payload.data, 0, payload_bytes);
 }
