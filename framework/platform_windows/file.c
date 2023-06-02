@@ -19,12 +19,10 @@ struct File {
 };
 
 struct Buffer platform_file_read_entire(struct CString path) {
-	if (path.data == NULL) { goto fail_path; }
-
 	struct Buffer buffer = buffer_init(NULL);
 
 	struct File * file = platform_file_init(path, FILE_MODE_READ);
-	if (file == NULL) { return (struct Buffer){0}; }
+	if (file == NULL) { goto finalize; }
 
 	uint64_t const size = platform_file_size(file);
 	if (size == 0) { goto finalize; }
@@ -41,11 +39,6 @@ struct Buffer platform_file_read_entire(struct CString path) {
 	finalize:
 	if (file != NULL) { platform_file_free(file); }
 	return buffer;
-
-	// process errors
-	fail_path:
-	logger_to_console("file path is empty\n");
-	return (struct Buffer){0};
 }
 
 void platform_file_delete(struct CString path) {
@@ -63,6 +56,8 @@ void platform_file_delete(struct CString path) {
 
 static HANDLE platform_file_internal_create(struct CString path, enum File_Mode mode);
 struct File * platform_file_init(struct CString path, enum File_Mode mode) {
+	if (path.data == NULL) { return NULL; }
+
 	HANDLE handle = platform_file_internal_create(path, mode);
 	if (handle == INVALID_HANDLE_VALUE) { goto fail; }
 
@@ -70,16 +65,15 @@ struct File * platform_file_init(struct CString path, enum File_Mode mode) {
 	*file = (struct File){
 		.handle = handle,
 		.mode = mode,
+		.path_length = path.length,
+		.path = MEMORY_ALLOCATE_ARRAY(char, path.length),
 	};
-
-	file->path_length = path.length;
-	file->path = MEMORY_ALLOCATE_ARRAY(char, path.length);
 	common_memcpy(file->path, path.data, file->path_length);
 
 	return file;
 
 	// process errors
-	fail:
+	fail: DEBUG_BREAK();
 	logger_to_console("'CreateFile' failed; \"%.*s\"\n", path.length, path.data);
 	return NULL;
 }

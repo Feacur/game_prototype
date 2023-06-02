@@ -117,18 +117,33 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 		struct CString const uniform_name = string_system_get(it.id);
 
 		uint32_t const uniform_bytes = data_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;
-		if (it.size != uniform_bytes) { goto fail_size; }
+		if (it.size != uniform_bytes) {
+			logger_to_console(
+				"uniform `%.*s` size mismatch: expected %u, material %u\n"
+				""
+				, uniform_name.length, uniform_name.data
+				, uniform_bytes, it.size
+			); goto fail_field;
+		}
 
 		struct JSON const * uniform_json = json_get(json, uniform_name);
 		if (uniform_json->type == JSON_NULL) { continue; }
 
 		uint32_t const uniform_count = data_type_get_count(gpu_uniform->type) * gpu_uniform->array_size;
 		uint32_t const json_elements_count = max_u32(1, json_count(uniform_json));
-		if (json_elements_count != uniform_count) { goto fail_count; }
+		if (json_elements_count != uniform_count) {
+			logger_to_console(
+				"uniform `%.*s` length mismatch: expected %u, json %u\n"
+				""
+				, uniform_name.length, uniform_name.data
+				, uniform_count, json_elements_count
+			); goto fail_field;
+		}
 
 		buffer_ensure(&uniform_data_buffer, it.size);
 		switch (data_type_get_element_type(gpu_uniform->type)) {
-			default: goto fail_type;
+			default: logger_to_console("unknown data type\n");
+				goto fail_field;
 
 			case DATA_TYPE_UNIT_U:
 			case DATA_TYPE_UNIT_S:
@@ -153,30 +168,9 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 		continue;
 
 		// process errors
-		fail_type: DEBUG_BREAK();
-		logger_to_console("unknown data type\n");
-
-		fail_count: DEBUG_BREAK();
-		if (json_elements_count != uniform_count) {
-			logger_to_console(
-				"uniform `%.*s` length mismatch: expected %u, json %u\n"
-				""
-				, uniform_name.length, uniform_name.data
-				, uniform_count, json_elements_count
-			);
-		}
-
-		fail_size: DEBUG_BREAK();
-		if (it.size != uniform_bytes) {
-			logger_to_console(
-				"uniform `%.*s` size mismatch: expected %u, material %u\n"
-				""
-				, uniform_name.length, uniform_name.data
-				, uniform_bytes, it.size
-			);
-		}
-
+		fail_field: DEBUG_BREAK();
 		common_memset(uniform_data_buffer.data, 0, it.size);
+
 	}
 
 	buffer_free(&uniform_data_buffer);
@@ -184,5 +178,5 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 	// process errors
 	fail_uniforms: DEBUG_BREAK();
-	logger_to_console("failed to fill uniforms\n");
+	logger_to_console("missing shader uniforms\n");
 }

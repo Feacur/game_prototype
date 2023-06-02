@@ -16,14 +16,14 @@ static struct Application {
 	struct Application_Config config;
 	struct Application_Callbacks callbacks;
 
-	bool is_inited, should_exit;
+	bool should_exit;
 	struct Window * window;
 	struct Gpu_Context * gpu_context;
 
 	struct Application_Ticks {
-		uint64_t elapsed, per_second;
-		uint64_t fixed_accumulator;
+		uint64_t elapsed;
 		uint64_t frame_start;
+		uint64_t fixed_accumulator;
 	} ticks;
 } gs_app;
 
@@ -32,16 +32,16 @@ static uint64_t get_target_ticks(int32_t vsync_mode) {
 	uint32_t const refresh_rate = ((vsync_mode != 0) || (gs_app.config.target_refresh_rate == 0))
 		? platform_window_get_refresh_rate(gs_app.window, gs_app.config.target_refresh_rate)
 		: gs_app.config.target_refresh_rate;
-	return gs_app.ticks.per_second * vsync_factor / refresh_rate;
+	return platform_timer_get_ticks_per_second() * vsync_factor / refresh_rate;
 }
 
 static uint64_t get_fixed_ticks(uint64_t target_ticks) {
 	return (gs_app.config.fixed_refresh_rate > 0)
-		? gs_app.ticks.per_second / gs_app.config.fixed_refresh_rate
+		? platform_timer_get_ticks_per_second() / gs_app.config.fixed_refresh_rate
 		: target_ticks;
 }
 
-static bool application_init(void) {
+static void application_init(void) {
 	logger_to_console(
 		"> system status:\n"
 		"  power .. %s\n"
@@ -73,38 +73,27 @@ static bool application_init(void) {
 	if (gs_app.config.resizable) { window_config.settings |= WINDOW_SETTINGS_RESIZABLE; }
 
 	gs_app.window = platform_window_init(window_config, gs_app.callbacks.window_callbacks);
-	if (gs_app.window == NULL) { goto fail_window; }
-	platform_window_focus(gs_app.window);
-
+	if (gs_app.window == NULL) { goto finalize; }
 	platform_window_start_frame(gs_app.window);
-	gs_app.gpu_context = gpu_context_init(platform_window_get_cached_device(gs_app.window));
-	if (gs_app.gpu_context == NULL) { goto fail_gpu_context; }
 
+	gs_app.gpu_context = gpu_context_init(platform_window_get_cached_device(gs_app.window));
+	if (gs_app.gpu_context == NULL) { goto finalize; }
 	gpu_context_start_frame(gs_app.gpu_context, platform_window_get_cached_device(gs_app.window));
 
 	// setup timer, rewind it one frame
-	gs_app.ticks.per_second = platform_timer_get_ticks_per_second();
 	gpu_context_set_vsync(gs_app.gpu_context, gs_app.config.vsync);
 	int32_t const vsync_mode = gpu_context_get_vsync(gs_app.gpu_context);
 	gs_app.ticks.elapsed     = get_target_ticks(vsync_mode);
 	gs_app.ticks.frame_start = platform_timer_get_ticks() - gs_app.ticks.elapsed;
+	gs_app.ticks.fixed_accumulator = 0;
 
+	finalize:
 	if (gs_app.callbacks.init != NULL) {
 		gs_app.callbacks.init();
 	}
 
-	gpu_context_end_frame();
-	platform_window_end_frame(gs_app.window);
-
-	gs_app.is_inited = true;
-	return true;
-
-	// process errors
-	fail_gpu_context:
-	platform_window_end_frame(gs_app.window);
-
-	fail_window:
-	return false;
+	if (gs_app.gpu_context != NULL) { gpu_context_end_frame(gs_app.gpu_context); }
+	if (gs_app.window != NULL) { platform_window_end_frame(gs_app.window); }
 }
 
 static void application_free(void) {
@@ -128,7 +117,7 @@ static void application_draw_frame(void) {
 
 static void application_end_frame(void) {
 	platform_window_end_frame(gs_app.window);
-	gpu_context_end_frame();
+	gpu_context_end_frame(gs_app.gpu_context);
 }
 
 void application_update(void) {
@@ -194,10 +183,16 @@ void application_run(struct Application_Config config, struct Application_Callba
 	gs_app.config = config;
 	gs_app.callbacks = callbacks;
 	gs_app.should_exit = false;
-	if (application_init()) {
-		while (!gs_app.should_exit) { application_update(); }
-		application_free();
-	}
+
+	application_init();
+	if (gs_app.window == NULL) { goto finalize; }
+	if (gs_app.gpu_context == NULL) { goto finalize; }
+
+	platform_window_focus(gs_app.window);
+	while (!gs_app.should_exit) { application_update(); }
+
+	finalize:
+	application_free();
 }
 
 void application_exit(void) {
@@ -211,7 +206,5 @@ struct uvec2 application_get_screen_size(void) {
 }
 
 double application_get_delta_time(void) {
-	return (double)gs_app.ticks.elapsed / (double)gs_app.ticks.per_second;
+	return (double)gs_app.ticks.elapsed / (double)platform_timer_get_ticks_per_second();
 }
-
-bool application_is_inited(void) { return gs_app.is_inited; }

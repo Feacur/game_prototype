@@ -88,7 +88,6 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 	if (window == NULL) { goto fail_window; }
 	if (!SetProp(handle, TEXT(HANDLE_PROP_WINDOW_NAME), window)) { goto fail_window; }
 
-	RECT client_rect; GetClientRect(handle, &client_rect);
 	*window = (struct Window){
 		.config = config,
 		.callbacks = callbacks,
@@ -107,6 +106,7 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 	fail_handle: DEBUG_BREAK();
 	if (handle != NULL) { DestroyWindow(handle); }
 	else { logger_to_console("failed to create platform window\n"); }
+
 	return NULL;
 }
 

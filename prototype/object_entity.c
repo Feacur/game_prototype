@@ -26,11 +26,12 @@ struct uvec2 entity_get_content_size(
 
 			struct Gfx_Material const * material = material_system_take(material_handle);
 			struct CArray_Mut const field = gfx_uniforms_id_get(&material->uniforms, quad->uniform_id, 0);
-			struct Handle const * gpu_texture_handle = field.data;
-			if (gpu_texture_handle == NULL) { goto fail; }
+
+			if (field.data == NULL) { return (struct uvec2){0, 0}; }
+			struct Handle const gpu_texture_handle = *(struct Handle *)field.data;
 
 			uint32_t texture_size_x, texture_size_y;
-			gpu_texture_get_size(*gpu_texture_handle, &texture_size_x, &texture_size_y);
+			gpu_texture_get_size(gpu_texture_handle, &texture_size_x, &texture_size_y);
 
 			return (struct uvec2){
 				(uint32_t)r32_floor((float)texture_size_x * clamp_r32(quad->view.max.x - quad->view.min.x, 0, 1)),
@@ -57,9 +58,5 @@ struct uvec2 entity_get_content_size(
 	}
 
 	logger_to_console("unknown entity type\n"); DEBUG_BREAK();
-	return (struct uvec2){0};
-
-	// process errors
-	fail:
 	return (struct uvec2){0};
 }

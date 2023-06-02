@@ -23,7 +23,6 @@ struct Asset_Entry {
 	uint8_t payload[FLEXIBLE_ARRAY];
 };
 
-static struct Asset_Type * asset_system_get_type(uint32_t id);
 static void asset_system_del_type_internal(struct Asset_Type * asset_type);
 static struct CString asset_system_name_to_extension(struct CString name);
 
@@ -63,50 +62,39 @@ bool asset_system_match_type(struct Asset_Handle handle, struct CString type) {
 
 void asset_system_set_type(struct CString type, struct Asset_Callbacks callbacks, uint32_t value_size) {
 	uint32_t const type_id = string_system_add(type);
-	if (type_id == 0) { logger_to_console("empty type\n"); goto fail; }
-
 	hash_table_u32_set(&gs_asset_system.types, type_id, &(struct Asset_Type){
 		.callbacks = callbacks,
 		.instances = handle_table_init(SIZE_OF_MEMBER(struct Asset_Entry, header) + value_size),
 	});
-
 	if (callbacks.type_init != NULL) {
 		callbacks.type_init();
 	}
-
-	return;
-	fail: DEBUG_BREAK();
 }
 
 void asset_system_del_type(struct CString type) {
 	uint32_t const type_id = string_system_find(type);
-	if (type_id == 0) { logger_to_console("unknown type: %.*s\n", type.length, type.data); goto fail; }
-
-	struct Asset_Type * asset_type = asset_system_get_type(type_id);
+	struct Asset_Type * asset_type = hash_table_u32_get(&gs_asset_system.types, type_id);
 	if (asset_type != NULL) {
 		asset_system_del_type_internal(asset_type);
 		hash_table_u32_del(&gs_asset_system.types, type_id);
 	}
-
-	return;
-	fail: DEBUG_BREAK();
 }
 
 struct Asset_Handle asset_system_aquire(struct CString name) {
 	uint32_t name_id = string_system_add(name);
-	if (name_id == 0) { logger_to_console("empty name\n"); goto fail; }
+	if (name_id == 0) { return (struct Asset_Handle){0}; }
 
 	//
 	struct CString const extension = asset_system_name_to_extension(name);
 	uint32_t const extension_id = string_system_find(extension);
-	if (extension_id == 0) { logger_to_console("unknown extension: %.*s\n", extension.length, extension.data); goto fail; }
+	if (extension_id == 0) { return (struct Asset_Handle){0}; }
 
 	uint32_t const * type_id_ptr = hash_table_u32_get(&gs_asset_system.map, extension_id);
 	uint32_t const type_id = (type_id_ptr != NULL) ? *type_id_ptr : extension_id;
 
 	//
-	struct Asset_Type * asset_type = asset_system_get_type(type_id);
-	if (asset_type == NULL) { goto fail; }
+	struct Asset_Type * asset_type = hash_table_u32_get(&gs_asset_system.types, type_id);
+	if (asset_type == NULL) { return (struct Asset_Handle){0}; }
 
 	//
 	struct Handle const * instance_handle_ptr = hash_table_u32_get(&gs_asset_system.handles, name_id);
@@ -134,40 +122,29 @@ struct Asset_Handle asset_system_aquire(struct CString name) {
 		.type_id = type_id,
 		.name_id = name_id,
 	};
-
-	// process errors
-	fail: DEBUG_BREAK();
-	return (struct Asset_Handle){0};
 }
 
 void asset_system_discard(struct Asset_Handle handle) {
-	struct Asset_Type * asset_type = asset_system_get_type(handle.type_id);
-	if (asset_type == NULL) { goto fail; }
-
-	//
 	hash_table_u32_del(&gs_asset_system.handles, handle.name_id);
-	struct Asset_Entry * entry = handle_table_get(&asset_type->instances, handle.instance_handle);
-	if (entry != NULL) {
-		if (asset_type->callbacks.free != NULL) {
-			asset_type->callbacks.free(entry->payload);
-		}
-		handle_table_discard(&asset_type->instances, handle.instance_handle);
-	}
 
-	return;
-	fail: DEBUG_BREAK();
+	struct Asset_Type * asset_type = hash_table_u32_get(&gs_asset_system.types, handle.type_id);
+	if (asset_type == NULL) { return; }
+
+	struct Asset_Entry * entry = handle_table_get(&asset_type->instances, handle.instance_handle);
+	if (entry != NULL) { return; }
+
+	if (asset_type->callbacks.free != NULL) {
+		asset_type->callbacks.free(entry->payload);
+	}
+	handle_table_discard(&asset_type->instances, handle.instance_handle);
 }
 
 void * asset_system_take(struct Asset_Handle handle) {
-	struct Asset_Type * asset_type = asset_system_get_type(handle.type_id);
-	if (asset_type == NULL) { goto fail; }
-
-	//
-	struct Asset_Entry * entry = handle_table_get(&asset_type->instances, handle.instance_handle);
+	struct Asset_Type * asset_type = hash_table_u32_get(&gs_asset_system.types, handle.type_id);
+	struct Asset_Entry * entry = (asset_type != NULL)
+		? handle_table_get(&asset_type->instances, handle.instance_handle)
+		: NULL;
 	return (entry != NULL) ? entry->payload : NULL;
-
-	fail: DEBUG_BREAK();
-	return NULL;
 }
 
 void * asset_system_aquire_instance(struct CString name) {
@@ -180,15 +157,6 @@ struct CString asset_system_get_name(struct Asset_Handle handle) {
 }
 
 //
-
-static struct Asset_Type * asset_system_get_type(uint32_t id) {
-	struct Asset_Type * type = hash_table_u32_get(&gs_asset_system.types, id);
-	if (type == NULL) {
-		struct CString const type_string = string_system_get(id);
-		logger_to_console("unknown type: %.*s\n", type_string.length, type_string.data); DEBUG_BREAK();
-	}
-	return type;
-}
 
 static void asset_system_del_type_internal(struct Asset_Type * asset_type) {
 	FOR_HANDLE_TABLE (&asset_type->instances, it) {

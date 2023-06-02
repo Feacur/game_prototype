@@ -42,11 +42,13 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 
 	gs_platform_system = (struct Platform_System){
 		.callbacks = callbacks,
-		.module = GetModuleHandle(NULL),
+		.module  = GetModuleHandle(NULL),
 		.process = GetCurrentProcess(),
 		.thread  = GetCurrentThread(),
 	};
-	if (gs_platform_system.module == NULL) { goto fail; }
+	if (gs_platform_system.module  == NULL) { goto fail; }
+	if (gs_platform_system.process == NULL) { goto fail; }
+	if (gs_platform_system.thread  == NULL) { goto fail; }
 
 	// @note: might as well lock main thread
 	//        https://docs.microsoft.com/windows/win32/dxtecharts/game-timing-and-multicore-processors
@@ -188,8 +190,8 @@ static void system_set_process_dpi_awareness(void) {
 	}
 
 	finalize:
-	if (User32_dll != NULL) { FreeLibrary(User32_dll); User32_dll = NULL; }
-	if (Shcore_dll != NULL) { FreeLibrary(Shcore_dll); Shcore_dll = NULL; }
+	if (User32_dll != NULL) { FreeLibrary(User32_dll); }
+	if (Shcore_dll != NULL) { FreeLibrary(Shcore_dll); }
 
 	// https://docs.microsoft.com/windows/win32/hidpi/setting-the-default-dpi-awareness-for-a-process
 }

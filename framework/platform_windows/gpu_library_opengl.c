@@ -110,15 +110,11 @@ struct Gpu_Context {
 
 static HGLRC create_context_auto(HDC device, HGLRC shared, struct Pixel_Format * selected_pixel_format);
 struct Gpu_Context * gpu_context_init(void * device) {
-	if (device == NULL) { goto fail_device; }
-
 	struct Pixel_Format pixel_format;
 	HGLRC const handle = create_context_auto(device, NULL, &pixel_format);
-	if (handle == NULL) { goto fail_context; }
+	if (handle == NULL) { goto fail; }
 
-	BOOL const context_is_current = gs_gpu_library.dll.MakeCurrent(device, handle);
-	if (!context_is_current) { goto fail_context; }
-
+	gs_gpu_library.dll.MakeCurrent(device, handle);
 	graphics_to_gpu_library_init();
 	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 
@@ -131,13 +127,8 @@ struct Gpu_Context * gpu_context_init(void * device) {
 	return gpu_context;
 
 	// process errors
-	fail_context: DEBUG_BREAK();
-	if (handle != NULL) { gs_gpu_library.dll.DeleteContext(handle); }
-	else { logger_to_console("failed to create context\n"); }
-
-	fail_device: DEBUG_BREAK();
-	if (device == NULL) { logger_to_console("device is null\n"); }
-
+	fail: DEBUG_BREAK();
+	logger_to_console("failed to create gpu context\n");
 	return NULL;
 }
 
@@ -172,7 +163,8 @@ void gpu_context_draw_frame(struct Gpu_Context const * gpu_context) {
 	glFinish();
 }
 
-void gpu_context_end_frame(void) {
+void gpu_context_end_frame(struct Gpu_Context const * gpu_context) {
+	(void)gpu_context;
 	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 }
 
