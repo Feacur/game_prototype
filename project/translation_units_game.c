@@ -115,6 +115,7 @@ Disable Clang warnings:
 - bad-function-cast               (allow casting function results without temporary assignment)
 - documentation-unknown-command   (source: clangd; `@note`; doesn't affect compilation)
 - declaration-after-statement     (allow mixing code and variables declarations)
+- unsafe-buffer-usage             (allow unsafe pointer arithmetic)
 
 Disable MSVC warnings:
 - 5105, macro expansion producing 'defined' has undefined behavior (source: OS; `winbase.h`; is unfixable)

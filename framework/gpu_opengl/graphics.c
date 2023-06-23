@@ -1463,7 +1463,7 @@ static void __stdcall opengl_debug_message_callback(
 	const GLchar *message,
 	const void *userParam
 ) {
-#define STACKTRACE_OFFSET 4
+#define STACKTRACE_OFFSET 5 // or 1
 
 	(void)userParam;
 	logger_to_console(
