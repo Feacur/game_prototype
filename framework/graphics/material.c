@@ -3,8 +3,6 @@
 #include "framework/graphics/gpu_objects.h"
 #include "framework/systems/string_system.h"
 
-#include <malloc.h>
-
 //
 #include "material.h"
 

@@ -21,7 +21,7 @@
 #include "functions.h"
 #include "types.h"
 
-#include <malloc.h>
+#include <malloc.h> // alloca
 
 // @todo: GPU scissor test
 // @todo: expose screen buffer settings, as well as OpenGL's

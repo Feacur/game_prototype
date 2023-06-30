@@ -3,7 +3,7 @@
 #include "framework/containers/buffer.h"
 
 #include <Windows.h>
-#include <malloc.h>
+#include <malloc.h> // alloca
 
 // @todo: sidestep `MAX_PATH` limit?
 // @idea: async file access through OS API

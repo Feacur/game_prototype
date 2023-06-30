@@ -19,24 +19,30 @@ static struct Platform_Debug {
 	struct Buffer scratch;
 } gs_platform_debug;
 
+// @note: tested for `AMD64`; the whole thing depends heavily
+//        on the platform; might require dynamic dll calls
+//        instead of statically chosen at compile-time (?)
+
 //
 #include "framework/platform_debug.h"
 
 struct Callstack platform_debug_get_callstack(void) {
 	struct Callstack callstack = {0};
 
-	CONTEXT context; RtlCaptureContext(&context);
+	CONTEXT context; RtlCaptureContext(&context); // @note: platform-specific structure
 	for (uint32_t i = 0; i < SIZE_OF_ARRAY(callstack.data); i++) {
+		DWORD64 const control_pc = context.Rip; // @note: platform-specific field
+
 		DWORD64 image_base;
-		PRUNTIME_FUNCTION entry = RtlLookupFunctionEntry(context.Rip, &image_base, NULL);
+		PRUNTIME_FUNCTION entry = RtlLookupFunctionEntry(control_pc, &image_base, NULL);
 		if (entry == NULL) { break; }
 
-		callstack.data[callstack.count++] = context.Rip;
+		callstack.data[callstack.count++] = control_pc;
 
 		PVOID handler_data;
 		DWORD64 establisher_frame;
 		RtlVirtualUnwind(UNW_FLAG_NHANDLER,
-			image_base, context.Rip, entry,
+			image_base, control_pc, entry,
 			&context, &handler_data, &establisher_frame,
 			NULL
 		);

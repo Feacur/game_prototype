@@ -7,7 +7,7 @@
 
 #include <Windows.h>
 #include <hidusage.h>
-#include <malloc.h>
+#include <malloc.h> // alloca
 
 #define HANDLE_PROP_WINDOW_NAME "prop_window"
 
