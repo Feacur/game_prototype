@@ -345,6 +345,7 @@ static char const * system_vector_get_type(DWORD value) {
 		case EXCEPTION_PRIV_INSTRUCTION:         return "priv instruction";         // The thread tried to execute an instruction whose operation is not allowed in the current machine mode.
 		case EXCEPTION_SINGLE_STEP:              return "single step";              // A trace trap or other single-instruction mechanism signaled that one instruction has been executed.
 		case EXCEPTION_STACK_OVERFLOW:           return "stack overflow";           // The thread used up its stack.
+		// @note: there's a lot more, but MSDN describes a lot fewer; see `STATUS_*` in `winnt.h`
 	}
 	return "unknown";
 }
@@ -352,11 +353,40 @@ static char const * system_vector_get_type(DWORD value) {
 static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 #define STACKTRACE_OFFSET 4 // or 1
 
-	DWORD const code = ExceptionInfo->ExceptionRecord->ExceptionCode;
+	// The presence of this flag indicates that the exception is a noncontinuable exception,
+	// whereas the absence of this flag indicates that the exception is a continuable exception.
+	// Any attempt to continue execution after a noncontinuable exception causes the EXCEPTION_NONCONTINUABLE_EXCEPTION exception.
+	bool const noncontinuable = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == EXCEPTION_NONCONTINUABLE;
 	if (gs_platform_system.has_error) { goto finilize; }
-	if (code == EXCEPTION_BREAKPOINT) { goto finilize; }
 
-	// bool const noncontinuable = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == EXCEPTION_NONCONTINUABLE;
+	DWORD const code = ExceptionInfo->ExceptionRecord->ExceptionCode;
+	// if (code == EXCEPTION_BREAKPOINT)  { return EXCEPTION_CONTINUE_SEARCH; }
+	// if (code == EXCEPTION_SINGLE_STEP) { return EXCEPTION_CONTINUE_SEARCH; }
+
+	// @note: I don't know of it, but *seems* harmless so far
+	// and in reality is quite continuable
+	if (code == 0xe06d7363) { return EXCEPTION_CONTINUE_SEARCH; }
+
+	logger_to_console(
+		"> system vector '0x%lx'\n"
+		"  type: %s\n"
+		""
+		, code
+		, system_vector_get_type(code)
+	);
+	REPORT_CALLSTACK(STACKTRACE_OFFSET); DEBUG_BREAK();
+
+	gs_platform_system.has_error = true;
+
+	finilize:
+	return noncontinuable
+		? EXCEPTION_CONTINUE_EXECUTION
+		: EXCEPTION_CONTINUE_SEARCH;
+
+	// https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-exception_record
+#undef STACKTRACE_OFFSET
+
+	// This flag is reserved for system use.
 	// bool const software_originate = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_SOFTWARE_ORIGINATE) == EXCEPTION_SOFTWARE_ORIGINATE;
 
 	// switch (code)
@@ -372,22 +402,4 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	// 		ULONGLONG const nt_status = ExceptionInfo->ExceptionRecord->ExceptionInformation[2];
 	// 	} break;
 	// }
-
-	logger_to_console(
-		"> system vector '0x%lx'\n"
-		"  type: %s\n"
-		""
-		, code
-		, system_vector_get_type(code)
-	);
-	REPORT_CALLSTACK(STACKTRACE_OFFSET); DEBUG_BREAK();
-
-	gs_platform_system.has_error = true;
-
-	finilize:
-	// return EXCEPTION_CONTINUE_SEARCH;
-	return EXCEPTION_CONTINUE_EXECUTION;
-
-	// https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-exception_record
-#undef STACKTRACE_OFFSET
 }
