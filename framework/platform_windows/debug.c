@@ -58,6 +58,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 	gs_platform_debug.buffer.size = 0;
 	gs_platform_debug.scratch.size = 0;
 
+	DWORD64 symbol_offset = 0;
 	union {
 		SYMBOL_INFO header;
 		uint8_t payload[sizeof(SYMBOL_INFO) + 1024];
@@ -69,40 +70,48 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 
 	DWORD source_offset = 0;
 	IMAGEHLP_LINE64 source = {.SizeOfStruct = sizeof(source)};
+	IMAGEHLP_MODULE64 module = {.SizeOfStruct = sizeof(module)};
 
 	HANDLE const process = GetCurrentProcess();
 	for (uint32_t i = offset + 1, last = callstack.count; i < last; i++) {
 		// fetch function, source file, and line
-		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], NULL, &symbol.header);
+		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], &symbol_offset, &symbol.header);
 		BOOL const valid_source = SymGetLineFromAddr64(process, callstack.data[i], &source_offset, &source) && (source.FileName != NULL);
+		BOOL const valid_module = SymGetModuleInfo64(process, callstack.data[i], &module);
 
 	#if defined(DBGHELP_TRANSLATE_TCHAR)
 		uint32_t const symbol_length = valid_symbol ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, NULL, 0, NULL, NULL) : 0;
 		uint32_t const source_length = valid_source ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, source.FileName, -1, NULL, 0, NULL, NULL) : 0;
-		buffer_ensure(&gs_platform_debug.scratch, symbol_length + source_length);
-		WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, gs_platform_debug.scratch.data, (int)symbol_length, NULL, NULL);
-		WideCharToMultiByte(CP_UTF8, 0, source.FileName, -1, (char *)gs_platform_debug.scratch.data + symbol_length, (int)source_length, NULL, NULL);
-		char const * symbol_data = gs_platform_debug.scratch.data;
-		char const * source_data = (char *)gs_platform_debug.scratch.data + symbol_length;
+		uint32_t const module_length = valid_module ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, module.ModuleName, -1, NULL, 0, NULL, NULL) : 0;
+		buffer_ensure(&gs_platform_debug.scratch, symbol_length + source_length + module_length);
+		char * symbol_data = gs_platform_debug.scratch.data;
+		char * source_data = symbol_data + symbol_length;
+		char * module_data = source_data + source_length;
+		WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, symbol_data, (int)symbol_length, NULL, NULL);
+		WideCharToMultiByte(CP_UTF8, 0, source.FileName, -1, source_data, (int)source_length, NULL, NULL);
+		WideCharToMultiByte(CP_UTF8, 0, module.ModuleName, -1, module_data, (int)module_length, NULL, NULL);
 	#else
 		uint32_t const symbol_length = valid_symbol ? (uint32_t)symbol.header.NameLen : 0;
 		uint32_t const source_length = valid_source ? (uint32_t)strlen(source.FileName) : 0;
+		uint32_t const module_length = valid_module ? (uint32_t)strlen(source.ModuleName) : 0;
 		char const * symbol_data = symbol.header.Name;
 		char const * source_data = source.FileName;
+		char const * source_data = source.ModuleName;
 	#endif
 
 		// reserve output buffer
-		buffer_ensure(&gs_platform_debug.buffer, gs_platform_debug.buffer.size + 1 + symbol_length + 4 + source_length + 16);
+		buffer_ensure(&gs_platform_debug.buffer, gs_platform_debug.buffer.size + 1 + symbol_length + 4 + source_length + 16 + module_length + 4);
 
 		// fill the buffer
 		uint32_t const written = logger_to_buffer(
 			(uint32_t)(gs_platform_debug.buffer.capacity - gs_platform_debug.buffer.size),
 			(char *)gs_platform_debug.buffer.data + gs_platform_debug.buffer.size,
-			"%.*s at '%.*s:%u'\n"
+			"%.*s at '%.*s:%u' (%.*s)\n"
 			""
 			, symbol_length, symbol_data
 			, source_length, source_data
 			, (source_length > 0) ? (uint32_t)source.LineNumber : 0
+			, module_length, module_data
 		);
 		gs_platform_debug.buffer.size += written;
 

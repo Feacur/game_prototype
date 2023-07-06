@@ -353,19 +353,19 @@ static char const * system_vector_get_type(DWORD value) {
 static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 #define STACKTRACE_OFFSET 4 // or 1
 
-	// The presence of this flag indicates that the exception is a noncontinuable exception,
-	// whereas the absence of this flag indicates that the exception is a continuable exception.
-	// Any attempt to continue execution after a noncontinuable exception causes the EXCEPTION_NONCONTINUABLE_EXCEPTION exception.
-	bool const noncontinuable = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == EXCEPTION_NONCONTINUABLE;
-	if (gs_platform_system.has_error) { goto finilize; }
-
+	if (gs_platform_system.has_error) { return EXCEPTION_CONTINUE_EXECUTION; }
 	DWORD const code = ExceptionInfo->ExceptionRecord->ExceptionCode;
+
+	// @note: there are non-exception vectors as well
 	// if (code == EXCEPTION_BREAKPOINT)  { return EXCEPTION_CONTINUE_SEARCH; }
 	// if (code == EXCEPTION_SINGLE_STEP) { return EXCEPTION_CONTINUE_SEARCH; }
 
-	// @note: I don't know of it, but *seems* harmless so far
-	// and in reality is quite continuable
-	if (code == 0xe06d7363) { return EXCEPTION_CONTINUE_SEARCH; }
+	// The presence of this flag indicates that the exception is a noncontinuable exception,
+	// whereas the absence of this flag indicates that the exception is a continuable exception.
+	// Any attempt to continue execution after a noncontinuable exception causes the EXCEPTION_NONCONTINUABLE_EXCEPTION exception.
+	bool const noncontinuable = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == EXCEPTION_NONCONTINUABLE
+		&& code != 0xe06d7363 // @note: I don't know of it, but *seems* harmless so far; besides it's quite continuable in reality
+	;
 
 	logger_to_console(
 		"> system vector '0x%lx'\n"
@@ -374,11 +374,12 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 		, code
 		, system_vector_get_type(code)
 	);
-	REPORT_CALLSTACK(STACKTRACE_OFFSET); DEBUG_BREAK();
+	REPORT_CALLSTACK(STACKTRACE_OFFSET);
 
-	gs_platform_system.has_error = true;
+	if (noncontinuable) { DEBUG_BREAK();
+		gs_platform_system.has_error = true;
+	}
 
-	finilize:
 	return noncontinuable
 		? EXCEPTION_CONTINUE_EXECUTION
 		: EXCEPTION_CONTINUE_SEARCH;

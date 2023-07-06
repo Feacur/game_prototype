@@ -5,7 +5,7 @@
 
 struct Callstack {
 	uint32_t count;
-	uint64_t data[32];
+	uint64_t data[64];
 };
 
 struct Callstack platform_debug_get_callstack(void);
