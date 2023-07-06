@@ -1,41 +1,41 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"path": ".",
 		},
 		{
-			"path": "../framework"
+			"path": "../framework",
 		},
 		{
-			"path": "../application"
+			"path": "../application",
 		},
 		{
-			"path": "../prototype"
+			"path": "../prototype",
 		},
 		{
-			"path": "../third_party"
+			"path": "../third_party",
 		},
 		{
-			"path": "../assets"
+			"path": "../assets",
 		},
 		{
-			"path": "../project"
+			"path": "../project",
 		},
 		{
-			"path": "../bin"
+			"path": "../bin",
 		},
 		{
 			"name": "root_folder",
 			"path": "..",
 		},
 		{
-			"path": "../__sublime_project"
+			"path": "../__sublime_project",
 		},
 		{
-			"path": "../__notepad++"
+			"path": "../__notepad++",
 		},
 		{
-			"path": "../__nvim"
+			"path": "../__nvim",
 		},
 	],
 	"settings": {
@@ -45,6 +45,8 @@
 		"files.exclude": { // exclude each subfolder of the root_folder
 			"__sublime_project": true,
 			"__vscode_workspace": true,
+			"__nvim": true,
+			"__notepad++": true,
 			"application": true,
 			"assets": true,
 			"bin": true,
@@ -54,7 +56,7 @@
 			"third_party": true,
 		},
 		// extensions: ms-vscode.cpptools
-		"C_Cpp.formatting": "Disabled",
+		"C_Cpp.formatting": "disabled",
 		"C_Cpp.preferredPathSeparator": "Forward Slash",
 		"C_Cpp.default.includePath": [
 			"${workspaceFolder}/..",

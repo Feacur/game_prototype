@@ -6,6 +6,21 @@
 	{ "key": "ctrl+down", "command": "-scrollLineDown", },
 	{ "key": "alt+pageup", "command": "-scrollPageUp", },
 	{ "key": "alt+pagedown", "command": "-scrollPageDown", },
+	{ "key": "ctrl+0", "command": "-workbench.action.focusSideBar" },
+	{ "key": "ctrl+1", "command": "-workbench.action.focusFirstEditorGroup" },
+	{ "key": "ctrl+2", "command": "-workbench.action.focusSecondEditorGroup" },
+	{ "key": "ctrl+3", "command": "-workbench.action.focusThirdEditorGroup" },
+	{ "key": "ctrl+6", "command": "-workbench.action.focusSixthEditorGroup" },
+	{ "key": "ctrl+7", "command": "-workbench.action.focusSeventhEditorGroup" },
+	{ "key": "ctrl+4", "command": "-workbench.action.focusFourthEditorGroup" },
+	{ "key": "ctrl+5", "command": "-workbench.action.focusFifthEditorGroup" },
+	{ "key": "ctrl+8", "command": "-workbench.action.focusEighthEditorGroup" },
+	{ "key": "ctrl+9", "command": "-workbench.action.lastEditorInGroup" },
+	{ "key": "ctrl+numpad0", "command": "-workbench.action.zoomReset" },
+	{ "key": "ctrl+numpad_add", "command": "-workbench.action.zoomIn" },
+	{ "key": "ctrl+numpad_subtract", "command": "-workbench.action.zoomOut" },
+	{ "key": "ctrl+shift+=", "command": "-workbench.action.zoomIn" },
+	{ "key": "ctrl+shift+-", "command": "-workbench.action.zoomOut" },
 	// utilities
 	{
 		"key": "ctrl+shift+r",
@@ -22,6 +37,10 @@
 	{
 		"key": "shift+f11",
 		"command": "workbench.action.toggleZenMode"
+	},
+	{
+		"key": "ctrl+0",
+		"command": "workbench.action.zoomReset"
 	},
 	// RMB
 	{
