@@ -99,6 +99,9 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 		char const * source_data = source.ModuleName;
 	#endif
 
+		struct CString const cs_symbol = {.length = symbol_length, .data = symbol_data};
+		if (cstring_equals(cs_symbol, S_(""))) { continue; }
+
 		// reserve output buffer
 		buffer_ensure(&gs_platform_debug.buffer, gs_platform_debug.buffer.size + 1 + symbol_length + 4 + source_length + 16 + module_length + 4);
 
@@ -115,7 +118,6 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 		);
 		gs_platform_debug.buffer.size += written;
 
-		struct CString const cs_symbol = {.length = symbol_length, .data = symbol_data};
 		if (cstring_equals(cs_symbol, S_("main"))) { break; }
 	}
 

@@ -7,21 +7,25 @@
         {
             "command": 
             {
-                "action": "commandPalette"
-            },
-            "keys": "win+\\"
-        },
-        {
-            "command": 
-            {
                 "action": "copy",
                 "singleLine": false
             },
             "keys": "ctrl+c"
         },
         {
+            "command": 
+            {
+                "action": "commandPalette"
+            },
+            "keys": "win+\\"
+        },
+        {
             "command": "paste",
             "keys": "ctrl+v"
+        },
+        {
+            "command": "find",
+            "keys": "ctrl+f"
         },
         {
             "command": 
@@ -29,9 +33,6 @@
                 "action": "scrollDown"
             },
             "keys": "ctrl+down"
-        },
-        {
-            "command": "find"
         },
         {
             "command": "unbound",
@@ -176,10 +177,6 @@
         {
             "command": "unbound",
             "keys": "ctrl+shift+v"
-        },
-        {
-            "command": "unbound",
-            "keys": "ctrl+f"
         },
         {
             "command": "unbound",

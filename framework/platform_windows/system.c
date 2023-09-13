@@ -364,7 +364,10 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	// whereas the absence of this flag indicates that the exception is a continuable exception.
 	// Any attempt to continue execution after a noncontinuable exception causes the EXCEPTION_NONCONTINUABLE_EXCEPTION exception.
 	bool const noncontinuable = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == EXCEPTION_NONCONTINUABLE
-		&& code != 0xe06d7363 // @note: I don't know of it, but *seems* harmless so far; besides it's quite continuable in reality
+		&& code != 0xe0434352 // CLR exception
+		&& code != 0xe06d7363 // C++ exception
+		&& code != 0x40010006 // OutputDebugString
+		&& code != 0x406d1388 // SetThreadName
 	;
 
 	logger_to_console(
@@ -385,6 +388,8 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 		: EXCEPTION_CONTINUE_SEARCH;
 
 	// https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-exception_record
+	// https://learn.microsoft.com/visualstudio/debugger/how-to-set-a-thread-name-in-native-code
+	// https://wiki.winehq.org/Debugging_Hints
 #undef STACKTRACE_OFFSET
 
 	// This flag is reserved for system use.

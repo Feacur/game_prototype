@@ -63,9 +63,8 @@
 	// extensions: ms-dotnettools.csharp
 	"omnisharp.loggingLevel": "information",
 	"omnisharp.enableDecompilationSupport": true,
-	"omnisharp.enableRoslynAnalyzers": true,
-	"omnisharp.enableImportCompletion": true,
 	"omnisharp.organizeImportsOnFormat": true,
+	"dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
 	// extensions: ms-vscode.cpptools
 	"C_Cpp.default.cStandard": "c99",
 	"C_Cpp.default.cppStandard": "c++11",
@@ -93,7 +92,9 @@
 }
 // extensions:
 // - ms-dotnettools.csharp
-// - unity.unity-debug
+// - ms-dotnettools.csdevkit
+// - ms-dotnettools.vscode-dotnet-runtime
+// - visualstudiotoolsforunity.vstuc
 // - jdinhlife.gruvbox
 // - ms-vscode.hexeditor
 // - slevesque.shader
