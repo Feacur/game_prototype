@@ -78,6 +78,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], &symbol_offset, &symbol.header);
 		BOOL const valid_source = SymGetLineFromAddr64(process, callstack.data[i], &source_offset, &source) && (source.FileName != NULL);
 		BOOL const valid_module = SymGetModuleInfo64(process, callstack.data[i], &module);
+		if (!(valid_symbol || valid_source || valid_module)) { continue; }
 
 	#if defined(DBGHELP_TRANSLATE_TCHAR)
 		uint32_t const symbol_length = valid_symbol ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, NULL, 0, NULL, NULL) : 0;
@@ -99,25 +100,27 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 		char const * source_data = source.ModuleName;
 	#endif
 
-		struct CString const cs_symbol = {.length = symbol_length, .data = symbol_data};
-		if (cstring_equals(cs_symbol, S_(""))) { continue; }
-
 		// reserve output buffer
-		buffer_ensure(&gs_platform_debug.buffer, gs_platform_debug.buffer.size + 1 + symbol_length + 4 + source_length + 16 + module_length + 4);
+		buffer_ensure(&gs_platform_debug.buffer,
+			gs_platform_debug.buffer.size
+			+ module_length + symbol_length + source_length
+			+ 32 // for whatever static text there is (22 tops atm: 11 chars + 11 UINT32_MAX)
+		);
 
 		// fill the buffer
 		uint32_t const written = logger_to_buffer(
 			(uint32_t)(gs_platform_debug.buffer.capacity - gs_platform_debug.buffer.size),
 			(char *)gs_platform_debug.buffer.data + gs_platform_debug.buffer.size,
-			"%.*s at '%.*s:%u' (%.*s)\n"
+			"[%.*s] %.*s at '%.*s:%u'\n"
 			""
+			, module_length, module_data
 			, symbol_length, symbol_data
 			, source_length, source_data
 			, (source_length > 0) ? (uint32_t)source.LineNumber : 0
-			, module_length, module_data
 		);
 		gs_platform_debug.buffer.size += written;
 
+		struct CString const cs_symbol = {.length = symbol_length, .data = symbol_data};
 		if (cstring_equals(cs_symbol, S_("main"))) { break; }
 	}
 
