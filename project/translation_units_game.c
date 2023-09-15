@@ -28,8 +28,8 @@
 #include "framework/containers/handle_table.c"
 #include "framework/containers/strings.c"
 
-#include "framework/assets/internal/wfobj_scanner.c"
-#include "framework/assets/internal/json_scanner.c"
+#include "framework/assets/internal/wfobj_lexer.c"
+#include "framework/assets/internal/json_lexer.c"
 #include "framework/assets/internal/wfobj.c"
 #include "framework/assets/json.c"
 #include "framework/assets/mesh.c"

@@ -5,7 +5,7 @@
 
 #include "framework/systems/string_system.h"
 
-#include "internal/json_scanner.h"
+#include "internal/json_lexer.h"
 
 // @note: JSON is based off of rfc8259
 
@@ -102,7 +102,7 @@ bool json_at_boolean(struct JSON const * value, uint32_t index) {
 //
 
 struct JSON_Parser {
-	struct JSON_Scanner scanner;
+	struct JSON_Lexer lexer;
 	struct JSON_Token previous, current;
 	bool error, panic;
 };
@@ -143,7 +143,7 @@ static void json_parser_error_current(struct JSON_Parser * parser, struct CStrin
 static void json_parser_consume(struct JSON_Parser * parser) {
 	parser->previous = parser->current;
 	while (parser->current.type != JSON_TOKEN_EOF) {
-		parser->current = json_scanner_next(&parser->scanner);
+		parser->current = json_lexer_next(&parser->lexer);
 		switch (parser->current.type) {
 			case JSON_TOKEN_COMMENT: continue;
 
@@ -152,7 +152,7 @@ static void json_parser_consume(struct JSON_Parser * parser) {
 			case JSON_TOKEN_ERROR_UNTERMINATED_STRING:
 			case JSON_TOKEN_ERROR_UNESCAPED_CONTROL:
 			case JSON_TOKEN_ERROR_MALFORMED_UNICODE:
-				json_parser_error_current(parser, S_("scanner error"));
+				json_parser_error_current(parser, S_("lexer error"));
 				continue;
 
 			default: return;
@@ -304,7 +304,7 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 
 struct JSON json_parse(char const * data) {
 	struct JSON_Parser parser = {
-		.scanner = json_scanner_init(data),
+		.lexer = json_lexer_init(data),
 	};
 	json_parser_consume(&parser);
 
@@ -322,7 +322,7 @@ struct JSON json_parse(char const * data) {
 		value = c_json_error;
 	}
 
-	json_scanner_free(&parser.scanner);
+	json_lexer_free(&parser.lexer);
 	return value;
 }
 

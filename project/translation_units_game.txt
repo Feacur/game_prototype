@@ -27,8 +27,8 @@ framework/containers/hash_set_ptr.c
 framework/containers/handle_table.c
 framework/containers/strings.c
 
-framework/assets/internal/wfobj_scanner.c
-framework/assets/internal/json_scanner.c
+framework/assets/internal/wfobj_lexer.c
+framework/assets/internal/json_lexer.c
 framework/assets/internal/wfobj.c
 framework/assets/json.c
 framework/assets/mesh.c

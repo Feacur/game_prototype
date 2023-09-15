@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_WFOBJ_SCANNER)
-#define FRAMEWORK_ASSETS_WFOBJ_SCANNER
+#if !defined(FRAMEWORK_ASSETS_WFOBJ_LEXER)
+#define FRAMEWORK_ASSETS_WFOBJ_LEXER
 
 #include "framework/common.h"
 
@@ -37,14 +37,14 @@ struct WFObj_Token {
 	uint32_t line;
 };
 
-struct WFObj_Scanner {
+struct WFObj_Lexer {
 	char const * start, * current;
 	uint32_t line_start, line_current;
 };
 
-struct WFObj_Scanner wfobj_scanner_init(char const * text);
-void wfobj_scanner_free(struct WFObj_Scanner * scanner);
+struct WFObj_Lexer wfobj_lexer_init(char const * text);
+void wfobj_lexer_free(struct WFObj_Lexer * lexer);
 
-struct WFObj_Token wfobj_scanner_next(struct WFObj_Scanner * scanner);
+struct WFObj_Token wfobj_lexer_next(struct WFObj_Lexer * lexer);
 
 #endif

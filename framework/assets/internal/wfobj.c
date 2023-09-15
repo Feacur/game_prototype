@@ -2,7 +2,7 @@
 #include "framework/logger.h"
 #include "framework/parsing.h"
 
-#include "wfobj_scanner.h"
+#include "wfobj_lexer.h"
 
 //
 #include "wfobj.h"
@@ -44,14 +44,14 @@ static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 	logger_to_console("\n");
 }
 
-static void wfobj_advance(struct WFObj_Scanner * scanner, struct WFObj_Token * token) {
+static void wfobj_advance(struct WFObj_Lexer * lexer, struct WFObj_Token * token) {
 	while (token->type != WFOBJ_TOKEN_EOF) {
-		*token = wfobj_scanner_next(scanner);
+		*token = wfobj_lexer_next(lexer);
 		switch (token->type) {
 			case WFOBJ_TOKEN_COMMENT: continue;
 
 			case WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER:
-				wfobj_error_at(token, "scanner error");
+				wfobj_error_at(token, "lexer error");
 				continue;
 
 			default: return;
@@ -59,8 +59,8 @@ static void wfobj_advance(struct WFObj_Scanner * scanner, struct WFObj_Token * t
 	}
 }
 
-static bool wfobj_consume_float(struct WFObj_Scanner * scanner, struct WFObj_Token * token, float * value) {
-#define ADVANCE() wfobj_advance(scanner, token)
+static bool wfobj_consume_float(struct WFObj_Lexer * lexer, struct WFObj_Token * token, float * value) {
+#define ADVANCE() wfobj_advance(lexer, token)
 
 	if (token->type == WFOBJ_TOKEN_NUMBER) {
 		// *value = strtof(token->start, NULL);
@@ -75,8 +75,8 @@ static bool wfobj_consume_float(struct WFObj_Scanner * scanner, struct WFObj_Tok
 #undef ADVANCE
 }
 
-static bool wfobj_consume_s32(struct WFObj_Scanner * scanner, struct WFObj_Token * token, int32_t * value) {
-#define ADVANCE() wfobj_advance(scanner, token)
+static bool wfobj_consume_s32(struct WFObj_Lexer * lexer, struct WFObj_Token * token, int32_t * value) {
+#define ADVANCE() wfobj_advance(lexer, token)
 
 	if (token->type == WFOBJ_TOKEN_NUMBER) {
 		// *value = (int32_t)strtoul(token->start, NULL, 10);
@@ -91,21 +91,21 @@ static bool wfobj_consume_s32(struct WFObj_Scanner * scanner, struct WFObj_Token
 #undef ADVANCE
 }
 
-static void wfobj_do_name(struct WFObj_Scanner * scanner, struct WFObj_Token * token) {
+static void wfobj_do_name(struct WFObj_Lexer * lexer, struct WFObj_Token * token) {
 	while (token->type != WFOBJ_TOKEN_EOF && token->type != WFOBJ_TOKEN_NEW_LINE) {
-		wfobj_advance(scanner, token);
+		wfobj_advance(lexer, token);
 	}
 }
 
-static void wfobj_do_vertex(struct WFObj_Scanner * scanner, struct WFObj_Token * token, struct Array_Flt * buffer, uint32_t limit) {
-#define ADVANCE() wfobj_advance(scanner, token)
+static void wfobj_do_vertex(struct WFObj_Lexer * lexer, struct WFObj_Token * token, struct Array_Flt * buffer, uint32_t limit) {
+#define ADVANCE() wfobj_advance(lexer, token)
 
 	uint32_t entries = 0;
 	while (token->type != WFOBJ_TOKEN_EOF && token->type != WFOBJ_TOKEN_NEW_LINE) {
 		if (entries >= limit) { wfobj_error_at(token, "expected less elements"); }
 
 		float value;
-		if (wfobj_consume_float(scanner, token, &value)) {
+		if (wfobj_consume_float(lexer, token, &value)) {
 			if (entries >= limit) { continue; } entries++;
 			array_flt_push_many(buffer, 1, &value);
 		}
@@ -122,17 +122,17 @@ inline static uint32_t wfobj_translate_index(int32_t value, uint32_t base) {
 }
 
 static void wfobj_do_faces(
-	struct WFObj_Scanner * scanner, struct WFObj_Token * token, struct Array_U32 * buffer,
+	struct WFObj_Lexer * lexer, struct WFObj_Token * token, struct Array_U32 * buffer,
 	uint32_t positions_count, uint32_t texcoords_count, uint32_t normals_count
 ) {
-#define ADVANCE() wfobj_advance(scanner, token)
+#define ADVANCE() wfobj_advance(lexer, token)
 
 	while (token->type != WFOBJ_TOKEN_EOF && token->type != WFOBJ_TOKEN_NEW_LINE) {
 		int32_t value;
 		uint32_t face[3] = {0};
 
 		// face format: position
-		wfobj_consume_s32(scanner, token, &value);
+		wfobj_consume_s32(lexer, token, &value);
 		face[0] = wfobj_translate_index(value, positions_count);
 
 		if (token->type != WFOBJ_TOKEN_SLASH) {
@@ -145,7 +145,7 @@ static void wfobj_do_faces(
 		if (token->type == WFOBJ_TOKEN_SLASH) {
 			ADVANCE();
 
-			wfobj_consume_s32(scanner, token, &value);
+			wfobj_consume_s32(lexer, token, &value);
 			face[2] = wfobj_translate_index(value, normals_count);
 
 			array_u32_push_many(buffer, 3, face);
@@ -153,7 +153,7 @@ static void wfobj_do_faces(
 		}
 
 		// face format: position/texcoord
-		wfobj_consume_s32(scanner, token, &value);
+		wfobj_consume_s32(lexer, token, &value);
 		face[1] = wfobj_translate_index(value, texcoords_count);
 
 		if (token->type != WFOBJ_TOKEN_SLASH) {
@@ -163,7 +163,7 @@ static void wfobj_do_faces(
 
 		// face format: position/texcoord/normal
 		ADVANCE();
-		wfobj_consume_s32(scanner, token, &value);
+		wfobj_consume_s32(lexer, token, &value);
 		face[2] = wfobj_translate_index(value, normals_count);
 
 		array_u32_push_many(buffer, 3, face);
@@ -173,11 +173,11 @@ static void wfobj_do_faces(
 }
 
 struct WFObj wfobj_parse(char const * text) {
-#define ADVANCE() wfobj_advance(&scanner, &token)
+#define ADVANCE() wfobj_advance(&lexer, &token)
 
 	struct WFObj result = wfobj_init();
 
-	struct WFObj_Scanner scanner;
+	struct WFObj_Lexer lexer;
 	struct WFObj_Token token;
 
 	//
@@ -186,7 +186,7 @@ struct WFObj wfobj_parse(char const * text) {
 	uint32_t normal_lines = 0;
 	uint32_t face_lines = 0;
 
-	scanner = wfobj_scanner_init(text);
+	lexer = wfobj_lexer_init(text);
 	token = (struct WFObj_Token){0}; ADVANCE();
 	while (token.type != WFOBJ_TOKEN_EOF) {
 		switch (token.type) {
@@ -199,7 +199,7 @@ struct WFObj wfobj_parse(char const * text) {
 		}
 		ADVANCE();
 	}
-	wfobj_scanner_free(&scanner);
+	wfobj_lexer_free(&lexer);
 
 	array_flt_resize(&result.positions, position_lines * 3);
 	array_flt_resize(&result.texcoords, texcoord_lines * 2);
@@ -211,7 +211,7 @@ struct WFObj wfobj_parse(char const * text) {
 	struct Array_U32 scratch_u32 = array_u32_init();
 	array_u32_resize(&scratch_u32, 3 * 4);
 
-	scanner = wfobj_scanner_init(text);
+	lexer = wfobj_lexer_init(text);
 	token = (struct WFObj_Token){0}; ADVANCE();
 	while (token.type != WFOBJ_TOKEN_EOF) {
 		switch (token.type) {
@@ -220,28 +220,28 @@ struct WFObj wfobj_parse(char const * text) {
 			case WFOBJ_TOKEN_NEW_LINE: break;
 
 			// errors
-			default: wfobj_error_at(&token, "scanner error"); break;
+			default: wfobj_error_at(&token, "lexer error"); break;
 
 			// valid
 			case WFOBJ_TOKEN_POSITION: { ADVANCE();
-				wfobj_do_vertex(&scanner, &token, &result.positions, 3);
+				wfobj_do_vertex(&lexer, &token, &result.positions, 3);
 				break;
 			}
 
 			case WFOBJ_TOKEN_TEXCOORD: { ADVANCE();
-				wfobj_do_vertex(&scanner, &token, &result.texcoords, 2);
+				wfobj_do_vertex(&lexer, &token, &result.texcoords, 2);
 				break;
 			}
 
 			case WFOBJ_TOKEN_NORMAL: { ADVANCE();
-				wfobj_do_vertex(&scanner, &token, &result.normals, 3);
+				wfobj_do_vertex(&lexer, &token, &result.normals, 3);
 				break;
 			}
 
 			case WFOBJ_TOKEN_FACE: { ADVANCE();
 				scratch_u32.count = 0;
 				wfobj_do_faces(
-					&scanner, &token, &scratch_u32,
+					&lexer, &token, &scratch_u32,
 					result.positions.count, result.texcoords.count, result.normals.count
 				);
 
@@ -255,12 +255,12 @@ struct WFObj wfobj_parse(char const * text) {
 			}
 
 			case WFOBJ_TOKEN_SMOOTH: ADVANCE(); break;
-			case WFOBJ_TOKEN_OBJECT: wfobj_do_name(&scanner, &token); break;
-			case WFOBJ_TOKEN_GROUP: wfobj_do_name(&scanner, &token); break;
+			case WFOBJ_TOKEN_OBJECT: wfobj_do_name(&lexer, &token); break;
+			case WFOBJ_TOKEN_GROUP: wfobj_do_name(&lexer, &token); break;
 		}
 		ADVANCE();
 	}
-	wfobj_scanner_free(&scanner);
+	wfobj_lexer_free(&lexer);
 	array_u32_free(&scratch_u32);
 
 	return result;

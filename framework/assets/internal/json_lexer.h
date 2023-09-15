@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_JSON_SCANNER)
-#define FRAMEWORK_ASSETS_JSON_SCANNER
+#if !defined(FRAMEWORK_ASSETS_JSON_LEXER)
+#define FRAMEWORK_ASSETS_JSON_LEXER
 
 #include "framework/common.h"
 
@@ -39,14 +39,14 @@ struct JSON_Token {
 	uint32_t line;
 };
 
-struct JSON_Scanner {
+struct JSON_Lexer {
 	char const * start, * current;
 	uint32_t line_start, line_current;
 };
 
-struct JSON_Scanner json_scanner_init(char const * text);
-void json_scanner_free(struct JSON_Scanner * scanner);
+struct JSON_Lexer json_lexer_init(char const * text);
+void json_lexer_free(struct JSON_Lexer * lexer);
 
-struct JSON_Token json_scanner_next(struct JSON_Scanner * scanner);
+struct JSON_Token json_lexer_next(struct JSON_Lexer * lexer);
 
 #endif
