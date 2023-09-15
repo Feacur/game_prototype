@@ -42,7 +42,7 @@
 struct Batcher_2D_Word {
 	uint32_t codepoints_offset, codepoints_end;
 	uint32_t buffer_vertices_offset;
-	struct Asset_Handle font_asset_handle; float size;
+	struct Handle font_asset_handle; float size;
 	// @note: local to `batcher_2d_add_text`
 	uint32_t breaker_codepoint;
 	struct vec2 position;
@@ -71,7 +71,7 @@ struct Batcher_2D {
 	struct Array_U32 codepoints;
 	struct Array_Any batches;  // `struct Batcher_2D_Batch`
 	struct Array_Any words;    // `struct Batcher_2D_Word`
-	struct Hash_Set_Ptr fonts; // `struct Asset_Handle`
+	struct Hash_Set_Ptr fonts; // `struct Handle`
 	//
 	struct vec4 color;
 	struct mat4 matrix;
@@ -246,7 +246,7 @@ void batcher_2d_add_quad(
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
 	struct rect rect, struct vec2 alignment, bool wrap,
-	struct Asset_Handle font_asset_handle, struct CString value, float size
+	struct Handle font_asset_handle, struct CString value, float size
 ) {
 	struct Asset_Font const * font_asset = asset_system_take(font_asset_handle);
 	if (font_asset == NULL) { return; }

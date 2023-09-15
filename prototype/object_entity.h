@@ -1,7 +1,7 @@
 #if !defined(PROTOTYPE_OBJECT_ENTITY)
 #define PROTOTYPE_OBJECT_ENTITY
 
-#include "framework/systems/asset_handle.h"
+#include "framework/containers/handle.h"
 #include "framework/graphics/types.h"
 
 #include "application/components.h"
@@ -29,7 +29,7 @@ enum Entity_Rotation_Mode {
 };
 
 struct Entity_Mesh {
-	struct Asset_Handle asset_handle;
+	struct Handle asset_handle;
 };
 
 struct Entity_Quad {
@@ -39,15 +39,15 @@ struct Entity_Quad {
 };
 
 struct Entity_Text {
-	struct Asset_Handle font_asset_handle;
-	struct Asset_Handle message_asset_handle;
+	struct Handle font_asset_handle;
+	struct Handle message_asset_handle;
 	float size;
 	struct vec2 alignment;
 };
 
 struct Entity {
 	uint32_t camera;
-	struct Asset_Handle material_asset_handle;
+	struct Handle material_asset_handle;
 	//
 	struct Transform_3D transform;
 	struct Transform_Rect rect; // @todo: make it completely optional?

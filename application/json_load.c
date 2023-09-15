@@ -52,7 +52,7 @@ void json_load_font_range(struct JSON const * json, struct Font * font) {
 	uint32_t const from = (uint32_t)json_get_number(json, S_("from"));
 	uint32_t const to   = (uint32_t)json_get_number(json, S_("to"));
 
-	struct Asset_Handle const handle = asset_system_aquire(path);
+	struct Handle const handle = asset_system_aquire(path);
 	struct Asset_Typeface const * asset = asset_system_take(handle);
 	font_set_typeface(font, asset->typeface, from, to);
 }
@@ -65,8 +65,8 @@ static struct Handle json_load_texture(struct JSON const * json) {
 	struct CString const path = json_get_string(json, S_("path"));
 	if (path.data == NULL) { goto fail; }
 
-	struct Asset_Handle const asset_handle = asset_system_aquire(path);
-	if (asset_handle_is_null(asset_handle)) { goto fail; }
+	struct Handle const asset_handle = asset_system_aquire(path);
+	if (handle_is_null(asset_handle)) { goto fail; }
 
 	void const * instance = asset_system_take(asset_handle);
 	if (instance == NULL) { goto fail; }

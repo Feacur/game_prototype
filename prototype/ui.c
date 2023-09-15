@@ -17,9 +17,9 @@
 #include "ui.h"
 
 static struct UI {
-	struct Asset_Handle shader_asset_handle;
-	struct Asset_Handle image_asset_handle;
-	struct Asset_Handle font_asset_handle;
+	struct Handle shader_asset_handle;
+	struct Handle image_asset_handle;
+	struct Handle font_asset_handle;
 	//
 	struct mat4 camera;
 	struct vec2 pivot;
