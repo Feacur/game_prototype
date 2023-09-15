@@ -75,29 +75,29 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 	HANDLE const process = GetCurrentProcess();
 	for (uint32_t i = offset + 1, last = callstack.count; i < last; i++) {
 		// fetch function, source file, and line
+		BOOL const valid_module = SymGetModuleInfo64(process, callstack.data[i], &module);
 		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], &symbol_offset, &symbol.header);
 		BOOL const valid_source = SymGetLineFromAddr64(process, callstack.data[i], &source_offset, &source) && (source.FileName != NULL);
-		BOOL const valid_module = SymGetModuleInfo64(process, callstack.data[i], &module);
-		if (!(valid_symbol || valid_source || valid_module)) { continue; }
+		if (!(valid_module || valid_symbol || valid_source)) { continue; }
 
 	#if defined(DBGHELP_TRANSLATE_TCHAR)
+		uint32_t const module_length = valid_module ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, module.ModuleName, -1, NULL, 0, NULL, NULL) : 0;
 		uint32_t const symbol_length = valid_symbol ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, NULL, 0, NULL, NULL) : 0;
 		uint32_t const source_length = valid_source ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, source.FileName, -1, NULL, 0, NULL, NULL) : 0;
-		uint32_t const module_length = valid_module ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, module.ModuleName, -1, NULL, 0, NULL, NULL) : 0;
 		buffer_ensure(&gs_platform_debug.scratch, symbol_length + source_length + module_length);
-		char * symbol_data = gs_platform_debug.scratch.data;
-		char * source_data = symbol_data + symbol_length;
-		char * module_data = source_data + source_length;
+		char * module_data = gs_platform_debug.scratch.data;
+		char * symbol_data = module_data + symbol_length;
+		char * source_data = symbol_data + source_length;
+		WideCharToMultiByte(CP_UTF8, 0, module.ModuleName, -1, module_data, (int)module_length, NULL, NULL);
 		WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, symbol_data, (int)symbol_length, NULL, NULL);
 		WideCharToMultiByte(CP_UTF8, 0, source.FileName, -1, source_data, (int)source_length, NULL, NULL);
-		WideCharToMultiByte(CP_UTF8, 0, module.ModuleName, -1, module_data, (int)module_length, NULL, NULL);
 	#else
+		uint32_t const module_length = valid_module ? (uint32_t)strlen(source.ModuleName) : 0;
 		uint32_t const symbol_length = valid_symbol ? (uint32_t)symbol.header.NameLen : 0;
 		uint32_t const source_length = valid_source ? (uint32_t)strlen(source.FileName) : 0;
-		uint32_t const module_length = valid_module ? (uint32_t)strlen(source.ModuleName) : 0;
+		char const * module_data = source.ModuleName;
 		char const * symbol_data = symbol.header.Name;
 		char const * source_data = source.FileName;
-		char const * source_data = source.ModuleName;
 	#endif
 
 		// reserve output buffer
