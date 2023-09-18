@@ -3,7 +3,7 @@
 #include "framework/unicode.h"
 #include "framework/logger.h"
 
-#include "framework/containers/hash_set_ptr.h"
+#include "framework/containers/hashset.h"
 #include "framework/containers/array_any.h"
 #include "framework/containers/array_flt.h"
 #include "framework/containers/array_u32.h"
@@ -71,7 +71,7 @@ struct Batcher_2D {
 	struct Array_U32 codepoints;
 	struct Array_Any batches;  // `struct Batcher_2D_Batch`
 	struct Array_Any words;    // `struct Batcher_2D_Word`
-	struct Hash_Set_Ptr fonts; // `struct Handle`
+	struct Hashset fonts;      // `struct Handle`
 	//
 	struct vec4 color;
 	struct mat4 matrix;
@@ -113,7 +113,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 		.codepoints      = array_u32_init(),
 		.batches         = array_any_init(sizeof(struct Batcher_2D_Batch)),
 		.words           = array_any_init(sizeof(struct Batcher_2D_Word)),
-		.fonts           = hash_set_ptr_init(),
+		.fonts           = hashset_init(&hash32, sizeof(struct Handle)),
 		.buffer_vertices = array_any_init(sizeof(struct Batcher_2D_Vertex)),
 		.buffer_indices  = array_u32_init(),
 	};
@@ -134,7 +134,7 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	array_u32_free(&batcher->codepoints);
 	array_any_free(&batcher->batches);
 	array_any_free(&batcher->words);
-	hash_set_ptr_free(&batcher->fonts);
+	hashset_free(&batcher->fonts);
 	array_any_free(&batcher->buffer_vertices);
 	array_u32_free(&batcher->buffer_indices);
 	//
@@ -451,21 +451,22 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 	// render and upload the atlases
 	{
 		// @todo: (?) arena/stack allocator
-		hash_set_ptr_clear(&batcher->fonts);
+		hashset_clear(&batcher->fonts);
 
 		for (uint32_t i = 0; i < batcher->words.count; i++) {
 			struct Batcher_2D_Word const * word = array_any_at(&batcher->words, i);
-			struct Asset_Font const * font_asset = asset_system_take(word->font_asset_handle);
-			hash_set_ptr_set(&batcher->fonts, (size_t)font_asset);
+			hashset_set(&batcher->fonts, &word->font_asset_handle);
 		}
 
-		FOR_HASH_SET_PTR (&batcher->fonts, it) {
-			struct Asset_Font const * font_asset = (void *)it.key_hash;
+		FOR_HASHSET (&batcher->fonts, it) {
+			struct Handle const * handle = it.key;
+			struct Asset_Font const * font_asset = asset_system_take(*handle);
 			font_render(font_asset->font);
 		}
 
-		FOR_HASH_SET_PTR (&batcher->fonts, it) {
-			struct Asset_Font const * font_asset = (void *)it.key_hash;
+		FOR_HASHSET (&batcher->fonts, it) {
+			struct Handle const * handle = it.key;
+			struct Asset_Font const * font_asset = asset_system_take(*handle);
 			gpu_texture_update(font_asset->gpu_handle, font_get_asset(font_asset->font));
 		}
 	}

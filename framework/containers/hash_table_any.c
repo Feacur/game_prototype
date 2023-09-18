@@ -78,7 +78,7 @@ void hash_table_any_clear(struct Hash_Table_Any * hash_table) {
 void * hash_table_any_get(struct Hash_Table_Any const * hash_table, void const * key, uint32_t hash) {
 	if (key == NULL) {
 		logger_to_console("hash table key should be non-null\n"); DEBUG_BREAK();
-		return false;
+		return NULL;
 	}
 
 	if (hash_table->count == 0) { return NULL; }
