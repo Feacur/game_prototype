@@ -208,7 +208,7 @@ static void prototype_draw_objects(void) {
 	array_any_ensure(&gs_renderer.gpu_commands, gpu_commands_count_estimate);
 
 	struct Handle previous_gpu_target_handle = { // @note: deliberately wrong handle
-		.id = INDEX_EMPTY, .gen = INDEX_EMPTY,
+		.id = 0xffffff, .gen = 0xff,
 	};
 
 	batcher_2d_set_color(gs_renderer.batcher_2d, (struct vec4){1, 1, 1, 1});
