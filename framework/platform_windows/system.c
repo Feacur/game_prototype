@@ -286,6 +286,24 @@ static void system_set_process_dpi_awareness(void) {
 
 //
 
+static void log_last_error(char const * prefix) {
+	DWORD id = GetLastError();
+	if (id == 0) { return; }
+
+	LPSTR message = NULL;
+	DWORD size = FormatMessageA(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS
+		, NULL, id, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)
+		, (LPSTR)&message, 0, NULL
+	);
+	if (size > 0 && message[size - 1] == '\n') { size -= 1; }
+	if (prefix != NULL) { logger_to_console("%s", prefix); }
+	logger_to_console("%.*s\n", (int)size, message);
+	LocalFree(message);
+}
+
+//
+
 static char const * system_signal_get_type(int value) {
 	switch (value) {
 		case SIGABRT: return "abnormal termination";           // such as is initiated by the abort function.
@@ -308,7 +326,9 @@ static void system_signal_handler(int value) {
 		, value
 		, system_signal_get_type(value)
 	);
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	log_last_error("  message: ");
+	REPORT_CALLSTACK(1);
+	DEBUG_BREAK();
 
 	gs_platform_system.has_error = true;
 
@@ -322,8 +342,16 @@ static void system_signal_handler(int value) {
 
 #define SVE_IGNORE_CLR (DWORD)0xe0434352 // CLR exception
 #define SVE_IGNORE_CPP (DWORD)0xe06d7363 // C++ exception
-#define SVE_IGNORE_ODS (DWORD)0x40010006 // OutputDebugString
-#define SVE_IGNORE_STN (DWORD)0x406d1388 // SetThreadName
+
+#if !defined(MS_VC_EXCEPTION)
+	#define MS_VC_EXCEPTION (DWORD)0x406d1388 // SetThreadName
+	// https://learn.microsoft.com/visualstudio/debugger/how-to-set-a-thread-name-in-native-code
+#endif
+
+#if !defined(DBG_UNABLE_TO_PROVIDE_HANDLE)
+	#define DBG_UNABLE_TO_PROVIDE_HANDLE (DWORD) 0x40010002L
+	// https://learn.microsoft.com/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
+#endif
 
 static char const * system_vector_get_type(DWORD value) {
 	switch (value) {
@@ -348,10 +376,23 @@ static char const * system_vector_get_type(DWORD value) {
 		case EXCEPTION_SINGLE_STEP:              return "single step";              // A trace trap or other single-instruction mechanism signaled that one instruction has been executed.
 		case EXCEPTION_STACK_OVERFLOW:           return "stack overflow";           // The thread used up its stack.
 		// @note: there's a lot more, but MSDN describes a lot fewer; see `STATUS_*` in `winnt.h`
-		case SVE_IGNORE_CLR: return "CLR exception";
-		case SVE_IGNORE_CPP: return "C++ exception";
-		case SVE_IGNORE_ODS: return "OutputDebugString";
-		case SVE_IGNORE_STN: return "SetThreadName";
+		case DBG_EXCEPTION_HANDLED:        return "dbg exception handled";        // Debugger handled the exception.
+		case DBG_CONTINUE:                 return "dbg continue";                 // The debugger continued.
+		case DBG_REPLY_LATER:              return "dbg reply later";              // Debugger will reply later.
+		case DBG_UNABLE_TO_PROVIDE_HANDLE: return "dbg unable to provide handle"; // Debugger cannot provide a handle.
+		case DBG_TERMINATE_THREAD:         return "dbg terminate thread";         // Debugger terminated the thread.
+		case DBG_TERMINATE_PROCESS:        return "dbg terminate process";        // Debugger terminated the process.
+		case DBG_CONTROL_C:                return "dbg control c";                // Debugger obtained control of C.
+		case DBG_PRINTEXCEPTION_C:         return "dbg printexception c";         // Debugger printed an exception on control C.
+		case DBG_RIPEXCEPTION:             return "dbg ripexception";             // Debugger received a RIP exception.
+		case DBG_CONTROL_BREAK:            return "dbg control break";            // Debugger received a control break.
+		case DBG_COMMAND_EXCEPTION:        return "dbg command exception";        // Debugger command communication exception.
+		case DBG_PRINTEXCEPTION_WIDE_C:    return "dbg printexception wide c";    // Debugger obtained control of C.
+		case DBG_EXCEPTION_NOT_HANDLED:    return "dbg exception not handled";    // Debugger did not handle the exception.
+		//
+		case MS_VC_EXCEPTION: return "SetThreadName";
+		case SVE_IGNORE_CLR:  return "CLR exception";
+		case SVE_IGNORE_CPP:  return "C++ exception";
 	}
 	return "unknown";
 }
@@ -364,15 +405,15 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	// if (code == EXCEPTION_BREAKPOINT)  { return EXCEPTION_CONTINUE_SEARCH; }
 	// if (code == EXCEPTION_SINGLE_STEP) { return EXCEPTION_CONTINUE_SEARCH; }
 
+	// @note: ignore external exceptions
+	if (code == MS_VC_EXCEPTION) { return EXCEPTION_CONTINUE_SEARCH; }
+	if (code == SVE_IGNORE_CLR)  { return EXCEPTION_CONTINUE_SEARCH; }
+	if (code == SVE_IGNORE_CPP)  { return EXCEPTION_CONTINUE_SEARCH; }
+
 	// The presence of this flag indicates that the exception is a noncontinuable exception,
 	// whereas the absence of this flag indicates that the exception is a continuable exception.
 	// Any attempt to continue execution after a noncontinuable exception causes the EXCEPTION_NONCONTINUABLE_EXCEPTION exception.
-	bool const noncontinuable = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == EXCEPTION_NONCONTINUABLE
-		&& code != SVE_IGNORE_CLR
-		&& code != SVE_IGNORE_CPP
-		&& code != SVE_IGNORE_ODS
-		&& code != SVE_IGNORE_STN
-	;
+	bool const noncontinuable = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == EXCEPTION_NONCONTINUABLE;
 
 	logger_to_console(
 		"> system vector '0x%lx'\n"
@@ -381,6 +422,7 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 		, code
 		, system_vector_get_type(code)
 	);
+	log_last_error("  message: ");
 	REPORT_CALLSTACK(1);
 
 	if (noncontinuable) { DEBUG_BREAK();
