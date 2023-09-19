@@ -1,4 +1,4 @@
-#include "framework/containers/hashtable.h"
+#include "framework/containers/hashmap.h"
 #include "framework/graphics/types.h"
 #include "framework/graphics/gpu_objects.h"
 #include "framework/systems/string_system.h"
@@ -94,11 +94,11 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_h
 	struct CString const property_prefix = S_("p_");
 
 	material->gpu_program_handle = gpu_handle;
-	struct Hashtable const * uniforms = gpu_program_get_uniforms(gpu_handle);
+	struct Hashmap const * uniforms = gpu_program_get_uniforms(gpu_handle);
 	if (uniforms == NULL) { return; }
 
 	uint32_t payload_bytes = 0, properties_count = 0;
-	FOR_HASHTABLE(uniforms, it) {
+	FOR_HASHMAP(uniforms, it) {
 		struct CString const uniform_name = string_system_get(it.hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 
@@ -111,7 +111,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_h
 	array_resize(&material->uniforms.headers, properties_count);
 	buffer_resize(&material->uniforms.payload, payload_bytes);
 
-	FOR_HASHTABLE(uniforms, it) {
+	FOR_HASHMAP(uniforms, it) {
 		struct CString const uniform_name = string_system_get(it.hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 

@@ -2,7 +2,7 @@
 
 #include "framework/containers/buffer.h"
 #include "framework/containers/array.h"
-#include "framework/containers/hashtable.h"
+#include "framework/containers/hashmap.h"
 
 #include "framework/assets/image.h"
 #include "framework/assets/typeface.h"
@@ -22,7 +22,7 @@ struct Font {
 	struct Image buffer;
 	//
 	struct Array ranges;    // `struct Typeface_Range`
-	struct Hashtable table; // `struct Typeface_Key` : `struct Glyph`
+	struct Hashmap table; // `struct Typeface_Key` : `struct Glyph`
 	bool rendered;
 };
 
@@ -68,7 +68,7 @@ struct Font * font_init(void) {
 			},
 		},
 		.ranges = array_init(sizeof(struct Typeface_Range)),
-		.table = hashtable_init(&font_hash_key, sizeof(struct Typeface_Key), sizeof(struct Glyph)),
+		.table = hashmap_init(&font_hash_key, sizeof(struct Typeface_Key), sizeof(struct Glyph)),
 	};
 	return font;
 }
@@ -77,7 +77,7 @@ void font_free(struct Font * font) {
 	if (font == NULL) { logger_to_console("freeing NULL glyph atlas\n"); return; }
 	image_free(&font->buffer);
 	array_free(&font->ranges);
-	hashtable_free(&font->table);
+	hashmap_free(&font->table);
 
 	common_memset(font, 0, sizeof(*font));
 	MEMORY_FREE(font);
@@ -106,7 +106,7 @@ void font_add_glyph(struct Font * font, uint32_t codepoint, float size) {
 		.codepoint = codepoint,
 		.size = size,
 	};
-	struct Glyph * glyph = hashtable_get(&font->table, &key);
+	struct Glyph * glyph = hashmap_get(&font->table, &key);
 	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
 	struct Typeface const * typeface = font_get_typeface(font, codepoint);
@@ -119,7 +119,7 @@ void font_add_glyph(struct Font * font, uint32_t codepoint, float size) {
 		typeface, glyph_id, typeface_get_scale(typeface, size)
 	);
 
-	hashtable_set(&font->table, &key, &(struct Glyph){
+	hashmap_set(&font->table, &key, &(struct Glyph){
 		.params = glyph_params,
 		.id = glyph_id,
 		.gc_timeout = GLYPH_GC_TIMEOUT_MAX,
@@ -134,10 +134,10 @@ static void font_add_default(struct Font *font, uint32_t codepoint, float size, 
 		.size = size,
 	};
 
-	struct Glyph * glyph = hashtable_get(&font->table, &key);
+	struct Glyph * glyph = hashmap_get(&font->table, &key);
 	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
-	hashtable_set(&font->table, &key, &(struct Glyph){
+	hashmap_set(&font->table, &key, &(struct Glyph){
 		.params = (struct Glyph_Params){
 			.full_size_x = full_size_x,
 			.rect = rect,
@@ -182,11 +182,11 @@ void font_render(struct Font * font) {
 	uint32_t const padding = 1;
 
 	// track glyphs usage
-	FOR_HASHTABLE (&font->table, it) {
+	FOR_HASHMAP (&font->table, it) {
 		struct Glyph * glyph = it.value;
 		if (glyph->gc_timeout == 0) {
 			font->rendered = false;
-			hashtable_del_at(&font->table, it.current);
+			hashmap_del_at(&font->table, it.current);
 			continue;
 		}
 
@@ -200,7 +200,7 @@ void font_render(struct Font * font) {
 	uint32_t symbols_count = 0;
 	struct Typeface_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(struct Typeface_Symbol, font->table.count);
 
-	FOR_HASHTABLE (&font->table, it) {
+	FOR_HASHMAP (&font->table, it) {
 		struct Glyph * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 		if (glyph->id == 0) { continue; }
@@ -355,7 +355,7 @@ void font_render(struct Font * font) {
 	MEMORY_FREE(symbols_to_render);
 
 	// reuse error glyph UVs
-	FOR_HASHTABLE (&font->table, it) {
+	FOR_HASHMAP (&font->table, it) {
 		struct Glyph * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 		if (glyph->id != 0) { continue; }
@@ -372,7 +372,7 @@ struct Image const * font_get_asset(struct Font const * font) {
 }
 
 struct Glyph const * font_get_glyph(struct Font * const font, uint32_t codepoint, float size) {
-	return hashtable_get(&font->table, &(struct Typeface_Key){
+	return hashmap_get(&font->table, &(struct Typeface_Key){
 		.codepoint = codepoint,
 		.size = size,
 	});

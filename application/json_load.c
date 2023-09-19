@@ -4,7 +4,7 @@
 #include "framework/json_read.h"
 
 #include "framework/containers/buffer.h"
-#include "framework/containers/hashtable.h"
+#include "framework/containers/hashmap.h"
 
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/material.h"
@@ -106,14 +106,14 @@ static void json_load_many_texture(struct JSON const * json, uint32_t length, st
 }
 
 static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * material) {
-	struct Hashtable const * gpu_program_uniforms = gpu_program_get_uniforms(material->gpu_program_handle);
+	struct Hashmap const * gpu_program_uniforms = gpu_program_get_uniforms(material->gpu_program_handle);
 	if (gpu_program_uniforms == NULL) { goto fail_uniforms; }
 
 	// @todo: arena/stack allocator
 	struct Buffer uniform_data_buffer = buffer_init(NULL);
 
 	FOR_GFX_UNIFORMS(&material->uniforms, it) {
-		struct Gpu_Uniform const * gpu_uniform = hashtable_get(gpu_program_uniforms, &it.id);
+		struct Gpu_Uniform const * gpu_uniform = hashmap_get(gpu_program_uniforms, &it.id);
 		struct CString const uniform_name = string_system_get(it.id);
 
 		uint32_t const uniform_bytes = data_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;

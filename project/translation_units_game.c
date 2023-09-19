@@ -16,7 +16,7 @@
 #include "framework/containers/buffer.c"
 #include "framework/containers/array.c"
 #include "framework/containers/handle_table.c"
-#include "framework/containers/hashtable.c"
+#include "framework/containers/hashmap.c"
 #include "framework/containers/hashset.c"
 #include "framework/containers/strings.c"
 
