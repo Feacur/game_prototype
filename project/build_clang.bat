@@ -19,8 +19,12 @@ rem static|dynamic|static_debug|dynamic_debug
 set runtime_mode=%3
 if [%runtime_mode%] == [] ( set "runtime_mode=static" )
 
+rem shared|console|windows
+set arch_mode=%4
+if [%arch_mode%] == [] ( set "arch_mode=console" )
+
 rem normal|unity|unity_link
-set build_mode=%4
+set build_mode=%5
 if [%build_mode%] == [] ( set "build_mode=unity" )
 
 rem https://clang.llvm.org/docs/index.html

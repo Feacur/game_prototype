@@ -177,7 +177,6 @@ void font_add_defaults(struct Font *font, float size) {
 	font_add_default(font, CODEPOINT_NON_BREAKING_SPACE, size, glyph_space_size,     (struct srect){0});
 }
 
-inline static struct Typeface_Key font_get_key(uint64_t value);
 static int font_sort_comparison(void const * v1, void const * v2);
 void font_render(struct Font * font) {
 	uint32_t const padding = 1;

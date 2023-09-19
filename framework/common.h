@@ -143,17 +143,11 @@ void report_callstack(uint32_t offset);
 #endif
 
 // ----- ----- ----- ----- -----
-//     callstack
+//     static assert
 // ----- ----- ----- ----- -----
 
-#if !defined(GAME_TARGET_OPTIMIZED)
-	#define STATIC_ASSERT(condition, token) \
-		typedef char CAT_MCR(static_assert__ ## token ## _, __LINE__)[(condition)?1:-1]
-#endif
-
-#if !defined(STATIC_ASSERT)
-	#define STATIC_ASSERT(condition, token) (void)0
-#endif
+#define STATIC_ASSERT(condition, token) \
+	typedef char CAT_MCR(static_assert__ ## token ## _, __LINE__)[(condition)?1:-1]
 
 // ----- ----- ----- ----- -----
 //     documentation

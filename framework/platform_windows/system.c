@@ -409,3 +409,85 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	// 	} break;
 	// }
 }
+
+#if defined(GAME_ARCH_SHARED)
+	BOOL WINAPI DllMain(
+		HINSTANCE hinstDLL,   // A handle to the DLL module. The value is the base address of the DLL. The HINSTANCE of a DLL is the same as the HMODULE of the DLL, so hinstDLL can be used in calls to functions that require a module handle.
+		DWORD     fdwReason,  // The reason code that indicates why the DLL entry-point function is being called. This parameter can be one of the following values.
+		LPVOID    lpvReserved
+	) {
+		switch( fdwReason ) {
+			case DLL_PROCESS_ATTACH:
+				// lpvReserved is NULL for dynamic loads and non-NULL for static loads.
+				/*
+				The DLL is being loaded into the virtual address space of the current process as a result of the process starting up or as a result of a call to LoadLibrary. DLLs can use this opportunity to initialize any instance data or to use the TlsAlloc function to allocate a thread local storage (TLS) index.
+				The lpvReserved parameter indicates whether the DLL is being loaded statically or dynamically.
+				*/
+				break;
+
+			case DLL_THREAD_ATTACH:
+				/*
+				The DLL is being unloaded from the virtual address space of the calling process because it was loaded unsuccessfully or the reference count has reached zero (the processes has either terminated or called FreeLibrary one time for each time it called LoadLibrary).
+				The lpvReserved parameter indicates whether the DLL is being unloaded as a result of a FreeLibrary call, a failure to load, or process termination.
+				The DLL can use this opportunity to call the TlsFree function to free any TLS indices allocated by using TlsAlloc and to free any thread local data.
+				Note that the thread that receives the DLL_PROCESS_DETACH notification is not necessarily the same thread that received the DLL_PROCESS_ATTACH notification.
+				*/
+				break;
+
+			case DLL_THREAD_DETACH:
+				/*
+				The current process is creating a new thread. When this occurs, the system calls the entry-point function of all DLLs currently attached to the process. The call is made in the context of the new thread. DLLs can use this opportunity to initialize a TLS slot for the thread. A thread calling the DLL entry-point function with DLL_PROCESS_ATTACH does not call the DLL entry-point function with DLL_THREAD_ATTACH.
+				Note that a DLL's entry-point function is called with this value only by threads created after the DLL is loaded by the process. When a DLL is loaded using LoadLibrary, existing threads do not call the entry-point function of the newly loaded DLL.
+				*/
+				break;
+
+			case DLL_PROCESS_DETACH:
+				if (lpvReserved != NULL) { break; }
+				// lpvReserved is NULL if FreeLibrary has been called or the DLL load failed and non-NULL if the process is terminating.
+				/*
+				A thread is exiting cleanly. If the DLL has stored a pointer to allocated memory in a TLS slot, it should use this opportunity to free the memory. The system calls the entry-point function of all currently loaded DLLs with this value. The call is made in the context of the exiting thread.
+				*/
+				break;
+		}
+
+		// If the return value is FALSE when DllMain is called because the process uses the LoadLibrary function, LoadLibrary returns NULL.
+		return TRUE;
+
+		// https://learn.microsoft.com/windows/win32/dlls/dllmain
+	}
+#elif defined(GAME_ARCH_WINDOWS)
+	#include <stdio.h>
+
+	extern int main (int argc, char * argv[]);
+	int WINAPI WinMain(
+		HINSTANCE hInstance,     // The operating system uses this value to identify the executable or EXE when it's loaded in memory. Certain Windows functions need the instance handle, for example to load icons or bitmaps
+		HINSTANCE hPrevInstance, // has no meaning. It was used in 16-bit Windows, but is now always zero
+		PSTR      pCmdLine,      // contains the command-line arguments as a Unicode string.
+		int       nCmdShow       // is a flag that indicates whether the main application window is minimized, maximized, or shown normally
+	) {
+		(void)hInstance; (void)hPrevInstance; (void)pCmdLine; (void)nCmdShow;
+
+		if (AllocConsole()) {
+			FILE * file_stderr = NULL;
+			freopen_s(&file_stderr, "CONOUT$", "w", stderr);
+
+			FILE * file_stdout = NULL;
+			freopen_s(&file_stdout, "CONOUT$", "w", stdout);
+			
+			FILE * file_stdin = NULL;
+			freopen_s(&file_stdin, "CONIN$", "r", stdin);
+		}
+
+		return main(__argc, __argv);
+
+		// @note: unicode differences
+		// #if defined (UNICODE) || defined (_UNICODE)
+		// 	wWinMain
+		// 	PWSTR pCmdLine
+		// 	__wargv
+		// #endif
+
+		// https://learn.microsoft.com/windows/win32/learnwin32/winmain--the-application-entry-point
+		// https://learn.microsoft.com/windows/console/console-handles
+	}
+#endif

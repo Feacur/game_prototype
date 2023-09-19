@@ -84,7 +84,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 		uint32_t const module_length = valid_module ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, module.ModuleName, -1, NULL, 0, NULL, NULL) : 0;
 		uint32_t const symbol_length = valid_symbol ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, NULL, 0, NULL, NULL) : 0;
 		uint32_t const source_length = valid_source ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, source.FileName, -1, NULL, 0, NULL, NULL) : 0;
-		buffer_ensure(&gs_platform_debug.scratch, symbol_length + source_length + module_length);
+		buffer_ensure(&gs_platform_debug.scratch, module_length + symbol_length + source_length);
 		char * module_data = gs_platform_debug.scratch.data;
 		char * symbol_data = module_data + symbol_length;
 		char * source_data = symbol_data + source_length;
@@ -171,7 +171,7 @@ struct Callstack platform_debug_get_callstack(void) { return (struct Callstack){
 struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_t offset) { (void)callstack; (void)offset; return (struct CString){0}; }
 
 //
-#include "debug_to_system.h"
+#include "internal/debug_to_system.h"
 
 bool debug_to_system_init(void) { return true; }
 void debug_to_system_free(void) { }

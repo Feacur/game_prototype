@@ -3,10 +3,14 @@ chcp 65001 > nul
 
 rem linker options for MSVC `link` or clang `lld-link`
 
+rem https://learn.microsoft.com/cpp/c-runtime-library/crt-library-features
+rem https://learn.microsoft.com/cpp/build/reference/entry-entry-point-symbol
+rem https://learn.microsoft.com/cpp/build/reference/subsystem-specify-subsystem
+
 set includes=-I".." -I"../third_party"
 set defines=-D_CRT_SECURE_NO_WARNINGS -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE -D_UNICODE
 set libs=kernel32.lib user32.lib gdi32.lib
-set linker=-nologo -WX -subsystem:console -incremental:no
+set linker=-nologo -WX -incremental:no
 
 set linker=%linker% -nodefaultlib
 if %runtime_mode% == static (
@@ -20,6 +24,19 @@ if %runtime_mode% == static (
 ) else if %runtime_mode% == dynamic_debug (
 	set libs=%libs% ucrtd.lib vcruntimed.lib msvcrtd.lib
 	set defines=%defines% -D_MT -D_DLL -D_DEBUG
+)
+
+if %arch_mode% == shared (
+	set defines=%defines% -DGAME_ARCH_SHARED
+	rem set linker=%linker% -entry:_DllMainCRTStartup
+) else if %arch_mode% == console (
+	set defines=%defines% -DGAME_ARCH_CONSOLE
+	set linker=%linker% -subsystem:console,5.02
+	rem set linker=%linker% -entry:mainCRTStartup
+) else if %arch_mode% == windows (
+	set defines=%defines% -DGAME_ARCH_WINDOWS
+	set linker=%linker% -subsystem:windows,5.02
+	rem set linker=%linker% -entry:WinMainCRTStartup
 )
 
 if %configuration% == optimized (
