@@ -7,7 +7,7 @@
 
 struct Batcher_2D;
 
-struct Array_Any;
+struct Array;
 
 struct Batcher_2D * batcher_2d_init(void);
 void batcher_2d_free(struct Batcher_2D * batcher);
@@ -37,7 +37,7 @@ void batcher_2d_add_text(
 );
 
 void batcher_2d_clear(struct Batcher_2D * batcher);
-void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array_Any * commands);
+void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * commands);
 void batcher_2d_bake(struct Batcher_2D * batcher);
 
 #endif

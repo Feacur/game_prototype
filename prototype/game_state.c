@@ -71,7 +71,7 @@ static void json_read_cameras(struct JSON const * json) {
 		struct Camera camera;
 		json_read_camera(camera_json, &camera);
 
-		array_any_push_many(&gs_game.cameras, 1, &camera);
+		array_push_many(&gs_game.cameras, 1, &camera);
 	}
 }
 
@@ -179,7 +179,7 @@ static void json_read_entities(struct JSON const * json) {
 		struct Entity entity;
 		json_read_entity(entity_json, &entity);
 
-		array_any_push_many(&gs_game.entities, 1, &entity);
+		array_push_many(&gs_game.entities, 1, &entity);
 	}
 }
 
@@ -189,21 +189,21 @@ struct Game_State gs_game;
 
 void game_init(void) {
 	gs_game = (struct Game_State){
-		.cameras = array_any_init(sizeof(struct Camera)),
-		.entities = array_any_init(sizeof(struct Entity)),
+		.cameras = array_init(sizeof(struct Camera)),
+		.entities = array_init(sizeof(struct Entity)),
 	};
 }
 
 void game_free(void) {
-	array_any_free(&gs_game.cameras);
-	array_any_free(&gs_game.entities);
+	array_free(&gs_game.cameras);
+	array_free(&gs_game.entities);
 
 	common_memset(&gs_game, 0, sizeof(gs_game));
 }
 
 void game_fill_scene(struct JSON const * json, void * data) {
-	array_any_clear(&gs_game.cameras);
-	array_any_clear(&gs_game.entities);
+	array_clear(&gs_game.cameras);
+	array_clear(&gs_game.entities);
 
 	if (json->type == JSON_ERROR) { DEBUG_BREAK(); return; }
 	if (data != &gs_game) { DEBUG_BREAK(); return; }

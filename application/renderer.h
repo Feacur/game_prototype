@@ -1,7 +1,7 @@
 #if !defined(APPLICATION_RENDERER)
 #define APPLICATION_RENDERER
 
-#include "framework/containers/array_any.h"
+#include "framework/containers/array.h"
 #include "framework/graphics/material.h"
 
 struct Batcher_2D;
@@ -9,7 +9,7 @@ struct Batcher_2D;
 extern struct Renderer {
 	struct Batcher_2D * batcher_2d;
 	struct Gfx_Uniforms uniforms;
-	struct Array_Any gpu_commands; // `struct GPU_Command`
+	struct Array gpu_commands; // `struct GPU_Command`
 } gs_renderer;
 
 //

@@ -9,18 +9,18 @@
 
 struct WFObj wfobj_init(void) {
 	return (struct WFObj){
-		.positions = array_flt_init(),
-		.texcoords = array_flt_init(),
-		.normals   = array_flt_init(),
-		.triangles = array_u32_init(),
+		.positions = array_init(sizeof(float)),
+		.texcoords = array_init(sizeof(float)),
+		.normals   = array_init(sizeof(float)),
+		.triangles = array_init(sizeof(uint32_t)),
 	};
 }
 
 void wfobj_free(struct WFObj * obj) {
-	array_flt_free(&obj->positions);
-	array_flt_free(&obj->texcoords);
-	array_flt_free(&obj->normals);
-	array_u32_free(&obj->triangles);
+	array_free(&obj->positions);
+	array_free(&obj->texcoords);
+	array_free(&obj->normals);
+	array_free(&obj->triangles);
 	// common_memset(obj, 0, sizeof(*obj));
 }
 
@@ -97,7 +97,7 @@ static void wfobj_do_name(struct WFObj_Lexer * lexer, struct WFObj_Token * token
 	}
 }
 
-static void wfobj_do_vertex(struct WFObj_Lexer * lexer, struct WFObj_Token * token, struct Array_Flt * buffer, uint32_t limit) {
+static void wfobj_do_vertex(struct WFObj_Lexer * lexer, struct WFObj_Token * token, struct Array * buffer, uint32_t limit) {
 #define ADVANCE() wfobj_advance(lexer, token)
 
 	uint32_t entries = 0;
@@ -107,7 +107,7 @@ static void wfobj_do_vertex(struct WFObj_Lexer * lexer, struct WFObj_Token * tok
 		float value;
 		if (wfobj_consume_float(lexer, token, &value)) {
 			if (entries >= limit) { continue; } entries++;
-			array_flt_push_many(buffer, 1, &value);
+			array_push_many(buffer, 1, &value);
 		}
 		else { ADVANCE(); }
 	}
@@ -122,7 +122,7 @@ inline static uint32_t wfobj_translate_index(int32_t value, uint32_t base) {
 }
 
 static void wfobj_do_faces(
-	struct WFObj_Lexer * lexer, struct WFObj_Token * token, struct Array_U32 * buffer,
+	struct WFObj_Lexer * lexer, struct WFObj_Token * token, struct Array * buffer,
 	uint32_t positions_count, uint32_t texcoords_count, uint32_t normals_count
 ) {
 #define ADVANCE() wfobj_advance(lexer, token)
@@ -136,7 +136,7 @@ static void wfobj_do_faces(
 		face[0] = wfobj_translate_index(value, positions_count);
 
 		if (token->type != WFOBJ_TOKEN_SLASH) {
-			array_u32_push_many(buffer, 3, face);
+			array_push_many(buffer, 3, face);
 			continue;
 		}
 
@@ -148,7 +148,7 @@ static void wfobj_do_faces(
 			wfobj_consume_s32(lexer, token, &value);
 			face[2] = wfobj_translate_index(value, normals_count);
 
-			array_u32_push_many(buffer, 3, face);
+			array_push_many(buffer, 3, face);
 			continue;
 		}
 
@@ -157,7 +157,7 @@ static void wfobj_do_faces(
 		face[1] = wfobj_translate_index(value, texcoords_count);
 
 		if (token->type != WFOBJ_TOKEN_SLASH) {
-			array_u32_push_many(buffer, 3, face);
+			array_push_many(buffer, 3, face);
 			continue;
 		}
 
@@ -166,7 +166,7 @@ static void wfobj_do_faces(
 		wfobj_consume_s32(lexer, token, &value);
 		face[2] = wfobj_translate_index(value, normals_count);
 
-		array_u32_push_many(buffer, 3, face);
+		array_push_many(buffer, 3, face);
 	}
 
 #undef ADVANCE
@@ -201,15 +201,15 @@ struct WFObj wfobj_parse(char const * text) {
 	}
 	wfobj_lexer_free(&lexer);
 
-	array_flt_resize(&result.positions, position_lines * 3);
-	array_flt_resize(&result.texcoords, texcoord_lines * 2);
-	array_flt_resize(&result.normals,   normal_lines * 3);
-	array_u32_resize(&result.triangles, face_lines * 3 * 2);
+	array_resize(&result.positions, position_lines * 3);
+	array_resize(&result.texcoords, texcoord_lines * 2);
+	array_resize(&result.normals,   normal_lines * 3);
+	array_resize(&result.triangles, face_lines * 3 * 2);
 
 	//
 	// @todo: arena/stack allocator
-	struct Array_U32 scratch_u32 = array_u32_init();
-	array_u32_resize(&scratch_u32, 3 * 4);
+	struct Array scratch_u32 = array_init(sizeof(uint32_t));
+	array_resize(&scratch_u32, 3 * 4);
 
 	lexer = wfobj_lexer_init(text);
 	token = (struct WFObj_Token){0}; ADVANCE();
@@ -247,9 +247,10 @@ struct WFObj wfobj_parse(char const * text) {
 
 				uint32_t indices_count = scratch_u32.count / 3;
 				for (uint32_t i = 2; i < indices_count; i++) {
-					array_u32_push_many(&result.triangles, 3, scratch_u32.data + 0);
-					array_u32_push_many(&result.triangles, 3, scratch_u32.data + (i - 1) * 3);
-					array_u32_push_many(&result.triangles, 3, scratch_u32.data + i * 3);
+					uint32_t const * data = scratch_u32.data;
+					array_push_many(&result.triangles, 3, data + 0);
+					array_push_many(&result.triangles, 3, data + (i - 1) * 3);
+					array_push_many(&result.triangles, 3, data + i * 3);
 				}
 				break;
 			}
@@ -261,7 +262,7 @@ struct WFObj wfobj_parse(char const * text) {
 		ADVANCE();
 	}
 	wfobj_lexer_free(&lexer);
-	array_u32_free(&scratch_u32);
+	array_free(&scratch_u32);
 
 	return result;
 

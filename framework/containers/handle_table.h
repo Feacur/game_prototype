@@ -2,7 +2,7 @@
 #define FRAMEWORK_CONTAINERS_HANDLE_TABLE
 
 #include "handle.h"
-#include "array_any.h"
+#include "array.h"
 
 struct Handle_Table_Iterator {
 	uint32_t current, next;
@@ -11,7 +11,7 @@ struct Handle_Table_Iterator {
 };
 
 struct Handle_Table {
-	struct Array_Any buffer;
+	struct Array buffer;
 	// handles table
 	uint32_t free_sparse_index;
 	struct Handle * sparse; // free id: next free sparse index; taken id: dense and value index

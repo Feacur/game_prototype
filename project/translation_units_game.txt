@@ -13,11 +13,7 @@ framework/graphics/material.c
 
 framework/containers/internal/helpers.c
 framework/containers/buffer.c
-framework/containers/array_any.c
-framework/containers/array_flt.c
-framework/containers/array_s32.c
-framework/containers/array_u32.c
-framework/containers/array_u64.c
+framework/containers/array.c
 framework/containers/handle_table.c
 framework/containers/hashtable.c
 framework/containers/hashset.c

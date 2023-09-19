@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_ASSETS_JSON)
 #define FRAMEWORK_ASSETS_JSON
 
-#include "framework/containers/array_any.h"
+#include "framework/containers/array.h"
 #include "framework/containers/hashtable.h"
 
 struct Strings;
@@ -20,7 +20,7 @@ struct JSON {
 	enum JSON_Type type;
 	union {
 		struct Hashtable table; // key string id : `struct JSON`
-		struct Array_Any array;      // `struct JSON`
+		struct Array array;     // `struct JSON`
 		uint32_t string_id;
 		double number;
 		bool boolean;

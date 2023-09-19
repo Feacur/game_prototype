@@ -24,21 +24,21 @@ void renderer_init(void) {
 	gs_renderer = (struct Renderer){
 		.batcher_2d = batcher_2d_init(),
 		.uniforms = gfx_uniforms_init(),
-		.gpu_commands = array_any_init(sizeof(struct GPU_Command)),
+		.gpu_commands = array_init(sizeof(struct GPU_Command)),
 	};
 }
 
 void renderer_free(void) {
 	batcher_2d_free(gs_renderer.batcher_2d);
 	gfx_uniforms_free(&gs_renderer.uniforms);
-	array_any_free(&gs_renderer.gpu_commands);
+	array_free(&gs_renderer.gpu_commands);
 	common_memset(&gs_renderer, 0, sizeof(gs_renderer));
 }
 
 void renderer_start_frame(void) {
 	batcher_2d_clear(gs_renderer.batcher_2d);
 	gfx_uniforms_clear(&gs_renderer.uniforms);
-	array_any_clear(&gs_renderer.gpu_commands);
+	array_clear(&gs_renderer.gpu_commands);
 }
 
 void renderer_end_frame(void) {

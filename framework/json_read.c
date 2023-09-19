@@ -225,12 +225,12 @@ struct Handle json_read_target(struct JSON const * json) {
 	if (buffers_json->type != JSON_ARRAY) { goto fail; }
 
 	// @todo: arena/stack allocator
-	struct Array_Any parameters_buffer = array_any_init(sizeof(struct Texture_Parameters));
+	struct Array parameters_buffer = array_init(sizeof(struct Texture_Parameters));
 
 	uint32_t const buffers_count = json_count(buffers_json);
 	for (uint32_t i = 0; i < buffers_count; i++) {
 		struct Texture_Parameters const texture_parameters = json_read_texture_parameters(json_at(buffers_json, i));
-		array_any_push_many(&parameters_buffer, 1, &texture_parameters);
+		array_push_many(&parameters_buffer, 1, &texture_parameters);
 	}
 
 	struct Handle result = (struct Handle){0};
@@ -242,7 +242,7 @@ struct Handle json_read_target(struct JSON const * json) {
 		}
 	}
 
-	array_any_free(&parameters_buffer);
+	array_free(&parameters_buffer);
 	return result;
 
 	// process errors

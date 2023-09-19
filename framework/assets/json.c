@@ -27,11 +27,11 @@ void json_free(struct JSON * value) {
 		} break;
 
 		case JSON_ARRAY: {
-			struct Array_Any * array = &value->as.array;
+			struct Array * array = &value->as.array;
 			for (uint32_t i = 0; i < array->count; i++) {
-				json_free(array_any_at(array, i));
+				json_free(array_at(array, i));
 			}
-			array_any_free(array);
+			array_free(array);
 		} break;
 	}
 	common_memset(value, 0, sizeof(*value));
@@ -48,7 +48,7 @@ struct JSON const * json_get(struct JSON const * value, struct CString key) {
 
 struct JSON const * json_at(struct JSON const * value, uint32_t index) {
 	if (value->type != JSON_ARRAY) { DEBUG_BREAK(); return &c_json_error; }
-	void * result = array_any_at(&value->as.array, index);
+	void * result = array_at(&value->as.array, index);
 	return (result != NULL) ? result : &c_json_null;
 }
 
@@ -234,8 +234,8 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 
 static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * value) {
 	*value = (struct JSON){.type = JSON_ARRAY};
-	struct Array_Any * array = &value->as.array;
-	*array = array_any_init(sizeof(struct JSON));
+	struct Array * array = &value->as.array;
+	*array = array_init(sizeof(struct JSON));
 
 	enum JSON_Token_Type const scope = JSON_TOKEN_RIGHT_SQUARE;
 	if (parser->current.type == scope) { json_parser_consume(parser); return; }
@@ -249,7 +249,7 @@ static void json_parser_do_array(struct JSON_Parser * parser, struct JSON * valu
 		}
 
 		// add
-		array_any_push_many(array, 1, &entry_value);
+		array_push_many(array, 1, &entry_value);
 
 		// finalize
 		bool const is_comma = json_parser_match(parser, JSON_TOKEN_COMMA);

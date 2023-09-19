@@ -14,11 +14,7 @@
 
 #include "framework/containers/internal/helpers.c"
 #include "framework/containers/buffer.c"
-#include "framework/containers/array_any.c"
-#include "framework/containers/array_flt.c"
-#include "framework/containers/array_u32.c"
-#include "framework/containers/array_s32.c"
-#include "framework/containers/array_u64.c"
+#include "framework/containers/array.c"
 #include "framework/containers/handle_table.c"
 #include "framework/containers/hashtable.c"
 #include "framework/containers/hashset.c"

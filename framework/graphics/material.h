@@ -2,7 +2,7 @@
 #define FRAMEWORK_GRAPHICS_MATERIAL
 
 #include "framework/containers/buffer.h"
-#include "framework/containers/array_any.h"
+#include "framework/containers/array.h"
 #include "framework/containers/handle.h"
 
 #include "types.h"
@@ -23,7 +23,7 @@ struct Gfx_Uniforms_Iterator {
 };
 
 struct Gfx_Uniforms {
-	struct Array_Any headers; // `struct Gfx_Uniforms_Entry`
+	struct Array headers; // `struct Gfx_Uniforms_Entry`
 	struct Buffer payload;
 };
 

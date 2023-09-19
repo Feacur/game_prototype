@@ -2,8 +2,8 @@
 #include "framework/logger.h"
 #include "framework/platform_file.h"
 #include "framework/containers/buffer.h"
-#include "framework/containers/array_flt.h"
-#include "framework/containers/array_u32.h"
+#include "framework/containers/array.h"
+#include "framework/containers/array.h"
 #include "internal/wfobj.h"
 
 //
@@ -11,31 +11,31 @@
 
 static void wfobj_repack(
 	struct WFObj const * wfobj,
-	struct Array_Flt * vertices,
-	struct Array_U32 * attributes,
-	struct Array_U32 * indices
+	struct Array * vertices,   // float
+	struct Array * attributes, // uint32_t
+	struct Array * indices     // uint32_t
 );
 
 static struct Mesh mesh_construct(
-	struct Array_Flt const * vertices,
-	struct Array_U32 const * attributes,
-	struct Array_U32 const * indices
+	struct Array const * vertices,   // float
+	struct Array const * attributes, // uint32_t
+	struct Array const * indices     // uint32_t
 );
 
 struct Mesh mesh_init(struct Buffer const * buffer) {
 	struct WFObj wfobj = wfobj_parse((char const *)buffer->data);
 
 	//
-	struct Array_Flt vertices;
-	struct Array_U32 attributes;
-	struct Array_U32 indices;
+	struct Array vertices;
+	struct Array attributes;
+	struct Array indices;
 
 	wfobj_repack(&wfobj, &vertices, &attributes, &indices);
 	wfobj_free(&wfobj);
 
-	array_u32_push_many(&attributes, 2, (uint32_t[]){0, 0});
+	array_push_many(&attributes, 2, (uint32_t[]){0, 0});
 	struct Mesh mesh = mesh_construct(&vertices, &attributes, &indices);
-	array_u32_free(&attributes);
+	array_free(&attributes);
 
 	return mesh;
 }
@@ -53,13 +53,13 @@ void mesh_free(struct Mesh * mesh) {
 
 static void wfobj_repack(
 	struct WFObj const * wfobj,
-	struct Array_Flt * vertices,
-	struct Array_U32 * attributes,
-	struct Array_U32 * indices
+	struct Array * vertices,   // float
+	struct Array * attributes, // uint32_t
+	struct Array * indices     // uint32_t
 ) {
-	*vertices   = array_flt_init();
-	*attributes = array_u32_init();
-	*indices    = array_u32_init();
+	*vertices   = array_init(sizeof(float));
+	*attributes = array_init(sizeof(uint32_t));
+	*indices    = array_init(sizeof(uint32_t));
 
 	uint32_t attributes_buffer[MESH_ATTRIBUTES_CAPACITY];
 	uint32_t attributes_count = 0;
@@ -68,34 +68,31 @@ static void wfobj_repack(
 	if (wfobj->texcoords.count > 0) { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_TEXCOORD; attributes_buffer[attributes_count++] = 2; }
 	if (wfobj->normals.count   > 0) { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_NORMAL;   attributes_buffer[attributes_count++] = 3; }
 
-	array_u32_push_many(attributes, attributes_count, attributes_buffer);
+	array_push_many(attributes, attributes_count, attributes_buffer);
 
 	uint32_t indices_count = wfobj->triangles.count / 3;
 	for (uint32_t i = 0, vertex_id = 0; i < indices_count; i++) {
-		uint32_t const vertex_index[] = {
-			wfobj->triangles.data[i * 3 + 0],
-			wfobj->triangles.data[i * 3 + 1],
-			wfobj->triangles.data[i * 3 + 2],
-		};
+		uint32_t const * data = array_at(&wfobj->triangles, i * 3);
+		uint32_t const vertex_index[] = {data[0], data[1], data[2]};
 
 		// @todo: reuse matching vertices instead of copying them
 		//        naive linear search would be quadratically slow,
 		//        so a hash_table it is
 
 		uint32_t attribute_index = 1;
-		if (wfobj->positions.count > 0) { array_flt_push_many(vertices, 3, wfobj->positions.data + vertex_index[0] * attributes_buffer[attribute_index]); attribute_index += 2; }
-		if (wfobj->texcoords.count > 0) { array_flt_push_many(vertices, 2, wfobj->texcoords.data + vertex_index[1] * attributes_buffer[attribute_index]); attribute_index += 2; }
-		if (wfobj->normals.count > 0)   { array_flt_push_many(vertices, 3, wfobj->normals.data   + vertex_index[2] * attributes_buffer[attribute_index]); attribute_index += 2; }
+		if (wfobj->positions.count > 0) { array_push_many(vertices, 3, array_at(&wfobj->positions, vertex_index[0] * attributes_buffer[attribute_index])); attribute_index += 2; }
+		if (wfobj->texcoords.count > 0) { array_push_many(vertices, 2, array_at(&wfobj->texcoords, vertex_index[1] * attributes_buffer[attribute_index])); attribute_index += 2; }
+		if (wfobj->normals.count > 0)   { array_push_many(vertices, 3, array_at(&wfobj->normals,   vertex_index[2] * attributes_buffer[attribute_index])); attribute_index += 2; }
 
-		array_u32_push_many(indices, 1, &vertex_id);
+		array_push_many(indices, 1, &vertex_id);
 		vertex_id++;
 	}
 }
 
 static struct Mesh mesh_construct(
-	struct Array_Flt const * vertices,
-	struct Array_U32 const * attributes,
-	struct Array_U32 const * indices
+	struct Array const * vertices,   // float
+	struct Array const * attributes, // uint32_t
+	struct Array const * indices     // uint32_t
 ) {
 	if (vertices->count == 0) { return (struct Mesh){0}; }
 	if (indices->count == 0) { return (struct Mesh){0}; }
@@ -127,8 +124,9 @@ static struct Mesh mesh_construct(
 		.flags = MESH_FLAG_INDEX,
 	};
 
-	common_memcpy(mesh.parameters[0].attributes, attributes->data, sizeof(*attributes->data) * attributes->count);
-	common_memset(mesh.parameters[0].attributes + attributes->count, 0, sizeof(*attributes->data) * (MESH_ATTRIBUTES_CAPACITY - attributes->count));
+	size_t const attribute_size = SIZE_OF_MEMBER(struct Mesh_Parameters, attributes[0]);
+	common_memcpy(mesh.parameters[0].attributes, attributes->data, attribute_size * attributes->count);
+	common_memset(mesh.parameters[0].attributes + attributes->count, 0, attribute_size * (MESH_ATTRIBUTES_CAPACITY - attributes->count));
 
 	return mesh;
 }

@@ -1,7 +1,7 @@
 #include "framework/maths.h"
 
 #include "framework/containers/buffer.h"
-#include "framework/containers/array_any.h"
+#include "framework/containers/array.h"
 #include "framework/containers/hashtable.h"
 
 #include "framework/assets/image.h"
@@ -21,7 +21,7 @@ struct Typeface_Range {
 struct Font {
 	struct Image buffer;
 	//
-	struct Array_Any ranges; // `struct Typeface_Range`
+	struct Array ranges;    // `struct Typeface_Range`
 	struct Hashtable table; // `struct Typeface_Key` : `struct Glyph`
 	bool rendered;
 };
@@ -67,7 +67,7 @@ struct Font * font_init(void) {
 				},
 			},
 		},
-		.ranges = array_any_init(sizeof(struct Typeface_Range)),
+		.ranges = array_init(sizeof(struct Typeface_Range)),
 		.table = hashtable_init(&font_hash_key, sizeof(struct Typeface_Key), sizeof(struct Glyph)),
 	};
 	return font;
@@ -76,7 +76,7 @@ struct Font * font_init(void) {
 void font_free(struct Font * font) {
 	if (font == NULL) { logger_to_console("freeing NULL glyph atlas\n"); return; }
 	image_free(&font->buffer);
-	array_any_free(&font->ranges);
+	array_free(&font->ranges);
 	hashtable_free(&font->table);
 
 	common_memset(font, 0, sizeof(*font));
@@ -85,7 +85,7 @@ void font_free(struct Font * font) {
 
 struct Typeface const * font_get_typeface(struct Font const * font, uint32_t codepoint) {
 	for (uint32_t i = font->ranges.count; i > 0; i--) {
-		struct Typeface_Range const * range = array_any_at(&font->ranges, i - 1);
+		struct Typeface_Range const * range = array_at(&font->ranges, i - 1);
 		if (codepoint < range->from) { continue; }
 		if (codepoint > range->to) { continue; }
 		return range->typeface;
@@ -94,7 +94,7 @@ struct Typeface const * font_get_typeface(struct Font const * font, uint32_t cod
 }
 
 void font_set_typeface(struct Font * font, struct Typeface const * typeface, uint32_t codepoint_from, uint32_t codepoint_to) {
-	array_any_push_many(&font->ranges, 1, &(struct Typeface_Range){
+	array_push_many(&font->ranges, 1, &(struct Typeface_Range){
 		.from = codepoint_from,
 		.to = codepoint_to,
 		.typeface = typeface,

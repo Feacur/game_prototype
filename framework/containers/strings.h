@@ -2,14 +2,14 @@
 #define FRAMEWORK_CONTAINERS_STRINGS
 
 #include "framework/containers/buffer.h"
-#include "framework/containers/array_u32.h"
+#include "framework/containers/array.h"
 
 // @purpose: strings interning structure
 
 // @note: `0` is a NULL id
 struct Strings {
-	struct Array_U32 offsets;
-	struct Array_U32 lengths;
+	struct Array offsets; // uint32_t
+	struct Array lengths; // uint32_t
 	struct Buffer buffer;
 };
 

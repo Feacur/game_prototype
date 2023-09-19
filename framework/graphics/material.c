@@ -12,19 +12,19 @@
 
 struct Gfx_Uniforms gfx_uniforms_init(void) {
 	return (struct Gfx_Uniforms){
-		.headers = array_any_init(sizeof(struct Gfx_Uniforms_Entry)),
+		.headers = array_init(sizeof(struct Gfx_Uniforms_Entry)),
 		.payload = buffer_init(NULL),
 	};
 }
 
 void gfx_uniforms_free(struct Gfx_Uniforms * uniforms) {
-	array_any_free(&uniforms->headers);
+	array_free(&uniforms->headers);
 	buffer_free(&uniforms->payload);
 	// common_memset(uniforms, 0, sizeof(*uniforms));
 }
 
 void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {
-	array_any_clear(&uniforms->headers);
+	array_clear(&uniforms->headers);
 	buffer_clear(&uniforms->payload);
 }
 
@@ -41,7 +41,7 @@ void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, struct CString name, stru
 struct CArray_Mut gfx_uniforms_id_get(struct Gfx_Uniforms const * uniforms, uint32_t id, uint32_t offset) {
 	if (id == 0) { goto null; }
 	for (uint32_t i = offset; i < uniforms->headers.count; i++) {
-		struct Gfx_Uniforms_Entry const * entry = array_any_at(&uniforms->headers, i);
+		struct Gfx_Uniforms_Entry const * entry = array_at(&uniforms->headers, i);
 		if (entry->id != id) { continue; }
 		return (struct CArray_Mut){
 			.data = (uint8_t *)uniforms->payload.data + entry->offset,
@@ -53,7 +53,7 @@ struct CArray_Mut gfx_uniforms_id_get(struct Gfx_Uniforms const * uniforms, uint
 
 void gfx_uniforms_id_push(struct Gfx_Uniforms * uniforms, uint32_t id, struct CArray value) {
 	if (id == 0) { return; }
-	array_any_push_many(&uniforms->headers, 1, &(struct Gfx_Uniforms_Entry){
+	array_push_many(&uniforms->headers, 1, &(struct Gfx_Uniforms_Entry){
 		.id = id,
 		.size = (uint32_t)value.size,
 		.offset = (uint32_t)uniforms->payload.size,
@@ -66,7 +66,7 @@ bool gfx_uniforms_iterate(struct Gfx_Uniforms const * uniforms, struct Gfx_Unifo
 		uint32_t const index = iterator->next++;
 		iterator->current = index;
 		//
-		struct Gfx_Uniforms_Entry const * entry = array_any_at(&uniforms->headers, index);
+		struct Gfx_Uniforms_Entry const * entry = array_at(&uniforms->headers, index);
 		iterator->id = entry->id;
 		iterator->size = entry->size;
 		iterator->value = (uint8_t *)uniforms->payload.data + entry->offset;
@@ -108,7 +108,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_h
 	}
 
 	gfx_uniforms_clear(&material->uniforms);
-	array_any_resize(&material->uniforms.headers, properties_count);
+	array_resize(&material->uniforms.headers, properties_count);
 	buffer_resize(&material->uniforms.payload, payload_bytes);
 
 	FOR_HASHTABLE(uniforms, it) {

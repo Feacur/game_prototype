@@ -1,14 +1,14 @@
 #if !defined(FRAMEWORK_ASSETS_WFOBJ)
 #define FRAMEWORK_ASSETS_WFOBJ
 
-#include "framework/containers/array_flt.h"
-#include "framework/containers/array_u32.h"
+#include "framework/containers/array.h"
+#include "framework/containers/array.h"
 
 struct WFObj {
-	struct Array_Flt positions;
-	struct Array_Flt texcoords;
-	struct Array_Flt normals;
-	struct Array_U32 triangles;
+	struct Array positions; // float
+	struct Array texcoords; // float
+	struct Array normals;   // float
+	struct Array triangles; // uint32_t
 };
 
 struct WFObj wfobj_init(void);

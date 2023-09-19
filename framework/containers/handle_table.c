@@ -9,19 +9,19 @@
 
 struct Handle_Table handle_table_init(uint32_t value_size) {
 	return (struct Handle_Table){
-		.buffer = array_any_init(value_size),
+		.buffer = array_init(value_size),
 	};
 }
 
 void handle_table_free(struct Handle_Table * handle_table) {
-	array_any_free(&handle_table->buffer);
+	array_free(&handle_table->buffer);
 	MEMORY_FREE(handle_table->dense);
 	MEMORY_FREE(handle_table->sparse);
 	common_memset(handle_table, 0, sizeof(*handle_table));
 }
 
 void handle_table_clear(struct Handle_Table * handle_table) {
-	array_any_clear(&handle_table->buffer);
+	array_clear(&handle_table->buffer);
 	handle_table->free_sparse_index = 0;
 	common_memset(handle_table->dense, 0, sizeof(*handle_table->dense) * handle_table->buffer.capacity);
 	for (uint32_t i = 0; i < handle_table->buffer.capacity; i++) {
@@ -44,7 +44,7 @@ void handle_table_resize(struct Handle_Table * handle_table, uint32_t target_cap
 
 	uint32_t const capacity = handle_table->buffer.capacity;
 
-	array_any_resize(&handle_table->buffer, target_capacity);
+	array_resize(&handle_table->buffer, target_capacity);
 	handle_table->dense  = MEMORY_REALLOCATE_ARRAY(handle_table->dense, handle_table->buffer.capacity);
 	handle_table->sparse = MEMORY_REALLOCATE_ARRAY(handle_table->sparse, handle_table->buffer.capacity);
 
@@ -73,7 +73,7 @@ struct Handle handle_table_aquire(struct Handle_Table * handle_table, void const
 	// claim the entry
 	entry->id = handle_table->buffer.count;
 	handle_table->dense[handle_table->buffer.count] = handle_id;
-	array_any_push_many(&handle_table->buffer, 1, value);
+	array_push_many(&handle_table->buffer, 1, value);
 
 	//
 	return (struct Handle){
@@ -96,7 +96,7 @@ void handle_table_discard(struct Handle_Table * handle_table, struct Handle hand
 
 	// keep the `dense` and `values` arrays integrities
 	if (entry->id < handle_table->buffer.count - 1) {
-		array_any_set_many(&handle_table->buffer, entry->id, 1, array_any_pop(&handle_table->buffer));
+		array_set_many(&handle_table->buffer, entry->id, 1, array_pop(&handle_table->buffer));
 
 		uint32_t const replacement_sparse_index = handle_table->dense[handle_table->buffer.count];
 
@@ -125,7 +125,7 @@ void * handle_table_get(struct Handle_Table * handle_table, struct Handle handle
 	if (handle_id  != handle_table->dense[entry->id]) { return NULL; }
 	if (handle.gen != entry->gen)                     { return NULL; }
 
-	return array_any_at(&handle_table->buffer, entry->id);
+	return array_at(&handle_table->buffer, entry->id);
 }
 
 void handle_table_set(struct Handle_Table * handle_table, struct Handle handle, void const * value) {
@@ -137,7 +137,7 @@ void handle_table_set(struct Handle_Table * handle_table, struct Handle handle, 
 	if (handle_id  != handle_table->dense[entry->id]) { DEBUG_BREAK(); return; }
 	if (handle.gen != entry->gen)                     { DEBUG_BREAK(); return; }
 
-	array_any_set_many(&handle_table->buffer, entry->id, 1, value);
+	array_set_many(&handle_table->buffer, entry->id, 1, value);
 }
 
 bool handle_table_iterate(struct Handle_Table const * handle_table, struct Handle_Table_Iterator * iterator) {
@@ -150,7 +150,7 @@ bool handle_table_iterate(struct Handle_Table const * handle_table, struct Handl
 			.id = handle_id + 1,
 			.gen = handle_table->sparse[handle_id].gen,
 		};
-		iterator->value = array_any_at(&handle_table->buffer, index);
+		iterator->value = array_at(&handle_table->buffer, index);
 		return true;
 	}
 	return false;

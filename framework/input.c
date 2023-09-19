@@ -1,5 +1,5 @@
 #include "framework/logger.h"
-#include "framework/containers/array_u32.h"
+#include "framework/containers/array.h"
 
 // @idea: elaborate raw input
 // @idea: expose Caps Lock and Num Lock toggle states?
@@ -30,7 +30,7 @@ struct Mouse_State {
 static struct Input_State {
 	struct Keyboard_State keyboard, keyboard_prev;
 	struct Mouse_State mouse, mouse_prev;
-	struct Array_U32 codepoints;
+	struct Array codepoints; // uint32_t
 	bool track_codepoints;
 } gs_input_state;
 
@@ -49,7 +49,7 @@ void input_track_codepoints(bool state) {
 	gs_input_state.track_codepoints = state;
 }
 
-struct Array_U32 const * input_get_codepoints(void) {
+struct Array const * input_get_codepoints(void) {
 	return &gs_input_state.codepoints;
 }
 
@@ -82,12 +82,12 @@ bool input_mouse_transition(enum Mouse_Code key, bool state) {
 #include "framework/internal/input_to_system.h"
 
 bool input_to_system_init(void) {
-	gs_input_state.codepoints = array_u32_init();
+	gs_input_state.codepoints = array_init(sizeof(uint32_t));
 	return true;
 }
 
 void input_to_system_free(void) {
-	array_u32_free(&gs_input_state.codepoints);
+	array_free(&gs_input_state.codepoints);
 	common_memset(&gs_input_state, 0, sizeof(gs_input_state));
 }
 
@@ -146,7 +146,7 @@ void input_to_platform_on_key(enum Key_Code key, bool is_down) {
 
 void input_to_platform_on_codepoint(uint32_t codepoint) {
 	if (!gs_input_state.track_codepoints) { return; }
-	array_u32_push_many(&gs_input_state.codepoints, 1, &codepoint);
+	array_push_many(&gs_input_state.codepoints, 1, &codepoint);
 }
 
 void input_to_platform_on_mouse_move(uint32_t x, uint32_t y) {
