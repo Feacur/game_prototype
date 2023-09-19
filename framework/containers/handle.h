@@ -6,8 +6,8 @@
 // @purpose: decouple `handle_table.h` and `asset_system.h` with any other one
 
 struct Handle {
-	uint32_t id : 24;
-	uint32_t gen : 8;
+	uint32_t id : 24; // 0x00ffffff
+	uint32_t gen : 8; // 0x000000ff
 };
 STATIC_ASSERT(sizeof(struct Handle) == sizeof(uint32_t), handle);
 

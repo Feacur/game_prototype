@@ -1335,7 +1335,7 @@ void graphics_to_gpu_library_init(void) {
 
 void graphics_to_gpu_library_free(void) {
 #define GPU_FREE(data, action) do { \
-	if (data.buffer.count > 0) { logger_to_console("dangling \"" #data "\": %u\n", data.buffer.count); } \
+	if (data.packed.count > 0) { logger_to_console("dangling \"" #data "\": %u\n", data.packed.count); } \
 	FOR_HANDLE_TABLE (&data, it) { action(it.value); } \
 	handle_table_free(&data); \
 } while (false)\

@@ -11,11 +11,10 @@ struct Handle_Table_Iterator {
 };
 
 struct Handle_Table {
-	struct Array buffer;
-	// handles table
-	uint32_t free_sparse_index;
-	struct Handle * sparse; // free id: next free sparse index; taken id: dense and value index
-	uint32_t * dense; // taken sparse index
+	struct Array packed; // of value_size
+	struct Array sparse; // `struct Handle`
+	uint32_t * ids;      // into `sparse`
+	uint32_t free_list;  // into `sparse`
 };
 
 struct Handle_Table handle_table_init(uint32_t value_size);
