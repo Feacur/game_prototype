@@ -16,7 +16,7 @@
 #include "framework/graphics/gpu_objects.h"
 #include "framework/graphics/gpu_command.h"
 
-#include "framework/containers/hash_table_any.h"
+#include "framework/containers/hashtable.h"
 
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"

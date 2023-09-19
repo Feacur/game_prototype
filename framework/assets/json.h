@@ -2,7 +2,7 @@
 #define FRAMEWORK_ASSETS_JSON
 
 #include "framework/containers/array_any.h"
-#include "framework/containers/hash_table_u32.h"
+#include "framework/containers/hashtable.h"
 
 struct Strings;
 
@@ -19,7 +19,7 @@ enum JSON_Type {
 struct JSON {
 	enum JSON_Type type;
 	union {
-		struct Hash_Table_U32 table; // key string id : `struct JSON`
+		struct Hashtable table; // key string id : `struct JSON`
 		struct Array_Any array;      // `struct JSON`
 		uint32_t string_id;
 		double number;

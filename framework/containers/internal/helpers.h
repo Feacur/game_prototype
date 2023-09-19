@@ -20,8 +20,8 @@ enum Hash_Table_Mark {
 uint32_t grow_capacity_value_u32(uint32_t current, uint32_t delta);
 uint64_t grow_capacity_value_u64(uint64_t current, uint64_t delta);
 
-bool should_hash_table_grow(uint32_t capacity, uint32_t count);
-uint32_t adjust_hash_table_capacity_value(uint32_t value);
+bool should_hashes_grow(uint32_t capacity, uint32_t count);
+uint32_t adjust_hashes_capacity_value(uint32_t value);
 
 //
 

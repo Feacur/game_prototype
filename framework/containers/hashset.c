@@ -31,7 +31,7 @@ void hashset_resize(struct Hashset * hashset, uint32_t target_capacity) {
 	uint8_t  * keys   = hashset->keys;
 	uint8_t  * marks  = hashset->marks;
 
-	hashset->capacity = adjust_hash_table_capacity_value(target_capacity);
+	hashset->capacity = adjust_hashes_capacity_value(target_capacity);
 	hashset->hashes   = MEMORY_ALLOCATE_ARRAY(uint32_t, hashset->capacity);
 	hashset->keys     = MEMORY_ALLOCATE_ARRAY(uint8_t, hashset->key_size * hashset->capacity);
 	hashset->marks    = MEMORY_ALLOCATE_ARRAY(uint8_t, hashset->capacity);
@@ -86,7 +86,7 @@ bool hashset_set(struct Hashset * hashset, void const * key) {
 		return false;
 	}
 
-	if (should_hash_table_grow(hashset->capacity, hashset->count)) {
+	if (should_hashes_grow(hashset->capacity, hashset->count)) {
 		uint32_t const target_capacity = grow_capacity_value_u32(hashset->capacity, 1);
 		hashset_resize(hashset, target_capacity);
 	}

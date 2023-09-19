@@ -94,6 +94,10 @@ uint64_t align_u64(uint64_t value);
 
 bool contains_full_word(char const * container, struct CString value);
 
+typedef uint32_t hasher(void const * v);
+
+inline static uint32_t hash32(void const * v) { return *(uint32_t const *)v; }
+
 // ----- ----- ----- ----- -----
 //     flexible array
 // ----- ----- ----- ----- -----

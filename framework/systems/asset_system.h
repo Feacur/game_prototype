@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_SYSTEMS_ASSET_SYSTEM)
 #define FRAMEWORK_SYSTEMS_ASSET_SYSTEM
 
-#include "framework/containers/hash_table_u32.h"
+#include "framework/containers/hashtable.h"
 #include "framework/containers/handle_table.h"
 
 struct Asset_Callbacks {

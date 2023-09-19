@@ -4,7 +4,7 @@
 #include "framework/common.h"
 
 struct Buffer {
-	Allocator * allocator;
+	Allocator * allocate;
 	size_t capacity, size;
 	void * data;
 };

@@ -6,7 +6,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/array_any.h"
 #include "framework/containers/array_u32.h"
-#include "framework/containers/hash_table_u32.h"
+#include "framework/containers/hashtable.h"
 #include "framework/containers/handle_table.h"
 
 #include "framework/assets/mesh.h"
@@ -35,7 +35,7 @@ struct Gpu_Uniform_Internal {
 
 struct Gpu_Program {
 	GLuint id;
-	struct Hash_Table_U32 uniforms; // uniform string id : `struct Gpu_Uniform_Internal`
+	struct Hashtable uniforms; // uniform string id : `struct Gpu_Uniform_Internal`
 	// @idea: add an optional asset source
 };
 
@@ -134,11 +134,11 @@ static struct Graphics_State {
 
 static void gpu_program_on_aquire(struct Gpu_Program * gpu_program) {
 	gpu_program->id = glCreateProgram();
-	gpu_program->uniforms = hash_table_u32_init(sizeof(struct Gpu_Uniform_Internal));
+	gpu_program->uniforms = hashtable_init(&hash32, sizeof(uint32_t), sizeof(struct Gpu_Uniform_Internal));
 }
 
 static void gpu_program_on_discard(struct Gpu_Program * gpu_program) {
-	hash_table_u32_free(&gpu_program->uniforms);
+	hashtable_free(&gpu_program->uniforms);
 	glDeleteProgram(gpu_program->id);
 }
 
@@ -248,7 +248,7 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 	glGetProgramInterfaceiv(program.id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
 	GLchar * uniform_name_buffer = alloca(sizeof(GLchar) * (size_t)uniform_name_buffer_length);
 
-	hash_table_u32_resize(&program.uniforms, (uint32_t)uniforms_count);
+	hashtable_resize(&program.uniforms, (uint32_t)uniforms_count);
 
 	for (GLint i = 0; i < uniforms_count; i++) {
 		enum Param {
@@ -293,7 +293,7 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 		}
 
 		uint32_t const id = string_system_add(uniform_name);
-		hash_table_u32_set(&program.uniforms, id, &(struct Gpu_Uniform_Internal){
+		hashtable_set(&program.uniforms, &id, &(struct Gpu_Uniform_Internal){
 			.base = {
 				.type = interpret_gl_type(params[PARAM_TYPE]),
 				.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
@@ -327,7 +327,7 @@ void gpu_program_free(struct Handle handle) {
 	});
 }
 
-struct Hash_Table_U32 const * gpu_program_get_uniforms(struct Handle handle) {
+struct Hashtable const * gpu_program_get_uniforms(struct Handle handle) {
 	struct Gpu_Program const * gpu_program = handle_table_get(&gs_graphics_state.programs, handle);
 	return (gpu_program != NULL) ? &gpu_program->uniforms : NULL;
 }
@@ -1030,7 +1030,7 @@ static void gpu_upload_uniforms(struct Gpu_Program const * gpu_program, struct G
 	for (uint32_t i = offset, last = offset + count; i < last; i++) {
 		struct Gfx_Uniforms_Entry const * entry = array_any_at(&uniforms->headers, i);
 
-		struct Gpu_Uniform_Internal const * uniform = hash_table_u32_get(&gpu_program->uniforms, entry->id);
+		struct Gpu_Uniform_Internal const * uniform = hashtable_get(&gpu_program->uniforms, &entry->id);
 		if (uniform == NULL) { continue; }
 
 		if (data_type_get_size(uniform->base.type) * uniform->base.array_size != entry->size) { continue; }

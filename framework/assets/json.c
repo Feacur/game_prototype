@@ -21,9 +21,9 @@ void json_free(struct JSON * value) {
 		default: break;
 
 		case JSON_OBJECT: {
-			struct Hash_Table_U32 * table = &value->as.table;
-			FOR_HASH_TABLE_U32 (table, it) { json_free(it.value); }
-			hash_table_u32_free(table);
+			struct Hashtable * table = &value->as.table;
+			FOR_HASHTABLE (table, it) { json_free(it.value); }
+			hashtable_free(table);
 		} break;
 
 		case JSON_ARRAY: {
@@ -42,7 +42,7 @@ struct JSON const * json_get(struct JSON const * value, struct CString key) {
 	if (value->type != JSON_OBJECT) { DEBUG_BREAK(); return &c_json_error; }
 	uint32_t const key_id = string_system_find(key);
 	if (key_id == 0) { return &c_json_null; }
-	void const * result = hash_table_u32_get(&value->as.table, key_id);
+	void const * result = hashtable_get(&value->as.table, &key_id);
 	return (result != NULL) ? result : &c_json_null;
 }
 
@@ -187,8 +187,8 @@ static void json_parser_synchronize_array(struct JSON_Parser * parser) {
 static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * value);
 static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * value) {
 	*value = (struct JSON){.type = JSON_OBJECT};
-	struct Hash_Table_U32 * table = &value->as.table;
-	*table = hash_table_u32_init(sizeof(struct JSON));
+	struct Hashtable * table = &value->as.table;
+	*table = hashtable_init(&hash32, SIZE_OF_MEMBER(struct JSON, as.string_id), sizeof(struct JSON));
 
 	enum JSON_Token_Type const scope = JSON_TOKEN_RIGHT_BRACE;
 	if (parser->current.type == scope) { json_parser_consume(parser); return; }
@@ -214,7 +214,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		}
 
 		// add
-		bool const is_new = hash_table_u32_set(table, entry_key.as.string_id, &entry_value);
+		bool const is_new = hashtable_set(table, &entry_key.as.string_id, &entry_value);
 		if (!is_new) {
 			struct CString const key = string_system_get(entry_key.as.string_id);
 			logger_to_console("key duplicate: \"%.*s\"\n", key.length, key.data);

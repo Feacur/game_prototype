@@ -60,11 +60,11 @@ uint64_t grow_capacity_value_u64(uint64_t current, uint64_t delta) {
 	return current;
 }
 
-bool should_hash_table_grow(uint32_t capacity, uint32_t count) {
+bool should_hashes_grow(uint32_t capacity, uint32_t count) {
 	return count >= mul_div_u64(capacity, GROWTH_DIV, GROWTH_MUL);
 }
 
-uint32_t adjust_hash_table_capacity_value(uint32_t value) {
+uint32_t adjust_hashes_capacity_value(uint32_t value) {
 #if defined(HASH_TABLE_PO2)
 	return round_up_to_PO2_u32(value);
 #else

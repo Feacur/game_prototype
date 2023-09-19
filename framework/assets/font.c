@@ -2,7 +2,7 @@
 
 #include "framework/containers/buffer.h"
 #include "framework/containers/array_any.h"
-#include "framework/containers/hash_table_u64.h"
+#include "framework/containers/hashtable.h"
 
 #include "framework/assets/image.h"
 #include "framework/assets/typeface.h"
@@ -22,7 +22,7 @@ struct Font {
 	struct Image buffer;
 	//
 	struct Array_Any ranges; // `struct Typeface_Range`
-	struct Hash_Table_U64 table; // `struct Typeface_Key` : `struct Glyph`
+	struct Hashtable table; // `struct Typeface_Key` : `struct Glyph`
 	bool rendered;
 };
 
@@ -30,7 +30,6 @@ struct Typeface_Key {
 	uint32_t codepoint;
 	float size; // @note: differs from scale
 };
-STATIC_ASSERT(sizeof(struct Typeface_Key) == sizeof(uint64_t), font);
 
 //
 #include "font.h"
@@ -43,6 +42,12 @@ struct Typeface_Symbol {
 struct Glyph_Codepoint {
 	uint32_t glyph, codepoint;
 };
+
+static uint32_t font_hash_key(void const * v) {
+	struct Typeface_Key const * k = v;
+	return k->codepoint
+	     ^ *(uint32_t const *)&k->size;
+}
 
 struct Font * font_init(void) {
 	struct Font * font = MEMORY_ALLOCATE(struct Font);
@@ -63,7 +68,7 @@ struct Font * font_init(void) {
 			},
 		},
 		.ranges = array_any_init(sizeof(struct Typeface_Range)),
-		.table = hash_table_u64_init(sizeof(struct Glyph)),
+		.table = hashtable_init(&font_hash_key, sizeof(struct Typeface_Key), sizeof(struct Glyph)),
 	};
 	return font;
 }
@@ -72,7 +77,7 @@ void font_free(struct Font * font) {
 	if (font == NULL) { logger_to_console("freeing NULL glyph atlas\n"); return; }
 	image_free(&font->buffer);
 	array_any_free(&font->ranges);
-	hash_table_u64_free(&font->table);
+	hashtable_free(&font->table);
 
 	common_memset(font, 0, sizeof(*font));
 	MEMORY_FREE(font);
@@ -96,14 +101,12 @@ void font_set_typeface(struct Font * font, struct Typeface const * typeface, uin
 	});
 }
 
-inline static uint64_t font_get_key_hash(struct Typeface_Key value);
 void font_add_glyph(struct Font * font, uint32_t codepoint, float size) {
-	uint64_t const key_hash = font_get_key_hash((struct Typeface_Key){
+	struct Typeface_Key const key = {
 		.codepoint = codepoint,
 		.size = size,
-	});
-
-	struct Glyph * glyph = hash_table_u64_get(&font->table, key_hash);
+	};
+	struct Glyph * glyph = hashtable_get(&font->table, &key);
 	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
 	struct Typeface const * typeface = font_get_typeface(font, codepoint);
@@ -116,7 +119,7 @@ void font_add_glyph(struct Font * font, uint32_t codepoint, float size) {
 		typeface, glyph_id, typeface_get_scale(typeface, size)
 	);
 
-	hash_table_u64_set(&font->table, key_hash, &(struct Glyph){
+	hashtable_set(&font->table, &key, &(struct Glyph){
 		.params = glyph_params,
 		.id = glyph_id,
 		.gc_timeout = GLYPH_GC_TIMEOUT_MAX,
@@ -126,15 +129,15 @@ void font_add_glyph(struct Font * font, uint32_t codepoint, float size) {
 }
 
 static void font_add_default(struct Font *font, uint32_t codepoint, float size, float full_size_x, struct srect rect) {
-	uint64_t const key_hash = font_get_key_hash((struct Typeface_Key){
+	struct Typeface_Key const key = {
 		.codepoint = codepoint,
 		.size = size,
-	});
+	};
 
-	struct Glyph * glyph = hash_table_u64_get(&font->table, key_hash);
+	struct Glyph * glyph = hashtable_get(&font->table, &key);
 	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
-	hash_table_u64_set(&font->table, key_hash, &(struct Glyph){
+	hashtable_set(&font->table, &key, &(struct Glyph){
 		.params = (struct Glyph_Params){
 			.full_size_x = full_size_x,
 			.rect = rect,
@@ -180,11 +183,11 @@ void font_render(struct Font * font) {
 	uint32_t const padding = 1;
 
 	// track glyphs usage
-	FOR_HASH_TABLE_U64 (&font->table, it) {
+	FOR_HASHTABLE (&font->table, it) {
 		struct Glyph * glyph = it.value;
 		if (glyph->gc_timeout == 0) {
 			font->rendered = false;
-			hash_table_u64_del_at(&font->table, it.current);
+			hashtable_del_at(&font->table, it.current);
 			continue;
 		}
 
@@ -198,16 +201,16 @@ void font_render(struct Font * font) {
 	uint32_t symbols_count = 0;
 	struct Typeface_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(struct Typeface_Symbol, font->table.count);
 
-	FOR_HASH_TABLE_U64 (&font->table, it) {
+	FOR_HASHTABLE (&font->table, it) {
 		struct Glyph * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 		if (glyph->id == 0) { continue; }
 
-		struct Typeface_Key const key = font_get_key(it.key_hash);
-		if (codepoint_is_invisible(key.codepoint)) { continue; }
+		struct Typeface_Key const * key = it.key;
+		if (codepoint_is_invisible(key->codepoint)) { continue; }
 
 		symbols_to_render[symbols_count++] = (struct Typeface_Symbol){
-			.key = key,
+			.key = *key,
 			.glyph = glyph,
 		};
 	}
@@ -353,13 +356,13 @@ void font_render(struct Font * font) {
 	MEMORY_FREE(symbols_to_render);
 
 	// reuse error glyph UVs
-	FOR_HASH_TABLE_U64 (&font->table, it) {
+	FOR_HASHTABLE (&font->table, it) {
 		struct Glyph * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 		if (glyph->id != 0) { continue; }
 
-		struct Typeface_Key const key = font_get_key(it.key_hash);
-		if (codepoint_is_invisible(key.codepoint)) { continue; }
+		struct Typeface_Key const *key = it.key;
+		if (codepoint_is_invisible(key->codepoint)) { continue; }
 
 		glyph->uv = error_glyph.uv;
 	}
@@ -370,10 +373,10 @@ struct Image const * font_get_asset(struct Font const * font) {
 }
 
 struct Glyph const * font_get_glyph(struct Font * const font, uint32_t codepoint, float size) {
-	return hash_table_u64_get(&font->table, font_get_key_hash((struct Typeface_Key){
+	return hashtable_get(&font->table, &(struct Typeface_Key){
 		.codepoint = codepoint,
 		.size = size,
-	}));
+	});
 }
 
 // 
@@ -444,24 +447,6 @@ static int font_sort_comparison(void const * v1, void const * v2) {
 	if (s1->glyph->id > s2->glyph->id) { return -1; }
 
 	return 0;
-}
-
-inline static struct Typeface_Key font_get_key(uint64_t value) {
-	union {
-		uint64_t value_u64;
-		struct Typeface_Key value_key;
-	} data;
-	data.value_u64 = value;
-	return data.value_key;
-}
-
-inline static uint64_t font_get_key_hash(struct Typeface_Key value) {
-	union {
-		uint64_t value_u64;
-		struct Typeface_Key value_key;
-	} data;
-	data.value_key = value;
-	return data.value_u64;
 }
 
 #undef GLYPH_GC_TIMEOUT_MAX

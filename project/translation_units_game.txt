@@ -18,11 +18,9 @@ framework/containers/array_flt.c
 framework/containers/array_s32.c
 framework/containers/array_u32.c
 framework/containers/array_u64.c
-framework/containers/hash_table_any.c
-framework/containers/hash_table_u32.c
-framework/containers/hash_table_u64.c
-framework/containers/hashset.c
 framework/containers/handle_table.c
+framework/containers/hashtable.c
+framework/containers/hashset.c
 framework/containers/strings.c
 
 framework/assets/internal/wfobj_lexer.c

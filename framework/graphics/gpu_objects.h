@@ -16,7 +16,7 @@
 struct Buffer;
 struct Mesh;
 struct Image;
-struct Hash_Table_U32;
+struct Hashtable;
 
 // ----- ----- ----- ----- -----
 //     GPU program part
@@ -26,7 +26,7 @@ struct Handle gpu_program_init(struct Buffer const * asset);
 void gpu_program_free(struct Handle handle);
 
 // uniform string id : `struct Gpu_Uniform`
-struct Hash_Table_U32 const * gpu_program_get_uniforms(struct Handle handle);
+struct Hashtable const * gpu_program_get_uniforms(struct Handle handle);
 
 // ----- ----- ----- ----- -----
 //     GPU texture part

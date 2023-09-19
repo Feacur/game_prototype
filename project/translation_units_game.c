@@ -19,11 +19,9 @@
 #include "framework/containers/array_u32.c"
 #include "framework/containers/array_s32.c"
 #include "framework/containers/array_u64.c"
-#include "framework/containers/hash_table_any.c"
-#include "framework/containers/hash_table_u32.c"
-#include "framework/containers/hash_table_u64.c"
-#include "framework/containers/hashset.c"
 #include "framework/containers/handle_table.c"
+#include "framework/containers/hashtable.c"
+#include "framework/containers/hashset.c"
 #include "framework/containers/strings.c"
 
 #include "framework/assets/internal/wfobj_lexer.c"
