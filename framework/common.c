@@ -128,8 +128,9 @@ bool contains_full_word(char const * container, struct CString value) {
 // ----- ----- ----- ----- -----
 
 void report_callstack(uint32_t offset) {
+	offset += 2; // @note: skip `platform_debug_get_callstack` and `report_callstack`
 	struct Callstack const callstack = platform_debug_get_callstack();
-	struct CString const stacktrace = platform_debug_get_stacktrace(callstack, offset + 1);
+	struct CString const stacktrace = platform_debug_get_stacktrace(callstack, offset);
 	logger_to_console(
 		"> callstack:\n"
 		"%.*s"

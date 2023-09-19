@@ -299,8 +299,6 @@ static char const * system_signal_get_type(int value) {
 }
 
 static void system_signal_handler(int value) {
-#define STACKTRACE_OFFSET 7 // or 1
-
 	if (gs_platform_system.has_error) { goto finilize; }
 
 	logger_to_console(
@@ -310,7 +308,7 @@ static void system_signal_handler(int value) {
 		, value
 		, system_signal_get_type(value)
 	);
-	REPORT_CALLSTACK(STACKTRACE_OFFSET); DEBUG_BREAK();
+	REPORT_CALLSTACK(1); DEBUG_BREAK();
 
 	gs_platform_system.has_error = true;
 
@@ -318,10 +316,14 @@ static void system_signal_handler(int value) {
 	(void)0;
 
 	// http://www.cplusplus.com/reference/csignal/signal/
-#undef STACKTRACE_OFFSET
 }
 
 //
+
+#define SVE_IGNORE_CLR (DWORD)0xe0434352 // CLR exception
+#define SVE_IGNORE_CPP (DWORD)0xe06d7363 // C++ exception
+#define SVE_IGNORE_ODS (DWORD)0x40010006 // OutputDebugString
+#define SVE_IGNORE_STN (DWORD)0x406d1388 // SetThreadName
 
 static char const * system_vector_get_type(DWORD value) {
 	switch (value) {
@@ -346,13 +348,15 @@ static char const * system_vector_get_type(DWORD value) {
 		case EXCEPTION_SINGLE_STEP:              return "single step";              // A trace trap or other single-instruction mechanism signaled that one instruction has been executed.
 		case EXCEPTION_STACK_OVERFLOW:           return "stack overflow";           // The thread used up its stack.
 		// @note: there's a lot more, but MSDN describes a lot fewer; see `STATUS_*` in `winnt.h`
+		case SVE_IGNORE_CLR: return "CLR exception";
+		case SVE_IGNORE_CPP: return "C++ exception";
+		case SVE_IGNORE_ODS: return "OutputDebugString";
+		case SVE_IGNORE_STN: return "SetThreadName";
 	}
 	return "unknown";
 }
 
 static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
-#define STACKTRACE_OFFSET 4 // or 1
-
 	if (gs_platform_system.has_error) { return EXCEPTION_CONTINUE_EXECUTION; }
 	DWORD const code = ExceptionInfo->ExceptionRecord->ExceptionCode;
 
@@ -364,10 +368,10 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	// whereas the absence of this flag indicates that the exception is a continuable exception.
 	// Any attempt to continue execution after a noncontinuable exception causes the EXCEPTION_NONCONTINUABLE_EXCEPTION exception.
 	bool const noncontinuable = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == EXCEPTION_NONCONTINUABLE
-		&& code != 0xe0434352 // CLR exception
-		&& code != 0xe06d7363 // C++ exception
-		&& code != 0x40010006 // OutputDebugString
-		&& code != 0x406d1388 // SetThreadName
+		&& code != SVE_IGNORE_CLR
+		&& code != SVE_IGNORE_CPP
+		&& code != SVE_IGNORE_ODS
+		&& code != SVE_IGNORE_STN
 	;
 
 	logger_to_console(
@@ -377,7 +381,7 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 		, code
 		, system_vector_get_type(code)
 	);
-	REPORT_CALLSTACK(STACKTRACE_OFFSET);
+	REPORT_CALLSTACK(1);
 
 	if (noncontinuable) { DEBUG_BREAK();
 		gs_platform_system.has_error = true;
@@ -390,7 +394,6 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	// https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-exception_record
 	// https://learn.microsoft.com/visualstudio/debugger/how-to-set-a-thread-name-in-native-code
 	// https://wiki.winehq.org/Debugging_Hints
-#undef STACKTRACE_OFFSET
 
 	// This flag is reserved for system use.
 	// bool const software_originate = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_SOFTWARE_ORIGINATE) == EXCEPTION_SOFTWARE_ORIGINATE;
@@ -409,6 +412,11 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	// 	} break;
 	// }
 }
+
+#undef SVE_IGNORE_CLR
+#undef SVE_IGNORE_CPP
+#undef SVE_IGNORE_ODS
+#undef SVE_IGNORE_STN
 
 #if defined(GAME_ARCH_SHARED)
 	BOOL WINAPI DllMain(

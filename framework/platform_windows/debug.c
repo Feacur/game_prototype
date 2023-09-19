@@ -54,6 +54,17 @@ struct Callstack platform_debug_get_callstack(void) {
 	// https://docs.microsoft.com/windows/win32/api/winnt/nf-winnt-rtlvirtualunwind
 }
 
+#if defined(DBGHELP_TRANSLATE_TCHAR)
+	inline static uint32_t platform_debug_eval_length(WCHAR const * value, int limit) {
+		int const length = WideCharToMultiByte(CP_UTF8, 0, value, limit, NULL, 0, NULL, NULL);
+		if (limit >= 0) { return (uint32_t)length; }
+		if (length > 0) { return (uint32_t)(length - 1); }
+		return 0;
+
+		// https://learn.microsoft.com/windows/win32/api/stringapiset/nf-stringapiset-widechartomultibyte
+	}
+#endif
+
 struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_t offset) {
 	gs_platform_debug.buffer.size = 0;
 	gs_platform_debug.scratch.size = 0;
@@ -73,7 +84,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 	IMAGEHLP_MODULE64 module = {.SizeOfStruct = sizeof(module)};
 
 	HANDLE const process = GetCurrentProcess();
-	for (uint32_t i = offset + 1, last = callstack.count; i < last; i++) {
+	for (uint32_t i = offset, last = callstack.count; i < last; i++) {
 		// fetch function, source file, and line
 		BOOL const valid_module = SymGetModuleInfo64(process, callstack.data[i], &module);
 		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], &symbol_offset, &symbol.header);
@@ -81,9 +92,9 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 		if (!(valid_module || valid_symbol || valid_source)) { continue; }
 
 	#if defined(DBGHELP_TRANSLATE_TCHAR)
-		uint32_t const module_length = valid_module ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, module.ModuleName, -1, NULL, 0, NULL, NULL) : 0;
-		uint32_t const symbol_length = valid_symbol ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, NULL, 0, NULL, NULL) : 0;
-		uint32_t const source_length = valid_source ? (uint32_t)WideCharToMultiByte(CP_UTF8, 0, source.FileName, -1, NULL, 0, NULL, NULL) : 0;
+		uint32_t const module_length = valid_module ? platform_debug_eval_length(module.ModuleName, -1) : 0;
+		uint32_t const symbol_length = valid_symbol ? platform_debug_eval_length(symbol.header.Name, (int)symbol.header.NameLen) : 0;
+		uint32_t const source_length = valid_source ? platform_debug_eval_length(source.FileName, -1) : 0;
 		buffer_ensure(&gs_platform_debug.scratch, module_length + symbol_length + source_length);
 		char * module_data = gs_platform_debug.scratch.data;
 		char * symbol_data = module_data + symbol_length;

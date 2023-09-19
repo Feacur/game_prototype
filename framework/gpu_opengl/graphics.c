@@ -1463,8 +1463,6 @@ static void __stdcall opengl_debug_message_callback(
 	const GLchar *message,
 	const void *userParam
 ) {
-#define STACKTRACE_OFFSET 5 // or 1
-
 	(void)userParam;
 	logger_to_console(
 		"> OpenGL message '0x%x'\n"
@@ -1479,9 +1477,7 @@ static void __stdcall opengl_debug_message_callback(
 		, opengl_debug_get_type(type)
 		, length, message
 	);
-	REPORT_CALLSTACK(STACKTRACE_OFFSET); DEBUG_BREAK();
-
-#undef STACKTRACE_OFFSET
+	REPORT_CALLSTACK(1); DEBUG_BREAK();
 }
 
 /*
