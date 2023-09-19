@@ -6,10 +6,10 @@
 #include "asset_system.h"
 
 static struct Asset_System {
-	struct Handle_Table meta; // `struct Asset_Meta`
-	struct Hashmap handles;   // name string id : `struct Handle`
-	struct Hashmap types;     // type string id : `struct Asset_Type`
-	struct Hashmap map;       // extension string id : type string id
+	struct Sparseset meta;  // `struct Asset_Meta`
+	struct Hashmap handles; // name string id : `struct Handle`
+	struct Hashmap types;   // type string id : `struct Asset_Type`
+	struct Hashmap map;     // extension string id : type string id
 } gs_asset_system;
 
 struct Asset_Meta {
@@ -20,7 +20,7 @@ struct Asset_Meta {
 
 struct Asset_Type {
 	struct Asset_Callbacks callbacks;
-	struct Handle_Table instances; // `struct Asset_Inst`, variable type sizes
+	struct Sparseset instances; // `struct Asset_Inst`, variable type sizes
 };
 
 struct Asset_Inst {
@@ -35,7 +35,7 @@ static struct CString asset_system_name_to_extension(struct CString name);
 
 void asset_system_init(void) {
 	gs_asset_system = (struct Asset_System){
-		.meta = handle_table_init(sizeof(struct Asset_Meta)),
+		.meta = sparseset_init(sizeof(struct Asset_Meta)),
 		.handles = hashmap_init(&hash32, sizeof(uint32_t), sizeof(struct Handle)),
 		.types = hashmap_init(&hash32, sizeof(uint32_t), sizeof(struct Asset_Type)),
 		.map = hashmap_init(&hash32, sizeof(uint32_t), sizeof(uint32_t)),
@@ -45,18 +45,18 @@ void asset_system_init(void) {
 void asset_system_free(void) {
 	FOR_HASHMAP (&gs_asset_system.types, it_type) {
 		struct Asset_Type * type = it_type.value;
-		FOR_HANDLE_TABLE (&type->instances, it_inst) {
+		FOR_SPARSESET (&type->instances, it_inst) {
 			struct Asset_Inst * inst = it_inst.value;
 			if (type->callbacks.free != NULL) {
 				type->callbacks.free(inst->payload);
 			}
 		}
-		handle_table_free(&type->instances);
+		sparseset_free(&type->instances);
 		if (type->callbacks.type_free != NULL) {
 			type->callbacks.type_free();
 		}
 	}
-	handle_table_free(&gs_asset_system.meta);
+	sparseset_free(&gs_asset_system.meta);
 	hashmap_free(&gs_asset_system.handles);
 	hashmap_free(&gs_asset_system.types);
 	hashmap_free(&gs_asset_system.map);
@@ -75,7 +75,7 @@ void asset_system_map_extension(struct CString type, struct CString extension) {
 }
 
 bool asset_system_match_type(struct Handle handle, struct CString type_name) {
-	struct Asset_Meta const * meta = handle_table_get(&gs_asset_system.meta, handle);
+	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return false; }
 	struct CString const handle_type = string_system_get(meta->type_id);
 	return cstring_equals(handle_type, type_name);
@@ -85,7 +85,7 @@ void asset_system_set_type(struct CString type, struct Asset_Callbacks callbacks
 	uint32_t const type_id = string_system_add(type);
 	hashmap_set(&gs_asset_system.types, &type_id, &(struct Asset_Type){
 		.callbacks = callbacks,
-		.instances = handle_table_init(SIZE_OF_MEMBER(struct Asset_Inst, header) + value_size),
+		.instances = sparseset_init(SIZE_OF_MEMBER(struct Asset_Inst, header) + value_size),
 	});
 	if (callbacks.type_init != NULL) {
 		callbacks.type_init();
@@ -97,18 +97,18 @@ void asset_system_del_type(struct CString type_name) {
 	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &type_id);
 	if (type == NULL) { return; }
 
-	FOR_HANDLE_TABLE (&type->instances, it_inst) {
+	FOR_SPARSESET (&type->instances, it_inst) {
 		struct Asset_Inst * inst = it_inst.value;
 
 		hashmap_del(&gs_asset_system.handles, &inst->header.name_id);
-		handle_table_discard(&gs_asset_system.meta, inst->header.meta_handle);
+		sparseset_discard(&gs_asset_system.meta, inst->header.meta_handle);
 
 		if (type->callbacks.free != NULL) {
 			type->callbacks.free(inst->payload);
 		}
 	}
 
-	handle_table_free(&type->instances);
+	sparseset_free(&type->instances);
 	if (type->callbacks.type_free != NULL) {
 		type->callbacks.type_free();
 	}
@@ -136,15 +136,15 @@ struct Handle asset_system_aquire(struct CString name) {
 	if (type == NULL) { return (struct Handle){0}; }
 
 	//
-	struct Handle const inst_handle = handle_table_aquire(&type->instances, NULL);
-	struct Handle const meta_handle = handle_table_aquire(&gs_asset_system.meta, &(struct Asset_Meta){
+	struct Handle const inst_handle = sparseset_aquire(&type->instances, NULL);
+	struct Handle const meta_handle = sparseset_aquire(&gs_asset_system.meta, &(struct Asset_Meta){
 		.type_id = type_id,
 		.name_id = name_id,
 		.inst_handle = inst_handle,
 	});
 	hashmap_set(&gs_asset_system.handles, &name_id, &meta_handle);
 
-	struct Asset_Inst * inst = handle_table_get(&type->instances, inst_handle);
+	struct Asset_Inst * inst = sparseset_get(&type->instances, inst_handle);
 	inst->header = (struct Asset_Inst_Header) {
 		.name_id = name_id,
 		.meta_handle = meta_handle,
@@ -158,31 +158,31 @@ struct Handle asset_system_aquire(struct CString name) {
 }
 
 void asset_system_discard(struct Handle handle) {
-	struct Asset_Meta const * meta = handle_table_get(&gs_asset_system.meta, handle);
+	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return; }
 
 	hashmap_del(&gs_asset_system.handles, &meta->name_id);
-	handle_table_discard(&gs_asset_system.meta, handle);
+	sparseset_discard(&gs_asset_system.meta, handle);
 
 	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &meta->type_id);
 	if (type == NULL) { return; }
 
-	struct Asset_Inst * inst = handle_table_get(&type->instances, meta->inst_handle);
+	struct Asset_Inst * inst = sparseset_get(&type->instances, meta->inst_handle);
 	if (inst != NULL) { return; }
 
 	if (type->callbacks.free != NULL) {
 		type->callbacks.free(inst->payload);
 	}
-	handle_table_discard(&type->instances, meta->inst_handle);
+	sparseset_discard(&type->instances, meta->inst_handle);
 }
 
 void * asset_system_take(struct Handle handle) {
-	struct Asset_Meta const * meta = handle_table_get(&gs_asset_system.meta, handle);
+	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return NULL; }
 
 	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &meta->type_id);
 	struct Asset_Inst * inst = (type != NULL)
-		? handle_table_get(&type->instances, meta->inst_handle)
+		? sparseset_get(&type->instances, meta->inst_handle)
 		: NULL;
 	return (inst != NULL) ? inst->payload : NULL;
 }
@@ -193,7 +193,7 @@ void * asset_system_aquire_instance(struct CString name) {
 }
 
 struct CString asset_system_get_name(struct Handle handle) {
-	struct Asset_Meta const * meta = handle_table_get(&gs_asset_system.meta, handle);
+	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return (struct CString){0}; }
 	return string_system_get(meta->name_id);
 }

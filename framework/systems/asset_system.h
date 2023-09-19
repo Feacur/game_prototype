@@ -2,7 +2,7 @@
 #define FRAMEWORK_SYSTEMS_ASSET_SYSTEM
 
 #include "framework/containers/hashmap.h"
-#include "framework/containers/handle_table.h"
+#include "framework/containers/sparseset.h"
 
 struct Asset_Callbacks {
 	void (* type_init)(void);

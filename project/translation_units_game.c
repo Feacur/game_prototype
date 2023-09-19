@@ -13,11 +13,11 @@
 #include "framework/graphics/material.c"
 
 #include "framework/containers/internal/helpers.c"
-#include "framework/containers/buffer.c"
 #include "framework/containers/array.c"
-#include "framework/containers/handle_table.c"
+#include "framework/containers/buffer.c"
 #include "framework/containers/hashmap.c"
 #include "framework/containers/hashset.c"
+#include "framework/containers/sparseset.c"
 #include "framework/containers/strings.c"
 
 #include "framework/assets/internal/wfobj_lexer.c"

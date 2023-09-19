@@ -3,7 +3,7 @@
 
 #include "framework/common.h"
 
-// @purpose: decouple `handle_table.h` and `asset_system.h` with any other one
+// @purpose: decouple `sparseset.h` and `asset_system.h` with any other one
 
 struct Handle {
 	uint32_t id : 24; // 0x00ffffff
