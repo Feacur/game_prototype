@@ -7,7 +7,7 @@
 
 static struct Asset_System {
 	struct Handle_Table meta; // `struct Asset_Meta`
-	struct Hashtable reflex;  // name string id : `struct Handle`
+	struct Hashtable handles; // name string id : `struct Handle`
 	struct Hashtable types;   // type string id : `struct Asset_Type`
 	struct Hashtable map;     // extension string id : type string id
 } gs_asset_system;
@@ -36,7 +36,7 @@ static struct CString asset_system_name_to_extension(struct CString name);
 void asset_system_init(void) {
 	gs_asset_system = (struct Asset_System){
 		.meta = handle_table_init(sizeof(struct Asset_Meta)),
-		.reflex = hashtable_init(&hash32, sizeof(uint32_t), sizeof(struct Handle)),
+		.handles = hashtable_init(&hash32, sizeof(uint32_t), sizeof(struct Handle)),
 		.types = hashtable_init(&hash32, sizeof(uint32_t), sizeof(struct Asset_Type)),
 		.map = hashtable_init(&hash32, sizeof(uint32_t), sizeof(uint32_t)),
 	};
@@ -57,7 +57,7 @@ void asset_system_free(void) {
 		}
 	}
 	handle_table_free(&gs_asset_system.meta);
-	hashtable_free(&gs_asset_system.reflex);
+	hashtable_free(&gs_asset_system.handles);
 	hashtable_free(&gs_asset_system.types);
 	hashtable_free(&gs_asset_system.map);
 	// common_memset(&gs_asset_system, 0, sizeof(gs_asset_system));
@@ -100,7 +100,7 @@ void asset_system_del_type(struct CString type_name) {
 	FOR_HANDLE_TABLE (&type->instances, it_inst) {
 		struct Asset_Inst * inst = it_inst.value;
 
-		hashtable_del(&gs_asset_system.reflex, &inst->header.name_id);
+		hashtable_del(&gs_asset_system.handles, &inst->header.name_id);
 		handle_table_discard(&gs_asset_system.meta, inst->header.meta_handle);
 
 		if (type->callbacks.free != NULL) {
@@ -120,7 +120,7 @@ struct Handle asset_system_aquire(struct CString name) {
 	uint32_t name_id = string_system_add(name);
 	if (name_id == 0) { return (struct Handle){0}; }
 
-	struct Handle const * meta_handle_ptr = hashtable_get(&gs_asset_system.reflex, &name_id);
+	struct Handle const * meta_handle_ptr = hashtable_get(&gs_asset_system.handles, &name_id);
 	if (meta_handle_ptr != NULL) { return *meta_handle_ptr; }
 
 	//
@@ -142,7 +142,7 @@ struct Handle asset_system_aquire(struct CString name) {
 		.name_id = name_id,
 		.inst_handle = inst_handle,
 	});
-	hashtable_set(&gs_asset_system.reflex, &name_id, &meta_handle);
+	hashtable_set(&gs_asset_system.handles, &name_id, &meta_handle);
 
 	struct Asset_Inst * inst = handle_table_get(&type->instances, inst_handle);
 	inst->header = (struct Asset_Inst_Header) {
@@ -161,7 +161,7 @@ void asset_system_discard(struct Handle handle) {
 	struct Asset_Meta const * meta = handle_table_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return; }
 
-	hashtable_del(&gs_asset_system.reflex, &meta->name_id);
+	hashtable_del(&gs_asset_system.handles, &meta->name_id);
 	handle_table_discard(&gs_asset_system.meta, handle);
 
 	struct Asset_Type * type = hashtable_get(&gs_asset_system.types, &meta->type_id);
