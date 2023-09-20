@@ -80,7 +80,7 @@ Defines:
 - _MT                     (MSVC, dynamic CRT)
 - _DLL                    (MSVC, dynamic CRT)
 - _DEBUG                  (MSVC, debug CRT)
-- GAME_TARGET_OPTIMIZED   (this game, optional)
+- GAME_TARGET_RELEASE     (this game, optional)
 - GAME_TARGET_DEVELOPMENT (this game, optional)
 - GAME_TARGET_DEBUG       (this game, optional)
 

@@ -1,6 +1,6 @@
-#if !defined (GAME_TARGET_OPTIMIZED)
+#if !defined (GAME_TARGET_RELEASE)
 // ----- ----- ----- ----- -----
-//     !GAME_TARGET_OPTIMIZED
+//     !GAME_TARGET_RELEASE
 // ----- ----- ----- ----- -----
 
 #include "framework/logger.h"
@@ -172,7 +172,7 @@ void debug_to_system_free(void) {
 
 #else
 // ----- ----- ----- ----- -----
-//     GAME_TARGET_OPTIMIZED
+//     GAME_TARGET_RELEASE
 // ----- ----- ----- ----- -----
 
 //

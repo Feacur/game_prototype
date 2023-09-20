@@ -11,9 +11,9 @@ rem [any]
 set project=%1
 if [%project%] == [] ( set "project=game" )
 
-rem optimized|development|debug
+rem tiny|fast|tiny_dev|fast_dev|debug
 set configuration=%2
-if [%configuration%] == [] ( set "configuration=optimized" )
+if [%configuration%] == [] ( set "configuration=fast" )
 
 rem static|dynamic|static_debug|dynamic_debug
 set runtime_mode=%3
@@ -54,9 +54,13 @@ rem |> OPTIONS
 call build_options.bat
 set compiler=%compiler% -fno-exceptions -fno-rtti
 
-if %configuration% == optimized (
+if %configuration% == tiny (
+	set compiler=%compiler% -Oz
+) else if %configuration% == fast (
 	set compiler=%compiler% -O3
-) else if %configuration% == development (
+) else if %configuration% == tiny_dev (
+	set compiler=%compiler% -Oz -g
+) else if %configuration% == fast_dev (
 	set compiler=%compiler% -O3 -g
 ) else if %configuration% == debug (
 	set compiler=%compiler% -O0 -g

@@ -39,11 +39,20 @@ if %arch_mode% == shared (
 	rem set linker=%linker% -entry:WinMainCRTStartup
 )
 
-if %configuration% == optimized (
+if %configuration% == tiny (
 	set linker=%linker% -debug:none
-	set defines=%defines% -DGAME_TARGET_OPTIMIZED
+	set defines=%defines% -DGAME_TARGET_RELEASE
 	rem [linker] -opt:ref -opt:icf -opt:lbr
-) else if %configuration% == development (
+) else if %configuration% == fast (
+	set linker=%linker% -debug:none
+	set defines=%defines% -DGAME_TARGET_RELEASE
+	rem [linker] -opt:ref -opt:icf -opt:lbr
+) else if %configuration% == tiny_dev (
+	set linker=%linker% -debug:full
+	set libs=%libs% dbghelp.lib
+	set defines=%defines% -DGAME_TARGET_DEVELOPMENT
+	rem [linker] -opt:noref -opt:noicf -opt:nolbr
+) else if %configuration% == fast_dev (
 	set linker=%linker% -debug:full
 	set libs=%libs% dbghelp.lib
 	set defines=%defines% -DGAME_TARGET_DEVELOPMENT
