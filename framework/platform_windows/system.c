@@ -12,8 +12,23 @@
 #include "internal/window_to_system.h"
 #include "internal/gpu_library_to_system.h"
 
+#include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 #include <signal.h>
+
+// http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
+// Global Variable NvOptimusEnablement (new in Driver Release 302)
+// Starting with the Release 302 drivers, application developers can direct the Optimus driver at runtime to use the High Performance Graphics to render any application–even those applications for which there is no existing application profile. They can do this by exporting a global variable named NvOptimusEnablement. The Optimus driver looks for the existence and value of the export. Only the LSB of the DWORD matters at this time. Avalue of 0x00000001 indicates that rendering should be performed using High Performance Graphics. A value of 0x00000000 indicates that this method should beignored.
+__declspec(dllexport) extern DWORD NvOptimusEnablement;
+DWORD NvOptimusEnablement = 1;
+
+// https://community.amd.com/thread/169965
+// https://community.amd.com/thread/223376
+// https://gpuopen.com/amdpowerxpressrequesthighperformance
+// Many Gaming and workstation laptops are available with both (1) integrated power saving and (2) discrete high performance graphics devices. Unfortunately, 3D intensive application performance may suffer greatly if the best graphics device is not selected. For example, a game may run at 30 Frames Per Second (FPS) on the integrated GPU rather than the 60 FPS the discrete GPU would enable. As a developer you can easily fix this problem by adding only one line to your executable’s source code:
+// Yes, it’s that easy. This line will ensure that the high-performance graphics device is chosen when running your application.
+__declspec(dllexport) extern DWORD AmdPowerXpressRequestHighPerformance;
+DWORD AmdPowerXpressRequestHighPerformance = 1;
 
 //
 #include "framework/platform_system.h"
@@ -29,11 +44,9 @@ static struct Platform_System {
 	bool has_error;
 } gs_platform_system;
 
-// static void system_cache_paths(void);
-static void system_set_process_dpi_awareness(void);
-// static void system_enable_virtual_terminal_processing(void);
 static void system_signal_handler(int value);
 static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo);
+
 void platform_system_init(struct Platform_Callbacks callbacks) {
 	signal(SIGABRT, system_signal_handler);
 	signal(SIGFPE,  system_signal_handler);
@@ -54,19 +67,29 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 	if (gs_platform_system.thread   == NULL) { goto fail; }
 	if (gs_platform_system.vectored == NULL) { goto fail; }
 
-	// @note: might as well lock main thread
-	//        https://docs.microsoft.com/windows/win32/dxtecharts/game-timing-and-multicore-processors
-	// SetThreadAffinityMask(
-	// 	gs_platform_system.module,
-	// 	1 << GetCurrentProcessorNumber()
-	// );
+	{
+		// -- terminal, code page
+		SetConsoleCP(CP_UTF8);
+		SetConsoleOutputCP(CP_UTF8);
 
-	// system_cache_paths();
-	system_set_process_dpi_awareness();
-	// system_enable_virtual_terminal_processing();
+		// -- terminal, virtual processing
+		DWORD const handles[] = {STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
+		for (uint32_t i = 0; i < SIZE_OF_ARRAY(handles); i++) {
+			HANDLE handle = GetStdHandle(handles[i]);
+			if (handle == NULL) { continue; }
+			DWORD mode = 0;
+			if (GetConsoleMode(handle, &mode)) {
+				SetConsoleMode(handle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+			}
+		}
 
-	SetConsoleCP(CP_UTF8);
-	SetConsoleOutputCP(CP_UTF8);
+		// -- threading
+		// SetThreadAffinityMask(
+		// 	gs_platform_system.module,
+		// 	1 << GetCurrentProcessorNumber()
+		// );
+		// https://docs.microsoft.com/windows/win32/dxtecharts/game-timing-and-multicore-processors
+	}
 
 	if (!debug_to_system_init())       { goto fail; }
 	if (!timer_to_system_init())       { goto fail; }
@@ -93,14 +116,14 @@ void platform_system_free(void) {
 	debug_to_system_free();
 
 	RemoveVectoredContinueHandler(gs_platform_system.vectored);
-	common_memset(&gs_platform_system, 0, sizeof(gs_platform_system));
-
 	signal(SIGABRT, SIG_DFL);
 	signal(SIGFPE,  SIG_DFL);
 	signal(SIGILL,  SIG_DFL);
 	signal(SIGINT,  SIG_DFL);
 	signal(SIGSEGV, SIG_DFL);
 	signal(SIGTERM, SIG_DFL);
+
+	common_memset(&gs_platform_system, 0, sizeof(gs_platform_system));
 }
 
 bool platform_system_is_powered(void) {
@@ -162,127 +185,6 @@ void platform_system_sleep(uint32_t millis) {
 void * system_to_internal_get_module(void) {
 	return gs_platform_system.module;
 }
-
-//
-
-#include <ShellScalingApi.h>
-
-static void system_set_process_dpi_awareness(void) {
-	HMODULE User32_dll = LoadLibrary(TEXT("User32.dll"));
-	HMODULE Shcore_dll = LoadLibrary(TEXT("Shcore.dll"));
-
-	// Windows 10, version 1607
-	if (User32_dll != NULL) {
-		typedef BOOL (WINAPI * set_awareness_func)(DPI_AWARENESS_CONTEXT);
-		set_awareness_func set_awareness = (set_awareness_func)(void *)GetProcAddress(User32_dll, "SetProcessDpiAwarenessContext");
-		if (set_awareness != NULL) {
-			set_awareness(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-			goto finalize;
-		}
-	}
-
-	// Windows 8.1
-	if (Shcore_dll != NULL) {
-		typedef BOOL (WINAPI * set_awareness_func)(PROCESS_DPI_AWARENESS);
-		set_awareness_func set_awareness = (set_awareness_func)(void *)GetProcAddress(Shcore_dll, "SetProcessDpiAwareness");
-		if (set_awareness != NULL) {
-			set_awareness(PROCESS_PER_MONITOR_DPI_AWARE);
-			goto finalize;
-		}
-	}
-
-	// Windows Vista
-	if (User32_dll != NULL) {
-		typedef BOOL (WINAPI * set_awareness_func)(VOID);
-		set_awareness_func set_awareness = (set_awareness_func)(void *)GetProcAddress(User32_dll, "SetProcessDPIAware");
-		if (set_awareness != NULL) {
-			set_awareness();
-			goto finalize;
-		}
-	}
-
-	finalize:
-	if (User32_dll != NULL) { FreeLibrary(User32_dll); }
-	if (Shcore_dll != NULL) { FreeLibrary(Shcore_dll); }
-
-	// https://docs.microsoft.com/windows/win32/hidpi/setting-the-default-dpi-awareness-for-a-process
-}
-
-//
-//
-// static void system_enable_virtual_terminal_processing(void) {
-// 	DWORD const handles[] = {STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
-// 	for (uint32_t i = 0; i < SIZE_OF_ARRAY(handles); i++) {
-// 		HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-// 		if (handle == NULL) { continue; }
-// 		DWORD mode = 0;
-// 		if (GetConsoleMode(handle, &mode)) {
-// 			SetConsoleMode(handle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-// 		}
-// 	}
-// }
-
-//
-// #include <ShlObj.h>
-// 
-// static void system_cache_paths(void) {
-// 	// requires shell32.lib ole32.lib
-// 
-// 	PWSTR buffer_utf16 = NULL;
-// 	if (SHGetKnownFolderPath(&FOLDERID_LocalAppData, KF_FLAG_CREATE, NULL, &buffer_utf16) != S_OK) { return; }
-// 
-// 	uint32_t length_utf16 = 0;
-// 	while (buffer_utf16[length_utf16] != 0) { length_utf16++; }
-// 	
-// 	struct Buffer buffer_utf8;
-// 	buffer_init(&buffer_utf8);
-// 	buffer_resize(&buffer_utf8, length_utf16 * 4);
-// 
-// 	uint32_t utf16_high_surrogate = 0;
-// 	for (uint16_t const * ptr = buffer_utf16; *ptr != 0; ptr++) {
-// 		uint32_t value = *ptr;
-// 
-// 		// UTF-16 -> UTF-32
-// 		if ((0xd800 <= value) && (value <= 0xdbff)) {
-// 			// if (utf16_high_surrogate != 0) { DEBUG_BREAK(); utf16_high_surrogate = 0; return 0; }
-// 			utf16_high_surrogate = value;
-// 			continue;
-// 		}
-// 
-// 		if ((0xdc00 <= value) && (value <= 0xdfff)) {
-// 			// if (utf16_high_surrogate == 0) { DEBUG_BREAK(); return 0; }
-// 			value = (((utf16_high_surrogate & 0x03ff) << 10) | (value & 0x03ff)) + 0x10000;
-// 			utf16_high_surrogate = 0;
-// 		}
-// 
-// 		// UTF-32 -> UTF-8
-// 		if (value <= 0x0000007F) {
-// 			buffer_push(&buffer_utf8, (uint8_t)value);
-// 		}
-// 		else  if (0x00000080 <= value && value <= 0x000007FF) {
-// 			buffer_push(&buffer_utf8, (uint8_t)((value >> 8) & 0x1f) | 0xc0);
-// 			buffer_push(&buffer_utf8, (uint8_t)(value        & 0x3f) | 0x80);
-// 		}
-// 		else if (0x00000800 <= value && value <= 0x0000FFFF) {
-// 			buffer_push(&buffer_utf8, (uint8_t)((value >> 16) & 0x0f) | 0xe0);
-// 			buffer_push(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
-// 			buffer_push(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
-// 		}
-// 		else if (0x00010000 <= value && value <= 0x0010FFFF) {
-// 			buffer_push(&buffer_utf8, (uint8_t)((value >> 24) & 0x07) | 0xf0);
-// 			buffer_push(&buffer_utf8, (uint8_t)((value >> 16) & 0x3f) | 0x80);
-// 			buffer_push(&buffer_utf8, (uint8_t)((value >>  8) & 0x3f) | 0x80);
-// 			buffer_push(&buffer_utf8, (uint8_t)(value         & 0x3f) | 0x80);
-// 		}
-// 		// else { logger_console("UTF-32 sequence is malformed\n"); DEBUG_BREAK(); }
-// 	}
-// 
-// 	buffer_utf8.data[buffer_utf8.count] = '\0';
-// 	buffer_resize(&buffer_utf8, buffer_utf8.count + 1);
-// 	buffer_free(&buffer_utf8);
-// 
-// 	CoTaskMemFree(buffer_utf16);
-// }
 
 //
 
@@ -457,8 +359,6 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 
 #undef SVE_IGNORE_CLR
 #undef SVE_IGNORE_CPP
-#undef SVE_IGNORE_ODS
-#undef SVE_IGNORE_STN
 
 #if defined(GAME_ARCH_SHARED)
 	BOOL WINAPI DllMain(

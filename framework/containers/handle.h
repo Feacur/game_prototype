@@ -11,10 +11,9 @@ struct Handle {
 };
 STATIC_ASSERT(sizeof(struct Handle) == sizeof(uint32_t), handle);
 
-inline static bool handle_is_null(struct Handle v) { return v.id == 0; }
-inline static bool handle_equals(struct Handle v1, struct Handle v2) {
-	return v1.gen == v2.gen && v1.id == v2.id;
-	// return *((uint32_t *)&v1) == *((uint32_t *)&v2);
+inline static bool handle_is_null(struct Handle h) { return h.id == 0; }
+inline static bool handle_equals(struct Handle h1, struct Handle h2) {
+	return h1.gen == h2.gen && h1.id == h2.id;
 }
 
 #endif

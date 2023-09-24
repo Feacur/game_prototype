@@ -102,6 +102,10 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 	cl -std:c11 %compiler% "%project_folder%/translation_units_%project%.c" -Fe"./%project%.exe" -link %linker% || ( goto error )
 )
 
+if not exist ".\%project%.exe.manifest" (
+	copy "..\project\windows_dpi_awareness.manifest" ".\%project%.exe.manifest"
+)
+
 :error
 popd
 popd

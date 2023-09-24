@@ -1,6 +1,7 @@
 #include "framework/common.h"
 #include "framework/logger.h"
 
+#include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 
 static struct Platform_Timer {

@@ -2,6 +2,7 @@
 #include "framework/logger.h"
 #include "framework/containers/buffer.h"
 
+#include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 #include <malloc.h> // alloca
 

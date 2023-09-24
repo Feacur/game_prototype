@@ -1477,7 +1477,8 @@ static void __stdcall opengl_debug_message_callback(
 		, opengl_debug_get_type(type)
 		, length, message
 	);
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(1);
+	if (type == GL_DEBUG_TYPE_ERROR) { DEBUG_BREAK(); }
 }
 
 /*

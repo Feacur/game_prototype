@@ -9,7 +9,7 @@ rem https://learn.microsoft.com/cpp/build/reference/subsystem-specify-subsystem
 
 set includes=-I".." -I"../third_party"
 set defines=-D_CRT_SECURE_NO_WARNINGS -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE -D_UNICODE
-set libs=kernel32.lib user32.lib gdi32.lib
+set libs=kernel32.lib user32.lib gdi32.lib powrprof.lib
 set linker=-nologo -WX -incremental:no
 
 set linker=%linker% -nodefaultlib

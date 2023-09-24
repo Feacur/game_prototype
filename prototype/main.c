@@ -207,9 +207,7 @@ static void prototype_draw_objects(void) {
 	uint32_t const gpu_commands_count_estimate = gs_game.cameras.count * 2 + gs_game.entities.count;
 	array_ensure(&gs_renderer.gpu_commands, gpu_commands_count_estimate);
 
-	struct Handle previous_gpu_target_handle = { // @note: deliberately wrong handle
-		.id = 0xffffff, .gen = 0xff,
-	};
+	struct Handle previous_gpu_target_handle = {.gen = 1};
 
 	batcher_2d_set_color(gs_renderer.batcher_2d, (struct vec4){1, 1, 1, 1});
 

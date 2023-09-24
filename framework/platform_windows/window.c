@@ -5,6 +5,7 @@
 
 #include "internal/system.h"
 
+#include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 #include <hidusage.h>
 #include <malloc.h> // alloca

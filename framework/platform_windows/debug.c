@@ -11,6 +11,7 @@
 	#define DBGHELP_TRANSLATE_TCHAR
 #endif
 
+#include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 #include <DbgHelp.h>
 
