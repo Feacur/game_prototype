@@ -3,7 +3,6 @@
 
 #include "framework/vector_types.h"
 #include "framework/graphics/types.h"
-#include "framework/containers/handle.h"
 
 struct Batcher_2D;
 

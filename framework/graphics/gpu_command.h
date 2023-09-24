@@ -5,7 +5,6 @@
 // - gpu draw call
 
 #include "framework/vector_types.h"
-#include "framework/containers/handle.h"
 
 #include "types.h"
 

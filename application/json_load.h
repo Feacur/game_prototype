@@ -1,7 +1,7 @@
 #if !defined(APPLICATION_JSON_LOAD)
 #define APPLICATION_JSON_LOAD
 
-#include "framework/containers/handle.h"
+#include "framework/common.h"
 
 struct JSON;
 struct Font;

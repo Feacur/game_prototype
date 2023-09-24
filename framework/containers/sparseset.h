@@ -1,7 +1,6 @@
 #if !defined(FRAMEWORK_CONTAINERS_sparseset)
 #define FRAMEWORK_CONTAINERS_sparseset
 
-#include "handle.h"
 #include "array.h"
 
 struct Sparseset_Iterator {

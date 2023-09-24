@@ -1,7 +1,6 @@
 #if !defined(APPLICATION_ASSET_TYPES)
 #define APPLICATION_ASSET_TYPES
 
-#include "framework/containers/handle.h"
 #include "framework/assets/json.h"
 
 struct Typeface;

@@ -1,7 +1,6 @@
 #if !defined(PROTOTYPE_OBJECT_ENTITY)
 #define PROTOTYPE_OBJECT_ENTITY
 
-#include "framework/containers/handle.h"
 #include "framework/graphics/types.h"
 
 #include "application/components.h"

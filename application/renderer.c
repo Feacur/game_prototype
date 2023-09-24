@@ -2,7 +2,6 @@
 #include "framework/maths.h"
 #include "framework/parsing.h"
 
-#include "framework/containers/handle.h"
 #include "framework/containers/strings.h"
 
 #include "framework/graphics/material.h"

@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_SYSTEMS_MATERIAL_SYSTEM)
 #define FRAMEWORK_SYSTEMS_MATERIAL_SYSTEM
 
-#include "framework/containers/handle.h"
+#include "framework/common.h"
 
 struct Gfx_Material;
 
