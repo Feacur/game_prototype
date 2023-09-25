@@ -116,7 +116,7 @@ inline static uint32_t hash32(void const * v) { return *(uint32_t const *)v; }
 //     debug break
 // ----- ----- ----- ----- -----
 
-#if !defined(GAME_TARGET_RELEASE)
+#if defined(GAME_TARGET_DEBUG)
 	#if defined(__clang__)
 		#define DEBUG_BREAK() __builtin_debugtrap()
 	#elif defined(_MSC_VER)

@@ -27,8 +27,6 @@ void wfobj_free(struct WFObj * obj) {
 //
 
 static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
-	DEBUG_BREAK();
-
 	static char const * c_wfobj_token_names[] = {
 		[WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER] = "unknown character",
 		[WFOBJ_TOKEN_EOF]                     = "eof",
@@ -42,6 +40,7 @@ static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 	if (reason != NULL) { logger_to_console(" [%s]", reason); }
 	if (message != NULL) { logger_to_console(": %s", message); }
 	logger_to_console("\n");
+	REPORT_CALLSTACK(1); DEBUG_BREAK();
 }
 
 static void wfobj_advance(struct WFObj_Lexer * lexer, struct WFObj_Token * token) {

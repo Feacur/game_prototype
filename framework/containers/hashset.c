@@ -20,32 +20,36 @@ void hashset_free(struct Hashset * hashset) {
 }
 
 static uint32_t hashset_find_key_index(struct Hashset const * hashset, void const * key, uint32_t hash);
-void hashset_resize(struct Hashset * hashset, uint32_t target_capacity) {
-	if (target_capacity < hashset->count) {
-		logger_to_console("limiting target resize capacity to the number of elements\n"); DEBUG_BREAK();
-		target_capacity = hashset->count;
+void hashset_ensure(struct Hashset * hashset, uint32_t capacity) {
+	if (!growth_hash_check(hashset->capacity, capacity)) { return; }
+	capacity = growth_hash_adjust(hashset->capacity, capacity);
+
+	if (capacity <= hashset->capacity) {
+		logger_to_console("can't grow\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
 	}
 
-	uint32_t const capacity = hashset->capacity;
 	uint32_t * hashes = hashset->hashes;
 	uint8_t  * keys   = hashset->keys;
 	uint8_t  * marks  = hashset->marks;
 
-	hashset->capacity = adjust_hashes_capacity_value(target_capacity);
-	hashset->hashes   = MEMORY_ALLOCATE_ARRAY(uint32_t, hashset->capacity);
-	hashset->keys     = MEMORY_ALLOCATE_ARRAY(uint8_t, hashset->key_size * hashset->capacity);
-	hashset->marks    = MEMORY_ALLOCATE_ARRAY(uint8_t, hashset->capacity);
+	hashset->hashes = MEMORY_ALLOCATE_ARRAY(uint32_t, capacity);
+	hashset->keys   = MEMORY_ALLOCATE_ARRAY(uint8_t, hashset->key_size * capacity);
+	hashset->marks  = MEMORY_ALLOCATE_ARRAY(uint8_t, capacity);
 
-	common_memset(hashset->marks, HASH_TABLE_MARK_NONE, sizeof(*hashset->marks) * hashset->capacity);
+	common_memset(hashset->marks, HASH_MARK_NONE, sizeof(*hashset->marks) * capacity);
 
 	// @note: `hashset->count` remains as is
-	for (uint32_t i = 0; i < capacity; i++) {
-		if (marks[i] != HASH_TABLE_MARK_FULL) { continue; }
+	uint32_t const prev_capacity = hashset->capacity;
+	hashset->capacity = capacity;
+
+	for (uint32_t i = 0; i < prev_capacity; i++) {
+		if (marks[i] != HASH_MARK_FULL) { continue; }
 
 		void const * ht_key = keys + hashset->key_size * i;
 		uint32_t const key_index = hashset_find_key_index(hashset, ht_key, hashes[i]);
-		// if (key_index == INDEX_EMPTY) { DEBUG_BREAK(); continue; }
-		// if (key_index >= hashset->capacity) { DEBUG_BREAK(); continue; }
+		// if (key_index == INDEX_EMPTY) { REPORT_CALLSTACK(1); DEBUG_BREAK(); continue; }
+		// if (key_index >= capacity)    { REPORT_CALLSTACK(1); DEBUG_BREAK(); continue; }
 
 		hashset->hashes[key_index] = hashes[i];
 		common_memcpy(
@@ -53,7 +57,7 @@ void hashset_resize(struct Hashset * hashset, uint32_t target_capacity) {
 			ht_key,
 			hashset->key_size
 		);
-		hashset->marks[key_index] = HASH_TABLE_MARK_FULL;
+		hashset->marks[key_index] = HASH_MARK_FULL;
 	}
 
 	MEMORY_FREE(hashes);
@@ -63,39 +67,36 @@ void hashset_resize(struct Hashset * hashset, uint32_t target_capacity) {
 
 void hashset_clear(struct Hashset * hashset) {
 	hashset->count = 0;
-	common_memset(hashset->marks, HASH_TABLE_MARK_NONE, sizeof(*hashset->marks) * hashset->capacity);
+	common_memset(hashset->marks, HASH_MARK_NONE, sizeof(*hashset->marks) * hashset->capacity);
 }
 
 bool hashset_get(struct Hashset const * hashset, void const * key) {
 	if (key == NULL) {
-		logger_to_console("hash table key should be non-null\n"); DEBUG_BREAK();
-		return false;
+		logger_to_console("key should be non-null\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return false;
 	}
 
 	if (hashset->count == 0) { return false; }
 	uint32_t const hash = hashset->get_hash(key);
 	uint32_t const key_index = hashset_find_key_index(hashset, key, hash);
 	// if (key_index == INDEX_EMPTY) { return NULL; }
-	if (hashset->marks[key_index] != HASH_TABLE_MARK_FULL) { return false; }
+	if (hashset->marks[key_index] != HASH_MARK_FULL) { return false; }
 	return true;
 }
 
 bool hashset_set(struct Hashset * hashset, void const * key) {
 	if (key == NULL) {
-		logger_to_console("hash table key should be non-null\n"); DEBUG_BREAK();
-		return false;
+		logger_to_console("key should be non-null\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return false;
 	}
 
-	if (should_hashes_grow(hashset->capacity, hashset->count)) {
-		uint32_t const target_capacity = grow_capacity_value_u32(hashset->capacity, 1);
-		hashset_resize(hashset, target_capacity);
-	}
+	hashset_ensure(hashset, hashset->count + 1);
 
 	uint32_t const hash = hashset->get_hash(key);
 	uint32_t const key_index = hashset_find_key_index(hashset, key, hash);
 	// if (key_index == INDEX_EMPTY) { return false; }
 	uint8_t const mark = hashset->marks[key_index];
-	bool const is_new = (mark != HASH_TABLE_MARK_FULL);
+	bool const is_new = (mark != HASH_MARK_FULL);
 	if (is_new) { hashset->count++; }
 
 	hashset->hashes[key_index] = hash;
@@ -104,31 +105,31 @@ bool hashset_set(struct Hashset * hashset, void const * key) {
 		key,
 		hashset->key_size
 	);
-	hashset->marks[key_index] = HASH_TABLE_MARK_FULL;
+	hashset->marks[key_index] = HASH_MARK_FULL;
 	
 	return is_new;
 }
 
 bool hashset_del(struct Hashset * hashset, void const * key) {
 	if (key == NULL) {
-		logger_to_console("hash table key should be non-null\n"); DEBUG_BREAK();
-		return false;
+		logger_to_console("key should be non-null\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return false;
 	}
 
 	if (hashset->count == 0) { return false; }
 	uint32_t const hash = hashset->get_hash(key);
 	uint32_t const key_index = hashset_find_key_index(hashset, key, hash);
 	// if (key_index == INDEX_EMPTY) { return false; }
-	if (hashset->marks[key_index] != HASH_TABLE_MARK_FULL) { return false; }
-	hashset->marks[key_index] = HASH_TABLE_MARK_SKIP;
+	if (hashset->marks[key_index] != HASH_MARK_FULL) { return false; }
+	hashset->marks[key_index] = HASH_MARK_SKIP;
 	hashset->count--;
 	return true;
 }
 
 void hashset_del_at(struct Hashset * hashset, uint32_t key_index) {
-	if (key_index >= hashset->capacity) { DEBUG_BREAK(); return; }
-	if (hashset->marks[key_index] != HASH_TABLE_MARK_FULL) { DEBUG_BREAK(); return; }
-	hashset->marks[key_index] = HASH_TABLE_MARK_SKIP;
+	if (key_index >= hashset->capacity)                    { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (hashset->marks[key_index] != HASH_MARK_FULL) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	hashset->marks[key_index] = HASH_MARK_SKIP;
 	hashset->count--;
 }
 
@@ -137,7 +138,7 @@ bool hashset_iterate(struct Hashset const * hashset, struct Hashset_Iterator * i
 		uint32_t const index = iterator->next++;
 		iterator->current = index;
 		//
-		if (hashset->marks[index] != HASH_TABLE_MARK_FULL) { continue; }
+		if (hashset->marks[index] != HASH_MARK_FULL) { continue; }
 		iterator->hash  = hashset->hashes[index];
 		iterator->key   = (uint8_t *)hashset->keys   + hashset->key_size * index;
 		return true;
@@ -155,11 +156,11 @@ static uint32_t hashset_find_key_index(struct Hashset const * hashset, void cons
 		uint32_t const index = HASH_TABLE_WRAP(i + offset, hashset->capacity);
 
 		uint8_t const mark = hashset->marks[index];
-		if (mark == HASH_TABLE_MARK_SKIP) {
+		if (mark == HASH_MARK_SKIP) {
 			if (empty == INDEX_EMPTY) { empty = index; }
 			continue;
 		}
-		if (mark == HASH_TABLE_MARK_NONE) {
+		if (mark == HASH_MARK_NONE) {
 			if (empty == INDEX_EMPTY) { empty = index; }
 			break;
 		}

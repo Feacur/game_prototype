@@ -28,8 +28,8 @@ void * memory_reallocate(void * pointer, size_t size) {
 	if (pointer_header != NULL) {
 		if (pointer_header->checksum != (size_t)pointer_header) {
 			struct CString const stacktrace = platform_debug_get_stacktrace(callstack, 1);
-			logger_to_console("incorrect checksum: \"%.*s\"\n", stacktrace.length, stacktrace.data); DEBUG_BREAK();
-			return pointer;
+			logger_to_console("incorrect checksum: \"%.*s\"\n", stacktrace.length, stacktrace.data);
+			REPORT_CALLSTACK(1); DEBUG_BREAK(); return pointer;
 		}
 
 		pointer_header->checksum = 0;
@@ -65,8 +65,8 @@ void * memory_reallocate(void * pointer, size_t size) {
 
 	// failed
 	struct CString const stacktrace = platform_debug_get_stacktrace(callstack, 1);
-	logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data); DEBUG_BREAK();
-	return pointer;
+	logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data);
+	REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
 }
 
 void * memory_reallocate_without_tracking(void * pointer, size_t size) {
@@ -81,8 +81,8 @@ void * memory_reallocate_without_tracking(void * pointer, size_t size) {
 
 	// failed
 	struct CString const stacktrace = platform_debug_get_stacktrace(callstack, 1);
-	logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data); DEBUG_BREAK();
-	return pointer;
+	logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data);
+	REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
 }
 
 //

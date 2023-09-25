@@ -23,7 +23,7 @@ struct Hashset hashset_init(hasher * get_hash, uint32_t key_size);
 void hashset_free(struct Hashset * hashset);
 
 void hashset_clear(struct Hashset * hashset);
-void hashset_resize(struct Hashset * hashset, uint32_t target_capacity);
+void hashset_ensure(struct Hashset * hashset, uint32_t capacity);
 
 bool hashset_get(struct Hashset const * hashset, void const * key);
 bool hashset_set(struct Hashset * hashset, void const * key);

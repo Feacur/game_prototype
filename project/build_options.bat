@@ -24,6 +24,9 @@ if %runtime_mode% == static (
 ) else if %runtime_mode% == dynamic_debug (
 	set libs=%libs% ucrtd.lib vcruntimed.lib msvcrtd.lib
 	set defines=%defines% -D_MT -D_DLL -D_DEBUG
+) else (
+	echo.unknown runtime_mode "%runtime_mode%"
+	exit /b 1
 )
 
 if %arch_mode% == shared (
@@ -37,6 +40,9 @@ if %arch_mode% == shared (
 	set defines=%defines% -DGAME_ARCH_WINDOWS
 	set linker=%linker% -subsystem:windows,5.02
 	rem set linker=%linker% -entry:WinMainCRTStartup
+) else (
+	echo.unknown arch_mode "%arch_mode%"
+	exit /b 1
 )
 
 if %configuration% == tiny (
@@ -62,6 +68,9 @@ if %configuration% == tiny (
 	set libs=%libs% dbghelp.lib
 	set defines=%defines% -DGAME_TARGET_DEBUG
 	rem [linker] -opt:noref -opt:noicf -opt:nolbr
+) else (
+	echo.unknown configuration "%configuration%"
+	exit /b 1
 )
 
 set compiler=%includes% %defines%

@@ -39,7 +39,9 @@ void json_free(struct JSON * value) {
 
 // -- JSON get/at element
 struct JSON const * json_get(struct JSON const * value, struct CString key) {
-	if (value->type != JSON_OBJECT) { DEBUG_BREAK(); return &c_json_error; }
+	if (value->type != JSON_OBJECT) {
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return &c_json_error;
+	}
 	uint32_t const key_id = string_system_find(key);
 	if (key_id == 0) { return &c_json_null; }
 	void const * result = hashmap_get(&value->as.table, &key_id);
@@ -47,7 +49,9 @@ struct JSON const * json_get(struct JSON const * value, struct CString key) {
 }
 
 struct JSON const * json_at(struct JSON const * value, uint32_t index) {
-	if (value->type != JSON_ARRAY) { DEBUG_BREAK(); return &c_json_error; }
+	if (value->type != JSON_ARRAY) {
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return &c_json_error;
+	}
 	void * result = array_at(&value->as.array, index);
 	return (result != NULL) ? result : &c_json_null;
 }
@@ -218,7 +222,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		if (!is_new) {
 			struct CString const key = string_system_get(entry_key.as.string_id);
 			logger_to_console("key duplicate: \"%.*s\"\n", key.length, key.data);
-			DEBUG_BREAK();
+			REPORT_CALLSTACK(1); DEBUG_BREAK();
 		}
 
 		// finalize
@@ -317,7 +321,7 @@ struct JSON json_parse(char const * data) {
 	}
 
 	if (parser.error) {
-		DEBUG_BREAK();
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
 		json_free(&value);
 		value = c_json_error;
 	}

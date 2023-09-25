@@ -18,15 +18,15 @@ struct Array array_init(uint32_t value_size);
 void array_free(struct Array * array);
 
 void array_clear(struct Array * array);
-void array_resize(struct Array * array, uint32_t target_capacity);
-void array_ensure(struct Array * array, uint32_t target_capacity);
+void array_resize(struct Array * array, uint32_t capacity);
+void array_ensure(struct Array * array, uint32_t capacity);
 
 void array_push_many(struct Array * array, uint32_t count, void const * value);
 void array_set_many(struct Array * array, uint32_t index, uint32_t count, void const * value);
 void array_insert_many(struct Array * array, uint32_t index, uint32_t count, void const * value);
 
-void * array_pop(struct Array * array);
-void * array_peek(struct Array const * array, uint32_t offset);
+void * array_pop(struct Array * array, uint32_t count);
+void * array_peek(struct Array const * array, uint32_t depth);
 void * array_at(struct Array const * array, uint32_t index);
 
 bool array_iterate(struct Array const * array, struct Array_Iterator * iterator);

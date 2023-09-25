@@ -75,59 +75,54 @@ uint64_t hash_u64_xorshift(uint64_t value) {
 	return value;
 }
 
-uint32_t round_up_to_PO2_u32(uint32_t value) {
-#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
-	if (value > UINT32_C(0x80000000)) {
-		logger_to_console("value is over the largest power of two: %u\n", value); DEBUG_BREAK();
-		return UINT32_C(0x80000000);
+uint32_t po2_next_u32(uint32_t value) {
+#if !defined(GAME_TARGET_RELEASE)
+	if (value > (UINT32_C(1) << 31)) {
+		logger_to_console("PO2 overflow: %u\n", value);
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0;
 	}
 #endif
 
-	value--;
+	value -= 1;
 	value |= value >>  1;
 	value |= value >>  2;
 	value |= value >>  4;
 	value |= value >>  8;
 	value |= value >> 16;
-	value++;
-	return value;
+	return value + 1;
 }
 
-uint64_t round_up_to_PO2_u64(uint64_t value) {
-#if defined(GAME_TARGET_DEVELOPMENT) || defined(GAME_TARGET_DEBUG)
-	if (value > UINT64_C(0x8000000000000000)) {
-		logger_to_console("value is over the largest power of two: %llu\n", value); DEBUG_BREAK();
-		return UINT64_C(0x8000000000000000);
+uint64_t po2_next_u64(uint64_t value) {
+#if !defined(GAME_TARGET_RELEASE)
+	if (value > (UINT64_C(1) << 63)) {
+		logger_to_console("PO2 overflow: %llu\n", value);
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0;
 	}
 #endif
 
-	value--;
+	value -= 1;
 	value |= value >>  1;
 	value |= value >>  2;
 	value |= value >>  4;
 	value |= value >>  8;
 	value |= value >> 16;
 	value |= value >> 32;
-	value++;
-	return value;
+	return value + 1;
 }
 
-uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator) {
-	// @note: same as `value * numerator / denominator`, but protected
-	//        against intermediate overflow and loss of significance
-	//        N.B. result overflow is still possible with `numerator > denominator`
-	uint32_t a = value / denominator;
-	uint32_t b = value % denominator;
-	return a * numerator + b * numerator / denominator;
+uint32_t mul_div_u32(uint32_t value, uint32_t mul, uint32_t div) {
+	return (value / div) * mul
+	     + (value % div) * mul / div;
 }
 
-uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator) {
-	// @note: same as `value * numerator / denominator`, but protected
-	//        against intermediate overflow and loss of significance
-	//        N.B. result overflow is still possible with `numerator > denominator`
-	uint64_t a = value / denominator;
-	uint64_t b = value % denominator;
-	return a * numerator + b * numerator / denominator;
+uint64_t mul_div_u64(uint64_t value, uint64_t mul, uint64_t div) {
+	return (value / div) * mul
+	     + (value % div) * mul / div;
+}
+
+size_t mul_div_size(size_t value, size_t mul, size_t div) {
+	return (value / div) * mul
+	     + (value % div) * mul / div;
 }
 
 uint32_t midpoint_u32(uint32_t v1, uint32_t v2) {
@@ -137,6 +132,12 @@ uint32_t midpoint_u32(uint32_t v1, uint32_t v2) {
 }
 
 uint64_t midpoint_u64(uint64_t v1, uint64_t v2) {
+	return (v1 < v2)
+		? v1 + (v2 - v1) / 2
+		: v2 + (v1 - v2) / 2;
+}
+
+size_t midpoint_size(size_t v1, size_t v2) {
 	return (v1 < v2)
 		? v1 + (v2 - v1) / 2
 		: v2 + (v1 - v2) / 2;
@@ -153,6 +154,10 @@ int32_t clamp_s32(int32_t v, int32_t low, int32_t high) { return min_s32(max_s32
 float min_r32(float v1, float v2) { return (v1 < v2) ? v1 : v2; }
 float max_r32(float v1, float v2) { return (v1 > v2) ? v1 : v2; }
 float clamp_r32(float v, float low, float high) { return min_r32(max_r32(v, low), high); }
+
+size_t min_size(size_t v1, size_t v2) { return (v1 < v2) ? v1 : v2; }
+size_t max_size(size_t v1, size_t v2) { return (v1 > v2) ? v1 : v2; }
+size_t clamp_size(size_t v, size_t low, size_t high) { return min_size(max_size(v, low), high); }
 
 float lerp(float v1, float v2, float t) { return v1 + (v2 - v1)*t; }
 float lerp_stable(float v1, float v2, float t) { return v1*(1 - t) + v2*t; }

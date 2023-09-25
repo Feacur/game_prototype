@@ -148,7 +148,9 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 #define ADD_SECTION_HEADER(shader_type, version) \
 	do { \
 		if (common_strstr((char const *)asset->data, #shader_type)) {\
-			if (gs_ogl_version < (version)) { logger_to_console("'" #shader_type "' is unavailable\n"); DEBUG_BREAK(); break; } \
+			if (gs_ogl_version < (version)) { logger_to_console("'" #shader_type "' is unavailable\n"); \
+				REPORT_CALLSTACK(1); DEBUG_BREAK(); break; \
+			} \
 			sections[sections_count++] = (struct Section_Header){ \
 				.type = GL_##shader_type, \
 				.text = S_("#define " #shader_type "\n\n"), \
@@ -248,7 +250,7 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 	glGetProgramInterfaceiv(program.id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
 	GLchar * uniform_name_buffer = alloca(sizeof(GLchar) * (size_t)uniform_name_buffer_length);
 
-	hashmap_resize(&program.uniforms, (uint32_t)uniforms_count);
+	hashmap_ensure(&program.uniforms, (uint32_t)uniforms_count);
 
 	for (GLint i = 0; i < uniforms_count; i++) {
 		enum Param {
@@ -278,14 +280,14 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 
 		if (cstring_contains(uniform_name, S_("[0][0]"))) {
 			// @todo: provide a convenient API for nested arrays in GLSL
-			logger_to_console("nested arrays are not supported\n"); DEBUG_BREAK();
-			continue;
+			logger_to_console("nested arrays are not supported\n");
+			REPORT_CALLSTACK(1); DEBUG_BREAK(); continue;
 		}
 
 		if (cstring_contains(uniform_name, S_("[0]."))) {
 			// @todo: provide a convenient API for array of structs in GLSL
-			logger_to_console("arrays of structs are not supported\n"); DEBUG_BREAK();
-			continue;
+			logger_to_console("arrays of structs are not supported\n");
+			REPORT_CALLSTACK(1); DEBUG_BREAK(); continue;
 		}
 
 		if (params[PARAM_ARRAY_SIZE] > 1) {
@@ -351,12 +353,14 @@ static struct Handle gpu_texture_allocate(
 	uint32_t max_lod
 ) {
 	if (size_x > gs_graphics_state.limits.max_texture_size) {
-		logger_to_console("requested size is too large\n"); DEBUG_BREAK();
+		logger_to_console("requested size is too large\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
 		size_x = gs_graphics_state.limits.max_texture_size;
 	}
 
 	if (size_y > gs_graphics_state.limits.max_texture_size) {
-		logger_to_console("requested size is too large\n"); DEBUG_BREAK();
+		logger_to_console("requested size is too large\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
 		size_y = gs_graphics_state.limits.max_texture_size;
 	}
 
@@ -392,7 +396,8 @@ static struct Handle gpu_texture_allocate(
 		);
 	}
 	else {
-		logger_to_console("immutable storage should have non-zero size\n"); DEBUG_BREAK();
+		logger_to_console("immutable storage should have non-zero size\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
 	}
 
 	// chart buffer
@@ -479,7 +484,8 @@ void gpu_texture_update(struct Handle handle, struct Image const * asset) {
 	if (gpu_texture == NULL) { return; }
 
 	if (!(gpu_texture->parameters.flags & TEXTURE_FLAG_WRITE)) {
-		// logger_to_console("trying to write into a read-only buffer\n"); DEBUG_BREAK();
+		// logger_to_console("trying to write into a read-only buffer\n");
+		// REPORT_CALLSTACK(1); DEBUG_BREAK();
 		return;
 	}
 
@@ -509,7 +515,8 @@ void gpu_texture_update(struct Handle handle, struct Image const * asset) {
 		glGenerateTextureMipmap(gpu_texture->id);
 	}
 	else {
-		logger_to_console("trying to reallocate an immutable buffer\n"); DEBUG_BREAK();
+		logger_to_console("trying to reallocate an immutable buffer\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
 		// @todo: completely recreate object instead of using a mutable storage?
 	}
 }
@@ -662,7 +669,8 @@ struct Handle gpu_target_get_texture_handle(struct Handle handle, enum Texture_T
 		}
 	}
 
-	logger_to_console("failure: target doesn't have requested texture\n"); DEBUG_BREAK();
+	logger_to_console("failure: target doesn't have requested texture\n");
+	REPORT_CALLSTACK(1); DEBUG_BREAK();
 	return (struct Handle){0};
 }
 
@@ -722,8 +730,8 @@ static struct Handle gpu_mesh_allocate(
 			);
 		}
 		else {
-			logger_to_console("immutable storage should have non-zero size\n"); DEBUG_BREAK();
-			continue;
+			logger_to_console("immutable storage should have non-zero size\n");
+			REPORT_CALLSTACK(1); DEBUG_BREAK(); continue;
 		}
 
 		// @note: deliberately using count instead of capacity, so as to drop junk data
@@ -783,7 +791,8 @@ static struct Handle gpu_mesh_allocate(
 		}
 	}
 	if (mesh.elements_index == INDEX_EMPTY) {
-		logger_to_console("no element buffer\n"); DEBUG_BREAK();
+		logger_to_console("no element buffer\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
 	}
 
 	return sparseset_aquire(&gs_graphics_state.meshes, &mesh);
@@ -826,7 +835,8 @@ void gpu_mesh_update(struct Handle handle, struct Mesh const * asset) {
 		// struct Mesh_Parameters const * asset_parameters = asset->parameters + i;
 
 		if (!(parameters.flags & MESH_FLAG_WRITE)) {
-			// logger_to_console("trying to write into a read-only buffer\n"); DEBUG_BREAK();
+			// logger_to_console("trying to write into a read-only buffer\n");
+			// REPORT_CALLSTACK(1); DEBUG_BREAK();
 			continue;
 		}
 
@@ -855,8 +865,8 @@ void gpu_mesh_update(struct Handle handle, struct Mesh const * asset) {
 		}
 		else {
 			// @todo: completely recreate object instead of using a mutable storage?
-			logger_to_console("trying to reallocate an immutable buffer\n"); DEBUG_BREAK();
-			continue;
+			logger_to_console("trying to reallocate an immutable buffer\n");
+			REPORT_CALLSTACK(1); DEBUG_BREAK(); continue;
 		}
 
 		buffer->count = elements_count;
@@ -930,14 +940,14 @@ static uint32_t gpu_unit_init(struct Handle texture_handle) {
 
 	uint32_t const free_unit = graphics_unit_find((struct Handle){0});
 	if (free_unit == 0) {
-		logger_to_console("failure: no spare texture/sampler units\n"); DEBUG_BREAK();
-		return 0;
+		logger_to_console("failure: no spare texture/sampler units\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0;
 	}
 
 	struct Gpu_Texture const * gpu_texture = sparseset_get(&gs_graphics_state.textures, texture_handle);
 	if (gpu_texture == NULL) {
-		logger_to_console("failure: no spare texture/sampler units\n"); DEBUG_BREAK();
-		return 0;
+		logger_to_console("failure: no spare texture/sampler units\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0;
 	}
 
 	gs_graphics_state.units[free_unit] = (struct Gpu_Unit){
@@ -984,7 +994,10 @@ static void gpu_select_mesh(struct Handle handle) {
 
 static void gpu_upload_single_uniform(struct Gpu_Program const * gpu_program, struct Gpu_Uniform_Internal const * field, void const * data) {
 	switch (field->base.type) {
-		default: logger_to_console("unsupported field type '0x%x'\n", field->base.type); DEBUG_BREAK(); break;
+		default: {
+			logger_to_console("unsupported field type '0x%x'\n", field->base.type);
+			REPORT_CALLSTACK(1); DEBUG_BREAK();
+		} break;
 
 		case DATA_TYPE_UNIT_U:
 		case DATA_TYPE_UNIT_S:
@@ -1002,8 +1015,7 @@ static void gpu_upload_single_uniform(struct Gpu_Program const * gpu_program, st
 				units[units_count++] = (GLint)unit;
 			}
 			glProgramUniform1iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, units);
-			break;
-		}
+		} break;
 
 		case DATA_TYPE_R32_U:    glProgramUniform1uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
 		case DATA_TYPE_RG32_U:   glProgramUniform2uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
@@ -1096,7 +1108,10 @@ inline static void gpu_execute_target(struct GPU_Command_Target const * command)
 }
 
 inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
-	if (command->mask == TEXTURE_TYPE_NONE) { logger_to_console("clear mask is empty\n"); DEBUG_BREAK(); return; }
+	if (command->mask == TEXTURE_TYPE_NONE) {
+		logger_to_console("clear mask is empty\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+	}
 
 	float const depth   = gs_graphics_state.clip_space.depth_far;
 	GLint const stencil = 0;
@@ -1156,7 +1171,10 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 	struct Gpu_Mesh const * mesh = sparseset_get(&gs_graphics_state.meshes, command->mesh_handle);
 	if (mesh == NULL) { return; }
 
-	if (mesh->elements_index == INDEX_EMPTY) { logger_to_console("mesh has no elements buffer\n"); DEBUG_BREAK(); return; }
+	if (mesh->elements_index == INDEX_EMPTY) {
+		logger_to_console("mesh has no elements buffer\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+	}
 
 	//
 	struct Gpu_Mesh_Buffer const * buffer = array_at(&mesh->buffers, mesh->elements_index);
@@ -1185,7 +1203,8 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 		);
 	}
 	else {
-		logger_to_console("not implemented\n"); DEBUG_BREAK();
+		logger_to_console("not implemented\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
 		// @todo: implement
 		// uint32_t const elements_offset = (command->length != 0)
 		// 	? command->offset * 3
@@ -1203,7 +1222,11 @@ void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 	for (uint32_t i = 0; i < length; i++) {
 		struct GPU_Command const * command = commands + i;
 		switch (command->type) {
-			default:                        logger_to_console("unknown command\n"); DEBUG_BREAK(); break;
+			default: {
+				logger_to_console("unknown command\n");
+				REPORT_CALLSTACK(1); DEBUG_BREAK();
+			} break;
+
 			case GPU_COMMAND_TYPE_CULL:     gpu_execute_cull(&command->as.cull);         break;
 			case GPU_COMMAND_TYPE_TARGET:   gpu_execute_target(&command->as.target);     break;
 			case GPU_COMMAND_TYPE_CLEAR:    gpu_execute_clear(&command->as.clear);       break;
@@ -1386,15 +1409,12 @@ static void verify_shader(GLuint id) {
 
 	GLint max_length;
 	glGetShaderiv(id, GL_INFO_LOG_LENGTH, &max_length);
+	if (max_length <= 0) { return; }
 
-	if (max_length > 0) {
-		// @todo: (?) arena/stack allocator
-		GLchar * buffer = alloca(sizeof(GLchar) * (size_t)max_length);
-		glGetShaderInfoLog(id, max_length, &max_length, buffer);
-		logger_to_console("%s\n", buffer);
-	}
-
-	DEBUG_BREAK();
+	// @todo: (?) arena/stack allocator
+	GLchar * buffer = alloca(sizeof(GLchar) * (size_t)max_length);
+	glGetShaderInfoLog(id, max_length, &max_length, buffer);
+	logger_to_console("%s\n", buffer);
 }
 
 static void verify_program(GLuint id) {
@@ -1404,15 +1424,12 @@ static void verify_program(GLuint id) {
 
 	GLint max_length;
 	glGetProgramiv(id, GL_INFO_LOG_LENGTH, &max_length);
+	if (max_length <= 0) { return; }
 
-	if (max_length > 0) {
-		// @todo: (?) arena/stack allocator
-		GLchar * buffer = alloca(sizeof(GLchar) * (size_t)max_length);
-		glGetProgramInfoLog(id, max_length, &max_length, buffer);
-		logger_to_console("%s\n", buffer);
-	}
-
-	DEBUG_BREAK();
+	// @todo: (?) arena/stack allocator
+	GLchar * buffer = alloca(sizeof(GLchar) * (size_t)max_length);
+	glGetProgramInfoLog(id, max_length, &max_length, buffer);
+	logger_to_console("%s\n", buffer);
 }
 
 //
@@ -1432,7 +1449,7 @@ static char const * opengl_debug_get_source(GLenum value) {
 		case GL_DEBUG_SOURCE_API:             return "API";
 		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   return "window system";
 		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "shader compiler";
-		case GL_DEBUG_SOURCE_THIRD_PARTY:     return "thirdparty";
+		case GL_DEBUG_SOURCE_THIRD_PARTY:     return "third party";
 		case GL_DEBUG_SOURCE_APPLICATION:     return "application";
 		case GL_DEBUG_SOURCE_OTHER:           return "other";
 	}

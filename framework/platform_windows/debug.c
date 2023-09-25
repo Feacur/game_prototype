@@ -157,8 +157,8 @@ bool debug_to_system_init(void) {
 		.buffer  = buffer_init(memory_reallocate_without_tracking),
 		.scratch = buffer_init(memory_reallocate_without_tracking),
 	};
-	buffer_ensure(&gs_platform_debug.buffer,  4096);
-	buffer_ensure(&gs_platform_debug.scratch, 512);
+	buffer_resize(&gs_platform_debug.buffer,  4096);
+	buffer_resize(&gs_platform_debug.scratch, 512);
 
 	return true;
 }

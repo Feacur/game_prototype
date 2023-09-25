@@ -168,8 +168,9 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 		continue;
 
 		// process errors
-		fail_field: DEBUG_BREAK();
+		fail_field:
 		common_memset(uniform_data_buffer.data, 0, it.size);
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
 
 	}
 
@@ -177,6 +178,6 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 	return;
 
 	// process errors
-	fail_uniforms: DEBUG_BREAK();
-	logger_to_console("missing shader uniforms\n");
+	fail_uniforms: logger_to_console("missing shader uniforms\n");
+	REPORT_CALLSTACK(1); DEBUG_BREAK();
 }

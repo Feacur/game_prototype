@@ -242,7 +242,7 @@ void font_render(struct Font * font) {
 		uint32_t atlas_size_y;
 		if (font->buffer.size_x == 0 || font->buffer.size_y == 0) {
 			atlas_size_x = (uint32_t)r32_sqrt((float)minimum_area);
-			atlas_size_x = round_up_to_PO2_u32(atlas_size_x);
+			atlas_size_x = po2_next_u32(atlas_size_x);
 
 			atlas_size_y = atlas_size_x;
 			if (atlas_size_x * (atlas_size_y / 2) > minimum_area) {
@@ -253,7 +253,7 @@ void font_render(struct Font * font) {
 			atlas_size_y = font->buffer.size_y;
 
 			atlas_size_x = minimum_area / atlas_size_y;
-			atlas_size_x = round_up_to_PO2_u32(atlas_size_y);
+			atlas_size_x = po2_next_u32(atlas_size_y);
 			if (atlas_size_x < font->buffer.size_x) {
 				atlas_size_x = font->buffer.size_x;
 			}
@@ -321,10 +321,12 @@ void font_render(struct Font * font) {
 			}
 
 			if (font->buffer.size_x < offset_x + glyph_size_x - 1) {
-				logger_to_console("can't fit a glyph into the buffer\n"); DEBUG_BREAK(); continue;
+				logger_to_console("can't fit a glyph into the buffer\n");
+				REPORT_CALLSTACK(1); DEBUG_BREAK(); continue;
 			}
 			if (font->buffer.size_y < offset_y + glyph_size_y - 1) {
-				logger_to_console("can't fit a glyph into the buffer\n"); DEBUG_BREAK(); continue;
+				logger_to_console("can't fit a glyph into the buffer\n");
+				REPORT_CALLSTACK(1); DEBUG_BREAK(); continue;
 			}
 
 			//

@@ -71,7 +71,8 @@ void asset_system_map_extension(struct CString type, struct CString extension) {
 	hashmap_set(&gs_asset_system.map, &extension_id, &type_id);
 
 	return;
-	fail: DEBUG_BREAK();
+	fail:
+	REPORT_CALLSTACK(1); DEBUG_BREAK();
 }
 
 bool asset_system_match_type(struct Handle handle, struct CString type_name) {

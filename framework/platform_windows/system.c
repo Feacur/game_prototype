@@ -100,8 +100,8 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 	return;
 
 	// process errors
-	fail: DEBUG_BREAK();
-	logger_to_console("failed to initialize the system module\n");
+	fail: logger_to_console("failed to initialize the system module\n");
+	REPORT_CALLSTACK(1); DEBUG_BREAK();
 	gs_platform_system.has_error = true;
 	// common_exit_failure();
 }
@@ -112,7 +112,7 @@ void platform_system_free(void) {
 	window_to_system_free();
 	timer_to_system_free();
 
-	if (memory_to_system_cleanup()) { DEBUG_BREAK(); }
+	if (memory_to_system_cleanup()) { REPORT_CALLSTACK(1); DEBUG_BREAK(); }
 	debug_to_system_free();
 
 	RemoveVectoredContinueHandler(gs_platform_system.vectored);
@@ -229,8 +229,7 @@ static void system_signal_handler(int value) {
 		, system_signal_get_type(value)
 	);
 	log_last_error("  message: ");
-	REPORT_CALLSTACK(1);
-	DEBUG_BREAK();
+	REPORT_CALLSTACK(1); DEBUG_BREAK();
 
 	gs_platform_system.has_error = true;
 
@@ -327,7 +326,8 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	log_last_error("  message: ");
 	REPORT_CALLSTACK(1);
 
-	if (noncontinuable) { DEBUG_BREAK();
+	if (noncontinuable) {
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
 		gs_platform_system.has_error = true;
 	}
 

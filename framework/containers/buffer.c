@@ -1,3 +1,4 @@
+#include "framework/maths.h"
 #include "framework/memory.h"
 #include "framework/logger.h"
 #include "internal/helpers.h"
@@ -20,46 +21,46 @@ void buffer_clear(struct Buffer * buffer) {
 	buffer->size = 0;
 }
 
-void buffer_resize(struct Buffer * buffer, size_t target_capacity) {
-	buffer->capacity = target_capacity;
-	if (buffer->size > target_capacity) { buffer->size = target_capacity; }
-	buffer->data = default_allocator(buffer->allocate)(buffer->data, target_capacity);
+void buffer_resize(struct Buffer * buffer, size_t capacity) {
+	if (buffer->capacity == capacity) { return; }
+	void * data = default_allocator(buffer->allocate)(buffer->data, capacity);
+	if (data == NULL) { return; }
+	buffer->capacity = capacity;
+	buffer->size = min_size(buffer->size, capacity);
+	buffer->data = data;
 }
 
-void buffer_ensure(struct Buffer * buffer, size_t target_capacity) {
-	if (buffer->capacity < target_capacity) {
-		buffer_resize(buffer, target_capacity);
-	}
-}
-
-static void buffer_grow_if_must(struct Buffer * buffer, size_t target_size) {
-	if (buffer->capacity < target_size) {
-		size_t const target_capacity = grow_capacity_value_u64(buffer->capacity, target_size - buffer->capacity);
-		buffer_resize(buffer, target_capacity);
-	}
+void buffer_ensure(struct Buffer * buffer, size_t capacity) {
+	if (buffer->capacity >= capacity) { return; }
+	capacity = growth_adjust_buffer(buffer->capacity, capacity);
+	buffer_resize(buffer, capacity);
 }
 
 void buffer_push_many(struct Buffer * buffer, size_t size, void const * value) {
-	buffer_grow_if_must(buffer, buffer->size + size);
-	//
+	buffer_ensure(buffer, buffer->size + size);
 	uint8_t * end = (uint8_t *)buffer->data + buffer->size;
 	common_memcpy(end, value, size);
 	buffer->size += size;
 }
 
 void buffer_set_many(struct Buffer * buffer, size_t offset, size_t size, void const * value) {
-	if (offset + size > buffer->size) { logger_to_console("out of bounds\n"); DEBUG_BREAK(); return; }
+	if (offset + size > buffer->size) {
+		logger_to_console("out of bounds\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+	}
 	uint8_t * at = (uint8_t *)buffer->data + offset;
-	//
 	common_memcpy(at, value, size);
 }
 
 void buffer_insert_many(struct Buffer * buffer, size_t offset, size_t size, void const * value) {
-	if (offset > buffer->size) { logger_to_console("out of bounds\n"); DEBUG_BREAK(); return; }
-	buffer_grow_if_must(buffer, buffer->size + size);
+	if (offset > buffer->size) {
+		logger_to_console("out of bounds\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+	}
+	buffer_ensure(buffer, buffer->size + size);
 	//
-	uint8_t * end = (uint8_t *)buffer->data + buffer->size;
 	uint8_t * at  = (uint8_t *)buffer->data + offset;
+	uint8_t * end = (uint8_t *)buffer->data + buffer->size;
 	for (uint8_t * it = end; it > at; it -= 1) {
 		common_memcpy(it, it - size, 1);
 	}
@@ -68,17 +69,25 @@ void buffer_insert_many(struct Buffer * buffer, size_t offset, size_t size, void
 }
 
 void * buffer_pop(struct Buffer * buffer, size_t size) {
-	if (buffer->size < size) { DEBUG_BREAK(); return NULL; }
+	if (buffer->size < size) {
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
+	}
 	buffer->size -= size;
-	return (uint8_t *)buffer->data + buffer->size;
+	size_t const offset = buffer->size;
+	return (uint8_t *)buffer->data + offset;
 }
 
-void * buffer_peek(struct Buffer const * buffer, size_t offset) {
-	if (offset >= buffer->size) { DEBUG_BREAK(); return NULL; }
-	return (uint8_t *)buffer->data + (buffer->size - offset - 1);
+void * buffer_peek(struct Buffer const * buffer, size_t depth) {
+	if (depth >= buffer->size) {
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
+	}
+	size_t const offset = buffer->size - depth - 1;
+	return (uint8_t *)buffer->data + offset;
 }
 
 void * buffer_at(struct Buffer const * buffer, size_t offset) {
-	if (offset >= buffer->size) { DEBUG_BREAK(); return NULL; }
+	if (offset >= buffer->size) {
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
+	}
 	return (uint8_t *)buffer->data + offset;
 }

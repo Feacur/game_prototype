@@ -47,6 +47,9 @@ uint32_t logger_to_buffer(uint32_t size, char * buffer, char const * format, ...
 	va_start(args, format);
 	uint32_t length = (uint32_t)stbsp_vsnprintf(buffer, (int)size, format, args);
 	va_end(args);
-	if (length > size) { logger_to_console("insufficient buffer space\n"); DEBUG_BREAK(); }
+	if (length > size) {
+		logger_to_console("insufficient buffer space\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
+	}
 	return length;
 }

@@ -52,7 +52,8 @@ struct Typeface * typeface_init(struct Buffer * buffer) {
 
 	typeface->api.userdata = typeface->scratch;
 	if (!stbtt_InitFont(&typeface->api, typeface->data, stbtt_GetFontOffsetForIndex(typeface->data, 0))) {
-		logger_to_console("failure: can't read typeface data\n"); DEBUG_BREAK();
+		logger_to_console("failure: can't read typeface data\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK();
 	}
 
 	if (!stbtt_GetFontVMetricsOS2(&typeface->api, &typeface->ascent, &typeface->descent, &typeface->line_gap)) {
@@ -122,8 +123,14 @@ void typeface_render_glyph(
 	uint32_t glyph_size_x, uint32_t glyph_size_y,
 	uint32_t offset_x, uint32_t offset_y
 ) {
-	if (glyph_size_x == 0) { logger_to_console("'glyph_size_x == 0' doesn't make sense\n"); DEBUG_BREAK(); return; }
-	if (glyph_size_y == 0) { logger_to_console("'glyph_size_y == 0' doesn't make sense\n"); DEBUG_BREAK(); return; }
+	if (glyph_size_x == 0) {
+		logger_to_console("'glyph_size_x == 0' doesn't make sense\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+	}
+	if (glyph_size_y == 0) {
+		logger_to_console("'glyph_size_y == 0' doesn't make sense\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+	}
 
 	if (glyph_id == 0) {
 		uint8_t * base_target = buffer + offset_y * buffer_width + offset_x;
@@ -134,7 +141,10 @@ void typeface_render_glyph(
 		return;
 	}
 
-	if (buffer_width == 0) { logger_to_console("'buffer_width == 0' doesn't make sense\n"); DEBUG_BREAK(); return; }
+	if (buffer_width == 0) {
+		logger_to_console("'buffer_width == 0' doesn't make sense\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+	}
 
 	// @note: ensure glyphs layout
 	// stbtt_set_flip_vertically_on_load(1);

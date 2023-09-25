@@ -100,13 +100,15 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 	return window;
 
 	// process errors
-	fail_window: DEBUG_BREAK();
+	fail_window:
 	if (window != NULL) { MEMORY_FREE(window); }
 	else { logger_to_console("failed to initialize application window\n"); }
+	REPORT_CALLSTACK(1); DEBUG_BREAK();
 
-	fail_handle: DEBUG_BREAK();
+	fail_handle:
 	if (handle != NULL) { DestroyWindow(handle); }
 	else { logger_to_console("failed to create platform window\n"); }
+	REPORT_CALLSTACK(1); DEBUG_BREAK();
 
 	return NULL;
 }
@@ -139,8 +141,9 @@ void platform_window_update(struct Window * window) {
 }
 
 void platform_window_start_frame(struct Window * window) {
-	if (window->frame_cached_device != NULL) { DEBUG_BREAK(); return; }
-
+	if (window->frame_cached_device != NULL) {
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+	}
 	window->frame_cached_device = GetDC(window->handle);
 }
 
@@ -164,7 +167,9 @@ void platform_window_get_size(struct Window const * window, uint32_t * size_x, u
 }
 
 uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value) {
-	if (window->frame_cached_device == NULL) { DEBUG_BREAK(); return 0; }
+	if (window->frame_cached_device == NULL) {
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0;
+	}
 
 	int value = GetDeviceCaps(window->frame_cached_device, VREFRESH);
 	return value > 1 ? (uint32_t)value : default_value;
@@ -362,7 +367,7 @@ static void platform_window_internal_toggle_borderless_fullscreen(struct Window 
 	SetWindowPlacement(window->handle, &window->pre_fullscreen_position);
 }
 
-static enum Key_Code translate_virtual_key_to_application(uint8_t scan, uint8_t key, bool is_extended) {
+static enum Key_Code translate_virtual_key_to_application(uint8_t key, uint8_t scan, bool is_extended) {
 	if ('A'        <= key && key <= 'Z')        { return 'a'     + key - 'A'; }
 	if ('0'        <= key && key <= '9')        { return '0'     + key - '0'; }
 	if (VK_NUMPAD0 <= key && key <= VK_NUMPAD9) { return KC_NUM0 + key - VK_NUMPAD0; }
@@ -471,8 +476,8 @@ static void platform_window_internal_toggle_raw_input(struct Window * window, bo
 	};
 
 	if (!RegisterRawInputDevices(devices, SIZE_OF_ARRAY(devices), sizeof(RAWINPUTDEVICE))) {
-		logger_to_console("'RegisterRawInputDevices' failed\n"); DEBUG_BREAK();
-		return;
+		logger_to_console("'RegisterRawInputDevices' failed\n");
+		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
 	}
 
 	window->raw_input = state;
@@ -481,25 +486,23 @@ static void platform_window_internal_toggle_raw_input(struct Window * window, bo
 
 static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data) {
 	if (!window->raw_input) { return; }
-	if (data->VKey == 0xff) { return; }
+	if (data->VKey == 0xff) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
 
-	uint8_t scan = (uint8_t)data->MakeCode;
-	uint8_t key = (uint8_t)data->VKey;
-	bool is_extended = (data->Flags & RI_KEY_E0);
-
-	if ((data->Flags & RI_KEY_E1)) {
-		scan = (key == VK_PAUSE)
-			? 0x45
-			: (uint8_t)MapVirtualKey(key, MAPVK_VK_TO_VSC);
-	}
-
-	if (key == VK_NUMLOCK) { is_extended = true; }
+	uint8_t const key = (uint8_t)data->VKey;
+	uint8_t const scan = !(data->Flags & RI_KEY_E1) // The scan code has the E1 prefix
+		? (uint8_t)data->MakeCode
+		: (data->VKey != VK_PAUSE)
+			? (uint8_t)MapVirtualKey(data->VKey, MAPVK_VK_TO_VSC)
+			: 0x45
+		;
+	bool const is_extended = (data->Flags & RI_KEY_E0); // The scan code has the E0 prefix
 
 	input_to_platform_on_key(
 		translate_virtual_key_to_application(scan, key, is_extended),
 		!(data->Flags & RI_KEY_BREAK)
 	);
 
+	// https://learn.microsoft.com/windows/win32/inputdev/about-keyboard-input
 	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawkeyboard
 	// https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
 
@@ -580,7 +583,8 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 static void handle_input_hid_raw(struct Window * window, RAWHID * data) {
 	if (!window->raw_input) { return; }
 	(void)window; (void)data;
-	// @todo: logger_to_console("'RAWHID' input is not implemented\n"); DEBUG_BREAK();
+	// @todo: logger_to_console("'RAWHID' input is not implemented\n");
+	// REPORT_CALLSTACK(1); DEBUG_BREAK();
 	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawhid
 }
 
@@ -607,13 +611,13 @@ static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, L
 
 static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wParam, LPARAM lParam) {
 	if (window->raw_input) { return 0; }
-	if (wParam == 0xff) { DEBUG_BREAK(); return 0; }
+	if (wParam == 0xff)    { REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0; }
 
 	WORD flags = HIWORD(lParam);
 
-	uint8_t scan = (uint8_t)LOBYTE(flags);
-	uint8_t key = (uint8_t)wParam;
-	bool is_extended = (flags & KF_EXTENDED);
+	uint8_t const key = (uint8_t)wParam;
+	uint8_t const scan = (uint8_t)LOBYTE(flags);
+	bool const is_extended = (flags & KF_EXTENDED);
 
 	input_to_platform_on_key(
 		translate_virtual_key_to_application(scan, key, is_extended),

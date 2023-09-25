@@ -63,14 +63,16 @@ uint32_t hash_u32_xorshift(uint32_t value);
 uint64_t hash_u64_bytes_fnv1(uint8_t const * value, uint64_t length);
 uint64_t hash_u64_xorshift(uint64_t value);
 
-uint32_t round_up_to_PO2_u32(uint32_t value);
-uint64_t round_up_to_PO2_u64(uint64_t value);
+uint32_t po2_next_u32(uint32_t value);
+uint64_t po2_next_u64(uint64_t value);
 
-uint32_t mul_div_u32(uint32_t value, uint32_t numerator, uint32_t denominator);
-uint64_t mul_div_u64(uint64_t value, uint64_t numerator, uint64_t denominator);
+uint32_t mul_div_u32(uint32_t value, uint32_t mul, uint32_t div);
+uint64_t mul_div_u64(uint64_t value, uint64_t mul, uint64_t div);
+size_t mul_div_size(size_t value, size_t mul, size_t div);
 
 uint32_t midpoint_u32(uint32_t v1, uint32_t v2);
 uint64_t midpoint_u64(uint64_t v1, uint64_t v2);
+size_t midpoint_size(size_t v1, size_t v2);
 
 uint32_t min_u32(uint32_t v1, uint32_t v2);
 uint32_t max_u32(uint32_t v1, uint32_t v2);
@@ -83,6 +85,10 @@ int32_t clamp_s32(int32_t v, int32_t low, int32_t high);
 float min_r32(float v1, float v2);
 float max_r32(float v1, float v2);
 float clamp_r32(float v, float low, float high);
+
+size_t min_size(size_t v1, size_t v2);
+size_t max_size(size_t v1, size_t v2);
+size_t clamp_size(size_t v, size_t low, size_t high);
 
 float lerp(float v1, float v2, float t);
 float lerp_stable(float v1, float v2, float t);

@@ -64,6 +64,9 @@ if %configuration% == tiny (
 	set compiler=%compiler% -O3 -g
 ) else if %configuration% == debug (
 	set compiler=%compiler% -O0 -g
+) else (
+	echo.unknown configuration "%configuration%"
+	exit /b 1
 )
 
 set compiler=%compiler% -Werror -Weverything
@@ -114,6 +117,9 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 	rem @note: this option is less preferable as it ignores already setup environment
 	call %func% get_millis time_link
 	clang -std=c99 %compiler% "%project_folder%/translation_units_%project%.c" -o"./%project%.exe" -Wl,%linker: =,% || ( goto error )
+) else (
+	echo.unknown build_mode "%build_mode%"
+	exit /b 1
 )
 
 if not exist ".\%project%.exe.manifest" (
