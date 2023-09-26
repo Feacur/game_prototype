@@ -2,7 +2,7 @@
 # "~" is "%userprofile%"
 
 # https://help.github.com/en/github/authenticating-to-github/working-with-ssh-key-passphrases
-# https://support.microsoft.com/en-us/help/4026814/windows-accessing-credential-manager
+# https://support.microsoft.com/help/4026814/windows-accessing-credential-manager
 
 # on Windows [during git submodules initialization] you might want to force https over ssh
 

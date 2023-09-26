@@ -201,8 +201,8 @@ bool window_to_system_init(void) {
 		.hIconSm = LoadIconA(module, "ico"),
 	}) != 0;
 
-	// https://docs.microsoft.com/windows/win32/winmsg/about-window-classes
-	// https://docs.microsoft.com/windows/win32/gdi/private-display-device-contexts
+	// https://learn.microsoft.com/windows/win32/winmsg/about-window-classes
+	// https://learn.microsoft.com/windows/win32/gdi/private-display-device-contexts
 }
 
 void window_to_system_free(void) {
@@ -484,7 +484,7 @@ static void platform_window_internal_toggle_raw_input(struct Window * window, bo
 	}
 
 	window->raw_input = state;
-	// https://docs.microsoft.com/windows-hardware/drivers/hid/
+	// https://learn.microsoft.com/windows-hardware/drivers/hid/
 }
 
 static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data) {
@@ -506,7 +506,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 	);
 
 	// https://learn.microsoft.com/windows/win32/inputdev/about-keyboard-input
-	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawkeyboard
+	// https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-rawkeyboard
 	// https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
 
 /*
@@ -580,7 +580,7 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 		}
 	}
 
-	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawmouse
+	// https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-rawmouse
 }
 
 static void handle_input_hid_raw(struct Window * window, RAWHID * data) {
@@ -588,7 +588,7 @@ static void handle_input_hid_raw(struct Window * window, RAWHID * data) {
 	(void)window; (void)data;
 	// @todo: logger_to_console("'RAWHID' input is not implemented\n");
 	// REPORT_CALLSTACK(1); DEBUG_BREAK();
-	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawhid
+	// https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-rawhid
 }
 
 static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, LPARAM lParam) {
@@ -609,7 +609,7 @@ static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, L
 	}
 
 	return DefWindowProc(window->handle, WM_INPUT, wParam, lParam);
-	// https://docs.microsoft.com/windows/win32/inputdev/raw-input
+	// https://learn.microsoft.com/windows/win32/inputdev/raw-input
 }
 
 static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wParam, LPARAM lParam) {
@@ -628,7 +628,7 @@ static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wPar
 	);
 
 	return 0;
-	// https://docs.microsoft.com/windows/win32/inputdev/keyboard-input
+	// https://learn.microsoft.com/windows/win32/inputdev/keyboard-input
 
 /*
 	// officially, VK_SNAPSHOT gets only WM_KEYUP
@@ -683,7 +683,7 @@ static LRESULT handle_message_input_mouse(struct Window * window, WPARAM wParam,
 	}
 
 	return 0;
-	// https://docs.microsoft.com/windows/win32/inputdev/mouse-input
+	// https://learn.microsoft.com/windows/win32/inputdev/mouse-input
 }
 
 //

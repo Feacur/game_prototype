@@ -88,7 +88,7 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 		// 	gs_platform_system.module,
 		// 	1 << GetCurrentProcessorNumber()
 		// );
-		// https://docs.microsoft.com/windows/win32/dxtecharts/game-timing-and-multicore-processors
+		// https://learn.microsoft.com/windows/win32/dxtecharts/game-timing-and-multicore-processors
 	}
 
 	if (!debug_to_system_init())       { goto fail; }
@@ -139,8 +139,8 @@ bool platform_system_is_powered(void) {
 	*/
 	return system_power_status.ACLineStatus == 1;
 
-	// https://docs.microsoft.com/windows/win32/api/winbase/ns-winbase-system_power_status
-	// https://docs.microsoft.com/windows-hardware/design/component-guidelines/battery-saver
+	// https://learn.microsoft.com/windows/win32/api/winbase/ns-winbase-system_power_status
+	// https://learn.microsoft.com/windows-hardware/design/component-guidelines/battery-saver
 }
 
 bool platform_system_is_error(void) {

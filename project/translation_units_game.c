@@ -71,18 +71,21 @@ Includes:
 - "../third_party"
 
 Defines:
-- _CRT_SECURE_NO_WARNINGS
-- STRICT                  (Windows OS)
-- VC_EXTRALEAN            (Windows OS)
-- WIN32_LEAN_AND_MEAN     (Windows OS)
-- NOMINMAX                (Windows OS)
-- UNICODE                 (Windows OS)
-- _MT                     (MSVC, dynamic CRT)
-- _DLL                    (MSVC, dynamic CRT)
-- _DEBUG                  (MSVC, debug CRT)
-- GAME_TARGET_RELEASE     (this game, optional)
-- GAME_TARGET_DEVELOPMENT (this game, optional)
-- GAME_TARGET_DEBUG       (this game, optional)
+- Windows OS
+  - always:  STRICT, VC_EXTRALEAN, WIN32_LEAN_AND_MEAN, NOMINMAX
+  - unicode: UNICODE, _UNICODE
+- MSVC CRT
+  - always:  _CRT_SECURE_NO_WARNINGS
+  - dynamic: _MT, _DLL
+  - debug:   _DEBUG
+- this game %configuration%
+  - GAME_TARGET_RELEASE
+  - GAME_TARGET_DEVELOPMENT
+  - GAME_TARGET_DEBUG
+- this game %arch_mode%
+  - DGAME_ARCH_SHARED
+  - DGAME_ARCH_CONSOLE
+  - DGAME_ARCH_WINDOWS
 
 Features:
 - disable exceptions
@@ -92,10 +95,12 @@ Features:
 
 Libs:
 - Windows OS: kernel32.lib, user32.lib, gdi32.lib
+  - release: -
+  - else:    dbghelp.lib
 - MSVC CRT:
-  - dynamic: ucrt.lib, vcruntime.lib, msvcrt.lib
-  - static:  libucrt.lib, libvcruntime.lib, libcmt.lib
-  - dynamic_debug: ucrtd.lib, vcruntimed.lib, msvcrtd.lib
+  - dynamic:       ucrt.lib,     vcruntime.lib,     msvcrt.lib
+  - static:        libucrt.lib,  libvcruntime.lib,  libcmt.lib
+  - dynamic_debug: ucrtd.lib,    vcruntimed.lib,    msvcrtd.lib
   - static_debug:  libucrtd.lib, libvcruntimed.lib, libcmtd.lib
 
 Disable Clang warnings:

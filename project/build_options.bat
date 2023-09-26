@@ -3,16 +3,23 @@ chcp 65001 > nul
 
 rem linker options for MSVC `link` or clang `lld-link`
 
-rem https://learn.microsoft.com/cpp/c-runtime-library/crt-library-features
+rem https://learn.microsoft.com/cpp/c-runtime-library
 rem https://learn.microsoft.com/cpp/build/reference/entry-entry-point-symbol
 rem https://learn.microsoft.com/cpp/build/reference/subsystem-specify-subsystem
+rem https://learn.microsoft.com/cpp/build/reference/dot-res-files-as-linker-input
+rem https://learn.microsoft.com/cpp/build/reference/linker-options
+
+rem https://learn.microsoft.com/windows/win32/menurc/resource-compiler
+rem https://learn.microsoft.com/windows-server/administration/windows-commands/for
+rem https://learn.microsoft.com/windows-server/administration/windows-commands/setlocal
 
 set includes=-I".." -I"../third_party"
-set defines=-D_CRT_SECURE_NO_WARNINGS -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE -D_UNICODE
-set libs=kernel32.lib user32.lib gdi32.lib powrprof.lib
+set defines=-DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE -D_UNICODE
+set libs=kernel32.lib user32.lib gdi32.lib
 set linker=-nologo -WX -incremental:no
 
 set linker=%linker% -nodefaultlib
+set defines=%defines% -D_CRT_SECURE_NO_WARNINGS
 if %runtime_mode% == static (
 	set libs=%libs% libucrt.lib libvcruntime.lib libcmt.lib
 ) else if %runtime_mode% == dynamic (

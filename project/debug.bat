@@ -9,8 +9,8 @@ rem [any]
 set project=%1
 if [%project%] == [] ( set project=game )
 
-rem https://docs.microsoft.com/windows-server/administration/windows-commands/tasklist
-rem https://docs.microsoft.com/windows-server/administration/windows-commands/find
+rem https://learn.microsoft.com/windows-server/administration/windows-commands/tasklist
+rem https://learn.microsoft.com/windows-server/administration/windows-commands/find
 
 rem |> PREPARE PROJECT
 set project_folder=%cd%

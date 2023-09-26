@@ -27,11 +27,7 @@ rem normal|unity|unity_link
 set build_mode=%5
 if [%build_mode%] == [] ( set "build_mode=unity" )
 
-rem https://docs.microsoft.com/cpp/build/reference/compiler-options
-rem https://docs.microsoft.com/cpp/build/reference/linker-options
-rem https://docs.microsoft.com/cpp/c-runtime-library
-rem https://docs.microsoft.com/windows-server/administration/windows-commands/for
-rem https://docs.microsoft.com/windows-server/administration/windows-commands/setlocal
+rem https://learn.microsoft.com/cpp/build/reference/compiler-options
 
 rem |> PREPARE PROJECT
 set project_folder=%cd%

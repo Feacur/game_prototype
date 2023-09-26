@@ -50,9 +50,9 @@ struct Callstack platform_debug_get_callstack(void) {
 	}
 	return callstack;
 
-	// https://docs.microsoft.com/windows/win32/api/winnt/nf-winnt-rtlcapturecontext
-	// https://docs.microsoft.com/windows/win32/api/winnt/nf-winnt-rtllookupfunctionentry
-	// https://docs.microsoft.com/windows/win32/api/winnt/nf-winnt-rtlvirtualunwind
+	// https://learn.microsoft.com/windows/win32/api/winnt/nf-winnt-rtlcapturecontext
+	// https://learn.microsoft.com/windows/win32/api/winnt/nf-winnt-rtllookupfunctionentry
+	// https://learn.microsoft.com/windows/win32/api/winnt/nf-winnt-rtlvirtualunwind
 }
 
 #if defined(DBGHELP_TRANSLATE_TCHAR)
@@ -143,8 +143,8 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 			: NULL,
 	};
 
-	// https://docs.microsoft.com/windows/win32/api/dbghelp/nf-dbghelp-symfromaddr
-	// https://docs.microsoft.com/windows/win32/api/dbghelp/nf-dbghelp-symgetlinefromaddr64
+	// https://learn.microsoft.com/windows/win32/api/dbghelp/nf-dbghelp-symfromaddr
+	// https://learn.microsoft.com/windows/win32/api/dbghelp/nf-dbghelp-symgetlinefromaddr64
 }
 
 //

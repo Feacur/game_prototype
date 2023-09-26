@@ -32,10 +32,6 @@ rem https://clang.llvm.org/docs/CommandGuide/clang.html
 rem https://clang.llvm.org/docs/UsersManual.html
 rem https://clang.llvm.org/docs/ClangCommandLineReference.html
 rem https://lld.llvm.org/windows_support.html
-rem https://docs.microsoft.com/cpp/build/reference/linker-options
-rem https://docs.microsoft.com/cpp/c-runtime-library
-rem https://docs.microsoft.com/windows-server/administration/windows-commands/for
-rem https://docs.microsoft.com/windows-server/administration/windows-commands/setlocal
 
 rem |> PREPARE PROJECT
 set project_folder=%cd%

@@ -82,7 +82,7 @@ bool gpu_library_to_system_init(void) {
 
 	return gpu_library_do_using_temporary_context(gpu_library_wgl_init);
 
-	// https://docs.microsoft.com/windows/win32/api/wingdi/
+	// https://learn.microsoft.com/windows/win32/api/wingdi/
 	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
 }
 
@@ -332,7 +332,7 @@ static struct Pixel_Format * allocate_pixel_formats_legacy(HDC device) {
 	formats[formats_count] = (struct Pixel_Format){0};
 	return formats;
 
-	// https://docs.microsoft.com/windows/win32/api/wingdi/ns-wingdi-pixelformatdescriptor
+	// https://learn.microsoft.com/windows/win32/api/wingdi/ns-wingdi-pixelformatdescriptor
 }
 
 static struct Pixel_Format choose_pixel_format(struct Pixel_Format const * formats, struct Pixel_Format const * hint) {
