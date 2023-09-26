@@ -498,7 +498,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 	bool const is_extended = (data->Flags & RI_KEY_E0); // The scan code has the E0 prefix
 
 	input_to_platform_on_key(
-		translate_virtual_key_to_application(scan, key, is_extended),
+		translate_virtual_key_to_application(key, scan, is_extended),
 		!(data->Flags & RI_KEY_BREAK)
 	);
 
@@ -620,7 +620,7 @@ static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wPar
 	bool const is_extended = (flags & KF_EXTENDED);
 
 	input_to_platform_on_key(
-		translate_virtual_key_to_application(scan, key, is_extended),
+		translate_virtual_key_to_application(key, scan, is_extended),
 		!(flags & KF_UP)
 	);
 
