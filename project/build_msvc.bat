@@ -78,6 +78,8 @@ pushd %binary_folder%
 if not exist temp mkdir temp
 
 call %func% get_millis time_comp
+rc -nologo -fo "temp/%project%.res" "../project/windows_resources.rc"
+
 if %build_mode% == normal ( rem compile a set of translation units, then link them
 	rem @note: the folder may contain outdated objects
 	for /f %%v in (%project_folder%/translation_units_%project%.txt) do ( rem for each line %%v in the file

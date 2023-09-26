@@ -189,6 +189,7 @@ void platform_window_toggle_borderless_fullscreen(struct Window * window) {
 static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 bool window_to_system_init(void) {
+	HINSTANCE const module = GetModuleHandle(NULL);
 	return RegisterClassEx(&(WNDCLASSEX){
 		.cbSize = sizeof(WNDCLASSEX),
 		.lpszClassName = TEXT(APPLICATION_CLASS_NAME),
@@ -196,6 +197,8 @@ bool window_to_system_init(void) {
 		.lpfnWndProc = window_procedure,
 		.style = CS_HREDRAW | CS_VREDRAW,
 		.hCursor = LoadCursor(0, IDC_ARROW),
+		.hIcon = LoadIconA(module, "ico"),
+		.hIconSm = LoadIconA(module, "ico"),
 	}) != 0;
 
 	// https://docs.microsoft.com/windows/win32/winmsg/about-window-classes

@@ -74,4 +74,4 @@ if %configuration% == tiny (
 )
 
 set compiler=%includes% %defines%
-set linker=%linker% %libs%
+set linker=%linker% %libs% "temp/%project%.res"
