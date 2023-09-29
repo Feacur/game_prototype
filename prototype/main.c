@@ -472,7 +472,6 @@ static void main_fill_config(struct JSON const * json, void * data) {
 	result->vsync               = (int32_t)json_get_number(json, S_("vsync"));
 	result->target_refresh_rate = (uint32_t)json_get_number(json, S_("target_refresh_rate"));
 	result->fixed_refresh_rate  = (uint32_t)json_get_number(json, S_("fixed_refresh_rate"));
-	result->slow_frames_limit   = (uint32_t)json_get_number(json, S_("slow_frames_limit"));
 }
 
 static void main_run_application(void) {

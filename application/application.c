@@ -21,24 +21,23 @@ static struct Application {
 	struct Gpu_Context * gpu_context;
 
 	struct Application_Ticks {
-		uint64_t elapsed;
-		uint64_t frame_start;
-		uint64_t fixed_accumulator;
+		uint32_t elapsed;
+		uint32_t fixed_accumulator;
 	} ticks;
 } gs_app;
 
 static uint64_t get_target_ticks(int32_t vsync_mode) {
-	uint32_t const vsync_factor = (vsync_mode > 0) ? (uint32_t)vsync_mode : 1;
-	uint32_t const refresh_rate = ((vsync_mode != 0) || (gs_app.config.target_refresh_rate == 0))
+	uint64_t const vsync_factor = (vsync_mode > 0) ? (uint64_t)vsync_mode : 1;
+	uint64_t const refresh_rate = ((vsync_mode != 0) || (gs_app.config.target_refresh_rate == 0))
 		? platform_window_get_refresh_rate(gs_app.window, gs_app.config.target_refresh_rate)
 		: gs_app.config.target_refresh_rate;
 	return platform_timer_get_ticks_per_second() * vsync_factor / refresh_rate;
 }
 
-static uint64_t get_fixed_ticks(uint64_t target_ticks) {
+static uint64_t get_fixed_ticks(uint64_t default_value) {
 	return (gs_app.config.fixed_refresh_rate > 0)
 		? platform_timer_get_ticks_per_second() / gs_app.config.fixed_refresh_rate
-		: target_ticks;
+		: default_value;
 }
 
 static void application_init(void) {
@@ -55,13 +54,11 @@ static void application_init(void) {
 		"  vsync ........ %d\n"
 		"  target rate .. %u\n"
 		"  fixed rate ... %u\n"
-		"  slow frames .. %u\n"
 		""
 		, gs_app.config.size.x, gs_app.config.size.y
 		, gs_app.config.vsync
 		, gs_app.config.target_refresh_rate
 		, gs_app.config.fixed_refresh_rate
-		, gs_app.config.slow_frames_limit
 	);
 
 	// setup window
@@ -83,8 +80,7 @@ static void application_init(void) {
 	// setup timer, rewind it one frame
 	gpu_context_set_vsync(gs_app.gpu_context, gs_app.config.vsync);
 	int32_t const vsync_mode = gpu_context_get_vsync(gs_app.gpu_context);
-	gs_app.ticks.elapsed     = get_target_ticks(vsync_mode);
-	gs_app.ticks.frame_start = platform_timer_get_ticks() - gs_app.ticks.elapsed;
+	gs_app.ticks.elapsed     = (uint32_t)get_target_ticks(vsync_mode);
 	gs_app.ticks.fixed_accumulator = 0;
 
 	finalize:
@@ -124,6 +120,7 @@ void application_update(void) {
 	// application and platform are ready
 	if (gs_app.window == NULL) { goto exit; }
 	if (platform_system_is_error()) { goto exit; }
+	uint64_t const ticks_before = platform_timer_get_ticks();
 
 	// reset per-frame data / poll platform events
 	platform_system_update();
@@ -137,20 +134,11 @@ void application_update(void) {
 		platform_window_toggle_borderless_fullscreen(gs_app.window);
 	}
 
+	// process logic and rendering
 	application_begin_frame();
-
-	// @note: resulting delta time is extremely inconsistent and stuttery
-	uint64_t const timer_ticks  = platform_timer_get_ticks();
 	int32_t  const vsync_mode   = gpu_context_get_vsync(gs_app.gpu_context);
 	uint64_t const target_ticks = get_target_ticks(vsync_mode);
 	uint64_t const fixed_ticks  = get_fixed_ticks(target_ticks);
-
-	gs_app.ticks.elapsed = timer_ticks - gs_app.ticks.frame_start;
-	gs_app.ticks.frame_start = timer_ticks;
-
-	if (gs_app.config.slow_frames_limit > 0 && gs_app.ticks.elapsed > target_ticks * gs_app.config.slow_frames_limit) {
-		gs_app.ticks.elapsed = target_ticks * gs_app.config.slow_frames_limit;
-	}
 
 	// @note: probably should limit this too?
 	gs_app.ticks.fixed_accumulator += gs_app.ticks.elapsed;
@@ -165,16 +153,31 @@ void application_update(void) {
 		gs_app.callbacks.frame_tick();
 		application_draw_frame();
 	}
-
 	application_end_frame();
 
-	if (vsync_mode == 0) {
-		uint64_t const frame_end_ticks = gs_app.ticks.frame_start + target_ticks;
-		while (platform_timer_get_ticks() < frame_end_ticks) {
-			platform_system_sleep(0);
-		}
+	// maintain framerate
+	uint64_t const ticks_until = ticks_before + target_ticks;
+	while (platform_timer_get_ticks() < ticks_until) {
+		platform_system_sleep(0);
 	}
 
+	gs_app.ticks.elapsed = clamp_u32(
+		(uint32_t)(platform_timer_get_ticks() - ticks_before),
+		(uint32_t)(platform_timer_get_ticks_per_second() / 1000),
+		(uint32_t)(platform_timer_get_ticks_per_second() /  100)
+	);
+
+	// @note: resulting delta time is extremely inconsistent and stuttery
+	// {
+	// 	static uint64_t prev = 0;
+	// 	uint64_t const fps = platform_timer_get_ticks_per_second() / gs_app.ticks.elapsed;
+	// 	if (fps > prev + 10 || fps < prev - 10) {
+	// 		logger_to_console("%3llu\n", fps);
+	// 	}
+	// 	prev = fps;
+	// }
+
+	// done
 	return;
 	exit: gs_app.should_exit = true;
 }

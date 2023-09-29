@@ -11,16 +11,12 @@
 // @note: application accumulates frame time and calls `fixed_tick` whenever possible;
 //        the leftover time rolls over to the subsequent frames
 
-// @note: resulting frame time is capped at `ideal_frame_time * slow_frames_limit`;
-//        `slow_frames_limit` helps in case of using a debugger
-
 struct Application_Config {
 	struct uvec2 size;
 	bool resizable;
 	int32_t vsync;                // 0: off; 1+: fraction of display refresh rate
 	uint32_t target_refresh_rate; // 0: as display; 1+: N times per second
 	uint32_t fixed_refresh_rate;  // 0: as target; 1+: N times per second
-	uint32_t slow_frames_limit;   // 0: disabled; 1+: N target frames time
 };
 
 struct Application_Callbacks {
