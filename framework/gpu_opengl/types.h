@@ -6,8 +6,8 @@
 #include <KHR/khrplatform.h>
 #include <GL/glcorearb.h>
 
-GLenum gpu_data_type(enum Data_Type value);
-enum Data_Type interpret_gl_type(GLint value);
+GLenum gpu_vertex_type(enum Data_Type value);
+enum Data_Type translate_program_data_type(GLint value);
 
 GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture);
 GLint gpu_mag_filter_mode(enum Filter_Mode value);
@@ -26,10 +26,6 @@ GLenum gpu_cull_mode(enum Cull_Mode value);
 GLenum gpu_winding_order(enum Winding_Order value);
 GLenum gpu_stencil_op(enum Stencil_Op value);
 
-/*
-GLenum gpu_blend_op(enum Blend_Op value);
-GLenum gpu_blend_factor(enum Blend_Factor value);
-*/
 struct Gpu_Blend_Mode {
 	GLboolean mask[4];
 	GLenum color_src, color_op, color_dst;

@@ -6,10 +6,12 @@
 enum Data_Type {
 	DATA_TYPE_NONE,
 
+	// samplers
 	DATA_TYPE_UNIT_U,
 	DATA_TYPE_UNIT_S,
 	DATA_TYPE_UNIT_F,
 
+	// u8
 	DATA_TYPE_R8_U,
 	DATA_TYPE_RG8_U,
 	DATA_TYPE_RGB8_U,
@@ -20,6 +22,7 @@ enum Data_Type {
 	DATA_TYPE_RGB8_UNORM,
 	DATA_TYPE_RGBA8_UNORM,
 
+	// s8
 	DATA_TYPE_R8_S,
 	DATA_TYPE_RG8_S,
 	DATA_TYPE_RGB8_S,
@@ -30,6 +33,7 @@ enum Data_Type {
 	DATA_TYPE_RGB8_SNORM,
 	DATA_TYPE_RGBA8_SNORM,
 
+	// u16
 	DATA_TYPE_R16_U,
 	DATA_TYPE_RG16_U,
 	DATA_TYPE_RGB16_U,
@@ -40,6 +44,7 @@ enum Data_Type {
 	DATA_TYPE_RGB16_UNORM,
 	DATA_TYPE_RGBA16_UNORM,
 
+	// s16
 	DATA_TYPE_R16_S,
 	DATA_TYPE_RG16_S,
 	DATA_TYPE_RGB16_S,
@@ -50,41 +55,38 @@ enum Data_Type {
 	DATA_TYPE_RGB16_SNORM,
 	DATA_TYPE_RGBA16_SNORM,
 
-	DATA_TYPE_R16_F,
-
+	// u32
 	DATA_TYPE_R32_U,
 	DATA_TYPE_RG32_U,
 	DATA_TYPE_RGB32_U,
 	DATA_TYPE_RGBA32_U,
 
+	// s32
 	DATA_TYPE_R32_S,
 	DATA_TYPE_RG32_S,
 	DATA_TYPE_RGB32_S,
 	DATA_TYPE_RGBA32_S,
+
+	// floating
+	DATA_TYPE_R16_F,
+	DATA_TYPE_RG16_F,
+	DATA_TYPE_RGB16_F,
+	DATA_TYPE_RGBA16_F,
 
 	DATA_TYPE_R32_F,
 	DATA_TYPE_RG32_F,
 	DATA_TYPE_RGB32_F,
 	DATA_TYPE_RGBA32_F,
 
+	DATA_TYPE_R64_F,
+	DATA_TYPE_RG64_F,
+	DATA_TYPE_RGB64_F,
+	DATA_TYPE_RGBA64_F,
+
+	// matrices
 	DATA_TYPE_MAT2,
 	DATA_TYPE_MAT3,
 	DATA_TYPE_MAT4,
-
-	// DATA_TYPE_R64_U,
-	// DATA_TYPE_RG64_U,
-	// DATA_TYPE_RGB64_U,
-	// DATA_TYPE_RGBA64_U,
-
-	// DATA_TYPE_R64_S,
-	// DATA_TYPE_RG64_S,
-	// DATA_TYPE_RGB64_S,
-	// DATA_TYPE_RGBA64_S,
-
-	// DATA_TYPE_R64_F,
-	// DATA_TYPE_RG64_F,
-	// DATA_TYPE_RGB64_F,
-	// DATA_TYPE_RGBA64_F,
 };
 
 enum Filter_Mode {
@@ -278,7 +280,6 @@ struct Mesh_Parameters {
 
 //
 
-enum Data_Type data_type_get_basic_type(enum Data_Type value);
 enum Data_Type data_type_get_element_type(enum Data_Type value);
 enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels);
 uint32_t data_type_get_count(enum Data_Type value);

@@ -3,14 +3,11 @@
 //
 #include "types.h"
 
-GLenum gpu_data_type(enum Data_Type value) {
+GLenum gpu_vertex_type(enum Data_Type value) {
 	switch (value) {
 		default: break;
 
-		case DATA_TYPE_UNIT_U: return GL_UNSIGNED_INT_SAMPLER_2D;
-		case DATA_TYPE_UNIT_S: return GL_INT_SAMPLER_2D;
-		case DATA_TYPE_UNIT_F: return GL_SAMPLER_2D;
-
+		// u8
 		case DATA_TYPE_R8_U:
 		case DATA_TYPE_RG8_U:
 		case DATA_TYPE_RGB8_U:
@@ -21,6 +18,7 @@ GLenum gpu_data_type(enum Data_Type value) {
 		case DATA_TYPE_RGBA8_UNORM:
 			return GL_UNSIGNED_BYTE;
 
+		// s8
 		case DATA_TYPE_R8_S:
 		case DATA_TYPE_RG8_S:
 		case DATA_TYPE_RGB8_S:
@@ -31,6 +29,7 @@ GLenum gpu_data_type(enum Data_Type value) {
 		case DATA_TYPE_RGBA8_SNORM:
 			return GL_BYTE;
 
+		// u16
 		case DATA_TYPE_R16_U:
 		case DATA_TYPE_RG16_U:
 		case DATA_TYPE_RGB16_U:
@@ -41,6 +40,7 @@ GLenum gpu_data_type(enum Data_Type value) {
 		case DATA_TYPE_RGBA16_UNORM:
 			return GL_UNSIGNED_SHORT;
 
+		// s16
 		case DATA_TYPE_R16_S:
 		case DATA_TYPE_RG16_S:
 		case DATA_TYPE_RGB16_S:
@@ -51,93 +51,87 @@ GLenum gpu_data_type(enum Data_Type value) {
 		case DATA_TYPE_RGBA16_SNORM:
 			return GL_SHORT;
 
-		case DATA_TYPE_R16_F: return GL_HALF_FLOAT;
+		// u32
+		case DATA_TYPE_R32_U:
+		case DATA_TYPE_RG32_U:
+		case DATA_TYPE_RGB32_U:
+		case DATA_TYPE_RGBA32_U:
+			return GL_UNSIGNED_INT;
 
-		case DATA_TYPE_R32_U:    return GL_UNSIGNED_INT;
-		case DATA_TYPE_RG32_U:   return GL_UNSIGNED_INT_VEC2;
-		case DATA_TYPE_RGB32_U:  return GL_UNSIGNED_INT_VEC3;
-		case DATA_TYPE_RGBA32_U: return GL_UNSIGNED_INT_VEC4;
+		// s32
+		case DATA_TYPE_R32_S:
+		case DATA_TYPE_RG32_S:
+		case DATA_TYPE_RGB32_S:
+		case DATA_TYPE_RGBA32_S:
+			return GL_INT;
 
-		case DATA_TYPE_R32_S:    return GL_INT;
-		case DATA_TYPE_RG32_S:   return GL_INT_VEC2;
-		case DATA_TYPE_RGB32_S:  return GL_INT_VEC3;
-		case DATA_TYPE_RGBA32_S: return GL_INT_VEC4;
+		// floats
+		case DATA_TYPE_R16_F:
+		case DATA_TYPE_RG16_F:
+		case DATA_TYPE_RGB16_F:
+		case DATA_TYPE_RGBA16_F:
+			return GL_HALF_FLOAT;
 
-		case DATA_TYPE_R32_F:    return GL_FLOAT;
-		case DATA_TYPE_RG32_F:   return GL_FLOAT_VEC2;
-		case DATA_TYPE_RGB32_F:  return GL_FLOAT_VEC3;
-		case DATA_TYPE_RGBA32_F: return GL_FLOAT_VEC4;
+		case DATA_TYPE_R32_F:
+		case DATA_TYPE_RG32_F:
+		case DATA_TYPE_RGB32_F:
+		case DATA_TYPE_RGBA32_F:
+			return GL_FLOAT;
 
-		case DATA_TYPE_MAT2: return GL_FLOAT_MAT2;
-		case DATA_TYPE_MAT3: return GL_FLOAT_MAT3;
-		case DATA_TYPE_MAT4: return GL_FLOAT_MAT4;
-
-		// case DATA_TYPE_R64_U:    return GL_UNSIGNED_INT64_ARB;
-		// case DATA_TYPE_RG64_U:   return GL_UNSIGNED_INT64_VEC2_ARB;
-		// case DATA_TYPE_RGB64_U:  return GL_UNSIGNED_INT64_VEC3_ARB;
-		// case DATA_TYPE_RGBA64_U: return GL_UNSIGNED_INT64_VEC4_ARB;
-
-		// case DATA_TYPE_R64_S:    return GL_INT64_ARB;
-		// case DATA_TYPE_RG64_S:   return GL_INT64_VEC2_ARB;
-		// case DATA_TYPE_RGB64_S:  return GL_INT64_VEC3_ARB;
-		// case DATA_TYPE_RGBA64_S: return GL_INT64_VEC4_ARB;
-
-		// case DATA_TYPE_R64_F:    return GL_DOUBLE;
-		// case DATA_TYPE_RG64_F:   return GL_DOUBLE_VEC2;
-		// case DATA_TYPE_RGB64_F:  return GL_DOUBLE_VEC3;
-		// case DATA_TYPE_RGBA64_F: return GL_DOUBLE_VEC4;
+		case DATA_TYPE_R64_F:
+		case DATA_TYPE_RG64_F:
+		case DATA_TYPE_RGB64_F:
+		case DATA_TYPE_RGBA64_F:
+			return GL_DOUBLE;
 	}
 	logger_to_console("unknown data type\n");
 	REPORT_CALLSTACK(1); DEBUG_BREAK();
 	return GL_NONE;
 }
 
-enum Data_Type interpret_gl_type(GLint value) {
+enum Data_Type translate_program_data_type(GLint value) {
 	switch (value) {
 		case GL_UNSIGNED_INT_SAMPLER_2D: return DATA_TYPE_UNIT_U;
 		case GL_INT_SAMPLER_2D:          return DATA_TYPE_UNIT_S;
 		case GL_SAMPLER_2D:              return DATA_TYPE_UNIT_F;
 
+		// u8, s8
 		case GL_UNSIGNED_BYTE: return DATA_TYPE_R8_U;
 		case GL_BYTE:          return DATA_TYPE_R8_S;
 
+		// u16, s16
 		case GL_UNSIGNED_SHORT: return DATA_TYPE_R16_U;
 		case GL_SHORT:          return DATA_TYPE_R16_S;
-		case GL_HALF_FLOAT:     return DATA_TYPE_R16_F;
 
+		// u32
 		case GL_UNSIGNED_INT:      return DATA_TYPE_R32_U;
 		case GL_UNSIGNED_INT_VEC2: return DATA_TYPE_RG32_U;
 		case GL_UNSIGNED_INT_VEC3: return DATA_TYPE_RGB32_U;
 		case GL_UNSIGNED_INT_VEC4: return DATA_TYPE_RGBA32_U;
 
+		// s32
 		case GL_INT:      return DATA_TYPE_R32_S;
 		case GL_INT_VEC2: return DATA_TYPE_RG32_S;
 		case GL_INT_VEC3: return DATA_TYPE_RGB32_S;
 		case GL_INT_VEC4: return DATA_TYPE_RGBA32_S;
+
+		// floats
+		case GL_HALF_FLOAT: return DATA_TYPE_R16_F;
 
 		case GL_FLOAT:      return DATA_TYPE_R32_F;
 		case GL_FLOAT_VEC2: return DATA_TYPE_RG32_F;
 		case GL_FLOAT_VEC3: return DATA_TYPE_RGB32_F;
 		case GL_FLOAT_VEC4: return DATA_TYPE_RGBA32_F;
 
+		case GL_DOUBLE:      return DATA_TYPE_R64_F;
+		case GL_DOUBLE_VEC2: return DATA_TYPE_RG64_F;
+		case GL_DOUBLE_VEC3: return DATA_TYPE_RGB64_F;
+		case GL_DOUBLE_VEC4: return DATA_TYPE_RGBA64_F;
+
+		// matrices
 		case GL_FLOAT_MAT2: return DATA_TYPE_MAT2;
 		case GL_FLOAT_MAT3: return DATA_TYPE_MAT3;
 		case GL_FLOAT_MAT4: return DATA_TYPE_MAT4;
-
-		// case GL_UNSIGNED_INT64_ARB:      return DATA_TYPE_R64_U;
-		// case GL_UNSIGNED_INT64_VEC2_ARB: return DATA_TYPE_RG64_U;
-		// case GL_UNSIGNED_INT64_VEC3_ARB: return DATA_TYPE_RGB64_U;
-		// case GL_UNSIGNED_INT64_VEC4_ARB: return DATA_TYPE_RGBA64_U;
-
-		// case GL_INT64_ARB:      return DATA_TYPE_R64_S;
-		// case GL_INT64_VEC2_ARB: return DATA_TYPE_RG64_S;
-		// case GL_INT64_VEC3_ARB: return DATA_TYPE_RGB64_S;
-		// case GL_INT64_VEC4_ARB: return DATA_TYPE_RGBA64_S;
-
-		// case GL_DOUBLE:      return DATA_TYPE_R64_F;
-		// case GL_DOUBLE_VEC2: return DATA_TYPE_RG64_F;
-		// case GL_DOUBLE_VEC3: return DATA_TYPE_RGB64_F;
-		// case GL_DOUBLE_VEC4: return DATA_TYPE_RGBA64_F;
 	}
 	logger_to_console("unknown GL type\n");
 	REPORT_CALLSTACK(1); DEBUG_BREAK();
@@ -146,18 +140,24 @@ enum Data_Type interpret_gl_type(GLint value) {
 
 GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture) {
 	switch (mipmap) {
+		// choose 1 or lerp 4 texels
 		case FILTER_MODE_NONE: switch (texture) {
 			case FILTER_MODE_NONE:  return GL_NEAREST;
 			case FILTER_MODE_POINT: return GL_NEAREST;
 			case FILTER_MODE_LERP:  return GL_LINEAR;
 		} break;
 
+		// choose 1 mip-map
+		// choose 1 or lerp 4 texels
 		case FILTER_MODE_POINT: switch (texture) {
 			case FILTER_MODE_NONE:  return GL_NEAREST_MIPMAP_NEAREST;
 			case FILTER_MODE_POINT: return GL_NEAREST_MIPMAP_NEAREST;
 			case FILTER_MODE_LERP:  return GL_LINEAR_MIPMAP_NEAREST;
 		} break;
 
+		// choose 2 mip-maps
+		// choose 1 or lerp 4 texels
+		// lerp 2 values
 		case FILTER_MODE_LERP: switch (texture) {
 			case FILTER_MODE_NONE:  return GL_NEAREST_MIPMAP_LINEAR;
 			case FILTER_MODE_POINT: return GL_NEAREST_MIPMAP_LINEAR;
@@ -170,6 +170,7 @@ GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture) {
 }
 
 GLint gpu_mag_filter_mode(enum Filter_Mode value) {
+	// choose 1 or lerp 4 texels
 	switch (value) {
 		case FILTER_MODE_NONE:  return GL_NEAREST;
 		case FILTER_MODE_POINT: return GL_NEAREST;
@@ -353,7 +354,10 @@ GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index) {
 	switch (texture_type) {
 		case TEXTURE_TYPE_NONE: break;
 
-		case TEXTURE_TYPE_COLOR:    return GL_COLOR_ATTACHMENT0 + index;
+		case TEXTURE_TYPE_COLOR: if (index < 32) {
+			return GL_COLOR_ATTACHMENT0 + index;
+		} break;
+
 		case TEXTURE_TYPE_DEPTH:    return GL_DEPTH_ATTACHMENT;
 		case TEXTURE_TYPE_STENCIL:  return GL_STENCIL_ATTACHMENT;
 		case TEXTURE_TYPE_DSTENCIL: return GL_DEPTH_STENCIL_ATTACHMENT;
@@ -364,36 +368,23 @@ GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index) {
 }
 
 GLenum gpu_mesh_usage_pattern(enum Mesh_Flag flags) {
-#if defined(__clang__)
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wcomma"
-#elif defined(_MSC_VER)
-	#pragma warning(push, 0)
-#endif
-
 	// @note: those are hints, not directives
 	if (flags & MESH_FLAG_MUTABLE) {
 		if (flags & MESH_FLAG_FREQUENT) {
 			return (flags & MESH_FLAG_READ)     ? GL_STREAM_READ
 			     : (flags & MESH_FLAG_WRITE)    ? GL_STREAM_DRAW
 			     : (flags & MESH_FLAG_INTERNAL) ? GL_STREAM_COPY
-			                                    : (DEBUG_BREAK(), GL_NONE); // catch first
+			     : (REPORT_CALLSTACK(1), DEBUG_BREAK(), GL_NONE); // catch first
 		}
 		return (flags & MESH_FLAG_READ)     ? GL_DYNAMIC_READ
 		     : (flags & MESH_FLAG_WRITE)    ? GL_DYNAMIC_DRAW
 		     : (flags & MESH_FLAG_INTERNAL) ? GL_DYNAMIC_COPY
-		                                    : (DEBUG_BREAK(), GL_NONE); // catch first
+		     : (REPORT_CALLSTACK(1), DEBUG_BREAK(), GL_NONE); // catch first
 	}
 	return (flags & MESH_FLAG_READ)     ? GL_STATIC_READ
 	     : (flags & MESH_FLAG_WRITE)    ? GL_STATIC_DRAW
 	     : (flags & MESH_FLAG_INTERNAL) ? GL_STATIC_COPY
-	                                    : (DEBUG_BREAK(), GL_NONE); // catch first
-
-#if defined(__clang__)
-	#pragma clang diagnostic pop
-#elif defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
+	     : (REPORT_CALLSTACK(1), DEBUG_BREAK(), GL_NONE); // catch first
 }
 
 GLbitfield gpu_mesh_immutable_flag(enum Mesh_Flag flags) {
@@ -472,53 +463,6 @@ GLenum gpu_stencil_op(enum Stencil_Op value) {
 	REPORT_CALLSTACK(1); DEBUG_BREAK();
 	return GL_NONE;
 }
-
-/*
-GLenum gpu_blend_op(enum Blend_Op value) {
-	switch (value) {
-		case BLEND_OP_NONE:        break;
-		case BLEND_OP_ADD:         return GL_FUNC_ADD;
-		case BLEND_OP_SUB:         return GL_FUNC_SUBTRACT;
-		case BLEND_OP_MIN:         return GL_MIN;
-		case BLEND_OP_MAX:         return GL_MAX;
-		case BLEND_OP_REVERSE_SUB: return GL_FUNC_REVERSE_SUBTRACT;
-	}
-	logger_to_console("unknown blend operation\n"); DEBUG_BREAK();
-	return GL_NONE;
-}
-
-GLenum gpu_blend_factor(enum Blend_Factor value) {
-	switch (value) {
-		case BLEND_FACTOR_ZERO:                  return GL_ZERO;
-		case BLEND_FACTOR_ONE:                   return GL_ONE;
-
-		case BLEND_FACTOR_SRC_ALPHA_SATURATE:    return GL_SRC_ALPHA_SATURATE;
-
-		case BLEND_FACTOR_SRC_COLOR:             return GL_SRC_COLOR;
-		case BLEND_FACTOR_SRC_ALPHA:             return GL_SRC_ALPHA;
-		case BLEND_FACTOR_ONE_MINUS_SRC_COLOR:   return GL_ONE_MINUS_SRC_COLOR;
-		case BLEND_FACTOR_ONE_MINUS_SRC_ALPHA:   return GL_ONE_MINUS_SRC_ALPHA;
-
-		case BLEND_FACTOR_DST_COLOR:             return GL_DST_COLOR;
-		case BLEND_FACTOR_DST_ALPHA:             return GL_DST_ALPHA;
-		case BLEND_FACTOR_ONE_MINUS_DST_COLOR:   return GL_ONE_MINUS_DST_COLOR;
-		case BLEND_FACTOR_ONE_MINUS_DST_ALPHA:   return GL_ONE_MINUS_DST_ALPHA;
-
-		case BLEND_FACTOR_CONST_COLOR:           return GL_CONSTANT_COLOR;
-		case BLEND_FACTOR_CONST_ALPHA:           return GL_CONSTANT_ALPHA;
-		case BLEND_FACTOR_ONE_MINUS_CONST_COLOR: return GL_ONE_MINUS_CONSTANT_COLOR;
-		case BLEND_FACTOR_ONE_MINUS_CONST_ALPHA: return GL_ONE_MINUS_CONSTANT_ALPHA;
-
-		case BLEND_FACTOR_SRC1_COLOR:            return GL_SRC1_COLOR;
-		case BLEND_FACTOR_SRC1_ALPHA:            return GL_SRC1_ALPHA;
-		case BLEND_FACTOR_ONE_MINUS_SRC1_COLOR:  return GL_ONE_MINUS_SRC1_COLOR;
-		case BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA:  return GL_ONE_MINUS_SRC1_ALPHA;
-	}
-	logger_to_console("unknown blend factor\n");
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
-	return GL_NONE;
-}
-*/
 
 struct Gpu_Blend_Mode gpu_blend_mode(enum Blend_Mode value) {
 	switch (value) {

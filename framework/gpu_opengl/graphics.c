@@ -297,7 +297,7 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 		uint32_t const id = string_system_add(uniform_name);
 		hashmap_set(&program.uniforms, &id, &(struct Gpu_Uniform_Internal){
 			.base = {
-				.type = interpret_gl_type(params[PARAM_TYPE]),
+				.type = translate_program_data_type(params[PARAM_TYPE]),
 				.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
 			},
 			.location = params[PARAM_LOCATION],
@@ -774,7 +774,7 @@ static struct Handle gpu_mesh_allocate(
 			glVertexArrayAttribBinding(mesh.id, location, buffer_index);
 			glVertexArrayAttribFormat(
 				mesh.id, location,
-				(GLint)count, gpu_data_type(parameters.type),
+				(GLint)count, gpu_vertex_type(parameters.type),
 				GL_FALSE, (GLuint)attribute_offset
 			);
 			attribute_offset += count * data_type_get_size(parameters.type);
@@ -1198,7 +1198,7 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 		glDrawElements(
 			GL_TRIANGLES,
 			(GLsizei)elements_count,
-			gpu_data_type(elements_type),
+			gpu_vertex_type(elements_type),
 			(void const *)(size_t)elements_offset
 		);
 	}
