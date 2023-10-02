@@ -4,7 +4,7 @@
 // interface from `gpu_*/graphics.c` to anywhere
 // - general purpose
 
-#include "framework/vector_types.h"
+#include "framework/maths_types.h"
 
 void graphics_update(void);
 

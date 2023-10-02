@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_ASSETS_GLYPH_PARAMS)
 #define FRAMEWORK_ASSETS_GLYPH_PARAMS
 
-#include "framework/vector_types.h"
+#include "framework/maths_types.h"
 
 // @purpose: decouple `typeface.h` and `font.h`
 

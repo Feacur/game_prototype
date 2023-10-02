@@ -1,5 +1,5 @@
 //
-#include "vector_types.h"
+#include "maths_types.h"
 
 // @note: MSVC issues `C2099: initializer is not a constant`
 //        when a designated initializer type is specified

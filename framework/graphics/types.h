@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_GRAPHICS_TYPES)
 #define FRAMEWORK_GRAPHICS_TYPES
 
-#include "framework/vector_types.h"
+#include "framework/maths_types.h"
 
 enum Data_Type {
 	DATA_TYPE_NONE,

@@ -1,7 +1,7 @@
 #if !defined(APPLICATION_APPLICATION)
 #define APPLICATION_APPLICATION
 
-#include "framework/vector_types.h"
+#include "framework/maths_types.h"
 #include "framework/window_callbacks.h"
 
 // @note: adaptive vsync mode (-1) might not make sense and is not tested

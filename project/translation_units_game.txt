@@ -3,7 +3,7 @@ framework/maths.c
 framework/memory.c
 framework/input.c
 framework/unicode.c
-framework/vector_types.c
+framework/maths_types.c
 framework/logger.c
 framework/parsing.c
 framework/json_read.c

@@ -1,7 +1,7 @@
 #if !defined(APPLICATION_COMPONENTS)
 #define APPLICATION_COMPONENTS
 
-#include "framework/vector_types.h"
+#include "framework/maths_types.h"
 
 struct Transform_3D {
 	struct vec3 position;

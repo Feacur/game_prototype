@@ -4,7 +4,7 @@
 // interface from `gpu_*/graphics.c` to anywhere
 // - gpu draw call
 
-#include "framework/vector_types.h"
+#include "framework/maths_types.h"
 
 #include "types.h"
 

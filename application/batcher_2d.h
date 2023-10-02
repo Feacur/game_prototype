@@ -1,7 +1,7 @@
 #if !defined(APPLICATION_BATCHER_2D)
 #define APPLICATION_BATCHER_2D
 
-#include "framework/vector_types.h"
+#include "framework/maths_types.h"
 #include "framework/graphics/types.h"
 
 struct Batcher_2D;

@@ -1,19 +1,28 @@
 #if !defined(FRAMEWORK_MATHS)
 #define FRAMEWORK_MATHS
 
-#include "vector_types.h"
+#include "maths_types.h"
 
 /*
 // @note: left-handed
+
+(0, 1, 0)
 Y     
 |     
-|  Z  
+|  Z  (0, 0, 1)
 | /   
 |/    
-+----X
++----X (1, 0, 0)
+
 `cross(X, Y) == Z`
 `cross(Y, Z) == X`
 `cross(Z, X) == Y`
+
+why precisely so? because
+- I like it
+- I'm used to it
+- I don't really care about people walking on a plane
+- I want screen-space and world-space have X-right and Y-up
 
 // @note: expects functional `IEEE 754` float and double
 half   [sign:1][exponent: 5][mantissa:10] == sign * (1 + mantissa / 2^10) * 2^(exponent -   15)
