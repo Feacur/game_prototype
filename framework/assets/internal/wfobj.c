@@ -40,7 +40,7 @@ static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 	if (reason != NULL) { logger_to_console(" [%s]", reason); }
 	if (message != NULL) { logger_to_console(": %s", message); }
 	logger_to_console("\n");
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 }
 
 static void wfobj_advance(struct WFObj_Lexer * lexer, struct WFObj_Token * token) {

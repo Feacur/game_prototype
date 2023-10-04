@@ -79,7 +79,7 @@ uint32_t po2_next_u32(uint32_t value) {
 #if !defined(GAME_TARGET_RELEASE)
 	if (value > (UINT32_C(1) << 31)) {
 		logger_to_console("PO2 overflow: %u\n", value);
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
 #endif
 
@@ -96,7 +96,7 @@ uint64_t po2_next_u64(uint64_t value) {
 #if !defined(GAME_TARGET_RELEASE)
 	if (value > (UINT64_C(1) << 63)) {
 		logger_to_console("PO2 overflow: %llu\n", value);
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
 #endif
 

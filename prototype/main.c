@@ -451,8 +451,8 @@ static void main_fill_settings(struct JSON const * json, void * data) {
 	struct Main_Settings * result = data;
 	*result = (struct Main_Settings){0};
 
-	if (json->type == JSON_ERROR)  { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
-	if (data != &gs_main_settings) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (json->type == JSON_ERROR)  { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (data != &gs_main_settings) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	result->config_id = string_system_add(json_get_string(json, S_("config")));
 	result->scene_id = string_system_add(json_get_string(json, S_("scene")));
@@ -462,7 +462,7 @@ static void main_fill_config(struct JSON const * json, void * data) {
 	struct Application_Config * result = data;
 	*result = (struct Application_Config){0};
 
-	if (json->type == JSON_ERROR) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (json->type == JSON_ERROR) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	result->size = (struct uvec2){
 		.x = (uint32_t)json_get_number(json, S_("size_x")),

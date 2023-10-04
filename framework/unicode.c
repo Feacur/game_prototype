@@ -40,7 +40,7 @@ bool utf8_iterate(uint32_t length, uint8_t const * data, struct UTF8_Iterator * 
 			if (it->codepoint != CODEPOINT_EMPTY) { return true; }
 		}
 		logger_to_console("UTF-8 sequence is malformed\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK();
+		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 	return false;
 }

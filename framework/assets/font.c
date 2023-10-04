@@ -322,11 +322,11 @@ void font_render(struct Font * font) {
 
 			if (font->buffer.size_x < offset_x + glyph_size_x - 1) {
 				logger_to_console("can't fit a glyph into the buffer\n");
-				REPORT_CALLSTACK(1); DEBUG_BREAK(); continue;
+				REPORT_CALLSTACK(); DEBUG_BREAK(); continue;
 			}
 			if (font->buffer.size_y < offset_y + glyph_size_y - 1) {
 				logger_to_console("can't fit a glyph into the buffer\n");
-				REPORT_CALLSTACK(1); DEBUG_BREAK(); continue;
+				REPORT_CALLSTACK(); DEBUG_BREAK(); continue;
 			}
 
 			//

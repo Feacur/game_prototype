@@ -129,7 +129,7 @@ struct Gpu_Context * gpu_context_init(void * device) {
 
 	// process errors
 	fail: logger_to_console("failed to create gpu context\n");
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
 
@@ -144,8 +144,8 @@ void gpu_context_free(struct Gpu_Context * gpu_context) {
 }
 
 void gpu_context_start_frame(struct Gpu_Context const * gpu_context, void * device) {
-	if (gs_gpu_library.dll.GetCurrentContext() != NULL) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
-	if (gs_gpu_library.dll.GetCurrentDC() != NULL)      { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (gs_gpu_library.dll.GetCurrentContext() != NULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (gs_gpu_library.dll.GetCurrentDC() != NULL)      { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	if (!device) { DEBUG_BREAK(); return; }
 
@@ -153,10 +153,10 @@ void gpu_context_start_frame(struct Gpu_Context const * gpu_context, void * devi
 }
 
 void gpu_context_draw_frame(struct Gpu_Context const * gpu_context) {
-	if (gs_gpu_library.dll.GetCurrentContext() == NULL) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (gs_gpu_library.dll.GetCurrentContext() == NULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	HDC const device = gs_gpu_library.dll.GetCurrentDC();
-	if (device == NULL) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (device == NULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	if (gpu_context->pixel_format.double_buffering) {
 		if (SwapBuffers(device)) { return; }
@@ -170,8 +170,8 @@ void gpu_context_end_frame(struct Gpu_Context const * gpu_context) {
 }
 
 int32_t gpu_context_get_vsync(struct Gpu_Context const * gpu_context) {
-	if (gs_gpu_library.dll.GetCurrentContext() == NULL) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0; }
-	if (gs_gpu_library.dll.GetCurrentDC() == NULL)      { REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0; }
+	if (gs_gpu_library.dll.GetCurrentContext() == NULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return 0; }
+	if (gs_gpu_library.dll.GetCurrentDC() == NULL)      { REPORT_CALLSTACK(); DEBUG_BREAK(); return 0; }
 
 	if (!gpu_context->pixel_format.double_buffering) { return 0; }
 	if (!gs_gpu_library.ext.has_extension_swap_control) { /*default is 1*/ return 1; }
@@ -181,8 +181,8 @@ int32_t gpu_context_get_vsync(struct Gpu_Context const * gpu_context) {
 }
 
 void gpu_context_set_vsync(struct Gpu_Context * gpu_context, int32_t value) {
-	if (gs_gpu_library.dll.GetCurrentContext() == NULL) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
-	if (gs_gpu_library.dll.GetCurrentDC() == NULL)      { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (gs_gpu_library.dll.GetCurrentContext() == NULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (gs_gpu_library.dll.GetCurrentDC() == NULL)      { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	if (!gpu_context->pixel_format.double_buffering) { return; }
 	if (!gs_gpu_library.ext.has_extension_swap_control) { return; }
@@ -210,7 +210,7 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 	int const formats_request = WGL_NUMBER_PIXEL_FORMATS_ARB; int formats_capacity;
 	if (!gs_gpu_library.arb.GetPixelFormatAttribiv(device, 0, 0, 1, &formats_request, &formats_capacity)) { DEBUG_BREAK(); return NULL; }
 	if (formats_capacity == 0) {
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 
 	int const request_keys[] = {
@@ -244,7 +244,7 @@ static struct Pixel_Format * allocate_pixel_formats_arb(HDC device) {
 	for (int i = 0; i < formats_capacity; i++) {
 		int pfd_id = i + 1;
 		if (!gs_gpu_library.arb.GetPixelFormatAttribiv(device, pfd_id, 0, KEYS_COUNT, request_keys, request_vals)) {
-			REPORT_CALLSTACK(1); DEBUG_BREAK(); continue;
+			REPORT_CALLSTACK(); DEBUG_BREAK(); continue;
 		}
 
 		if (GET_VALUE(WGL_DRAW_TO_WINDOW_ARB)      == false)                     { continue; }
@@ -682,22 +682,22 @@ static bool gpu_library_do_using_temporary_context(bool (* action)(void)) {
 	success = action();
 
 	// clean up
-	clean_up_context: if (!success) { REPORT_CALLSTACK(1); DEBUG_BREAK(); }
+	clean_up_context: if (!success) { REPORT_CALLSTACK(); DEBUG_BREAK(); }
 	if (context != NULL) {
 		gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 		gs_gpu_library.dll.DeleteContext(context);
 	}
 	else { logger_to_console("failed to create a temporary context\n"); }
 
-	clean_up_device: if (!success) { REPORT_CALLSTACK(1); DEBUG_BREAK(); }
+	clean_up_device: if (!success) { REPORT_CALLSTACK(); DEBUG_BREAK(); }
 	if (device != NULL) { ReleaseDC(window, device); }
 	else { logger_to_console("failed to fetch a temporary device\n"); }
 
-	clean_up_window: if (!success) { REPORT_CALLSTACK(1); DEBUG_BREAK(); }
+	clean_up_window: if (!success) { REPORT_CALLSTACK(); DEBUG_BREAK(); }
 	if (window != NULL) { DestroyWindow(window); }
 	else { logger_to_console("failed to create a temporary window\n"); }
 
-	clean_up_class: if (!success) { REPORT_CALLSTACK(1); DEBUG_BREAK(); }
+	clean_up_class: if (!success) { REPORT_CALLSTACK(); DEBUG_BREAK(); }
 	if (class_atom != 0) { UnregisterClass(TEXT(OPENGL_CLASS_NAME), (HANDLE)system_to_internal_get_module()); }
 	else if (!use_application_class) { logger_to_console("failed to create a temporary window class\n"); }
 

@@ -27,9 +27,10 @@ static struct Platform_Debug {
 //
 #include "framework/platform_debug.h"
 
-struct Callstack platform_debug_get_callstack(void) {
-	struct Callstack callstack = {0};
+struct Callstack platform_debug_get_callstack(uint32_t skip) {
+	skip += 1; // @note: skip `platform_debug_get_callstack`
 
+	struct Callstack callstack = {0};
 	CONTEXT context; RtlCaptureContext(&context); // @note: platform-specific structure
 	for (uint32_t i = 0; i < SIZE_OF_ARRAY(callstack.data); i++) {
 		DWORD64 const control_pc = context.Rip; // @note: platform-specific field
@@ -38,7 +39,10 @@ struct Callstack platform_debug_get_callstack(void) {
 		PRUNTIME_FUNCTION entry = RtlLookupFunctionEntry(control_pc, &image_base, NULL);
 		if (entry == NULL) { break; }
 
-		callstack.data[callstack.count++] = control_pc;
+		if (skip == 0) {
+			callstack.data[callstack.count++] = control_pc;
+		}
+		else { skip--; }
 
 		PVOID handler_data;
 		DWORD64 establisher_frame;
@@ -66,7 +70,7 @@ struct Callstack platform_debug_get_callstack(void) {
 	}
 #endif
 
-struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_t offset) {
+struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 	gs_platform_debug.buffer.size = 0;
 	gs_platform_debug.scratch.size = 0;
 
@@ -85,7 +89,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_
 	IMAGEHLP_MODULE64 module = {.SizeOfStruct = sizeof(module)};
 
 	HANDLE const process = GetCurrentProcess();
-	for (uint32_t i = offset, last = callstack.count; i < last; i++) {
+	for (uint32_t i = 0, last = callstack.count; i < last; i++) {
 		// fetch function, source file, and line
 		BOOL const valid_module = SymGetModuleInfo64(process, callstack.data[i], &module);
 		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], &symbol_offset, &symbol.header);
@@ -179,8 +183,8 @@ void debug_to_system_free(void) {
 //
 #include "framework/platform_debug.h"
 
-struct Callstack platform_debug_get_callstack(void) { return (struct Callstack){0}; }
-struct CString platform_debug_get_stacktrace(struct Callstack callstack, uint32_t offset) { (void)callstack; (void)offset; return (struct CString){0}; }
+struct Callstack platform_debug_get_callstack(uint32_t skip) { return (struct Callstack){0}; }
+struct CString platform_debug_get_stacktrace(struct Callstack callstack) { (void)callstack; return (struct CString){0}; }
 
 //
 #include "internal/debug_to_system.h"

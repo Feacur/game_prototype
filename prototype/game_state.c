@@ -34,7 +34,7 @@ static enum Camera_Mode json_read_camera_mode(struct JSON const * json) {
 		}
 	}
 	logger_to_console("unknown camera mode\n");
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return CAMERA_MODE_NONE;
 }
 
@@ -63,7 +63,7 @@ static void json_read_camera(struct JSON const * json, struct Camera * camera) {
 
 static void json_read_cameras(struct JSON const * json) {
 	if (json->type != JSON_ARRAY) {
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
 	uint32_t const cameras_count = json_count(json);
@@ -95,7 +95,7 @@ static enum Entity_Type json_read_entity_type(struct JSON const * json) {
 		}
 	}
 	logger_to_console("unknown entity type\n");
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return ENTITY_TYPE_NONE;
 }
 
@@ -110,7 +110,7 @@ static enum Entity_Quad_Mode json_read_entity_quad_mode(struct JSON const * json
 		}
 	}
 	logger_to_console("unknown quad mode\n");
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return ENTITY_QUAD_MODE_NONE;
 }
 
@@ -175,7 +175,7 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 
 static void json_read_entities(struct JSON const * json) {
 	if (json->type != JSON_ARRAY) {
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
 	uint32_t const entities_count = json_count(json);
@@ -211,8 +211,8 @@ void game_fill_scene(struct JSON const * json, void * data) {
 	array_clear(&gs_game.cameras);
 	array_clear(&gs_game.entities);
 
-	if (json->type == JSON_ERROR) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
-	if (data != &gs_game)         { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (json->type == JSON_ERROR) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (data != &gs_game)         { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	json_read_cameras(json_get(json, S_("cameras")));
 	json_read_entities(json_get(json, S_("entities")));

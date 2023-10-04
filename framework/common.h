@@ -132,14 +132,14 @@ inline static uint32_t hash32(void const * v) { return *(uint32_t const *)v; }
 //     callstack
 // ----- ----- ----- ----- -----
 
-void report_callstack(uint32_t offset);
+void report_callstack(void);
 
 #if !defined(GAME_TARGET_RELEASE)
-	#define REPORT_CALLSTACK(offset) report_callstack(offset)
+	#define REPORT_CALLSTACK() report_callstack()
 #endif
 
 #if !defined(REPORT_CALLSTACK)
-	#define REPORT_CALLSTACK(offset) (void)0
+	#define REPORT_CALLSTACK() (void)0
 #endif
 
 // ----- ----- ----- ----- -----

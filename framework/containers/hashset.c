@@ -26,7 +26,7 @@ void hashset_ensure(struct Hashset * hashset, uint32_t capacity) {
 
 	if (capacity <= hashset->capacity) {
 		logger_to_console("can't grow\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
 	uint32_t * hashes = hashset->hashes;
@@ -48,8 +48,8 @@ void hashset_ensure(struct Hashset * hashset, uint32_t capacity) {
 
 		void const * ht_key = keys + hashset->key_size * i;
 		uint32_t const key_index = hashset_find_key_index(hashset, ht_key, hashes[i]);
-		// if (key_index == INDEX_EMPTY) { REPORT_CALLSTACK(1); DEBUG_BREAK(); continue; }
-		// if (key_index >= capacity)    { REPORT_CALLSTACK(1); DEBUG_BREAK(); continue; }
+		// if (key_index == INDEX_EMPTY) { REPORT_CALLSTACK(); DEBUG_BREAK(); continue; }
+		// if (key_index >= capacity)    { REPORT_CALLSTACK(); DEBUG_BREAK(); continue; }
 
 		hashset->hashes[key_index] = hashes[i];
 		common_memcpy(
@@ -73,7 +73,7 @@ void hashset_clear(struct Hashset * hashset) {
 bool hashset_get(struct Hashset const * hashset, void const * key) {
 	if (key == NULL) {
 		logger_to_console("key should be non-null\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return false;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return false;
 	}
 
 	if (hashset->count == 0) { return false; }
@@ -87,7 +87,7 @@ bool hashset_get(struct Hashset const * hashset, void const * key) {
 bool hashset_set(struct Hashset * hashset, void const * key) {
 	if (key == NULL) {
 		logger_to_console("key should be non-null\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return false;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return false;
 	}
 
 	hashset_ensure(hashset, hashset->count + 1);
@@ -113,7 +113,7 @@ bool hashset_set(struct Hashset * hashset, void const * key) {
 bool hashset_del(struct Hashset * hashset, void const * key) {
 	if (key == NULL) {
 		logger_to_console("key should be non-null\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return false;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return false;
 	}
 
 	if (hashset->count == 0) { return false; }
@@ -127,8 +127,8 @@ bool hashset_del(struct Hashset * hashset, void const * key) {
 }
 
 void hashset_del_at(struct Hashset * hashset, uint32_t key_index) {
-	if (key_index >= hashset->capacity)                    { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
-	if (hashset->marks[key_index] != HASH_MARK_FULL) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (key_index >= hashset->capacity)                    { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (hashset->marks[key_index] != HASH_MARK_FULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 	hashset->marks[key_index] = HASH_MARK_SKIP;
 	hashset->count--;
 }

@@ -75,7 +75,7 @@ struct File * platform_file_init(struct CString path, enum File_Mode mode) {
 
 	// process errors
 	fail: logger_to_console("'CreateFile' failed; \"%.*s\"\n", path.length, path.data);
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
 
@@ -121,7 +121,7 @@ uint64_t platform_file_read(struct File const * file, uint8_t * buffer, uint64_t
 
 	if (!(file->mode & FILE_MODE_READ)) {
 		logger_to_console("can't read write-only files; \"%.*s\"\n", file->path_length, file->path);
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
 	
 	uint64_t read = 0;
@@ -133,7 +133,7 @@ uint64_t platform_file_read(struct File const * file, uint8_t * buffer, uint64_t
 		DWORD read_chunk_size;
 		if (!ReadFile(file->handle, buffer + read, to_read, &read_chunk_size, NULL)) {
 			logger_to_console("'ReadFile' failed; \"%.*s\"\n", file->path_length, file->path);
-			REPORT_CALLSTACK(1); DEBUG_BREAK(); break;
+			REPORT_CALLSTACK(); DEBUG_BREAK(); break;
 		}
 
 		read += read_chunk_size;
@@ -148,7 +148,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 
 	if (!(file->mode & FILE_MODE_WRITE)) {
 		logger_to_console("can't write read-only files; \"%.*s\"\n", file->path_length, file->path);
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
 	
 	uint64_t written = 0;
@@ -160,7 +160,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 		DWORD read_chunk_size;
 		if (!WriteFile(file->handle, buffer + written, to_write, &read_chunk_size, NULL)) {
 			logger_to_console("'WriteFile' failed; \"%.*s\"\n", file->path_length, file->path);
-			REPORT_CALLSTACK(1); DEBUG_BREAK(); break;
+			REPORT_CALLSTACK(); DEBUG_BREAK(); break;
 		}
 
 		written += read_chunk_size;

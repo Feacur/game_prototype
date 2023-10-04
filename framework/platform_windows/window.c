@@ -103,12 +103,12 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 	fail_window:
 	if (window != NULL) { MEMORY_FREE(window); }
 	else { logger_to_console("failed to initialize application window\n"); }
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 
 	fail_handle:
 	if (handle != NULL) { DestroyWindow(handle); }
 	else { logger_to_console("failed to create platform window\n"); }
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 
 	return NULL;
 }
@@ -142,7 +142,7 @@ void platform_window_update(struct Window * window) {
 
 void platform_window_start_frame(struct Window * window) {
 	if (window->frame_cached_device != NULL) {
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 	window->frame_cached_device = GetDC(window->handle);
 }
@@ -168,7 +168,7 @@ void platform_window_get_size(struct Window const * window, uint32_t * size_x, u
 
 uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value) {
 	if (window->frame_cached_device == NULL) {
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
 
 	int value = GetDeviceCaps(window->frame_cached_device, VREFRESH);
@@ -480,7 +480,7 @@ static void platform_window_internal_toggle_raw_input(struct Window * window, bo
 
 	if (!RegisterRawInputDevices(devices, SIZE_OF_ARRAY(devices), sizeof(RAWINPUTDEVICE))) {
 		logger_to_console("'RegisterRawInputDevices' failed\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
 	window->raw_input = state;
@@ -489,7 +489,7 @@ static void platform_window_internal_toggle_raw_input(struct Window * window, bo
 
 static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data) {
 	if (!window->raw_input) { return; }
-	if (data->VKey == 0xff) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (data->VKey == 0xff) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	uint8_t const key = (uint8_t)data->VKey;
 	uint8_t const scan = !(data->Flags & RI_KEY_E1) // The scan code has the E1 prefix
@@ -587,7 +587,7 @@ static void handle_input_hid_raw(struct Window * window, RAWHID * data) {
 	if (!window->raw_input) { return; }
 	(void)window; (void)data;
 	// @todo: logger_to_console("'RAWHID' input is not implemented\n");
-	// REPORT_CALLSTACK(1); DEBUG_BREAK();
+	// REPORT_CALLSTACK(); DEBUG_BREAK();
 	// https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-rawhid
 }
 
@@ -614,7 +614,7 @@ static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, L
 
 static LRESULT handle_message_input_keyboard(struct Window * window, WPARAM wParam, LPARAM lParam) {
 	if (window->raw_input) { return 0; }
-	if (wParam == 0xff)    { REPORT_CALLSTACK(1); DEBUG_BREAK(); return 0; }
+	if (wParam == 0xff)    { REPORT_CALLSTACK(); DEBUG_BREAK(); return 0; }
 
 	WORD flags = HIWORD(lParam);
 

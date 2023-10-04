@@ -179,7 +179,7 @@ enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels
 		} break;
 	}
 	logger_to_console("unknown vector type\n");
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return DATA_TYPE_NONE;
 }
 
@@ -270,7 +270,7 @@ uint32_t data_type_get_count(enum Data_Type value) {
 		case DATA_TYPE_MAT4: return 4 * 4;
 	}
 	logger_to_console("unknown data type\n");
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return 0;
 }
 
@@ -361,7 +361,7 @@ uint32_t data_type_get_size(enum Data_Type value) {
 		case DATA_TYPE_MAT4: return sizeof(float) * 4 * 4;
 	}
 	logger_to_console("unknown data type\n");
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return 0;
 }
 

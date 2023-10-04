@@ -28,7 +28,7 @@ void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity) {
 
 	if (capacity <= hashmap->capacity) {
 		logger_to_console("can't grow\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
 	uint32_t * hashes = hashmap->hashes;
@@ -52,8 +52,8 @@ void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity) {
 
 		void const * ht_key = keys + hashmap->key_size * i;
 		uint32_t const key_index = hashmap_find_key_index(hashmap, ht_key, hashes[i]);
-		// if (key_index == INDEX_EMPTY) { REPORT_CALLSTACK(1); DEBUG_BREAK(); continue; }
-		// if (key_index >= capacity)    { REPORT_CALLSTACK(1); DEBUG_BREAK(); continue; }
+		// if (key_index == INDEX_EMPTY) { REPORT_CALLSTACK(); DEBUG_BREAK(); continue; }
+		// if (key_index >= capacity)    { REPORT_CALLSTACK(); DEBUG_BREAK(); continue; }
 
 		hashmap->hashes[key_index] = hashes[i];
 		common_memcpy(
@@ -83,7 +83,7 @@ void hashmap_clear(struct Hashmap * hashmap) {
 void * hashmap_get(struct Hashmap const * hashmap, void const * key) {
 	if (key == NULL) {
 		logger_to_console("key should be non-null\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 
 	if (hashmap->count == 0) { return NULL; }
@@ -97,7 +97,7 @@ void * hashmap_get(struct Hashmap const * hashmap, void const * key) {
 bool hashmap_set(struct Hashmap * hashmap, void const * key, void const * value) {
 	if (key == NULL) {
 		logger_to_console("key should be non-null\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return false;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return false;
 	}
 
 	hashmap_ensure(hashmap, hashmap->count + 1);
@@ -128,7 +128,7 @@ bool hashmap_set(struct Hashmap * hashmap, void const * key, void const * value)
 bool hashmap_del(struct Hashmap * hashmap, void const * key) {
 	if (key == NULL) {
 		logger_to_console("key should be non-null\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return false;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return false;
 	}
 
 	if (hashmap->count == 0) { return false; }
@@ -142,8 +142,8 @@ bool hashmap_del(struct Hashmap * hashmap, void const * key) {
 }
 
 void hashmap_del_at(struct Hashmap * hashmap, uint32_t key_index) {
-	if (key_index >= hashmap->capacity)                    { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
-	if (hashmap->marks[key_index] != HASH_MARK_FULL) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (key_index >= hashmap->capacity)                    { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (hashmap->marks[key_index] != HASH_MARK_FULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 	hashmap->marks[key_index] = HASH_MARK_SKIP;
 	hashmap->count--;
 }

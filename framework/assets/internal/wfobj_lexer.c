@@ -132,7 +132,7 @@ inline static struct WFObj_Token wfobj_lexer_next_internal(struct WFObj_Lexer * 
 	if (parse_is_alpha(c)) { return wfobj_lexer_make_identifier_token(lexer); }
 	if (c == '-' || parse_is_digit(c)) { return wfobj_lexer_make_number_token(lexer); }
 
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return wfobj_lexer_make_token(lexer, WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER);
 }
 

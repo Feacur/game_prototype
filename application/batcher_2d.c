@@ -568,11 +568,11 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 void batcher_2d_bake(struct Batcher_2D * batcher) {
 	if (batcher->batches.count > 0) {
 		logger_to_console("unissued batches\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK();
+		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 	if (batcher->batch.indices_offset < batcher->buffer_indices.count) {
 		logger_to_console("unissued indices\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK();
+		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 
 	batcher_2d_bake_words(batcher);

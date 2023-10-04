@@ -64,20 +64,20 @@ struct Handle sparseset_aquire(struct Sparseset * sparseset, void const * value)
 }
 
 void sparseset_discard(struct Sparseset * sparseset, struct Handle handle) {
-	if (handle.id == 0)                      { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
-	if (handle.id > sparseset->sparse.count) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (handle.id == 0)                      { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (handle.id > sparseset->sparse.count) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	uint32_t const handle_id = handle.id - 1;
 	struct Handle * entry = array_at(&sparseset->sparse, handle_id);
-	if (handle.gen != entry->gen)                { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
-	if (handle_id  != sparseset->ids[entry->id]) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (handle.gen != entry->gen)                { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (handle_id  != sparseset->ids[entry->id]) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	// swap the removed entry with the last one, maintain packing
 	void const * value = array_pop(&sparseset->packed, 1);
 	if (entry->id < sparseset->packed.count) {
 		uint32_t const swap_id = sparseset->ids[sparseset->packed.count];
 		struct Handle * swap = array_at(&sparseset->sparse, swap_id);
-		if (swap->id != sparseset->packed.count) { REPORT_CALLSTACK(1); DEBUG_BREAK(); }
+		if (swap->id != sparseset->packed.count) { REPORT_CALLSTACK(); DEBUG_BREAK(); }
 
 		sparseset->ids[entry->id] = swap_id;
 		swap->id = entry->id;
@@ -105,13 +105,13 @@ void * sparseset_get(struct Sparseset * sparseset, struct Handle handle) {
 }
 
 void sparseset_set(struct Sparseset * sparseset, struct Handle handle, void const * value) {
-	if (handle.id == 0)                      { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
-	if (handle.id > sparseset->sparse.count) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (handle.id == 0)                      { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (handle.id > sparseset->sparse.count) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	uint32_t const handle_id = handle.id - 1;
 	struct Handle const * entry = array_at(&sparseset->sparse, handle_id);
-	if (handle.gen != entry->gen)                { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
-	if (handle_id  != sparseset->ids[entry->id]) { REPORT_CALLSTACK(1); DEBUG_BREAK(); return; }
+	if (handle.gen != entry->gen)                { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (handle_id  != sparseset->ids[entry->id]) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	array_set_many(&sparseset->packed, entry->id, 1, value);
 }

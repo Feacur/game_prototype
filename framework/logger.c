@@ -49,7 +49,7 @@ uint32_t logger_to_buffer(uint32_t size, char * buffer, char const * format, ...
 	va_end(args);
 	if (length > size) {
 		logger_to_console("insufficient buffer space\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK();
+		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 	return length;
 }

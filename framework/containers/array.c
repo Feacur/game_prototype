@@ -46,7 +46,7 @@ void array_push_many(struct Array * array, uint32_t count, void const * value) {
 void array_set_many(struct Array * array, uint32_t index, uint32_t count, void const * value) {
 	if (index + count > array->count) {
 		logger_to_console("out of bounds\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 	uint8_t * at = (uint8_t *)array->data + array->value_size * index;
 	common_memcpy(at, value, array->value_size * count);
@@ -55,7 +55,7 @@ void array_set_many(struct Array * array, uint32_t index, uint32_t count, void c
 void array_insert_many(struct Array * array, uint32_t index, uint32_t count, void const * value) {
 	if (index > array->count) {
 		logger_to_console("out of bounds\n");
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 	array_ensure(array, array->count + count);
 	//
@@ -71,7 +71,7 @@ void array_insert_many(struct Array * array, uint32_t index, uint32_t count, voi
 
 void * array_pop(struct Array * array, uint32_t count) {
 	if (array->count < count) {
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	array->count -= count;
 	size_t const offset = array->value_size * array->count;
@@ -80,7 +80,7 @@ void * array_pop(struct Array * array, uint32_t count) {
 
 void * array_peek(struct Array const * array, uint32_t depth) {
 	if (depth >= array->count) {
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	size_t const offset = array->value_size * (array->count - depth - 1);
 	return (uint8_t *)array->data + offset;
@@ -88,7 +88,7 @@ void * array_peek(struct Array const * array, uint32_t depth) {
 
 void * array_at(struct Array const * array, uint32_t index) {
 	if (index >= array->count) {
-		REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	size_t const offset = array->value_size * index;
 	return (uint8_t *)array->data + offset;

@@ -72,7 +72,7 @@ void asset_system_map_extension(struct CString type, struct CString extension) {
 
 	return;
 	fail:
-	REPORT_CALLSTACK(1); DEBUG_BREAK();
+	REPORT_CALLSTACK(); DEBUG_BREAK();
 }
 
 bool asset_system_match_type(struct Handle handle, struct CString type_name) {

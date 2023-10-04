@@ -19,7 +19,7 @@ struct Memory_Header {
 static struct Memory_Header * gs_memory;
 
 void * memory_reallocate(void * pointer, size_t size) {
-	struct Callstack const callstack = platform_debug_get_callstack();
+	struct Callstack const callstack = platform_debug_get_callstack(0);
 
 	struct Memory_Header * pointer_header = (pointer != NULL)
 		? (struct Memory_Header *)pointer - 1
@@ -27,9 +27,9 @@ void * memory_reallocate(void * pointer, size_t size) {
 
 	if (pointer_header != NULL) {
 		if (pointer_header->checksum != (size_t)pointer_header) {
-			struct CString const stacktrace = platform_debug_get_stacktrace(callstack, 1);
+			struct CString const stacktrace = platform_debug_get_stacktrace(callstack);
 			logger_to_console("incorrect checksum: \"%.*s\"\n", stacktrace.length, stacktrace.data);
-			REPORT_CALLSTACK(1); DEBUG_BREAK(); return pointer;
+			REPORT_CALLSTACK(); DEBUG_BREAK(); return pointer;
 		}
 
 		pointer_header->checksum = 0;
@@ -64,13 +64,13 @@ void * memory_reallocate(void * pointer, size_t size) {
 	}
 
 	// failed
-	struct CString const stacktrace = platform_debug_get_stacktrace(callstack, 1);
+	struct CString const stacktrace = platform_debug_get_stacktrace(callstack);
 	logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data);
-	REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
+	REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 }
 
 void * memory_reallocate_without_tracking(void * pointer, size_t size) {
-	struct Callstack const callstack = platform_debug_get_callstack();
+	struct Callstack const callstack = platform_debug_get_callstack(0);
 
 	// free
 	if (size == 0) { free(pointer); return NULL; }
@@ -80,9 +80,9 @@ void * memory_reallocate_without_tracking(void * pointer, size_t size) {
 	if (reallocated != NULL) { return reallocated; }
 
 	// failed
-	struct CString const stacktrace = platform_debug_get_stacktrace(callstack, 1);
+	struct CString const stacktrace = platform_debug_get_stacktrace(callstack);
 	logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data);
-	REPORT_CALLSTACK(1); DEBUG_BREAK(); return NULL;
+	REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 }
 
 //
@@ -118,7 +118,7 @@ bool memory_to_system_cleanup(void) {
 	}
 
 	for (struct Memory_Header const * it = gs_memory; it != NULL; it = it->next) {
-		struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack, 1);
+		struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack);
 		logger_to_console(
 			"  [0x%.*zx] (bytes: %*.zu) stacktrace:\n"
 			"%.*s"
