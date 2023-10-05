@@ -7,7 +7,6 @@
 	"installed_packages":
 	[
 		"BuildX",
-		"EasyClangComplete",
 		"gruvbox",
 		"HexViewer",
 		"HLSL Syntax",
@@ -22,7 +21,6 @@
 		"Rust Enhanced",
 		"SyncedSideBar",
 		"Terminus",
-		"VimL",
 		"Zig Language",
 	],
 }

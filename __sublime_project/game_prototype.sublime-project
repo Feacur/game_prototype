@@ -34,50 +34,10 @@
 		{
 			"path": "../__vscode_workspace",
 		},
-		{
-			"path": "../__notepad++",
-		},
-		{
-			"path": "../__nvim",
-		},
 	],
 	"settings": {
 		// editor
 		"translate_tabs_to_spaces": false,
-		// extensions: EasyClangComplete
-		"ecc_force_unix_includes": true,
-		"ecc_common_flags": [
-			// flags
-			"-std=c99",
-			"-Werror",
-			"-Weverything",
-			//
-			"-Wno-switch-enum",
-			"-Wno-float-equal",
-			"-Wno-reserved-id-macro",
-			"-Wno-reserved-identifier",
-			"-Wno-nonportable-system-include-path",
-			"-Wno-assign-enum",
-			"-Wno-bad-function-cast",
-			"-Wno-documentation-unknown-command",
-			"-Wno-unsafe-buffer-usage",
-			//
-			"-Wno-unused-macros",
-			"-Wno-unused-function",
-			// includes
-			"-I..",
-			"-I../third_party",
-			// defines
-			"-D_CRT_SECURE_NO_WARNINGS",
-			"-DSTRICT",
-			"-DVC_EXTRALEAN",
-			"-DWIN32_LEAN_AND_MEAN",
-			"-DNOMINMAX",
-			"-DUNICODE",
-			"-D_UNICODE",
-			//
-			"-DGAME_TARGET_DEBUG",
-		],
 		// extensions: LSP
 		"LSP": {
 			"clangd": {

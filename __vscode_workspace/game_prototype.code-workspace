@@ -31,12 +31,6 @@
 		{
 			"path": "../__sublime_project",
 		},
-		{
-			"path": "../__notepad++",
-		},
-		{
-			"path": "../__nvim",
-		},
 	],
 	"settings": {
 		// editor
@@ -45,8 +39,6 @@
 		"files.exclude": { // exclude each subfolder of the root_folder
 			"__sublime_project": true,
 			"__vscode_workspace": true,
-			"__nvim": true,
-			"__notepad++": true,
 			"application": true,
 			"assets": true,
 			"bin": true,
@@ -64,12 +56,16 @@
 		],
 		"C_Cpp.default.defines": [
 			"GAME_TARGET_DEBUG",
-			"_CRT_SECURE_NO_WARNINGS",
-			"DSTRICT",
-			"DVC_EXTRALEAN",
+			"GAME_ARCH_CONSOLE,
+			//
+			"STRICT",
+			"VC_EXTRALEAN",
 			"WIN32_LEAN_AND_MEAN",
 			"NOMINMAX",
 			"UNICODE",
+			"_UNICODE",
+			//
+			"_CRT_SECURE_NO_WARNINGS",
 		],
 	},
 	"extensions": {

@@ -29,7 +29,6 @@
 	"ignored_packages":
 	[
 		"EasyClangComplete",
-		"VimL",
 		"Vintage",
 	],
 	"index_exclude_patterns":
