@@ -430,7 +430,9 @@ static void gpu_texture_upload(struct Handle handle, struct Image const * asset)
 		gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
 		asset->data
 	);
-	glGenerateTextureMipmap(gpu_texture->id);
+	if (gpu_texture->settings.mipmap != FILTER_MODE_NONE) {
+		glGenerateTextureMipmap(gpu_texture->id);
+	}
 }
 
 struct Handle gpu_texture_init(struct Image const * asset) {
@@ -512,7 +514,9 @@ void gpu_texture_update(struct Handle handle, struct Image const * asset) {
 			gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
 			asset->data
 		);
-		glGenerateTextureMipmap(gpu_texture->id);
+		if (gpu_texture->settings.mipmap != FILTER_MODE_NONE) {
+			glGenerateTextureMipmap(gpu_texture->id);
+		}
 	}
 	else {
 		logger_to_console("trying to reallocate an immutable buffer\n");
