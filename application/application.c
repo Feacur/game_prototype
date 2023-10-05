@@ -21,8 +21,8 @@ static struct Application {
 	struct Gpu_Context * gpu_context;
 
 	struct Application_Ticks {
-		uint32_t elapsed;
-		uint32_t fixed_accumulator;
+		uint64_t elapsed;
+		uint64_t fixed_accumulator;
 	} ticks;
 } gs_app;
 
@@ -80,7 +80,7 @@ static void application_init(void) {
 	// setup timer, rewind it one frame
 	gpu_context_set_vsync(gs_app.gpu_context, gs_app.config.vsync);
 	int32_t const vsync_mode = gpu_context_get_vsync(gs_app.gpu_context);
-	gs_app.ticks.elapsed     = (uint32_t)get_target_ticks(vsync_mode);
+	gs_app.ticks.elapsed     = get_target_ticks(vsync_mode);
 	gs_app.ticks.fixed_accumulator = 0;
 
 	finalize:
@@ -163,8 +163,8 @@ void application_update(void) {
 
 	gs_app.ticks.elapsed = clamp_u32(
 		(uint32_t)(platform_timer_get_ticks() - ticks_before),
-		(uint32_t)(platform_timer_get_ticks_per_second() / 1000),
-		(uint32_t)(platform_timer_get_ticks_per_second() /  100)
+		(uint32_t)(platform_timer_get_ticks_per_second() / 10000),
+		(uint32_t)(platform_timer_get_ticks_per_second() /   100)
 	);
 
 	// @note: resulting delta time is extremely inconsistent and stuttery

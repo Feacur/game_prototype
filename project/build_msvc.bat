@@ -90,7 +90,7 @@ if %build_mode% == normal ( rem compile a set of translation units, then link th
 		set object_file_name=%%~v
 		set object_file_name=!object_file_name:/=_!
 		set object_file_name=!object_file_name:.c=!
-		set objects=!objects! "./temp/!object_file_name!.o"
+		set objects=!objects! "./temp/!object_file_name!.obj"
 	)
 	link !objects! %linker% -out:"%project%.exe" || ( goto error )
 ) else if %build_mode% == unity ( rem compile as a unity build, then link separately
