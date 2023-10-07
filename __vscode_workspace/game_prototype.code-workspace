@@ -48,7 +48,6 @@
 			"third_party": true,
 		},
 		// extensions: ms-vscode.cpptools
-		"C_Cpp.formatting": "disabled",
 		"C_Cpp.preferredPathSeparator": "Forward Slash",
 		"C_Cpp.default.includePath": [
 			"${workspaceFolder}/..",
@@ -56,7 +55,7 @@
 		],
 		"C_Cpp.default.defines": [
 			"GAME_TARGET_DEBUG",
-			"GAME_ARCH_CONSOLE,
+			"GAME_ARCH_CONSOLE",
 			//
 			"STRICT",
 			"VC_EXTRALEAN",
@@ -70,10 +69,9 @@
 	},
 	"extensions": {
 		"recommendations": [
-			// c, c++
-			"ms-vscode.cpptools",
 			"vadimcn.vscode-lldb",
-			// "llvm-vs-code-extensions.vscode-clangd",
+			"llvm-vs-code-extensions.vscode-clangd",
+			// "ms-vscode.cpptools", // conflicts with clangd
 			// misc
 			"ms-vscode.hexeditor",
 			"slevesque.shader",

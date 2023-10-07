@@ -25,10 +25,9 @@
 	],
 	"font_face": "JetBrains Mono",
 	"font_options": ["no_liga", "no_clig", "no_calt"],
-	"font_size": 12,
+	"font_size": 13,
 	"ignored_packages":
 	[
-		"EasyClangComplete",
 		"Vintage",
 	],
 	"index_exclude_patterns":
@@ -46,4 +45,7 @@
 	"word_wrap": false,
 	"control_character_style": "names",
 	"trim_automatic_white_space": true,
+	"reveal_menu": true,
+	"remember_workspace": false,
+	"hot_exit": "disabled",
 }

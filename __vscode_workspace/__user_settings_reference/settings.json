@@ -10,17 +10,18 @@
 	"files.refactoring.autoSave": false,
 	"scm.autoReveal": false,
 	"telemetry.telemetryLevel": "off",
-	// files
+	"window.restoreWindows": "none",
+	// -- files
 	"files.trimFinalNewlines": false,
 	"files.trimTrailingWhitespace": false,
-	// git
+	// -- git
 	"git.enabled": false,
 	"git.mergeEditor": false,
 	"git.autorefresh": false,
 	"git.enableStatusBarSync": false,
 	"git.detectSubmodules": false,
 	"github.gitAuthentication": false,
-	// workbench
+	// -- workbench
 	"workbench.startupEditor": "newUntitledFile",
 	"workbench.sideBar.location": "right",
 	"workbench.activityBar.visible": false,
@@ -34,7 +35,7 @@
 	"workbench.editor.autoLockGroups": {
 		"terminalEditor": false
 	},
-	// editor
+	// -- editor
 	"editor.wordWrap": "off",
 	"editor.fontFamily": "JetBrains Mono",
 	"editor.fontLigatures": false,
@@ -54,34 +55,34 @@
 	"editor.trimAutoWhitespace": true,
 	"editor.unicodeHighlight.invisibleCharacters": false,
 	"editor.unicodeHighlight.ambiguousCharacters": false,
-	// diff
+	"editor.inlayHints.enabled": "off",
+	// -- diff
 	"diffEditor.codeLens": true,
 	"diffEditor.maxComputationTime": 0,
 	"diffEditor.maxFileSize": 0,
-	// language: C#
+	// -- extensions: ms-dotnettools.csharp
 	"csharp.suppressHiddenDiagnostics": false,
-	// extensions: ms-dotnettools.csharp
 	"omnisharp.loggingLevel": "information",
 	"omnisharp.enableDecompilationSupport": true,
 	"omnisharp.organizeImportsOnFormat": true,
 	"dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
-	// extensions: ms-vscode.cpptools
+	// -- extensions: ms-vscode.cpptools
 	"C_Cpp.default.cStandard": "c99",
 	"C_Cpp.default.cppStandard": "c++11",
 	"C_Cpp.default.compilerPath": "clang",
 	"C_Cpp.default.intelliSenseMode": "clang-x64",
-	// "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe",
-	// "C_Cpp.default.compilerPath": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.34.31933/bin/Hostx64/x64/cl.exe",
+	// "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl",
+	// "C_Cpp.default.compilerPath": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.34.31933/bin/Hostx64/x64/cl",
 	// "C_Cpp.default.intelliSenseMode": "msvc-x64",
-	"C_Cpp.formatting": "Disabled",
+	"C_Cpp.formatting": "disabled",
 	"C_Cpp.autoAddFileAssociations": false,
 	"C_Cpp.preferredPathSeparator": "Forward Slash",
-	"C_Cpp.errorSquiggles": "Disabled",
-	"C_Cpp.intelliSenseEngine": "Default",
-	"C_Cpp.intelliSenseEngineFallback": "Enabled",
+	"C_Cpp.errorSquiggles": "disabled",
+	"C_Cpp.intelliSenseEngine": "default",
+	"C_Cpp.intelliSenseEngineFallback": "enabled",
 	"C_Cpp.intelliSenseCacheSize": 0,
 	"C_Cpp.intelliSenseMemoryLimit": 256,
-	// extensions: llvm-vs-code-extensions.vscode-clangd
+	// -- extensions: llvm-vs-code-extensions.vscode-clangd
 	"clangd.path": "clangd",
 	"clangd.arguments": [
 		"--compile-commands-dir=${workspaceFolder}",
@@ -89,19 +90,40 @@
 		// "--log=verbose",
 	],
 	"clangd.onConfigChanged": "prompt",
+	// -- extensions: geequlim.godot-tools
+	"godot_tools.editor_path": "godot",
+	"godot_tools.gdscript_lsp_server_port": 6005,
+	// -- extensions: ziglang.vscode-zig
+	"zig.zigPath": "",
+	"zig.zls.enabled": true,
+	"zig.zls.path": "zls.exe",
+	"zig.checkForUpdate": false,
+	"zig.zls.checkForUpdate": false,
 }
 // extensions:
-// - ms-dotnettools.csharp
-// - ms-dotnettools.csdevkit
-// - ms-dotnettools.vscode-dotnet-runtime
-// - visualstudiotoolsforunity.vstuc
 // - jdinhlife.gruvbox
 // - ms-vscode.hexeditor
 // - slevesque.shader
-// - ms-vscode.cpptools
-// - llvm-vs-code-extensions.vscode-clangd
-// - ms-vscode.cmake-tools
-// - vadimcn.vscode-lldb
-// - ms-python.python
-// - rust-lang.rust-analyzer
+//
 // - ziglang.vscode-zig
+// - ms-vscode.mono-debug
+// - geequlim.godot-tools
+//
+// - vadimcn.vscode-lldb
+// - llvm-vs-code-extensions.vscode-clangd
+// - ms-vscode.cpptools ---- conflicts with clangd
+//
+// - ms-python.python
+//   - ms-python.vscode-pylance
+//
+// - ms-dotnettools.csharp ---- disable it by default, lest it idles
+//   - ms-dotnettools.csdevkit
+//     - visualstudiotoolsforunity.vstuc
+//     - neikeq.godot-csharp-vscode
+//   - ms-dotnettools.vscode-dotnet-runtime
+//
+// - ms-vscode.cmake-tools ---- disable it by default, lest it obtrudes
+//   - twxs.cmake
+//
+// - rust-lang.rust-analyzer ---- disable it by default, lest it obtrudes
+//

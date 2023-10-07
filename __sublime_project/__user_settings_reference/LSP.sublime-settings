@@ -8,7 +8,7 @@
 				"--header-insertion=never",
 				// "--log=verbose",
 			],
-			"enabled": false,
+			"enabled": true,
 		},
 		"omnisharp": {
 			"command": [
@@ -17,14 +17,19 @@
 				"--source=${project_path:${folder:${file_path}}}",
 				// "--verbose",
 			],
-			"enabled": false,
+			"enabled": true,
 		},
 		"rust-analyzer": {
 			"command": [
 				"rust-analyzer",
 				// "--verbose",
 			],
-			"enabled": false,
+			"enabled": true,
+		},
+		"zig": {
+			"command": ["zls"],
+			"enabled": true,
+			"selector": "source.zig",
 		},
 	},
 	"inhibit_word_completions": true,

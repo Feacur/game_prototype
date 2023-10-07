@@ -21,26 +21,27 @@
 	{ "key": "ctrl+numpad_subtract", "command": "-workbench.action.zoomOut" },
 	{ "key": "ctrl+shift+=", "command": "-workbench.action.zoomIn" },
 	{ "key": "ctrl+shift+-", "command": "-workbench.action.zoomOut" },
+	{ "key": "ctrl+f12", "command": "-editor.action.revealDefinition" },
 	// utilities
 	{
 		"key": "ctrl+shift+r",
-		"command": "workbench.view.extension.references-view"
+		"command": "workbench.view.extension.references-view",
 	},
 	{
 		"key": "ctrl+alt+t",
-		"command": "workbench.action.toggleTabsVisibility"
+		"command": "workbench.action.toggleTabsVisibility",
 	},
 	{
 		"key": "ctrl+alt+\\",
-		"command": "workbench.action.splitEditorDown"
+		"command": "workbench.action.splitEditorDown",
 	},
 	{
 		"key": "shift+f11",
-		"command": "workbench.action.toggleZenMode"
+		"command": "workbench.action.toggleZenMode",
 	},
 	{
 		"key": "ctrl+0",
-		"command": "workbench.action.zoomReset"
+		"command": "workbench.action.zoomReset",
 	},
 	// RMB
 	{
@@ -53,100 +54,106 @@
 		"key": "ctrl+up",
 		"command": "editorScroll",
 		"when": "editorTextFocus",
-		"args": {"to": "up", "by": "line", "revealCursor": true}
+		"args": {"to": "up", "by": "line", "revealCursor": true},
 	},
 	{
 		"key": "ctrl+down",
 		"command": "editorScroll",
 		"when": "editorTextFocus",
-		"args": {"to": "down", "by": "line", "revealCursor": true}
+		"args": {"to": "down", "by": "line", "revealCursor": true},
 	},
 	{
 		"key": "alt+pageup",
 		"command": "editorScroll",
 		"when": "editorTextFocus",
-		"args": {"to": "up", "by": "page", "revealCursor": true}
+		"args": {"to": "up", "by": "page", "revealCursor": true},
 	},
 	{
 		"key": "alt+pagedown",
 		"command": "editorScroll",
 		"when": "editorTextFocus",
-		"args": {"to": "down", "by": "page", "revealCursor": true}
+		"args": {"to": "down", "by": "page", "revealCursor": true},
 	},
-	// historical navigation
+	// navigate source
+	{
+		"key": "ctrl+f12",
+		"command": "editor.action.revealDeclaration",
+		"when": "editorTextFocus",
+	},
+	// navigate history
 	{
 		"key": "ctrl+alt+left",
-		"command": "workbench.action.navigateBack"
+		"command": "workbench.action.navigateBack",
 	},
 	{
 		"key": "ctrl+alt+right",
-		"command": "workbench.action.navigateForward"
+		"command": "workbench.action.navigateForward",
 	},
-	// contextual navigation
+	// navigate search
 	{
 		"key": "alt+]",
 		"command": "editor.action.marker.nextInFiles",
-		"when": "editorFocus"
+		"when": "editorFocus",
 	},
 	{
 		"key": "alt+[",
 		"command": "editor.action.marker.prevInFiles",
-		"when": "editorFocus"
+		"when": "editorFocus",
 	},
 	{
 		"key": "alt+]",
 		"command": "search.action.focusNextSearchResult",
-		"when": "hasSearchResult || inSearchEditor"
+		"when": "hasSearchResult || inSearchEditor",
 	},
 	{
 		"key": "alt+[",
 		"command": "search.action.focusPreviousSearchResult",
-		"when": "hasSearchResult || inSearchEditor"
+		"when": "hasSearchResult || inSearchEditor",
 	},
 	{
 		"key": "alt+]",
 		"command": "references-view.next",
-		"when": "reference-list.hasResult && references-view.canNavigate"
+		"when": "reference-list.hasResult && references-view.canNavigate",
 	},
 	{
 		"key": "alt+[",
 		"command": "references-view.prev",
-		"when": "reference-list.hasResult && references-view.canNavigate"
+		"when": "reference-list.hasResult && references-view.canNavigate",
 	},
 	{
 		"key": "alt+[",
 		"command": "goToPreviousReference",
-		"when": "inReferenceSearchEditor || referenceSearchVisible"
+		"when": "inReferenceSearchEditor || referenceSearchVisible",
 	},
 	{
 		"key": "alt+]",
 		"command": "goToNextReference",
-		"when": "inReferenceSearchEditor || referenceSearchVisible"
+		"when": "inReferenceSearchEditor || referenceSearchVisible",
 	},
 	// navigate paragraphs
 	{
 		"key": "alt+up",
 		"command": "cursorMove",
 		"when": "editorTextFocus",
-		"args": {"to": "prevBlankLine"}
+		"args": {"to": "prevBlankLine"},
 	},
 	{
 		"key": "alt+down",
 		"command": "cursorMove",
 		"when": "editorTextFocus",
-		"args": {"to": "nextBlankLine"}
+		"args": {"to": "nextBlankLine"},
 	},
 	{
 		"key": "alt+shift+up",
 		"command": "cursorMove",
 		"when": "editorTextFocus",
-		"args": {"to": "prevBlankLine", "select": true}
+		"args": {"to": "prevBlankLine", "select": true},
 	},
 	{
 		"key": "alt+shift+down",
 		"command": "cursorMove",
 		"when": "editorTextFocus",
-		"args": {"to": "nextBlankLine", "select": true}
+		"args": {"to": "nextBlankLine", "select": true},
 	},
 	// navigate words
 	// -- default
@@ -175,36 +182,37 @@
 	{
 		"key": "ctrl+m",
 		"command": "editor.action.jumpToBracket",
-		"when": "editorTextFocus"
+		"when": "editorTextFocus",
 	},
 	{
 		"key": "ctrl+shift+m",
-		"command": "editor.action.selectToBracket"
+		"command": "editor.action.selectToBracket",
+		"when": "editorTextFocus",
 	},
 	// windowing
 	{
 		"key": "ctrl+shift+alt+[",
-		"command": "workbench.action.closeGroup"
+		"command": "workbench.action.closeGroup",
 	},
 	{
 		"key": "ctrl+shift+alt+]",
-		"command": "workbench.action.newGroupRight"
+		"command": "workbench.action.newGroupRight",
 	},
 	{
 		"key": "ctrl+shift+alt+left",
-		"command": "workbench.action.moveEditorToLeftGroup"
+		"command": "workbench.action.moveEditorToLeftGroup",
 	},
 	{
 		"key": "ctrl+shift+alt+right",
-		"command": "workbench.action.moveEditorToRightGroup"
+		"command": "workbench.action.moveEditorToRightGroup",
 	},
 	{
 		"key": "ctrl+shift+alt+down",
-		"command": "workbench.action.moveEditorToBelowGroup"
+		"command": "workbench.action.moveEditorToBelowGroup",
 	},
 	{
 		"key": "ctrl+shift+alt+up",
-		"command": "workbench.action.moveEditorToAboveGroup"
+		"command": "workbench.action.moveEditorToAboveGroup",
 	},
 	// edit lines
 	{
@@ -215,16 +223,16 @@
 	{
 		"key": "ctrl+shift+delete",
 		"command": "deleteAllRight",
-		"when": "editorTextFocus && !editorReadonly"
+		"when": "editorTextFocus && !editorReadonly",
 	},
 	{
 		"key": "ctrl+shift+down",
 		"command": "editor.action.moveLinesDownAction",
-		"when": "editorTextFocus && !editorReadonly"
+		"when": "editorTextFocus && !editorReadonly",
 	},
 	{
 		"command": "editor.action.moveLinesUpAction",
 		"key": "ctrl+shift+up",
-		"when": "editorTextFocus && !editorReadonly"
+		"when": "editorTextFocus && !editorReadonly",
 	},
 ]
