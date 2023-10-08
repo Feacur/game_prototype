@@ -9,7 +9,10 @@
 
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
-#include <GL/wgl.h>
+
+#include "framework/__warnings_push.h"
+	#include <GL/wgl.h>
+#include "framework/__warnings_pop.h"
 
 static struct Gpu_Library {
 	HMODULE handle;

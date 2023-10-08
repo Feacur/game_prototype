@@ -4,25 +4,17 @@
 
 #include "framework/platform_file.h"
 
-// @idea: compile third-parties as separate units
-#if defined(__clang__)
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Weverything"
-#endif
+#include "framework/__warnings_push.h"
+	#define STBI_ONLY_PNG
 
-#define STBI_ONLY_PNG
+	#define STBI_MALLOC(size)           MEMORY_ALLOCATE_SIZE(size)
+	#define STBI_REALLOC(pointer, size) memory_reallocate(pointer, size)
+	#define STBI_FREE(pointer)          MEMORY_FREE(pointer)
 
-#define STBI_MALLOC(size)           MEMORY_ALLOCATE_SIZE(size)
-#define STBI_REALLOC(pointer, size) memory_reallocate(pointer, size)
-#define STBI_FREE(pointer)          MEMORY_FREE(pointer)
-
-#define STB_IMAGE_STATIC
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
-
-#if defined(__clang__)
-	#pragma clang diagnostic pop
-#endif
+	#define STB_IMAGE_STATIC
+	#define STB_IMAGE_IMPLEMENTATION
+	#include <stb/stb_image.h>
+#include "framework/__warnings_pop.h"
 
 //
 #include "image.h"

@@ -3,8 +3,10 @@
 
 #include "framework/graphics/types.h"
 
-#include <KHR/khrplatform.h>
-#include <GL/glcorearb.h>
+#include "framework/__warnings_push.h"
+	#include <KHR/khrplatform.h>
+	#include <GL/glcorearb.h>
+#include "framework/__warnings_pop.h"
 
 GLenum gpu_vertex_type(enum Data_Type value);
 enum Data_Type translate_program_data_type(GLint value);

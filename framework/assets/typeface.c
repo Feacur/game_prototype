@@ -8,26 +8,14 @@
 static void * typeface_memory_allocate(size_t size, struct Buffer * scratch);
 static void typeface_memory_free(void * pointer, struct Buffer * scratch);
 
-// @idea: compile third-parties as separate units
-#if defined(__clang__)
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Weverything"
-#elif defined(_MSC_VER)
-	#pragma warning(push, 0)
-#endif
+#include "framework/__warnings_push.h"
+	#define STBTT_malloc(size, user_data)  typeface_memory_allocate(size, user_data)
+	#define STBTT_free(pointer, user_data) typeface_memory_free(pointer, user_data)
 
-#define STBTT_malloc(size, user_data)  typeface_memory_allocate(size, user_data)
-#define STBTT_free(pointer, user_data) typeface_memory_free(pointer, user_data)
-
-#define STBTT_STATIC
-#define STB_TRUETYPE_IMPLEMENTATION
-#include <stb/stb_truetype.h>
-
-#if defined(__clang__)
-	#pragma clang diagnostic pop
-#elif defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
+	#define STBTT_STATIC
+	#define STB_TRUETYPE_IMPLEMENTATION
+	#include <stb/stb_truetype.h>
+#include "framework/__warnings_pop.h"
 
 //
 #include "typeface.h"

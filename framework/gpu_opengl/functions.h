@@ -3,8 +3,10 @@
 
 #include "framework/common.h"
 
-#include <KHR/khrplatform.h>
-#include <GL/glcorearb.h>
+#include "framework/__warnings_push.h"
+	#include <KHR/khrplatform.h>
+	#include <GL/glcorearb.h>
+#include "framework/__warnings_pop.h"
 
 #define XMACRO(type, name) extern PFNGL##type##PROC gl##name;
 #include "internal/functions_xmacro.h"
