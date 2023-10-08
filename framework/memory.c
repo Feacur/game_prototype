@@ -12,30 +12,28 @@
 
 struct Memory_Header {
 	size_t checksum, size;
-	struct Memory_Header * prev, * next;
+	struct Memory_Header * prev;
+	struct Memory_Header * next;
 	struct Callstack callstack;
 };
 
 static struct Memory_Header * gs_memory;
 
 void * memory_reallocate(void * pointer, size_t size) {
-	struct Callstack const callstack = platform_debug_get_callstack(0);
-
 	struct Memory_Header * pointer_header = (pointer != NULL)
 		? (struct Memory_Header *)pointer - 1
 		: NULL;
 
 	if (pointer_header != NULL) {
 		if (pointer_header->checksum != (size_t)pointer_header) {
-			struct CString const stacktrace = platform_debug_get_stacktrace(callstack);
-			logger_to_console("incorrect checksum: \"%.*s\"\n", stacktrace.length, stacktrace.data);
-			REPORT_CALLSTACK(); DEBUG_BREAK(); return pointer;
+			goto fail;
 		}
 
-		pointer_header->checksum = 0;
 		if (gs_memory == pointer_header) { gs_memory = pointer_header->next; }
 		if (pointer_header->next != NULL) { pointer_header->next->prev = pointer_header->prev; }
 		if (pointer_header->prev != NULL) { pointer_header->prev->next = pointer_header->next; }
+		pointer_header->checksum = 0;
+		// common_memset(pointer_header, 0, sizeof(*pointer_header) + pointer_header->size);
 	}
 
 	// free
@@ -48,48 +46,50 @@ void * memory_reallocate(void * pointer, size_t size) {
 
 	// allocate or reallocate
 	struct Memory_Header * reallocated_header = realloc(pointer_header, sizeof(*pointer_header) + size);
-	if (reallocated_header != NULL) {
-		*reallocated_header = (struct Memory_Header){
-			.checksum = (size_t)reallocated_header,
-			.size = size,
-			.callstack = callstack,
-		};
+	if (reallocated_header == NULL) { goto fail; }
 
-		// track memory
-		reallocated_header->next = gs_memory;
-		if (gs_memory != NULL) { gs_memory->prev = reallocated_header; }
-		gs_memory = reallocated_header;
+	// track memory
+	*reallocated_header = (struct Memory_Header){
+		.checksum = (size_t)reallocated_header,
+		.size = size,
+		.callstack = platform_debug_get_callstack(0),
+	};
 
-		return reallocated_header + 1;
-	}
+	reallocated_header->next = gs_memory;
+	if (gs_memory != NULL) { gs_memory->prev = reallocated_header; }
+	gs_memory = reallocated_header;
+
+	return reallocated_header + 1;
 
 	// failed
-	struct CString const stacktrace = platform_debug_get_stacktrace(callstack);
-	logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data);
-	REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
+	fail: logger_to_console("'realloc' failed:\n");
+	REPORT_CALLSTACK(); DEBUG_BREAK();
+	return NULL;
 }
 
 void * memory_reallocate_without_tracking(void * pointer, size_t size) {
-	struct Callstack const callstack = platform_debug_get_callstack(0);
-
 	// free
 	if (size == 0) { free(pointer); return NULL; }
 
 	// allocate or reallocate
 	void * reallocated = realloc(pointer, size);
-	if (reallocated != NULL) { return reallocated; }
+	if (reallocated == NULL) { goto fail; }
+
+	return reallocated;
 
 	// failed
-	struct CString const stacktrace = platform_debug_get_stacktrace(callstack);
-	logger_to_console("'realloc' failed: \"%.*s\"\n", stacktrace.length, stacktrace.data);
-	REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
+	fail: logger_to_console("'realloc' failed:\n");
+	REPORT_CALLSTACK(); DEBUG_BREAK();
+	return NULL;
 }
 
 //
 #include "framework/internal/memory_to_system.h"
 
-bool memory_to_system_cleanup(void) {
-	if (gs_memory == NULL) { return false; }
+bool memory_to_system_init(void) { return true; }
+
+void memory_to_system_free(void) {
+	if (gs_memory == NULL) { return; }
 
 	uint32_t const pointer_digits_count = sizeof(size_t) * 2;
 
@@ -134,5 +134,5 @@ bool memory_to_system_cleanup(void) {
 		memory_reallocate(pointer, 0);
 	}
 
-	return true;
+	DEBUG_BREAK();
 }

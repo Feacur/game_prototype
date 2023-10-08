@@ -6,6 +6,7 @@
 
 #include "framework/common.h"
 
-bool memory_to_system_cleanup(void);
+bool memory_to_system_init(void);
+void memory_to_system_free(void);
 
 #endif
