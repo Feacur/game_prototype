@@ -1,15 +1,11 @@
 #if !defined(FRAMEWORK_COMMON)
 #define FRAMEWORK_COMMON
 
+#include "__compilation.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-// #if defined(__clang__)
-// #define NORETURN_POSTFIX __attribute__((noreturn))
-// #else
-// #define NORETURN_POSTFIX
-// #endif
 
 // ----- ----- ----- ----- -----
 //     array
@@ -103,9 +99,7 @@ inline static uint32_t hash32(void const * v) { return *(uint32_t const *)v; }
 // ----- ----- ----- ----- -----
 
 #if __STDC_VERSION__ >= 199901L
-	#if defined(__clang__)
-		#define FLEXIBLE_ARRAY
-	#endif
+	#define FLEXIBLE_ARRAY
 #endif
 
 #if !defined(FLEXIBLE_ARRAY)

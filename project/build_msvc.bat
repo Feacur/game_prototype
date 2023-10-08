@@ -46,6 +46,7 @@ rem |> OPTIONS
 call build_options.bat
 set compiler=%compiler% -nologo -diagnostics:caret
 set compiler=%compiler% -EHa- -GR-
+set compiler=%compiler% -WX -W4
 
 if %configuration% == tiny (
 	set compiler=%compiler% -O1
@@ -61,10 +62,6 @@ if %configuration% == tiny (
 	echo.unknown configuration "%configuration%"
 	exit /b 1
 )
-
-set compiler=%compiler% -WX -W4
-set compiler=%compiler% -wd5105
-rem [5105] - macro expansion producing 'defined' has undefined behavior
 
 rem |> BUILD
 pushd ..

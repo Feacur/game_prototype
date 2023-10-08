@@ -49,6 +49,7 @@ call "environment.bat" || ( goto :eof )
 rem |> OPTIONS
 call build_options.bat
 set compiler=%compiler% -fno-exceptions -fno-rtti
+set compiler=%compiler% -Werror -Weverything
 
 if %configuration% == tiny (
 	set compiler=%compiler% -Oz
@@ -64,20 +65,6 @@ if %configuration% == tiny (
 	echo.unknown configuration "%configuration%"
 	exit /b 1
 )
-
-set compiler=%compiler% -Werror -Weverything
-set compiler=%compiler% -Wno-switch-enum
-set compiler=%compiler% -Wno-float-equal
-set compiler=%compiler% -Wno-reserved-id-macro
-set compiler=%compiler% -Wno-reserved-identifier
-set compiler=%compiler% -Wno-nonportable-system-include-path
-set compiler=%compiler% -Wno-assign-enum
-set compiler=%compiler% -Wno-bad-function-cast
-set compiler=%compiler% -Wno-documentation-unknown-command
-set compiler=%compiler% -Wno-declaration-after-statement
-set compiler=%compiler% -Wno-unsafe-buffer-usage
-rem [editor-only] -Wno-unused-macros
-rem [editor-only] -Wno-unused-function
 
 rem |> BUILD
 pushd ..
