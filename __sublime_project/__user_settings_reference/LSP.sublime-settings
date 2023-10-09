@@ -2,47 +2,48 @@
 {
 	"clients": {
 		"clangd": {
+			"selector": "source.c | source.c++",
 			"command": [
 				"clangd",
 				"--compile-commands-dir=${project_path:${folder:${file_path}}}",
 				"--header-insertion=never",
-				// "--log=verbose",
 			],
 			"enabled": true,
+			// https://github.com/clangd/clangd/releases/download/16.0.2/clangd-windows-16.0.2.zip
+			// ... or use LSP-clangd
 		},
 		"omnisharp": {
+			"selector": "source.cs",
 			"command": [
 				"omnisharp",
 				"--languageserver",
-				"--source=${project_path:${folder:${file_path}}}",
-				// "--verbose",
+				// "--source=${project_path:${project_path:${folder:${file_path}}}",
 			],
 			"enabled": true,
+			// https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.39.2/omnisharp-win-x64.zip
+			// https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.38.2/omnisharp-win-x64.zip
+			// ... or use LSP-omnisharp
 		},
 		"rust-analyzer": {
+			"selector": "source.rs",
 			"command": [
 				"rust-analyzer",
-				// "--verbose",
 			],
 			"enabled": true,
+			// https://github.com/rust-lang/rust-analyzer/releases/download/2023-10-02/rust-analyzer-x86_64-pc-windows-msvc.zip
+			// ... or use LSP-rust-analyzer
 		},
 		"zig": {
+			"selector": "source.zig",
 			"command": ["zls"],
 			"enabled": true,
-			"selector": "source.zig",
+			// https://github.com/zigtools/zls/releases/download/0.11.0/zls-x86_64-windows.zip
 		},
 	},
 	"inhibit_word_completions": true,
 	"inhibit_snippet_completions": true,
 	"show_symbol_action_links": true,
 	"diagnostics_highlight_style": "box",
-	"document_highlight_style": "fill",
+	"document_highlight_style": "outline",
 	"diagnostics_gutter_marker": "sign",
-	"disabled_capabilities": [
-		"colorProvider",
-		"documentHighlight",
-	],
-	// "log_debug": true,
-	// "log_stderr": true,
-	// "log_payloads": true,
 }

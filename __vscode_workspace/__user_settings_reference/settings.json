@@ -87,9 +87,8 @@
 	"clangd.arguments": [
 		"--compile-commands-dir=${workspaceFolder}",
 		"--header-insertion=never",
-		// "--log=verbose",
 	],
-	"clangd.onConfigChanged": "prompt",
+	"clangd.onConfigChanged": "restart",
 	// -- extensions: geequlim.godot-tools
 	"godot_tools.editor_path": "godot",
 	"godot_tools.gdscript_lsp_server_port": 6005,

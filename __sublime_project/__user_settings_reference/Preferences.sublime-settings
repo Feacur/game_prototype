@@ -28,6 +28,9 @@
 	"font_size": 13,
 	"ignored_packages":
 	[
+		"LSP-clangd",
+		"LSP-OmniSharp",
+		"LSP-rust-analyzer",
 		"Vintage",
 	],
 	"index_exclude_patterns":

@@ -38,6 +38,16 @@
 	"settings": {
 		// editor
 		"translate_tabs_to_spaces": false,
+		// extensions: LSP
+		"LSP": {
+			"clangd": {
+				"command": [
+					"clangd",
+					"--compile-commands-dir=${project_path}/../project",
+					"--header-insertion=never",
+				],
+			},
+		},
 	},
 	"build_systems": [
 		{
@@ -48,7 +58,14 @@
 			"file_regex": "^(.+):(\\d+):(\\d+): (.+)$",
 			"working_dir": "${project_path:${folder}}/../project",
 			"windows": {
-				"cmd": "build_clang.bat game debug static console unity",
+				"cmd": [
+					"build_clang.bat",
+					"game",
+					"debug",
+					"static",
+					"console",
+					"unity",
+				],
 			},
 			"word_wrap": false,
 		},
@@ -60,7 +77,14 @@
 			"file_regex": "^(.+)\\((\\d+),?(\\d+)?\\): (.+)$",
 			"working_dir": "${project_path:${folder}}/../project",
 			"windows": {
-				"cmd": "build_msvc.bat game debug static console unity",
+				"cmd": [
+					"build_msvc.bat",
+					"game",
+					"debug",
+					"static",
+					"console",
+					"unity",
+				],
 			},
 			"word_wrap": false,
 		},
@@ -68,7 +92,10 @@
 			"name": "Debug",
 			"working_dir": "${project_path:${folder}}/../project",
 			"windows": {
-				"cmd": "debug.bat game",
+				"cmd": [
+					"debug.bat",
+					"game",
+				],
 			},
 			"quiet": true,
 		},

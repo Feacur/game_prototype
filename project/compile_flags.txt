@@ -2,8 +2,10 @@
 -Werror
 -Weverything
 
+-Wno-nonportable-system-include-path
+-Wno-documentation-unknown-command
+-Wno-reserved-macro-identifier
 -Wno-unused-macros
--Wno-unused-function
 
 -I..
 -I../third_party

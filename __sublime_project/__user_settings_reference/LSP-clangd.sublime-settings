@@ -1,5 +1,5 @@
 // %appdata%/Sublime Text/Packages/User
-{
+{ // it's but a convenience
 	"initializationOptions" : {
 		"clangd.compile-commands-dir": "${project_path:${folder:${file_path}}}",
 		"clangd.header-insertion": "never",
