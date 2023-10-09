@@ -283,6 +283,22 @@
                 "action": "scrollUp"
             },
             "keys": "ctrl+up"
+        },
+        {
+            "command": 
+            {
+                "action": "findMatch",
+                "direction": "next"
+            },
+            "keys": "f3"
+        },
+        {
+            "command": 
+            {
+                "action": "findMatch",
+                "direction": "prev"
+            },
+            "keys": "shift+f3"
         }
     ],
     "copyFormatting": "none",

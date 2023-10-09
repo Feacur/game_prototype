@@ -1,6 +1,6 @@
-// %appdata%/Code/User
+// -- %appdata%/Code/User
 [
-	// unbind defaults
+	// -- unbind defaults
 	{ "key": "ctrl+m", "command": "-workbench.action.toggleTabsVisibility", },
 	{ "key": "ctrl+up", "command": "-scrollLineUp", },
 	{ "key": "ctrl+down", "command": "-scrollLineDown", },
@@ -22,7 +22,8 @@
 	{ "key": "ctrl+shift+=", "command": "-workbench.action.zoomIn" },
 	{ "key": "ctrl+shift+-", "command": "-workbench.action.zoomOut" },
 	{ "key": "ctrl+f12", "command": "-editor.action.revealDefinition" },
-	// utilities
+	{ "key": "ctrl+f12", "command": "-editor.action.goToImplementation" },
+	// -- utilities
 	{
 		"key": "ctrl+shift+r",
 		"command": "workbench.view.extension.references-view",
@@ -43,13 +44,13 @@
 		"key": "ctrl+0",
 		"command": "workbench.action.zoomReset",
 	},
-	// RMB
+	// -- RMB
 	{
 		"key": "ctrl+,",
 		"command": "editor.action.showContextMenu",
 		"when": "textInputFocus"
 	},
-	// scroll editor
+	// -- scroll editor
 	{
 		"key": "ctrl+up",
 		"command": "editorScroll",
@@ -74,13 +75,13 @@
 		"when": "editorTextFocus",
 		"args": {"to": "down", "by": "page", "revealCursor": true},
 	},
-	// navigate source
+	// -- navigate source
 	{
 		"key": "ctrl+f12",
 		"command": "editor.action.revealDeclaration",
 		"when": "editorTextFocus",
 	},
-	// navigate history
+	// -- navigate history
 	{
 		"key": "ctrl+alt+left",
 		"command": "workbench.action.navigateBack",
@@ -89,7 +90,7 @@
 		"key": "ctrl+alt+right",
 		"command": "workbench.action.navigateForward",
 	},
-	// navigate search
+	// -- navigate search
 	{
 		"key": "alt+]",
 		"command": "editor.action.marker.nextInFiles",
@@ -130,7 +131,7 @@
 		"command": "goToNextReference",
 		"when": "inReferenceSearchEditor || referenceSearchVisible",
 	},
-	// navigate paragraphs
+	// -- navigate paragraphs
 	{
 		"key": "alt+up",
 		"command": "cursorMove",
@@ -155,9 +156,9 @@
 		"when": "editorTextFocus",
 		"args": {"to": "nextBlankLine", "select": true},
 	},
-	// navigate words
-	// -- default
-	// navigate word parts
+	// -- navigate words
+	//    -- default
+	// -- navigate word parts
 	{
 		"key": "alt+left",
 		"command": "cursorWordPartLeft",
@@ -178,7 +179,7 @@
 		"command": "cursorWordPartRightSelect",
 		"when": "editorTextFocus",
 	},
-	// navigate brackets
+	// -- navigate brackets
 	{
 		"key": "ctrl+m",
 		"command": "editor.action.jumpToBracket",
@@ -189,7 +190,7 @@
 		"command": "editor.action.selectToBracket",
 		"when": "editorTextFocus",
 	},
-	// windowing
+	// -- windowing
 	{
 		"key": "ctrl+shift+alt+[",
 		"command": "workbench.action.closeGroup",
@@ -214,7 +215,7 @@
 		"key": "ctrl+shift+alt+up",
 		"command": "workbench.action.moveEditorToAboveGroup",
 	},
-	// edit lines
+	// -- edit lines
 	{
 		"key": "ctrl+shift+backspace",
 		"command": "deleteAllLeft",
