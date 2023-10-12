@@ -12,7 +12,14 @@
 		{
 			"label": "Build Clang",
 			"group": "build",
-			"command": "build_clang.bat game debug static console unity",
+			"command": "build_clang.bat",
+			"args": [
+				"game",
+				"debug",
+				"static",
+				"console",
+				"unity",
+			],
 			"problemMatcher": {
 				"owner": "c",
 				"fileLocation": ["autoDetect", "${workspaceFolder}"],
@@ -34,7 +41,14 @@
 		{
 			"label": "Build MSVC",
 			"group": "build",
-			"command": "build_msvc.bat game debug static console unity",
+			"command": "build_msvc.bat",
+			"args": [
+				"game",
+				"debug",
+				"static",
+				"console",
+				"unity",
+			],
 			"problemMatcher": {
 				"owner": "c",
 				"fileLocation": ["autoDetect", "${workspaceFolder}"],

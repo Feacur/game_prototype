@@ -25,7 +25,7 @@
 	"workbench.startupEditor": "newUntitledFile",
 	"workbench.sideBar.location": "right",
 	"workbench.activityBar.visible": false,
-	"workbench.editor.untitled.hint": "hidden",
+	"workbench.editor.empty.hint": "hidden",
 	"workbench.editor.restoreViewState": false,
 	"workbench.commandPalette.history": 0,
 	"workbench.colorTheme": "Gruvbox Dark Medium",
@@ -66,6 +66,14 @@
 	"omnisharp.enableDecompilationSupport": true,
 	"omnisharp.organizeImportsOnFormat": true,
 	"dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+	// -- extensions: ms-dotnettools.vscode-dotnet-runtime
+	"dotnetAcquisitionExtension.enableTelemetry": false,
+	"dotnetAcquisitionExtension.existingDotnetPath": [
+		{
+			"extensionId": "visualstudiotoolsforunity.vstuc",
+			"path": "dotnet"
+		},
+	],
 	// -- extensions: ms-vscode.cpptools
 	"C_Cpp.default.cStandard": "c99",
 	"C_Cpp.default.cppStandard": "c++11",
