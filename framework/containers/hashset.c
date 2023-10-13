@@ -136,8 +136,7 @@ void hashset_del_at(struct Hashset * hashset, uint32_t key_index) {
 bool hashset_iterate(struct Hashset const * hashset, struct Hashset_Iterator * iterator) {
 	while (iterator->next < hashset->capacity) {
 		uint32_t const index = iterator->next++;
-		iterator->current = index;
-		//
+		iterator->curr = index;
 		if (hashset->marks[index] != HASH_MARK_FULL) { continue; }
 		iterator->hash  = hashset->hashes[index];
 		iterator->key   = (uint8_t *)hashset->keys   + hashset->key_size * index;

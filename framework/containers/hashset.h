@@ -4,7 +4,7 @@
 #include "framework/common.h"
 
 struct Hashset_Iterator {
-	uint32_t current, next;
+	uint32_t curr, next;
 	uint32_t hash;
 	void const * key;
 };

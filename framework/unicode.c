@@ -35,7 +35,7 @@ bool utf8_iterate(uint32_t length, uint8_t const * data, struct UTF8_Iterator * 
 		it->next += (octets_count > 0) ? octets_count : 1;
 
 		if (0 < octets_count && octets_count <= (length - it->current)) {
-			it->previous = it->codepoint;
+			it->leading = it->codepoint;
 			it->codepoint = utf8_codepoint_decode(value, octets_count);
 			if (it->codepoint != CODEPOINT_EMPTY) { return true; }
 		}

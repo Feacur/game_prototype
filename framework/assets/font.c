@@ -186,7 +186,7 @@ void font_render(struct Font * font) {
 		struct Glyph * glyph = it.value;
 		if (glyph->gc_timeout == 0) {
 			font->rendered = false;
-			hashmap_del_at(&font->table, it.current);
+			hashmap_del_at(&font->table, it.curr);
 			continue;
 		}
 

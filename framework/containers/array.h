@@ -4,7 +4,7 @@
 #include "framework/common.h"
 
 struct Array_Iterator {
-	uint32_t current, next;
+	uint32_t curr, next;
 	void const * value;
 };
 

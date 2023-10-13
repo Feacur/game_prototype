@@ -294,7 +294,7 @@ void batcher_2d_add_text(
 				array_push_many(&batcher->codepoints, 1, &it.codepoint);
 
 				//
-				float const kerning = font_get_kerning(font_asset->font, it.previous, it.codepoint, scale);
+				float const kerning = font_get_kerning(font_asset->font, it.leading, it.codepoint, scale);
 				word_width += kerning;
 			}
 		}

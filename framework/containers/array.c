@@ -97,8 +97,7 @@ void * array_at(struct Array const * array, uint32_t index) {
 bool array_iterate(struct Array const * array, struct Array_Iterator * iterator) {
 	while (iterator->next < array->count) {
 		uint32_t const index = iterator->next++;
-		iterator->current = index;
-		//
+		iterator->curr = index;
 		iterator->value = array_at(array, index);
 		return true;
 	}

@@ -119,8 +119,7 @@ void sparseset_set(struct Sparseset * sparseset, struct Handle handle, void cons
 bool sparseset_iterate(struct Sparseset const * sparseset, struct Sparseset_Iterator * iterator) {
 	while (iterator->next < sparseset->packed.count) {
 		uint32_t const index = iterator->next++;
-		iterator->current = index;
-		//
+		iterator->curr = index;
 		uint32_t const handle_id = sparseset->ids[index];
 		struct Handle const * entry = array_at(&sparseset->sparse, handle_id);
 		iterator->handle = (struct Handle){

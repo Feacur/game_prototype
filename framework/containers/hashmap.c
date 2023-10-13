@@ -151,8 +151,7 @@ void hashmap_del_at(struct Hashmap * hashmap, uint32_t key_index) {
 bool hashmap_iterate(struct Hashmap const * hashmap, struct Hashmap_Iterator * iterator) {
 	while (iterator->next < hashmap->capacity) {
 		uint32_t const index = iterator->next++;
-		iterator->current = index;
-		//
+		iterator->curr = index;
 		if (hashmap->marks[index] != HASH_MARK_FULL) { continue; }
 		iterator->hash  = hashmap->hashes[index];
 		iterator->key   = (uint8_t *)hashmap->keys   + hashmap->key_size * index;

@@ -4,7 +4,7 @@
 #include "array.h"
 
 struct Sparseset_Iterator {
-	uint32_t current, next;
+	uint32_t curr, next;
 	struct Handle handle;
 	void * value;
 };

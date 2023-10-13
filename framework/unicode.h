@@ -7,8 +7,8 @@
 #define CODEPOINT_NON_BREAKING_SPACE 0x000000a0
 
 struct UTF8_Iterator {
-	uint32_t current, next;
-	uint32_t codepoint, previous;
+	uint32_t curr, next;
+	uint32_t codepoint, leading;
 };
 
 uint32_t utf8_codepoint_length(uint8_t octet);
