@@ -11,8 +11,7 @@ struct UTF8_Iterator {
 	uint32_t codepoint, leading;
 };
 
-uint32_t utf8_codepoint_length(uint8_t octet);
-uint32_t utf8_codepoint_decode(uint8_t const * value, uint32_t length);
+uint32_t utf8_decode(uint8_t const * value, uint32_t limit);
 
 inline static bool codepoint_is_invisible(uint32_t codepoint) {
 	switch (codepoint) {
