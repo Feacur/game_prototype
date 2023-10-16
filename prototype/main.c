@@ -1,3 +1,7 @@
+#if defined(GAME_ARCH_SHARED)
+	#error "this an executable entry point"
+#endif
+
 #include "framework/memory.h"
 #include "framework/unicode.h"
 #include "framework/json_read.h"

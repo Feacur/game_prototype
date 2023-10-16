@@ -16,8 +16,8 @@ goto :eof
 
 	rem @note: hours, minutes, seconds, centiseconds
 	for /F "tokens=1-4 delims=%delims%" %%a in ("%local_time%") do (
-		rem @note: force a leading zero, which anyway occur some of the times;
-		rem        later, they'll be erased by prepending with 1 and subtracting 100
+		rem @note: force a leading zero, which anyway occurs occasionally;
+		rem        they'll be erased by prepending with 1 and subtracting 100
 		if 1%%a lss 20 ( set "hh=0%%a" ) else ( set "hh=%%a" )
 		if 1%%b lss 20 ( set "mm=0%%b" ) else ( set "mm=%%b" )
 		if 1%%c lss 20 ( set "ss=0%%c" ) else ( set "ss=%%c" )

@@ -61,7 +61,10 @@
 #include "prototype/game_state.c"
 #include "prototype/components.c"
 #include "prototype/ui.c"
-#include "prototype/main.c"
+
+#if !defined(GAME_ARCH_SHARED)
+	#include "prototype/main.c"
+#endif
 
 /*
 Language: C99 or C11
