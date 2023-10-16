@@ -10,6 +10,7 @@
 #include "framework/memory.h"
 #include "framework/logger.h"
 #include "framework/unicode.h"
+#include "framework/maths.h"
 
 #define GLYPH_GC_TIMEOUT_MAX UINT8_MAX
 
@@ -43,10 +44,10 @@ struct Glyph_Codepoint {
 	uint32_t glyph, codepoint;
 };
 
-static uint32_t font_hash_key(void const * v) {
+static HASHER(hash_typeface_key) {
 	struct Typeface_Key const * k = v;
 	return k->codepoint
-	     ^ *(uint32_t const *)&k->size;
+	     ^ convert_bits_r32_u32(k->size);
 }
 
 struct Font * font_init(void) {
@@ -68,7 +69,7 @@ struct Font * font_init(void) {
 			},
 		},
 		.ranges = array_init(sizeof(struct Typeface_Range)),
-		.table = hashmap_init(&font_hash_key, sizeof(struct Typeface_Key), sizeof(struct Glyph)),
+		.table = hashmap_init(&hash_typeface_key, sizeof(struct Typeface_Key), sizeof(struct Glyph)),
 	};
 	return font;
 }

@@ -19,7 +19,7 @@ struct Memory_Header {
 
 static struct Memory_Header * gs_memory;
 
-void * memory_reallocate(void * pointer, size_t size) {
+ALLOCATOR(memory_reallocate) {
 	struct Memory_Header * pointer_header = (pointer != NULL)
 		? (struct Memory_Header *)pointer - 1
 		: NULL;
@@ -67,7 +67,7 @@ void * memory_reallocate(void * pointer, size_t size) {
 	return NULL;
 }
 
-void * memory_reallocate_without_tracking(void * pointer, size_t size) {
+ALLOCATOR(memory_reallocate_without_tracking) {
 	// free
 	if (size == 0) { free(pointer); return NULL; }
 

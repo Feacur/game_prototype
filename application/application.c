@@ -42,13 +42,6 @@ static uint64_t get_fixed_ticks(uint64_t default_value) {
 
 static void application_init(void) {
 	logger_to_console(
-		"> system status:\n"
-		"  power .. %s\n"
-		""
-		, platform_system_is_powered() ? "on" : "off"
-	);
-
-	logger_to_console(
 		"> application settings:\n"
 		"  size ......... %u x %u\n"
 		"  vsync ........ %d\n"

@@ -3,8 +3,10 @@
 
 #include "common.h"
 
-void * memory_reallocate(void * pointer, size_t size);
-void * memory_reallocate_without_tracking(void * pointer, size_t size);
+#define ALLOCATOR(name) void * name(void * pointer, size_t size)
+
+ALLOCATOR(memory_reallocate);
+ALLOCATOR(memory_reallocate_without_tracking);
 
 inline static Allocator * default_allocator(Allocator * allocator) {
 	return (allocator != NULL) ? allocator : memory_reallocate;
