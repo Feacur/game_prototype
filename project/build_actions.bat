@@ -66,11 +66,11 @@ goto :eof
 goto :eof
 
 :stat
-	call %func% get_millis time_done
-	if [%time_link%] == [] ( set time_link=%time_done% )
+	call %func% get_millis time_stat
+	if [%time_link%] == [] ( set time_link=%time_stat% )
 	call %func% report_millis_delta "head .." time_zero time_prep
 	call %func% report_millis_delta "prep .." time_prep time_comp
 	call %func% report_millis_delta "comp .." time_comp time_link
 	call %func% report_millis_delta "link .." time_link time_post
-	call %func% report_millis_delta "post .." time_post time_done
+	call %func% report_millis_delta "post .." time_post time_stat
 goto :eof

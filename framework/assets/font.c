@@ -22,7 +22,7 @@ struct Typeface_Range {
 struct Font {
 	struct Image buffer;
 	//
-	struct Array ranges;    // `struct Typeface_Range`
+	struct Array ranges;  // `struct Typeface_Range`
 	struct Hashmap table; // `struct Typeface_Key` : `struct Glyph`
 	bool rendered;
 };

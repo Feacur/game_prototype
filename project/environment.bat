@@ -1,5 +1,6 @@
 @echo off
 chcp 65001 > nul
+set _NO_DEBUG_HEAP=1
 
 rem enable ANSI escape codes for CMD: set `HKEY_CURRENT_USER\Console\VirtualTerminalLevel` to `0x00000001`
 rem enable UTF-8 by default for CMD: set `HKEY_LOCAL_MACHINE\Software\Microsoft\Command Processor\Autorun` to `chcp 65001 > nul`

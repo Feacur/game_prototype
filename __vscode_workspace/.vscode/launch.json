@@ -1,5 +1,6 @@
 {
 	"version": "0.2.0",
+	"environment": [{"name":"_NO_DEBUG_HEAP", "value": "1"}],
 	"configurations": [
 		{
 			"name": "Launch LLDB",
