@@ -156,7 +156,7 @@ struct Handle {
 	uint32_t id : 24; // ((1 << 24) - 1) == 0x00ffffff
 	uint32_t gen : 8; // ((1 <<  8) - 1) == 0x000000ff
 };
-STATIC_ASSERT(sizeof(struct Handle) == sizeof(uint32_t), handle);
+STATIC_ASSERT(sizeof(struct Handle) == sizeof(uint32_t), common);
 
 inline static bool handle_is_null(struct Handle h) { return h.id == 0; }
 inline static bool handle_equals(struct Handle h1, struct Handle h2) {

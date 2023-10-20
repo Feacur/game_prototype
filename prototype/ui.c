@@ -35,7 +35,7 @@ void ui_free(void) {
 }
 
 static void ui_internal_push_shader(void) {
-	struct Asset_Shader const * shader = asset_system_take(gs_ui.shader_asset_handle);
+	struct Asset_Shader const * shader = asset_system_get(gs_ui.shader_asset_handle);
 	batcher_2d_set_shader(
 		gs_renderer.batcher_2d,
 		shader->gpu_handle,
@@ -44,13 +44,13 @@ static void ui_internal_push_shader(void) {
 }
 
 static void ui_internal_push_image(void) {
-	struct Asset_Image const * asset = asset_system_take(gs_ui.image_asset_handle);
+	struct Asset_Image const * asset = asset_system_get(gs_ui.image_asset_handle);
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Texture"), A_(gpu_handle));
 }
 
 static void ui_internal_push_font(void) {
-	struct Asset_Font const * asset = asset_system_take(gs_ui.font_asset_handle);
+	struct Asset_Font const * asset = asset_system_get(gs_ui.font_asset_handle);
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Texture"), A_(gpu_handle));
 }
@@ -102,15 +102,15 @@ void ui_set_color(struct vec4 color) {
 }
 
 void ui_set_shader(struct CString name) {
-	gs_ui.shader_asset_handle = asset_system_aquire(name);
+	gs_ui.shader_asset_handle = asset_system_load(name);
 }
 
 void ui_set_image(struct CString name) {
-	gs_ui.image_asset_handle = asset_system_aquire(name);
+	gs_ui.image_asset_handle = asset_system_load(name);
 }
 
 void ui_set_font(struct CString name) {
-	gs_ui.font_asset_handle = asset_system_aquire(name);
+	gs_ui.font_asset_handle = asset_system_load(name);
 }
 
 void ui_quad(struct rect uv) {

@@ -118,7 +118,7 @@ static void prototype_tick_entities_quad_2d(void) {
 		struct Camera const * camera = array_at(&gs_game.cameras, entity->camera);
 		struct uvec2 const viewport_size = camera->cached_size;
 
-		struct Asset_Material const * material = asset_system_take(entity->material_asset_handle);
+		struct Asset_Material const * material = asset_system_get(entity->material_asset_handle);
 		struct uvec2 const content_size = entity_get_content_size(entity, material->handle, viewport_size.x, viewport_size.y);
 		if (content_size.x == 0 || content_size.y == 0) { break; }
 
@@ -270,7 +270,7 @@ static void prototype_draw_objects(void) {
 			struct Entity const * entity = array_at(&gs_game.entities, entity_i);
 			if (entity->camera != camera_i) { continue; }
 
-			struct Asset_Material const * material_asset = asset_system_take(entity->material_asset_handle);
+			struct Asset_Material const * material_asset = asset_system_get(entity->material_asset_handle);
 			struct Gfx_Material const * material = material_system_take(material_asset->handle);
 
 			struct mat4 const u_Model = mat4_set_transformation(
@@ -298,7 +298,7 @@ static void prototype_draw_objects(void) {
 					batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 
 					struct Entity_Mesh const * mesh = &entity->as.mesh;
-					struct Asset_Model const * model = asset_system_take(mesh->asset_handle);
+					struct Asset_Model const * model = asset_system_get(mesh->asset_handle);
 
 					uint32_t const override_offset = gs_renderer.uniforms.headers.count;
 					gfx_uniforms_push(&gs_renderer.uniforms, S_("u_Model"), A_(u_Model));
@@ -339,7 +339,7 @@ static void prototype_draw_objects(void) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * text = &entity->as.text;
-					struct Asset_Bytes const * message = asset_system_take(text->message_asset_handle);
+					struct Asset_Bytes const * message = asset_system_get(text->message_asset_handle);
 					struct CString const value = {
 						.length = message->length,
 						.data = (char const *)message->data,

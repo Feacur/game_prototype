@@ -32,7 +32,8 @@ struct Handle json_load_gfx_material(struct JSON const * json) {
 	struct CString const shader_path = json_get_string(json, S_("shader"));
 	if (shader_path.data == NULL) { goto fail; }
 
-	struct Asset_Shader const * shader_asset = asset_system_aquire_instance(shader_path);
+	struct Handle const shader_handle = asset_system_load(shader_path);
+	struct Asset_Shader const * shader_asset = asset_system_get(shader_handle);
 	if (shader_asset == NULL) { goto fail; }
 
 	gfx_material_set_shader(material, shader_asset->gpu_handle);
@@ -52,8 +53,8 @@ void json_load_font_range(struct JSON const * json, struct Font * font) {
 	uint32_t const from = (uint32_t)json_get_number(json, S_("from"));
 	uint32_t const to   = (uint32_t)json_get_number(json, S_("to"));
 
-	struct Handle const handle = asset_system_aquire(path);
-	struct Asset_Typeface const * asset = asset_system_take(handle);
+	struct Handle const handle = asset_system_load(path);
+	struct Asset_Typeface const * asset = asset_system_get(handle);
 	font_set_typeface(font, asset->typeface, from, to);
 }
 
@@ -65,25 +66,27 @@ static struct Handle json_load_texture(struct JSON const * json) {
 	struct CString const path = json_get_string(json, S_("path"));
 	if (path.data == NULL) { goto fail; }
 
-	struct Handle const asset_handle = asset_system_aquire(path);
+	struct Handle const asset_handle = asset_system_load(path);
 	if (handle_is_null(asset_handle)) { goto fail; }
 
-	void const * instance = asset_system_take(asset_handle);
+	void const * instance = asset_system_get(asset_handle);
 	if (instance == NULL) { goto fail; }
 
-	if (asset_system_match_type(asset_handle, S_("image"))) {
+	struct CString const type = asset_system_get_type(asset_handle);
+
+	if (cstring_equals(type, S_("image"))) {
 		struct Asset_Image const * asset = instance;
 		return asset->gpu_handle;
 	}
 
-	if (asset_system_match_type(asset_handle, S_("target"))) {
+	if (cstring_equals(type, S_("target"))) {
 		struct Asset_Target const * asset = instance;
 		enum Texture_Type const texture_type = json_read_texture_type(json_get(json, S_("buffer_type")));
 		uint32_t const index = (uint32_t)json_get_number(json, S_("index"));
 		return gpu_target_get_texture_handle(asset->gpu_handle, texture_type, index);
 	}
 
-	if (asset_system_match_type(asset_handle, S_("font"))) {
+	if (cstring_equals(type, S_("font"))) {
 		struct Asset_Font const * asset = instance;
 		return asset->gpu_handle;
 	}

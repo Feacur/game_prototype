@@ -248,7 +248,7 @@ void batcher_2d_add_text(
 	struct rect rect, struct vec2 alignment, bool wrap,
 	struct Handle font_asset_handle, struct CString value, float size
 ) {
-	struct Asset_Font const * font_asset = asset_system_take(font_asset_handle);
+	struct Asset_Font const * font_asset = asset_system_get(font_asset_handle);
 	if (font_asset == NULL) { return; }
 	if (font_asset->font == NULL) { return; }
 
@@ -462,13 +462,13 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 
 		FOR_HASHSET (&batcher->fonts, it) {
 			struct Handle const * handle = it.key;
-			struct Asset_Font const * font_asset = asset_system_take(*handle);
+			struct Asset_Font const * font_asset = asset_system_get(*handle);
 			font_render(font_asset->font);
 		}
 
 		FOR_HASHSET (&batcher->fonts, it) {
 			struct Handle const * handle = it.key;
-			struct Asset_Font const * font_asset = asset_system_take(*handle);
+			struct Asset_Font const * font_asset = asset_system_get(*handle);
 			gpu_texture_update(font_asset->gpu_handle, font_get_asset(font_asset->font));
 		}
 	}
@@ -478,7 +478,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 		struct Batcher_2D_Word const * word = array_at(&batcher->words, word_i);
 		uint32_t vertices_offset = word->buffer_vertices_offset;
 
-		struct Asset_Font const * font_asset = asset_system_take(word->font_asset_handle);
+		struct Asset_Font const * font_asset = asset_system_get(word->font_asset_handle);
 		struct Glyph const * glyph_error = font_get_glyph(font_asset->font, '\0', word->size);
 		struct rect const glyph_error_uv = glyph_error->uv;
 
