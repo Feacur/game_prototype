@@ -46,16 +46,14 @@ struct Handle json_load_gfx_material(struct JSON const * json) {
 	return handle;
 }
 
-void json_load_font_range(struct JSON const * json, struct Font * font) {
-	if (json->type != JSON_OBJECT) { return; }
+struct Handle json_load_font_range(struct JSON const * json, uint32_t * from, uint32_t * to) {
+	if (json->type != JSON_OBJECT) { return (struct Handle){0}; }
 
 	struct CString const path = json_get_string(json, S_("path"));
-	uint32_t const from = (uint32_t)json_get_number(json, S_("from"));
-	uint32_t const to   = (uint32_t)json_get_number(json, S_("to"));
+	*from = (uint32_t)json_get_number(json, S_("from"));
+	*to   = (uint32_t)json_get_number(json, S_("to"));
 
-	struct Handle const handle = asset_system_load(path);
-	struct Asset_Typeface const * asset = asset_system_get(handle);
-	font_set_typeface(font, asset->typeface, from, to);
+	return asset_system_load(path);
 }
 
 //

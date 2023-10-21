@@ -192,7 +192,14 @@ static void asset_font_fill(struct JSON const * json, void * data) {
 		uint32_t const count = json_count(ranges);
 		for (uint32_t i = 0; i < count; i++) {
 			struct JSON const * range = json_at(ranges, i);
-			json_load_font_range(range, font);
+
+			uint32_t from, to;
+			struct Handle const handle = json_load_font_range(range, &from, &to);
+			if (handle_is_null(handle)) { continue; }
+			if (from > to) { continue; }
+
+			struct Asset_Typeface const * asset = asset_system_get(handle);
+			font_set_typeface(font, asset->typeface, from, to);
 		}
 	}
 
@@ -294,7 +301,7 @@ static void asset_material_fill(struct JSON const * json, void * data) {
 	struct Handle handle = json_load_gfx_material(json);
 
 	*context->result = (struct Asset_Material){
-		.handle = handle,
+		.ms_handle = handle,
 	};
 }
 
@@ -306,7 +313,7 @@ static void asset_material_load(void * instance, struct CString name) {
 
 static void asset_material_drop(void * instance) {
 	struct Asset_Material * asset = instance;
-	material_system_discard(asset->handle);
+	material_system_discard(asset->ms_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
 

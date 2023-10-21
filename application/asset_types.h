@@ -41,7 +41,7 @@ struct Asset_Model {
 };
 
 struct Asset_Material {
-	struct Handle handle;
+	struct Handle ms_handle;
 };
 
 #endif

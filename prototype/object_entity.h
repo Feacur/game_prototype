@@ -28,7 +28,7 @@ enum Entity_Rotation_Mode {
 };
 
 struct Entity_Mesh {
-	struct Handle asset_handle;
+	struct Handle ah_mesh;
 };
 
 struct Entity_Quad {
@@ -38,15 +38,15 @@ struct Entity_Quad {
 };
 
 struct Entity_Text {
-	struct Handle font_asset_handle;
-	struct Handle message_asset_handle;
+	struct Handle ah_font;
+	struct Handle ah_text;
 	float size;
 	struct vec2 alignment;
 };
 
 struct Entity {
 	uint32_t camera;
-	struct Handle material_asset_handle;
+	struct Handle ah_material;
 	//
 	struct Transform_3D transform;
 	struct Transform_Rect rect; // @todo: make it completely optional?

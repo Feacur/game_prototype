@@ -22,10 +22,10 @@ struct uvec2 entity_get_content_size(
 		};
 
 		case ENTITY_TYPE_QUAD_2D: {
-			struct Entity_Quad const * quad = &entity->as.quad;
+			struct Entity_Quad const * e_quad = &entity->as.quad;
 
 			struct Gfx_Material const * material = material_system_take(material_handle);
-			struct CArray_Mut const field = gfx_uniforms_id_get(&material->uniforms, quad->uniform_id, 0);
+			struct CArray_Mut const field = gfx_uniforms_id_get(&material->uniforms, e_quad->uniform_id, 0);
 
 			if (field.data == NULL) { return (struct uvec2){0, 0}; }
 			struct Handle const gpu_texture_handle = *(struct Handle *)field.data;
@@ -34,8 +34,8 @@ struct uvec2 entity_get_content_size(
 			gpu_texture_get_size(gpu_texture_handle, &texture_size_x, &texture_size_y);
 
 			return (struct uvec2){
-				(uint32_t)r32_floor((float)texture_size_x * clamp_r32(quad->view.max.x - quad->view.min.x, 0, 1)),
-				(uint32_t)r32_floor((float)texture_size_y * clamp_r32(quad->view.max.y - quad->view.min.y, 0, 1)),
+				(uint32_t)r32_floor((float)texture_size_x * clamp_r32(e_quad->view.max.x - e_quad->view.min.x, 0, 1)),
+				(uint32_t)r32_floor((float)texture_size_y * clamp_r32(e_quad->view.max.y - e_quad->view.min.y, 0, 1)),
 			};
 		} // break;
 

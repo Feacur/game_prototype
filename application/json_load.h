@@ -7,6 +7,6 @@ struct JSON;
 struct Font;
 
 struct Handle json_load_gfx_material(struct JSON const * json);
-void json_load_font_range(struct JSON const * json, struct Font * font);
+struct Handle json_load_font_range(struct JSON const * json, uint32_t * from, uint32_t * to);
 
 #endif
