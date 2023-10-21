@@ -5,7 +5,7 @@
 
 struct Array_Iterator {
 	uint32_t curr, next;
-	void const * value;
+	void * value;
 };
 
 struct Array {
