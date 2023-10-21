@@ -160,6 +160,13 @@ void asset_system_drop(struct Handle handle) {
 	sparseset_discard(&type->instances, meta->inst_handle);
 }
 
+struct Handle asset_system_find(struct CString name) {
+	uint32_t name_id = string_system_add(name);
+	if (name_id == 0) { return (struct Handle){0}; }
+	struct Handle const * meta_handle_ptr = hashmap_get(&gs_asset_system.handles, &name_id);
+	return (meta_handle_ptr != NULL) ? *meta_handle_ptr : (struct Handle){0};
+}
+
 void * asset_system_get(struct Handle handle) {
 	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return NULL; }
