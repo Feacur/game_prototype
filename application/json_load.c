@@ -20,8 +20,8 @@
 //
 #include "json_load.h"
 
-static void json_fill_uniforms(struct Handle ah_parent, struct JSON const * json, struct Gfx_Material * material);
-struct Handle json_load_gfx_material(struct Handle ah_parent, struct JSON const * json) {
+static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * material);
+struct Handle json_load_gfx_material(struct JSON const * json) {
 	struct Handle ms_handle = material_system_aquire();
 	if (json->type != JSON_OBJECT) { goto fail; }
 
@@ -36,9 +36,8 @@ struct Handle json_load_gfx_material(struct Handle ah_parent, struct JSON const 
 	struct Asset_Shader const * shader_asset = asset_system_get(ah_shader);
 	if (shader_asset == NULL) { goto fail; }
 
-	asset_system_add_dependency(ah_parent, ah_shader);
 	gfx_material_set_shader(material, shader_asset->gpu_handle);
-	json_fill_uniforms(ah_parent, json_get(json, S_("uniforms")), material);
+	json_fill_uniforms(json_get(json, S_("uniforms")), material);
 
 	return ms_handle;
 
@@ -59,7 +58,7 @@ struct Handle json_load_font_range(struct JSON const * json, uint32_t * from, ui
 
 //
 
-static struct Handle json_load_texture(struct Handle ah_parent, struct JSON const * json) {
+static struct Handle json_load_texture(struct JSON const * json) {
 	if (json->type != JSON_OBJECT) { goto fail; }
 
 	struct CString const path = json_get_string(json, S_("path"));
@@ -71,7 +70,6 @@ static struct Handle json_load_texture(struct Handle ah_parent, struct JSON cons
 	void const * asset_ptr = asset_system_get(ah_texture);
 	if (asset_ptr == NULL) { goto fail; }
 
-	asset_system_add_dependency(ah_parent, ah_texture);
 	struct CString const type = asset_system_get_type(ah_texture);
 
 	if (cstring_equals(type, S_("image"))) {
@@ -96,19 +94,19 @@ static struct Handle json_load_texture(struct Handle ah_parent, struct JSON cons
 	return (struct Handle){0};
 }
 
-static void json_load_many_texture(struct Handle ah_parent, struct JSON const * json, uint32_t length, struct Handle * result) {
+static void json_load_many_texture(struct JSON const * json, uint32_t length, struct Handle * result) {
 	if (json->type == JSON_ARRAY) {
 		uint32_t const count = min_u32(length, json_count(json));
 		for (uint32_t i = 0; i < count; i++) {
-			result[i] = json_load_texture(ah_parent, json_at(json, i));
+			result[i] = json_load_texture(json_at(json, i));
 		}
 	}
 	else {
-		*result = json_load_texture(ah_parent, json);
+		*result = json_load_texture(json);
 	}
 }
 
-static void json_fill_uniforms(struct Handle ah_parent, struct JSON const * json, struct Gfx_Material * material) {
+static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * material) {
 	struct Hashmap const * gpu_program_uniforms = gpu_program_get_uniforms(material->gpu_program_handle);
 	if (gpu_program_uniforms == NULL) { goto fail_uniforms; }
 
@@ -151,7 +149,7 @@ static void json_fill_uniforms(struct Handle ah_parent, struct JSON const * json
 			case DATA_TYPE_UNIT_U:
 			case DATA_TYPE_UNIT_S:
 			case DATA_TYPE_UNIT_F: {
-				json_load_many_texture(ah_parent, uniform_json, uniform_count, uniform_data_buffer.data);
+				json_load_many_texture(uniform_json, uniform_count, uniform_data_buffer.data);
 			} break;
 
 			case DATA_TYPE_R32_U: {

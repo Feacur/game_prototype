@@ -201,7 +201,6 @@ static void asset_font_fill(struct JSON const * json, void * data) {
 
 			uint32_t from, to;
 			struct Handle const typeface_handle = json_load_font_range(range, &from, &to);
-			asset_system_add_dependency(context->ah_font, typeface_handle);
 
 			struct Asset_Typeface const * typeface_asset = asset_system_get(typeface_handle);
 			if (typeface_asset == NULL) { continue; }
@@ -307,7 +306,7 @@ static void asset_material_fill(struct JSON const * json, void * data) {
 		return;
 	}
 
-	struct Handle ms_handle = json_load_gfx_material(context->ah_material, json);
+	struct Handle ms_handle = json_load_gfx_material(json);
 
 	*asset = (struct Asset_Material){
 		.ms_handle = ms_handle,

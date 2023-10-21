@@ -19,8 +19,6 @@ void asset_system_del_type(struct CString type_name);
 struct Handle asset_system_load(struct CString name);
 void asset_system_drop(struct Handle handle);
 
-void asset_system_add_dependency(struct Handle handle, struct Handle other);
-
 void * asset_system_get(struct Handle handle);
 struct Handle asset_system_find(struct CString name);
 struct CString asset_system_get_type(struct Handle handle);
