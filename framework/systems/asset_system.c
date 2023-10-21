@@ -154,10 +154,12 @@ void asset_system_drop(struct Handle handle) {
 	struct Asset_Inst * inst = sparseset_get(&type->instances, meta->inst_handle);
 	if (inst == NULL) { return; }
 
+	struct Asset_Meta const local_meta = *meta;
+
 	if (type->info.drop != NULL) {
 		type->info.drop(inst->payload);
 	}
-	sparseset_discard(&type->instances, meta->inst_handle);
+	sparseset_discard(&type->instances, local_meta.inst_handle);
 }
 
 struct Handle asset_system_find(struct CString name) {
