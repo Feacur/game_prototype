@@ -3,8 +3,6 @@
 
 #include "common.h"
 
-#define ALLOCATOR(name) void * name(void * pointer, size_t size)
-
 ALLOCATOR(memory_reallocate);
 ALLOCATOR(memory_reallocate_without_tracking);
 

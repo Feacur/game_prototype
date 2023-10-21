@@ -12,7 +12,7 @@ struct Hashmap_Iterator {
 
 // @idea: hash the key automatically as bytes array?
 struct Hashmap {
-	hasher * get_hash;
+	Hasher * get_hash;
 	uint32_t key_size, value_size;
 	uint32_t capacity, count;
 	uint32_t * hashes;
@@ -21,7 +21,7 @@ struct Hashmap {
 	uint8_t * marks;
 };
 
-struct Hashmap hashmap_init(hasher * get_hash, uint32_t key_size, uint32_t value_size);
+struct Hashmap hashmap_init(Hasher * get_hash, uint32_t key_size, uint32_t value_size);
 void hashmap_free(struct Hashmap * hashmap);
 
 void hashmap_clear(struct Hashmap * hashmap);

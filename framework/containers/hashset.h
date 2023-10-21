@@ -11,7 +11,7 @@ struct Hashset_Iterator {
 
 // @idea: hash the key automatically as bytes array?
 struct Hashset {
-	hasher * get_hash;
+	Hasher * get_hash;
 	uint32_t key_size;
 	uint32_t capacity, count;
 	uint32_t * hashes;
@@ -19,7 +19,7 @@ struct Hashset {
 	uint8_t * marks;
 };
 
-struct Hashset hashset_init(hasher * get_hash, uint32_t key_size);
+struct Hashset hashset_init(Hasher * get_hash, uint32_t key_size);
 void hashset_free(struct Hashset * hashset);
 
 void hashset_clear(struct Hashset * hashset);

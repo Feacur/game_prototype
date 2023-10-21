@@ -5,7 +5,7 @@
 //
 #include "hashmap.h"
 
-struct Hashmap hashmap_init(hasher * get_hash, uint32_t key_size, uint32_t value_size) {
+struct Hashmap hashmap_init(Hasher * get_hash, uint32_t key_size, uint32_t value_size) {
 	return (struct Hashmap){
 		.get_hash = get_hash,
 		.key_size = key_size,

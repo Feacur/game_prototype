@@ -72,8 +72,6 @@ int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size
 //     utilities
 // ----- ----- ----- ----- -----
 
-typedef void * Allocator(void * pointer, size_t size);
-
 #define STR_TKN(v) #v
 #define STR_MCR(m) STR_TKN(m)
 #define CAT_TKN(v1, v2) v1 ## v2
@@ -91,11 +89,18 @@ uint64_t align_u64(uint64_t value);
 bool contains_full_word(char const * container, struct CString value);
 
 // ----- ----- ----- ----- -----
+//     allocating
+// ----- ----- ----- ----- -----
+
+#define ALLOCATOR(name) void * (name)(void * pointer, size_t size)
+typedef ALLOCATOR(Allocator);
+
+// ----- ----- ----- ----- -----
 //     hashing
 // ----- ----- ----- ----- -----
 
-#define HASHER(name) uint32_t name(void const * v)
-typedef HASHER(hasher);
+#define HASHER(name) uint32_t (name)(void const * v)
+typedef HASHER(Hasher);
 
 inline static HASHER(hash32) { return *(uint32_t const *)v; }
 

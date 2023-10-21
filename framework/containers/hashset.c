@@ -5,7 +5,7 @@
 //
 #include "hashset.h"
 
-struct Hashset hashset_init(hasher * get_hash, uint32_t key_size) {
+struct Hashset hashset_init(Hasher * get_hash, uint32_t key_size) {
 	return (struct Hashset){
 		.get_hash = get_hash,
 		.key_size = key_size,
