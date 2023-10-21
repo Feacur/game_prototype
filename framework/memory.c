@@ -10,14 +10,12 @@
 //
 #include "memory.h"
 
-struct Memory_Header {
+static struct Memory_Header {
 	size_t checksum, size;
 	struct Memory_Header * prev;
 	struct Memory_Header * next;
 	struct Callstack callstack;
-};
-
-static struct Memory_Header * gs_memory;
+} * gs_memory;
 
 ALLOCATOR(memory_reallocate) {
 	struct Memory_Header * pointer_header = (pointer != NULL)
