@@ -135,9 +135,11 @@ static struct Graphics_State {
 static void gpu_program_on_aquire(struct Gpu_Program * gpu_program) {
 	gpu_program->id = glCreateProgram();
 	gpu_program->uniforms = hashmap_init(&hash32, sizeof(uint32_t), sizeof(struct Gpu_Uniform_Internal));
+	logger_to_console("[gfx] aquire program %d\n", gpu_program->id);
 }
 
 static void gpu_program_on_discard(struct Gpu_Program * gpu_program) {
+	logger_to_console("[gfx] discard program %d\n", gpu_program->id);
 	hashmap_free(&gpu_program->uniforms);
 	glDeleteProgram(gpu_program->id);
 }
@@ -340,9 +342,11 @@ struct Hashmap const * gpu_program_get_uniforms(struct Handle handle) {
 
 static void gpu_texture_on_aquire(struct Gpu_Texture * gpu_texture) {
 	glCreateTextures(GL_TEXTURE_2D, 1, &gpu_texture->id);
+	logger_to_console("[gfx] aquire texture %d\n", gpu_texture->id);
 }
 
 static void gpu_texture_on_discard(struct Gpu_Texture * gpu_texture) {
+	logger_to_console("[gfx] discard texture %d\n", gpu_texture->id);
 	glDeleteTextures(1, &gpu_texture->id);
 }
 
@@ -533,9 +537,11 @@ static void gpu_target_on_aquire(struct Gpu_Target * gpu_target) {
 	glCreateFramebuffers(1, &gpu_target->id);
 	gpu_target->textures = array_init(sizeof(struct Gpu_Target_Texture));
 	gpu_target->buffers  = array_init(sizeof(struct Gpu_Target_Buffer));
+	logger_to_console("[gfx] aquire target %d\n", gpu_target->id);
 }
 
 static void gpu_target_on_discard(struct Gpu_Target * gpu_target) {
+	logger_to_console("[gfx] discard target %d\n", gpu_target->id);
 	for (uint32_t i = 0; i < gpu_target->textures.count; i++) {
 		struct Gpu_Target_Texture const * entry = array_at(&gpu_target->textures, i);
 		gpu_texture_free(entry->handle);
@@ -686,9 +692,11 @@ static void gpu_mesh_on_aquire(struct Gpu_Mesh * gpu_mesh) {
 	glCreateVertexArrays(1, &gpu_mesh->id);
 	gpu_mesh->buffers = array_init(sizeof(struct Gpu_Mesh_Buffer));
 	gpu_mesh->elements_index = INDEX_EMPTY;
+	logger_to_console("[gfx] aquire mesh %d\n", gpu_mesh->id);
 }
 
 static void gpu_mesh_on_discard(struct Gpu_Mesh * gpu_mesh) {
+	logger_to_console("[gfx] discard mesh %d\n", gpu_mesh->id);
 	for (uint32_t i = 0; i < gpu_mesh->buffers.count; i++) {
 		struct Gpu_Mesh_Buffer const * buffer = array_at(&gpu_mesh->buffers, i);
 		glDeleteBuffers(1, &buffer->id);
@@ -1361,27 +1369,28 @@ void graphics_to_gpu_library_init(void) {
 }
 
 void graphics_to_gpu_library_free(void) {
-#define GPU_FREE(data, action) do { \
-	if (data.packed.count > 0) { \
-		logger_to_console("dangling \"" #data "\": %u\n", data.packed.count); \
-		DEBUG_BREAK(); \
-	} \
-	FOR_SPARSESET (&data, it) { action(it.value); } \
-	sparseset_free(&data); \
+#define GPU_FREE(name, action) do { \
+	struct Sparseset * data = &gs_graphics_state.name; \
+	inst_count += sparseset_get_count(data); \
+	FOR_SPARSESET (data, it) { action(it.value); } \
+	sparseset_free(data); \
 } while (false) \
 
 	graphics_update();
 
-	GPU_FREE(gs_graphics_state.programs, gpu_program_on_discard);
-	GPU_FREE(gs_graphics_state.targets,  gpu_target_on_discard);
-	GPU_FREE(gs_graphics_state.textures, gpu_texture_on_discard);
-	GPU_FREE(gs_graphics_state.meshes,   gpu_mesh_on_discard);
+	uint32_t inst_count = 0;
+	GPU_FREE(programs, gpu_program_on_discard);
+	GPU_FREE(targets,  gpu_target_on_discard);
+	GPU_FREE(textures, gpu_texture_on_discard);
+	GPU_FREE(meshes,   gpu_mesh_on_discard);
 
 	//
 	array_free(&gs_graphics_state.actions);
 	MEMORY_FREE(gs_graphics_state.extensions);
 	MEMORY_FREE(gs_graphics_state.units);
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
+
+	if (inst_count > 0) { DEBUG_BREAK(); }
 
 #undef GPU_FREE
 }
