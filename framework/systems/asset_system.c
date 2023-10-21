@@ -10,12 +10,14 @@ static struct Asset_System {
 	struct Hashmap handles; // name string id : `struct Handle`
 	struct Hashmap types;   // type string id : `struct Asset_Type`
 	struct Hashmap map;     // extension string id : type string id
+	uint32_t indent;
 } gs_asset_system;
 
 struct Asset_Meta {
 	struct Handle inst_handle;
 	uint32_t type_id;
 	uint32_t name_id;
+	uint32_t marks;
 };
 
 struct Asset_Type {
@@ -30,6 +32,7 @@ struct Asset_Inst {
 	uint8_t payload[FLEXIBLE_ARRAY];
 };
 
+static void asset_system_report(struct Handle handle, struct CString tag);
 static struct CString asset_system_name_to_extension(struct CString name);
 
 void asset_system_init(void) {
@@ -84,19 +87,25 @@ void asset_system_del_type(struct CString type_name) {
 	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &type_id);
 	if (type == NULL) { return; }
 
+	logger_to_console("[del_type] %.*s\n", type_name.length, type_name.data);
+	gs_asset_system.indent++;
 	FOR_SPARSESET (&type->instances, it) {
 		struct Asset_Inst * inst = it.value;
 		struct Handle const handle = inst->header.meta_handle;
 
+		asset_system_report(handle, S_(""));
+		gs_asset_system.indent++;
 		if (type->info.drop != NULL) {
 			type->info.drop(inst->payload);
 		}
+		gs_asset_system.indent--;
 
 		struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 		if (meta == NULL) { continue; }
 		hashmap_del(&gs_asset_system.handles, &meta->name_id);
 		sparseset_discard(&gs_asset_system.meta, handle);
 	}
+	gs_asset_system.indent--;
 
 	sparseset_free(&type->instances);
 	hashmap_del(&gs_asset_system.types, &type_id);
@@ -107,7 +116,11 @@ struct Handle asset_system_load(struct CString name) {
 	if (name_id == 0) { return (struct Handle){0}; }
 
 	struct Handle const * meta_handle_ptr = hashmap_get(&gs_asset_system.handles, &name_id);
-	if (meta_handle_ptr != NULL) { return *meta_handle_ptr; }
+	if (meta_handle_ptr != NULL) {
+		struct Handle const handle = *meta_handle_ptr;
+		struct Asset_Meta * meta = sparseset_get(&gs_asset_system.meta, handle);
+		meta->marks++; return handle;
+	}
 
 	//
 	struct CString const extension = asset_system_name_to_extension(name);
@@ -135,9 +148,12 @@ struct Handle asset_system_load(struct CString name) {
 		.meta_handle = meta_handle,
 	};
 
+	asset_system_report(meta_handle, S_("[load]"));
+	gs_asset_system.indent++;
 	if (type->info.load != NULL) {
 		type->info.load(inst->payload, name);
 	}
+	gs_asset_system.indent--;
 
 	return meta_handle;
 }
@@ -145,6 +161,7 @@ struct Handle asset_system_load(struct CString name) {
 void asset_system_drop(struct Handle handle) {
 	struct Asset_Meta * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return; }
+	if (meta->marks > 0) { meta->marks--; return; }
 
 	// @note: preserve meta over drops and frees.
 	struct Asset_Meta const local_meta = *meta;
@@ -155,9 +172,12 @@ void asset_system_drop(struct Handle handle) {
 	struct Asset_Inst * inst = sparseset_get(&type->instances, meta->inst_handle);
 	if (inst == NULL) { DEBUG_BREAK(); goto cleanup; }
 
+	asset_system_report(handle, S_("[drop]"));
+	gs_asset_system.indent++;
 	if (type->info.drop != NULL) {
 		type->info.drop(inst->payload);
 	}
+	gs_asset_system.indent--;
 	sparseset_discard(&type->instances, local_meta.inst_handle);
 
 	cleanup: // make sure `local_meta` is inited
@@ -196,6 +216,18 @@ struct CString asset_system_get_name(struct Handle handle) {
 }
 
 //
+
+static void asset_system_report(struct Handle handle, struct CString tag) {
+	struct CString const name = asset_system_get_name(handle);
+	logger_to_console(
+		"%*s" // @note: indentation
+		"%.*s {%u:%u} %.*s\n"
+		, gs_asset_system.indent * 4, ""
+		, tag.length, tag.data
+		, handle.id, handle.gen
+		, name.length, name.data
+	);
+}
 
 static struct CString asset_system_name_to_extension(struct CString name) {
 	for (uint32_t extension_length = 0; extension_length < name.length; extension_length++) {
