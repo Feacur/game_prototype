@@ -70,6 +70,7 @@ void buffer_insert_many(struct Buffer * buffer, size_t offset, size_t size, void
 
 void * buffer_pop(struct Buffer * buffer, size_t size) {
 	if (buffer->size < size) {
+		logger_to_console("out of bounds\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	buffer->size -= size;
@@ -79,6 +80,7 @@ void * buffer_pop(struct Buffer * buffer, size_t size) {
 
 void * buffer_peek(struct Buffer const * buffer, size_t depth) {
 	if (depth >= buffer->size) {
+		logger_to_console("out of bounds\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	size_t const offset = buffer->size - depth - 1;
@@ -87,6 +89,7 @@ void * buffer_peek(struct Buffer const * buffer, size_t depth) {
 
 void * buffer_at(struct Buffer const * buffer, size_t offset) {
 	if (offset >= buffer->size) {
+		logger_to_console("out of bounds\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	return (uint8_t *)buffer->data + offset;

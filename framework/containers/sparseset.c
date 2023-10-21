@@ -116,6 +116,14 @@ void sparseset_set(struct Sparseset * sparseset, struct Handle handle, void cons
 	array_set_many(&sparseset->packed, entry->id, 1, value);
 }
 
+uint32_t sparseset_get_count(struct Sparseset * sparseset) {
+	return sparseset->packed.count;
+}
+
+void * sparseset_get_at(struct Sparseset * sparseset, uint32_t index) {
+	return array_at(&sparseset->packed, index);
+}
+
 bool sparseset_iterate(struct Sparseset const * sparseset, struct Sparseset_Iterator * iterator) {
 	while (iterator->next < sparseset->packed.count) {
 		uint32_t const index = iterator->next++;

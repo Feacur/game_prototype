@@ -28,7 +28,10 @@ void hashset_ensure(struct Hashset * hashset, uint32_t capacity);
 bool hashset_get(struct Hashset const * hashset, void const * key);
 bool hashset_set(struct Hashset * hashset, void const * key);
 bool hashset_del(struct Hashset * hashset, void const * key);
-void hashset_del_at(struct Hashset * hashset, uint32_t key_index);
+
+uint32_t hashset_get_count(struct Hashset * hashset);
+void * hashset_get_at(struct Hashset * hashset, uint32_t index);
+void hashset_del_at(struct Hashset * hashset, uint32_t index);
 
 bool hashset_iterate(struct Hashset const * hashset, struct Hashset_Iterator * iterator);
 

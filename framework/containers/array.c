@@ -71,6 +71,7 @@ void array_insert_many(struct Array * array, uint32_t index, uint32_t count, voi
 
 void * array_pop(struct Array * array, uint32_t count) {
 	if (array->count < count) {
+		logger_to_console("out of bounds\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	array->count -= count;
@@ -80,6 +81,7 @@ void * array_pop(struct Array * array, uint32_t count) {
 
 void * array_peek(struct Array const * array, uint32_t depth) {
 	if (depth >= array->count) {
+		logger_to_console("out of bounds\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	size_t const offset = array->value_size * (array->count - depth - 1);
@@ -88,6 +90,7 @@ void * array_peek(struct Array const * array, uint32_t depth) {
 
 void * array_at(struct Array const * array, uint32_t index) {
 	if (index >= array->count) {
+		logger_to_console("out of bounds\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	size_t const offset = array->value_size * index;

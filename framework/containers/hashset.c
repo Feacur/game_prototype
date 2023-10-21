@@ -126,10 +126,23 @@ bool hashset_del(struct Hashset * hashset, void const * key) {
 	return true;
 }
 
-void hashset_del_at(struct Hashset * hashset, uint32_t key_index) {
-	if (key_index >= hashset->capacity)                    { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-	if (hashset->marks[key_index] != HASH_MARK_FULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-	hashset->marks[key_index] = HASH_MARK_SKIP;
+uint32_t hashset_get_count(struct Hashset * hashset) {
+	return hashset->count;
+}
+
+void * hashset_get_at(struct Hashset * hashset, uint32_t index) {
+	if (index >= hashset->count) {
+		logger_to_console("out of bounds\n");
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
+	}
+	size_t const offset = hashset->key_size * index;
+	return (uint8_t *)hashset->keys + offset;
+}
+
+void hashset_del_at(struct Hashset * hashset, uint32_t index) {
+	if (index >= hashset->capacity)              { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (hashset->marks[index] != HASH_MARK_FULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	hashset->marks[index] = HASH_MARK_SKIP;
 	hashset->count--;
 }
 

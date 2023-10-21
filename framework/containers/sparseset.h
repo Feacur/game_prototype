@@ -28,6 +28,9 @@ void sparseset_discard(struct Sparseset * sparseset, struct Handle handle);
 void * sparseset_get(struct Sparseset * sparseset, struct Handle handle);
 void sparseset_set(struct Sparseset * sparseset, struct Handle handle, void const * value);
 
+uint32_t sparseset_get_count(struct Sparseset * sparseset);
+void * sparseset_get_at(struct Sparseset * sparseset, uint32_t index);
+
 bool sparseset_iterate(struct Sparseset const * sparseset, struct Sparseset_Iterator * iterator);
 
 #define FOR_SPARSESET(data, it) for ( \

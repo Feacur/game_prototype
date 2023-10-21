@@ -141,10 +141,32 @@ bool hashmap_del(struct Hashmap * hashmap, void const * key) {
 	return true;
 }
 
-void hashmap_del_at(struct Hashmap * hashmap, uint32_t key_index) {
-	if (key_index >= hashmap->capacity)                    { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-	if (hashmap->marks[key_index] != HASH_MARK_FULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-	hashmap->marks[key_index] = HASH_MARK_SKIP;
+uint32_t hashmap_get_count(struct Hashmap * hashmap) {
+	return hashmap->count;
+}
+
+void * hashmap_get_key_at(struct Hashmap * hashmap, uint32_t index) {
+	if (index >= hashmap->count) {
+		logger_to_console("out of bounds\n");
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
+	}
+	size_t const offset = hashmap->key_size * index;
+	return (uint8_t *)hashmap->keys + offset;
+}
+
+void * hashmap_get_val_at(struct Hashmap * hashmap, uint32_t index) {
+	if (index >= hashmap->count) {
+		logger_to_console("out of bounds\n");
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
+	}
+	size_t const offset = hashmap->value_size * index;
+	return (uint8_t *)hashmap->values + offset;
+}
+
+void hashmap_del_at(struct Hashmap * hashmap, uint32_t index) {
+	if (index >= hashmap->capacity)              { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (hashmap->marks[index] != HASH_MARK_FULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	hashmap->marks[index] = HASH_MARK_SKIP;
 	hashmap->count--;
 }
 
