@@ -17,9 +17,9 @@
 #include "ui.h"
 
 static struct UI {
-	struct Handle shader_asset_handle;
-	struct Handle image_asset_handle;
-	struct Handle font_asset_handle;
+	struct Handle ah_shader;
+	struct Handle ah_image;
+	struct Handle ah_font;
 	//
 	struct mat4 camera;
 	struct vec2 pivot;
@@ -31,11 +31,14 @@ void ui_init(void) {
 }
 
 void ui_free(void) {
+	asset_system_drop(gs_ui.ah_shader);
+	asset_system_drop(gs_ui.ah_image);
+	asset_system_drop(gs_ui.ah_font);
 	common_memset(&gs_ui, 0, sizeof(gs_ui));
 }
 
 static void ui_internal_push_shader(void) {
-	struct Asset_Shader const * shader = asset_system_get(gs_ui.shader_asset_handle);
+	struct Asset_Shader const * shader = asset_system_get(gs_ui.ah_shader);
 	batcher_2d_set_shader(
 		gs_renderer.batcher_2d,
 		shader->gpu_handle,
@@ -44,13 +47,13 @@ static void ui_internal_push_shader(void) {
 }
 
 static void ui_internal_push_image(void) {
-	struct Asset_Image const * asset = asset_system_get(gs_ui.image_asset_handle);
+	struct Asset_Image const * asset = asset_system_get(gs_ui.ah_image);
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Texture"), A_(gpu_handle));
 }
 
 static void ui_internal_push_font(void) {
-	struct Asset_Font const * asset = asset_system_get(gs_ui.font_asset_handle);
+	struct Asset_Font const * asset = asset_system_get(gs_ui.ah_font);
 	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Texture"), A_(gpu_handle));
 }
@@ -102,20 +105,20 @@ void ui_set_color(struct vec4 color) {
 }
 
 void ui_set_shader(struct CString name) {
-	struct Handle const prev = gs_ui.shader_asset_handle;
-	gs_ui.shader_asset_handle = asset_system_load(name);
+	struct Handle const prev = gs_ui.ah_shader;
+	gs_ui.ah_shader = asset_system_load(name);
 	asset_system_drop(prev);
 }
 
 void ui_set_image(struct CString name) {
-	struct Handle const prev = gs_ui.image_asset_handle;
-	gs_ui.image_asset_handle = asset_system_load(name);
+	struct Handle const prev = gs_ui.ah_image;
+	gs_ui.ah_image = asset_system_load(name);
 	asset_system_drop(prev);
 }
 
 void ui_set_font(struct CString name) {
-	struct Handle const prev = gs_ui.font_asset_handle;
-	gs_ui.font_asset_handle = asset_system_load(name);
+	struct Handle const prev = gs_ui.ah_font;
+	gs_ui.ah_font = asset_system_load(name);
 	asset_system_drop(prev);
 }
 
@@ -133,6 +136,6 @@ void ui_text(struct CString value, struct vec2 alignment, bool wrap, float size)
 	batcher_2d_add_text(
 		gs_renderer.batcher_2d,
 		gs_ui.rect, alignment, wrap,
-		gs_ui.font_asset_handle, value, size
+		gs_ui.ah_font, value, size
 	);
 }
