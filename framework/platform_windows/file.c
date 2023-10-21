@@ -33,7 +33,7 @@ struct Buffer platform_file_read_entire(struct CString path) {
 	buffer_push_many(&buffer, 1, "\0"); buffer.size--;
 
 	if (buffer.size != size) {
-		LOG("read failure: %zu / %zu bytes; \"%.*s\"\n", buffer.size, size, path.length, path.data);
+		WRN("read failure: %zu / %zu bytes; \"%.*s\"\n", buffer.size, size, path.length, path.data);
 		buffer_free(&buffer);
 	}
 
@@ -74,7 +74,7 @@ struct File * platform_file_init(struct CString path, enum File_Mode mode) {
 	return file;
 
 	// process errors
-	fail: LOG("'CreateFile' failed; \"%.*s\"\n", path.length, path.data);
+	fail: ERR("'CreateFile' failed; \"%.*s\"\n", path.length, path.data);
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
@@ -120,7 +120,7 @@ uint64_t platform_file_read(struct File const * file, uint8_t * buffer, uint64_t
 	DWORD const max_chunk_size = UINT16_MAX + 1;
 
 	if (!(file->mode & FILE_MODE_READ)) {
-		LOG("can't read write-only files; \"%.*s\"\n", file->path_length, file->path);
+		ERR("can't read write-only files; \"%.*s\"\n", file->path_length, file->path);
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
 	
@@ -132,7 +132,7 @@ uint64_t platform_file_read(struct File const * file, uint8_t * buffer, uint64_t
 
 		DWORD read_chunk_size;
 		if (!ReadFile(file->handle, buffer + read, to_read, &read_chunk_size, NULL)) {
-			LOG("'ReadFile' failed; \"%.*s\"\n", file->path_length, file->path);
+			ERR("'ReadFile' failed; \"%.*s\"\n", file->path_length, file->path);
 			REPORT_CALLSTACK(); DEBUG_BREAK(); break;
 		}
 
@@ -147,7 +147,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 	DWORD const max_chunk_size = UINT16_MAX + 1;
 
 	if (!(file->mode & FILE_MODE_WRITE)) {
-		LOG("can't write read-only files; \"%.*s\"\n", file->path_length, file->path);
+		ERR("can't write read-only files; \"%.*s\"\n", file->path_length, file->path);
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
 	
@@ -159,7 +159,7 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 
 		DWORD read_chunk_size;
 		if (!WriteFile(file->handle, buffer + written, to_write, &read_chunk_size, NULL)) {
-			LOG("'WriteFile' failed; \"%.*s\"\n", file->path_length, file->path);
+			ERR("'WriteFile' failed; \"%.*s\"\n", file->path_length, file->path);
 			REPORT_CALLSTACK(); DEBUG_BREAK(); break;
 		}
 

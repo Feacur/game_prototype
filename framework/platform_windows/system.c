@@ -101,7 +101,7 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 	return;
 
 	// process errors
-	fail: LOG("failed to initialize the system module\n");
+	fail: ERR("failed to initialize the system module\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	gs_platform_system.has_error = true;
 	// common_exit_failure();
@@ -327,7 +327,7 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	REPORT_CALLSTACK();
 
 	if (noncontinuable) {
-		REPORT_CALLSTACK(); DEBUG_BREAK();
+		DEBUG_BREAK();
 		gs_platform_system.has_error = true;
 	}
 

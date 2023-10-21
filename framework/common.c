@@ -131,7 +131,7 @@ void report_callstack(void) {
 	// @note: skip `report_callstack`
 	struct Callstack const callstack = platform_debug_get_callstack(1);
 	struct CString const stacktrace = platform_debug_get_stacktrace(callstack);
-	LOG(
+	TRC(
 		"> callstack:\n"
 		"%.*s"
 		, stacktrace.length, stacktrace.data

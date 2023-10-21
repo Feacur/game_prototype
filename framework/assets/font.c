@@ -75,7 +75,7 @@ struct Font * font_init(void) {
 }
 
 void font_free(struct Font * font) {
-	if (font == NULL) { LOG("freeing NULL glyph atlas\n"); return; }
+	if (font == NULL) { WRN("freeing NULL glyph atlas\n"); return; }
 	image_free(&font->buffer);
 	array_free(&font->ranges);
 	hashmap_free(&font->table);
@@ -112,10 +112,10 @@ void font_add_glyph(struct Font * font, uint32_t codepoint, float size) {
 	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
 	struct Typeface const * typeface = font_get_typeface(font, codepoint);
-	if (typeface == NULL) { LOG("glyph atlas misses a typeface for codepoint '0x%x'\n", codepoint); return; }
+	if (typeface == NULL) { WRN("glyph atlas misses a typeface for codepoint '0x%x'\n", codepoint); return; }
 
 	uint32_t const glyph_id = typeface_get_glyph_id(typeface, codepoint);
-	if (glyph_id == 0) { LOG("glyph atlas misses a glyph for codepoint '0x%x'\n", codepoint); }
+	if (glyph_id == 0) { WRN("glyph atlas misses a glyph for codepoint '0x%x'\n", codepoint); }
 
 	struct Glyph_Params const glyph_params = typeface_get_glyph_parameters(
 		typeface, glyph_id, typeface_get_scale(typeface, size)
@@ -323,11 +323,11 @@ void font_render(struct Font * font) {
 			}
 
 			if (font->buffer.size_x < offset_x + glyph_size_x - 1) {
-				LOG("can't fit a glyph into the buffer\n");
+				WRN("can't fit a glyph into the buffer\n");
 				REPORT_CALLSTACK(); DEBUG_BREAK(); continue;
 			}
 			if (font->buffer.size_y < offset_y + glyph_size_y - 1) {
-				LOG("can't fit a glyph into the buffer\n");
+				WRN("can't fit a glyph into the buffer\n");
 				REPORT_CALLSTACK(); DEBUG_BREAK(); continue;
 			}
 

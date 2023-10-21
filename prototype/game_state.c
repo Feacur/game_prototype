@@ -33,7 +33,7 @@ static enum Camera_Mode json_read_camera_mode(struct JSON const * json) {
 			return CAMERA_MODE_ASPECT_Y;
 		}
 	}
-	LOG("unknown camera mode\n");
+	ERR("unknown camera mode\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return CAMERA_MODE_NONE;
 }
@@ -96,7 +96,7 @@ static enum Entity_Type json_read_entity_type(struct JSON const * json) {
 			return ENTITY_TYPE_TEXT_2D;
 		}
 	}
-	LOG("unknown entity type\n");
+	ERR("unknown entity type\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return ENTITY_TYPE_NONE;
 }
@@ -111,7 +111,7 @@ static enum Entity_Quad_Mode json_read_entity_quad_mode(struct JSON const * json
 			return ENTITY_QUAD_MODE_SIZE;
 		}
 	}
-	LOG("unknown quad mode\n");
+	ERR("unknown quad mode\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return ENTITY_QUAD_MODE_NONE;
 }

@@ -131,7 +131,7 @@ struct Gpu_Context * gpu_context_init(void * device) {
 	return gpu_context;
 
 	// process errors
-	fail: LOG("failed to create gpu context\n");
+	fail: ERR("failed to create gpu context\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
@@ -690,19 +690,19 @@ static bool gpu_library_do_using_temporary_context(bool (* action)(void)) {
 		gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 		gs_gpu_library.dll.DeleteContext(context);
 	}
-	else { LOG("failed to create a temporary context\n"); }
+	else { ERR("failed to create a temporary context\n"); }
 
 	clean_up_device: if (!success) { REPORT_CALLSTACK(); DEBUG_BREAK(); }
 	if (device != NULL) { ReleaseDC(window, device); }
-	else { LOG("failed to fetch a temporary device\n"); }
+	else { ERR("failed to fetch a temporary device\n"); }
 
 	clean_up_window: if (!success) { REPORT_CALLSTACK(); DEBUG_BREAK(); }
 	if (window != NULL) { DestroyWindow(window); }
-	else { LOG("failed to create a temporary window\n"); }
+	else { ERR("failed to create a temporary window\n"); }
 
 	clean_up_class: if (!success) { REPORT_CALLSTACK(); DEBUG_BREAK(); }
 	if (class_atom != 0) { UnregisterClass(TEXT(OPENGL_CLASS_NAME), (HANDLE)system_to_internal_get_module()); }
-	else if (!use_application_class) { LOG("failed to create a temporary window class\n"); }
+	else if (!use_application_class) { ERR("failed to create a temporary window class\n"); }
 
 	return success;
 #undef OPENGL_CLASS_NAME

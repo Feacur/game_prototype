@@ -102,12 +102,12 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 	// process errors
 	fail_window:
 	if (window != NULL) { MEMORY_FREE(window); }
-	else { LOG("failed to initialize application window\n"); }
+	else { ERR("failed to initialize application window\n"); }
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 
 	fail_handle:
 	if (handle != NULL) { DestroyWindow(handle); }
-	else { LOG("failed to create platform window\n"); }
+	else { ERR("failed to create platform window\n"); }
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 
 	return NULL;
@@ -479,7 +479,7 @@ static void platform_window_internal_toggle_raw_input(struct Window * window, bo
 	};
 
 	if (!RegisterRawInputDevices(devices, SIZE_OF_ARRAY(devices), sizeof(RAWINPUTDEVICE))) {
-		LOG("'RegisterRawInputDevices' failed\n");
+		ERR("'RegisterRawInputDevices' failed\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
@@ -512,7 +512,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 /*
 	char key_name[32];
 	GetKeyNameText((LONG)((scan << 16) | (is_extended << 24)), key_name, sizeof(key_name));
-	LOG("%s\n", key_name);
+	TRC("%s\n", key_name);
 */
 }
 
@@ -586,7 +586,7 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 static void handle_input_hid_raw(struct Window * window, RAWHID * data) {
 	if (!window->raw_input) { return; }
 	(void)window; (void)data;
-	// @todo: LOG("'RAWHID' input is not implemented\n");
+	// @todo: ERR("'RAWHID' input is not implemented\n");
 	// REPORT_CALLSTACK(); DEBUG_BREAK();
 	// https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-rawhid
 }

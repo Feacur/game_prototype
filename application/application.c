@@ -165,7 +165,7 @@ void application_update(void) {
 	// 	static uint64_t prev = 0;
 	// 	uint64_t const fps = platform_timer_get_ticks_per_second() / gs_app.ticks.elapsed;
 	// 	if (fps > prev + 10 || fps < prev - 10) {
-	// 		LOG("%3llu\n", fps);
+	// 		TRC("%3llu\n", fps);
 	// 	}
 	// 	prev = fps;
 	// }

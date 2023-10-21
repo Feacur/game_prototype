@@ -34,7 +34,7 @@ static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 
 	char const * const reason = c_wfobj_token_names[token->type];
 
-	LOG("wfobj");
+	ERR("wfobj");
 	LOG(" [line: %u]", token->line + 1);
 	LOG(" [context: '%.*s']", token->text.length, token->text.data);
 	if (reason != NULL) { LOG(" [%s]", reason); }
