@@ -62,7 +62,8 @@ struct Entity {
 	struct rect cached_rect;
 };
 
-//
+struct Entity entity_init(void);
+void entity_free(struct Entity * entity);
 
 struct uvec2 entity_get_content_size(
 	struct Entity const * entity, struct Handle material_handle,

@@ -72,7 +72,7 @@ static void json_read_cameras(struct JSON const * json) {
 	for (uint32_t i = 0; i < cameras_count; i++) {
 		struct JSON const * camera_json = json_at(json, i);
 
-		struct Camera camera;
+		struct Camera camera = camera_init();
 		json_read_camera(camera_json, &camera);
 
 		array_push_many(&gs_game.cameras, 1, &camera);
@@ -184,7 +184,7 @@ static void json_read_entities(struct JSON const * json) {
 	for (uint32_t i = 0; i < entities_count; i++) {
 		struct JSON const * entity_json = json_at(json, i);
 
-		struct Entity entity;
+		struct Entity entity = entity_init();
 		json_read_entity(entity_json, &entity);
 
 		array_push_many(&gs_game.entities, 1, &entity);
@@ -203,6 +203,14 @@ void game_init(void) {
 }
 
 void game_free(void) {
+	FOR_ARRAY(&gs_game.cameras, it) {
+		camera_free(it.value);
+	}
+
+	FOR_ARRAY(&gs_game.entities, it) {
+		entity_free(it.value);
+	}
+
 	array_free(&gs_game.cameras);
 	array_free(&gs_game.entities);
 

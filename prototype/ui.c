@@ -102,15 +102,21 @@ void ui_set_color(struct vec4 color) {
 }
 
 void ui_set_shader(struct CString name) {
+	struct Handle const prev = gs_ui.shader_asset_handle;
 	gs_ui.shader_asset_handle = asset_system_load(name);
+	asset_system_drop(prev);
 }
 
 void ui_set_image(struct CString name) {
+	struct Handle const prev = gs_ui.image_asset_handle;
 	gs_ui.image_asset_handle = asset_system_load(name);
+	asset_system_drop(prev);
 }
 
 void ui_set_font(struct CString name) {
+	struct Handle const prev = gs_ui.font_asset_handle;
 	gs_ui.font_asset_handle = asset_system_load(name);
+	asset_system_drop(prev);
 }
 
 void ui_quad(struct rect uv) {

@@ -4,10 +4,31 @@
 #include "framework/graphics/material.h"
 #include "framework/graphics/gpu_objects.h"
 
+#include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
 
 //
 #include "object_entity.h"
+
+struct Entity entity_init(void) {
+	return (struct Entity){0};
+}
+
+void entity_free(struct Entity * entity) {
+	switch (entity->type) {
+		default: break;
+
+		case ENTITY_TYPE_MESH:
+			asset_system_drop(entity->as.mesh.ah_mesh);
+			break;
+
+		case ENTITY_TYPE_TEXT_2D:
+			asset_system_drop(entity->as.text.ah_font);
+			asset_system_drop(entity->as.text.ah_text);
+			break;
+	}
+	asset_system_drop(entity->ah_material);
+}
 
 struct uvec2 entity_get_content_size(
 	struct Entity const * entity, struct Handle material_handle,

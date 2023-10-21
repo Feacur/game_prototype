@@ -31,7 +31,8 @@ struct Camera {
 	struct uvec2 cached_size;
 };
 
-//
+struct Camera camera_init(void);
+void camera_free(struct Camera * camera);
 
 struct mat4 camera_get_projection(
 	struct Camera_Params const * params,

@@ -1,9 +1,18 @@
 #include "framework/maths.h"
 #include "framework/logger.h"
 #include "framework/graphics/gpu_misc.h"
+#include "framework/systems/asset_system.h"
 
 //
 #include "object_camera.h"
+
+struct Camera camera_init(void) {
+	return (struct Camera){0};
+}
+
+void camera_free(struct Camera * camera) {
+	asset_system_drop(camera->ah_target);
+}
 
 struct mat4 camera_get_projection(
 	struct Camera_Params const * params,
