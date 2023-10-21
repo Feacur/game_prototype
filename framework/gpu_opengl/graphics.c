@@ -1362,10 +1362,15 @@ void graphics_to_gpu_library_init(void) {
 
 void graphics_to_gpu_library_free(void) {
 #define GPU_FREE(data, action) do { \
-	if (data.packed.count > 0) { logger_to_console("dangling \"" #data "\": %u\n", data.packed.count); } \
+	if (data.packed.count > 0) { \
+		logger_to_console("dangling \"" #data "\": %u\n", data.packed.count); \
+		DEBUG_BREAK(); \
+	} \
 	FOR_SPARSESET (&data, it) { action(it.value); } \
 	sparseset_free(&data); \
-} while (false)\
+} while (false) \
+
+	graphics_update();
 
 	GPU_FREE(gs_graphics_state.programs, gpu_program_on_discard);
 	GPU_FREE(gs_graphics_state.targets,  gpu_target_on_discard);
