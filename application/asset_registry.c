@@ -24,8 +24,9 @@
 //     Asset bytes part
 // ----- ----- ----- ----- -----
 
-static void asset_bytes_load(void * instance, struct CString name) {
-	struct Asset_Bytes * asset = instance;
+static void asset_bytes_load(struct Handle handle) {
+	struct Asset_Bytes * asset = asset_system_get(handle);
+	struct CString const name = asset_system_get_name(handle);
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
@@ -40,8 +41,8 @@ static void asset_bytes_load(void * instance, struct CString name) {
 	};
 }
 
-static void asset_bytes_drop(void * instance) {
-	struct Asset_Bytes * asset = instance;
+static void asset_bytes_drop(struct Handle handle) {
+	struct Asset_Bytes * asset = asset_system_get(handle);
 	MEMORY_FREE(asset->data);
 	common_memset(asset, 0, sizeof(*asset));
 }
@@ -50,8 +51,9 @@ static void asset_bytes_drop(void * instance) {
 //     Asset json part
 // ----- ----- ----- ----- -----
 
-static void asset_json_load(void * instance, struct CString name) {
-	struct Asset_JSON * asset = instance;
+static void asset_json_load(struct Handle handle) {
+	struct Asset_JSON * asset = asset_system_get(handle);
+	struct CString const name = asset_system_get_name(handle);
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
@@ -65,8 +67,8 @@ static void asset_json_load(void * instance, struct CString name) {
 	buffer_free(&file_buffer);
 }
 
-static void asset_json_drop(void * instance) {
-	struct Asset_JSON * asset = instance;
+static void asset_json_drop(struct Handle handle) {
+	struct Asset_JSON * asset = asset_system_get(handle);
 	json_free(&asset->value);
 	// common_memset(asset, 0, sizeof(*asset));
 }
@@ -75,8 +77,9 @@ static void asset_json_drop(void * instance) {
 //     Asset shader part
 // ----- ----- ----- ----- -----
 
-static void asset_shader_load(void * instance, struct CString name) {
-	struct Asset_Shader * asset = instance;
+static void asset_shader_load(struct Handle handle) {
+	struct Asset_Shader * asset = asset_system_get(handle);
+	struct CString const name = asset_system_get_name(handle);
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
@@ -91,8 +94,8 @@ static void asset_shader_load(void * instance, struct CString name) {
 	buffer_free(&file_buffer);
 }
 
-static void asset_shader_drop(void * instance) {
-	struct Asset_Shader * asset = instance;
+static void asset_shader_drop(struct Handle handle) {
+	struct Asset_Shader * asset = asset_system_get(handle);
 	gpu_program_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
@@ -131,14 +134,15 @@ static void asset_image_fill(struct JSON const * json, void * data) {
 
 }
 
-static void asset_image_load(void * instance, struct CString name) {
-	struct Asset_Image * asset = instance;
+static void asset_image_load(struct Handle handle) {
+	struct Asset_Image * asset = asset_system_get(handle);
+	struct CString const name = asset_system_get_name(handle);
 	struct Asset_Image_Context context = { .result = asset };
 	process_json(name, &context, asset_image_fill);
 }
 
-static void asset_image_drop(void * instance) {
-	struct Asset_Image * asset = instance;
+static void asset_image_drop(struct Handle handle) {
+	struct Asset_Image * asset = asset_system_get(handle);
 	gpu_texture_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
@@ -147,8 +151,9 @@ static void asset_image_drop(void * instance) {
 //     Asset typeface part
 // ----- ----- ----- ----- -----
 
-static void asset_typeface_load(void * instance, struct CString name) {
-	struct Asset_Typeface * asset = instance;
+static void asset_typeface_load(struct Handle handle) {
+	struct Asset_Typeface * asset = asset_system_get(handle);
+	struct CString const name = asset_system_get_name(handle);
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
@@ -163,8 +168,8 @@ static void asset_typeface_load(void * instance, struct CString name) {
 	};
 }
 
-static void asset_typeface_drop(void * instance) {
-	struct Asset_Typeface * asset = instance;
+static void asset_typeface_drop(struct Handle handle) {
+	struct Asset_Typeface * asset = asset_system_get(handle);
 	typeface_free(asset->typeface);
 	common_memset(asset, 0, sizeof(*asset));
 }
@@ -173,14 +178,15 @@ static void asset_typeface_drop(void * instance) {
 //     Asset glyph atlas part
 // ----- ----- ----- ----- -----
 
-struct Asset_font_Context {
-	struct Asset_Font * result;
+struct Asset_Font_Context {
+	struct Handle ah_font;
 };
 
 static void asset_font_fill(struct JSON const * json, void * data) {
-	struct Asset_font_Context * context = data;
+	struct Asset_Font_Context * context = data;
+	struct Asset_Font * asset = asset_system_get(context->ah_font);
 	if (json->type == JSON_ERROR) {
-		common_memset(context->result, 0, sizeof(*context->result));
+		common_memset(asset, 0, sizeof(*asset));
 		return;
 	}
 
@@ -194,30 +200,30 @@ static void asset_font_fill(struct JSON const * json, void * data) {
 			struct JSON const * range = json_at(ranges, i);
 
 			uint32_t from, to;
-			struct Handle const handle = json_load_font_range(range, &from, &to);
-			if (handle_is_null(handle)) { continue; }
-			if (from > to) { continue; }
+			struct Handle const typeface_handle = json_load_font_range(range, &from, &to);
+			asset_system_add_dependency(context->ah_font, typeface_handle);
 
-			struct Asset_Typeface const * asset = asset_system_get(handle);
-			font_set_typeface(font, asset->typeface, from, to);
+			struct Asset_Typeface const * typeface_asset = asset_system_get(typeface_handle);
+			if (typeface_asset == NULL) { continue; }
+			font_set_typeface(font, typeface_asset->typeface, from, to);
 		}
 	}
 
-	*context->result = (struct Asset_Font){
+	*asset = (struct Asset_Font){
 		.font = font,
 		.gpu_handle = gpu_texture_init(font_get_asset(font)),
 	};
 	
 }
 
-static void asset_font_load(void * instance, struct CString name) {
-	struct Asset_Font * asset = instance;
-	struct Asset_font_Context context = { .result = asset };
+static void asset_font_load(struct Handle handle) {
+	struct CString const name = asset_system_get_name(handle);
+	struct Asset_Font_Context context = { .ah_font = handle };
 	process_json(name, &context, asset_font_fill);
 }
 
-static void asset_font_drop(void * instance) {
-	struct Asset_Font * asset = instance;
+static void asset_font_drop(struct Handle handle) {
+	struct Asset_Font * asset = asset_system_get(handle);
 	font_free(asset->font);
 	gpu_texture_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
@@ -243,14 +249,15 @@ static void asset_target_fill(struct JSON const * json, void * data) {
 	};
 }
 
-static void asset_target_load(void * instance, struct CString name) {
-	struct Asset_Target * asset = instance;
+static void asset_target_load(struct Handle handle) {
+	struct Asset_Target * asset = asset_system_get(handle);
+	struct CString const name = asset_system_get_name(handle);
 	struct Asset_Target_Context context = { .result = asset };
 	process_json(name, &context, asset_target_fill);
 }
 
-static void asset_target_drop(void * instance) {
-	struct Asset_Target * asset = instance;
+static void asset_target_drop(struct Handle handle) {
+	struct Asset_Target * asset = asset_system_get(handle);
 	gpu_target_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
@@ -259,8 +266,9 @@ static void asset_target_drop(void * instance) {
 //     Asset model part
 // ----- ----- ----- ----- -----
 
-static void asset_model_load(void * instance, struct CString name) {
-	struct Asset_Model * asset = instance;
+static void asset_model_load(struct Handle handle) {
+	struct Asset_Model * asset = asset_system_get(handle);
+	struct CString const name = asset_system_get_name(handle);
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
@@ -277,8 +285,8 @@ static void asset_model_load(void * instance, struct CString name) {
 	mesh_free(&mesh);
 }
 
-static void asset_model_drop(void * instance) {
-	struct Asset_Model * asset = instance;
+static void asset_model_drop(struct Handle handle) {
+	struct Asset_Model * asset = asset_system_get(handle);
 	gpu_mesh_free(asset->gpu_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }
@@ -288,31 +296,32 @@ static void asset_model_drop(void * instance) {
 // ----- ----- ----- ----- -----
 
 struct Asset_Material_Context {
-	struct Asset_Material * result;
+	struct Handle ah_material;
 };
 
 static void asset_material_fill(struct JSON const * json, void * data) {
 	struct Asset_Material_Context * context = data;
+	struct Asset_Material * asset = asset_system_get(context->ah_material);
 	if (json->type == JSON_ERROR) {
-		common_memset(context->result, 0, sizeof(*context->result));
+		common_memset(asset, 0, sizeof(*asset));
 		return;
 	}
 
-	struct Handle handle = json_load_gfx_material(json);
+	struct Handle ms_handle = json_load_gfx_material(context->ah_material, json);
 
-	*context->result = (struct Asset_Material){
-		.ms_handle = handle,
+	*asset = (struct Asset_Material){
+		.ms_handle = ms_handle,
 	};
 }
 
-static void asset_material_load(void * instance, struct CString name) {
-	struct Asset_Material * asset = instance;
-	struct Asset_Material_Context context = { .result = asset };
+static void asset_material_load(struct Handle handle) {
+	struct CString const name = asset_system_get_name(handle);
+	struct Asset_Material_Context context = { .ah_material = handle };
 	process_json(name, &context, asset_material_fill);
 }
 
-static void asset_material_drop(void * instance) {
-	struct Asset_Material * asset = instance;
+static void asset_material_drop(struct Handle handle) {
+	struct Asset_Material * asset = asset_system_get(handle);
 	material_system_discard(asset->ms_handle);
 	common_memset(asset, 0, sizeof(*asset));
 }

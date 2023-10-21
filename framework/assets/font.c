@@ -15,8 +15,8 @@
 #define GLYPH_GC_TIMEOUT_MAX UINT8_MAX
 
 struct Typeface_Range {
-	uint32_t from, to;
 	struct Typeface const * typeface;
+	uint32_t from, to;
 };
 
 struct Font {
@@ -95,10 +95,11 @@ struct Typeface const * font_get_typeface(struct Font const * font, uint32_t cod
 }
 
 void font_set_typeface(struct Font * font, struct Typeface const * typeface, uint32_t codepoint_from, uint32_t codepoint_to) {
+	if (codepoint_from > codepoint_to) { return; }
 	array_push_many(&font->ranges, 1, &(struct Typeface_Range){
+		.typeface = typeface,
 		.from = codepoint_from,
 		.to = codepoint_to,
-		.typeface = typeface,
 	});
 }
 
