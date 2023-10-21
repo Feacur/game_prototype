@@ -1,4 +1,4 @@
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/containers/hashmap.h"
 #include "framework/containers/sparseset.h"
 #include "framework/systems/string_system.h"
@@ -77,9 +77,9 @@ void asset_system_free(void) {
 
 void asset_system_map_extension(struct CString type, struct CString extension) {
 	uint32_t const type_id = string_system_add(type);
-	if (type_id == 0) { logger_to_console("empty type\n"); goto fail; }
+	if (type_id == 0) { LOG("empty type\n"); goto fail; }
 	uint32_t const extension_id = string_system_add(extension);
-	if (extension_id == 0) { logger_to_console("empty extension\n"); goto fail; }
+	if (extension_id == 0) { LOG("empty extension\n"); goto fail; }
 	hashmap_set(&gs_asset_system.map, &extension_id, &type_id);
 
 	return;
@@ -102,7 +102,7 @@ void asset_system_del_type(struct CString type_name) {
 
 	uint32_t const inst_count = sparseset_get_count(&type->instances);
 
-	logger_to_console("[type] %.*s\n", type_name.length, type_name.data);
+	LOG("[type] %.*s\n", type_name.length, type_name.data);
 	array_push_many(&gs_asset_system.stack, 1, &(struct Handle){0});
 	FOR_SPARSESET (&type->instances, it) {
 		struct Asset_Inst * inst = it.value;
@@ -116,7 +116,7 @@ void asset_system_del_type(struct CString type_name) {
 		array_pop(&gs_asset_system.stack, 1);
 
 		struct Asset_Meta * meta = sparseset_get(&gs_asset_system.meta, handle);
-		if (meta == NULL) { logger_to_console("inst w/o meta\n"); DEBUG_BREAK(); goto cleanup; }
+		if (meta == NULL) { LOG("inst w/o meta\n"); DEBUG_BREAK(); goto cleanup; }
 
 		array_push_many(&gs_asset_system.stack, 1, &handle);
 		FOR_ARRAY(&meta->dependencies, it_dpdc) {
@@ -197,10 +197,10 @@ void asset_system_drop(struct Handle handle) {
 	}
 
 	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &meta->type_id);
-	if (type == NULL) { logger_to_console("meta w/o type\n"); DEBUG_BREAK(); goto cleanup; }
+	if (type == NULL) { LOG("meta w/o type\n"); DEBUG_BREAK(); goto cleanup; }
 
 	struct Asset_Inst * inst = sparseset_get(&type->instances, meta->inst_handle);
-	if (inst == NULL) { logger_to_console("meta w/o inst\n"); DEBUG_BREAK(); goto cleanup; }
+	if (inst == NULL) { LOG("meta w/o inst\n"); DEBUG_BREAK(); goto cleanup; }
 
 	asset_system_report(handle, S_("[drop]"));
 	array_push_many(&gs_asset_system.stack, 1, &handle);
@@ -267,7 +267,7 @@ static void asset_system_report(struct Handle handle, struct CString tag) {
 	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 	struct CString const name = asset_system_get_name(handle);
 	uint32_t const indent = gs_asset_system.stack.count * 4;
-	logger_to_console(
+	LOG(
 		"%*s" // @note: indentation
 		"%.*s {%u:%u} (%u) %.*s\n"
 		, indent, ""

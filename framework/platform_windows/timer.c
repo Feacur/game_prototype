@@ -1,5 +1,5 @@
 #include "framework/common.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>

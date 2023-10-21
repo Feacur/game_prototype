@@ -1,4 +1,4 @@
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/maths.h"
 
 #include "framework/graphics/material.h"
@@ -78,7 +78,7 @@ struct uvec2 entity_get_content_size(
 		} // break;
 	}
 
-	logger_to_console("unknown entity type\n");
+	LOG("unknown entity type\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return (struct uvec2){0};
 }

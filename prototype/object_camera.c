@@ -1,5 +1,5 @@
 #include "framework/maths.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/graphics/gpu_misc.h"
 #include "framework/systems/asset_system.h"
 
@@ -44,7 +44,7 @@ struct mat4 camera_get_projection(
 			);
 	}
 
-	logger_to_console("unknown camera mode\n");
+	LOG("unknown camera mode\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return (struct mat4){0};
 }

@@ -169,6 +169,16 @@ inline static bool handle_equals(struct Handle h1, struct Handle h2) {
 }
 
 // ----- ----- ----- ----- -----
+//     formatting
+// ----- ----- ----- ----- -----
+
+#if defined(__clang__)
+	#define PRINTF_LIKE(position, count) __attribute__((format(printf, position, count)))
+#else
+	#define PRINTF_LIKE(position, count)
+#endif // __clang__
+
+// ----- ----- ----- ----- -----
 //     documentation
 // ----- ----- ----- ----- -----
 

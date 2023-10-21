@@ -1,5 +1,5 @@
 #include "framework/memory.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "internal/helpers.h"
 
 //
@@ -25,7 +25,7 @@ void hashset_ensure(struct Hashset * hashset, uint32_t capacity) {
 	capacity = growth_hash_adjust(hashset->capacity, capacity);
 
 	if (capacity <= hashset->capacity) {
-		logger_to_console("can't grow\n");
+		LOG("can't grow\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
@@ -72,7 +72,7 @@ void hashset_clear(struct Hashset * hashset) {
 
 bool hashset_get(struct Hashset const * hashset, void const * key) {
 	if (key == NULL) {
-		logger_to_console("key should be non-null\n");
+		LOG("key should be non-null\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return false;
 	}
 
@@ -86,7 +86,7 @@ bool hashset_get(struct Hashset const * hashset, void const * key) {
 
 bool hashset_set(struct Hashset * hashset, void const * key) {
 	if (key == NULL) {
-		logger_to_console("key should be non-null\n");
+		LOG("key should be non-null\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return false;
 	}
 
@@ -112,7 +112,7 @@ bool hashset_set(struct Hashset * hashset, void const * key) {
 
 bool hashset_del(struct Hashset * hashset, void const * key) {
 	if (key == NULL) {
-		logger_to_console("key should be non-null\n");
+		LOG("key should be non-null\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return false;
 	}
 
@@ -132,7 +132,7 @@ uint32_t hashset_get_count(struct Hashset * hashset) {
 
 void * hashset_get_at(struct Hashset * hashset, uint32_t index) {
 	if (index >= hashset->count) {
-		logger_to_console("out of bounds\n");
+		LOG("out of bounds\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	size_t const offset = hashset->key_size * index;

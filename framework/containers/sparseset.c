@@ -1,5 +1,5 @@
 #include "framework/memory.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "internal/helpers.h"
 
 // @note: `id` of external `struct Handle` is expected to be `sparse index + 1`

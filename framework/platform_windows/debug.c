@@ -3,7 +3,7 @@
 //     !GAME_TARGET_RELEASE
 // ----- ----- ----- ----- -----
 
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/memory.h"
 #include "framework/containers/buffer.h"
 
@@ -124,7 +124,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 		);
 
 		// fill the buffer
-		uint32_t const written = logger_to_buffer(
+		uint32_t const written = formatter_fmt(
 			(uint32_t)(gs_platform_debug.buffer.capacity - gs_platform_debug.buffer.size),
 			(char *)gs_platform_debug.buffer.data + gs_platform_debug.buffer.size,
 			"[%.*s] %.*s at '%.*s:%u'\n"

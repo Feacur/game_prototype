@@ -5,7 +5,7 @@
 #include "framework/input.c"
 #include "framework/unicode.c"
 #include "framework/maths_types.c"
-#include "framework/logger.c"
+#include "framework/formatter.c"
 #include "framework/parsing.c"
 #include "framework/json_read.c"
 

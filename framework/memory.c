@@ -1,4 +1,4 @@
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/platform_debug.h"
 
 #include <stdlib.h>
@@ -60,7 +60,7 @@ ALLOCATOR(memory_reallocate) {
 	return reallocated_header + 1;
 
 	// failed
-	fail: logger_to_console("'realloc' failed:\n");
+	fail: LOG("'realloc' failed:\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
@@ -76,7 +76,7 @@ ALLOCATOR(memory_reallocate_without_tracking) {
 	return reallocated;
 
 	// failed
-	fail: logger_to_console("'realloc' failed:\n");
+	fail: LOG("'realloc' failed:\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
@@ -105,7 +105,7 @@ void memory_to_system_free(void) {
 
 	{
 		struct CString const header = S_("memory report");
-		logger_to_console(
+		LOG(
 			"> %-*.*s (bytes: %*.zu | count: %u):\n"
 			""
 			, pointer_digits_count + 4 // compensate for [0x]
@@ -117,7 +117,7 @@ void memory_to_system_free(void) {
 
 	for (struct Memory_Header const * it = gs_memory; it != NULL; it = it->next) {
 		struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack);
-		logger_to_console(
+		LOG(
 			"  [0x%.*zx] (bytes: %*.zu) stacktrace:\n"
 			"%.*s"
 			""

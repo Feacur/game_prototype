@@ -7,7 +7,7 @@
 #include "framework/json_read.h"
 #include "framework/platform_system.h"
 #include "framework/platform_file.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 
 #include "framework/maths.h"
 #include "framework/input.h"
@@ -155,7 +155,7 @@ static void prototype_tick_entities_quad_2d(void) {
 
 static void prototype_init(void) {
 	if (gs_main_settings.scene_id == 0) {
-		logger_to_console("no scene to initialize with\n");
+		LOG("no scene to initialize with\n");
 		return;
 	}
 
@@ -177,7 +177,7 @@ static void prototype_tick_entities(void) {
 	// if (input_mouse(MC_LEFT)) {
 	// 	int32_t x, y;
 	// 	input_mouse_delta(&x, &y);
-	// 	logger_to_console("delta: %d %d\n", x, y);
+	// 	LOG("delta: %d %d\n", x, y);
 	// }
 
 	prototype_tick_cameras();
@@ -362,7 +362,7 @@ static struct CString prototype_get_fps_cstring(void) {
 	double const dt = application_get_delta_time();
 	uint32_t const fps = (uint32_t)r64_floor(1.0 / dt);
 
-	uint32_t const length = logger_to_buffer(sizeof(buffer), buffer, "FPS: %3d (%.5f ms)", fps, dt);
+	uint32_t const length = formatter_fmt(sizeof(buffer), buffer, "FPS: %3d (%.5f ms)", fps, dt);
 	return (struct CString){.length = length, .data = buffer};
 }
 
@@ -488,7 +488,7 @@ static void main_run_application(void) {
 	struct CString const config_path = string_system_get(gs_main_settings.config_id);
 	process_json(config_path, &config, main_fill_config);
 
-	logger_to_console("launched application\n");
+	LOG("launched application\n");
 	application_run(config, (struct Application_Callbacks){
 		.init = app_init,
 		.free = app_free,
@@ -498,22 +498,22 @@ static void main_run_application(void) {
 			.close = app_window_close,
 		},
 	});
-	logger_to_console("application has ended\n");
+	LOG("application has ended\n");
 
 	finalize:
 	string_system_free();
 	return;
 
 	// process errors
-	fail: logger_to_console("failed to launch application\n");
+	fail: LOG("failed to launch application\n");
 	platform_system_sleep(1000);
 	goto finalize;
 }
 
 int main (int argc, char * argv[]) {
-	logger_to_console("> main arguments:\n");
+	LOG("> main arguments:\n");
 	for (int i = 0; i < argc; i++) {
-		logger_to_console("  %s\n", argv[i]);
+		LOG("  %s\n", argv[i]);
 	}
 
 	platform_system_init((struct Platform_Callbacks){

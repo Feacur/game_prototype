@@ -1,4 +1,4 @@
-#include "framework/logger.h"
+#include "framework/formatter.h"
 
 //
 #include "types.h"
@@ -84,7 +84,7 @@ GLenum gpu_vertex_type(enum Data_Type value) {
 		case DATA_TYPE_RGBA64_F:
 			return GL_DOUBLE;
 	}
-	logger_to_console("unknown data type\n");
+	LOG("unknown data type\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -133,7 +133,7 @@ enum Data_Type translate_program_data_type(GLint value) {
 		case GL_FLOAT_MAT3: return DATA_TYPE_MAT3;
 		case GL_FLOAT_MAT4: return DATA_TYPE_MAT4;
 	}
-	logger_to_console("unknown GL type\n");
+	LOG("unknown GL type\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return DATA_TYPE_NONE;
 }
@@ -164,7 +164,7 @@ GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture) {
 			case FILTER_MODE_LERP:  return GL_LINEAR_MIPMAP_LINEAR;
 		} break;
 	}
-	logger_to_console("unknown min filter mode\n");
+	LOG("unknown min filter mode\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -176,7 +176,7 @@ GLint gpu_mag_filter_mode(enum Filter_Mode value) {
 		case FILTER_MODE_POINT: return GL_NEAREST;
 		case FILTER_MODE_LERP:  return GL_LINEAR;
 	}
-	logger_to_console("unknown mag filter mode\n");
+	LOG("unknown mag filter mode\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -190,7 +190,7 @@ GLint gpu_wrap_mode(enum Wrap_Mode value) {
 		case WRAP_MODE_MIRROR_EDGE:   return GL_MIRROR_CLAMP_TO_EDGE;
 		case WRAP_MODE_MIRROR_REPEAT: return GL_MIRRORED_REPEAT;
 	}
-	logger_to_console("unknown wrap mode\n");
+	LOG("unknown wrap mode\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -276,7 +276,7 @@ GLenum gpu_sized_internal_format(enum Texture_Type texture_type, enum Data_Type 
 			case DATA_TYPE_R32_F: return GL_DEPTH32F_STENCIL8;
 		} break;
 	}
-	logger_to_console("unknown sized internal format\n");
+	LOG("unknown sized internal format\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -298,7 +298,7 @@ GLenum gpu_pixel_data_format(enum Texture_Type texture_type, enum Data_Type data
 		case TEXTURE_TYPE_STENCIL:  return GL_STENCIL_INDEX;
 		case TEXTURE_TYPE_DSTENCIL: return GL_DEPTH_STENCIL;
 	}
-	logger_to_console("unknown pixel data format\n");
+	LOG("unknown pixel data format\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -345,7 +345,7 @@ GLenum gpu_pixel_data_type(enum Texture_Type texture_type, enum Data_Type data_t
 			case DATA_TYPE_R32_F: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
 		} break;
 	}
-	logger_to_console("unknown pixel data type\n");
+	LOG("unknown pixel data type\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -362,7 +362,7 @@ GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index) {
 		case TEXTURE_TYPE_STENCIL:  return GL_STENCIL_ATTACHMENT;
 		case TEXTURE_TYPE_DSTENCIL: return GL_DEPTH_STENCIL_ATTACHMENT;
 	}
-	logger_to_console("unknown attachment point\n");
+	LOG("unknown attachment point\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -421,7 +421,7 @@ GLenum gpu_comparison_op(enum Comparison_Op value) {
 		case COMPARISON_OP_LESS_EQUAL: return GL_LEQUAL;
 		case COMPARISON_OP_MORE_EQUAL: return GL_GEQUAL;
 	}
-	logger_to_console("unknown comparison operation\n");
+	LOG("unknown comparison operation\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -433,7 +433,7 @@ GLenum gpu_cull_mode(enum Cull_Mode value) {
 		case CULL_MODE_FRONT: return GL_FRONT;
 		case CULL_MODE_BOTH:  return GL_FRONT_AND_BACK;
 	}
-	logger_to_console("unknown cull mode\n");
+	LOG("unknown cull mode\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -443,7 +443,7 @@ GLenum gpu_winding_order(enum Winding_Order value) {
 		case WINDING_ORDER_POSITIVE: return GL_CCW;
 		case WINDING_ORDER_NEGATIVE: return GL_CW;
 	}
-	logger_to_console("unknown winding order\n");
+	LOG("unknown winding order\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -459,7 +459,7 @@ GLenum gpu_stencil_op(enum Stencil_Op value) {
 		case STENCIL_OP_INCR_WRAP: return GL_INCR_WRAP;
 		case STENCIL_OP_DECR_WRAP: return GL_DECR_WRAP;
 	}
-	logger_to_console("unknown stencil operation\n");
+	LOG("unknown stencil operation\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -504,7 +504,7 @@ struct Gpu_Blend_Mode gpu_blend_mode(enum Blend_Mode value) {
 			.alpha_src = GL_ONE_MINUS_DST_ALPHA, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
 		};
 	}
-	logger_to_console("unknown blend function\n");
+	LOG("unknown blend function\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return (struct Gpu_Blend_Mode){0};
 }
@@ -521,7 +521,7 @@ struct Gpu_Depth_Mode gpu_depth_mode(enum Depth_Mode value, bool reversed_z) {
 			.mask = GL_TRUE, /**/ .op = reversed_z ? GL_GREATER : GL_LESS,
 		};
 	}
-	logger_to_console("unknown depth function\n");
+	LOG("unknown depth function\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return (struct Gpu_Depth_Mode){0};
 }
@@ -542,7 +542,7 @@ GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index) {
 		case SWIZZLE_OP_B: return GL_BLUE;
 		case SWIZZLE_OP_A: return GL_ALPHA;
 	}
-	logger_to_console("unknown swizzle operation\n");
+	LOG("unknown swizzle operation\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }

@@ -1,4 +1,4 @@
-#include "framework/logger.h"
+#include "framework/formatter.h"
 
 //
 #include "functions.h"
@@ -20,7 +20,7 @@ void functions_to_gpu_library_init(void * (* get)(struct CString name)) {
 			glGetIntegerv(GL_MINOR_VERSION, &version_minor); \
 			gs_ogl_version = (uint32_t)(version_major * 10 + version_minor); \
 			\
-			logger_to_console( \
+			LOG( \
 				"> OpenGL info:\n" \
 				"  vendor ..... %s\n" \
 				"  renderer: .. %s\n" \

@@ -1,5 +1,5 @@
 #include "framework/memory.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/maths.h"
 #include "framework/json_read.h"
 
@@ -42,7 +42,7 @@ struct Handle json_load_gfx_material(struct JSON const * json) {
 	return ms_handle;
 
 	// process errors
-	fail: logger_to_console("failed to load gfx material asset\n");
+	fail: LOG("failed to load gfx material asset\n");
 	return ms_handle;
 }
 
@@ -90,7 +90,7 @@ static struct Handle json_load_texture(struct JSON const * json) {
 	}
 
 	// process errors
-	fail: logger_to_console("failed to load texture asset\n");
+	fail: LOG("failed to load texture asset\n");
 	return (struct Handle){0};
 }
 
@@ -119,7 +119,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 		uint32_t const uniform_bytes = data_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;
 		if (it.size != uniform_bytes) {
-			logger_to_console(
+			LOG(
 				"uniform `%.*s` size mismatch: expected %u, material %u\n"
 				""
 				, uniform_name.length, uniform_name.data
@@ -133,7 +133,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 		uint32_t const uniform_count = data_type_get_count(gpu_uniform->type) * gpu_uniform->array_size;
 		uint32_t const json_elements_count = max_u32(1, json_count(uniform_json));
 		if (json_elements_count != uniform_count) {
-			logger_to_console(
+			LOG(
 				"uniform `%.*s` length mismatch: expected %u, json %u\n"
 				""
 				, uniform_name.length, uniform_name.data
@@ -143,7 +143,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 		buffer_ensure(&uniform_data_buffer, it.size);
 		switch (data_type_get_element_type(gpu_uniform->type)) {
-			default: logger_to_console("unknown data type\n");
+			default: LOG("unknown data type\n");
 				goto fail_field;
 
 			case DATA_TYPE_UNIT_U:
@@ -179,6 +179,6 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 	return;
 
 	// process errors
-	fail_uniforms: logger_to_console("missing shader uniforms\n");
+	fail_uniforms: LOG("missing shader uniforms\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 }

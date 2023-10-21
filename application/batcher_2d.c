@@ -1,7 +1,7 @@
 #include "framework/common.h"
 #include "framework/memory.h"
 #include "framework/unicode.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 
 #include "framework/containers/hashset.h"
 #include "framework/containers/array.h"
@@ -567,11 +567,11 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 
 void batcher_2d_bake(struct Batcher_2D * batcher) {
 	if (batcher->batches.count > 0) {
-		logger_to_console("unissued batches\n");
+		LOG("unissued batches\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 	if (batcher->batch.indices_offset < batcher->buffer_indices.count) {
-		logger_to_console("unissued indices\n");
+		LOG("unissued indices\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 

@@ -1,5 +1,5 @@
 #include "framework/memory.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/parsing.h"
 
 #include "wfobj_lexer.h"
@@ -34,12 +34,12 @@ static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 
 	char const * const reason = c_wfobj_token_names[token->type];
 
-	logger_to_console("wfobj");
-	logger_to_console(" [line: %u]", token->line + 1);
-	logger_to_console(" [context: '%.*s']", token->text.length, token->text.data);
-	if (reason != NULL) { logger_to_console(" [%s]", reason); }
-	if (message != NULL) { logger_to_console(": %s", message); }
-	logger_to_console("\n");
+	LOG("wfobj");
+	LOG(" [line: %u]", token->line + 1);
+	LOG(" [context: '%.*s']", token->text.length, token->text.data);
+	if (reason != NULL) { LOG(" [%s]", reason); }
+	if (message != NULL) { LOG(": %s", message); }
+	LOG("\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 }
 

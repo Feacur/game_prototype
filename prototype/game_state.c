@@ -1,4 +1,4 @@
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/json_read.h"
 #include "framework/containers/strings.h"
 #include "framework/assets/json.h"
@@ -33,7 +33,7 @@ static enum Camera_Mode json_read_camera_mode(struct JSON const * json) {
 			return CAMERA_MODE_ASPECT_Y;
 		}
 	}
-	logger_to_console("unknown camera mode\n");
+	LOG("unknown camera mode\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return CAMERA_MODE_NONE;
 }
@@ -96,7 +96,7 @@ static enum Entity_Type json_read_entity_type(struct JSON const * json) {
 			return ENTITY_TYPE_TEXT_2D;
 		}
 	}
-	logger_to_console("unknown entity type\n");
+	LOG("unknown entity type\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return ENTITY_TYPE_NONE;
 }
@@ -111,7 +111,7 @@ static enum Entity_Quad_Mode json_read_entity_quad_mode(struct JSON const * json
 			return ENTITY_QUAD_MODE_SIZE;
 		}
 	}
-	logger_to_console("unknown quad mode\n");
+	LOG("unknown quad mode\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return ENTITY_QUAD_MODE_NONE;
 }

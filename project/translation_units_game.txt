@@ -4,7 +4,7 @@ framework/memory.c
 framework/input.c
 framework/unicode.c
 framework/maths_types.c
-framework/logger.c
+framework/formatter.c
 framework/parsing.c
 framework/json_read.c
 

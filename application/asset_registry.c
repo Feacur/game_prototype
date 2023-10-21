@@ -1,5 +1,5 @@
 #include "framework/memory.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/maths.h"
 #include "framework/json_read.h"
 #include "framework/platform_file.h"

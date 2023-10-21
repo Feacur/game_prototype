@@ -1,5 +1,5 @@
 #include "framework/memory.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "internal/helpers.h"
 
 //
@@ -27,7 +27,7 @@ void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity) {
 	capacity = growth_hash_adjust(hashmap->capacity, capacity);
 
 	if (capacity <= hashmap->capacity) {
-		logger_to_console("can't grow\n");
+		LOG("can't grow\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
@@ -82,7 +82,7 @@ void hashmap_clear(struct Hashmap * hashmap) {
 
 void * hashmap_get(struct Hashmap const * hashmap, void const * key) {
 	if (key == NULL) {
-		logger_to_console("key should be non-null\n");
+		LOG("key should be non-null\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 
@@ -96,7 +96,7 @@ void * hashmap_get(struct Hashmap const * hashmap, void const * key) {
 
 bool hashmap_set(struct Hashmap * hashmap, void const * key, void const * value) {
 	if (key == NULL) {
-		logger_to_console("key should be non-null\n");
+		LOG("key should be non-null\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return false;
 	}
 
@@ -127,7 +127,7 @@ bool hashmap_set(struct Hashmap * hashmap, void const * key, void const * value)
 
 bool hashmap_del(struct Hashmap * hashmap, void const * key) {
 	if (key == NULL) {
-		logger_to_console("key should be non-null\n");
+		LOG("key should be non-null\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return false;
 	}
 
@@ -147,7 +147,7 @@ uint32_t hashmap_get_count(struct Hashmap * hashmap) {
 
 void * hashmap_get_key_at(struct Hashmap * hashmap, uint32_t index) {
 	if (index >= hashmap->count) {
-		logger_to_console("out of bounds\n");
+		LOG("out of bounds\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	size_t const offset = hashmap->key_size * index;
@@ -156,7 +156,7 @@ void * hashmap_get_key_at(struct Hashmap * hashmap, uint32_t index) {
 
 void * hashmap_get_val_at(struct Hashmap * hashmap, uint32_t index) {
 	if (index >= hashmap->count) {
-		logger_to_console("out of bounds\n");
+		LOG("out of bounds\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	size_t const offset = hashmap->value_size * index;

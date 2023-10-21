@@ -4,7 +4,7 @@
 #include "framework/memory.h"
 #include "framework/unicode.h"
 #include "framework/input_keys.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/platform_debug.h"
 
 #include "internal/debug_to_system.h"
@@ -101,7 +101,7 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 	return;
 
 	// process errors
-	fail: logger_to_console("failed to initialize the system module\n");
+	fail: LOG("failed to initialize the system module\n");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	gs_platform_system.has_error = true;
 	// common_exit_failure();
@@ -199,8 +199,8 @@ static void log_last_error(char const * prefix) {
 		, (LPSTR)&message, 0, NULL
 	);
 	if (size > 0 && message[size - 1] == '\n') { size -= 1; }
-	if (prefix != NULL) { logger_to_console("%s", prefix); }
-	logger_to_console("%.*s\n", (int)size, message);
+	if (prefix != NULL) { LOG("%s", prefix); }
+	LOG("%.*s\n", (int)size, message);
 	LocalFree(message);
 }
 
@@ -221,7 +221,7 @@ static char const * system_signal_get_type(int value) {
 static void system_signal_handler(int value) {
 	if (gs_platform_system.has_error) { goto finilize; }
 
-	logger_to_console(
+	LOG(
 		"> system signal '0x%x'\n"
 		"  type: %s\n"
 		""
@@ -316,7 +316,7 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	// Any attempt to continue execution after a noncontinuable exception causes the EXCEPTION_NONCONTINUABLE_EXCEPTION exception.
 	bool const noncontinuable = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == EXCEPTION_NONCONTINUABLE;
 
-	logger_to_console(
+	LOG(
 		"> system vector '0x%lx'\n"
 		"  type: %s\n"
 		""

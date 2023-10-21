@@ -1,5 +1,5 @@
 #include "platform_debug.h"
-#include "logger.h"
+#include "formatter.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -131,10 +131,9 @@ void report_callstack(void) {
 	// @note: skip `report_callstack`
 	struct Callstack const callstack = platform_debug_get_callstack(1);
 	struct CString const stacktrace = platform_debug_get_stacktrace(callstack);
-	logger_to_console(
+	LOG(
 		"> callstack:\n"
 		"%.*s"
-		""
 		, stacktrace.length, stacktrace.data
 	);
 }

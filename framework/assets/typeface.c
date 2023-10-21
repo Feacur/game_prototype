@@ -1,5 +1,5 @@
 #include "framework/memory.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/maths.h"
 #include "framework/containers/buffer.h"
 
@@ -40,7 +40,7 @@ struct Typeface * typeface_init(struct Buffer * buffer) {
 
 	typeface->api.userdata = typeface->scratch;
 	if (!stbtt_InitFont(&typeface->api, typeface->data, stbtt_GetFontOffsetForIndex(typeface->data, 0))) {
-		logger_to_console("failure: can't read typeface data\n");
+		LOG("failure: can't read typeface data\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 
@@ -52,7 +52,7 @@ struct Typeface * typeface_init(struct Buffer * buffer) {
 }
 
 void typeface_free(struct Typeface * typeface) {
-	if (typeface == NULL) { logger_to_console("freeing NULL typeface\n"); return; }
+	if (typeface == NULL) { LOG("freeing NULL typeface\n"); return; }
 	buffer_free(typeface->scratch); MEMORY_FREE(typeface->scratch);
 	MEMORY_FREE(typeface->data);
 	common_memset(typeface, 0, sizeof(*typeface));
@@ -112,11 +112,11 @@ void typeface_render_glyph(
 	uint32_t offset_x, uint32_t offset_y
 ) {
 	if (glyph_size_x == 0) {
-		logger_to_console("'glyph_size_x == 0' doesn't make sense\n");
+		LOG("'glyph_size_x == 0' doesn't make sense\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 	if (glyph_size_y == 0) {
-		logger_to_console("'glyph_size_y == 0' doesn't make sense\n");
+		LOG("'glyph_size_y == 0' doesn't make sense\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
@@ -130,7 +130,7 @@ void typeface_render_glyph(
 	}
 
 	if (buffer_width == 0) {
-		logger_to_console("'buffer_width == 0' doesn't make sense\n");
+		LOG("'buffer_width == 0' doesn't make sense\n");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 

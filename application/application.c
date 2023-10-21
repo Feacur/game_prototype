@@ -7,7 +7,7 @@
 #include "framework/gpu_context.h"
 #include "framework/maths.h"
 #include "framework/input.h"
-#include "framework/logger.h"
+#include "framework/formatter.h"
 
 //
 #include "application.h"
@@ -41,7 +41,7 @@ static uint64_t get_fixed_ticks(uint64_t default_value) {
 }
 
 static void application_init(void) {
-	logger_to_console(
+	LOG(
 		"> application settings:\n"
 		"  size ......... %u x %u\n"
 		"  vsync ........ %d\n"
@@ -165,7 +165,7 @@ void application_update(void) {
 	// 	static uint64_t prev = 0;
 	// 	uint64_t const fps = platform_timer_get_ticks_per_second() / gs_app.ticks.elapsed;
 	// 	if (fps > prev + 10 || fps < prev - 10) {
-	// 		logger_to_console("%3llu\n", fps);
+	// 		LOG("%3llu\n", fps);
 	// 	}
 	// 	prev = fps;
 	// }

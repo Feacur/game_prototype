@@ -1,4 +1,4 @@
-#include "framework/logger.h"
+#include "framework/formatter.h"
 #include "framework/parsing.h"
 
 #include "framework/containers/buffer.h"
@@ -128,12 +128,12 @@ static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token 
 
 	struct CString const reason = c_json_token_names[token->type];
 
-	logger_to_console("json");
-	logger_to_console(" [line: %u]", token->line + 1);
-	logger_to_console(" [context: '%.*s']", token->text.length, token->text.data);
-	if (reason.data != NULL) { logger_to_console(" [%.*s]", reason.length, reason.data); }
-	if (message.data != NULL) { logger_to_console(": %.*s", message.length, message.data); }
-	logger_to_console("\n");
+	LOG("json");
+	LOG(" [line: %u]", token->line + 1);
+	LOG(" [context: '%.*s']", token->text.length, token->text.data);
+	if (reason.data != NULL) { LOG(" [%.*s]", reason.length, reason.data); }
+	if (message.data != NULL) { LOG(": %.*s", message.length, message.data); }
+	LOG("\n");
 }
 
 static void json_parser_error_previous(struct JSON_Parser * parser, struct CString message) {
@@ -221,7 +221,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		bool const is_new = hashmap_set(table, &entry_key.as.string_id, &entry_value);
 		if (!is_new) {
 			struct CString const key = string_system_get(entry_key.as.string_id);
-			logger_to_console("key duplicate: \"%.*s\"\n", key.length, key.data);
+			LOG("key duplicate: \"%.*s\"\n", key.length, key.data);
 			REPORT_CALLSTACK(); DEBUG_BREAK();
 		}
 
