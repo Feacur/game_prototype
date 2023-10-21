@@ -152,7 +152,7 @@ void asset_system_drop(struct Handle handle) {
 	if (type == NULL) { return; }
 
 	struct Asset_Inst * inst = sparseset_get(&type->instances, meta->inst_handle);
-	if (inst != NULL) { return; }
+	if (inst == NULL) { return; }
 
 	if (type->info.drop != NULL) {
 		type->info.drop(inst->payload);
