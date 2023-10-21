@@ -84,20 +84,21 @@ void asset_system_del_type(struct CString type_name) {
 	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &type_id);
 	if (type == NULL) { return; }
 
-	FOR_SPARSESET (&type->instances, it_inst) {
-		struct Asset_Inst * inst = it_inst.value;
-
-		struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, inst->header.meta_handle);
-		hashmap_del(&gs_asset_system.handles, &meta->name_id);
-		sparseset_discard(&gs_asset_system.meta, inst->header.meta_handle);
+	FOR_SPARSESET (&type->instances, it) {
+		struct Asset_Inst * inst = it.value;
+		struct Handle const handle = inst->header.meta_handle;
 
 		if (type->info.drop != NULL) {
 			type->info.drop(inst->payload);
 		}
+
+		struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
+		if (meta == NULL) { continue; }
+		hashmap_del(&gs_asset_system.handles, &meta->name_id);
+		sparseset_discard(&gs_asset_system.meta, handle);
 	}
 
 	sparseset_free(&type->instances);
-
 	hashmap_del(&gs_asset_system.types, &type_id);
 }
 
@@ -142,24 +143,26 @@ struct Handle asset_system_load(struct CString name) {
 }
 
 void asset_system_drop(struct Handle handle) {
-	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
+	struct Asset_Meta * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return; }
 
-	hashmap_del(&gs_asset_system.handles, &meta->name_id);
-	sparseset_discard(&gs_asset_system.meta, handle);
+	// @note: preserve meta over drops and frees.
+	struct Asset_Meta const local_meta = *meta;
 
 	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &meta->type_id);
-	if (type == NULL) { return; }
+	if (type == NULL) { DEBUG_BREAK(); goto cleanup; }
 
 	struct Asset_Inst * inst = sparseset_get(&type->instances, meta->inst_handle);
-	if (inst == NULL) { return; }
-
-	struct Asset_Meta const local_meta = *meta;
+	if (inst == NULL) { DEBUG_BREAK(); goto cleanup; }
 
 	if (type->info.drop != NULL) {
 		type->info.drop(inst->payload);
 	}
 	sparseset_discard(&type->instances, local_meta.inst_handle);
+
+	cleanup: // make sure `local_meta` is inited
+	sparseset_discard(&gs_asset_system.meta, handle);
+	hashmap_del(&gs_asset_system.handles, &local_meta.name_id);
 }
 
 struct Handle asset_system_find(struct CString name) {
