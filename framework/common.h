@@ -88,6 +88,27 @@ uint64_t align_u64(uint64_t value);
 
 bool contains_full_word(char const * container, struct CString value);
 
+
+inline static bool is_line(char c) {
+	return c == '\n' || c == '\r';
+}
+
+inline static bool is_digit(char c) {
+	return '0' <= c && c <= '9';
+}
+
+inline static bool is_hex(char c) {
+	return ('0' <= c && c <= '9')
+	    || ('a' <= c && c <= 'f')
+	    || ('A' <= c && c <= 'F');
+}
+
+inline static bool is_alpha(char c) {
+	return ('a' <= c && c <= 'z')
+	    || ('A' <= c && c <= 'Z')
+	    || c == '_';
+}
+
 // ----- ----- ----- ----- -----
 //     allocating
 // ----- ----- ----- ----- -----

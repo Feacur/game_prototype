@@ -4,7 +4,6 @@
 #include "common.h"
 
 struct Callstack {
-	uint32_t count;
 	uint64_t data[64];
 };
 

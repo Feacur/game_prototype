@@ -1,5 +1,6 @@
 #include "platform_debug.h"
 #include "formatter.h"
+#include "parsing.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -130,10 +131,22 @@ bool contains_full_word(char const * container, struct CString value) {
 void report_callstack(void) {
 	// @note: skip `report_callstack`
 	struct Callstack const callstack = platform_debug_get_callstack(1);
-	struct CString const stacktrace = platform_debug_get_stacktrace(callstack);
-	TRC(
-		"> callstack:\n"
-		"%.*s"
-		, stacktrace.length, stacktrace.data
-	);
+	struct CString stacktrace = platform_debug_get_stacktrace(callstack);
+	if (stacktrace.length == 0) { stacktrace = S_("empty"); }
+	LOG("> callstack:\n");
+	do {
+		while (stacktrace.length > 0 && is_line(stacktrace.data[0])) {
+			stacktrace.length--;
+			stacktrace.data++;
+		}
+		uint32_t line_length = 0;
+		while (line_length < stacktrace.length && !is_line(stacktrace.data[line_length])) {
+			line_length++;
+		}
+		if (line_length > 0) {
+			LOG("  %.*s\n" , line_length, stacktrace.data);
+			stacktrace.length -= line_length;
+			stacktrace.data += line_length;
+		}
+	} while (stacktrace.length > 0);
 }

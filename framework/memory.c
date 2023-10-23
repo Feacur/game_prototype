@@ -60,7 +60,7 @@ ALLOCATOR(memory_reallocate) {
 	return reallocated_header + 1;
 
 	// failed
-	fail: ERR("'realloc' failed:\n");
+	fail: ERR("'realloc' failed:");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
@@ -76,7 +76,7 @@ ALLOCATOR(memory_reallocate_without_tracking) {
 	return reallocated;
 
 	// failed
-	fail: ERR("'realloc' failed:\n");
+	fail: ERR("'realloc' failed:");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
@@ -106,7 +106,7 @@ void memory_to_system_free(void) {
 	{
 		struct CString const header = S_("memory report");
 		WRN(
-			"> %-*.*s (bytes: %*.zu | count: %u):\n"
+			"> %-*.*s (bytes: %*.zu | count: %u):"
 			""
 			, pointer_digits_count + 4 // compensate for [0x]
 			, header.length, header.data

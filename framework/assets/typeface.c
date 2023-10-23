@@ -40,7 +40,7 @@ struct Typeface * typeface_init(struct Buffer * buffer) {
 
 	typeface->api.userdata = typeface->scratch;
 	if (!stbtt_InitFont(&typeface->api, typeface->data, stbtt_GetFontOffsetForIndex(typeface->data, 0))) {
-		ERR("failure: can't read typeface data\n");
+		ERR("failure: can't read typeface data");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 
@@ -52,7 +52,7 @@ struct Typeface * typeface_init(struct Buffer * buffer) {
 }
 
 void typeface_free(struct Typeface * typeface) {
-	if (typeface == NULL) { WRN("freeing NULL typeface\n"); return; }
+	if (typeface == NULL) { WRN("freeing NULL typeface"); return; }
 	buffer_free(typeface->scratch); MEMORY_FREE(typeface->scratch);
 	MEMORY_FREE(typeface->data);
 	common_memset(typeface, 0, sizeof(*typeface));
@@ -112,11 +112,11 @@ void typeface_render_glyph(
 	uint32_t offset_x, uint32_t offset_y
 ) {
 	if (glyph_size_x == 0) {
-		WRN("'glyph_size_x == 0' doesn't make sense\n");
+		WRN("'glyph_size_x == 0' doesn't make sense");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 	if (glyph_size_y == 0) {
-		WRN("'glyph_size_y == 0' doesn't make sense\n");
+		WRN("'glyph_size_y == 0' doesn't make sense");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
@@ -130,7 +130,7 @@ void typeface_render_glyph(
 	}
 
 	if (buffer_width == 0) {
-		WRN("'buffer_width == 0' doesn't make sense\n");
+		WRN("'buffer_width == 0' doesn't make sense");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 

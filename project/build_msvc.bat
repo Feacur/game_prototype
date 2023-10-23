@@ -2,7 +2,6 @@
 chcp 65001 > nul
 setlocal enabledelayedexpansion
 echo.building with MSVC...
-call %func% get_millis time_zero
 
 rem https://learn.microsoft.com/cpp/build/reference/compiler-options
 

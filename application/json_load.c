@@ -42,7 +42,7 @@ struct Handle json_load_gfx_material(struct JSON const * json) {
 	return ms_handle;
 
 	// process errors
-	fail: ERR("failed to load gfx material asset\n");
+	fail: ERR("failed to load gfx material asset");
 	return ms_handle;
 }
 
@@ -90,7 +90,7 @@ static struct Handle json_load_texture(struct JSON const * json) {
 	}
 
 	// process errors
-	fail: ERR("failed to load texture asset\n");
+	fail: ERR("failed to load texture asset");
 	return (struct Handle){0};
 }
 
@@ -119,9 +119,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 		uint32_t const uniform_bytes = data_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;
 		if (it.size != uniform_bytes) {
-			ERR(
-				"uniform `%.*s` size mismatch: expected %u, material %u\n"
-				""
+			ERR("uniform `%.*s` size mismatch: expected %u, material %u"
 				, uniform_name.length, uniform_name.data
 				, uniform_bytes, it.size
 			); goto fail_field;
@@ -133,9 +131,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 		uint32_t const uniform_count = data_type_get_count(gpu_uniform->type) * gpu_uniform->array_size;
 		uint32_t const json_elements_count = max_u32(1, json_count(uniform_json));
 		if (json_elements_count != uniform_count) {
-			ERR(
-				"uniform `%.*s` length mismatch: expected %u, json %u\n"
-				""
+			ERR("uniform `%.*s` length mismatch: expected %u, json %u"
 				, uniform_name.length, uniform_name.data
 				, uniform_count, json_elements_count
 			); goto fail_field;
@@ -143,7 +139,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 		buffer_ensure(&uniform_data_buffer, it.size);
 		switch (data_type_get_element_type(gpu_uniform->type)) {
-			default: ERR("unknown data type\n");
+			default: ERR("unknown data type");
 				goto fail_field;
 
 			case DATA_TYPE_UNIT_U:
@@ -179,6 +175,6 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 	return;
 
 	// process errors
-	fail_uniforms: WRN("missing shader uniforms\n");
+	fail_uniforms: WRN("missing shader uniforms");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 }

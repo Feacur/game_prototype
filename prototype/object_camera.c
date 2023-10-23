@@ -44,7 +44,7 @@ struct mat4 camera_get_projection(
 			);
 	}
 
-	ERR("unknown camera mode\n");
+	ERR("unknown camera mode");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return (struct mat4){0};
 }

@@ -78,7 +78,7 @@ uint64_t hash_u64_xorshift(uint64_t value) {
 uint32_t po2_next_u32(uint32_t value) {
 #if !defined(GAME_TARGET_RELEASE)
 	if (value > (UINT32_C(1) << 31)) {
-		ERR("PO2 overflow: %u\n", value);
+		ERR("PO2 overflow: %u", value);
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
 #endif
@@ -95,7 +95,7 @@ uint32_t po2_next_u32(uint32_t value) {
 uint64_t po2_next_u64(uint64_t value) {
 #if !defined(GAME_TARGET_RELEASE)
 	if (value > (UINT64_C(1) << 63)) {
-		ERR("PO2 overflow: %llu\n", value);
+		ERR("PO2 overflow: %llu", value);
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
 #endif

@@ -128,7 +128,7 @@ static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token 
 
 	struct CString const reason = c_json_token_names[token->type];
 
-	ERR("json");
+	LOG("[json]");
 	LOG(" [line: %u]", token->line + 1);
 	LOG(" [context: '%.*s']", token->text.length, token->text.data);
 	if (reason.data != NULL) { LOG(" [%.*s]", reason.length, reason.data); }
@@ -221,7 +221,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		bool const is_new = hashmap_set(table, &entry_key.as.string_id, &entry_value);
 		if (!is_new) {
 			struct CString const key = string_system_get(entry_key.as.string_id);
-			WRN("key duplicate: \"%.*s\"\n", key.length, key.data);
+			WRN("key duplicate: \"%.*s\"", key.length, key.data);
 			REPORT_CALLSTACK(); DEBUG_BREAK();
 		}
 

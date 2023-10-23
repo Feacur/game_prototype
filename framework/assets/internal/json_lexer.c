@@ -72,10 +72,10 @@ static struct JSON_Token json_lexer_make_token(struct JSON_Lexer * lexer, enum J
 
 static struct JSON_Token json_lexer_make_number_token(struct JSON_Lexer * lexer) {
 	if (PEEK() == '-') { ADVANCE(); }
-	while (parse_is_digit(PEEK())) { ADVANCE(); }
+	while (is_digit(PEEK())) { ADVANCE(); }
 
 	if (PEEK() == '.') { ADVANCE();
-		while (parse_is_digit(PEEK())) { ADVANCE(); }
+		while (is_digit(PEEK())) { ADVANCE(); }
 	}
 
 	if (PEEK() == 'e' || PEEK() == 'E') { ADVANCE();
@@ -83,7 +83,7 @@ static struct JSON_Token json_lexer_make_number_token(struct JSON_Lexer * lexer)
 			case '-': ADVANCE(); break;
 			case '+': ADVANCE(); break;
 		}
-		while (parse_is_digit(PEEK())) { ADVANCE(); }
+		while (is_digit(PEEK())) { ADVANCE(); }
 	}
 
 	return json_lexer_make_token(lexer, JSON_TOKEN_NUMBER);
@@ -105,7 +105,7 @@ static enum JSON_Token_Type json_lexer_identifier_type(struct JSON_Lexer * lexer
 }
 
 static struct JSON_Token json_lexer_make_identifier_token(struct JSON_Lexer * lexer) {
-	while (parse_is_alpha(PEEK()) || parse_is_digit(PEEK())) { ADVANCE(); }
+	while (is_alpha(PEEK()) || is_digit(PEEK())) { ADVANCE(); }
 	return json_lexer_make_token(lexer, json_lexer_identifier_type(lexer));
 }
 
@@ -126,10 +126,10 @@ static struct JSON_Token json_lexer_make_string(struct JSON_Lexer * lexer) {
 					continue;
 
 				case 'u':
-					if (!parse_is_hex(PEEK_OFFSET(1))) { return json_lexer_make_token(lexer, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
-					if (!parse_is_hex(PEEK_OFFSET(2))) { return json_lexer_make_token(lexer, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
-					if (!parse_is_hex(PEEK_OFFSET(3))) { return json_lexer_make_token(lexer, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
-					if (!parse_is_hex(PEEK_OFFSET(4))) { return json_lexer_make_token(lexer, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
+					if (!is_hex(PEEK_OFFSET(1))) { return json_lexer_make_token(lexer, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
+					if (!is_hex(PEEK_OFFSET(2))) { return json_lexer_make_token(lexer, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
+					if (!is_hex(PEEK_OFFSET(3))) { return json_lexer_make_token(lexer, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
+					if (!is_hex(PEEK_OFFSET(4))) { return json_lexer_make_token(lexer, JSON_TOKEN_ERROR_MALFORMED_UNICODE); }
 					ADVANCE(); ADVANCE(); ADVANCE(); ADVANCE();
 					continue;
 			}
@@ -172,8 +172,8 @@ inline static struct JSON_Token json_lexer_next_internal(struct JSON_Lexer * lex
 		case '"': return json_lexer_make_string(lexer);
 	}
 
-	if (parse_is_alpha(c)) { return json_lexer_make_identifier_token(lexer); }
-	if (c == '-' || parse_is_digit(c)) { return json_lexer_make_number_token(lexer); }
+	if (is_alpha(c)) { return json_lexer_make_identifier_token(lexer); }
+	if (c == '-' || is_digit(c)) { return json_lexer_make_number_token(lexer); }
 
 	return json_lexer_make_token(lexer, JSON_TOKEN_ERROR_UNKNOWN_CHARACTER);
 }

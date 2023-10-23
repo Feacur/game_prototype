@@ -567,11 +567,11 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 
 void batcher_2d_bake(struct Batcher_2D * batcher) {
 	if (batcher->batches.count > 0) {
-		WRN("unissued batches\n");
+		WRN("unissued batches");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 	if (batcher->batch.indices_offset < batcher->buffer_indices.count) {
-		WRN("unissued indices\n");
+		WRN("unissued indices");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 

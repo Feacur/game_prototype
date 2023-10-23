@@ -45,7 +45,7 @@ void buffer_push_many(struct Buffer * buffer, size_t size, void const * value) {
 
 void buffer_set_many(struct Buffer * buffer, size_t offset, size_t size, void const * value) {
 	if (offset + size > buffer->size) {
-		ERR("out of bounds\n");
+		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 	uint8_t * at = (uint8_t *)buffer->data + offset;
@@ -54,7 +54,7 @@ void buffer_set_many(struct Buffer * buffer, size_t offset, size_t size, void co
 
 void buffer_insert_many(struct Buffer * buffer, size_t offset, size_t size, void const * value) {
 	if (offset > buffer->size) {
-		ERR("out of bounds\n");
+		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 	buffer_ensure(buffer, buffer->size + size);
@@ -70,7 +70,7 @@ void buffer_insert_many(struct Buffer * buffer, size_t offset, size_t size, void
 
 void * buffer_pop(struct Buffer * buffer, size_t size) {
 	if (buffer->size < size) {
-		ERR("out of bounds\n");
+		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	buffer->size -= size;
@@ -80,7 +80,7 @@ void * buffer_pop(struct Buffer * buffer, size_t size) {
 
 void * buffer_peek(struct Buffer const * buffer, size_t depth) {
 	if (depth >= buffer->size) {
-		ERR("out of bounds\n");
+		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	size_t const offset = buffer->size - depth - 1;
@@ -89,7 +89,7 @@ void * buffer_peek(struct Buffer const * buffer, size_t depth) {
 
 void * buffer_at(struct Buffer const * buffer, size_t offset) {
 	if (offset >= buffer->size) {
-		ERR("out of bounds\n");
+		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	return (uint8_t *)buffer->data + offset;

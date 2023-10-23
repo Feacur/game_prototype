@@ -155,7 +155,7 @@ static void prototype_tick_entities_quad_2d(void) {
 
 static void prototype_init(void) {
 	if (gs_main_settings.scene_id == 0) {
-		WRN("no scene to initialize with\n");
+		WRN("no scene to initialize with");
 		return;
 	}
 
@@ -177,7 +177,7 @@ static void prototype_tick_entities(void) {
 	// if (input_mouse(MC_LEFT)) {
 	// 	int32_t x, y;
 	// 	input_mouse_delta(&x, &y);
-	// 	TRC("delta: %d %d\n", x, y);
+	// 	TRC("delta: %d %d", x, y);
 	// }
 
 	prototype_tick_cameras();
@@ -488,7 +488,7 @@ static void main_run_application(void) {
 	struct CString const config_path = string_system_get(gs_main_settings.config_id);
 	process_json(config_path, &config, main_fill_config);
 
-	TRC("launched application\n");
+	TRC("launched application");
 	application_run(config, (struct Application_Callbacks){
 		.init = app_init,
 		.free = app_free,
@@ -498,14 +498,14 @@ static void main_run_application(void) {
 			.close = app_window_close,
 		},
 	});
-	TRC("application has ended\n");
+	TRC("application has ended");
 
 	finalize:
 	string_system_free();
 	return;
 
 	// process errors
-	fail: ERR("failed to launch application\n");
+	fail: ERR("failed to launch application");
 	platform_system_sleep(1000);
 	goto finalize;
 }

@@ -62,10 +62,10 @@ static struct WFObj_Token wfobj_lexer_make_token(struct WFObj_Lexer * lexer, enu
 
 static struct WFObj_Token wfobj_lexer_make_number_token(struct WFObj_Lexer * lexer) {
 	if (PEEK() == '-') { ADVANCE(); }
-	while (parse_is_digit(PEEK())) { ADVANCE(); }
+	while (is_digit(PEEK())) { ADVANCE(); }
 
 	if (PEEK() == '.') { ADVANCE();
-		while (parse_is_digit(PEEK())) { ADVANCE(); }
+		while (is_digit(PEEK())) { ADVANCE(); }
 	}
 
 	if (PEEK() == 'e' || PEEK() == 'E') { ADVANCE();
@@ -73,7 +73,7 @@ static struct WFObj_Token wfobj_lexer_make_number_token(struct WFObj_Lexer * lex
 			case '-': ADVANCE(); break;
 			case '+': ADVANCE(); break;
 		}
-		while (parse_is_digit(PEEK())) { ADVANCE(); }
+		while (is_digit(PEEK())) { ADVANCE(); }
 	}
 
 	return wfobj_lexer_make_token(lexer, WFOBJ_TOKEN_NUMBER);
@@ -104,7 +104,7 @@ static enum WFObj_Token_Type wfobj_lexer_identifier_type(struct WFObj_Lexer * le
 }
 
 static struct WFObj_Token wfobj_lexer_make_identifier_token(struct WFObj_Lexer * lexer) {
-	while (parse_is_alpha(PEEK()) || parse_is_digit(PEEK())) { ADVANCE(); }
+	while (is_alpha(PEEK()) || is_digit(PEEK())) { ADVANCE(); }
 	return wfobj_lexer_make_token(lexer, wfobj_lexer_identifier_type(lexer));
 }
 
@@ -129,8 +129,8 @@ inline static struct WFObj_Token wfobj_lexer_next_internal(struct WFObj_Lexer * 
 			return wfobj_lexer_make_token(lexer, WFOBJ_TOKEN_NEW_LINE);
 	}
 
-	if (parse_is_alpha(c)) { return wfobj_lexer_make_identifier_token(lexer); }
-	if (c == '-' || parse_is_digit(c)) { return wfobj_lexer_make_number_token(lexer); }
+	if (is_alpha(c)) { return wfobj_lexer_make_identifier_token(lexer); }
+	if (c == '-' || is_digit(c)) { return wfobj_lexer_make_number_token(lexer); }
 
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return wfobj_lexer_make_token(lexer, WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER);

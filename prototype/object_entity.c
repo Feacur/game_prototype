@@ -78,7 +78,7 @@ struct uvec2 entity_get_content_size(
 		} // break;
 	}
 
-	ERR("unknown entity type\n");
+	ERR("unknown entity type");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return (struct uvec2){0};
 }

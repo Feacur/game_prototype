@@ -178,7 +178,7 @@ enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels
 			case 4: return DATA_TYPE_RGBA64_F;
 		} break;
 	}
-	ERR("unknown vector type\n");
+	ERR("unknown vector type");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return DATA_TYPE_NONE;
 }
@@ -269,7 +269,7 @@ uint32_t data_type_get_count(enum Data_Type value) {
 		case DATA_TYPE_MAT3: return 3 * 3;
 		case DATA_TYPE_MAT4: return 4 * 4;
 	}
-	ERR("unknown data type\n");
+	ERR("unknown data type");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return 0;
 }
@@ -360,7 +360,7 @@ uint32_t data_type_get_size(enum Data_Type value) {
 		case DATA_TYPE_MAT3: return sizeof(float) * 3 * 3;
 		case DATA_TYPE_MAT4: return sizeof(float) * 4 * 4;
 	}
-	ERR("unknown data type\n");
+	ERR("unknown data type");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return 0;
 }

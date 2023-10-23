@@ -30,6 +30,7 @@ static struct Platform_Debug {
 struct Callstack platform_debug_get_callstack(uint32_t skip) {
 	skip += 1; // @note: skip `platform_debug_get_callstack`
 
+	uint32_t count = 0;
 	struct Callstack callstack = {0};
 	CONTEXT context; RtlCaptureContext(&context); // @note: platform-specific structure
 	for (uint32_t i = 0; i < SIZE_OF_ARRAY(callstack.data); i++) {
@@ -40,7 +41,7 @@ struct Callstack platform_debug_get_callstack(uint32_t skip) {
 		if (entry == NULL) { break; }
 
 		if (skip == 0) {
-			callstack.data[callstack.count++] = control_pc;
+			callstack.data[count++] = control_pc;
 		}
 		else { skip--; }
 
@@ -71,6 +72,8 @@ struct Callstack platform_debug_get_callstack(uint32_t skip) {
 #endif
 
 struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
+	static uint32_t const FRAMES_MAX = SIZE_OF_MEMBER(struct Callstack, data);
+
 	gs_platform_debug.buffer.size = 0;
 	gs_platform_debug.scratch.size = 0;
 
@@ -89,7 +92,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 	IMAGEHLP_MODULE64 module = {.SizeOfStruct = sizeof(module)};
 
 	HANDLE const process = GetCurrentProcess();
-	for (uint32_t i = 0, last = callstack.count; i < last; i++) {
+	for (uint32_t i = 0; i < FRAMES_MAX && callstack.data[i] > 0; i++) {
 		// fetch function, source file, and line
 		BOOL const valid_module = SymGetModuleInfo64(process, callstack.data[i], &module);
 		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], &symbol_offset, &symbol.header);
@@ -120,24 +123,33 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 		buffer_ensure(&gs_platform_debug.buffer,
 			gs_platform_debug.buffer.size
 			+ module_length + symbol_length + source_length
-			+ 32 // for whatever static text there is (22 tops atm: 11 chars + 11 UINT32_MAX)
+			+ 34 // chars
+			+ 11 // UINT32_MAX
+			+ 11 // UINT32_MAX
 		);
 
 		// fill the buffer
 		uint32_t const written = formatter_fmt(
 			(uint32_t)(gs_platform_debug.buffer.capacity - gs_platform_debug.buffer.size),
 			(char *)gs_platform_debug.buffer.data + gs_platform_debug.buffer.size,
-			"[%.*s] %.*s at '%.*s:%u'\n"
+			"[%.*s] %.*s at '%.*s:%u:%u'\n"
 			""
 			, module_length, module_data
 			, symbol_length, symbol_data
 			, source_length, source_data
-			, (source_length > 0) ? (uint32_t)source.LineNumber : 0
+			, (uint32_t)source.LineNumber
+			, (uint32_t)source_offset
 		);
 		gs_platform_debug.buffer.size += written;
 
 		struct CString const cs_symbol = {.length = symbol_length, .data = symbol_data};
 		if (cstring_equals(cs_symbol, S_("main"))) { break; }
+	}
+
+	if (gs_platform_debug.buffer.size > 0) {
+		// @note: strip last LF
+		char const * last = buffer_peek(&gs_platform_debug.buffer, 0);
+		if (last[0] == '\n') { gs_platform_debug.buffer.size--; }
 	}
 
 	return (struct CString){

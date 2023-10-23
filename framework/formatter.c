@@ -54,7 +54,7 @@ static FORMATTER_CALLBACK(formatter_fmt_callback) {
 
 	size_t input_size = (size_t)length;
 	if (input_size > context->capacity) {
-		ERR("insufficient format space %zu / %zu\n", context->capacity, input_size);
+		ERR("insufficient format space %zu / %zu", context->capacity, input_size);
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 		input_size = context->capacity;
 	}
