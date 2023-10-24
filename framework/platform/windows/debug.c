@@ -25,7 +25,7 @@ static struct Platform_Debug {
 //        instead of statically chosen at compile-time (?)
 
 //
-#include "framework/platform_debug.h"
+#include "framework/platform/debug.h"
 
 struct Callstack platform_debug_get_callstack(uint32_t skip) {
 	skip += 1; // @note: skip `platform_debug_get_callstack`

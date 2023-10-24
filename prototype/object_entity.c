@@ -2,7 +2,7 @@
 #include "framework/maths.h"
 
 #include "framework/graphics/material.h"
-#include "framework/graphics/gpu_objects.h"
+#include "framework/graphics/objects.h"
 
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"

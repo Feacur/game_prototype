@@ -1,5 +1,5 @@
 #include "framework/formatter.h"
-#include "framework/platform_debug.h"
+#include "framework/platform/debug.h"
 
 #include <stdlib.h>
 

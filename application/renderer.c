@@ -5,8 +5,8 @@
 #include "framework/containers/strings.h"
 
 #include "framework/graphics/material.h"
-#include "framework/graphics/gpu_objects.h"
-#include "framework/graphics/gpu_command.h"
+#include "framework/graphics/objects.h"
+#include "framework/graphics/command.h"
 
 #include "application/json_load.h"
 #include "application/asset_types.h"

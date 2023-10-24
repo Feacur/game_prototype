@@ -35,17 +35,17 @@
 
 #define GAME_GRAPHICS_IS_OPENGL
 #if defined(_WIN32) || defined(_WIN64)
-	#include "framework/platform_windows/timer.c"
-	#include "framework/platform_windows/file.c"
-	#include "framework/platform_windows/system.c"
-	#include "framework/platform_windows/window.c"
-	#include "framework/platform_windows/debug.c"
+	#include "framework/platform/windows/timer.c"
+	#include "framework/platform/windows/file.c"
+	#include "framework/platform/windows/system.c"
+	#include "framework/platform/windows/window.c"
+	#include "framework/platform/windows/debug.c"
 
 	#if defined(GAME_GRAPHICS_IS_OPENGL)
-		#include "framework/platform_windows/gpu_library_opengl.c"
-		#include "framework/gpu_opengl/functions.c"
-		#include "framework/gpu_opengl/types.c"
-		#include "framework/gpu_opengl/graphics.c"
+		#include "framework/platform/windows/gpu_library_opengl.c"
+		#include "framework/graphics/opengl/functions.c"
+		#include "framework/graphics/opengl/types.c"
+		#include "framework/graphics/opengl/graphics.c"
 	#endif
 #endif
 

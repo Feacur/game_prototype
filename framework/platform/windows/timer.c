@@ -9,7 +9,7 @@ static struct Platform_Timer {
 } gs_platform_timer;
 
 //
-#include "framework/platform_timer.h"
+#include "framework/platform/timer.h"
 
 uint64_t platform_timer_get_ticks(void) {
 	LARGE_INTEGER ticks;

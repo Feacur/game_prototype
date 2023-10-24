@@ -2,7 +2,7 @@
 #include "framework/systems/material_system.h"
 
 #include "framework/graphics/material.h"
-#include "framework/graphics/gpu_command.h"
+#include "framework/graphics/command.h"
 
 #include "framework/maths.h"
 

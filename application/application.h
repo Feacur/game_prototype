@@ -2,7 +2,7 @@
 #define APPLICATION_APPLICATION
 
 #include "framework/maths_types.h"
-#include "framework/window_callbacks.h"
+#include "framework/platform/window_callbacks.h"
 
 // @note: adaptive vsync mode (-1) might not make sense and is not tested
 

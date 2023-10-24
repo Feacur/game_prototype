@@ -128,7 +128,7 @@ static struct Graphics_State {
 } gs_graphics_state;
 
 //
-#include "framework/graphics/gpu_objects.h"
+#include "framework/graphics/objects.h"
 
 // ----- ----- ----- ----- -----
 //     GPU program part
@@ -888,7 +888,7 @@ void gpu_mesh_update(struct Handle handle, struct Mesh const * asset) {
 }
 
 //
-#include "framework/graphics/gpu_misc.h"
+#include "framework/graphics/misc.h"
 
 void graphics_update(void) {
 	for (uint32_t i = 0; i < gs_graphics_state.actions.count; i++) {
@@ -898,11 +898,11 @@ void graphics_update(void) {
 	array_clear(&gs_graphics_state.actions);
 }
 
-struct mat4 graphics_set_projection_mat4(
+struct mat4 graphics_projection_mat4(
 	struct vec2 scale_xy, struct vec2 offset_xy,
 	float view_near, float view_far, float ortho
 ) {
-	return mat4_set_projection(
+	return mat4_projection(
 		scale_xy, offset_xy,
 		view_near, view_far, ortho,
 		gs_graphics_state.clip_space.ndc_near, gs_graphics_state.clip_space.ndc_far
@@ -1097,7 +1097,7 @@ static void gpu_set_depth_mode(enum Depth_Mode mode) {
 }
 
 //
-#include "framework/graphics/gpu_command.h"
+#include "framework/graphics/command.h"
 
 inline static void gpu_execute_cull(struct GPU_Command_Cull const * command) {
 	if (command->mode == CULL_MODE_NONE) {

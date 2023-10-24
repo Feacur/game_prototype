@@ -215,8 +215,8 @@ struct vec4 vec4_norm(struct vec4 v);
 //     quaternions
 // ----- ----- ----- ----- -----
 
-struct vec4 quat_set_axis(struct vec3 axis, float radians);
-struct vec4 quat_set_radians(struct vec3 radians);
+struct vec4 quat_axis(struct vec3 axis, float radians);
+struct vec4 quat_radians(struct vec3 radians);
 struct vec4 quat_mul(struct vec4 q1, struct vec4 q2);
 
 struct vec4 quat_conjugate(struct vec4 q);
@@ -228,22 +228,22 @@ void        quat_get_axes(struct vec4 q, struct vec3 * x, struct vec3 * y, struc
 //     complex
 // ----- ----- ----- ----- -----
 
-struct vec2 comp_set_radians(float radians);
+struct vec2 comp_radians(float radians);
 
 // ----- ----- ----- ----- -----
 //     matrices
 // ----- ----- ----- ----- -----
 
-struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
-struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
+struct mat4 mat4_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
+struct mat4 mat4_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation);
 
-struct mat4 mat4_set_projection(
+struct mat4 mat4_projection(
 	struct vec2 scale_xy, struct vec2 offset_xy,
 	float view_near, float view_far, float ortho,
 	float ndc_near, float ndc_far
 );
 
-struct mat4 mat4_inverse_transformation(struct mat4 m);
+struct mat4 mat4_invert_transformation(struct mat4 m);
 struct vec4 mat4_mul_vec(struct mat4 m, struct vec4 v);
 struct mat4 mat4_mul_mat(struct mat4 m1, struct mat4 m2);
 

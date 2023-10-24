@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_PLATFORM_SYSTEM)
 #define FRAMEWORK_PLATFORM_SYSTEM
 
-#include "common.h"
+#include "framework/common.h"
 
 struct Platform_Callbacks {
 	void (* quit)(void);

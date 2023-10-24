@@ -45,7 +45,7 @@ void transform_rect_get_pivot_and_rect(
 }
 
 // ----- ----- ----- ----- -----
-//     Serialization
+//     deserialization
 // ----- ----- ----- ----- -----
 
 void json_read_transform_3d(struct JSON const * json, struct Transform_3D * transform) {
@@ -53,7 +53,7 @@ void json_read_transform_3d(struct JSON const * json, struct Transform_3D * tran
 	if (json->type == JSON_OBJECT) {
 		struct vec3 euler = {0, 0, 0};
 		json_read_many_flt(json_get(json, S_("euler")), 3, &euler.x);
-		transform->rotation = quat_set_radians(euler);
+		transform->rotation = quat_radians(euler);
 
 		json_read_many_flt(json_get(json, S_("pos")),   3, &transform->position.x);
 		json_read_many_flt(json_get(json, S_("quat")),  4, &transform->rotation.x);
@@ -66,7 +66,7 @@ void json_read_transform_2d(struct JSON const * json, struct Transform_2D * tran
 	if (json->type == JSON_OBJECT) {
 		float euler = 0;
 		json_read_many_flt(json_get(json, S_("euler")), 1, &euler);
-		transform->rotation = comp_set_radians(euler);
+		transform->rotation = comp_radians(euler);
 
 		json_read_many_flt(json_get(json, S_("pos")),   2, &transform->position.x);
 		json_read_many_flt(json_get(json, S_("comp")), 2, &transform->rotation.x);
@@ -84,6 +84,10 @@ void json_read_transform_rect(struct JSON const * json, struct Transform_Rect * 
 		json_read_many_flt(json_get(json, S_("pivot")),      2, &transform->pivot.x);
 	}
 }
+
+// ----- ----- ----- ----- -----
+//     constants
+// ----- ----- ----- ----- -----
 
 // @note: MSVC issues `C2099: initializer is not a constant`
 //        when a designated initializer type is specified

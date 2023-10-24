@@ -6,7 +6,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/hashmap.h"
 
-#include "framework/graphics/gpu_objects.h"
+#include "framework/graphics/objects.h"
 #include "framework/graphics/material.h"
 
 #include "framework/systems/string_system.h"

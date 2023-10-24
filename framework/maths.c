@@ -416,14 +416,14 @@ struct vec4 vec4_norm(struct vec4 v) {
     which allows us rotating arbitrary vectors around arbitrary axes by arbitrary angles
 */
 
-struct vec4 quat_set_axis(struct vec3 axis, float radians) {
+struct vec4 quat_axis(struct vec3 axis, float radians) {
 	float const r = radians * 0.5f;
 	float const s = r32_sin(r);
 	float const c = r32_cos(r);
 	return (struct vec4){axis.x * s, axis.y * s, axis.z * s, c};
 }
 
-struct vec4 quat_set_radians(struct vec3 radians) {
+struct vec4 quat_radians(struct vec3 radians) {
 	struct vec3 const r = vec3_mul(radians, (struct vec3){0.5f, 0.5f, 0.5f});
 	struct vec3 const s = (struct vec3){r32_sin(r.x), r32_sin(r.y), r32_sin(r.z)};
 	struct vec3 const c = (struct vec3){r32_cos(r.x), r32_cos(r.y), r32_cos(r.z)};
@@ -497,7 +497,7 @@ z = quat_transform(q, {0,0,1})
 //     complex
 // ----- ----- ----- ----- -----
 
-struct vec2 comp_set_radians(float radians) {
+struct vec2 comp_radians(float radians) {
 	return (struct vec2){r32_cos(radians), r32_sin(radians)};
 }
 
@@ -505,7 +505,7 @@ struct vec2 comp_set_radians(float radians) {
 //     matrices
 // ----- ----- ----- ----- -----
 
-struct mat4 mat4_set_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation) {
+struct mat4 mat4_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation) {
 	struct vec3 axis_x, axis_y, axis_z;
 	quat_get_axes(rotation, &axis_x, &axis_y, &axis_z);
 	axis_x = (struct vec3){axis_x.x * scale.x, axis_x.y * scale.x, axis_x.z * scale.x};
@@ -548,7 +548,7 @@ while column-major order means doing it that way around
 */
 }
 
-struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation) {
+struct mat4 mat4_inverse_transformation(struct vec3 position, struct vec3 scale, struct vec4 rotation) {
 	struct vec3 axis_x, axis_y, axis_z;
 	quat_get_axes(rotation, &axis_x, &axis_y, &axis_z);
 	axis_x = (struct vec3){axis_x.x * scale.x, axis_x.y * scale.x, axis_x.z * scale.x};
@@ -567,7 +567,7 @@ struct mat4 mat4_set_inverse_transformation(struct vec3 position, struct vec3 sc
 	};
 }
 
-struct mat4 mat4_set_projection(
+struct mat4 mat4_projection(
 	struct vec2 scale_xy, struct vec2 offset_xy,
 	float view_near, float view_far, float ortho,
 	float ndc_near, float ndc_far
@@ -611,7 +611,7 @@ struct mat4 mat4_set_projection(
 */
 }
 
-struct mat4 mat4_inverse_transformation(struct mat4 m) {
+struct mat4 mat4_invert_transformation(struct mat4 m) {
 	struct vec3 const position = (struct vec3){m.w.x, m.w.y, m.w.z};
 	return (struct mat4){
 		{m.x.x, m.y.x, m.z.x, 0},

@@ -30,8 +30,6 @@ struct JSON {
 struct JSON json_init(void);
 void json_free(struct JSON * value);
 
-struct JSON json_parse(char const * data);
-
 // -- JSON get/at element
 struct JSON const * json_get(struct JSON const * value, struct CString key);
 struct JSON const * json_at(struct JSON const * value, uint32_t index);
@@ -52,7 +50,16 @@ struct CString json_at_string(struct JSON const * value, uint32_t index);
 double json_at_number(struct JSON const * value, uint32_t index);
 bool json_at_boolean(struct JSON const * value, uint32_t index);
 
-//
+// ----- ----- ----- ----- -----
+//     parsing
+// ----- ----- ----- ----- -----
+
+struct JSON json_parse(char const * data);
+
+// ----- ----- ----- ----- -----
+//     constants
+// ----- ----- ----- ----- -----
+
 extern struct JSON const c_json_true;
 extern struct JSON const c_json_false;
 extern struct JSON const c_json_null;

@@ -3,7 +3,7 @@
 #include "framework/maths.h"
 #include "framework/containers/buffer.h"
 
-#include "framework/platform_file.h"
+#include "framework/platform/file.h"
 
 static void * typeface_memory_allocate(size_t size, struct Buffer * scratch);
 static void typeface_memory_free(void * pointer, struct Buffer * scratch);

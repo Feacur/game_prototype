@@ -1,15 +1,14 @@
-#include "framework/formatter.h"
 #include "framework/parsing.h"
-
+#include "framework/formatter.h"
 #include "framework/containers/buffer.h"
-
 #include "framework/systems/string_system.h"
-
-#include "internal/json_lexer.h"
 
 // @note: JSON is based off of rfc8259
 
-//
+// ----- ----- ----- ----- -----
+//     API
+// ----- ----- ----- ----- -----
+
 #include "json.h"
 
 struct JSON json_init(void) {
@@ -103,7 +102,11 @@ bool json_at_boolean(struct JSON const * value, uint32_t index) {
 	return json_as_boolean(json_at(value, index));
 }
 
-//
+// ----- ----- ----- ----- -----
+//     parsing
+// ----- ----- ----- ----- -----
+
+#include "internal/json_lexer.h"
 
 struct JSON_Parser {
 	struct JSON_Lexer lexer;
@@ -330,7 +333,10 @@ struct JSON json_parse(char const * data) {
 	return value;
 }
 
-//
+// ----- ----- ----- ----- -----
+//     constants
+// ----- ----- ----- ----- -----
+
 struct JSON const c_json_true  = {.type = JSON_BOOLEAN, .as.boolean = true};
 struct JSON const c_json_false = {.type = JSON_BOOLEAN, .as.boolean = false};
 struct JSON const c_json_null  = {.type = JSON_NULL};

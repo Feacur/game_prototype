@@ -13,7 +13,7 @@
 #define HANDLE_PROP_WINDOW_NAME "prop_window"
 
 //
-#include "framework/platform_window.h"
+#include "framework/platform/window.h"
 
 struct Window {
 	struct Window_Config config;

@@ -44,7 +44,9 @@ struct urect { struct uvec2 min, max; };
 struct srect { struct svec2 min, max; };
 struct rect { struct vec2 min, max; };
 
-//
+// ----- ----- ----- ----- -----
+//     constants
+// ----- ----- ----- ----- -----
 
 extern struct vec2 const c_comp_identity;
 extern struct vec4 const c_quat_identity;

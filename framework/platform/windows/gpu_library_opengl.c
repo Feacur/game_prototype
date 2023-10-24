@@ -1,9 +1,9 @@
 #include "framework/memory.h"
 #include "framework/formatter.h"
 
-#include "framework/gpu_opengl/functions.h"
-#include "framework/gpu_opengl/internal/functions_to_gpu_library.h"
-#include "framework/gpu_opengl/internal/graphics_to_gpu_library.h"
+#include "framework/graphics/opengl/functions.h"
+#include "framework/graphics/opengl/internal/functions_to_gpu_library.h"
+#include "framework/graphics/opengl/internal/graphics_to_gpu_library.h"
 
 #include "internal/system.h"
 

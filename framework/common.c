@@ -1,4 +1,4 @@
-#include "platform_debug.h"
+#include "platform/debug.h"
 #include "formatter.h"
 #include "parsing.h"
 

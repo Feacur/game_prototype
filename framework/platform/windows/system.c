@@ -5,7 +5,7 @@
 #include "framework/unicode.h"
 #include "framework/input_keys.h"
 #include "framework/formatter.h"
-#include "framework/platform_debug.h"
+#include "framework/platform/debug.h"
 
 #include "internal/debug_to_system.h"
 #include "internal/timer_to_system.h"
@@ -31,7 +31,7 @@ __declspec(dllexport) extern DWORD AmdPowerXpressRequestHighPerformance;
 DWORD AmdPowerXpressRequestHighPerformance = 1;
 
 //
-#include "framework/platform_system.h"
+#include "framework/platform/system.h"
 
 static struct Platform_System {
 	struct Platform_Callbacks callbacks;

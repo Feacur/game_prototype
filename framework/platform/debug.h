@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_PLATFORM_DEBUG)
 #define FRAMEWORK_PLATFORM_DEBUG
 
-#include "common.h"
+#include "framework/common.h"
 
 struct Callstack {
 	uint64_t data[64];

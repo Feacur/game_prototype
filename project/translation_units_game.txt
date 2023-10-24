@@ -32,16 +32,16 @@ framework/systems/string_system.c
 framework/systems/material_system.c
 framework/systems/asset_system.c
 
-framework/platform_windows/timer.c
-framework/platform_windows/file.c
-framework/platform_windows/system.c
-framework/platform_windows/window.c
-framework/platform_windows/debug.c
+framework/platform/windows/timer.c
+framework/platform/windows/file.c
+framework/platform/windows/system.c
+framework/platform/windows/window.c
+framework/platform/windows/debug.c
 
-framework/platform_windows/gpu_library_opengl.c
-framework/gpu_opengl/functions.c
-framework/gpu_opengl/types.c
-framework/gpu_opengl/graphics.c
+framework/platform/windows/gpu_library_opengl.c
+framework/graphics/opengl/functions.c
+framework/graphics/opengl/types.c
+framework/graphics/opengl/graphics.c
 
 application/json_load.c
 application/application.c

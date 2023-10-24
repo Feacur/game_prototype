@@ -5,8 +5,8 @@
 #include "framework/memory.h"
 #include "framework/unicode.h"
 #include "framework/json_read.h"
-#include "framework/platform_system.h"
-#include "framework/platform_file.h"
+#include "framework/platform/system.h"
+#include "framework/platform/file.h"
 #include "framework/formatter.h"
 
 #include "framework/maths.h"
@@ -17,8 +17,8 @@
 #include "framework/systems/asset_system.h"
 
 #include "framework/graphics/material.h"
-#include "framework/graphics/gpu_objects.h"
-#include "framework/graphics/gpu_command.h"
+#include "framework/graphics/objects.h"
+#include "framework/graphics/command.h"
 
 #include "framework/containers/hashmap.h"
 
@@ -87,19 +87,19 @@ static void prototype_tick_entities_rotation_mode(void) {
 			case ENTITY_ROTATION_MODE_NONE: break;
 
 			case ENTITY_ROTATION_MODE_X: {
-				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
+				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_radians(
 					(struct vec3){1 * dt, 0, 0}
 				)));
 			} break;
 
 			case ENTITY_ROTATION_MODE_Y: {
-				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
+				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_radians(
 					(struct vec3){0, 1 * dt, 0}
 				)));
 			} break;
 
 			case ENTITY_ROTATION_MODE_Z: {
-				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_set_radians(
+				entity->transform.rotation = vec4_norm(quat_mul(entity->transform.rotation, quat_radians(
 					(struct vec3){0, 0, 1 * dt}
 				)));
 			} break;
@@ -220,7 +220,7 @@ static void prototype_draw_objects(void) {
 		struct uvec2 const u_ViewportSize = camera->cached_size;
 
 		struct mat4 const u_Projection = camera_get_projection(&camera->params, u_ViewportSize.x, u_ViewportSize.y);
-		struct mat4 const u_View = mat4_set_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
+		struct mat4 const u_View = mat4_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
 		struct mat4 const u_ProjectionView = mat4_mul_mat(u_Projection, u_View);
 
 		// process camera
@@ -273,7 +273,7 @@ static void prototype_draw_objects(void) {
 			struct Asset_Material const * material_asset = asset_system_get(entity->ah_material);
 			struct Gfx_Material const * material = material_system_take(material_asset->ms_handle);
 
-			struct mat4 const u_Model = mat4_set_transformation(
+			struct mat4 const u_Model = mat4_transformation(
 				entity->transform.position,
 				entity->transform.scale,
 				entity->transform.rotation

@@ -5,9 +5,9 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
 #include "framework/assets/json.h"
-#include "framework/graphics/gpu_objects.h"
+#include "framework/graphics/objects.h"
 
-#include "platform_file.h"
+#include "framework/platform/file.h"
 
 #include "json_read.h"
 

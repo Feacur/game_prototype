@@ -12,8 +12,8 @@
 #include "framework/assets/font.h"
 
 #include "framework/graphics/material.h"
-#include "framework/graphics/gpu_objects.h"
-#include "framework/graphics/gpu_command.h"
+#include "framework/graphics/objects.h"
+#include "framework/graphics/command.h"
 
 #include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"

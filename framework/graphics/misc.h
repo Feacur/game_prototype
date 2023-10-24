@@ -8,7 +8,7 @@
 
 void graphics_update(void);
 
-struct mat4 graphics_set_projection_mat4(
+struct mat4 graphics_projection_mat4(
 	struct vec2 scale_xy, struct vec2 offset_xy,
 	float view_near, float view_far, float ortho
 );
