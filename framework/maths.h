@@ -157,6 +157,7 @@ struct uvec4 uvec4_mul(struct uvec4 v1, struct uvec4 v2);
 struct uvec4 uvec4_div(struct uvec4 v1, struct uvec4 v2);
 uint32_t     uvec4_dot(struct uvec4 v1, struct uvec4 v2);
 
+uint32_t uvec2_cross(struct uvec2 v1, struct uvec2 v2);
 struct uvec3 uvec3_cross(struct uvec3 v1, struct uvec3 v2);
 
 // ----- ----- ----- ----- -----
@@ -181,6 +182,7 @@ struct svec4 svec4_mul(struct svec4 v1, struct svec4 v2);
 struct svec4 svec4_div(struct svec4 v1, struct svec4 v2);
 int32_t      svec4_dot(struct svec4 v1, struct svec4 v2);
 
+int32_t svec2_cross(struct svec2 v1, struct svec2 v2);
 struct svec3 svec3_cross(struct svec3 v1, struct svec3 v2);
 
 // ----- ----- ----- ----- -----
@@ -205,6 +207,7 @@ struct vec4 vec4_mul(struct vec4 v1, struct vec4 v2);
 struct vec4 vec4_div(struct vec4 v1, struct vec4 v2);
 float       vec4_dot(struct vec4 v1, struct vec4 v2);
 
+float vec2_cross(struct vec2 v1, struct vec2 v2);
 struct vec3 vec3_cross(struct vec3 v1, struct vec3 v2);
 
 struct vec2 vec2_norm(struct vec2 v);

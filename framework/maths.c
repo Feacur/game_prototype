@@ -256,18 +256,44 @@ int32_t map01_to_s32(float value) {
 // ----- ----- ----- ----- -----
 
 /* -- vectors
-i = jk = -kj
-j = ki = -ik
-k = ij = -ji
 
-> vectors cross product, `v1 x v2 = |v1| * |v2| * sin(a) * n`
-ii = jj = kk = ijk =  0 == sin(0)
+> imaginary basis
+  +------------+
+  |    i  j  k |
+  | i -1  k -j |
+  | j -k -1  i |
+  | k  j -i -1 |
+  +------------+
+  v = i*a1 + j*a2 + k*a3 + ...
+  v1 * v2 = (i*a1 + j*a2 + k*a3 + ...) * (i*b1 + j*b2 + k*b3 + ...)
+          = -dot(v1, v2) + cross(v1, v2)
 
-> vectors dot product,   `v1 . v2 = |v1| * |v2| * cos(a)`
-ii = jj = kk = ijk =  1 == cos(0)
+> bivector basis
+  +---------------+
+  |     x   y   z |
+  | x   1  xy  xz |
+  | y -xy   1  yz |
+  | z -xz -yz   1 |
+  +---------------+
+  v = x*S1 + y*S2 + z*S3 + ...
+  v1 * v2 = (x*a1 + y*a2 + z*a3 + ...) * (x*b1 + y*b2 + z*b3 + ...)
+          = dot(v1, v2) + wedge(v1, v2)
 
-> quaternions multiplication
-ii = jj = kk = ijk = -1 == cos(90 + 90)
+> correspondence in 3d
+  i ~ yz
+  j ~ zx
+  k ~ xy
+
+> vector inner (dot)
+  v1 . v2 = |v1| * |v2| * cos(a)
+
+> vector outer (wedge)
+  v1 ^ v2 = |v1| * |v2| * sin(a) * I
+  I is a unit bivector, parallel to v1 and v2
+
+> vector cross (effectively wedge in 3d)
+  v1 x v2 = |v1| * |v2| * sin(a) * n
+  n is a unit vector, perpendicular to v1 and v2
 */
 
 // ----- ----- ----- ----- -----
@@ -291,6 +317,10 @@ struct uvec4 uvec4_sub(struct uvec4 v1, struct uvec4 v2) { return (struct uvec4)
 struct uvec4 uvec4_mul(struct uvec4 v1, struct uvec4 v2) { return (struct uvec4){v1.x * v2.x, v1.y * v2.y, v1.z * v2.z, v1.w * v2.w}; }
 struct uvec4 uvec4_div(struct uvec4 v1, struct uvec4 v2) { return (struct uvec4){v1.x / v2.x, v1.y / v2.y, v1.z / v2.z, v1.w / v2.w}; }
 uint32_t     uvec4_dot(struct uvec4 v1, struct uvec4 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w; }
+
+uint32_t uvec2_cross(struct uvec2 v1, struct uvec2 v2) {
+	return v1.x*v2.y - v1.y*v2.x;
+}
 
 struct uvec3 uvec3_cross(struct uvec3 v1, struct uvec3 v2) {
 	return (struct uvec3){
@@ -322,6 +352,10 @@ struct svec4 svec4_mul(struct svec4 v1, struct svec4 v2) { return (struct svec4)
 struct svec4 svec4_div(struct svec4 v1, struct svec4 v2) { return (struct svec4){v1.x / v2.x, v1.y / v2.y, v1.z / v2.z, v1.w / v2.w}; }
 int32_t      svec4_dot(struct svec4 v1, struct svec4 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w; }
 
+int32_t svec2_cross(struct svec2 v1, struct svec2 v2) {
+	return v1.x*v2.y - v1.y*v2.x;
+}
+
 struct svec3 svec3_cross(struct svec3 v1, struct svec3 v2) {
 	return (struct svec3){
 		v1.y*v2.z - v1.z*v2.y,
@@ -351,6 +385,10 @@ struct vec4 vec4_sub(struct vec4 v1, struct vec4 v2) { return (struct vec4){v1.x
 struct vec4 vec4_mul(struct vec4 v1, struct vec4 v2) { return (struct vec4){v1.x * v2.x, v1.y * v2.y, v1.z * v2.z, v1.w * v2.w}; }
 struct vec4 vec4_div(struct vec4 v1, struct vec4 v2) { return (struct vec4){v1.x / v2.x, v1.y / v2.y, v1.z / v2.z, v1.w / v2.w}; }
 float       vec4_dot(struct vec4 v1, struct vec4 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w; }
+
+float vec2_cross(struct vec2 v1, struct vec2 v2) {
+	return v1.x*v2.y - v1.y*v2.x;
+}
 
 struct vec3 vec3_cross(struct vec3 v1, struct vec3 v2) {
 	return (struct vec3){
@@ -454,6 +492,9 @@ struct vec4 quat_mul(struct vec4 q1, struct vec4 q2) {
 /*
 result = (q1.x*i + q1.y*j + q1.z*k + q1.w)
        * (q2.x*i + q2.y*j + q2.z*k + q2.w)
+
+vector part: w1 * v2 + w2 * v1 + cross(v1, v2)
+scalar part: w1      * w2      - dot(v1, v2)
 */
 }
 
