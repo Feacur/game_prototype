@@ -48,8 +48,8 @@ static struct Main_Settings {
 
 static void prototype_tick_cameras(void) {
 	struct uvec2 const screen_size = application_get_screen_size();
-	for (uint32_t camera_i = 0; camera_i < gs_game.cameras.count; camera_i++) {
-		struct Camera * camera = array_at(&gs_game.cameras, camera_i);
+	FOR_ARRAY(&gs_game.cameras, it) {
+		struct Camera * camera = it.value;
 		camera->cached_size = screen_size;
 		if (!handle_is_null(camera->gpu_target)) {
 			gpu_target_get_size(camera->gpu_target, &camera->cached_size.x, &camera->cached_size.y);
@@ -58,8 +58,8 @@ static void prototype_tick_cameras(void) {
 }
 
 static void prototype_tick_entities_rect(void) {
-	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
-		struct Entity * entity = array_at(&gs_game.entities, entity_i);
+	FOR_ARRAY(&gs_game.entities, it) {
+		struct Entity * entity = it.value;
 
 		if (entity->type == ENTITY_TYPE_NONE) { continue; }
 		if (entity->type == ENTITY_TYPE_MESH) { continue; }
@@ -80,8 +80,8 @@ static void prototype_tick_entities_rect(void) {
 
 static void prototype_tick_entities_rotation_mode(void) {
 	float const dt = (float)application_get_delta_time();
-	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
-		struct Entity * entity = array_at(&gs_game.entities, entity_i);
+	FOR_ARRAY(&gs_game.entities, it) {
+		struct Entity * entity = it.value;
 
 		switch (entity->rotation_mode) {
 			case ENTITY_ROTATION_MODE_NONE: break;
@@ -108,8 +108,8 @@ static void prototype_tick_entities_rotation_mode(void) {
 }
 
 static void prototype_tick_entities_quad_2d(void) {
-	for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
-		struct Entity * entity = array_at(&gs_game.entities, entity_i);
+	FOR_ARRAY(&gs_game.entities, it) {
+		struct Entity * entity = it.value;
 
 		if (entity->type != ENTITY_TYPE_QUAD_2D) { continue; }
 		struct Entity_Quad * e_quad = &entity->as.quad;
@@ -215,8 +215,8 @@ static void prototype_draw_objects(void) {
 
 	batcher_2d_set_color(gs_renderer.batcher_2d, (struct vec4){1, 1, 1, 1});
 
-	for (uint32_t camera_i = 0; camera_i < gs_game.cameras.count; camera_i++) {
-		struct Camera const * camera = array_at(&gs_game.cameras, camera_i);
+	FOR_ARRAY(&gs_game.cameras, it_camera) {
+		struct Camera const * camera = it_camera.value;
 		struct uvec2 const u_ViewportSize = camera->cached_size;
 
 		struct mat4 const u_Projection = camera_get_projection(&camera->params, u_ViewportSize.x, u_ViewportSize.y);
@@ -266,9 +266,9 @@ static void prototype_draw_objects(void) {
 		}
 
 		// draw entities
-		for (uint32_t entity_i = 0; entity_i < gs_game.entities.count; entity_i++) {
-			struct Entity const * entity = array_at(&gs_game.entities, entity_i);
-			if (entity->camera != camera_i) { continue; }
+		FOR_ARRAY(&gs_game.entities, it_entity) {
+			struct Entity const * entity = it_entity.value;
+			if (entity->camera != it_camera.curr) { continue; }
 
 			struct Asset_Material const * material_asset = asset_system_get(entity->ah_material);
 			struct Gfx_Material const * material = material_system_take(material_asset->ms_handle);

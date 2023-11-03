@@ -27,9 +27,7 @@ void json_free(struct JSON * value) {
 
 		case JSON_ARRAY: {
 			struct Array * array = &value->as.array;
-			for (uint32_t i = 0; i < array->count; i++) {
-				json_free(array_at(array, i));
-			}
+			FOR_ARRAY(array, it) { json_free(it.value); }
 			array_free(array);
 		} break;
 	}

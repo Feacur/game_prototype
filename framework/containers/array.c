@@ -88,20 +88,24 @@ void * array_peek(struct Array const * array, uint32_t depth) {
 	return (uint8_t *)array->data + offset;
 }
 
+void * array_at_unsafe(struct Array const * array, uint32_t index) {
+	size_t const offset = array->value_size * index;
+	return (uint8_t *)array->data + offset;
+}
+
 void * array_at(struct Array const * array, uint32_t index) {
 	if (index >= array->count) {
 		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
-	size_t const offset = array->value_size * index;
-	return (uint8_t *)array->data + offset;
+	return array_at_unsafe(array, index);
 }
 
 bool array_iterate(struct Array const * array, struct Array_Iterator * iterator) {
 	while (iterator->next < array->count) {
 		uint32_t const index = iterator->next++;
-		iterator->curr = index;
-		iterator->value = array_at(array, index);
+		iterator->curr  = index;
+		iterator->value = array_at_unsafe(array, index);
 		return true;
 	}
 	return false;

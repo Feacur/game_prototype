@@ -32,9 +32,9 @@ bool hashmap_set(struct Hashmap * hashmap, void const * key, void const * value)
 bool hashmap_del(struct Hashmap * hashmap, void const * key);
 
 
-uint32_t hashmap_get_count(struct Hashmap * hashmap);
-void * hashmap_get_key_at(struct Hashmap * hashmap, uint32_t index);
-void * hashmap_get_val_at(struct Hashmap * hashmap, uint32_t index);
+uint32_t hashmap_get_count(struct Hashmap const * hashmap);
+void * hashmap_get_key_at(struct Hashmap const * hashmap, uint32_t index);
+void * hashmap_get_val_at(struct Hashmap const * hashmap, uint32_t index);
 void hashmap_del_at(struct Hashmap * hashmap, uint32_t index);
 
 bool hashmap_iterate(struct Hashmap const * hashmap, struct Hashmap_Iterator * iterator);

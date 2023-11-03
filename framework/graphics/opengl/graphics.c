@@ -544,12 +544,12 @@ static void gpu_target_on_aquire(struct Gpu_Target * gpu_target) {
 
 static void gpu_target_on_discard(struct Gpu_Target * gpu_target) {
 	GFX_TRACE("discard target %d", gpu_target->id);
-	for (uint32_t i = 0; i < gpu_target->textures.count; i++) {
-		struct Gpu_Target_Texture const * entry = array_at(&gpu_target->textures, i);
+	FOR_ARRAY(&gpu_target->textures, it) {
+		struct Gpu_Target_Texture const * entry = it.value;
 		gpu_texture_free(entry->handle);
 	}
-	for (uint32_t i = 0; i < gpu_target->buffers.count; i++) {
-		struct Gpu_Target_Buffer const * entry = array_at(&gpu_target->buffers, i);
+	FOR_ARRAY(&gpu_target->buffers, it) {
+		struct Gpu_Target_Buffer const * entry = it.value;
 		glDeleteRenderbuffers(1, &entry->id);
 	}
 	array_free(&gpu_target->textures);
@@ -672,12 +672,13 @@ void gpu_target_get_size(struct Handle handle, uint32_t * x, uint32_t * y) {
 struct Handle gpu_target_get_texture_handle(struct Handle handle, enum Texture_Type type, uint32_t index) {
 	struct Gpu_Target const * gpu_target = sparseset_get(&gs_graphics_state.targets, handle);
 	if (gpu_target == NULL) { return (struct Handle){0}; }
-	for (uint32_t i = 0, color_index = 0; i < gpu_target->textures.count; i++) {
-		struct Gpu_Target_Texture const * texture = array_at(&gpu_target->textures, i);
-		struct Gpu_Texture const * gpu_texture = sparseset_get(&gs_graphics_state.textures, texture->handle);
+	uint32_t color_index = 0;
+	FOR_ARRAY(&gpu_target->textures, it) {
+		struct Gpu_Target_Texture const * gpu_target_texture = it.value;
+		struct Gpu_Texture const * gpu_texture = sparseset_get(&gs_graphics_state.textures, gpu_target_texture->handle);
 		if (gpu_texture->parameters.texture_type == type) {
 			if (type == TEXTURE_TYPE_COLOR && color_index != index) { color_index++; continue; }
-			return texture->handle;
+			return gpu_target_texture->handle;
 		}
 	}
 
@@ -699,8 +700,8 @@ static void gpu_mesh_on_aquire(struct Gpu_Mesh * gpu_mesh) {
 
 static void gpu_mesh_on_discard(struct Gpu_Mesh * gpu_mesh) {
 	GFX_TRACE("discard mesh %d", gpu_mesh->id);
-	for (uint32_t i = 0; i < gpu_mesh->buffers.count; i++) {
-		struct Gpu_Mesh_Buffer const * buffer = array_at(&gpu_mesh->buffers, i);
+	FOR_ARRAY(&gpu_mesh->buffers, it) {
+		struct Gpu_Mesh_Buffer const * buffer = it.value;
 		glDeleteBuffers(1, &buffer->id);
 	}
 	array_free(&gpu_mesh->buffers);
@@ -842,8 +843,8 @@ void gpu_mesh_free(struct Handle handle) {
 void gpu_mesh_update(struct Handle handle, struct Mesh const * asset) {
 	struct Gpu_Mesh * gpu_mesh = sparseset_get(&gs_graphics_state.meshes, handle);
 	if (gpu_mesh == NULL) { return; }
-	for (uint32_t i = 0; i < gpu_mesh->buffers.count; i++) {
-		struct Gpu_Mesh_Buffer * buffer = array_at(&gpu_mesh->buffers, i);
+	FOR_ARRAY(&gpu_mesh->buffers, it) {
+		struct Gpu_Mesh_Buffer * buffer = it.value;
 		struct Mesh_Parameters const parameters = buffer->parameters;
 		// @todo: compare mesh and asset parameters?
 		// struct Mesh_Parameters const * asset_parameters = asset->parameters + i;
@@ -854,7 +855,7 @@ void gpu_mesh_update(struct Handle handle, struct Mesh const * asset) {
 			continue;
 		}
 
-		struct Buffer const * asset_buffer = asset->buffers + i;
+		struct Buffer const * asset_buffer = asset->buffers + it.curr;
 		if (asset_buffer->size == 0) { continue; }
 		if (asset_buffer->data == NULL) { continue; }
 
@@ -891,9 +892,9 @@ void gpu_mesh_update(struct Handle handle, struct Mesh const * asset) {
 #include "framework/graphics/misc.h"
 
 void graphics_update(void) {
-	for (uint32_t i = 0; i < gs_graphics_state.actions.count; i++) {
-		struct Graphics_Action const * it = array_at(&gs_graphics_state.actions, i);
-		it->action(it->handle);
+	FOR_ARRAY(&gs_graphics_state.actions, it) {
+		struct Graphics_Action const * entry = it.value;
+		entry->action(entry->handle);
 	}
 	array_clear(&gs_graphics_state.actions);
 }

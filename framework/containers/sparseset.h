@@ -5,8 +5,8 @@
 
 struct Sparseset_Iterator {
 	uint32_t curr, next;
-	struct Handle handle;
 	void * value;
+	struct Handle handle;
 };
 
 struct Sparseset {
@@ -25,11 +25,11 @@ void sparseset_ensure(struct Sparseset * sparseset, uint32_t capacity);
 struct Handle sparseset_aquire(struct Sparseset * sparseset, void const * value);
 void sparseset_discard(struct Sparseset * sparseset, struct Handle handle);
 
-void * sparseset_get(struct Sparseset * sparseset, struct Handle handle);
+void * sparseset_get(struct Sparseset const * sparseset, struct Handle handle);
 void sparseset_set(struct Sparseset * sparseset, struct Handle handle, void const * value);
 
-uint32_t sparseset_get_count(struct Sparseset * sparseset);
-void * sparseset_get_at(struct Sparseset * sparseset, uint32_t index);
+uint32_t sparseset_get_count(struct Sparseset const * sparseset);
+void * sparseset_get_at(struct Sparseset const * sparseset, uint32_t index);
 
 bool sparseset_iterate(struct Sparseset const * sparseset, struct Sparseset_Iterator * iterator);
 

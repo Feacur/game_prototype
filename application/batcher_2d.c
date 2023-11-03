@@ -455,8 +455,8 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 		// @todo: (?) arena/stack allocator
 		hashset_clear(&batcher->fonts);
 
-		for (uint32_t i = 0; i < batcher->words.count; i++) {
-			struct Batcher_2D_Word const * word = array_at(&batcher->words, i);
+		FOR_ARRAY(&batcher->words, it) {
+			struct Batcher_2D_Word const * word = it.value;
 			hashset_set(&batcher->fonts, &word->font_asset_handle);
 		}
 
@@ -474,16 +474,16 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 	}
 
 	// fill quads UVs
-	for (uint32_t word_i = 0; word_i < batcher->words.count; word_i++) {
-		struct Batcher_2D_Word const * word = array_at(&batcher->words, word_i);
+	FOR_ARRAY(&batcher->words, it) {
+		struct Batcher_2D_Word const * word = it.value;
 		uint32_t vertices_offset = word->buffer_vertices_offset;
 
 		struct Asset_Font const * font_asset = asset_system_get(word->font_asset_handle);
 		struct Glyph const * glyph_error = font_get_glyph(font_asset->font, '\0', word->size);
 		struct rect const glyph_error_uv = glyph_error->uv;
 
-		for (uint32_t strings_i = word->codepoints_offset; strings_i < word->codepoints_end; strings_i++) {
-			uint32_t const * codepoint = array_at(&batcher->codepoints, strings_i);
+		for (uint32_t i = word->codepoints_offset; i < word->codepoints_end; i++) {
+			uint32_t const * codepoint = array_at(&batcher->codepoints, i);
 
 			if (codepoint_is_invisible(*codepoint)) { continue; }
 
@@ -513,8 +513,8 @@ void batcher_2d_clear(struct Batcher_2D * batcher) {
 
 void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_commands) {
 	batcher_2d_internal_bake_pass(batcher);
-	for (uint32_t i = 0; i < batcher->batches.count; i++) {
-		struct Batcher_2D_Batch const * batch = array_at(&batcher->batches, i);
+	FOR_ARRAY(&batcher->batches, it) {
+		struct Batcher_2D_Batch const * batch = it.value;
 
 		struct Handle program_handle = {0};
 		if (!handle_is_null(batch->material)) {

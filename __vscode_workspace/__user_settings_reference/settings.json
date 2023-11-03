@@ -11,6 +11,7 @@
 	"scm.autoReveal": false,
 	"telemetry.telemetryLevel": "off",
 	"window.restoreWindows": "none",
+	"debug.toolBarLocation": "commandCenter",
 	// -- files
 	"files.trimFinalNewlines": false,
 	"files.trimTrailingWhitespace": false,

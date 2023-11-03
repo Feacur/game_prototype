@@ -27,6 +27,7 @@ void array_insert_many(struct Array * array, uint32_t index, uint32_t count, voi
 
 void * array_pop(struct Array * array, uint32_t count);
 void * array_peek(struct Array const * array, uint32_t depth);
+void * array_at_unsafe(struct Array const * array, uint32_t index);
 void * array_at(struct Array const * array, uint32_t index);
 
 bool array_iterate(struct Array const * array, struct Array_Iterator * iterator);

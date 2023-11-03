@@ -126,17 +126,21 @@ bool hashset_del(struct Hashset * hashset, void const * key) {
 	return true;
 }
 
-uint32_t hashset_get_count(struct Hashset * hashset) {
+uint32_t hashset_get_count(struct Hashset const * hashset) {
 	return hashset->count;
 }
 
-void * hashset_get_at(struct Hashset * hashset, uint32_t index) {
+static void * hashset_get_at_unsafe(struct Hashset const * hashset, uint32_t index) {
+	size_t const offset = hashset->key_size * index;
+	return (uint8_t *)hashset->keys + offset;
+}
+
+void * hashset_get_at(struct Hashset const * hashset, uint32_t index) {
 	if (index >= hashset->count) {
 		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
-	size_t const offset = hashset->key_size * index;
-	return (uint8_t *)hashset->keys + offset;
+	return hashset_get_at_unsafe(hashset, index);
 }
 
 void hashset_del_at(struct Hashset * hashset, uint32_t index) {
@@ -149,10 +153,10 @@ void hashset_del_at(struct Hashset * hashset, uint32_t index) {
 bool hashset_iterate(struct Hashset const * hashset, struct Hashset_Iterator * iterator) {
 	while (iterator->next < hashset->capacity) {
 		uint32_t const index = iterator->next++;
-		iterator->curr = index;
 		if (hashset->marks[index] != HASH_MARK_FULL) { continue; }
-		iterator->hash  = hashset->hashes[index];
-		iterator->key   = (uint8_t *)hashset->keys   + hashset->key_size * index;
+		iterator->curr = index;
+		iterator->hash = hashset->hashes[index];
+		iterator->key  = hashset_get_at_unsafe(hashset, index);
 		return true;
 	}
 	return false;
@@ -179,7 +183,7 @@ static uint32_t hashset_find_key_index(struct Hashset const * hashset, void cons
 
 		if (hashset->hashes[index] != hash) { continue; }
 
-		void const * ht_key = (uint8_t *)hashset->keys + hashset->key_size * index;
+		void const * ht_key = hashset_get_at_unsafe(hashset, index);
 		if (common_memcmp(ht_key, key, hashset->key_size) == 0) { return index; }
 	}
 

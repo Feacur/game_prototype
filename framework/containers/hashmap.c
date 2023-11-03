@@ -141,26 +141,34 @@ bool hashmap_del(struct Hashmap * hashmap, void const * key) {
 	return true;
 }
 
-uint32_t hashmap_get_count(struct Hashmap * hashmap) {
+uint32_t hashmap_get_count(struct Hashmap const * hashmap) {
 	return hashmap->count;
 }
 
-void * hashmap_get_key_at(struct Hashmap * hashmap, uint32_t index) {
-	if (index >= hashmap->count) {
-		ERR("out of bounds");
-		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
-	}
+static void * hashmap_get_key_at_unsafe(struct Hashmap const * hashmap, uint32_t index) {
 	size_t const offset = hashmap->key_size * index;
 	return (uint8_t *)hashmap->keys + offset;
 }
 
-void * hashmap_get_val_at(struct Hashmap * hashmap, uint32_t index) {
+void * hashmap_get_key_at(struct Hashmap const * hashmap, uint32_t index) {
 	if (index >= hashmap->count) {
 		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
+	return hashmap_get_key_at_unsafe(hashmap, index);
+}
+
+static void * hashmap_get_val_at_unsafe(struct Hashmap const * hashmap, uint32_t index) {
 	size_t const offset = hashmap->value_size * index;
 	return (uint8_t *)hashmap->values + offset;
+}
+
+void * hashmap_get_val_at(struct Hashmap const * hashmap, uint32_t index) {
+	if (index >= hashmap->count) {
+		ERR("out of bounds");
+		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
+	}
+	return hashmap_get_val_at_unsafe(hashmap, index);
 }
 
 void hashmap_del_at(struct Hashmap * hashmap, uint32_t index) {
@@ -173,11 +181,11 @@ void hashmap_del_at(struct Hashmap * hashmap, uint32_t index) {
 bool hashmap_iterate(struct Hashmap const * hashmap, struct Hashmap_Iterator * iterator) {
 	while (iterator->next < hashmap->capacity) {
 		uint32_t const index = iterator->next++;
-		iterator->curr = index;
 		if (hashmap->marks[index] != HASH_MARK_FULL) { continue; }
+		iterator->curr = index;
 		iterator->hash  = hashmap->hashes[index];
-		iterator->key   = (uint8_t *)hashmap->keys   + hashmap->key_size * index;
-		iterator->value = (uint8_t *)hashmap->values + hashmap->value_size * index;
+		iterator->key   = hashmap_get_key_at_unsafe(hashmap, index);
+		iterator->value = hashmap_get_val_at_unsafe(hashmap, index);
 		return true;
 	}
 	return false;
@@ -204,7 +212,7 @@ static uint32_t hashmap_find_key_index(struct Hashmap const * hashmap, void cons
 
 		if (hashmap->hashes[index] != hash) { continue; }
 
-		void const * ht_key = (uint8_t *)hashmap->keys + hashmap->key_size * index;
+		void const * ht_key = hashmap_get_key_at_unsafe(hashmap, index);
 		if (common_memcmp(ht_key, key, hashmap->key_size) == 0) { return index; }
 	}
 
