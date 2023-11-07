@@ -63,7 +63,6 @@ rem https://learn.microsoft.com/cpp/build/reference/subsystem-specify-subsystem
 rem https://learn.microsoft.com/cpp/build/reference/dot-res-files-as-linker-input
 rem https://learn.microsoft.com/cpp/build/reference/linker-options
 
-rem https://learn.microsoft.com/windows/win32/menurc/resource-compiler
 rem https://learn.microsoft.com/windows-server/administration/windows-commands/for
 rem https://learn.microsoft.com/windows-server/administration/windows-commands/setlocal
 

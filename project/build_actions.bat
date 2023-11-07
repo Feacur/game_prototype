@@ -3,6 +3,9 @@ chcp 65001 > nul
 
 rem @note: relies on global variables
 
+rem https://learn.microsoft.com/windows/win32/menurc/resource-compiler
+rem https://learn.microsoft.com/windows/win32/sbscs/mt-exe
+
 rem |> REROUTE
 call :%*
 
@@ -56,11 +59,8 @@ goto :eof
 :post
 	call %func% get_millis time_post
 	if not %arch_mode% == shared (
-		if not exist ".\%project%.exe.manifest" (
-			copy "%project_folder%\windows_dpi_awareness.manifest" ".\%project%.exe.manifest"
-		)
+		mt -nologo -manifest "%project_folder%\windows_dpi_awareness.manifest" -outputresource:%project%.exe
 	)
-
 	popd
 	popd
 goto :eof
