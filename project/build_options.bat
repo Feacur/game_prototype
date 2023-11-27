@@ -149,3 +149,6 @@ if %build_mode% == normal (
 	echo.unknown build_mode "%build_mode%"
 	exit /b 1
 )
+
+set resource_compiler=rc -nologo -fo "temp/%project%.res" "%project_folder%/windows_resources.rc"
+set manifest_tool=mt -nologo -manifest "%project_folder%\windows_dpi_awareness.manifest" -outputresource:%project%.exe

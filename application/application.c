@@ -123,7 +123,7 @@ void application_update(void) {
 	platform_window_update(gs_app.window);
 
 	// process application-side input
-	if (input_key(KC_ALT) && input_key_transition(KC_ENTER, true)) {
+	if (input_key(KC_F11, IT_DOWN_TRNS)) {
 		platform_window_toggle_borderless_fullscreen(gs_app.window);
 	}
 

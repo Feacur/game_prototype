@@ -9,16 +9,16 @@
 //
 #include "input.h"
 
-#define KEYBOARD_KEYS_MAX UINT8_MAX + 1
+#define KEYBOARD_KEYS_MAX KC_ERROR + 1
 #define MOUSE_KEYS_MAX 8
 
 struct Keyboard_State {
-	uint8_t keys[KEYBOARD_KEYS_MAX];
+	bool keys[KEYBOARD_KEYS_MAX];
 	// bool caps_lock, num_lock;
 };
 
 struct Mouse_State {
-	uint8_t keys[MOUSE_KEYS_MAX];
+	bool keys[MOUSE_KEYS_MAX];
 
 	uint32_t display_x, display_y;
 	uint32_t window_x, window_y;
@@ -34,14 +34,12 @@ static struct Input_State {
 	bool track_codepoints;
 } gs_input_state;
 
-bool input_key(enum Key_Code key) {
-	return gs_input_state.keyboard.keys[key];
-}
-
-bool input_key_transition(enum Key_Code key, bool state) {
-	uint8_t now = gs_input_state.keyboard.keys[key];
-	uint8_t was = gs_input_state.keyboard_prev.keys[key];
-	return (now != was) && (now == state);
+bool input_key(enum Key_Code key, enum Input_Type state) {
+	bool const is_down = gs_input_state.keyboard.keys[key];
+	bool const is_trns = gs_input_state.keyboard.keys[key] != gs_input_state.keyboard_prev.keys[key];
+	if ((state & IT_DOWN) && !is_down) { return false; }
+	if ((state & IT_TRNS) && !is_trns) { return false; }
+	return true;
 }
 
 void input_track_codepoints(bool state) {
@@ -68,14 +66,12 @@ void input_mouse_delta(int32_t * x, int32_t * y) {
 	*y = gs_input_state.mouse.delta_y;
 }
 
-bool input_mouse(enum Mouse_Code key) {
-	return gs_input_state.mouse.keys[key];
-}
-
-bool input_mouse_transition(enum Mouse_Code key, bool state) {
-	uint8_t now = gs_input_state.mouse.keys[key];
-	uint8_t was = gs_input_state.mouse_prev.keys[key];
-	return (now != was) && (now == state);
+bool input_mouse(enum Mouse_Code key, enum Input_Type state) {
+	bool const is_down = gs_input_state.mouse.keys[key];
+	bool const is_trns = gs_input_state.mouse.keys[key] != gs_input_state.mouse_prev.keys[key];
+	if ((state & IT_DOWN) && !is_down) { return false; }
+	if ((state & IT_TRNS) && !is_trns) { return false; }
+	return true;
 }
 
 //
@@ -105,8 +101,8 @@ void input_to_platform_before_update(void) {
 
 void input_to_platform_after_update(void) {
 	// remap keyboard input ASCII characters
-	static char const c_remap_src[] = ",./"    ";'"     "[]\\"    "`1234567890-=";
-	static char const c_remap_dst[] = "<?>"    ":\""    "{}|"     "~!@#$%^&*()_+";
+	static char const c_remap_src[] = ",./"    ";"    "'"     "[]"    "\\"    "`1234567890-=";
+	static char const c_remap_dst[] = "<?>"    ":"    "\""    "{}"    "|"     "~!@#$%^&*()_+";
 
 	for (uint8_t i = 0; i < SIZE_OF_ARRAY(c_remap_src); i++) {
 		gs_input_state.keyboard.keys[(uint8_t)c_remap_dst[i]] = gs_input_state.keyboard.keys[(uint8_t)c_remap_src[i]];

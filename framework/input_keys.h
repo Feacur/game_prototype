@@ -116,4 +116,12 @@ enum Mouse_Code {
 	MC_X2,
 };
 
+enum Input_Type {
+	IT_NONE = 0,
+	IT_DOWN = (1 << 0),
+	IT_TRNS = (1 << 1),
+	// shorthands
+	IT_DOWN_TRNS = IT_DOWN | IT_TRNS,
+};
+
 #endif

@@ -36,10 +36,6 @@
         },
         {
             "command": "unbound",
-            "keys": "f11"
-        },
-        {
-            "command": "unbound",
             "keys": "ctrl+shift+m"
         },
         {
@@ -271,6 +267,10 @@
             "keys": "ctrl+alt+9"
         },
         {
+            "command": "unbound",
+            "keys": "alt+enter"
+        },
+        {
             "command": 
             {
                 "action": "quakeMode"
@@ -283,6 +283,10 @@
                 "action": "scrollUp"
             },
             "keys": "ctrl+up"
+        },
+        {
+            "command": "toggleFullscreen",
+            "keys": "f11"
         },
         {
             "command": 
@@ -625,50 +629,6 @@
         }
     ],
     "startOnUserLogin": false,
-    "themes": 
-    [
-        {
-            "name": "legacyDark",
-            "tab": 
-            {
-                "background": null,
-                "showCloseButton": "always",
-                "unfocusedBackground": null
-            },
-            "window": 
-            {
-                "applicationTheme": "dark",
-                "useMica": false
-            }
-        },
-        {
-            "name": "legacyLight",
-            "tab": 
-            {
-                "background": null,
-                "showCloseButton": "always",
-                "unfocusedBackground": null
-            },
-            "window": 
-            {
-                "applicationTheme": "light",
-                "useMica": false
-            }
-        },
-        {
-            "name": "legacySystem",
-            "tab": 
-            {
-                "background": null,
-                "showCloseButton": "always",
-                "unfocusedBackground": null
-            },
-            "window": 
-            {
-                "applicationTheme": "system",
-                "useMica": false
-            }
-        }
-    ],
+    "themes": [],
     "windowingBehavior": "useExisting"
 }

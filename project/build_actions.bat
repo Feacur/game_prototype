@@ -14,8 +14,6 @@ goto :eof
 
 :prep
 	call %func% get_millis time_prep
-	echo.%compiler%
-	echo.%linker%
 
 	pushd ..
 	if not exist bin mkdir bin
@@ -25,12 +23,15 @@ goto :eof
 	if exist "temp/*.tmp" del "temp\\*.tmp" /q
 
 	if not %arch_mode% == shared (
-		rc -nologo -fo "temp/%project%.res" "%project_folder%/windows_resources.rc"
+		echo.%resource_compiler%
+		%resource_compiler%
 	)
 goto :eof
 
 :comp # flag, ext
 	call %func% get_millis time_comp
+	echo.%compiler%
+	echo.%linker%
 	if %build_mode% == normal (
 		for /f %%v in (%source%.txt) do (
 			set object=%%~v
@@ -59,7 +60,8 @@ goto :eof
 :post
 	call %func% get_millis time_post
 	if not %arch_mode% == shared (
-		mt -nologo -manifest "%project_folder%\windows_dpi_awareness.manifest" -outputresource:%project%.exe
+		echo.%manifest_tool%
+		%manifest_tool%
 	)
 	popd
 	popd
