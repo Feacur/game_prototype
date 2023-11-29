@@ -712,6 +712,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			handle_message_input_keyboard(window, wParam, lParam);
 			return 0;
 
+		case WM_SYSCHAR:
 		case WM_CHAR: { // posted into queue
 			static uint32_t s_utf16_high_surrogate = 0;
 			uint32_t value = (uint32_t)wParam;
@@ -726,6 +727,12 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 				input_to_platform_on_codepoint(value);
 			}
 			return 0;
+		}
+
+		case WM_UNICHAR: { // posted into queue
+			if (wParam == UNICODE_NOCHAR) { return TRUE; }
+			input_to_platform_on_codepoint((uint32_t)wParam);
+			return FALSE;
 		}
 
 		case WM_MOUSEMOVE:
