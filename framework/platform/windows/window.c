@@ -370,81 +370,165 @@ static void platform_window_internal_toggle_borderless_fullscreen(struct Window 
 	SetWindowPlacement(window->handle, &window->pre_fullscreen_position);
 }
 
-static uint8_t fix_virtual_key(uint8_t key, USHORT scan) {
+static uint8_t fix_virtual_key(uint8_t key, uint32_t scan) {
 	return (key == VK_SHIFT)
-		? LOBYTE(MapVirtualKey(scan, MAPVK_VSC_TO_VK_EX))
+		? (uint8_t)MapVirtualKey(scan, MAPVK_VSC_TO_VK_EX)
 		: key;
 }
 
 static enum Key_Code translate_virtual_key(uint8_t key, bool is_extended) {
-	if ('A'        <= key && key <= 'Z')        { return 'a'     + key - 'A'; }
-	if ('0'        <= key && key <= '9')        { return '0'     + key - '0'; }
-	if (VK_NUMPAD0 <= key && key <= VK_NUMPAD9) { return KC_NUM0 + key - VK_NUMPAD0; }
-	if (VK_F1      <= key && key <= VK_F24)     { return KC_F1   + key - VK_F1; }
-
-	switch (key) {
+	static enum Key_Code const LUT_normal[] = {
+		// ASCII, numbers
+		[0x30 + 0] = KC_D0,
+		[0x30 + 1] = KC_D1,
+		[0x30 + 2] = KC_D2,
+		[0x30 + 3] = KC_D3,
+		[0x30 + 4] = KC_D4,
+		[0x30 + 5] = KC_D5,
+		[0x30 + 6] = KC_D6,
+		[0x30 + 7] = KC_D7,
+		[0x30 + 8] = KC_D8,
+		[0x30 + 9] = KC_D9,
+		// ASCII, letters
+		['A'] = KC_A,
+		['B'] = KC_B,
+		['C'] = KC_C,
+		['D'] = KC_D,
+		['E'] = KC_E,
+		['F'] = KC_F,
+		['G'] = KC_G,
+		['H'] = KC_H,
+		['I'] = KC_I,
+		['J'] = KC_J,
+		['K'] = KC_K,
+		['L'] = KC_L,
+		['M'] = KC_M,
+		['N'] = KC_N,
+		['O'] = KC_O,
+		['P'] = KC_P,
+		['Q'] = KC_Q,
+		['R'] = KC_R,
+		['S'] = KC_S,
+		['T'] = KC_T,
+		['U'] = KC_U,
+		['V'] = KC_V,
+		['W'] = KC_W,
+		['X'] = KC_X,
+		['Y'] = KC_Y,
+		['Z'] = KC_Z,
 		// ASCII, control characters
-		case VK_BACK:   return '\b';
-		case VK_TAB:    return '\t';
-		case VK_ESCAPE: return KC_ESC;
-		case VK_RETURN: return is_extended ? KC_NUM_ENTER : '\r';
-		case VK_DELETE: return is_extended ? KC_DEL       : KC_NUM_DEC;
+		[VK_BACK]   = '\b',
+		[VK_TAB]    = '\t',
+		[VK_RETURN] = '\r',
+		[VK_ESCAPE] = KC_ESC,
 		// ASCII, printable characters
-		case VK_SPACE:      return ' ';
-		case VK_OEM_COMMA:  return ',';
-		case VK_OEM_PERIOD: return '.';
-		case VK_OEM_2:      return '/';
-		case VK_OEM_1:      return ';';
-		case VK_OEM_7:      return '\'';
-		case VK_OEM_4:      return '[';
-		case VK_OEM_6:      return ']';
-		case VK_OEM_5:      return '\\';
-		case VK_OEM_3:      return '`';
-		case VK_OEM_MINUS:  return '-';
-		case VK_OEM_PLUS:   return '=';
+		[VK_SPACE]      = ' ',
+		[VK_OEM_COMMA]  = ',',
+		[VK_OEM_PERIOD] = '.',
+		[VK_OEM_MINUS]  = '-',
+		[VK_OEM_PLUS]   = '=',
+		[VK_OEM_1]      = ';',
+		[VK_OEM_2]      = '/',
+		[VK_OEM_3]      = '`',
+		[VK_OEM_4]      = '[',
+		[VK_OEM_5]      = '\\',
+		[VK_OEM_6]      = ']',
+		[VK_OEM_7]      = '\'',
 		// non-ASCII, common
-		case VK_SHIFT:    return is_extended ? KC_LSHIFT : KC_RSHIFT;
-		case VK_LSHIFT:   return KC_LSHIFT;
-		case VK_RSHIFT:   return KC_RSHIFT;
-		case VK_CONTROL:  return is_extended ? KC_LCTRL : KC_RCTRL;
-		case VK_LCONTROL: return KC_LCTRL;
-		case VK_RCONTROL: return KC_RCTRL;
-		case VK_MENU:     return is_extended ? KC_LALT : KC_RALT;
-		case VK_LMENU:    return KC_LALT;
-		case VK_RMENU:    return KC_RALT;
-		case VK_LEFT:     return is_extended ? KC_ARROW_LEFT  : KC_NUM4;
-		case VK_RIGHT:    return is_extended ? KC_ARROW_RIGHT : KC_NUM6;
-		case VK_DOWN:     return is_extended ? KC_ARROW_DOWN  : KC_NUM2;
-		case VK_UP:       return is_extended ? KC_ARROW_UP    : KC_NUM8;
-		case VK_INSERT:   return is_extended ? KC_INSERT      : KC_NUM0;
-		case VK_PRIOR:    return is_extended ? KC_PAGE_UP     : KC_NUM9;
-		case VK_NEXT:     return is_extended ? KC_PAGE_DOWN   : KC_NUM3;
-		case VK_HOME:     return is_extended ? KC_HOME        : KC_NUM7;
-		case VK_END:      return is_extended ? KC_END         : KC_NUM1;
-		case VK_CLEAR:    return is_extended ? KC_CLEAR       : KC_NUM5;
-		case VK_CAPITAL:  return KC_CAPS_LOCK;
-		case VK_SNAPSHOT: return KC_PSCREEN;
-		case VK_PAUSE:    return KC_PAUSE;
+		[VK_LSHIFT]  = KC_LSHIFT,
+		[VK_RSHIFT]  = KC_RSHIFT,
+		[VK_CONTROL] = KC_LCTRL,
+		[VK_MENU]    = KC_LALT,
+		//
+		[VK_LCONTROL] = KC_LCTRL,
+		[VK_LMENU]    = KC_LALT,
+		[VK_RCONTROL] = KC_RCTRL,
+		[VK_RMENU]    = KC_RALT,
+		// non-ASCII, common
+		[VK_CAPITAL]  = KC_CAPS_LOCK,
 		// non-ASCII, numeric
-		case VK_NUMLOCK:  return KC_NUM_LOCK;
-		case VK_ADD:      return KC_NUM_ADD;
-		case VK_SUBTRACT: return KC_NUM_SUB;
-		case VK_MULTIPLY: return KC_NUM_MUL;
-		case VK_DIVIDE:   return KC_NUM_DIV;
-		case VK_DECIMAL:  return KC_NUM_DEC;
-		case VK_NUMPAD0:  return KC_NUM0;
-		case VK_NUMPAD1:  return KC_NUM1;
-		case VK_NUMPAD2:  return KC_NUM2;
-		case VK_NUMPAD3:  return KC_NUM3;
-		case VK_NUMPAD4:  return KC_NUM4;
-		case VK_NUMPAD5:  return KC_NUM5;
-		case VK_NUMPAD6:  return KC_NUM6;
-		case VK_NUMPAD7:  return KC_NUM7;
-		case VK_NUMPAD8:  return KC_NUM8;
-		case VK_NUMPAD9:  return KC_NUM9;
-	}
+		[VK_NUMLOCK]  = KC_NUM_LOCK,
+		[VK_ADD]      = KC_NUM_ADD,
+		[VK_SUBTRACT] = KC_NUM_SUB,
+		[VK_MULTIPLY] = KC_NUM_MUL,
+		[VK_DECIMAL]  = KC_NUM_DEC,
+		[VK_NUMPAD0]  = KC_NUM0,
+		[VK_NUMPAD1]  = KC_NUM1,
+		[VK_NUMPAD2]  = KC_NUM2,
+		[VK_NUMPAD3]  = KC_NUM3,
+		[VK_NUMPAD4]  = KC_NUM4,
+		[VK_NUMPAD5]  = KC_NUM5,
+		[VK_NUMPAD6]  = KC_NUM6,
+		[VK_NUMPAD7]  = KC_NUM7,
+		[VK_NUMPAD8]  = KC_NUM8,
+		[VK_NUMPAD9]  = KC_NUM9,
+		//
+		[VK_LEFT]   = KC_NUM4,
+		[VK_RIGHT]  = KC_NUM6,
+		[VK_DOWN]   = KC_NUM2,
+		[VK_UP]     = KC_NUM8,
+		[VK_INSERT] = KC_NUM0,
+		[VK_PRIOR]  = KC_NUM9,
+		[VK_NEXT]   = KC_NUM3,
+		[VK_HOME]   = KC_NUM7,
+		[VK_END]    = KC_NUM1,
+		[VK_CLEAR]  = KC_NUM5,
+		// non-ASCII, functional
+		[VK_F1]  = KC_F1,
+		[VK_F2]  = KC_F2,
+		[VK_F3]  = KC_F3,
+		[VK_F4]  = KC_F4,
+		[VK_F5]  = KC_F5,
+		[VK_F6]  = KC_F6,
+		[VK_F7]  = KC_F7,
+		[VK_F8]  = KC_F8,
+		[VK_F9]  = KC_F9,
+		[VK_F10] = KC_F10,
+		[VK_F11] = KC_F11,
+		[VK_F12] = KC_F12,
+		[VK_F13] = KC_F13,
+		[VK_F14] = KC_F14,
+		[VK_F15] = KC_F15,
+		[VK_F16] = KC_F16,
+		[VK_F17] = KC_F17,
+		[VK_F18] = KC_F18,
+		[VK_F19] = KC_F19,
+		[VK_F20] = KC_F20,
+		[VK_F21] = KC_F21,
+		[VK_F22] = KC_F22,
+		[VK_F23] = KC_F23,
+		[VK_F24] = KC_F24,
+		//
+		[0xff] = 0,
+	};
 
-	return KC_ERROR;
+	static enum Key_Code const LUT_extended[] = {
+		// ASCII, control characters
+		[VK_RETURN] = KC_NUM_ENTER,
+		[VK_DIVIDE] = KC_NUM_DIV,
+		//
+		[VK_SNAPSHOT] = KC_PSCREEN,
+		[VK_CONTROL]  = KC_RCTRL,
+		[VK_MENU]     = KC_RALT,
+		[VK_DELETE]   = KC_DEL,
+		//
+		[VK_LEFT]   = KC_ARROW_LEFT,
+		[VK_RIGHT]  = KC_ARROW_RIGHT,
+		[VK_DOWN]   = KC_ARROW_DOWN,
+		[VK_UP]     = KC_ARROW_UP,
+		//
+		[VK_INSERT] = KC_INSERT,
+		[VK_PRIOR]  = KC_PAGE_UP,
+		[VK_NEXT]   = KC_PAGE_DOWN,
+		[VK_HOME]   = KC_HOME,
+		[VK_END]    = KC_END,
+		//
+		[0xff] = 0,
+	};
+
+	return is_extended
+		? LUT_extended[key]
+		: LUT_normal[key];
 }
 
 static bool platform_window_internal_has_raw_input(struct Window * window) {
@@ -494,9 +578,9 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 
 	bool const is_extended = (data->Flags & RI_KEY_E0) == RI_KEY_E0;
 
-	USHORT const scan = (data->Flags & RI_KEY_E1)
-		? (USHORT)MapVirtualKey(data->VKey, MAPVK_VK_TO_VSC)
-		: data->MakeCode;
+	uint32_t const scan = (data->Flags & RI_KEY_E1)
+		? (uint32_t)MapVirtualKey(data->VKey, MAPVK_VK_TO_VSC)
+		: data->MakeCode | (is_extended ? 0xe000 : 0x0000);
 
 	uint8_t const key = fix_virtual_key((uint8_t)data->VKey, scan);
 	if (key == 0x00) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
@@ -504,6 +588,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 
 	input_to_platform_on_key(
 		translate_virtual_key(key, is_extended),
+		scan,
 		(data->Flags & RI_KEY_BREAK) == 0
 	);
 
@@ -593,9 +678,9 @@ static void handle_input_hid_raw(struct Window * window, RAWHID * data) {
 	// https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-rawhid
 }
 
-static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, LPARAM lParam) {
+static void handle_message_input_raw(struct Window * window, WPARAM wParam, LPARAM lParam) {
 	// skip input in background; requires `RIDEV_INPUTSINK` at registration
-	if (GET_RAWINPUT_CODE_WPARAM(wParam) == RIM_INPUTSINK) { return 0; }
+	if (GET_RAWINPUT_CODE_WPARAM(wParam) == RIM_INPUTSINK) { return; }
 
 	RAWINPUTHEADER header; UINT header_size = sizeof(header);
 	if (GetRawInputData((HRAWINPUT)lParam, RID_HEADER, &header, &header_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
@@ -610,7 +695,6 @@ static LRESULT handle_message_input_raw(struct Window * window, WPARAM wParam, L
 		}
 	}
 
-	return DefWindowProc(window->handle, WM_INPUT, wParam, lParam);
 	// https://learn.microsoft.com/windows/win32/inputdev/raw-input
 }
 
@@ -620,15 +704,17 @@ static void handle_message_input_keyboard(struct Window * window, WPARAM wParam,
 	WORD const flags = HIWORD(lParam);
 	bool const is_extended = (flags & KF_EXTENDED) == KF_EXTENDED;
 
-	USHORT const scan = LOBYTE(flags)
-		| (is_extended ? 0xe000 : 0x0000);
+	uint32_t const scan = (wParam == VK_PAUSE)
+		? (uint32_t)MapVirtualKey(wParam, MAPVK_VK_TO_VSC)
+		: LOBYTE(flags) | (is_extended ? 0xe000 : 0x0000);
 
-	uint8_t const key = fix_virtual_key(LOBYTE(wParam), scan);
+	uint8_t const key = fix_virtual_key((uint8_t)wParam, scan);
 	if (key == 0x00) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 	if (key == 0xff) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	input_to_platform_on_key(
 		translate_virtual_key(key, is_extended),
+		scan,
 		(flags & KF_UP) != KF_UP
 	);
 
@@ -698,7 +784,8 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 		}
 
 		case WM_INPUT: // sent immediately
-			return handle_message_input_raw(window, wParam, lParam);
+			handle_message_input_raw(window, wParam, lParam);
+			return 0;
 
 		case WM_INPUT_DEVICE_CHANGE: switch (wParam) { // sent immediately
 			case GIDC_ARRIVAL: return 0;

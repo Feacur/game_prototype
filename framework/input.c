@@ -100,26 +100,6 @@ void input_to_platform_before_update(void) {
 }
 
 void input_to_platform_after_update(void) {
-	// remap keyboard input ASCII characters
-	static char const c_remap_src[] = ",./"    ";"    "'"     "[]"    "\\"    "`1234567890-=";
-	static char const c_remap_dst[] = "<?>"    ":"    "\""    "{}"    "|"     "~!@#$%^&*()_+";
-
-	for (uint8_t i = 0; i < SIZE_OF_ARRAY(c_remap_src); i++) {
-		gs_input_state.keyboard.keys[(uint8_t)c_remap_dst[i]] = gs_input_state.keyboard.keys[(uint8_t)c_remap_src[i]];
-	}
-
-	common_memcpy(
-		gs_input_state.keyboard.keys + (uint8_t)'A',
-		gs_input_state.keyboard.keys + (uint8_t)'a',
-		sizeof(*gs_input_state.keyboard.keys) * (1 + 'Z' - 'A')
-	);
-
-	//
-	gs_input_state.keyboard.keys[KC_SHIFT] = gs_input_state.keyboard.keys[KC_LSHIFT] || gs_input_state.keyboard.keys[KC_RSHIFT];
-	gs_input_state.keyboard.keys[KC_CTRL] = gs_input_state.keyboard.keys[KC_LCTRL] || gs_input_state.keyboard.keys[KC_RCTRL];
-	gs_input_state.keyboard.keys[KC_ALT] = gs_input_state.keyboard.keys[KC_LALT] || gs_input_state.keyboard.keys[KC_RALT];
-
-	//
 	if (gs_input_state.mouse.delta_x == 0 && gs_input_state.mouse.delta_y == 0) {
 		gs_input_state.mouse.delta_x = (int32_t)gs_input_state.mouse.window_x - (int32_t)gs_input_state.mouse_prev.window_x;
 		gs_input_state.mouse.delta_y = (int32_t)gs_input_state.mouse.window_y - (int32_t)gs_input_state.mouse_prev.window_y;
@@ -129,6 +109,147 @@ void input_to_platform_after_update(void) {
 //
 #include "framework/internal/input_to_window.h"
 
+
+static enum Key_Code translate_scan(uint32_t scan) {
+	static enum Key_Code const LUT_normal[] = {
+		// ASCII, numbers
+		[0x0B] = KC_D0,
+		[0x02] = KC_D1,
+		[0x03] = KC_D2,
+		[0x04] = KC_D3,
+		[0x05] = KC_D4,
+		[0x06] = KC_D5,
+		[0x07] = KC_D6,
+		[0x08] = KC_D7,
+		[0x09] = KC_D8,
+		[0x0A] = KC_D9,
+		// ASCII, letters
+		[0x1E] = KC_A,
+		[0x30] = KC_B,
+		[0x2E] = KC_C,
+		[0x20] = KC_D,
+		[0x12] = KC_E,
+		[0x21] = KC_F,
+		[0x22] = KC_G,
+		[0x23] = KC_H,
+		[0x17] = KC_I,
+		[0x24] = KC_J,
+		[0x25] = KC_K,
+		[0x26] = KC_L,
+		[0x32] = KC_M,
+		[0x31] = KC_N,
+		[0x18] = KC_O,
+		[0x19] = KC_P,
+		[0x10] = KC_Q,
+		[0x13] = KC_R,
+		[0x1F] = KC_S,
+		[0x14] = KC_T,
+		[0x16] = KC_U,
+		[0x2F] = KC_V,
+		[0x11] = KC_W,
+		[0x2D] = KC_X,
+		[0x15] = KC_Y,
+		[0x2C] = KC_Z,
+		// ASCII, control characters
+		[0x0E] = '\b',
+		[0x0F] = '\t',
+		[0x1C] = '\r',
+		[0x01] = KC_ESC,
+		// ASCII, printable characters
+		[0x39] = ' ',
+		[0x33] = ',',
+		[0x34] = '.',
+		[0x0C] = '-',
+		[0x0D] = '=',
+		[0x27] = ';',
+		[0x35] = '/',
+		[0x29] = '`',
+		[0x1A] = '[',
+		[0x2B] = '\\',
+		[0x28] = '\'',
+		[0x1B] = ']',
+		// non-ASCII, common
+		[0x2A] = KC_LSHIFT,
+		[0x36] = KC_RSHIFT,
+		[0x1D] = KC_LCTRL,
+		[0x38] = KC_LALT,
+		// non-ASCII, common
+		[0x3A] = KC_CAPS_LOCK,
+		// non-ASCII, numeric
+		[0x45] = KC_NUM_LOCK,
+		[0x4E] = KC_NUM_ADD,
+		[0x4A] = KC_NUM_SUB,
+		[0x37] = KC_NUM_MUL,
+		[0x53] = KC_NUM_DEC,
+		[0x52] = KC_NUM0,
+		[0x4F] = KC_NUM1,
+		[0x50] = KC_NUM2,
+		[0x51] = KC_NUM3,
+		[0x4B] = KC_NUM4,
+		[0x4C] = KC_NUM5,
+		[0x4D] = KC_NUM6,
+		[0x47] = KC_NUM7,
+		[0x48] = KC_NUM8,
+		[0x49] = KC_NUM9,
+		// non-ASCII, functional
+		[0x3B] = KC_F1,
+		[0x3C] = KC_F2,
+		[0x3D] = KC_F3,
+		[0x3E] = KC_F4,
+		[0x3F] = KC_F5,
+		[0x40] = KC_F6,
+		[0x41] = KC_F7,
+		[0x42] = KC_F8,
+		[0x43] = KC_F9,
+		[0x44] = KC_F10,
+		[0x57] = KC_F11,
+		[0x58] = KC_F12,
+		[0x64] = KC_F13,
+		[0x65] = KC_F14,
+		[0x66] = KC_F15,
+		[0x67] = KC_F16,
+		[0x68] = KC_F17,
+		[0x69] = KC_F18,
+		[0x6A] = KC_F19,
+		[0x6B] = KC_F20,
+		[0x6C] = KC_F21,
+		[0x6D] = KC_F22,
+		[0x6E] = KC_F23,
+		[0x76] = KC_F24,
+		//
+		[0xff] = 0,
+	};
+
+	static enum Key_Code const LUT_extended[] = {
+		//
+		[0x1C] = KC_NUM_ENTER,
+		[0x35] = KC_NUM_DIV,
+		//
+		[0x37] = KC_PSCREEN,
+		[0x1D] = KC_RCTRL,
+		[0x38] = KC_RALT,
+		[0x53] = KC_DEL,
+		//
+		[0x4B] = KC_ARROW_LEFT,
+		[0x4D] = KC_ARROW_RIGHT,
+		[0x50] = KC_ARROW_DOWN,
+		[0x48] = KC_ARROW_UP,
+		//
+		[0x52] = KC_INSERT,
+		[0x51] = KC_PAGE_UP,
+		[0x49] = KC_PAGE_DOWN,
+		[0x47] = KC_HOME,
+		[0x4F] = KC_END,
+		//
+		[0xff] = 0,
+	};
+
+	uint8_t const index = scan & 0xff;
+	return (scan & 0xff00)
+		? LUT_extended[index]
+		: LUT_normal[index];
+}
+
 void input_to_platform_reset(void) {
 	common_memset(&gs_input_state.keyboard, 0, sizeof(gs_input_state.keyboard));
 	common_memset(&gs_input_state.keyboard_prev, 0, sizeof(gs_input_state.keyboard_prev));
@@ -136,7 +257,9 @@ void input_to_platform_reset(void) {
 	common_memset(&gs_input_state.mouse_prev, 0, sizeof(gs_input_state.mouse_prev));
 }
 
-void input_to_platform_on_key(enum Key_Code key, bool is_down) {
+void input_to_platform_on_key(enum Key_Code key, uint32_t scan, bool is_down) {
+	// @note: override translated key with a universal HID one
+	key = translate_scan(scan);
 	gs_input_state.keyboard.keys[key] = is_down;
 }
 
