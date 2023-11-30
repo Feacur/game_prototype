@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_GRAPHICS_GPU_COMMAND)
 #define FRAMEWORK_GRAPHICS_GPU_COMMAND
 
-// interface from `gpu_*/graphics.c` to anywhere
+// interface from `graphics.c` to anywhere
 // - gpu draw call
 
 #include "framework/maths_types.h"

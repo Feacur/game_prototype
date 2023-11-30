@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_GRAPHICS_GPU_OBJECTS)
 #define FRAMEWORK_GRAPHICS_GPU_OBJECTS
 
-// interface from `gpu_*/graphics.c` to anywhere
+// interface from `graphics.c` to anywhere
 // - gpu objects initialization and manipulation
 
 #include "framework/graphics/types.h"

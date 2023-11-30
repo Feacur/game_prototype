@@ -376,7 +376,7 @@ static uint8_t fix_virtual_key(uint8_t key, enum Scan_Code scan) {
 		: key;
 }
 
-static enum Key_Code translate_virtual_key(uint8_t key, bool is_extended) {
+static enum Key_Code virtual_to_key(uint8_t key, bool is_extended) {
 	static enum Key_Code const LUT_normal[] = {
 		// letters
 		['A']                 = 'A',
@@ -571,7 +571,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 	if (key == 0xff) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	input_to_platform_on_key(
-		translate_virtual_key(key, is_extended),
+		virtual_to_key(key, is_extended),
 		scan,
 		(data->Flags & RI_KEY_BREAK) == 0
 	);
@@ -579,12 +579,6 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 	// https://learn.microsoft.com/windows/win32/inputdev/about-keyboard-input
 	// https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-rawkeyboard
 	// https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
-
-/*
-	char key_name[32];
-	GetKeyNameText((LONG)((scan << 16) | (is_extended << 24)), key_name, sizeof(key_name));
-	TRC("%s", key_name);
-*/
 }
 
 static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
@@ -698,7 +692,7 @@ static void handle_message_input_keyboard(struct Window * window, WPARAM wParam,
 	if (key == 0xff) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	input_to_platform_on_key(
-		translate_virtual_key(key, is_extended),
+		virtual_to_key(key, is_extended),
 		scan,
 		(flags & KF_UP) != KF_UP
 	);

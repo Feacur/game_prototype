@@ -109,8 +109,7 @@ void input_to_platform_after_update(void) {
 //
 #include "framework/internal/input_to_window.h"
 
-
-static enum Key_Code translate_scan(enum Scan_Code scan) {
+static enum Key_Code scan_to_key(enum Scan_Code scan) {
 	static enum Key_Code const LUT_normal[] = {
 		// letters
 		[SC_A]                = 'A',
@@ -244,7 +243,7 @@ static enum Key_Code translate_scan(enum Scan_Code scan) {
 		[0xff] = 0,
 	};
 
-	uint8_t const index = scan & 0xff;
+	uint8_t const index = scan & 0x00ff;
 	return (scan & 0xff00)
 		? LUT_extended[index]
 		: LUT_normal[index];
@@ -259,7 +258,7 @@ void input_to_platform_reset(void) {
 
 void input_to_platform_on_key(enum Key_Code key, enum Scan_Code scan, bool is_down) {
 	// @note: override translated key with a universal HID one
-	key = translate_scan(scan);
+	key = scan_to_key(scan);
 	gs_input_state.keyboard.keys[key] = is_down;
 }
 

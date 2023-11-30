@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_GRAPHICS_GPU_MISC)
 #define FRAMEWORK_GRAPHICS_GPU_MISC
 
-// interface from `gpu_*/graphics.c` to anywhere
+// interface from `graphics.c` to anywhere
 // - general purpose
 
 #include "framework/maths_types.h"

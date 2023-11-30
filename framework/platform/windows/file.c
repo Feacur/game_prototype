@@ -22,7 +22,7 @@ struct File {
 struct Buffer platform_file_read_entire(struct CString path) {
 	struct Buffer buffer = buffer_init(NULL);
 
-	struct File * file = platform_file_init(path, FILE_MODE_READ);
+	struct File * file = platform_file_init(path, FILE_MODE_NONE);
 	if (file == NULL) { goto finalize; }
 
 	uint64_t const size = platform_file_size(file);
@@ -42,17 +42,17 @@ struct Buffer platform_file_read_entire(struct CString path) {
 	return buffer;
 }
 
-void platform_file_delete(struct CString path) {
+bool platform_file_delete(struct CString path) {
 #if defined(UNICODE) || defined(_UNICODE)
 	// @todo: (?) arena/stack allocator
-	const int path_valid_length = MultiByteToWideChar(CP_UTF8, 0, path.data, -1, NULL, 0);
-	wchar_t * path_valid = alloca(sizeof(wchar_t) * (uint64_t)path_valid_length);
-	MultiByteToWideChar(CP_UTF8, 0, path.data, -1, path_valid, path_valid_length);
+	int const sys_path_length = MultiByteToWideChar(CP_UTF8, 0, path.data, -1, NULL, 0);
+	wchar_t * sys_path = alloca(sizeof(wchar_t) * (uint64_t)sys_path_length);
+	MultiByteToWideChar(CP_UTF8, 0, path.data, -1, sys_path, sys_path_length);
 #else
-	char const * path_valid = path.data;
+	char const * sys_path = path.data;
 #endif
 
-	DeleteFile(path_valid);
+	return DeleteFile(sys_path);
 }
 
 static HANDLE platform_file_internal_create(struct CString path, enum File_Mode mode);
@@ -84,6 +84,10 @@ void platform_file_free(struct File * file) {
 	MEMORY_FREE(file->path);
 	common_memset(file, 0, sizeof(*file));
 	MEMORY_FREE(file);
+}
+
+void platform_file_end(struct File * file) {
+	SetEndOfFile(file->handle);
 }
 
 uint64_t platform_file_size(struct File const * file) {
@@ -119,11 +123,6 @@ uint64_t platform_file_position_set(struct File * file, uint64_t position) {
 uint64_t platform_file_read(struct File const * file, uint8_t * buffer, uint64_t size) {
 	DWORD const max_chunk_size = UINT16_MAX + 1;
 
-	if (!(file->mode & FILE_MODE_READ)) {
-		ERR("can't read write-only files; \"%.*s\"", file->path_length, file->path);
-		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
-	}
-	
 	uint64_t read = 0;
 	while (read < size) {
 		DWORD const to_read = ((size - read) < (uint64_t)max_chunk_size)
@@ -173,33 +172,28 @@ uint64_t platform_file_write(struct File * file, uint8_t * buffer, uint64_t size
 //
 
 static HANDLE platform_file_internal_create(struct CString path, enum File_Mode mode) {
-	DWORD access = 0, share = 0, creation = OPEN_EXISTING;
-	if (mode & FILE_MODE_READ) {
-		access |= GENERIC_READ;
-		share |= FILE_SHARE_READ;
-	}
+	DWORD access = GENERIC_READ;
+	DWORD share = FILE_SHARE_READ;
+	DWORD creation = OPEN_EXISTING;
 
 	if (mode & FILE_MODE_WRITE) {
 		access |= GENERIC_WRITE;
-		share |= FILE_SHARE_WRITE;
-		creation = OPEN_ALWAYS;
-	}
-
-	if (mode & FILE_MODE_DELETE) {
-		share |= FILE_SHARE_DELETE;
+		creation = (mode & FILE_MODE_FORCE)
+			? OPEN_ALWAYS
+			: CREATE_NEW;
 	}
 
 #if defined(UNICODE) || defined(_UNICODE)
 	// @todo: (?) arena/stack allocator
-	const int path_valid_length = MultiByteToWideChar(CP_UTF8, 0, path.data, -1, NULL, 0);
-	wchar_t * path_valid = alloca(sizeof(wchar_t) * (uint64_t)path_valid_length);
-	MultiByteToWideChar(CP_UTF8, 0, path.data, -1, path_valid, path_valid_length);
+	int const sys_path_length = MultiByteToWideChar(CP_UTF8, 0, path.data, -1, NULL, 0);
+	wchar_t * sys_path = alloca(sizeof(wchar_t) * (uint64_t)sys_path_length);
+	MultiByteToWideChar(CP_UTF8, 0, path.data, -1, sys_path, sys_path_length);
 #else
-	char const * path_valid = path.data;
+	char const * sys_path = path.data;
 #endif
 
 	return CreateFile(
-		path_valid,
+		sys_path,
 		access, share, NULL, creation,
 		FILE_ATTRIBUTE_NORMAL, NULL
 	);
