@@ -370,7 +370,7 @@ static void platform_window_internal_toggle_borderless_fullscreen(struct Window 
 	SetWindowPlacement(window->handle, &window->pre_fullscreen_position);
 }
 
-static uint8_t fix_virtual_key(uint8_t key, uint32_t scan) {
+static uint8_t fix_virtual_key(uint8_t key, enum Scan_Code scan) {
 	return (key == VK_SHIFT)
 		? (uint8_t)MapVirtualKey(scan, MAPVK_VSC_TO_VK_EX)
 		: key;
@@ -378,150 +378,134 @@ static uint8_t fix_virtual_key(uint8_t key, uint32_t scan) {
 
 static enum Key_Code translate_virtual_key(uint8_t key, bool is_extended) {
 	static enum Key_Code const LUT_normal[] = {
-		// ASCII, numbers
-		[0x30 + 0] = KC_D0,
-		[0x30 + 1] = KC_D1,
-		[0x30 + 2] = KC_D2,
-		[0x30 + 3] = KC_D3,
-		[0x30 + 4] = KC_D4,
-		[0x30 + 5] = KC_D5,
-		[0x30 + 6] = KC_D6,
-		[0x30 + 7] = KC_D7,
-		[0x30 + 8] = KC_D8,
-		[0x30 + 9] = KC_D9,
-		// ASCII, letters
-		['A'] = KC_A,
-		['B'] = KC_B,
-		['C'] = KC_C,
-		['D'] = KC_D,
-		['E'] = KC_E,
-		['F'] = KC_F,
-		['G'] = KC_G,
-		['H'] = KC_H,
-		['I'] = KC_I,
-		['J'] = KC_J,
-		['K'] = KC_K,
-		['L'] = KC_L,
-		['M'] = KC_M,
-		['N'] = KC_N,
-		['O'] = KC_O,
-		['P'] = KC_P,
-		['Q'] = KC_Q,
-		['R'] = KC_R,
-		['S'] = KC_S,
-		['T'] = KC_T,
-		['U'] = KC_U,
-		['V'] = KC_V,
-		['W'] = KC_W,
-		['X'] = KC_X,
-		['Y'] = KC_Y,
-		['Z'] = KC_Z,
-		// ASCII, control characters
-		[VK_BACK]   = '\b',
-		[VK_TAB]    = '\t',
-		[VK_RETURN] = '\r',
-		[VK_ESCAPE] = KC_ESC,
-		// ASCII, printable characters
-		[VK_SPACE]      = ' ',
-		[VK_OEM_COMMA]  = ',',
-		[VK_OEM_PERIOD] = '.',
-		[VK_OEM_MINUS]  = '-',
-		[VK_OEM_PLUS]   = '=',
-		[VK_OEM_1]      = ';',
-		[VK_OEM_2]      = '/',
-		[VK_OEM_3]      = '`',
-		[VK_OEM_4]      = '[',
-		[VK_OEM_5]      = '\\',
-		[VK_OEM_6]      = ']',
-		[VK_OEM_7]      = '\'',
-		// non-ASCII, common
-		[VK_LSHIFT]  = KC_LSHIFT,
-		[VK_RSHIFT]  = KC_RSHIFT,
-		[VK_CONTROL] = KC_LCTRL,
-		[VK_MENU]    = KC_LALT,
-		//
-		[VK_LCONTROL] = KC_LCTRL,
-		[VK_LMENU]    = KC_LALT,
-		[VK_RCONTROL] = KC_RCTRL,
-		[VK_RMENU]    = KC_RALT,
-		// non-ASCII, common
-		[VK_CAPITAL]  = KC_CAPS_LOCK,
-		// non-ASCII, numeric
-		[VK_NUMLOCK]  = KC_NUM_LOCK,
-		[VK_ADD]      = KC_NUM_ADD,
-		[VK_SUBTRACT] = KC_NUM_SUB,
-		[VK_MULTIPLY] = KC_NUM_MUL,
-		[VK_DECIMAL]  = KC_NUM_DEC,
-		[VK_NUMPAD0]  = KC_NUM0,
-		[VK_NUMPAD1]  = KC_NUM1,
-		[VK_NUMPAD2]  = KC_NUM2,
-		[VK_NUMPAD3]  = KC_NUM3,
-		[VK_NUMPAD4]  = KC_NUM4,
-		[VK_NUMPAD5]  = KC_NUM5,
-		[VK_NUMPAD6]  = KC_NUM6,
-		[VK_NUMPAD7]  = KC_NUM7,
-		[VK_NUMPAD8]  = KC_NUM8,
-		[VK_NUMPAD9]  = KC_NUM9,
-		//
-		[VK_LEFT]   = KC_NUM4,
-		[VK_RIGHT]  = KC_NUM6,
-		[VK_DOWN]   = KC_NUM2,
-		[VK_UP]     = KC_NUM8,
-		[VK_INSERT] = KC_NUM0,
-		[VK_PRIOR]  = KC_NUM9,
-		[VK_NEXT]   = KC_NUM3,
-		[VK_HOME]   = KC_NUM7,
-		[VK_END]    = KC_NUM1,
-		[VK_CLEAR]  = KC_NUM5,
-		// non-ASCII, functional
-		[VK_F1]  = KC_F1,
-		[VK_F2]  = KC_F2,
-		[VK_F3]  = KC_F3,
-		[VK_F4]  = KC_F4,
-		[VK_F5]  = KC_F5,
-		[VK_F6]  = KC_F6,
-		[VK_F7]  = KC_F7,
-		[VK_F8]  = KC_F8,
-		[VK_F9]  = KC_F9,
-		[VK_F10] = KC_F10,
-		[VK_F11] = KC_F11,
-		[VK_F12] = KC_F12,
-		[VK_F13] = KC_F13,
-		[VK_F14] = KC_F14,
-		[VK_F15] = KC_F15,
-		[VK_F16] = KC_F16,
-		[VK_F17] = KC_F17,
-		[VK_F18] = KC_F18,
-		[VK_F19] = KC_F19,
-		[VK_F20] = KC_F20,
-		[VK_F21] = KC_F21,
-		[VK_F22] = KC_F22,
-		[VK_F23] = KC_F23,
-		[VK_F24] = KC_F24,
+		// letters
+		['A']                 = 'A',
+		['B']                 = 'B',
+		['C']                 = 'C',
+		['D']                 = 'D',
+		['E']                 = 'E',
+		['F']                 = 'F',
+		['G']                 = 'G',
+		['H']                 = 'H',
+		['I']                 = 'I',
+		['J']                 = 'J',
+		['K']                 = 'K',
+		['L']                 = 'L',
+		['M']                 = 'M',
+		['N']                 = 'N',
+		['O']                 = 'O',
+		['P']                 = 'P',
+		['Q']                 = 'Q',
+		['R']                 = 'R',
+		['S']                 = 'S',
+		['T']                 = 'T',
+		['U']                 = 'U',
+		['V']                 = 'V',
+		['W']                 = 'W',
+		['X']                 = 'X',
+		['Y']                 = 'Y',
+		['Z']                 = 'Z',
+		// number and backslash
+		['1']                 = '1',
+		['2']                 = '2',
+		['3']                 = '3',
+		['4']                 = '4',
+		['5']                 = '5',
+		['6']                 = '6',
+		['7']                 = '7',
+		['8']                 = '8',
+		['9']                 = '9',
+		['0']                 = '0',
+		[VK_OEM_MINUS]        = '-',
+		[VK_OEM_PLUS]         = '=',
+		['\b']                = '\b',
+		// near letters
+		['\r']                = '\r',
+		[VK_ESCAPE]           = KC_ESCAPE,
+		[VK_TAB]              = '\t',
+		[' ']                 = ' ',
+		[VK_OEM_4]            = '[',
+		[VK_OEM_6]            = ']',
+		[VK_OEM_5]            = '\\',
+		[VK_OEM_1]            = ';',
+		[VK_OEM_7]            = '\'',
+		[VK_OEM_3]            = '`',
+		[VK_OEM_COMMA]        = ',',
+		[VK_OEM_PERIOD]       = '.',
+		[VK_OEM_2]            = '/',
+		// modificators
+		[VK_CAPITAL]          = KC_CAPS,
+		[VK_CONTROL]          = KC_LCTRL,
+		[VK_LSHIFT]           = KC_LSHIFT,
+		[VK_RSHIFT]           = KC_RSHIFT,
+		[VK_MENU]             = KC_LALT,
+		// functional
+		[VK_F1]               = KC_F1,
+		[VK_F2]               = KC_F2,
+		[VK_F3]               = KC_F3,
+		[VK_F4]               = KC_F4,
+		[VK_F5]               = KC_F5,
+		[VK_F6]               = KC_F6,
+		[VK_F7]               = KC_F7,
+		[VK_F8]               = KC_F8,
+		[VK_F9]               = KC_F9,
+		[VK_F10]              = KC_F10,
+		[VK_F11]              = KC_F11,
+		[VK_F12]              = KC_F12,
+		[VK_F13]              = KC_F13,
+		[VK_F14]              = KC_F14,
+		[VK_F15]              = KC_F15,
+		[VK_F16]              = KC_F16,
+		[VK_F17]              = KC_F17,
+		[VK_F18]              = KC_F18,
+		[VK_F19]              = KC_F19,
+		[VK_F20]              = KC_F20,
+		[VK_F21]              = KC_F21,
+		[VK_F22]              = KC_F22,
+		[VK_F23]              = KC_F23,
+		[VK_F24]              = KC_F24,
+		// numpad
+		[VK_NUMLOCK]          = KC_NUM_LOCK,
+		[VK_MULTIPLY]         = KC_NUM_STAR,
+		[VK_SUBTRACT]         = KC_NUM_DASH,
+		[VK_ADD]              = KC_NUM_PLUS,
+		[VK_NUMPAD1]          = KC_NUM1,
+		[VK_NUMPAD2]          = KC_NUM2,
+		[VK_NUMPAD3]          = KC_NUM3,
+		[VK_NUMPAD4]          = KC_NUM4,
+		[VK_NUMPAD5]          = KC_NUM5,
+		[VK_NUMPAD6]          = KC_NUM6,
+		[VK_NUMPAD7]          = KC_NUM7,
+		[VK_NUMPAD8]          = KC_NUM8,
+		[VK_NUMPAD9]          = KC_NUM9,
+		[VK_NUMPAD0]          = KC_NUM0,
+		[VK_DECIMAL]          = KC_NUM_PERIOD,
 		//
 		[0xff] = 0,
 	};
 
 	static enum Key_Code const LUT_extended[] = {
-		// ASCII, control characters
-		[VK_RETURN] = KC_NUM_ENTER,
-		[VK_DIVIDE] = KC_NUM_DIV,
-		//
-		[VK_SNAPSHOT] = KC_PSCREEN,
-		[VK_CONTROL]  = KC_RCTRL,
-		[VK_MENU]     = KC_RALT,
-		[VK_DELETE]   = KC_DEL,
-		//
-		[VK_LEFT]   = KC_ARROW_LEFT,
-		[VK_RIGHT]  = KC_ARROW_RIGHT,
-		[VK_DOWN]   = KC_ARROW_DOWN,
-		[VK_UP]     = KC_ARROW_UP,
-		//
-		[VK_INSERT] = KC_INSERT,
-		[VK_PRIOR]  = KC_PAGE_UP,
-		[VK_NEXT]   = KC_PAGE_DOWN,
-		[VK_HOME]   = KC_HOME,
-		[VK_END]    = KC_END,
+		// near letters
+		[VK_DELETE]           = KC_DELETE,
+		// modificators
+		[VK_CONTROL]          = KC_RCTRL,
+		[VK_MENU]             = KC_RALT,
+		[VK_LWIN]             = KC_LGUI,
+		[VK_RWIN]             = KC_RGUI,
+		// navigation block
+		[VK_INSERT]           = KC_INSERT,
+		[VK_HOME]             = KC_HOME,
+		[VK_PRIOR]            = KC_PAGE_UP,
+		[VK_END]              = KC_END,
+		[VK_NEXT]             = KC_PAGE_DOWN,
+		// arrows
+		[VK_RIGHT]            = KC_ARROW_RIGHT,
+		[VK_LEFT]             = KC_ARROW_LEFT,
+		[VK_DOWN]             = KC_ARROW_DOWN,
+		[VK_UP]               = KC_PAGE_UP,
+		// numpad
+		[VK_DIVIDE]           = KC_NUM_SLASH,
+		[VK_RETURN]           = KC_NUM_ENTER,
 		//
 		[0xff] = 0,
 	};
@@ -578,8 +562,8 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 
 	bool const is_extended = (data->Flags & RI_KEY_E0) == RI_KEY_E0;
 
-	uint32_t const scan = (data->Flags & RI_KEY_E1)
-		? (uint32_t)MapVirtualKey(data->VKey, MAPVK_VK_TO_VSC)
+	enum Scan_Code const scan = (data->Flags & RI_KEY_E1)
+		? (enum Scan_Code)MapVirtualKey(data->VKey, MAPVK_VK_TO_VSC)
 		: data->MakeCode | (is_extended ? 0xe000 : 0x0000);
 
 	uint8_t const key = fix_virtual_key((uint8_t)data->VKey, scan);
@@ -704,11 +688,12 @@ static void handle_message_input_keyboard(struct Window * window, WPARAM wParam,
 	WORD const flags = HIWORD(lParam);
 	bool const is_extended = (flags & KF_EXTENDED) == KF_EXTENDED;
 
-	uint32_t const scan = (wParam == VK_PAUSE)
-		? (uint32_t)MapVirtualKey(wParam, MAPVK_VK_TO_VSC)
+	enum Scan_Code const scan = (wParam == VK_PAUSE)
+		? (enum Scan_Code)MapVirtualKey(wParam, MAPVK_VK_TO_VSC)
 		: LOBYTE(flags) | (is_extended ? 0xe000 : 0x0000);
 
 	uint8_t const key = fix_virtual_key((uint8_t)wParam, scan);
+	TRC("0x%x", key);
 	if (key == 0x00) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 	if (key == 0xff) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 

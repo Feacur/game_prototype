@@ -9,7 +9,7 @@
 
 void input_to_platform_reset(void);
 
-void input_to_platform_on_key(enum Key_Code key, uint32_t scan, bool is_down);
+void input_to_platform_on_key(enum Key_Code key, enum Scan_Code scan, bool is_down);
 void input_to_platform_on_codepoint(uint32_t codepoint);
 
 void input_to_platform_on_mouse_move(uint32_t x, uint32_t y);
