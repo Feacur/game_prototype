@@ -684,7 +684,7 @@ static void handle_message_input_keyboard(struct Window * window, WPARAM wParam,
 	bool const is_extended = (flags & KF_EXTENDED) == KF_EXTENDED;
 
 	enum Scan_Code const scan = (wParam == VK_PAUSE)
-		? (enum Scan_Code)MapVirtualKey(wParam, MAPVK_VK_TO_VSC)
+		? (enum Scan_Code)MapVirtualKey((UINT)wParam, MAPVK_VK_TO_VSC)
 		: LOBYTE(flags) | (is_extended ? 0xe000 : 0x0000);
 
 	uint8_t const key = fix_virtual_key((uint8_t)wParam, scan);

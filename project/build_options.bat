@@ -67,10 +67,11 @@ rem https://learn.microsoft.com/windows-server/administration/windows-commands/f
 rem https://learn.microsoft.com/windows-server/administration/windows-commands/setlocal
 
 set compiler=%compiler% -I".." -I"../third_party"
-set compiler=%compiler% -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX -DUNICODE -D_UNICODE
+set compiler=%compiler% -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX
+set compiler=%compiler% -DUNICODE -D_UNICODE
 
 set linker=%linker% -nologo -WX -incremental:no
-set linker=%linker% kernel32.lib user32.lib gdi32.lib
+set libs=%libs% kernel32.lib user32.lib gdi32.lib
 
 set project_folder=%cd%
 set source=%cd%/translation_units_%project%
@@ -101,12 +102,14 @@ if %arch_mode% == shared (
 	rem [linker] -entry:_DllMainCRTStartup
 ) else if %arch_mode% == console (
 	set output=%project%.exe
-	set linker=%linker% -machine:x64 -subsystem:console "temp/%project%.res"
+	set linker=%linker% -machine:x64 -subsystem:console
+	set libs=%libs% "temp/%project%.res"
 	set compiler=%compiler% -DGAME_ARCH_CONSOLE
 	rem [linker] -entry:mainCRTStartup
 ) else if %arch_mode% == windows (
 	set output=%project%.exe
-	set linker=%linker% -machine:x64 -subsystem:windows "temp/%project%.res"
+	set linker=%linker% -machine:x64 -subsystem:windows
+	set libs=%libs% "temp/%project%.res"
 	set compiler=%compiler% -DGAME_ARCH_WINDOWS
 	rem [linker] -entry:WinMainCRTStartup
 ) else (
@@ -123,15 +126,18 @@ if %configuration% == tiny (
 	set compiler=%compiler% -DGAME_TARGET_RELEASE
 	rem [linker] -opt:ref -opt:icf -opt:lbr
 ) else if %configuration% == tiny_dev (
-	set linker=%linker% -debug:full dbghelp.lib
+	set linker=%linker% -debug:full
+	set libs=%libs% dbghelp.lib
 	set compiler=%compiler% -DGAME_TARGET_DEVELOPMENT
 	rem [linker] -opt:noref -opt:noicf -opt:nolbr
 ) else if %configuration% == fast_dev (
-	set linker=%linker% -debug:full dbghelp.lib
+	set linker=%linker% -debug:full
+	set libs=%libs% dbghelp.lib
 	set compiler=%compiler% -DGAME_TARGET_DEVELOPMENT
 	rem [linker] -opt:noref -opt:noicf -opt:nolbr
 ) else if %configuration% == debug (
-	set linker=%linker% -debug:full dbghelp.lib
+	set linker=%linker% -debug:full
+	set libs=%libs% dbghelp.lib
 	set compiler=%compiler% -DGAME_TARGET_DEBUG
 	rem [linker] -opt:noref -opt:noicf -opt:nolbr
 ) else (

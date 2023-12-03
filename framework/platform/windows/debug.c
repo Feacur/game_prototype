@@ -79,24 +79,24 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 
 	DWORD64 symbol_offset = 0;
 	union {
-		SYMBOL_INFO header;
-		uint8_t payload[sizeof(SYMBOL_INFO) + 1024];
+		SYMBOL_INFOW header;
+		uint8_t payload[sizeof(SYMBOL_INFOW) + 1024];
 	} symbol;
-	symbol.header = (SYMBOL_INFO){
+	symbol.header = (SYMBOL_INFOW){
 		.SizeOfStruct  = sizeof(symbol.header),
 		.MaxNameLen = sizeof(symbol.payload) - sizeof(symbol.header),
 	};
 
 	DWORD source_offset = 0;
-	IMAGEHLP_LINE64 source = {.SizeOfStruct = sizeof(source)};
-	IMAGEHLP_MODULE64 module = {.SizeOfStruct = sizeof(module)};
+	IMAGEHLP_LINEW64 source = {.SizeOfStruct = sizeof(source)};
+	IMAGEHLP_MODULEW64 module = {.SizeOfStruct = sizeof(module)};
 
 	HANDLE const process = GetCurrentProcess();
 	for (uint32_t i = 0; i < FRAMES_MAX && callstack.data[i] > 0; i++) {
 		// fetch function, source file, and line
-		BOOL const valid_module = SymGetModuleInfo64(process, callstack.data[i], &module);
-		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], &symbol_offset, &symbol.header);
-		BOOL const valid_source = SymGetLineFromAddr64(process, callstack.data[i], &source_offset, &source) && (source.FileName != NULL);
+		BOOL const valid_module = SymGetModuleInfoW64(process, callstack.data[i], &module);
+		BOOL const valid_symbol = SymFromAddrW(process, callstack.data[i], &symbol_offset, &symbol.header);
+		BOOL const valid_source = SymGetLineFromAddrW64(process, callstack.data[i], &source_offset, &source) && (source.FileName != NULL);
 		if (!(valid_module || valid_symbol || valid_source)) { continue; }
 
 	#if defined(DBGHELP_TRANSLATE_TCHAR)

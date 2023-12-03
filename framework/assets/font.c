@@ -263,7 +263,7 @@ void font_render(struct Font * font) {
 		}
 
 		// verify estimated atlas dimensions
-		verify_dimensions:
+		verify_dimensions:; // zig cc
 		uint32_t line_height = 0;
 		struct uvec2 offset = {padding, padding};
 		for (uint32_t i = 0; i < symbols_count; i++) {

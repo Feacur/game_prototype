@@ -70,6 +70,25 @@
 			"word_wrap": false,
 		},
 		{
+			"name": "Build Zig",
+			// between "^start" and "end$" tokens:
+			// path:line:column: message
+			// ^(.+):(\d+):(\d+): (.+)$
+			"file_regex": "^(.+):(\\d+):(\\d+): (.+)$",
+			"working_dir": "${project_path:${folder}}/../project",
+			"windows": {
+				"cmd": [
+					"build_zig.bat",
+					"game",
+					"debug",
+					"static",
+					"console",
+					"unity",
+				],
+			},
+			"word_wrap": false,
+		},
+		{
 			"name": "Build MSVC",
 			// between "^start" and "end$" tokens:
 			// path(line[,][column]): message

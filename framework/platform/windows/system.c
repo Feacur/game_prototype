@@ -250,8 +250,13 @@ static void system_signal_handler(int value) {
 #endif
 
 #if !defined(DBG_UNABLE_TO_PROVIDE_HANDLE)
-	#define DBG_UNABLE_TO_PROVIDE_HANDLE (DWORD) 0x40010002L
+	#define DBG_UNABLE_TO_PROVIDE_HANDLE (DWORD)0x40010002L
 	// https://learn.microsoft.com/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
+#endif
+
+#if !defined(DBG_REPLY_LATER)
+	// zig cc
+	#define DBG_REPLY_LATER (DWORD)0x40010001L
 #endif
 
 static char const * system_vector_get_type(DWORD value) {

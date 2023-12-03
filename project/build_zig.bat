@@ -1,13 +1,7 @@
 @echo off
 chcp 65001 > nul
 setlocal enabledelayedexpansion
-echo.building with Clang...
-
-rem https://clang.llvm.org/docs/index.html
-rem https://clang.llvm.org/docs/CommandGuide/clang.html
-rem https://clang.llvm.org/docs/UsersManual.html
-rem https://clang.llvm.org/docs/ClangCommandLineReference.html
-rem https://lld.llvm.org/windows_support.html
+echo.building with Zig...
 
 rem |> OPTIONS
 call build_options.bat %* || ( goto :eof )
@@ -15,7 +9,11 @@ set compiler=%compiler% -std=c99
 set compiler=%compiler% -fno-exceptions -fno-rtti
 set compiler=%compiler% -Werror -Weverything
 
-set linker=%linker% -noimplib
+set compiler=%compiler% -target x86_64-windows
+set compiler=%compiler% -fno-sanitize=undefined
+set compiler=%compiler% -DWINVER=0x0A00
+
+set linker=-Wl,-implib=
 
 if %configuration% == tiny (
 	set compiler=%compiler% -Oz
@@ -31,14 +29,14 @@ if %configuration% == tiny (
 
 if %build_mode% == unity_link (
 	rem compile and link
-	set compiler=clang %compiler%
-	set linker=-Wl,%linker: =,%,%libs: =,%
-	set output=-o:"%output%"
+	set compiler=zig cc %compiler%
+	set linker=%libs% %linker%
+	set output=-o "%output%"
 ) else (
 	rem compile then link
-	set compiler=clang -c %compiler%
-	set linker=lld-link %linker% %libs%
-	set output=-out:"%output%"
+	set compiler=zig cc -c %compiler%
+	set linker=zig cc %libs% %linker%
+	set output=-o "%output%"
 )
 
 rem |> BUILD

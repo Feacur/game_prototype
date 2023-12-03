@@ -12,6 +12,8 @@ set compiler=%compiler% -std:c11 -options:strict
 set compiler=%compiler% -EHa- -GR-
 set compiler=%compiler% -WX -W4
 
+set linker=%linker% -noimplib -noexp
+
 if %configuration% == tiny (
 	set compiler=%compiler% -O1
 ) else if %configuration% == fast (
@@ -27,12 +29,12 @@ if %configuration% == tiny (
 if %build_mode% == unity_link (
 	rem compile and link
 	set compiler=cl %compiler%
-	set linker=-link %linker%
+	set linker=-link %linker% %libs%
 	set output=-Fe:"%output%"
 ) else (
 	rem compile then link
 	set compiler=cl -c %compiler%
-	set linker=link %linker%
+	set linker=link %linker% %libs%
 	set output=-out:"%output%"
 )
 
