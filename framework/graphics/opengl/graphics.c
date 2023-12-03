@@ -43,7 +43,7 @@ struct Gpu_Program {
 
 struct Gpu_Texture {
 	GLuint id;
-	uint32_t size_x, size_y;
+	struct uvec2 size;
 	struct Texture_Parameters parameters;
 	struct Texture_Settings settings;
 	// @idea: add an optional asset source
@@ -62,7 +62,7 @@ struct Gpu_Target_Buffer {
 
 struct Gpu_Target {
 	GLuint id;
-	uint32_t size_x, size_y;
+	struct uvec2 size;
 	struct Array textures; // `struct Gpu_Target_Texture`
 	struct Array buffers;  // `struct Gpu_Target_Buffer`
 	// @idea: add an optional asset source
@@ -353,21 +353,21 @@ static void gpu_texture_on_discard(struct Gpu_Texture * gpu_texture) {
 }
 
 static struct Handle gpu_texture_allocate(
-	uint32_t size_x, uint32_t size_y,
+	struct uvec2 size,
 	struct Texture_Parameters parameters,
 	struct Texture_Settings settings,
 	uint32_t max_lod
 ) {
-	if (size_x > gs_graphics_state.limits.max_texture_size) {
+	if (size.x > gs_graphics_state.limits.max_texture_size) {
 		WRN("requested size is too large");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
-		size_x = gs_graphics_state.limits.max_texture_size;
+		size.x = gs_graphics_state.limits.max_texture_size;
 	}
 
-	if (size_y > gs_graphics_state.limits.max_texture_size) {
+	if (size.y > gs_graphics_state.limits.max_texture_size) {
 		WRN("requested size is too large");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
-		size_y = gs_graphics_state.limits.max_texture_size;
+		size.y = gs_graphics_state.limits.max_texture_size;
 	}
 
 	GLenum const internalformat = gpu_sized_internal_format(parameters.texture_type, parameters.data_type);
@@ -375,30 +375,28 @@ static struct Handle gpu_texture_allocate(
 	GLenum const type = gpu_pixel_data_type(parameters.texture_type, parameters.data_type);
 
 	struct Gpu_Texture texture; gpu_texture_on_aquire(&texture);
-	texture.size_x     = size_x;
-	texture.size_y     = size_y;
+	texture.size       = size;
 	texture.parameters = parameters;
 	texture.settings   = settings;
 
 	// allocate buffer
 	if (parameters.flags & TEXTURE_FLAG_MUTABLE) {
-		uint32_t lod_size_x = size_x;
-		uint32_t lod_size_y = size_y;
+		struct uvec2 lod_size = size;
 		glBindTexture(GL_TEXTURE_2D, texture.id);
 		for (uint32_t lod = 0; lod <= max_lod; lod++) {
 			glTexImage2D(
 				GL_TEXTURE_2D, (GLint)lod, (GLint)internalformat,
-				(GLsizei)lod_size_x, (GLsizei)lod_size_y, 0,
+				(GLsizei)lod_size.x, (GLsizei)lod_size.y, 0,
 				format, type, NULL
 			);
-			lod_size_x = max_u32(1, lod_size_x / 2);
-			lod_size_y = max_u32(1, lod_size_y / 2);
+			lod_size.x = max_u32(1, lod_size.x / 2);
+			lod_size.y = max_u32(1, lod_size.y / 2);
 		}
 	}
-	else if (size_x > 0 && size_y > 0) {
+	else if (size.x > 0 && size.y > 0) {
 		glTextureStorage2D(
 			texture.id, (GLsizei)(max_lod + 1), internalformat,
-			(GLsizei)size_x, (GLsizei)size_y
+			(GLsizei)size.x, (GLsizei)size.y
 		);
 	}
 	else {
@@ -431,7 +429,7 @@ static void gpu_texture_upload(struct Handle handle, struct Image const * asset)
 	struct Gpu_Texture * gpu_texture = sparseset_get(&gs_graphics_state.textures, handle);
 	glTextureSubImage2D(
 		gpu_texture->id, 0,
-		0, 0, (GLsizei)asset->size_x, (GLsizei)asset->size_y,
+		0, 0, (GLsizei)asset->size.x, (GLsizei)asset->size.y,
 		gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.data_type),
 		gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
 		asset->data
@@ -443,7 +441,7 @@ static void gpu_texture_upload(struct Handle handle, struct Image const * asset)
 
 struct Handle gpu_texture_init(struct Image const * asset) {
 	struct Handle const handle = gpu_texture_allocate(
-		asset->size_x, asset->size_y, asset->parameters, asset->settings, asset->settings.max_lod
+		asset->size, asset->parameters, asset->settings, asset->settings.max_lod
 	);
 
 	if (!(asset->parameters.flags & TEXTURE_FLAG_WRITE) && asset->data != NULL) {
@@ -475,16 +473,11 @@ void gpu_texture_free(struct Handle handle) {
 	});
 }
 
-void gpu_texture_get_size(struct Handle handle, uint32_t * x, uint32_t * y) {
+struct uvec2 gpu_texture_get_size(struct Handle handle) {
 	struct Gpu_Texture const * gpu_texture = sparseset_get(&gs_graphics_state.textures, handle);
-	if (gpu_texture != NULL) {
-		*x = gpu_texture->size_x;
-		*y = gpu_texture->size_y;
-	}
-	else {
-		*x = 0;
-		*y = 0;
-	}
+	return (gpu_texture != NULL)
+		? gpu_texture->size
+		: (struct uvec2){0};
 }
 
 void gpu_texture_update(struct Handle handle, struct Image const * asset) {
@@ -500,22 +493,22 @@ void gpu_texture_update(struct Handle handle, struct Image const * asset) {
 	// @todo: compare texture and asset parameters?
 
 	if (asset->data == NULL) { return; }
-	if (asset->size_x == 0) { return; }
-	if (asset->size_y == 0) { return; }
+	if (asset->size.x == 0) { return; }
+	if (asset->size.y == 0) { return; }
 
 	GLint const level = 0;
-	if (gpu_texture->size_x >= asset->size_x && gpu_texture->size_y >= asset->size_y) {
+	if (gpu_texture->size.x >= asset->size.x && gpu_texture->size.y >= asset->size.y) {
 		gpu_texture_upload(handle, asset);
 	}
 	else if (gpu_texture->parameters.flags & TEXTURE_FLAG_MUTABLE) {
 		// WRN("reallocating a buffer");
-		gpu_texture->size_x = asset->size_x;
-		gpu_texture->size_y = asset->size_y;
+		gpu_texture->size.x = asset->size.x;
+		gpu_texture->size.y = asset->size.y;
 		glBindTexture(GL_TEXTURE_2D, gpu_texture->id);
 		glTexImage2D(
 			GL_TEXTURE_2D, level,
 			(GLint)gpu_sized_internal_format(gpu_texture->parameters.texture_type, gpu_texture->parameters.data_type),
-			(GLsizei)asset->size_x, (GLsizei)asset->size_y, 0,
+			(GLsizei)asset->size.x, (GLsizei)asset->size.y, 0,
 			gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.data_type),
 			gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
 			asset->data
@@ -558,13 +551,12 @@ static void gpu_target_on_discard(struct Gpu_Target * gpu_target) {
 }
 
 struct Handle gpu_target_init(
-	uint32_t size_x, uint32_t size_y,
+	struct uvec2 size,
 	uint32_t parameters_count,
 	struct Texture_Parameters const * parameters
 ) {
 	struct Gpu_Target target; gpu_target_on_aquire(&target);
-	target.size_x = size_x;
-	target.size_y = size_y;
+	target.size = size;
 
 	// allocate exact space for the buffers
 	uint32_t textures_count = 0;
@@ -583,7 +575,7 @@ struct Handle gpu_target_init(
 		bool const is_color = (parameters[i].texture_type == TEXTURE_TYPE_COLOR);
 		if (parameters[i].flags & TEXTURE_FLAG_READ) {
 			// @idea: expose settings
-			struct Handle const handle = gpu_texture_allocate(size_x, size_y, parameters[i], (struct Texture_Settings){
+			struct Handle const handle = gpu_texture_allocate(size, parameters[i], (struct Texture_Settings){
 				.wrap_x = WRAP_MODE_EDGE,
 				.wrap_y = WRAP_MODE_EDGE,
 			}, 0);
@@ -598,7 +590,7 @@ struct Handle gpu_target_init(
 			glNamedRenderbufferStorage(
 				buffer_id,
 				gpu_sized_internal_format(parameters[i].texture_type, parameters[i].data_type),
-				(GLsizei)size_x, (GLsizei)size_y
+				(GLsizei)size.x, (GLsizei)size.y
 			);
 			array_push_many(&target.buffers, 1, &(struct Gpu_Target_Buffer){
 				.id = buffer_id,
@@ -661,12 +653,11 @@ void gpu_target_free(struct Handle handle) {
 	});
 }
 
-void gpu_target_get_size(struct Handle handle, uint32_t * x, uint32_t * y) {
+struct uvec2 gpu_target_get_size(struct Handle handle) {
 	struct Gpu_Target const * gpu_target = sparseset_get(&gs_graphics_state.targets, handle);
-	if (gpu_target != NULL) {
-		*x = gpu_target->size_x;
-		*y = gpu_target->size_y;
-	}
+	return (gpu_target != NULL)
+		? gpu_target->size
+		: (struct uvec2){0};
 }
 
 struct Handle gpu_target_get_texture_handle(struct Handle handle, enum Texture_Type type, uint32_t index) {
@@ -1114,12 +1105,12 @@ inline static void gpu_execute_cull(struct GPU_Command_Cull const * command) {
 inline static void gpu_execute_target(struct GPU_Command_Target const * command) {
 	gpu_select_target(command->handle);
 
-	uint32_t viewport_size_x = command->screen_size_x, viewport_size_y = command->screen_size_y;
+	struct uvec2 viewport_size = command->screen_size;
 	if (!handle_is_null(command->handle)) {
-		gpu_target_get_size(command->handle, &viewport_size_x, &viewport_size_y);
+		viewport_size = gpu_target_get_size(command->handle);
 	}
 
-	glViewport(0, 0, (GLsizei)viewport_size_x, (GLsizei)viewport_size_y);
+	glViewport(0, 0, (GLsizei)viewport_size.x, (GLsizei)viewport_size.y);
 }
 
 inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {

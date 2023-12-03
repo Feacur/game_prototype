@@ -13,7 +13,7 @@
 
 void transform_rect_get_pivot_and_rect(
 	struct Transform_Rect const * transform_rect,
-	uint32_t parent_size_x, uint32_t parent_size_y,
+	struct uvec2 parent_size,
 	struct vec2 * out_pivot, struct rect * out_rect
 ) {
 	struct vec2 const offset_min = {
@@ -26,12 +26,12 @@ void transform_rect_get_pivot_and_rect(
 	};
 
 	struct vec2 const min = {
-		transform_rect->anchor_min.x * (float)parent_size_x + offset_min.x,
-		transform_rect->anchor_min.y * (float)parent_size_y + offset_min.y,
+		transform_rect->anchor_min.x * (float)parent_size.x + offset_min.x,
+		transform_rect->anchor_min.y * (float)parent_size.y + offset_min.y,
 	};
 	struct vec2 const max = {
-		transform_rect->anchor_max.x * (float)parent_size_x + offset_max.x,
-		transform_rect->anchor_max.y * (float)parent_size_y + offset_max.y,
+		transform_rect->anchor_max.x * (float)parent_size.x + offset_max.x,
+		transform_rect->anchor_max.y * (float)parent_size.y + offset_max.y,
 	};
 
 	*out_pivot = (struct vec2){

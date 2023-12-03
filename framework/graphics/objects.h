@@ -4,6 +4,7 @@
 // interface from `graphics.c` to anywhere
 // - gpu objects initialization and manipulation
 
+#include "framework/maths_types.h"
 #include "framework/graphics/types.h"
 
 // @note: texture coordinates
@@ -35,7 +36,7 @@ struct Hashmap const * gpu_program_get_uniforms(struct Handle handle);
 struct Handle gpu_texture_init(struct Image const * asset);
 void gpu_texture_free(struct Handle handle);
 
-void gpu_texture_get_size(struct Handle handle, uint32_t * x, uint32_t * y);
+struct uvec2 gpu_texture_get_size(struct Handle handle);
 
 void gpu_texture_update(struct Handle handle, struct Image const * asset);
 
@@ -44,13 +45,13 @@ void gpu_texture_update(struct Handle handle, struct Image const * asset);
 // ----- ----- ----- ----- -----
 
 struct Handle gpu_target_init(
-	uint32_t size_x, uint32_t size_y,
+	struct uvec2 size,
 	uint32_t parameters_count,
 	struct Texture_Parameters const * parameters
 );
 void gpu_target_free(struct Handle handle);
 
-void gpu_target_get_size(struct Handle handle, uint32_t * x, uint32_t * y);
+struct uvec2 gpu_target_get_size(struct Handle handle);
 struct Handle gpu_target_get_texture_handle(struct Handle handle, enum Texture_Type type, uint32_t index);
 
 // ----- ----- ----- ----- -----

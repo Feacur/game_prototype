@@ -36,7 +36,7 @@ void camera_free(struct Camera * camera);
 
 struct mat4 camera_get_projection(
 	struct Camera_Params const * params,
-	uint32_t viewport_size_x, uint32_t viewport_size_y
+	struct uvec2 viewport_size
 );
 
 #endif

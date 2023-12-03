@@ -16,7 +16,7 @@ void camera_free(struct Camera * camera) {
 
 struct mat4 camera_get_projection(
 	struct Camera_Params const * params,
-	uint32_t viewport_size_x, uint32_t viewport_size_y
+	struct uvec2 viewport_size
 ) {
 	switch (params->mode) {
 		case CAMERA_MODE_NONE:
@@ -24,21 +24,21 @@ struct mat4 camera_get_projection(
 
 		case CAMERA_MODE_SCREEN:
 			return graphics_projection_mat4(
-				(struct vec2){2 / (float)viewport_size_x, 2 / (float)viewport_size_y},
+				(struct vec2){2 / (float)viewport_size.x, 2 / (float)viewport_size.y},
 				(struct vec2){-1, -1},
 				params->ncp, params->fcp, params->ortho
 			);
 
 		case CAMERA_MODE_ASPECT_X:
 			return graphics_projection_mat4(
-				(struct vec2){1, (float)viewport_size_x / (float)viewport_size_y},
+				(struct vec2){1, (float)viewport_size.x / (float)viewport_size.y},
 				(struct vec2){0, 0},
 				params->ncp, params->fcp, params->ortho
 			);
 
 		case CAMERA_MODE_ASPECT_Y:
 			return graphics_projection_mat4(
-				(struct vec2){(float)viewport_size_y / (float)viewport_size_x, 1},
+				(struct vec2){(float)viewport_size.y / (float)viewport_size.x, 1},
 				(struct vec2){0, 0},
 				params->ncp, params->fcp, params->ortho
 			);

@@ -32,15 +32,12 @@ void entity_free(struct Entity * entity) {
 
 struct uvec2 entity_get_content_size(
 	struct Entity const * entity, struct Handle material_handle,
-	uint32_t parent_size_x, uint32_t parent_size_y
+	struct uvec2 parent_size
 ) {
 	switch (entity->type) {
 		case ENTITY_TYPE_NONE: return (struct uvec2){0, 0};
 
-		case ENTITY_TYPE_MESH: return (struct uvec2){
-			parent_size_x,
-			parent_size_y
-		};
+		case ENTITY_TYPE_MESH: return parent_size;
 
 		case ENTITY_TYPE_QUAD_2D: {
 			struct Entity_Quad const * e_quad = &entity->as.quad;
@@ -51,24 +48,23 @@ struct uvec2 entity_get_content_size(
 			if (field.data == NULL) { return (struct uvec2){0, 0}; }
 			struct Handle const gpu_texture_handle = *(struct Handle *)field.data;
 
-			uint32_t texture_size_x, texture_size_y;
-			gpu_texture_get_size(gpu_texture_handle, &texture_size_x, &texture_size_y);
+			struct uvec2 const texture_size = gpu_texture_get_size(gpu_texture_handle);
 
 			return (struct uvec2){
-				(uint32_t)r32_floor((float)texture_size_x * clamp_r32(e_quad->view.max.x - e_quad->view.min.x, 0, 1)),
-				(uint32_t)r32_floor((float)texture_size_y * clamp_r32(e_quad->view.max.y - e_quad->view.min.y, 0, 1)),
+				(uint32_t)r32_floor((float)texture_size.x * clamp_r32(e_quad->view.max.x - e_quad->view.min.x, 0, 1)),
+				(uint32_t)r32_floor((float)texture_size.y * clamp_r32(e_quad->view.max.y - e_quad->view.min.y, 0, 1)),
 			};
 		} // break;
 
 		case ENTITY_TYPE_TEXT_2D: {
 			struct srect const rect = {
 				.min = {
-					(int32_t)r32_floor((float)parent_size_x * entity->rect.anchor_min.x + entity->rect.extents.x),
-					(int32_t)r32_floor((float)parent_size_y * entity->rect.anchor_min.y + entity->rect.extents.y),
+					(int32_t)r32_floor((float)parent_size.x * entity->rect.anchor_min.x + entity->rect.extents.x),
+					(int32_t)r32_floor((float)parent_size.y * entity->rect.anchor_min.y + entity->rect.extents.y),
 				},
 				.max = {
-					(int32_t)r32_ceil ((float)parent_size_x * entity->rect.anchor_max.x + entity->rect.extents.x),
-					(int32_t)r32_ceil ((float)parent_size_y * entity->rect.anchor_max.y + entity->rect.extents.y),
+					(int32_t)r32_ceil ((float)parent_size.x * entity->rect.anchor_max.x + entity->rect.extents.x),
+					(int32_t)r32_ceil ((float)parent_size.y * entity->rect.anchor_max.y + entity->rect.extents.y),
 				},
 			};
 			return (struct uvec2){

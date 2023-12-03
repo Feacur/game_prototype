@@ -1,6 +1,5 @@
 {
-	"size_x": 320,
-	"size_y": 180,
+	"size": [320, 180],
 	"buffers": [
 		{
 			"type": "color_rgba8_unorm",

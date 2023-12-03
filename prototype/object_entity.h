@@ -67,7 +67,7 @@ void entity_free(struct Entity * entity);
 
 struct uvec2 entity_get_content_size(
 	struct Entity const * entity, struct Handle material_handle,
-	uint32_t parent_size_x, uint32_t parent_size_y
+	struct uvec2 parent_size
 );
 
 #endif

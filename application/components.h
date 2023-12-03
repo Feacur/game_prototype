@@ -27,7 +27,7 @@ struct Transform_Rect {
 
 void transform_rect_get_pivot_and_rect(
 	struct Transform_Rect const * transform_rect,
-	uint32_t viewport_size_x, uint32_t viewport_size_y,
+	struct uvec2 parent_size,
 	struct vec2 * out_pivot, struct rect * out_rect
 );
 

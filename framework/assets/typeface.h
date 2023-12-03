@@ -1,6 +1,8 @@
 #if !defined(FRAMEWORK_ASSETS_TYPEFACE)
 #define FRAMEWORK_ASSETS_TYPEFACE
 
+#include "framework/maths_types.h"
+
 #include "glyph_params.h"
 
 // @note: `typeface_init` takes memory ownership of the buffer
@@ -18,8 +20,8 @@ void typeface_render_glyph(
 	struct Typeface const * typeface,
 	uint32_t glyph_id, float scale,
 	uint8_t * buffer, uint32_t buffer_width,
-	uint32_t glyph_size_x, uint32_t glyph_size_y,
-	uint32_t offset_x, uint32_t offset_y
+	struct uvec2 glyph_size,
+	struct uvec2 offset
 );
 
 float typeface_get_scale(struct Typeface const * typeface, float size);

@@ -64,13 +64,12 @@ static void ui_internal_push_tint(void) {
 }
 
 void ui_start_frame(void) {
-	struct uvec2 const screen_size = application_get_screen_size();
 	gs_ui.camera = camera_get_projection(
 		&(struct Camera_Params){
 			.mode = CAMERA_MODE_SCREEN,
 			.ncp = 0, .fcp = 1, .ortho = 1,
 		},
-		screen_size.x, screen_size.y
+		application_get_screen_size()
 	);
 }
 
@@ -81,8 +80,7 @@ void ui_end_frame(void) {
 void ui_set_transform(struct Transform_Rect transform_rect) {
 	struct uvec2 const screen_size = application_get_screen_size();
 	transform_rect_get_pivot_and_rect(
-		&transform_rect,
-		screen_size.x, screen_size.y,
+		&transform_rect, screen_size,
 		&gs_ui.pivot, &gs_ui.rect
 	);
 

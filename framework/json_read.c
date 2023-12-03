@@ -235,10 +235,10 @@ struct Handle json_read_target(struct JSON const * json) {
 
 	struct Handle result = (struct Handle){0};
 	if (parameters_buffer.count > 0) {
-		uint32_t const size_x = (uint32_t)json_get_number(json, S_("size_x"));
-		uint32_t const size_y = (uint32_t)json_get_number(json, S_("size_y"));
-		if (size_x > 0 && size_y > 0) {
-			result = gpu_target_init(size_x, size_y, parameters_buffer.count, parameters_buffer.data);
+		struct uvec2 size = {0};
+		json_read_many_u32(json_get(json, S_("size")), 2, &size.x);
+		if (size.x > 0 && size.y > 0) {
+			result = gpu_target_init(size, parameters_buffer.count, parameters_buffer.data);
 		}
 	}
 

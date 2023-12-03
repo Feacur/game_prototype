@@ -1,6 +1,8 @@
 #if !defined(FRAMEWORK_PLATFORM_WINDOW)
 #define FRAMEWORK_PLATFORM_WINDOW
 
+#include "framework/maths_types.h"
+
 #include "window_callbacks.h"
 
 struct Window;
@@ -13,7 +15,7 @@ enum Window_Settings {
 };
 
 struct Window_Config {
-	uint32_t size_x, size_y;
+	struct uvec2 size;
 	enum Window_Settings settings;
 };
 
@@ -29,7 +31,7 @@ void platform_window_end_frame(struct Window * window);
 
 void * platform_window_get_cached_device(struct Window * window);
 
-void platform_window_get_size(struct Window const * window, uint32_t * size_x, uint32_t * size_y);
+struct uvec2 platform_window_get_size(struct Window const * window);
 uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value);
 void platform_window_toggle_borderless_fullscreen(struct Window * window);
 

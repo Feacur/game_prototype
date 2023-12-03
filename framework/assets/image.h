@@ -2,6 +2,7 @@
 #define FRAMEWORK_ASSETS_IMAGE
 
 #include "framework/common.h"
+#include "framework/maths_types.h"
 #include "framework/graphics/types.h"
 
 struct Buffer;
@@ -13,7 +14,8 @@ struct Buffer;
 // |0,0       |
 // +----------+
 struct Image {
-	uint32_t capacity, size_x, size_y;
+	uint32_t capacity;
+	struct uvec2 size;
 	void * data;
 	struct Texture_Parameters parameters;
 	struct Texture_Settings settings;
@@ -22,6 +24,6 @@ struct Image {
 struct Image image_init(struct Texture_Settings settings, struct Buffer const * buffer);
 void image_free(struct Image * image);
 
-void image_ensure(struct Image * image, uint32_t size_x, uint32_t size_y);
+void image_ensure(struct Image * image, struct uvec2 size);
 
 #endif

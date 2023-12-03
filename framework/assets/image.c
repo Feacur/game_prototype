@@ -28,8 +28,7 @@ struct Image image_init(struct Texture_Settings settings, struct Buffer const * 
 
 	return (struct Image){
 		.capacity = (uint32_t)(size_x * size_y),
-		.size_x = (uint32_t)size_x,
-		.size_y = (uint32_t)size_y,
+		.size = (struct uvec2){(uint32_t)size_x, (uint32_t)size_y},
 		.data = image_bytes,
 		.parameters = {
 			.texture_type = TEXTURE_TYPE_COLOR,
@@ -44,14 +43,13 @@ void image_free(struct Image * image) {
 	common_memset(image, 0, sizeof(*image));
 }
 
-void image_ensure(struct Image * image, uint32_t size_x, uint32_t size_y) {
+void image_ensure(struct Image * image, struct uvec2 size) {
 	uint32_t const channels = data_type_get_count(image->parameters.data_type);
 	uint32_t const data_size = data_type_get_size(image->parameters.data_type);
-	uint32_t const target_capacity = size_x * size_y * channels;
+	uint32_t const target_capacity = size.x * size.y * channels;
 	if (image->capacity < target_capacity) {
-		image->data = MEMORY_REALLOCATE_SIZE(image->data, size_x * size_y * data_size);
+		image->data = MEMORY_REALLOCATE_SIZE(image->data, size.x * size.y * data_size);
 		image->capacity = target_capacity;
 	}
-	image->size_x = size_x;
-	image->size_y = size_y;
+	image->size = size;
 }

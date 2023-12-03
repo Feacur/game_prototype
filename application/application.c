@@ -56,8 +56,7 @@ static void application_init(void) {
 
 	// setup window
 	struct Window_Config window_config = {
-		.size_x = gs_app.config.size.x,
-		.size_y = gs_app.config.size.y,
+		.size = gs_app.config.size,
 		.settings = WINDOW_SETTINGS_MINIMIZE,
 	};
 	if (gs_app.config.resizable) { window_config.settings |= WINDOW_SETTINGS_RESIZABLE; }
@@ -196,9 +195,7 @@ void application_exit(void) {
 }
 
 struct uvec2 application_get_screen_size(void) {
-	struct uvec2 result;
-	platform_window_get_size(gs_app.window, &result.x, &result.y);
-	return result;
+	return platform_window_get_size(gs_app.window);
 }
 
 double application_get_delta_time(void) {

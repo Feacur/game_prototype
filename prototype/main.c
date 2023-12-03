@@ -52,7 +52,7 @@ static void prototype_tick_cameras(void) {
 		struct Camera * camera = it.value;
 		camera->cached_size = screen_size;
 		if (!handle_is_null(camera->gpu_target)) {
-			gpu_target_get_size(camera->gpu_target, &camera->cached_size.x, &camera->cached_size.y);
+			camera->cached_size = gpu_target_get_size(camera->gpu_target);
 		}
 	}
 }
@@ -69,8 +69,7 @@ static void prototype_tick_entities_rect(void) {
 
 		struct vec2 entity_pivot;
 		transform_rect_get_pivot_and_rect(
-			&entity->rect,
-			viewport_size.x, viewport_size.y,
+			&entity->rect, viewport_size,
 			&entity_pivot, &entity->cached_rect
 		);
 		entity->transform.position.x = entity_pivot.x;
@@ -119,7 +118,7 @@ static void prototype_tick_entities_quad_2d(void) {
 		struct uvec2 const viewport_size = camera->cached_size;
 
 		struct Asset_Material const * material = asset_system_get(entity->ah_material);
-		struct uvec2 const content_size = entity_get_content_size(entity, material->ms_handle, viewport_size.x, viewport_size.y);
+		struct uvec2 const content_size = entity_get_content_size(entity, material->ms_handle, viewport_size);
 		if (content_size.x == 0 || content_size.y == 0) { break; }
 
 		switch (e_quad->mode) {
@@ -194,8 +193,7 @@ static void prototype_draw_objects(void) {
 			{
 				.type = GPU_COMMAND_TYPE_TARGET,
 				.as.target = {
-					.screen_size_x = screen_size.x,
-					.screen_size_y = screen_size.y,
+					.screen_size = screen_size,
 				},
 			},
 			{
@@ -219,7 +217,7 @@ static void prototype_draw_objects(void) {
 		struct Camera const * camera = it_camera.value;
 		struct uvec2 const u_ViewportSize = camera->cached_size;
 
-		struct mat4 const u_Projection = camera_get_projection(&camera->params, u_ViewportSize.x, u_ViewportSize.y);
+		struct mat4 const u_Projection = camera_get_projection(&camera->params, u_ViewportSize);
 		struct mat4 const u_View = mat4_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
 		struct mat4 const u_ProjectionView = mat4_mul_mat(u_Projection, u_View);
 
@@ -247,8 +245,7 @@ static void prototype_draw_objects(void) {
 			array_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_TARGET,
 				.as.target = {
-					.screen_size_x = screen_size.x,
-					.screen_size_y = screen_size.y,
+					.screen_size = screen_size,
 					.handle = camera->gpu_target,
 				},
 			});
@@ -468,10 +465,7 @@ static void main_fill_config(struct JSON const * json, void * data) {
 
 	if (json->type == JSON_ERROR) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
-	result->size = (struct uvec2){
-		.x = (uint32_t)json_get_number(json, S_("size_x")),
-		.y = (uint32_t)json_get_number(json, S_("size_y")),
-	};
+	json_read_many_u32(json_get(json, S_("size")), 2, &result->size.x);
 	result->resizable = json_get_boolean(json, S_("resizable"));
 	result->vsync               = (int32_t)json_get_number(json, S_("vsync"));
 	result->target_refresh_rate = (uint32_t)json_get_number(json, S_("target_refresh_rate"));

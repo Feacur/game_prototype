@@ -234,76 +234,79 @@ void font_render(struct Font * font) {
 		for (uint32_t i = 0; i < symbols_count; i++) {
 			struct Typeface_Symbol const * symbol = symbols_to_render + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
-			uint32_t const glyph_size_x = (uint32_t)(params->rect.max.x - params->rect.min.x);
-			uint32_t const glyph_size_y = (uint32_t)(params->rect.max.y - params->rect.min.y);
-			minimum_area += (glyph_size_x + padding) * (glyph_size_y + padding);
+			struct uvec2 const glyph_size = {
+				(uint32_t)(params->rect.max.x - params->rect.min.x),
+				(uint32_t)(params->rect.max.y - params->rect.min.y),
+			};
+			minimum_area += (glyph_size.x + padding) * (glyph_size.y + padding);
 		}
 
 		// estimate required atlas dimesions
-		uint32_t atlas_size_x;
-		uint32_t atlas_size_y;
-		if (font->buffer.size_x == 0 || font->buffer.size_y == 0) {
-			atlas_size_x = (uint32_t)r32_sqrt((float)minimum_area);
-			atlas_size_x = po2_next_u32(atlas_size_x);
+		struct uvec2 atlas_size;
+		if (font->buffer.size.x == 0 || font->buffer.size.y == 0) {
+			atlas_size.x = (uint32_t)r32_sqrt((float)minimum_area);
+			atlas_size.x = po2_next_u32(atlas_size.x);
 
-			atlas_size_y = atlas_size_x;
-			if (atlas_size_x * (atlas_size_y / 2) > minimum_area) {
-				atlas_size_y = atlas_size_y / 2;
+			atlas_size.y = atlas_size.x;
+			if (atlas_size.x * (atlas_size.y / 2) > minimum_area) {
+				atlas_size.y = atlas_size.y / 2;
 			}
 		}
 		else {
-			atlas_size_y = font->buffer.size_y;
+			atlas_size.y = font->buffer.size.y;
 
-			atlas_size_x = minimum_area / atlas_size_y;
-			atlas_size_x = po2_next_u32(atlas_size_y);
-			if (atlas_size_x < font->buffer.size_x) {
-				atlas_size_x = font->buffer.size_x;
+			atlas_size.x = minimum_area / atlas_size.y;
+			atlas_size.x = po2_next_u32(atlas_size.y);
+			if (atlas_size.x < font->buffer.size.x) {
+				atlas_size.x = font->buffer.size.x;
 			}
 		}
 
 		// verify estimated atlas dimensions
 		verify_dimensions:
 		uint32_t line_height = 0;
-		uint32_t offset_x = padding, offset_y = padding;
+		struct uvec2 offset = {padding, padding};
 		for (uint32_t i = 0; i < symbols_count; i++) {
 
 			struct Typeface_Symbol const * symbol = symbols_to_render + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
 
-			uint32_t const glyph_size_x = (uint32_t)(params->rect.max.x - params->rect.min.x);
-			uint32_t const glyph_size_y = (uint32_t)(params->rect.max.y - params->rect.min.y);
+			struct uvec2 const glyph_size = {
+				(uint32_t)(params->rect.max.x - params->rect.min.x),
+				(uint32_t)(params->rect.max.y - params->rect.min.y),
+			};
 
-			if (line_height == 0) { line_height = glyph_size_y; }
+			if (line_height == 0) { line_height = glyph_size.y; }
 
-			if (offset_x + glyph_size_x + padding > atlas_size_x) {
-				offset_x = padding;
-				offset_y += line_height + padding;
-				line_height = glyph_size_y;
+			if (offset.x + glyph_size.x + padding > atlas_size.x) {
+				offset.x = padding;
+				offset.y += line_height + padding;
+				line_height = glyph_size.y;
 			}
 
-			if (offset_y + line_height + padding > atlas_size_y) {
-				if (atlas_size_x > atlas_size_y) {
-					atlas_size_y = atlas_size_y * 2;
+			if (offset.y + line_height + padding > atlas_size.y) {
+				if (atlas_size.x > atlas_size.y) {
+					atlas_size.y = atlas_size.y * 2;
 				}
 				else {
 					// @note: change of width requires reevaluation from scratch
-					atlas_size_x = atlas_size_x * 2;
+					atlas_size.x = atlas_size.x * 2;
 					goto verify_dimensions;
 				}
 			}
 
-			offset_x += glyph_size_x + padding;
+			offset.x += glyph_size.x + padding;
 		}
 
-		image_ensure(&font->buffer, atlas_size_x, atlas_size_y);
+		image_ensure(&font->buffer, atlas_size);
 	}
 
 	// render glyphs into the atlas, assuming they shall fit
 	uint32_t const buffer_data_size = data_type_get_size(font->buffer.parameters.data_type);
-	common_memset(font->buffer.data, 0, font->buffer.size_x * font->buffer.size_y * buffer_data_size);
+	common_memset(font->buffer.data, 0, font->buffer.size.x * font->buffer.size.y * buffer_data_size);
 	{
 		uint32_t line_height = 0;
-		uint32_t offset_x = padding, offset_y = padding;
+		struct uvec2 offset = {padding, padding};
 		for (uint32_t i = 0; i < symbols_count; i++) {
 			struct Typeface_Symbol const * symbol = symbols_to_render + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
@@ -311,22 +314,24 @@ void font_render(struct Font * font) {
 			struct Typeface const * typeface = font_get_typeface(font, symbol->key.codepoint);
 			if (typeface == NULL) { continue; }
 
-			uint32_t const glyph_size_x = (uint32_t)(params->rect.max.x - params->rect.min.x);
-			uint32_t const glyph_size_y = (uint32_t)(params->rect.max.y - params->rect.min.y);
+			struct uvec2 const glyph_size = {
+				(uint32_t)(params->rect.max.x - params->rect.min.x),
+				(uint32_t)(params->rect.max.y - params->rect.min.y),
+			};
 
-			if (line_height == 0) { line_height = glyph_size_y; }
+			if (line_height == 0) { line_height = glyph_size.y; }
 
-			if (offset_x + glyph_size_x + padding > font->buffer.size_x) {
-				offset_x = padding;
-				offset_y += line_height + padding;
-				line_height = glyph_size_y;
+			if (offset.x + glyph_size.x + padding > font->buffer.size.x) {
+				offset.x = padding;
+				offset.y += line_height + padding;
+				line_height = glyph_size.y;
 			}
 
-			if (font->buffer.size_x < offset_x + glyph_size_x - 1) {
+			if (font->buffer.size.x < offset.x + glyph_size.x - 1) {
 				WRN("can't fit a glyph into the buffer");
 				REPORT_CALLSTACK(); DEBUG_BREAK(); continue;
 			}
-			if (font->buffer.size_y < offset_y + glyph_size_y - 1) {
+			if (font->buffer.size.y < offset.y + glyph_size.y - 1) {
 				WRN("can't fit a glyph into the buffer");
 				REPORT_CALLSTACK(); DEBUG_BREAK(); continue;
 			}
@@ -335,24 +340,23 @@ void font_render(struct Font * font) {
 			struct Glyph * glyph = symbol->glyph;
 			glyph->uv = (struct rect){
 				.min = {
-					(float)(offset_x)                / (float)font->buffer.size_x,
-					(float)(offset_y)                / (float)font->buffer.size_y,
+					(float)(offset.x)                / (float)font->buffer.size.x,
+					(float)(offset.y)                / (float)font->buffer.size.y,
 				},
 				.max = {
-					(float)(offset_x + glyph_size_x) / (float)font->buffer.size_x,
-					(float)(offset_y + glyph_size_y) / (float)font->buffer.size_y,
+					(float)(offset.x + glyph_size.x) / (float)font->buffer.size.x,
+					(float)(offset.y + glyph_size.y) / (float)font->buffer.size.y,
 				},
 			};
 
 			typeface_render_glyph(
 				typeface,
 				glyph->id, typeface_get_scale(typeface, symbol->key.size),
-				font->buffer.data, font->buffer.size_x,
-				glyph_size_x, glyph_size_y,
-				offset_x, offset_y
+				font->buffer.data, font->buffer.size.x,
+				glyph_size, offset
 			);
 
-			offset_x += glyph_size_x + padding;
+			offset.x += glyph_size.x + padding;
 		}
 	}
 

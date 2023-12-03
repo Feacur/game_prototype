@@ -27,7 +27,7 @@ struct GPU_Command_Cull {
 };
 
 struct GPU_Command_Target {
-	uint32_t screen_size_x, screen_size_y;
+	struct uvec2 screen_size;
 	struct Handle handle;
 };
 

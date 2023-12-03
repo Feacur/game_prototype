@@ -61,7 +61,7 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 		target_style |= WS_SYSMENU;
 	}
 
-	RECT target_rect = {.right = (LONG)config.size_x, .bottom = (LONG)config.size_y};
+	RECT target_rect = {.right = (LONG)config.size.x, .bottom = (LONG)config.size.y};
 	AdjustWindowRectExForDpi(
 		&target_rect, target_style, FALSE, target_ex_style,
 		GetDpiForSystem()
@@ -160,10 +160,12 @@ void * platform_window_get_cached_device(struct Window * window) {
 	return window->frame_cached_device;
 }
 
-void platform_window_get_size(struct Window const * window, uint32_t * size_x, uint32_t * size_y) {
+struct uvec2 platform_window_get_size(struct Window const * window) {
 	RECT client_rect; GetClientRect(window->handle, &client_rect);
-	*size_x = (uint32_t)(client_rect.right - client_rect.left);
-	*size_y = (uint32_t)(client_rect.bottom - client_rect.top);
+	return (struct uvec2){
+		(uint32_t)(client_rect.right - client_rect.left),
+		(uint32_t)(client_rect.bottom - client_rect.top),
+	};
 }
 
 uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value) {
@@ -584,8 +586,7 @@ static void handle_input_keyboard_raw(struct Window * window, RAWKEYBOARD * data
 static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 	if (!window->raw_input) { return; }
 
-	uint32_t size_x, size_y;
-	platform_window_get_size(window, &size_x, &size_y);
+	struct uvec2 const size = platform_window_get_size(window);
 
 	bool const is_virtual_desktop = (data->usFlags & MOUSE_VIRTUAL_DESKTOP);
 	int const display_height = GetSystemMetrics(is_virtual_desktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
@@ -608,7 +609,7 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 
 	//
 	input_to_platform_on_mouse_move((uint32_t)screen.x, (uint32_t)(display_height - screen.y - 1));
-	input_to_platform_on_mouse_move_window((uint32_t)client.x, size_y - (uint32_t)client.y - 1);
+	input_to_platform_on_mouse_move_window((uint32_t)client.x, size.y - (uint32_t)client.y - 1);
 
 	//
 	if ((data->usButtonFlags & RI_MOUSE_HWHEEL)) {
@@ -703,8 +704,7 @@ static void handle_message_input_keyboard(struct Window * window, WPARAM wParam,
 static void handle_message_input_mouse(struct Window * window, WPARAM wParam, LPARAM lParam, bool client_space, float wheel_mask_x, float wheel_mask_y) {
 	if (window->raw_input) { return; }
 
-	uint32_t size_x, size_y;
-	platform_window_get_size(window, &size_x, &size_y);
+	struct uvec2 const size = platform_window_get_size(window);
 
 	int const display_height = GetSystemMetrics(SM_CYSCREEN);
 
@@ -724,7 +724,7 @@ static void handle_message_input_mouse(struct Window * window, WPARAM wParam, LP
 
 	//
 	input_to_platform_on_mouse_move((uint32_t)screen.x, (uint32_t)(display_height - screen.y - 1));
-	input_to_platform_on_mouse_move_window((uint32_t)client.x, size_y - (uint32_t)client.y - 1);
+	input_to_platform_on_mouse_move_window((uint32_t)client.x, size.y - (uint32_t)client.y - 1);
 
 	//
 	float const wheel_delta = (float)GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;

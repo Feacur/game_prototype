@@ -108,22 +108,22 @@ void typeface_render_glyph(
 	struct Typeface const * typeface,
 	uint32_t glyph_id, float scale,
 	uint8_t * buffer, uint32_t buffer_width,
-	uint32_t glyph_size_x, uint32_t glyph_size_y,
-	uint32_t offset_x, uint32_t offset_y
+	struct uvec2 glyph_size,
+	struct uvec2 offset
 ) {
-	if (glyph_size_x == 0) {
-		WRN("'glyph_size_x == 0' doesn't make sense");
+	if (glyph_size.x == 0) {
+		WRN("'glyph_size.x == 0' doesn't make sense");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
-	if (glyph_size_y == 0) {
-		WRN("'glyph_size_y == 0' doesn't make sense");
+	if (glyph_size.y == 0) {
+		WRN("'glyph_size.y == 0' doesn't make sense");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
 
 	if (glyph_id == 0) {
-		uint8_t * base_target = buffer + offset_y * buffer_width + offset_x;
-		uint32_t const bytes_to_set = glyph_size_x * sizeof(*buffer);
-		for (uint32_t y = 0; y < glyph_size_y; y++) {
+		uint8_t * base_target = buffer + offset.y * buffer_width + offset.x;
+		uint32_t const bytes_to_set = glyph_size.x * sizeof(*buffer);
+		for (uint32_t y = 0; y < glyph_size.y; y++) {
 			common_memset(base_target + y * buffer_width, 0xff, bytes_to_set);
 		}
 		return;
@@ -138,8 +138,8 @@ void typeface_render_glyph(
 	// stbtt_set_flip_vertically_on_load(1);
 
 	stbtt_MakeGlyphBitmap(
-		&typeface->api, buffer + offset_y * buffer_width + offset_x,
-		(int)glyph_size_x, (int)glyph_size_y, (int)buffer_width,
+		&typeface->api, buffer + offset.y * buffer_width + offset.x,
+		(int)glyph_size.x, (int)glyph_size.y, (int)buffer_width,
 		scale, scale,
 		(int)glyph_id
 	);
