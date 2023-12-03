@@ -156,8 +156,8 @@ void application_update(void) {
 
 	gs_app.ticks.elapsed = clamp_u32(
 		(uint32_t)(platform_timer_get_ticks() - ticks_before),
-		(uint32_t)(platform_timer_get_ticks_per_second() / 10000),
-		(uint32_t)(platform_timer_get_ticks_per_second() /   100)
+		(uint32_t)(platform_timer_get_ticks_per_second() / 10000), // max FPS
+		(uint32_t)(platform_timer_get_ticks_per_second() /    10)  // min FPS
 	);
 
 	// @note: resulting delta time is extremely inconsistent and stuttery
