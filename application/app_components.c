@@ -5,7 +5,7 @@
 #include "json_load.h"
 
 //
-#include "components.h"
+#include "app_components.h"
 
 // ----- ----- ----- ----- -----
 //     API

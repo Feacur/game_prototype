@@ -8,7 +8,7 @@ framework/formatter.c
 framework/parsing.c
 framework/json_read.c
 
-framework/graphics/types.c
+framework/graphics/gfx_types.c
 framework/graphics/material.c
 
 framework/containers/internal/helpers.c
@@ -40,19 +40,19 @@ framework/platform/windows/debug.c
 
 framework/platform/windows/gpu_library_opengl.c
 framework/graphics/opengl/functions.c
-framework/graphics/opengl/types.c
+framework/graphics/opengl/opengl_types.c
 framework/graphics/opengl/graphics.c
 
 application/json_load.c
 application/application.c
 application/asset_registry.c
-application/components.c
+application/app_components.c
 application/batcher_2d.c
 application/renderer.c
 
 prototype/object_camera.c
 prototype/object_entity.c
 prototype/game_state.c
-prototype/components.c
+prototype/proto_components.c
 prototype/ui.c
 prototype/main.c

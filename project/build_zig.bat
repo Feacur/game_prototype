@@ -13,7 +13,7 @@ set compiler=%compiler% -target x86_64-windows
 set compiler=%compiler% -fno-sanitize=undefined
 set compiler=%compiler% -DWINVER=0x0A00
 
-set linker=-Wl,-implib=
+set linker=-implib=
 
 if %configuration% == tiny (
 	set compiler=%compiler% -Oz
@@ -27,15 +27,13 @@ if %configuration% == tiny (
 	set compiler=%compiler% -O0 -g
 )
 
-if %build_mode% == unity_link (
-	rem compile and link
+if [%separate_linking%] == [] (
 	set compiler=zig cc %compiler%
-	set linker=%libs% %linker%
+	set linker=%libs% -Wl,%linker: =,%
 	set output=-o "%output%"
 ) else (
-	rem compile then link
 	set compiler=zig cc -c %compiler%
-	set linker=zig cc %libs% %linker%
+	set linker=zig cc %libs% -Wl,%linker: =,%
 	set output=-o "%output%"
 )
 

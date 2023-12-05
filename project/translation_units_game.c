@@ -9,7 +9,7 @@
 #include "framework/parsing.c"
 #include "framework/json_read.c"
 
-#include "framework/graphics/types.c"
+#include "framework/graphics/gfx_types.c"
 #include "framework/graphics/material.c"
 
 #include "framework/containers/internal/helpers.c"
@@ -44,7 +44,7 @@
 	#if defined(GAME_GRAPHICS_IS_OPENGL)
 		#include "framework/platform/windows/gpu_library_opengl.c"
 		#include "framework/graphics/opengl/functions.c"
-		#include "framework/graphics/opengl/types.c"
+		#include "framework/graphics/opengl/opengl_types.c"
 		#include "framework/graphics/opengl/graphics.c"
 	#endif
 #endif
@@ -52,14 +52,14 @@
 #include "application/json_load.c"
 #include "application/application.c"
 #include "application/asset_registry.c"
-#include "application/components.c"
+#include "application/app_components.c"
 #include "application/batcher_2d.c"
 #include "application/renderer.c"
 
 #include "prototype/object_camera.c"
 #include "prototype/object_entity.c"
 #include "prototype/game_state.c"
-#include "prototype/components.c"
+#include "prototype/proto_components.c"
 #include "prototype/ui.c"
 
 #if !defined(GAME_ARCH_SHARED)

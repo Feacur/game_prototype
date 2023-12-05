@@ -21,7 +21,7 @@ rem shared|console|windows
 set arch_mode=%~4
 if [%arch_mode%] == [] ( set "arch_mode=console" )
 
-rem normal|unity|unity_link
+rem normal|unity|unity_link|auto
 set build_mode=%~5
 if [%build_mode%] == [] ( set "build_mode=unity" )
 
@@ -146,11 +146,15 @@ if %configuration% == tiny (
 )
 
 if %build_mode% == normal (
-	rem compile multiple units, then link
+	rem compile units, then link
+	set separate_linking=true
 ) else if %build_mode% == unity (
 	rem compile single unit, then link
+	set separate_linking=true
 ) else if %build_mode% == unity_link (
 	rem compile single unit and link
+) else if %build_mode% == auto (
+	rem compile units and link
 ) else (
 	echo.unknown build_mode "%build_mode%"
 	exit /b 1

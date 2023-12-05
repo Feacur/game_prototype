@@ -12,14 +12,14 @@
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
 
-#include "framework/graphics/types.h"
+#include "framework/graphics/gfx_types.h"
 #include "framework/graphics/material.h"
 
 #include "framework/systems/string_system.h"
 #include "framework/systems/material_system.h"
 
 #include "functions.h"
-#include "types.h"
+#include "opengl_types.h"
 
 #include <malloc.h> // alloca
 

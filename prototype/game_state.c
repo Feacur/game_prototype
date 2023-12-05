@@ -9,7 +9,7 @@
 #include "application/json_load.h"
 #include "application/asset_types.h"
 
-#include "components.h"
+#include "proto_components.h"
 #include "object_camera.h"
 #include "object_entity.h"
 

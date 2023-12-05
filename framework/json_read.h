@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_JSON_READ)
 #define FRAMEWORK_JSON_READ
 
-#include "framework/graphics/types.h"
+#include "framework/graphics/gfx_types.h"
 
 struct JSON;
 

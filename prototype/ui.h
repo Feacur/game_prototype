@@ -1,7 +1,7 @@
 #if !defined(PROTOTYPE_UI)
 #define PROTOTYPE_UI
 
-#include "application/components.h"
+#include "application/app_components.h"
 
 struct Asset_System;
 

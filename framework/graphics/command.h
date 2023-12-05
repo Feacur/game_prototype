@@ -6,7 +6,7 @@
 
 #include "framework/maths_types.h"
 
-#include "types.h"
+#include "gfx_types.h"
 
 struct Gfx_Uniforms;
 

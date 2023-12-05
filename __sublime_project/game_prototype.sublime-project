@@ -83,7 +83,7 @@
 					"debug",
 					"static",
 					"console",
-					"unity",
+					"auto",
 				],
 			},
 			"word_wrap": false,

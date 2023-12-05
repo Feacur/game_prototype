@@ -1,7 +1,7 @@
 #if !defined(FRAMEWORK_GRAPHICS_OPENGL_TYPES)
 #define FRAMEWORK_GRAPHICS_OPENGL_TYPES
 
-#include "framework/graphics/types.h"
+#include "framework/graphics/gfx_types.h"
 
 #include "framework/__warnings_push.h"
 	#include <KHR/khrplatform.h>

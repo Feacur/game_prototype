@@ -2,7 +2,7 @@
 #define APPLICATION_BATCHER_2D
 
 #include "framework/maths_types.h"
-#include "framework/graphics/types.h"
+#include "framework/graphics/gfx_types.h"
 
 struct Batcher_2D;
 

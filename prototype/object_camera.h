@@ -1,11 +1,11 @@
 #if !defined(PROTOTYPE_OBJECT_CAMERA)
 #define PROTOTYPE_OBJECT_CAMERA
 
-#include "framework/graphics/types.h"
+#include "framework/graphics/gfx_types.h"
 
-#include "application/components.h"
+#include "application/app_components.h"
 
-#include "components.h"
+#include "proto_components.h"
 
 enum Camera_Mode {
 	CAMERA_MODE_NONE,     // map to normalized device

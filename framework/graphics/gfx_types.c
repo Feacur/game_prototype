@@ -1,7 +1,7 @@
 #include "framework/formatter.h"
 
 //
-#include "types.h"
+#include "gfx_types.h"
 
 enum Data_Type data_type_get_element_type(enum Data_Type value) {
 	switch (value) {

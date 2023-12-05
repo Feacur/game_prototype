@@ -1,7 +1,7 @@
 #include "framework/formatter.h"
 
 //
-#include "types.h"
+#include "opengl_types.h"
 
 GLenum gpu_vertex_type(enum Data_Type value) {
 	switch (value) {

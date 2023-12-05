@@ -11,6 +11,7 @@ set compiler=%compiler% -nologo -diagnostics:caret
 set compiler=%compiler% -std:c11 -options:strict
 set compiler=%compiler% -EHa- -GR-
 set compiler=%compiler% -WX -W4
+set compiler=%compiler% -Fd"./temp/%project%"
 
 set linker=%linker% -noimplib -noexp
 
@@ -26,13 +27,11 @@ if %configuration% == tiny (
 	set compiler=%compiler% -Od -Zi
 )
 
-if %build_mode% == unity_link (
-	rem compile and link
+if [%separate_linking%] == [] (
 	set compiler=cl %compiler%
 	set linker=-link %linker% %libs%
-	set output=-Fe:"%output%"
+	set output=-Fe:"%output%" -Fo:"./temp/"
 ) else (
-	rem compile then link
 	set compiler=cl -c %compiler%
 	set linker=link %linker% %libs%
 	set output=-out:"%output%"

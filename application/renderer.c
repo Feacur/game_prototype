@@ -11,7 +11,7 @@
 #include "application/json_load.h"
 #include "application/asset_types.h"
 #include "application/asset_registry.h"
-#include "application/components.h"
+#include "application/app_components.h"
 #include "application/batcher_2d.h"
 
 //

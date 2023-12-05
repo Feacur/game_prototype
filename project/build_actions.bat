@@ -47,6 +47,11 @@ goto :eof
 		set objects=!object!
 	) else if %build_mode% == unity_link (
 		%compiler% "%source%.c" %output% %linker% || ( exit /b 1 )
+	) else if %build_mode% == auto (
+		for /f %%v in (%source%.txt) do (
+			set sources=!sources! "../%%~v"
+		)
+		%compiler% !sources! %output% %linker% || ( exit /b 1 )
 	)
 goto :eof
 

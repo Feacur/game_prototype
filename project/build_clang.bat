@@ -29,13 +29,11 @@ if %configuration% == tiny (
 	set compiler=%compiler% -O0 -g
 )
 
-if %build_mode% == unity_link (
-	rem compile and link
+if [%separate_linking%] == [] (
 	set compiler=clang %compiler%
-	set linker=-Wl,%linker: =,%,%libs: =,%
-	set output=-o:"%output%"
+	set linker=-Wl,%linker: =,%,%libs: =,%,-noexp
+	set output=-o "%output%"
 ) else (
-	rem compile then link
 	set compiler=clang -c %compiler%
 	set linker=lld-link %linker% %libs%
 	set output=-out:"%output%"

@@ -31,14 +31,14 @@
 #include "application/application.h"
 #include "application/asset_registry.h"
 #include "application/asset_types.h"
-#include "application/components.h"
+#include "application/app_components.h"
 #include "application/batcher_2d.h"
 #include "application/renderer.h"
 
 #include "object_camera.h"
 #include "object_entity.h"
 #include "game_state.h"
-#include "components.h"
+#include "proto_components.h"
 #include "ui.h"
 
 static struct Main_Settings {
@@ -505,7 +505,7 @@ static void main_run_application(void) {
 }
 
 int main (int argc, char * argv[]) {
-	LOG("> main arguments:\n");
+	LOG("> main argumentss:\n");
 	for (int i = 0; i < argc; i++) {
 		LOG("  %s\n", argv[i]);
 	}

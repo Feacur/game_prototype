@@ -3,7 +3,7 @@
 
 #include "framework/common.h"
 #include "framework/maths_types.h"
-#include "framework/graphics/types.h"
+#include "framework/graphics/gfx_types.h"
 
 struct Buffer;
 

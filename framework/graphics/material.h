@@ -4,7 +4,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/array.h"
 
-#include "types.h"
+#include "gfx_types.h"
 
 // ----- ----- ----- ----- -----
 //     uniforms

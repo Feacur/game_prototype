@@ -1,11 +1,11 @@
 #if !defined(PROTOTYPE_OBJECT_ENTITY)
 #define PROTOTYPE_OBJECT_ENTITY
 
-#include "framework/graphics/types.h"
+#include "framework/graphics/gfx_types.h"
 
-#include "application/components.h"
+#include "application/app_components.h"
 
-#include "components.h"
+#include "proto_components.h"
 
 enum Entity_Type {
 	ENTITY_TYPE_NONE,

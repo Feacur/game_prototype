@@ -5,7 +5,7 @@
 // - gpu objects initialization and manipulation
 
 #include "framework/maths_types.h"
-#include "framework/graphics/types.h"
+#include "framework/graphics/gfx_types.h"
 
 // @note: texture coordinates
 // +------------+
