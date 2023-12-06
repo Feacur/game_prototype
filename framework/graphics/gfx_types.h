@@ -222,6 +222,17 @@ struct Texture_Settings {
 	struct vec4 border;
 };
 
+enum Mesh_Mode {
+	MESH_MODE_NONE,
+	MESH_MODE_POINTS,
+	MESH_MODE_LINES,
+	MESH_MODE_LINE_STRIP,
+	MESH_MODE_LINE_LOOP,
+	MESH_MODE_TRIANGLES,
+	MESH_MODE_TRIANGLE_STRIP,
+	MESH_MODE_TRIANGLE_FAN,
+};
+
 enum Attribute_Type {
 	ATTRIBUTE_TYPE_NONE,
 	ATTRIBUTE_TYPE_POSITION,
@@ -235,6 +246,7 @@ enum Attribute_Type {
 #define MESH_ATTRIBUTES_CAPACITY (2 * ATTRIBUTE_TYPE_INTERNAL_COUNT)
 
 struct Mesh_Parameters {
+	enum Mesh_Mode mode;
 	enum Data_Type type;
 	enum Mesh_Flag flags;
 	uint32_t attributes[MESH_ATTRIBUTES_CAPACITY];

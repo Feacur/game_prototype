@@ -55,6 +55,7 @@ struct GPU_Command_Uniform {
 struct GPU_Command_Draw {
 	struct Handle mesh_handle;
 	uint32_t offset, length;
+	uint32_t instances;
 };
 
 struct GPU_Command {

@@ -77,7 +77,6 @@ struct Gpu_Mesh_Buffer {
 struct Gpu_Mesh {
 	GLuint id;
 	struct Array buffers; // `struct Gpu_Mesh_Buffer`
-	uint32_t elements_index;
 	// @idea: add an optional asset source
 };
 
@@ -685,7 +684,6 @@ struct Handle gpu_target_get_texture_handle(struct Handle handle, enum Texture_T
 static void gpu_mesh_on_aquire(struct Gpu_Mesh * gpu_mesh) {
 	glCreateVertexArrays(1, &gpu_mesh->id);
 	gpu_mesh->buffers = array_init(sizeof(struct Gpu_Mesh_Buffer));
-	gpu_mesh->elements_index = INDEX_EMPTY;
 	GFX_TRACE("aquire mesh %d", gpu_mesh->id);
 }
 
@@ -780,25 +778,11 @@ static struct Handle gpu_mesh_allocate(
 			glVertexArrayAttribBinding(mesh.id, location, buffer_index);
 			glVertexArrayAttribFormat(
 				mesh.id, location,
-				(GLint)count, gpu_vertex_type(parameters.type),
+				(GLint)count, gpu_vertex_value_type(parameters.type),
 				GL_FALSE, (GLuint)attribute_offset
 			);
 			attribute_offset += count * data_type_get_size(parameters.type);
 		}
-	}
-
-	//
-	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct Gpu_Mesh_Buffer const * buffer = array_at(&mesh.buffers, i);
-		struct Mesh_Parameters const parameters = buffer->parameters;
-		if (parameters.flags & MESH_FLAG_INDEX) {
-			mesh.elements_index = i;
-			break;
-		}
-	}
-	if (mesh.elements_index == INDEX_EMPTY) {
-		WRN("no element buffer");
-		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 
 	return sparseset_aquire(&gs_graphics_state.meshes, &mesh);
@@ -1177,50 +1161,38 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 	struct Gpu_Mesh const * mesh = sparseset_get(&gs_graphics_state.meshes, command->mesh_handle);
 	if (mesh == NULL) { return; }
 
-	if (mesh->elements_index == INDEX_EMPTY) {
-		WRN("mesh has no elements buffer");
-		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
-	}
-
-	//
-	struct Gpu_Mesh_Buffer const * buffer = array_at(&mesh->buffers, mesh->elements_index);
-	if (command->length == 0) {
-		if (buffer == NULL) { return; }
-		if (buffer->count == 0) { return; }
-	}
-
-	uint32_t const elements_count = (command->length != 0)
-		? command->length
-		: buffer->count;
-
 	gpu_select_mesh(command->mesh_handle);
 
-	if (buffer != NULL) {
-		enum Data_Type const elements_type = buffer->parameters.type;
-		uint32_t const elements_offset = (command->length != 0)
-			? command->offset * data_type_get_size(elements_type)
-			: 0;
+	FOR_ARRAY(&mesh->buffers, it) {
+		struct Gpu_Mesh_Buffer const * buffer = it.value;
+		if (buffer->parameters.mode == MESH_MODE_NONE) { continue; }
+		if (buffer->count == 0) { continue; }
 
-		glDrawElements(
-			GL_TRIANGLES,
-			(GLsizei)elements_count,
-			gpu_vertex_type(elements_type),
-			(void const *)(size_t)elements_offset
-		);
-	}
-	else {
-		ERR("not implemented");
-		REPORT_CALLSTACK(); DEBUG_BREAK();
-		// @todo: implement
-		// uint32_t const elements_offset = (command->length != 0)
-		// 	? command->offset * 3
-		// 	: 0;
-		// 
-		// glDrawArrays(
-		// 	GL_TRIANGLES,
-		// 	(GLint)elements_offset,
-		// 	(GLsizei)elements_count
-		// );
+		uint32_t const offset = command->offset;
+		uint32_t const count = (command->length != 0)
+			? command->length
+			: buffer->count;
+
+		if (buffer->parameters.flags & MESH_FLAG_INDEX) {
+			enum Data_Type const elements_type = buffer->parameters.type;
+			size_t const bytes_offset = command->offset * data_type_get_size(elements_type);
+
+			glDrawElementsInstanced(
+				gpu_mesh_mode(buffer->parameters.mode),
+				(GLsizei)count,
+				gpu_index_value_type(elements_type),
+				(void const *)bytes_offset,
+				(GLsizei)max_u32(command->instances, 1)
+			);
+		}
+		else {
+			glDrawArraysInstanced(
+				gpu_mesh_mode(buffer->parameters.mode),
+				(GLint)offset,
+				(GLsizei)count,
+				(GLsizei)max_u32(command->instances, 1)
+			);
+		}
 	}
 }
 

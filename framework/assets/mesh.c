@@ -120,6 +120,7 @@ static struct Mesh mesh_construct(
 		.type = DATA_TYPE_R32_F,
 	};
 	mesh.parameters[1] = (struct Mesh_Parameters){
+		.mode = MESH_MODE_TRIANGLES,
 		.type = DATA_TYPE_R32_U,
 		.flags = MESH_FLAG_INDEX,
 	};

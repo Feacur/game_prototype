@@ -3,88 +3,34 @@
 //
 #include "opengl_types.h"
 
-GLenum gpu_vertex_type(enum Data_Type value) {
+GLenum gpu_vertex_value_type(enum Data_Type value) {
 	switch (value) {
 		default: break;
 
-		// u8
-		case DATA_TYPE_R8_U:
-		case DATA_TYPE_RG8_U:
-		case DATA_TYPE_RGB8_U:
-		case DATA_TYPE_RGBA8_U:
-		case DATA_TYPE_R8_UNORM:
-		case DATA_TYPE_RG8_UNORM:
-		case DATA_TYPE_RGB8_UNORM:
-		case DATA_TYPE_RGBA8_UNORM:
-			return GL_UNSIGNED_BYTE;
-
-		// s8
-		case DATA_TYPE_R8_S:
-		case DATA_TYPE_RG8_S:
-		case DATA_TYPE_RGB8_S:
-		case DATA_TYPE_RGBA8_S:
-		case DATA_TYPE_R8_SNORM:
-		case DATA_TYPE_RG8_SNORM:
-		case DATA_TYPE_RGB8_SNORM:
-		case DATA_TYPE_RGBA8_SNORM:
-			return GL_BYTE;
-
-		// u16
-		case DATA_TYPE_R16_U:
-		case DATA_TYPE_RG16_U:
-		case DATA_TYPE_RGB16_U:
-		case DATA_TYPE_RGBA16_U:
-		case DATA_TYPE_R16_UNORM:
-		case DATA_TYPE_RG16_UNORM:
-		case DATA_TYPE_RGB16_UNORM:
-		case DATA_TYPE_RGBA16_UNORM:
-			return GL_UNSIGNED_SHORT;
-
-		// s16
-		case DATA_TYPE_R16_S:
-		case DATA_TYPE_RG16_S:
-		case DATA_TYPE_RGB16_S:
-		case DATA_TYPE_RGBA16_S:
-		case DATA_TYPE_R16_SNORM:
-		case DATA_TYPE_RG16_SNORM:
-		case DATA_TYPE_RGB16_SNORM:
-		case DATA_TYPE_RGBA16_SNORM:
-			return GL_SHORT;
-
-		// u32
-		case DATA_TYPE_R32_U:
-		case DATA_TYPE_RG32_U:
-		case DATA_TYPE_RGB32_U:
-		case DATA_TYPE_RGBA32_U:
-			return GL_UNSIGNED_INT;
-
-		// s32
-		case DATA_TYPE_R32_S:
-		case DATA_TYPE_RG32_S:
-		case DATA_TYPE_RGB32_S:
-		case DATA_TYPE_RGBA32_S:
-			return GL_INT;
-
-		// floats
-		case DATA_TYPE_R16_F:
-		case DATA_TYPE_RG16_F:
-		case DATA_TYPE_RGB16_F:
-		case DATA_TYPE_RGBA16_F:
-			return GL_HALF_FLOAT;
-
-		case DATA_TYPE_R32_F:
-		case DATA_TYPE_RG32_F:
-		case DATA_TYPE_RGB32_F:
-		case DATA_TYPE_RGBA32_F:
-			return GL_FLOAT;
-
-		case DATA_TYPE_R64_F:
-		case DATA_TYPE_RG64_F:
-		case DATA_TYPE_RGB64_F:
-		case DATA_TYPE_RGBA64_F:
-			return GL_DOUBLE;
+		case DATA_TYPE_R8_U:  return GL_UNSIGNED_BYTE;
+		case DATA_TYPE_R8_S:  return GL_BYTE;
+		case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
+		case DATA_TYPE_R16_S: return GL_SHORT;
+		case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
+		case DATA_TYPE_R32_S: return GL_INT;
+		case DATA_TYPE_R16_F: return GL_HALF_FLOAT;
+		case DATA_TYPE_R32_F: return GL_FLOAT;
+		case DATA_TYPE_R64_F: return GL_DOUBLE;
 	}
-	ERR("unknown data type");
+	ERR("unknown vertex value type");
+	REPORT_CALLSTACK(); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+GLenum gpu_index_value_type(enum Data_Type value) {
+	switch (value) {
+		default: break;
+
+		case DATA_TYPE_R8_U:  return GL_UNSIGNED_BYTE;
+		case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
+		case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
+	}
+	ERR("unknown index value type");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
@@ -543,6 +489,23 @@ GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index) {
 		case SWIZZLE_OP_A: return GL_ALPHA;
 	}
 	ERR("unknown swizzle operation");
+	REPORT_CALLSTACK(); DEBUG_BREAK();
+	return GL_NONE;
+}
+
+GLenum gpu_mesh_mode(enum Mesh_Mode value) {
+	switch (value) {
+		case MESH_MODE_NONE: break;
+
+		case MESH_MODE_POINTS:         return GL_POINTS;
+		case MESH_MODE_LINES:          return GL_LINES;
+		case MESH_MODE_LINE_STRIP:     return GL_LINE_STRIP;
+		case MESH_MODE_LINE_LOOP:      return GL_LINE_LOOP;
+		case MESH_MODE_TRIANGLES:      return GL_TRIANGLES;
+		case MESH_MODE_TRIANGLE_STRIP: return GL_TRIANGLE_STRIP;
+		case MESH_MODE_TRIANGLE_FAN:   return GL_TRIANGLE_FAN;
+	}
+	ERR("unknown mesh mode");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }

@@ -231,8 +231,8 @@ XMACRO(VIEWPORT,        Viewport)
 XMACRO(BINDFRAMEBUFFER, BindFramebuffer)
 //
 XMACRO(CLEAR,        Clear)
-XMACRO(DRAWELEMENTS, DrawElements)
-XMACRO(DRAWARRAYS,   DrawArrays)
+XMACRO(DRAWELEMENTSINSTANCED, DrawElementsInstanced)
+XMACRO(DRAWARRAYSINSTANCED,   DrawArraysInstanced)
 XMACRO(FINISH,       Finish)
 XMACRO(FLUSH,        Flush)
 

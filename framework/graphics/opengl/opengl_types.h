@@ -8,7 +8,8 @@
 	#include <GL/glcorearb.h>
 #include "framework/__warnings_pop.h"
 
-GLenum gpu_vertex_type(enum Data_Type value);
+GLenum gpu_vertex_value_type(enum Data_Type value);
+GLenum gpu_index_value_type(enum Data_Type value);
 enum Data_Type translate_program_data_type(GLint value);
 
 GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture);
@@ -39,5 +40,7 @@ struct Gpu_Depth_Mode {
 } gpu_depth_mode(enum Depth_Mode value, bool reversed_z);
 
 GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index);
+
+GLenum gpu_mesh_mode(enum Mesh_Mode value);
 
 #endif
