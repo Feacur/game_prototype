@@ -68,7 +68,6 @@ rem https://learn.microsoft.com/windows-server/administration/windows-commands/s
 
 set compiler=%compiler% -I".." -I"../third_party"
 set compiler=%compiler% -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX
-set compiler=%compiler% -DUNICODE -D_UNICODE
 
 set linker=%linker% -nologo -WX -incremental:no
 set libs=%libs% kernel32.lib user32.lib gdi32.lib

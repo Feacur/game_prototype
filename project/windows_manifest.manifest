@@ -1,13 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!-- 
-  https://learn.microsoft.com/windows/win32/sbscs/application-manifests
-  https://learn.microsoft.com/windows/win32/hidpi/setting-the-default-dpi-awareness-for-a-process
--->
+<!-- https://learn.microsoft.com/windows/win32/sbscs/application-manifests -->
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3">
   <asmv3:application>
-    <asmv3:windowsSettings>
-      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">True/PM</dpiAware>
-      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2,PerMonitor</dpiAwareness>
+
+    <!-- https://learn.microsoft.com/windows/win32/hidpi/setting-the-default-dpi-awareness-for-a-process -->
+    <asmv3:windowsSettings xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">
+      <dpiAware>True/PM</dpiAware>
     </asmv3:windowsSettings>
+
+    <asmv3:windowsSettings xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">
+      <dpiAwareness>PerMonitorV2,PerMonitor</dpiAwareness>
+    </asmv3:windowsSettings>
+
+    <!-- https://learn.microsoft.com/windows/win32/fileio/maximum-file-path-limitation -->
+    <asmv3:windowsSettings xmlns:ws2="http://schemas.microsoft.com/SMI/2016/WindowsSettings">
+      <ws2:longPathAware>true</ws2:longPathAware>
+    </asmv3:windowsSettings>
+
+    <!-- https://learn.microsoft.com/windows/apps/design/globalizing/use-utf8-code-page -->
+    <asmv3:windowsSettings xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">
+      <activeCodePage>UTF-8</activeCodePage>
+    </asmv3:windowsSettings>
+
   </asmv3:application>
 </assembly>

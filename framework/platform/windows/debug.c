@@ -7,10 +7,6 @@
 #include "framework/memory.h"
 #include "framework/containers/buffer.h"
 
-#if defined (UNICODE) || defined (_UNICODE)
-	#define DBGHELP_TRANSLATE_TCHAR
-#endif
-
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 #include <DbgHelp.h>
@@ -60,17 +56,6 @@ struct Callstack platform_debug_get_callstack(uint32_t skip) {
 	// https://learn.microsoft.com/windows/win32/api/winnt/nf-winnt-rtlvirtualunwind
 }
 
-#if defined(DBGHELP_TRANSLATE_TCHAR)
-	inline static uint32_t platform_debug_eval_length(WCHAR const * value, int limit) {
-		int const length = WideCharToMultiByte(CP_UTF8, 0, value, limit, NULL, 0, NULL, NULL);
-		if (limit >= 0) { return (uint32_t)length; }
-		if (length > 0) { return (uint32_t)(length - 1); }
-		return 0;
-
-		// https://learn.microsoft.com/windows/win32/api/stringapiset/nf-stringapiset-widechartomultibyte
-	}
-#endif
-
 struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 	static uint32_t const FRAMES_MAX = SIZE_OF_MEMBER(struct Callstack, data);
 
@@ -79,45 +64,32 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 
 	DWORD64 symbol_offset = 0;
 	union {
-		SYMBOL_INFOW header;
-		uint8_t payload[sizeof(SYMBOL_INFOW) + 1024];
+		SYMBOL_INFO header;
+		uint8_t payload[sizeof(SYMBOL_INFO) + 1024];
 	} symbol;
-	symbol.header = (SYMBOL_INFOW){
+	symbol.header = (SYMBOL_INFO){
 		.SizeOfStruct  = sizeof(symbol.header),
 		.MaxNameLen = sizeof(symbol.payload) - sizeof(symbol.header),
 	};
 
 	DWORD source_offset = 0;
-	IMAGEHLP_LINEW64 source = {.SizeOfStruct = sizeof(source)};
-	IMAGEHLP_MODULEW64 module = {.SizeOfStruct = sizeof(module)};
+	IMAGEHLP_LINE64 source = {.SizeOfStruct = sizeof(source)};
+	IMAGEHLP_MODULE64 module = {.SizeOfStruct = sizeof(module)};
 
 	HANDLE const process = GetCurrentProcess();
 	for (uint32_t i = 0; i < FRAMES_MAX && callstack.data[i] > 0; i++) {
 		// fetch function, source file, and line
-		BOOL const valid_module = SymGetModuleInfoW64(process, callstack.data[i], &module);
-		BOOL const valid_symbol = SymFromAddrW(process, callstack.data[i], &symbol_offset, &symbol.header);
-		BOOL const valid_source = SymGetLineFromAddrW64(process, callstack.data[i], &source_offset, &source) && (source.FileName != NULL);
+		BOOL const valid_module = SymGetModuleInfo64(process, callstack.data[i], &module);
+		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], &symbol_offset, &symbol.header);
+		BOOL const valid_source = SymGetLineFromAddr64(process, callstack.data[i], &source_offset, &source) && (source.FileName != NULL);
 		if (!(valid_module || valid_symbol || valid_source)) { continue; }
 
-	#if defined(DBGHELP_TRANSLATE_TCHAR)
-		uint32_t const module_length = valid_module ? platform_debug_eval_length(module.ModuleName, -1) : 0;
-		uint32_t const symbol_length = valid_symbol ? platform_debug_eval_length(symbol.header.Name, (int)symbol.header.NameLen) : 0;
-		uint32_t const source_length = valid_source ? platform_debug_eval_length(source.FileName, -1) : 0;
-		buffer_ensure(&gs_platform_debug.scratch, module_length + symbol_length + source_length);
-		char * module_data = gs_platform_debug.scratch.data;
-		char * symbol_data = module_data + symbol_length;
-		char * source_data = symbol_data + source_length;
-		WideCharToMultiByte(CP_UTF8, 0, module.ModuleName, -1, module_data, (int)module_length, NULL, NULL);
-		WideCharToMultiByte(CP_UTF8, 0, symbol.header.Name, (int)symbol.header.NameLen, symbol_data, (int)symbol_length, NULL, NULL);
-		WideCharToMultiByte(CP_UTF8, 0, source.FileName, -1, source_data, (int)source_length, NULL, NULL);
-	#else
-		uint32_t const module_length = valid_module ? (uint32_t)strlen(source.ModuleName) : 0;
-		uint32_t const symbol_length = valid_symbol ? (uint32_t)symbol.header.NameLen : 0;
-		uint32_t const source_length = valid_source ? (uint32_t)strlen(source.FileName) : 0;
-		char const * module_data = source.ModuleName;
+		uint32_t const module_length = valid_module ? (uint32_t)strlen(module.ModuleName) : 0;
+		uint32_t const symbol_length = valid_symbol ? (uint32_t)symbol.header.NameLen     : 0;
+		uint32_t const source_length = valid_source ? (uint32_t)strlen(source.FileName)   : 0;
+		char const * module_data = module.ModuleName;
 		char const * symbol_data = symbol.header.Name;
 		char const * source_data = source.FileName;
-	#endif
 
 		// reserve output buffer
 		buffer_ensure(&gs_platform_debug.buffer,

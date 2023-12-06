@@ -2,6 +2,19 @@
 #define FRAMEWORK_COMPILATION
 
 // ----- ----- ----- ----- -----
+//     windows
+// ----- ----- ----- ----- -----
+
+#include "__warnings_push.h"
+	// @note: explicitly disregard -W API and rely on UTF-8 via -A API and `activeCodePage` manifest;
+	//        also CP_UTF8 for console is being set. it's trivial to restore the compatability code
+	//        via the `MultiByteToWideChar` and following defines; but for now I can stop caring.
+	#undef UNICODE
+	#undef _UNICODE
+	#undef DBGHELP_TRANSLATE_TCHAR
+#include "__warnings_pop.h"
+
+// ----- ----- ----- ----- -----
 //     saner C99/C11
 // ----- ----- ----- ----- -----
 

@@ -367,6 +367,7 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 
 #if defined(GAME_ARCH_WINDOWS)
 	#include <stdio.h>
+	#include <stdlib.h>
 
 	extern int main (int argc, char * argv[]);
 	int WINAPI WinMain(
@@ -378,24 +379,12 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 		(void)hInstance; (void)hPrevInstance; (void)pCmdLine; (void)nCmdShow;
 
 		if (AllocConsole()) {
-			FILE * file_stderr = NULL;
-			freopen_s(&file_stderr, "CONOUT$", "w", stderr);
-
-			FILE * file_stdout = NULL;
-			freopen_s(&file_stdout, "CONOUT$", "w", stdout);
-			
-			FILE * file_stdin = NULL;
-			freopen_s(&file_stdin, "CONIN$", "r", stdin);
+			FILE * in;  freopen_s(&in,  "CONIN$",  "r", stdin);
+			FILE * out; freopen_s(&out, "CONOUT$", "w", stdout);
+			FILE * err; freopen_s(&err, "CONOUT$", "w", stderr);
 		}
 
 		return main(__argc, __argv);
-
-		// @note: unicode differences
-		// #if defined (UNICODE) || defined (_UNICODE)
-		// 	wWinMain
-		// 	PWSTR pCmdLine
-		// 	__wargv
-		// #endif
 
 		// https://learn.microsoft.com/windows/win32/learnwin32/winmain--the-application-entry-point
 		// https://learn.microsoft.com/windows/console/console-handles

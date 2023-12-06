@@ -61,8 +61,6 @@
 			"VC_EXTRALEAN",
 			"WIN32_LEAN_AND_MEAN",
 			"NOMINMAX",
-			"UNICODE",
-			"_UNICODE",
 			//
 			"_CRT_SECURE_NO_WARNINGS",
 		],

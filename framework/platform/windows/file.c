@@ -4,9 +4,7 @@
 
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
-#include <malloc.h> // alloca
 
-// @todo: sidestep `MAX_PATH` limit?
 // @idea: async file access through OS API
 
 //
@@ -43,16 +41,7 @@ struct Buffer platform_file_read_entire(struct CString path) {
 }
 
 bool platform_file_delete(struct CString path) {
-#if defined(UNICODE) || defined(_UNICODE)
-	// @todo: (?) arena/stack allocator
-	int const sys_path_length = MultiByteToWideChar(CP_UTF8, 0, path.data, -1, NULL, 0);
-	wchar_t * sys_path = alloca(sizeof(wchar_t) * (uint64_t)sys_path_length);
-	MultiByteToWideChar(CP_UTF8, 0, path.data, -1, sys_path, sys_path_length);
-#else
-	char const * sys_path = path.data;
-#endif
-
-	return DeleteFile(sys_path);
+	return DeleteFileA(path.data);
 }
 
 static HANDLE platform_file_internal_create(struct CString path, enum File_Mode mode);
@@ -183,17 +172,8 @@ static HANDLE platform_file_internal_create(struct CString path, enum File_Mode 
 			: CREATE_NEW;
 	}
 
-#if defined(UNICODE) || defined(_UNICODE)
-	// @todo: (?) arena/stack allocator
-	int const sys_path_length = MultiByteToWideChar(CP_UTF8, 0, path.data, -1, NULL, 0);
-	wchar_t * sys_path = alloca(sizeof(wchar_t) * (uint64_t)sys_path_length);
-	MultiByteToWideChar(CP_UTF8, 0, path.data, -1, sys_path, sys_path_length);
-#else
-	char const * sys_path = path.data;
-#endif
-
-	return CreateFile(
-		sys_path,
+	return CreateFileA(
+		path.data,
 		access, share, NULL, creation,
 		FILE_ATTRIBUTE_NORMAL, NULL
 	);

@@ -199,8 +199,8 @@ bool window_to_system_init(void) {
 		.lpfnWndProc = window_procedure,
 		.style = CS_HREDRAW | CS_VREDRAW,
 		.hCursor = LoadCursor(0, IDC_ARROW),
-		.hIcon = LoadIconA(module, "ico"),
-		.hIconSm = LoadIconA(module, "ico"),
+		.hIcon = LoadIcon(module, TEXT("ico")),
+		.hIconSm = LoadIcon(module, TEXT("ico")),
 	}) != 0;
 
 	// https://learn.microsoft.com/windows/win32/winmsg/about-window-classes
