@@ -3,9 +3,6 @@ chcp 65001 > nul
 
 rem @note: relies on global variables
 
-rem https://learn.microsoft.com/windows/win32/menurc/resource-compiler
-rem https://learn.microsoft.com/windows/win32/sbscs/mt-exe
-
 rem |> REROUTE
 call :%*
 
@@ -64,10 +61,6 @@ goto :eof
 
 :post
 	call %func% get_millis time_post
-	if not %arch_mode% == shared (
-		echo.%manifest_tool%
-		%manifest_tool%
-	)
 	popd
 	popd
 goto :eof

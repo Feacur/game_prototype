@@ -1,3 +1,6 @@
-ico ICON "icon.ico"
+#include <Windows.h>
 
-// https://learn.microsoft.com/windows/win32/menurc/resource-definition-statements
+ico                                ICON        "icon.ico"
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "windows_manifest.manifest"
+
+// https://learn.microsoft.com/windows/win32/menurc/resource-compiler
