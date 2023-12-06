@@ -1,7 +1,7 @@
 #include "framework/formatter.h"
 #include "framework/maths.h"
 
-#include "framework/graphics/material.h"
+#include "framework/graphics/gfx_material.h"
 #include "framework/graphics/objects.h"
 
 #include "framework/systems/asset_system.h"

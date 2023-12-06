@@ -7,7 +7,7 @@
 #include "framework/containers/hashmap.h"
 
 #include "framework/graphics/objects.h"
-#include "framework/graphics/material.h"
+#include "framework/graphics/gfx_material.h"
 
 #include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"

@@ -9,7 +9,7 @@ framework/parsing.c
 framework/json_read.c
 
 framework/graphics/gfx_types.c
-framework/graphics/material.c
+framework/graphics/gfx_material.c
 
 framework/containers/internal/helpers.c
 framework/containers/array.c
@@ -40,7 +40,7 @@ framework/platform/windows/debug.c
 
 framework/platform/windows/gpu_library_opengl.c
 framework/graphics/opengl/functions.c
-framework/graphics/opengl/opengl_types.c
+framework/graphics/opengl/gpu_types.c
 framework/graphics/opengl/graphics.c
 
 application/json_load.c

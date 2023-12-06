@@ -10,7 +10,7 @@
 #include "framework/json_read.c"
 
 #include "framework/graphics/gfx_types.c"
-#include "framework/graphics/material.c"
+#include "framework/graphics/gfx_material.c"
 
 #include "framework/containers/internal/helpers.c"
 #include "framework/containers/array.c"
@@ -44,7 +44,7 @@
 	#if defined(GAME_GRAPHICS_IS_OPENGL)
 		#include "framework/platform/windows/gpu_library_opengl.c"
 		#include "framework/graphics/opengl/functions.c"
-		#include "framework/graphics/opengl/opengl_types.c"
+		#include "framework/graphics/opengl/gpu_types.c"
 		#include "framework/graphics/opengl/graphics.c"
 	#endif
 #endif

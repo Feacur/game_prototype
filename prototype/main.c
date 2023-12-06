@@ -16,7 +16,7 @@
 #include "framework/systems/material_system.h"
 #include "framework/systems/asset_system.h"
 
-#include "framework/graphics/material.h"
+#include "framework/graphics/gfx_material.h"
 #include "framework/graphics/objects.h"
 #include "framework/graphics/command.h"
 

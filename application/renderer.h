@@ -2,7 +2,7 @@
 #define APPLICATION_RENDERER
 
 #include "framework/containers/array.h"
-#include "framework/graphics/material.h"
+#include "framework/graphics/gfx_material.h"
 
 struct Batcher_2D;
 

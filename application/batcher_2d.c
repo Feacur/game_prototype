@@ -11,7 +11,7 @@
 #include "framework/assets/mesh.h"
 #include "framework/assets/font.h"
 
-#include "framework/graphics/material.h"
+#include "framework/graphics/gfx_material.h"
 #include "framework/graphics/objects.h"
 #include "framework/graphics/command.h"
 

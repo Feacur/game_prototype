@@ -1,5 +1,5 @@
 #include "framework/containers/sparseset.h"
-#include "framework/graphics/material.h"
+#include "framework/graphics/gfx_material.h"
 
 #include "material_system.h"
 

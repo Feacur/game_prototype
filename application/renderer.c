@@ -4,7 +4,6 @@
 
 #include "framework/containers/strings.h"
 
-#include "framework/graphics/material.h"
 #include "framework/graphics/objects.h"
 #include "framework/graphics/command.h"
 

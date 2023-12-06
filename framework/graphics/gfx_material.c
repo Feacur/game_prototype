@@ -4,7 +4,7 @@
 #include "framework/systems/string_system.h"
 
 //
-#include "material.h"
+#include "gfx_material.h"
 
 // ----- ----- ----- ----- -----
 //     uniforms

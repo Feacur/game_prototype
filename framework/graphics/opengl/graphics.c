@@ -13,13 +13,13 @@
 #include "framework/assets/image.h"
 
 #include "framework/graphics/gfx_types.h"
-#include "framework/graphics/material.h"
+#include "framework/graphics/gfx_material.h"
 
 #include "framework/systems/string_system.h"
 #include "framework/systems/material_system.h"
 
 #include "functions.h"
-#include "opengl_types.h"
+#include "gpu_types.h"
 
 #include <malloc.h> // alloca
 
