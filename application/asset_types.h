@@ -16,11 +16,11 @@ struct Asset_JSON {
 };
 
 struct Asset_Shader {
-	struct Handle gpu_handle;
+	struct Handle gh_program;
 };
 
 struct Asset_Image {
-	struct Handle gpu_handle;
+	struct Handle gh_texture;
 };
 
 struct Asset_Typeface {
@@ -29,19 +29,19 @@ struct Asset_Typeface {
 
 struct Asset_Font {
 	struct Font * font;
-	struct Handle gpu_handle;
+	struct Handle gh_texture;
 };
 
 struct Asset_Target {
-	struct Handle gpu_handle;
+	struct Handle gh_target;
 };
 
 struct Asset_Model {
-	struct Handle gpu_handle;
+	struct Handle gh_mesh;
 };
 
 struct Asset_Material {
-	struct Handle ms_handle;
+	struct Handle mh_mat;
 };
 
 #endif

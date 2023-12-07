@@ -53,7 +53,7 @@ struct Gfx_Material {
 	enum Depth_Mode depth_mode;
 	struct Gfx_Uniforms uniforms;
 	//
-	struct Handle gpu_program_handle;
+	struct Handle gh_program;
 };
 
 struct Gfx_Material gfx_material_init(void);

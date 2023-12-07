@@ -55,12 +55,9 @@ static void json_read_camera(struct JSON const * json, struct Camera * camera) {
 
 	struct CString const target = json_get_string(json, S_("target"));
 	if (target.data != NULL) {
-		struct Handle const handle = asset_system_load(target);
-		struct Asset_Target const * asset = asset_system_get(handle);
-		camera->ah_target = handle;
-		camera->gpu_target = (asset != NULL) ? asset->gpu_handle : (struct Handle){0};
+		camera->ah_target = asset_system_load(target);
 	}
-	else { camera->gpu_target = (struct Handle){0}; }
+	else { camera->ah_target = (struct Handle){0}; }
 }
 
 static void json_read_cameras(struct JSON const * json) {

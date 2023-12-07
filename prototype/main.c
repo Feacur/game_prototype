@@ -51,8 +51,10 @@ static void prototype_tick_cameras(void) {
 	FOR_ARRAY(&gs_game.cameras, it) {
 		struct Camera * camera = it.value;
 		camera->cached_size = screen_size;
-		if (!handle_is_null(camera->gpu_target)) {
-			camera->cached_size = gpu_target_get_size(camera->gpu_target);
+		if (!handle_is_null(camera->ah_target)) {
+			struct Asset_Target const * asset = asset_system_get(camera->ah_target);
+			struct Handle const gh_target = (asset != NULL) ? asset->gh_target : (struct Handle){0};
+			camera->cached_size = gpu_target_get_size(gh_target);
 		}
 	}
 }
@@ -118,7 +120,7 @@ static void prototype_tick_entities_quad_2d(void) {
 		struct uvec2 const viewport_size = camera->cached_size;
 
 		struct Asset_Material const * material = asset_system_get(entity->ah_material);
-		struct uvec2 const content_size = entity_get_content_size(entity, material->ms_handle, viewport_size);
+		struct uvec2 const content_size = entity_get_content_size(entity, material->mh_mat, viewport_size);
 		if (content_size.x == 0 || content_size.y == 0) { break; }
 
 		switch (e_quad->mode) {
@@ -209,7 +211,7 @@ static void prototype_draw_objects(void) {
 	uint32_t const gpu_commands_count_estimate = gs_game.cameras.count * 2 + gs_game.entities.count;
 	array_ensure(&gs_renderer.gpu_commands, gpu_commands_count_estimate);
 
-	struct Handle previous_gpu_target_handle = {.gen = 1};
+	struct Handle gh_program_prev = {.gen = 1};
 
 	batcher_2d_set_color(gs_renderer.batcher_2d, (struct vec4){1, 1, 1, 1});
 
@@ -239,14 +241,16 @@ static void prototype_draw_objects(void) {
 			});
 		}
 
-		if (!handle_equals(previous_gpu_target_handle, camera->gpu_target)) {
-			previous_gpu_target_handle = camera->gpu_target;
+		struct Asset_Target const * asset = asset_system_get(camera->ah_target);
+		struct Handle const gh_target = (asset != NULL) ? asset->gh_target : (struct Handle){0};
+		if (!handle_equals(gh_program_prev, gh_target)) {
+			gh_program_prev = gh_target;
 			batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 			array_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_TARGET,
 				.as.target = {
+					.gh_target   = gh_target,
 					.screen_size = screen_size,
-					.handle = camera->gpu_target,
 				},
 			});
 		}
@@ -268,7 +272,7 @@ static void prototype_draw_objects(void) {
 			if (entity->camera != it_camera.curr) { continue; }
 
 			struct Asset_Material const * material_asset = asset_system_get(entity->ah_material);
-			struct Gfx_Material const * material = material_system_take(material_asset->ms_handle);
+			struct Gfx_Material const * material = material_system_take(material_asset->mh_mat);
 
 			struct mat4 const u_Model = mat4_transformation(
 				entity->transform.position,
@@ -284,7 +288,7 @@ static void prototype_draw_objects(void) {
 				case ENTITY_TYPE_TEXT_2D: {
 					struct mat4 const matrix = mat4_mul_mat(u_ProjectionView, u_Model);
 					batcher_2d_set_matrix(gs_renderer.batcher_2d, matrix);
-					batcher_2d_set_material(gs_renderer.batcher_2d, material_asset->ms_handle);
+					batcher_2d_set_material(gs_renderer.batcher_2d, material_asset->mh_mat);
 				} break;
 			}
 
@@ -304,13 +308,13 @@ static void prototype_draw_objects(void) {
 						(struct GPU_Command){
 							.type = GPU_COMMAND_TYPE_MATERIAL,
 							.as.material = {
-								.handle = material_asset->ms_handle,
+								.mh_mat = material_asset->mh_mat,
 							},
 						},
 						(struct GPU_Command){
 							.type = GPU_COMMAND_TYPE_UNIFORM,
 							.as.uniform = {
-								.program_handle = material->gpu_program_handle,
+								.gh_program = material->gh_program,
 								.uniforms = &gs_renderer.uniforms,
 								.offset = override_offset,
 								.count = (gs_renderer.uniforms.headers.count - override_offset),
@@ -319,7 +323,7 @@ static void prototype_draw_objects(void) {
 						(struct GPU_Command){
 							.type = GPU_COMMAND_TYPE_DRAW,
 							.as.draw = {
-								.mesh_handle = model->gpu_handle,
+								.gh_mesh = model->gh_mesh,
 							},
 						},
 					});

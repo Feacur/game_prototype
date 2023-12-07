@@ -41,20 +41,20 @@ static void ui_internal_push_shader(void) {
 	struct Asset_Shader const * shader = asset_system_get(gs_ui.ah_shader);
 	batcher_2d_set_shader(
 		gs_renderer.batcher_2d,
-		shader->gpu_handle,
+		shader->gh_program,
 		BLEND_MODE_MIX, DEPTH_MODE_NONE
 	);
 }
 
 static void ui_internal_push_image(void) {
 	struct Asset_Image const * asset = asset_system_get(gs_ui.ah_image);
-	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
+	struct Handle const gpu_handle = asset ? asset->gh_texture : (struct Handle){0};
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Texture"), A_(gpu_handle));
 }
 
 static void ui_internal_push_font(void) {
 	struct Asset_Font const * asset = asset_system_get(gs_ui.ah_font);
-	struct Handle const gpu_handle = asset ? asset->gpu_handle : (struct Handle){0};
+	struct Handle const gpu_handle = asset ? asset->gh_texture : (struct Handle){0};
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Texture"), A_(gpu_handle));
 }
 

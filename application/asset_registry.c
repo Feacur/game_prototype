@@ -89,14 +89,14 @@ static void asset_shader_load(struct Handle handle) {
 	// @todo: return error shader?
 
 	*asset = (struct Asset_Shader){
-		.gpu_handle = gpu_program_init(&file_buffer),
+		.gh_program = gpu_program_init(&file_buffer),
 	};
 	buffer_free(&file_buffer);
 }
 
 static void asset_shader_drop(struct Handle handle) {
 	struct Asset_Shader * asset = asset_system_get(handle);
-	gpu_program_free(asset->gpu_handle);
+	gpu_program_free(asset->gh_program);
 	common_memset(asset, 0, sizeof(*asset));
 }
 
@@ -128,7 +128,7 @@ static void asset_image_fill(struct JSON const * json, void * data) {
 	buffer_free(&file_buffer);
 
 	*context->result = (struct Asset_Image){
-		.gpu_handle = gpu_texture_init(&image),
+		.gh_texture = gpu_texture_init(&image),
 	};
 	image_free(&image);
 
@@ -143,7 +143,7 @@ static void asset_image_load(struct Handle handle) {
 
 static void asset_image_drop(struct Handle handle) {
 	struct Asset_Image * asset = asset_system_get(handle);
-	gpu_texture_free(asset->gpu_handle);
+	gpu_texture_free(asset->gh_texture);
 	common_memset(asset, 0, sizeof(*asset));
 }
 
@@ -200,17 +200,17 @@ static void asset_font_fill(struct JSON const * json, void * data) {
 			struct JSON const * range = json_at(ranges, i);
 
 			uint32_t from, to;
-			struct Handle const typeface_handle = json_load_font_range(range, &from, &to);
+			struct Handle const ah_typeface = json_load_font_range(range, &from, &to);
 
-			struct Asset_Typeface const * typeface_asset = asset_system_get(typeface_handle);
-			if (typeface_asset == NULL) { continue; }
-			font_set_typeface(font, typeface_asset->typeface, from, to);
+			struct Asset_Typeface const * typeface = asset_system_get(ah_typeface);
+			if (typeface == NULL) { continue; }
+			font_set_typeface(font, typeface->typeface, from, to);
 		}
 	}
 
 	*asset = (struct Asset_Font){
 		.font = font,
-		.gpu_handle = gpu_texture_init(font_get_asset(font)),
+		.gh_texture = gpu_texture_init(font_get_asset(font)),
 	};
 	
 }
@@ -224,7 +224,7 @@ static void asset_font_load(struct Handle handle) {
 static void asset_font_drop(struct Handle handle) {
 	struct Asset_Font * asset = asset_system_get(handle);
 	font_free(asset->font);
-	gpu_texture_free(asset->gpu_handle);
+	gpu_texture_free(asset->gh_texture);
 	common_memset(asset, 0, sizeof(*asset));
 }
 
@@ -244,7 +244,7 @@ static void asset_target_fill(struct JSON const * json, void * data) {
 	}
 
 	*context->result = (struct Asset_Target){
-		.gpu_handle = json_read_target(json),
+		.gh_target = json_read_target(json),
 	};
 }
 
@@ -257,7 +257,7 @@ static void asset_target_load(struct Handle handle) {
 
 static void asset_target_drop(struct Handle handle) {
 	struct Asset_Target * asset = asset_system_get(handle);
-	gpu_target_free(asset->gpu_handle);
+	gpu_target_free(asset->gh_target);
 	common_memset(asset, 0, sizeof(*asset));
 }
 
@@ -279,14 +279,14 @@ static void asset_model_load(struct Handle handle) {
 	buffer_free(&file_buffer);
 
 	*asset = (struct Asset_Model){
-		.gpu_handle = gpu_mesh_init(&mesh),
+		.gh_mesh = gpu_mesh_init(&mesh),
 	};
 	mesh_free(&mesh);
 }
 
 static void asset_model_drop(struct Handle handle) {
 	struct Asset_Model * asset = asset_system_get(handle);
-	gpu_mesh_free(asset->gpu_handle);
+	gpu_mesh_free(asset->gh_mesh);
 	common_memset(asset, 0, sizeof(*asset));
 }
 
@@ -306,10 +306,8 @@ static void asset_material_fill(struct JSON const * json, void * data) {
 		return;
 	}
 
-	struct Handle ms_handle = json_load_gfx_material(json);
-
 	*asset = (struct Asset_Material){
-		.ms_handle = ms_handle,
+		.mh_mat = json_load_gfx_material(json),
 	};
 }
 
@@ -321,7 +319,7 @@ static void asset_material_load(struct Handle handle) {
 
 static void asset_material_drop(struct Handle handle) {
 	struct Asset_Material * asset = asset_system_get(handle);
-	material_system_discard(asset->ms_handle);
+	material_system_discard(asset->mh_mat);
 	common_memset(asset, 0, sizeof(*asset));
 }
 

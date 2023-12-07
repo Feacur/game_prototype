@@ -90,11 +90,11 @@ void gfx_material_free(struct Gfx_Material * material) {
 	common_memset(material, 0, sizeof(*material));
 }
 
-void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gpu_handle) {
+void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_program) {
 	struct CString const property_prefix = S_("p_");
 
-	material->gpu_program_handle = gpu_handle;
-	struct Hashmap const * uniforms = gpu_program_get_uniforms(gpu_handle);
+	material->gh_program = gh_program;
+	struct Hashmap const * uniforms = gpu_program_get_uniforms(gh_program);
 	if (uniforms == NULL) { return; }
 
 	uint32_t payload_bytes = 0, properties_count = 0;

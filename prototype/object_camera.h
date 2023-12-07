@@ -26,7 +26,6 @@ struct Camera {
 		struct vec4 color;
 	} clear;
 	struct Handle ah_target;
-	struct Handle gpu_target;
 	//
 	struct uvec2 cached_size;
 };

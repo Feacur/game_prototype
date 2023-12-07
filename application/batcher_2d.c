@@ -30,7 +30,7 @@
 struct Batcher_2D_Word {
 	uint32_t codepoints_offset, codepoints_end;
 	size_t buffer_offset;
-	struct Handle font_asset_handle; float size;
+	struct Handle ah_font; float size;
 	// @note: local to `batcher_2d_add_text`
 	uint32_t breaker_codepoint;
 	struct vec2 position;
@@ -38,8 +38,8 @@ struct Batcher_2D_Word {
 };
 
 struct Batcher_2D_Batch {
-	struct Handle material;
-	struct Handle shader;
+	struct Handle mh_mat;
+	struct Handle gh_program;
 	enum Blend_Mode blend_mode;
 	enum Depth_Mode depth_mode;
 	size_t buffer_offset, buffer_length;
@@ -132,27 +132,27 @@ static void batcher_2d_internal_bake_pass(struct Batcher_2D * batcher) {
 }
 
 void batcher_2d_set_material(struct Batcher_2D * batcher, struct Handle handle) {
-	if (!handle_equals(batcher->batch.material, handle)) {
+	if (!handle_equals(batcher->batch.mh_mat, handle)) {
 		batcher_2d_internal_bake_pass(batcher);
 	}
-	batcher->batch.material = handle;
-	batcher->batch.shader = (struct Handle){0};
+	batcher->batch.mh_mat = handle;
+	batcher->batch.gh_program = (struct Handle){0};
 	batcher->batch.blend_mode = BLEND_MODE_NONE;
 	batcher->batch.depth_mode = DEPTH_MODE_NONE;
 }
 
 void batcher_2d_set_shader(
 	struct Batcher_2D * batcher,
-	struct Handle handle,
+	struct Handle gh_program,
 	enum Blend_Mode blend_mode, enum Depth_Mode depth_mode
 ) {
-	if (!handle_equals(batcher->batch.shader, handle)
+	if (!handle_equals(batcher->batch.gh_program, gh_program)
 		|| batcher->batch.blend_mode != blend_mode
 		|| batcher->batch.depth_mode != depth_mode) {
 		batcher_2d_internal_bake_pass(batcher);
 	}
-	batcher->batch.material = (struct Handle){0};
-	batcher->batch.shader = handle;
+	batcher->batch.mh_mat = (struct Handle){0};
+	batcher->batch.gh_program = gh_program;
 	batcher->batch.blend_mode = blend_mode;
 	batcher->batch.depth_mode = depth_mode;
 }
@@ -198,9 +198,9 @@ void batcher_2d_add_quad(
 void batcher_2d_add_text(
 	struct Batcher_2D * batcher,
 	struct rect rect, struct vec2 alignment, bool wrap,
-	struct Handle font_asset_handle, struct CString value, float size
+	struct Handle gh_font, struct CString value, float size
 ) {
-	struct Asset_Font const * font_asset = asset_system_get(font_asset_handle);
+	struct Asset_Font const * font_asset = asset_system_get(gh_font);
 	if (font_asset == NULL) { return; }
 	if (font_asset->font == NULL) { return; }
 
@@ -231,7 +231,7 @@ void batcher_2d_add_text(
 				// @todo: (?) arena/stack allocator
 				array_push_many(&batcher->words, 1, &(struct Batcher_2D_Word) {
 					.codepoints_offset = codepoints_offset, .codepoints_end = batcher->codepoints.count,
-					.font_asset_handle = font_asset_handle, .size = size,
+					.ah_font = gh_font, .size = size,
 					.breaker_codepoint = it.codepoint,
 					.full_size_x = word_width,
 				});
@@ -255,7 +255,7 @@ void batcher_2d_add_text(
 			// @todo: (?) arena/stack allocator
 			array_push_many(&batcher->words, 1, &(struct Batcher_2D_Word) {
 				.codepoints_offset = codepoints_offset, .codepoints_end = batcher->codepoints.count,
-				.font_asset_handle = font_asset_handle, .size = size,
+				.ah_font = gh_font, .size = size,
 				.full_size_x = word_width,
 			});
 		}
@@ -409,19 +409,19 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 
 		FOR_ARRAY(&batcher->words, it) {
 			struct Batcher_2D_Word const * word = it.value;
-			hashset_set(&batcher->fonts, &word->font_asset_handle);
+			hashset_set(&batcher->fonts, &word->ah_font);
 		}
 
 		FOR_HASHSET (&batcher->fonts, it) {
-			struct Handle const * handle = it.key;
-			struct Asset_Font const * font_asset = asset_system_get(*handle);
-			font_render(font_asset->font);
+			struct Handle const * ah_font = it.key;
+			struct Asset_Font const * font = asset_system_get(*ah_font);
+			font_render(font->font);
 		}
 
 		FOR_HASHSET (&batcher->fonts, it) {
-			struct Handle const * handle = it.key;
-			struct Asset_Font const * font_asset = asset_system_get(*handle);
-			gpu_texture_update(font_asset->gpu_handle, font_get_asset(font_asset->font));
+			struct Handle const * ah_font = it.key;
+			struct Asset_Font const * font = asset_system_get(*ah_font);
+			gpu_texture_update(font->gh_texture, font_get_asset(font->font));
 		}
 	}
 
@@ -430,7 +430,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 		struct Batcher_2D_Word const * word = it.value;
 		size_t b_offset = word->buffer_offset;
 
-		struct Asset_Font const * font_asset = asset_system_get(word->font_asset_handle);
+		struct Asset_Font const * font_asset = asset_system_get(word->ah_font);
 		struct Glyph const * glyph_error = font_get_glyph(font_asset->font, '\0', word->size);
 		struct rect const glyph_error_uv = glyph_error->uv;
 
@@ -464,24 +464,24 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 	FOR_ARRAY(&batcher->batches, it) {
 		struct Batcher_2D_Batch const * batch = it.value;
 
-		struct Handle program_handle = {0};
-		if (!handle_is_null(batch->material)) {
-			struct Gfx_Material const * material = material_system_take(batch->material);
-			program_handle = material->gpu_program_handle;
+		struct Handle gh_program = {0};
+		if (!handle_is_null(batch->mh_mat)) {
+			struct Gfx_Material const * material = material_system_take(batch->mh_mat);
+			gh_program = material->gh_program;
 			array_push_many(gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_MATERIAL,
 				.as.material = {
-					.handle = batch->material,
+					.mh_mat = batch->mh_mat,
 				},
 			});
 		}
 
-		if (!handle_is_null(batch->shader)) {
-			program_handle = batch->shader;
+		if (!handle_is_null(batch->gh_program)) {
+			gh_program = batch->gh_program;
 			array_push_many(gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_SHADER,
 				.as.shader = {
-					.handle = batch->shader,
+					.gh_program = batch->gh_program,
 					.blend_mode = batch->blend_mode,
 					.depth_mode = batch->depth_mode,
 				},
@@ -492,7 +492,7 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 			array_push_many(gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_UNIFORM,
 				.as.uniform = {
-					.program_handle = program_handle,
+					.gh_program = gh_program,
 					.uniforms = &batcher->uniforms,
 					.offset = batch->uniform_offset,
 					.count = batch->uniform_length,
@@ -507,7 +507,7 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 				{
 					.type = GPU_COMMAND_TYPE_BUFFER,
 					.as.buffer = {
-						.buffer_handle = batcher->gh_buffer,
+						.gh_buffer = batcher->gh_buffer,
 						.offset = batch->buffer_offset,
 						.length = batch->buffer_length,
 					},
@@ -515,7 +515,7 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 				{
 					.type = GPU_COMMAND_TYPE_DRAW,
 					.as.draw = {
-						.mesh_handle = batcher->gh_mesh,
+						.gh_mesh = batcher->gh_mesh,
 						.count = 6, .mode = MESH_MODE_TRIANGLES,
 						.instances = (uint32_t)(batch->buffer_length / sizeof(struct Batcher_Instance)),
 					},

@@ -33,10 +33,10 @@ struct Handle json_load_gfx_material(struct JSON const * json) {
 	if (shader_path.data == NULL) { goto fail; }
 
 	struct Handle const ah_shader = asset_system_load(shader_path);
-	struct Asset_Shader const * shader_asset = asset_system_get(ah_shader);
-	if (shader_asset == NULL) { goto fail; }
+	struct Asset_Shader const * shader = asset_system_get(ah_shader);
+	if (shader == NULL) { goto fail; }
 
-	gfx_material_set_shader(material, shader_asset->gpu_handle);
+	gfx_material_set_shader(material, shader->gh_program);
 	json_fill_uniforms(json_get(json, S_("uniforms")), material);
 
 	return ms_handle;
@@ -74,19 +74,19 @@ static struct Handle json_load_texture(struct JSON const * json) {
 
 	if (cstring_equals(type, S_("image"))) {
 		struct Asset_Image const * asset = asset_ptr;
-		return asset->gpu_handle;
+		return asset->gh_texture;
 	}
 
 	if (cstring_equals(type, S_("target"))) {
 		struct Asset_Target const * asset = asset_ptr;
 		enum Texture_Type const texture_type = json_read_texture_type(json_get(json, S_("buffer_type")));
 		uint32_t const index = (uint32_t)json_get_number(json, S_("index"));
-		return gpu_target_get_texture_handle(asset->gpu_handle, texture_type, index);
+		return gpu_target_get_texture_handle(asset->gh_target, texture_type, index);
 	}
 
 	if (cstring_equals(type, S_("font"))) {
 		struct Asset_Font const * asset = asset_ptr;
-		return asset->gpu_handle;
+		return asset->gh_texture;
 	}
 
 	// process errors
@@ -107,7 +107,7 @@ static void json_load_many_texture(struct JSON const * json, uint32_t length, st
 }
 
 static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * material) {
-	struct Hashmap const * gpu_program_uniforms = gpu_program_get_uniforms(material->gpu_program_handle);
+	struct Hashmap const * gpu_program_uniforms = gpu_program_get_uniforms(material->gh_program);
 	if (gpu_program_uniforms == NULL) { goto fail_uniforms; }
 
 	// @todo: arena/stack allocator

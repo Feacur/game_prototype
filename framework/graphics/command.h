@@ -28,8 +28,8 @@ struct GPU_Command_Cull {
 };
 
 struct GPU_Command_Target {
+	struct Handle gh_target;
 	struct uvec2 screen_size;
-	struct Handle handle;
 };
 
 struct GPU_Command_Clear {
@@ -38,29 +38,29 @@ struct GPU_Command_Clear {
 };
 
 struct GPU_Command_Material {
-	struct Handle handle;
+	struct Handle mh_mat;
 };
 
 struct GPU_Command_Shader {
-	struct Handle handle;
+	struct Handle gh_program;
 	enum Blend_Mode blend_mode;
 	enum Depth_Mode depth_mode;
 };
 
 struct GPU_Command_Uniform {
-	struct Handle program_handle;
+	struct Handle gh_program;
 	struct Gfx_Uniforms const * uniforms;
 	uint32_t offset, count;
 };
 
 struct GPU_Command_Buffer {
-	struct Handle buffer_handle;
+	struct Handle gh_buffer;
 	size_t offset, length;
 	uint32_t index;
 };
 
 struct GPU_Command_Draw {
-	struct Handle mesh_handle;
+	struct Handle gh_mesh;
 	uint32_t offset, count;
 	enum Mesh_Mode mode;
 	uint32_t instances;
