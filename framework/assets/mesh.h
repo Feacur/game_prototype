@@ -2,9 +2,9 @@
 #define FRAMEWORK_ASSETS_MESH
 
 #include "framework/common.h"
-#include "framework/graphics/gfx_types.h"
 
 struct Buffer;
+struct Mesh_Parameters;
 
 struct Mesh {
 	uint32_t capacity, count;

@@ -95,7 +95,6 @@ struct Batcher_2D * batcher_2d_init(void) {
 			(struct Mesh_Parameters){
 				.mode = MESH_MODE_TRIANGLES,
 				.type = DATA_TYPE_R32_F,
-				.flags = MESH_FLAG_MUTABLE | MESH_FLAG_WRITE | MESH_FLAG_FREQUENT,
 				.attributes = {
 					ATTRIBUTE_TYPE_POSITION,
 					SIZE_OF_MEMBER(struct Batcher_2D_Vertex, position) / sizeof(float),

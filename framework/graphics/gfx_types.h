@@ -114,10 +114,8 @@ enum Texture_Type {
 };
 
 enum Texture_Flag {
-	TEXTURE_FLAG_NONE    = 0,
-	TEXTURE_FLAG_MUTABLE = (1 << 0),
-	TEXTURE_FLAG_WRITE   = (1 << 1),
-	TEXTURE_FLAG_READ    = (1 << 2),
+	TEXTURE_FLAG_NONE   = 0,
+	TEXTURE_FLAG_OPAQUE = (1 << 0),
 };
 
 enum Swizzle_Op {
@@ -131,13 +129,8 @@ enum Swizzle_Op {
 };
 
 enum Mesh_Flag {
-	MESH_FLAG_NONE     = 0,
-	MESH_FLAG_MUTABLE  = (1 << 0),
-	MESH_FLAG_WRITE    = (1 << 1),
-	MESH_FLAG_READ     = (1 << 2),
-	MESH_FLAG_INTERNAL = (1 << 3),
-	MESH_FLAG_INDEX    = (1 << 4),
-	MESH_FLAG_FREQUENT = (1 << 5),
+	MESH_FLAG_NONE  = 0,
+	MESH_FLAG_INDEX = (1 << 0),
 };
 
 enum Comparison_Op {

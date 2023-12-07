@@ -313,48 +313,6 @@ GLenum gpu_attachment_point(enum Texture_Type texture_type, uint32_t index) {
 	return GL_NONE;
 }
 
-GLenum gpu_mesh_usage_pattern(enum Mesh_Flag flags) {
-	// @note: those are hints, not directives
-	if (flags & MESH_FLAG_MUTABLE) {
-		if (flags & MESH_FLAG_FREQUENT) {
-			return (flags & MESH_FLAG_READ)     ? GL_STREAM_READ
-			     : (flags & MESH_FLAG_WRITE)    ? GL_STREAM_DRAW
-			     : (flags & MESH_FLAG_INTERNAL) ? GL_STREAM_COPY
-			     : (REPORT_CALLSTACK(), DEBUG_BREAK(), GL_NONE); // catch first
-		}
-		return (flags & MESH_FLAG_READ)     ? GL_DYNAMIC_READ
-		     : (flags & MESH_FLAG_WRITE)    ? GL_DYNAMIC_DRAW
-		     : (flags & MESH_FLAG_INTERNAL) ? GL_DYNAMIC_COPY
-		     : (REPORT_CALLSTACK(), DEBUG_BREAK(), GL_NONE); // catch first
-	}
-	return (flags & MESH_FLAG_READ)     ? GL_STATIC_READ
-	     : (flags & MESH_FLAG_WRITE)    ? GL_STATIC_DRAW
-	     : (flags & MESH_FLAG_INTERNAL) ? GL_STATIC_COPY
-	     : (REPORT_CALLSTACK(), DEBUG_BREAK(), GL_NONE); // catch first
-}
-
-GLbitfield gpu_mesh_immutable_flag(enum Mesh_Flag flags) {
-	GLbitfield bitfield = 0;
-	if (flags & MESH_FLAG_WRITE) {
-		bitfield |= GL_DYNAMIC_STORAGE_BIT; // for `glNamedBufferSubData`
-	}
-
-/*
-	if (flags & MESH_FLAG_WRITE) {
-		bitfield |= GL_MAP_WRITE_BIT;
-	}
-	if (flags & MESH_FLAG_READ) {
-		bitfield |= GL_MAP_READ_BIT;
-	}
-	if (bitfield != 0) {
-		bitfield |= GL_MAP_PERSISTENT_BIT;
-		bitfield |= GL_MAP_COHERENT_BIT;
-	}
-*/
-
-	return bitfield;
-}
-
 GLenum gpu_comparison_op(enum Comparison_Op value) {
 	switch (value) {
 		case COMPARISON_OP_NONE:       break;

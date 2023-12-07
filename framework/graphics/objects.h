@@ -26,6 +26,8 @@ struct Hashmap;
 struct Handle gpu_program_init(struct Buffer const * asset);
 void gpu_program_free(struct Handle handle);
 
+void gpu_program_update(struct Handle handle, struct Buffer const * asset);
+
 // uniform string id : `struct Gpu_Uniform`
 struct Hashmap const * gpu_program_get_uniforms(struct Handle handle);
 
@@ -36,23 +38,36 @@ struct Hashmap const * gpu_program_get_uniforms(struct Handle handle);
 struct Handle gpu_texture_init(struct Image const * asset);
 void gpu_texture_free(struct Handle handle);
 
-struct uvec2 gpu_texture_get_size(struct Handle handle);
-
 void gpu_texture_update(struct Handle handle, struct Image const * asset);
+
+struct uvec2 gpu_texture_get_size(struct Handle handle);
 
 // ----- ----- ----- ----- -----
 //     GPU target part
 // ----- ----- ----- ----- -----
 
-struct Handle gpu_target_init(
-	struct uvec2 size,
-	uint32_t parameters_count,
-	struct Texture_Parameters const * parameters
-);
+struct GPU_Target_Asset {
+	struct uvec2 size;
+	uint32_t count;
+	struct Texture_Parameters const * parameters;
+};
+
+struct Handle gpu_target_init(struct GPU_Target_Asset asset);
 void gpu_target_free(struct Handle handle);
+
+void gpu_target_update(struct Handle handle, struct GPU_Target_Asset asset);
 
 struct uvec2 gpu_target_get_size(struct Handle handle);
 struct Handle gpu_target_get_texture_handle(struct Handle handle, enum Texture_Type type, uint32_t index);
+
+// ----- ----- ----- ----- -----
+//     GPU storage part
+// ----- ----- ----- ----- -----
+
+struct Handle gpu_buffer_init(struct Buffer const * asset);
+void gpu_buffer_free(struct Handle handle);
+
+void gpu_buffer_update(struct Handle handle, struct Buffer const * asset);
 
 // ----- ----- ----- ----- -----
 //     GPU mesh part

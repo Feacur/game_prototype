@@ -4,14 +4,14 @@
 			"transform": {
 				"pos": [0, 3, -5],
 				"euler": [0.3926990817, 0, 0],
-				// -- make `aspect_y` beahve as `aspect_x` at 16:9
-				//    scale == tan(fov/2)
+				// -- make `aspect_y` behave as `aspect_x` at 16:9
+				//    scale == tan(fov/2) ---> fov ~= 120 degrees
 				"scale": [1.78, 1.78, 1],
 			},
 			"mode": "aspect_y",
 			"ncp": 0.1, "fcp": 1e39,
-			// // -- render to the buffer
-			// "target": "assets/back_buffer.target",
+			// -- render to the buffer
+			"target": "assets/back_buffer.target",
 			"clear_mask": ["color", "depth"],
 			"clear_color": [0.2, 0.2, 0.2, 1],
 		},
@@ -44,15 +44,15 @@
 			"type": "mesh",
 			"model": "assets/models/quad_xz.obj",
 		},
-		// // -- display the buffer from `camera_1`
-		// {
-		// 	"camera_uid": 2,
-		// 	"material": "assets/materials/back_buffer.material",
-		// 	"type": "quad_2d",
-		// 	"view": [0, 0, 1, 1],
-		// 	"uniform": "p_Texture",
-		// 	"mode": "fit",
-		// },
+		// -- display the buffer from `camera_1`
+		{
+			"camera_uid": 2,
+			"material": "assets/materials/back_buffer.material",
+			"type": "quad_2d",
+			"view": [0, 0, 1, 1],
+			"uniform": "p_Texture",
+			"mode": "fit",
+		},
 		// -- texts
 		{
 			"camera_uid": 2,

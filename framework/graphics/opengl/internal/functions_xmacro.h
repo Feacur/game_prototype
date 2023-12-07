@@ -33,17 +33,6 @@ XMACRO(COLORMASK,             ColorMask)
 XMACRO(BLENDCOLOR,            BlendColor)
 XMACRO(BLENDFUNCSEPARATE,     BlendFuncSeparate)
 XMACRO(BLENDEQUATIONSEPARATE, BlendEquationSeparate)
-//    XMACRO(BLENDFUNC,     BlendFunc)
-//    XMACRO(BLENDEQUATION, BlendEquation)
-//    XMACRO(DRAWBUFFERS,   DrawBuffers)
-// >= 3.0
-//    XMACRO(CLEARBUFFERIV,  ClearBufferiv)
-//    XMACRO(CLEARBUFFERUIV, ClearBufferuiv)
-//    XMACRO(CLEARBUFFERFI,  ClearBufferfi)
-//    XMACRO(CLEARBUFFERFV,  ClearBufferfv)
-// >= 4.0
-//    XMACRO(BLENDEQUATIONSEPARATEI, BlendEquationSeparatei)
-//    XMACRO(BLENDEQUATIONSEPARATEI, BlendEquationSeparatei)
 // >= 4.5
 XMACRO(NAMEDFRAMEBUFFERDRAWBUFFERS, NamedFramebufferDrawBuffers)
 XMACRO(CLEARNAMEDFRAMEBUFFERIV,     ClearNamedFramebufferiv)
@@ -75,8 +64,8 @@ XMACRO(FRONTFACE, FrontFace)
 
 // -- GPU program
 // >= 2.0
-XMACRO(ATTACHSHADER, AttachShader) // requires both 'program' and 'shader' ids
-XMACRO(DETACHSHADER, DetachShader) // requires both 'program' and 'shader' ids
+XMACRO(ATTACHSHADER, AttachShader)
+XMACRO(DETACHSHADER, DetachShader)
 //
 XMACRO(CREATEPROGRAM,     CreateProgram)
 XMACRO(DELETEPROGRAM,     DeleteProgram)
@@ -104,38 +93,13 @@ XMACRO(GETPROGRAMRESOURCENAME, GetProgramResourceName)
 //    XMACRO(GETATTRIBLOCATION, GetAttribLocation)
 
 // -- uniforms (GPU program variables and constants)
-// >= 2.0
-//    XMACRO(GETACTIVEUNIFORM,   GetActiveUniform)
-//    XMACRO(GETUNIFORMLOCATION, GetUniformLocation)
-// >= 3.1
-//    XMACRO(GETACTIVEUNIFORMSIV,  GetActiveUniformsiv)
-//    XMACRO(GETACTIVEUNIFORMNAME, GetActiveUniformName)
-//
-//    XMACRO(UNIFORM1FV, Uniform1fv)
-//    XMACRO(UNIFORM2FV, Uniform2fv)
-//    XMACRO(UNIFORM3FV, Uniform3fv)
-//    XMACRO(UNIFORM4FV, Uniform4fv)
-//
-//    XMACRO(UNIFORM1IV, Uniform1iv) // also a sampler uniform
-//    XMACRO(UNIFORM2IV, Uniform2iv)
-//    XMACRO(UNIFORM3IV, Uniform3iv)
-//    XMACRO(UNIFORM4IV, Uniform4iv)
-//
-//    XMACRO(UNIFORMMATRIX2FV, UniformMatrix2fv)
-//    XMACRO(UNIFORMMATRIX3FV, UniformMatrix3fv)
-//    XMACRO(UNIFORMMATRIX4FV, UniformMatrix4fv)
-// >= 3.0
-//    XMACRO(UNIFORM1UIV, Uniform1uiv)
-//    XMACRO(UNIFORM2UIV, Uniform2uiv)
-//    XMACRO(UNIFORM3UIV, Uniform3uiv)
-//    XMACRO(UNIFORM4UIV, Uniform4uiv)
 // >= 4.1
 XMACRO(PROGRAMUNIFORM1FV, ProgramUniform1fv)
 XMACRO(PROGRAMUNIFORM2FV, ProgramUniform2fv)
 XMACRO(PROGRAMUNIFORM3FV, ProgramUniform3fv)
 XMACRO(PROGRAMUNIFORM4FV, ProgramUniform4fv)
 //
-XMACRO(PROGRAMUNIFORM1IV, ProgramUniform1iv) // also a sampler uniform
+XMACRO(PROGRAMUNIFORM1IV, ProgramUniform1iv)
 XMACRO(PROGRAMUNIFORM2IV, ProgramUniform2iv)
 XMACRO(PROGRAMUNIFORM3IV, ProgramUniform3iv)
 XMACRO(PROGRAMUNIFORM4IV, ProgramUniform4iv)
@@ -151,16 +115,7 @@ XMACRO(PROGRAMUNIFORMMATRIX4FV, ProgramUniformMatrix4fv)
 
 // -- textures
 // >= 2.0
-XMACRO(BINDTEXTURE,    BindTexture)
-XMACRO(TEXIMAGE2D,     TexImage2D)
 XMACRO(DELETETEXTURES, DeleteTextures)
-//    XMACRO(GENTEXTURES,   GenTextures)
-//    XMACRO(TEXPARAMETERI, TexParameteri)
-//    XMACRO(TEXSUBIMAGE2D, TexSubImage2D)
-// >= 3.0
-//    XMACRO(GENERATEMIPMAP, GenerateMipmap)
-// >= 4.2
-//    XMACRO(TEXSTORAGE2D, TexStorage2D)
 // >= 4.5
 XMACRO(CREATETEXTURES,     CreateTextures)
 XMACRO(TEXTURESTORAGE2D,   TextureStorage2D)
@@ -176,8 +131,6 @@ XMACRO(GENERATETEXTUREMIPMAP, GenerateTextureMipmap)
 // >= 3.0
 XMACRO(DELETEFRAMEBUFFERS,  DeleteFramebuffers)
 XMACRO(DELETERENDERBUFFERS, DeleteRenderbuffers)
-//    XMACRO(GENFRAMEBUFFERS,      GenFramebuffers)
-//    XMACRO(FRAMEBUFFERTEXTURE2D, FramebufferTexture2D)
 // >= 4.5
 XMACRO(CREATEFRAMEBUFFERS,           CreateFramebuffers)
 XMACRO(NAMEDFRAMEBUFFERTEXTURE,      NamedFramebufferTexture)
@@ -196,34 +149,25 @@ XMACRO(NAMEDFRAMEBUFFERRENDERBUFFER, NamedFramebufferRenderbuffer)
 
 // -- meshes
 // >= 2.0
-XMACRO(GENBUFFERS,               GenBuffers)
-XMACRO(DELETEBUFFERS,            DeleteBuffers)
-//    XMACRO(BINDBUFFER,               BindBuffer)
-//    XMACRO(BUFFERDATA,               BufferData)
-//    XMACRO(DISABLEVERTEXATTRIBARRAY, DisableVertexAttribArray)
-//    XMACRO(ENABLEVERTEXATTRIBARRAY,  EnableVertexAttribArray)
-//    XMACRO(VERTEXATTRIBPOINTER,      VertexAttribPointer)
-//    XMACRO(BUFFERSUBDATA,            BufferSubData)
+XMACRO(GENBUFFERS,    GenBuffers)
+XMACRO(DELETEBUFFERS, DeleteBuffers)
 // >= 3.0
 XMACRO(DELETEVERTEXARRAYS, DeleteVertexArrays)
 XMACRO(BINDVERTEXARRAY,    BindVertexArray)
-//    XMACRO(GENVERTEXARRAYS,    GenVertexArrays)
-// >= 4.3
-//    XMACRO(BINDVERTEXBUFFER,    BindVertexBuffer)
-//    XMACRO(VERTEXATTRIBFORMAT,  VertexAttribFormat)
-//    XMACRO(VERTEXATTRIBBINDING, VertexAttribBinding)
 // >= 4.5
 XMACRO(CREATEVERTEXARRAYS,       CreateVertexArrays)
 XMACRO(CREATEBUFFERS,            CreateBuffers)
-XMACRO(NAMEDBUFFERDATA,          NamedBufferData)
 XMACRO(VERTEXARRAYELEMENTBUFFER, VertexArrayElementBuffer)
 XMACRO(VERTEXARRAYVERTEXBUFFER,  VertexArrayVertexBuffer)
 XMACRO(ENABLEVERTEXARRAYATTRIB,  EnableVertexArrayAttrib)
-XMACRO(VERTEXARRAYATTRIBFORMAT,  VertexArrayAttribFormat)
+XMACRO(DISABLEVERTEXARRAYATTRIB, DisableVertexArrayAttrib)
 XMACRO(VERTEXARRAYATTRIBBINDING, VertexArrayAttribBinding)
+XMACRO(VERTEXARRAYATTRIBFORMAT,  VertexArrayAttribFormat)
 XMACRO(NAMEDBUFFERSTORAGE,       NamedBufferStorage)
 XMACRO(NAMEDBUFFERSUBDATA,       NamedBufferSubData)
-//    XMACRO(DISABLEVERTEXARRAYATTRIB, DisableVertexArrayAttrib)
+
+// -- storage
+XMACRO(BINDBUFFERBASE, BindBufferBase)
 
 // -- display
 // >= 2.0

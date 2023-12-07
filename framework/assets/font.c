@@ -57,7 +57,6 @@ struct Font * font_init(void) {
 			.parameters = {
 				.texture_type = TEXTURE_TYPE_COLOR,
 				.data_type = DATA_TYPE_R8_UNORM,
-				.flags = TEXTURE_FLAG_MUTABLE | TEXTURE_FLAG_WRITE,
 			},
 			.settings = {
 				.swizzle = {

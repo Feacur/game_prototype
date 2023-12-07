@@ -183,7 +183,7 @@ struct Texture_Parameters json_read_texture_parameters(struct JSON const * json)
 		return (struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_COLOR,
 			.data_type = DATA_TYPE_RGBA8_UNORM,
-			.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
+			.flags = buffer_read ? TEXTURE_FLAG_NONE : TEXTURE_FLAG_OPAQUE,
 		};
 	}
 
@@ -191,7 +191,7 @@ struct Texture_Parameters json_read_texture_parameters(struct JSON const * json)
 		return (struct Texture_Parameters) {
 			.texture_type = TEXTURE_TYPE_DEPTH,
 			.data_type = DATA_TYPE_R32_F,
-			.flags = buffer_read ? TEXTURE_FLAG_READ : TEXTURE_FLAG_NONE,
+			.flags = buffer_read ? TEXTURE_FLAG_NONE : TEXTURE_FLAG_OPAQUE,
 		};
 	}
 
@@ -238,7 +238,11 @@ struct Handle json_read_target(struct JSON const * json) {
 		struct uvec2 size = {0};
 		json_read_many_u32(json_get(json, S_("size")), 2, &size.x);
 		if (size.x > 0 && size.y > 0) {
-			result = gpu_target_init(size, parameters_buffer.count, parameters_buffer.data);
+			result = gpu_target_init((struct GPU_Target_Asset){
+				.size = size,
+				.count = parameters_buffer.count,
+				.parameters = parameters_buffer.data,
+			});
 		}
 	}
 
