@@ -18,9 +18,9 @@
 		{
 			"mode": "screen",
 			"ncp": 0, "fcp": 1, "ortho": 1,
-			// // -- clear default framebuffer
-			// "clear_mask": ["color", "depth"],
-			// "clear_color": [0, 0, 0, 1],
+			// -- clear default framebuffer
+			"clear_mask": ["color", "depth"],
+			"clear_color": [0, 0, 0, 1],
 		},
 	],
 	"entities": [

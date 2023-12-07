@@ -347,6 +347,7 @@ static bool gpu_texture_upload(struct Gpu_Texture * gpu_texture, struct Image co
 	if (gpu_texture->size.x != asset->size.x) { return false; }
 	if (gpu_texture->size.y != asset->size.y) { return false; }
 
+	if (asset->data == NULL) { return true; }
 	if (asset->size.x == 0)  { return true; }
 	if (asset->size.y == 0)  { return true; }
 
@@ -623,7 +624,8 @@ static bool gpu_buffer_upload(struct Gpu_Buffer * gpu_buffer, struct Buffer cons
 	if (gpu_buffer->capacity < asset->size) { return false; }
 
 	gpu_buffer->size = asset->size;
-	if (asset->size == 0) { return true; }
+	if (asset->data == NULL) { return true; }
+	if (asset->size == 0)    { return true; }
 
 	glNamedBufferSubData(
 		gpu_buffer->id, 0,

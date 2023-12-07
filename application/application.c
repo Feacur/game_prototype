@@ -153,21 +153,17 @@ void application_update(void) {
 		platform_system_sleep(0);
 	}
 
+	// TRC("%5llu micros", mul_div_u64(
+	// 	platform_timer_get_ticks() - ticks_before
+	// 	, 1000000
+	// 	, platform_timer_get_ticks_per_second()
+	// ));
+
 	gs_app.ticks.elapsed = clamp_u32(
 		(uint32_t)(platform_timer_get_ticks() - ticks_before),
 		(uint32_t)(platform_timer_get_ticks_per_second() / 10000), // max FPS
 		(uint32_t)(platform_timer_get_ticks_per_second() /    10)  // min FPS
 	);
-
-	// @note: resulting delta time is extremely inconsistent and stuttery
-	// {
-	// 	static uint64_t prev = 0;
-	// 	uint64_t const fps = platform_timer_get_ticks_per_second() / gs_app.ticks.elapsed;
-	// 	if (fps > prev + 10 || fps < prev - 10) {
-	// 		TRC("%3llu", fps);
-	// 	}
-	// 	prev = fps;
-	// }
 
 	// done
 	return;

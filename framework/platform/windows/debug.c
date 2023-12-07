@@ -165,7 +165,7 @@ void debug_to_system_free(void) {
 // ----- ----- ----- ----- -----
 
 //
-#include "framework/platform_debug.h"
+#include "framework/platform/debug.h"
 
 struct Callstack platform_debug_get_callstack(uint32_t skip) { (void)skip; return (struct Callstack){0}; }
 struct CString platform_debug_get_stacktrace(struct Callstack callstack) { (void)callstack; return (struct CString){0}; }
