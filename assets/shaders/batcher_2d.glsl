@@ -1,15 +1,43 @@
 #if defined(VERTEX_SHADER)
-layout(location = ATTRIBUTE_TYPE_POSITION) in vec2 a_Position;
-layout(location = ATTRIBUTE_TYPE_TEXCOORD) in vec2 a_TexCoord;
-layout(location = ATTRIBUTE_TYPE_COLOR) in vec4 a_Color;
 
-out vec2 v_TexCoord;
+// quad layout
+// 4-----------3  2
+// |         /  / |
+// |       /  /   |
+// |     /  /     |
+// |   /  /       |
+// | /  /         |
+// 5  0-----------1
+
+struct Instance {
+	vec4 quad;
+	vec4 uv;
+	vec4 color;
+};
+
+layout(std430, binding = 0) buffer Buffer {
+	Instance instances[];
+};
+
 out vec4 v_Color;
+out vec2 v_TexCoord;
 
 void main() {
-	v_TexCoord = a_TexCoord;
-	v_Color = a_Color;
-	gl_Position = vec4(a_Position, 0, 1);
+	Instance inst = instances[gl_InstanceID];
+
+	vec2 position[6] = {
+		inst.quad.xy, inst.quad.zy, inst.quad.zw,
+		inst.quad.zw, inst.quad.xw, inst.quad.xy,
+	};
+
+	vec2 tex_coords[6] = {
+		inst.uv.xy, inst.uv.zy, inst.uv.zw,
+		inst.uv.zw, inst.uv.xw, inst.uv.xy,
+	};
+
+	v_Color = inst.color;
+	v_TexCoord = tex_coords[gl_VertexID];
+	gl_Position = vec4(position[gl_VertexID], 0, 1);
 }
 #endif
 
@@ -17,8 +45,8 @@ void main() {
 
 
 #if defined(FRAGMENT_SHADER)
-in vec2 v_TexCoord;
 in vec4 v_Color;
+in vec2 v_TexCoord;
 
 uniform vec4 p_Tint;
 uniform sampler2D p_Texture;

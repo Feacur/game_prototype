@@ -1132,13 +1132,27 @@ inline static void gpu_execute_uniform(struct GPU_Command_Uniform const * comman
 	}
 }
 
+inline static void gpu_execute_buffer(struct GPU_Command_Buffer const * command) {
+	struct Gpu_Buffer const * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, command->buffer_handle);
+	if (gpu_buffer == NULL) { return; }
+
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, command->index, gpu_buffer->id, (GLsizeiptr)command->offset, (GLsizeiptr)command->length);
+}
+
 inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
-	if (handle_is_null(command->mesh_handle)) { return; }
+	gpu_select_mesh(command->mesh_handle);
 
 	struct Gpu_Mesh const * mesh = sparseset_get(&gs_graphics_state.meshes, command->mesh_handle);
 	if (mesh == NULL) { return; }
 
-	gpu_select_mesh(command->mesh_handle);
+	if (mesh->buffers.count == 0 && command->mode != MESH_MODE_NONE) {
+		glDrawArraysInstanced(
+			gpu_mesh_mode(command->mode),
+			(GLint)command->offset,
+			(GLsizei)command->count,
+			(GLsizei)max_u32(command->instances, 1)
+		);
+	}
 
 	FOR_ARRAY(&mesh->buffers, it) {
 		struct Handle const * gh_buffer = it.value;
@@ -1148,8 +1162,8 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 		if (gpu_buffer->size == 0) { continue; }
 
 		uint32_t const offset = command->offset;
-		uint32_t const count = (command->length != 0)
-			? command->length
+		uint32_t const count = (command->count != 0)
+			? command->count
 			: (uint32_t)(gpu_buffer->size / data_type_get_size(parameters->type));
 
 		if (parameters->flags & MESH_FLAG_INDEX) {
@@ -1190,6 +1204,7 @@ void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 			case GPU_COMMAND_TYPE_MATERIAL: gpu_execute_material(&command->as.material); break;
 			case GPU_COMMAND_TYPE_SHADER:   gpu_execute_shader(&command->as.shader);     break;
 			case GPU_COMMAND_TYPE_UNIFORM:  gpu_execute_uniform(&command->as.uniform);   break;
+			case GPU_COMMAND_TYPE_BUFFER:   gpu_execute_buffer(&command->as.buffer);     break;
 			case GPU_COMMAND_TYPE_DRAW:     gpu_execute_draw(&command->as.draw);         break;
 		}
 	}

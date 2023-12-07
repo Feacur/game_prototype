@@ -18,6 +18,7 @@ enum GPU_Command_Type {
 	GPU_COMMAND_TYPE_MATERIAL,
 	GPU_COMMAND_TYPE_SHADER,
 	GPU_COMMAND_TYPE_UNIFORM,
+	GPU_COMMAND_TYPE_BUFFER,
 	GPU_COMMAND_TYPE_DRAW,
 };
 
@@ -52,9 +53,16 @@ struct GPU_Command_Uniform {
 	uint32_t offset, count;
 };
 
+struct GPU_Command_Buffer {
+	struct Handle buffer_handle;
+	size_t offset, length;
+	uint32_t index;
+};
+
 struct GPU_Command_Draw {
 	struct Handle mesh_handle;
-	uint32_t offset, length;
+	uint32_t offset, count;
+	enum Mesh_Mode mode;
 	uint32_t instances;
 };
 
@@ -67,6 +75,7 @@ struct GPU_Command {
 		struct GPU_Command_Material material;
 		struct GPU_Command_Shader   shader;
 		struct GPU_Command_Uniform  uniform;
+		struct GPU_Command_Buffer   buffer;
 		struct GPU_Command_Draw     draw;
 	} as;
 };

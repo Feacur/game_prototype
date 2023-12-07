@@ -167,7 +167,8 @@ XMACRO(NAMEDBUFFERSTORAGE,       NamedBufferStorage)
 XMACRO(NAMEDBUFFERSUBDATA,       NamedBufferSubData)
 
 // -- storage
-XMACRO(BINDBUFFERBASE, BindBufferBase)
+// >= 3.0
+XMACRO(BINDBUFFERRANGE, BindBufferRange)
 
 // -- display
 // >= 2.0

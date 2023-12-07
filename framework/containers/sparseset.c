@@ -64,7 +64,7 @@ struct Handle sparseset_aquire(struct Sparseset * sparseset, void const * value)
 }
 
 void sparseset_discard(struct Sparseset * sparseset, struct Handle handle) {
-	if (handle.id == 0)                      { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (handle_is_null(handle))              { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 	if (handle.id > sparseset->sparse.count) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	uint32_t const handle_id = handle.id - 1;
@@ -93,7 +93,7 @@ void sparseset_discard(struct Sparseset * sparseset, struct Handle handle) {
 }
 
 void * sparseset_get(struct Sparseset const * sparseset, struct Handle handle) {
-	if (handle.id == 0)                      { return NULL; }
+	if (handle_is_null(handle))              { return NULL; }
 	if (handle.id > sparseset->sparse.count) { return NULL; }
 
 	uint32_t const handle_id = handle.id - 1;
@@ -105,7 +105,7 @@ void * sparseset_get(struct Sparseset const * sparseset, struct Handle handle) {
 }
 
 void sparseset_set(struct Sparseset * sparseset, struct Handle handle, void const * value) {
-	if (handle.id == 0)                      { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (handle_is_null(handle))              { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 	if (handle.id > sparseset->sparse.count) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	uint32_t const handle_id = handle.id - 1;

@@ -5,8 +5,7 @@
 
 #include "framework/containers/hashset.h"
 #include "framework/containers/array.h"
-#include "framework/containers/array.h"
-#include "framework/containers/array.h"
+#include "framework/containers/buffer.h"
 
 #include "framework/assets/mesh.h"
 #include "framework/assets/font.h"
@@ -28,20 +27,9 @@
 // @idea: static batching option; cache vertices and stuff until changed
 // @idea: add a 3d batcher
 
-// quad layout
-// 4-----------3  2
-// |         /  / |
-// |       /  /   |
-// |     /  /     |
-// |   /  /       |
-// | /  /         |
-// 5  0-----------1
-
-#define BATCHER_2D_BUFFERS_COUNT 1
-
 struct Batcher_2D_Word {
 	uint32_t codepoints_offset, codepoints_end;
-	uint32_t buffer_vertices_offset;
+	size_t buffer_offset;
 	struct Handle font_asset_handle; float size;
 	// @note: local to `batcher_2d_add_text`
 	uint32_t breaker_codepoint;
@@ -54,13 +42,13 @@ struct Batcher_2D_Batch {
 	struct Handle shader;
 	enum Blend_Mode blend_mode;
 	enum Depth_Mode depth_mode;
-	uint32_t vertex_offset, vertex_length;
+	size_t buffer_offset, buffer_length;
 	uint32_t uniform_offset, uniform_length;
 };
 
-struct Batcher_2D_Vertex {
-	struct vec2 position;
-	struct vec2 tex_coord;
+struct Batcher_Instance {
+	struct rect quad;
+	struct rect uv;
 	struct vec4 color;
 };
 
@@ -76,10 +64,9 @@ struct Batcher_2D {
 	struct vec4 color;
 	struct mat4 matrix;
 	//
-	struct Array buffer_vertices; // `struct Batcher_2D_Vertex`
-	//
-	struct Mesh_Parameters mesh_parameters[BATCHER_2D_BUFFERS_COUNT];
-	struct Handle gpu_mesh_handle;
+	struct Buffer buffer;
+	struct Handle gh_buffer;
+	struct Handle gh_mesh;
 };
 
 //
@@ -91,45 +78,28 @@ struct Batcher_2D * batcher_2d_init(void) {
 		.uniforms = gfx_uniforms_init(),
 		.color = (struct vec4){1, 1, 1, 1},
 		.matrix = c_mat4_identity,
-		.mesh_parameters = {
-			(struct Mesh_Parameters){
-				.mode = MESH_MODE_TRIANGLES,
-				.type = DATA_TYPE_R32_F,
-				.attributes = {
-					ATTRIBUTE_TYPE_POSITION,
-					SIZE_OF_MEMBER(struct Batcher_2D_Vertex, position) / sizeof(float),
-					ATTRIBUTE_TYPE_TEXCOORD,
-					SIZE_OF_MEMBER(struct Batcher_2D_Vertex, tex_coord) / sizeof(float),
-					ATTRIBUTE_TYPE_COLOR,
-					SIZE_OF_MEMBER(struct Batcher_2D_Vertex, color) / sizeof(float),
-				},
-			},
-		},
 		.codepoints      = array_init(sizeof(uint32_t)),
 		.batches         = array_init(sizeof(struct Batcher_2D_Batch)),
 		.words           = array_init(sizeof(struct Batcher_2D_Word)),
 		.fonts           = hashset_init(&hash32, sizeof(struct Handle)),
-		.buffer_vertices = array_init(sizeof(struct Batcher_2D_Vertex)),
+		.buffer          = buffer_init(NULL),
+		.gh_buffer       = gpu_buffer_init(&(struct Buffer){0}),
+		.gh_mesh         = gpu_mesh_init(&(struct Mesh){0}),
 	};
 
-	//
-	batcher->gpu_mesh_handle = gpu_mesh_init(&(struct Mesh){
-		.count      = BATCHER_2D_BUFFERS_COUNT,
-		.buffers    = (struct Buffer[BATCHER_2D_BUFFERS_COUNT]){0},
-		.parameters = batcher->mesh_parameters,
-	});
 
 	return batcher;
 }
 
 void batcher_2d_free(struct Batcher_2D * batcher) {
-	gpu_mesh_free(batcher->gpu_mesh_handle);
+	gpu_buffer_free(batcher->gh_buffer);
+	gpu_mesh_free(batcher->gh_mesh);
 	//
 	array_free(&batcher->codepoints);
 	array_free(&batcher->batches);
 	array_free(&batcher->words);
 	hashset_free(&batcher->fonts);
-	array_free(&batcher->buffer_vertices);
+	buffer_free(&batcher->buffer);
 	//
 	gfx_uniforms_free(&batcher->uniforms);
 	//
@@ -146,17 +116,17 @@ void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const value)
 }
 
 static void batcher_2d_internal_bake_pass(struct Batcher_2D * batcher) {
-	uint32_t const v_offset = batcher->buffer_vertices.count;
-	uint32_t const u_offset = batcher->uniforms.headers.count;
-	if (batcher->batch.vertex_offset < v_offset || batcher->batch.uniform_offset < v_offset) {
-		batcher->batch.vertex_length = v_offset - batcher->batch.vertex_offset;
-		batcher->batch.uniform_length = u_offset - batcher->batch.uniform_offset;
+	size_t   const buffer_offset  = batcher->buffer.size;
+	uint32_t const uniform_offset = batcher->uniforms.headers.count;
+	if (batcher->batch.buffer_offset < buffer_offset || batcher->batch.uniform_offset < uniform_offset) {
+		batcher->batch.buffer_length  = buffer_offset  - batcher->batch.buffer_offset;
+		batcher->batch.uniform_length = uniform_offset - batcher->batch.uniform_offset;
 		array_push_many(&batcher->batches, 1, &batcher->batch);
 
-		batcher->batch.vertex_offset = v_offset;
-		batcher->batch.uniform_offset = u_offset;
+		batcher->batch.buffer_offset = buffer_offset;
+		batcher->batch.uniform_offset = uniform_offset;
 
-		batcher->batch.vertex_length = 0;
+		batcher->batch.buffer_length = 0;
 		batcher->batch.uniform_length = 0;
 	}
 }
@@ -202,35 +172,27 @@ void batcher_2d_uniforms_id_push(struct Batcher_2D * batcher, uint32_t id, struc
 	gfx_uniforms_id_push(&batcher->uniforms, id, value);
 }
 
-inline static struct Batcher_2D_Vertex batcher_2d_internal_make_vertex(struct mat4 m, struct vec2 position, struct vec2 tex_coord, struct vec4 color) {
-	return (struct Batcher_2D_Vertex){
-		.position = {
-			m.x.x * position.x + m.y.x * position.y + m.w.x,
-			m.x.y * position.x + m.y.y * position.y + m.w.y,
-		},
-		.tex_coord = tex_coord,
-		.color = color,
-	};
-
-/*
-	.position = mat4_mul_vec(m, position as vec4);
-*/
-}
-
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
 	struct rect rect,
 	struct rect uv
 ) {
-	struct vec4 const color = batcher->color;
-	array_push_many(&batcher->buffer_vertices, 6, (struct Batcher_2D_Vertex[]){
-		batcher_2d_internal_make_vertex(batcher->matrix, rect.min, uv.min, color),
-		batcher_2d_internal_make_vertex(batcher->matrix, (struct vec2){rect.max.x, rect.min.y}, (struct vec2){uv.max.x, uv.min.y}, color),
-		batcher_2d_internal_make_vertex(batcher->matrix, rect.max, uv.max, color),
-		batcher_2d_internal_make_vertex(batcher->matrix, rect.max, uv.max, color),
-		batcher_2d_internal_make_vertex(batcher->matrix, (struct vec2){rect.min.x, rect.max.y}, (struct vec2){uv.min.x, uv.max.y}, color),
-		batcher_2d_internal_make_vertex(batcher->matrix, rect.min, uv.min, color),
-	});
+	struct mat4 const m = batcher->matrix;
+	struct Batcher_Instance const instance = {
+		.quad = {
+			{
+				m.x.x * rect.min.x + m.y.x * rect.min.y + m.w.x,
+				m.x.y * rect.min.x + m.y.y * rect.min.y + m.w.y,
+			},
+			{
+				m.x.x * rect.max.x + m.y.x * rect.max.y + m.w.x,
+				m.x.y * rect.max.x + m.y.y * rect.max.y + m.w.y,
+			},
+		},
+		.uv = uv,
+		.color = batcher->color,
+	};
+	buffer_push_many(&batcher->buffer, sizeof(instance), &instance);
 }
 
 void batcher_2d_add_text(
@@ -396,7 +358,7 @@ void batcher_2d_add_text(
 	// translate words into vertices
 	for (uint32_t word_i = words_offset; word_i < batcher->words.count; word_i++) {
 		struct Batcher_2D_Word * word = array_at(&batcher->words, word_i);
-		word->buffer_vertices_offset = batcher->buffer_vertices.count;
+		word->buffer_offset = batcher->buffer.size;
 
 		struct vec2 offset = word->position;
 		if (offset.y > rect.max.y) { word->codepoints_end = word->codepoints_offset; continue; } // void entry
@@ -466,7 +428,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 	// fill quads UVs
 	FOR_ARRAY(&batcher->words, it) {
 		struct Batcher_2D_Word const * word = it.value;
-		uint32_t vertices_offset = word->buffer_vertices_offset;
+		size_t b_offset = word->buffer_offset;
 
 		struct Asset_Font const * font_asset = asset_system_get(word->font_asset_handle);
 		struct Glyph const * glyph_error = font_get_glyph(font_asset->font, '\0', word->size);
@@ -480,15 +442,10 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 			struct Glyph const * glyph = font_get_glyph(font_asset->font, *codepoint, word->size);
 			struct rect const uv = (glyph != NULL) ? glyph->uv : glyph_error_uv;
 
-			struct Batcher_2D_Vertex * vertices = array_at(&batcher->buffer_vertices, vertices_offset);
-			vertices[0].tex_coord = uv.min;
-			vertices[1].tex_coord = (struct vec2){uv.max.x, uv.min.y};
-			vertices[2].tex_coord = uv.max;
-			vertices[3].tex_coord = uv.max;
-			vertices[4].tex_coord = (struct vec2){uv.min.x, uv.max.y};
-			vertices[5].tex_coord = uv.min;
+			struct Batcher_Instance * instance = buffer_at(&batcher->buffer, b_offset);
+			instance->uv = uv;
 
-			vertices_offset += 6;
+			b_offset += sizeof(struct Batcher_Instance);
 		}
 	}
 }
@@ -498,7 +455,7 @@ void batcher_2d_clear(struct Batcher_2D * batcher) {
 	array_clear(&batcher->codepoints);
 	array_clear(&batcher->batches);
 	array_clear(&batcher->words);
-	array_clear(&batcher->buffer_vertices);
+	buffer_clear(&batcher->buffer);
 	gfx_uniforms_clear(&batcher->uniforms);
 }
 
@@ -543,12 +500,25 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 			});
 		}
 
-		if (batch->vertex_length > 0) {
-			array_push_many(gpu_commands, 1, &(struct GPU_Command){
-				.type = GPU_COMMAND_TYPE_DRAW,
-				.as.draw = {
-					.mesh_handle = batcher->gpu_mesh_handle,
-					.offset = batch->vertex_offset, .length = batch->vertex_length,
+		if (batch->buffer_length > 0) {
+			// @note: draw instances quads, each quad is 2 triangles,
+			// thus we need 6 vertices; the rest is shader-handled
+			array_push_many(gpu_commands, 2, (struct GPU_Command[]){
+				{
+					.type = GPU_COMMAND_TYPE_BUFFER,
+					.as.buffer = {
+						.buffer_handle = batcher->gh_buffer,
+						.offset = batch->buffer_offset,
+						.length = batch->buffer_length,
+					},
+				},
+				{
+					.type = GPU_COMMAND_TYPE_DRAW,
+					.as.draw = {
+						.mesh_handle = batcher->gh_mesh,
+						.count = 6, .mode = MESH_MODE_TRIANGLES,
+						.instances = (uint32_t)(batch->buffer_length / sizeof(struct Batcher_Instance)),
+					},
 				},
 			});
 		}
@@ -561,20 +531,11 @@ void batcher_2d_bake(struct Batcher_2D * batcher) {
 		WRN("unissued batches");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
-	if (batcher->batch.vertex_offset < batcher->buffer_vertices.count) {
+	if (batcher->batch.buffer_offset < batcher->buffer.size) {
 		WRN("unissued vertices");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
 
 	batcher_2d_bake_words(batcher);
-	gpu_mesh_update(batcher->gpu_mesh_handle, &(struct Mesh){
-		.count = BATCHER_2D_BUFFERS_COUNT,
-		.buffers = (struct Buffer[BATCHER_2D_BUFFERS_COUNT]){
-			(struct Buffer){
-				.data = batcher->buffer_vertices.data,
-				.size = sizeof(struct Batcher_2D_Vertex) * batcher->buffer_vertices.count,
-			},
-		},
-		.parameters = batcher->mesh_parameters,
-	});
+	gpu_buffer_update(batcher->gh_buffer, &batcher->buffer);
 }
