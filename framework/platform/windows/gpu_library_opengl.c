@@ -164,7 +164,7 @@ void gpu_context_draw_frame(struct Gpu_Context const * gpu_context) {
 	if (gpu_context->pixel_format.double_buffering) {
 		if (SwapBuffers(device)) { return; }
 	}
-	glFinish();
+	gl.Finish();
 }
 
 void gpu_context_end_frame(struct Gpu_Context const * gpu_context) {
