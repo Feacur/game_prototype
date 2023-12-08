@@ -11,7 +11,7 @@
 #include "framework/assets/font.h"
 
 #include "framework/graphics/gfx_material.h"
-#include "framework/graphics/objects.h"
+#include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/command.h"
 
 #include "framework/systems/string_system.h"

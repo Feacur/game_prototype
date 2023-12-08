@@ -8,6 +8,43 @@
 	#include <GL/glcorearb.h>
 #include "framework/__warnings_pop.h"
 
+struct GPU_Uniform_Internal {
+	struct GPU_Uniform base;
+	GLint location;
+};
+
+struct GPU_Program_Internal {
+	struct GPU_Program base;
+	GLuint id;
+};
+
+struct GPU_Texture_Internal {
+	struct GPU_Texture base;
+	GLuint id;
+};
+
+struct GPU_Target_Buffer_Internal {
+	struct GPU_Target_Buffer base;
+	GLuint id;
+};
+
+struct GPU_Target_Internal {
+	struct GPU_Target base;
+	GLuint id;
+};
+
+struct GPU_Buffer_Internal {
+	struct GPU_Buffer base;
+	GLuint id;
+};
+
+struct GPU_Mesh_Internal {
+	struct GPU_Mesh base;
+	GLuint id;
+};
+
+//
+
 GLenum gpu_vertex_value_type(enum Data_Type value);
 GLenum gpu_index_value_type(enum Data_Type value);
 enum Data_Type translate_program_data_type(GLint value);

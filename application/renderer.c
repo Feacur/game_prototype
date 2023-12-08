@@ -4,7 +4,7 @@
 
 #include "framework/containers/strings.h"
 
-#include "framework/graphics/objects.h"
+#include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/command.h"
 
 #include "application/json_load.h"

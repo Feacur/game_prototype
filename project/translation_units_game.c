@@ -10,6 +10,7 @@
 #include "framework/json_read.c"
 
 #include "framework/graphics/gfx_types.c"
+#include "framework/graphics/gfx_objects.c"
 #include "framework/graphics/gfx_material.c"
 
 #include "framework/containers/internal/helpers.c"

@@ -2,7 +2,7 @@
 #include "framework/maths.h"
 
 #include "framework/graphics/gfx_material.h"
-#include "framework/graphics/objects.h"
+#include "framework/graphics/gfx_objects.h"
 
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
@@ -48,7 +48,8 @@ struct uvec2 entity_get_content_size(
 			if (field.data == NULL) { return (struct uvec2){0, 0}; }
 			struct Handle const gh_texture = *(struct Handle *)field.data;
 
-			struct uvec2 const texture_size = gpu_texture_get_size(gh_texture);
+			struct GPU_Texture const * texture = gpu_texture_get(gh_texture);
+			struct uvec2 const texture_size = (texture != NULL) ? texture->size : (struct uvec2){0};
 
 			return (struct uvec2){
 				(uint32_t)r32_floor((float)texture_size.x * clamp_r32(e_quad->view.max.x - e_quad->view.min.x, 0, 1)),

@@ -9,6 +9,7 @@ framework/parsing.c
 framework/json_read.c
 
 framework/graphics/gfx_types.c
+framework/graphics/gfx_objects.c
 framework/graphics/gfx_material.c
 
 framework/containers/internal/helpers.c

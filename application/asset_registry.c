@@ -7,7 +7,7 @@
 #include "framework/containers/strings.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
-#include "framework/graphics/objects.h"
+#include "framework/graphics/gfx_objects.h"
 
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"

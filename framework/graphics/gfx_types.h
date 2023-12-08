@@ -2,6 +2,8 @@
 #define FRAMEWORK_GRAPHICS_TYPES
 
 #include "framework/maths_types.h"
+#include "framework/containers/array.h"
+#include "framework/containers/hashmap.h"
 
 enum Data_Type {
 	DATA_TYPE_NONE,
@@ -180,11 +182,6 @@ enum Color_Channel {
 	COLOR_CHANNEL_FULL = COLOR_CHANNEL_RED | COLOR_CHANNEL_GREEN | COLOR_CHANNEL_BLUE | COLOR_CHANNEL_ALPHA,
 };
 
-struct GPU_Uniform {
-	enum Data_Type type;
-	uint32_t array_size;
-};
-
 enum Blend_Mode {
 	BLEND_MODE_NONE,
 	BLEND_MODE_MIX, // lerp(Drgb, Srgb, Sa), max(Da, Sa)
@@ -246,6 +243,51 @@ struct Mesh_Parameters {
 	enum Data_Type type;
 	enum Mesh_Flag flags;
 	uint32_t attributes[MESH_ATTRIBUTES_CAPACITY];
+};
+
+//
+
+struct GPU_Uniform {
+	enum Data_Type type;
+	uint32_t array_size;
+};
+
+struct GPU_Program {
+	struct Hashmap uniforms; // uniform string id : `struct GPU_Uniform` (at least)
+	// @idea: add an optional asset source
+};
+
+struct GPU_Texture {
+	struct uvec2 size;
+	struct Texture_Parameters parameters;
+	struct Texture_Settings settings;
+	struct Sampler_Settings sampler;
+	// @idea: add an optional asset source
+};
+
+struct GPU_Target_Buffer {
+	struct Texture_Parameters parameters;
+};
+
+struct GPU_Target {
+	struct uvec2 size;
+	struct Array textures; // `struct Handle`
+	struct Array buffers;  // `struct GPU_Target_Buffer` (at least)
+	// @idea: add an optional asset source
+};
+
+struct GPU_Buffer {
+	size_t capacity, size;
+};
+
+struct GPU_Mesh {
+	struct Array buffers;    // `struct Handle`
+	struct Array parameters; // `struct Mesh_Parameters`
+	// @idea: add an optional asset source
+};
+
+struct GPU_Unit {
+	struct Handle gh_texture;
 };
 
 //

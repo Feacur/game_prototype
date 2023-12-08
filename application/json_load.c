@@ -6,7 +6,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/hashmap.h"
 
-#include "framework/graphics/objects.h"
+#include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/gfx_material.h"
 
 #include "framework/systems/string_system.h"
@@ -81,7 +81,7 @@ static struct Handle json_load_texture(struct JSON const * json) {
 		struct Asset_Target const * asset = asset_ptr;
 		enum Texture_Type const texture_type = json_read_texture_type(json_get(json, S_("buffer_type")));
 		uint32_t const index = (uint32_t)json_get_number(json, S_("index"));
-		return gpu_target_get_texture_handle(asset->gh_target, texture_type, index);
+		return gpu_target_get_texture(asset->gh_target, texture_type, index);
 	}
 
 	if (cstring_equals(type, S_("font"))) {
@@ -107,14 +107,14 @@ static void json_load_many_texture(struct JSON const * json, uint32_t length, st
 }
 
 static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * material) {
-	struct Hashmap const * gpu_program_uniforms = gpu_program_get_uniforms(material->gh_program);
-	if (gpu_program_uniforms == NULL) { goto fail_uniforms; }
+	struct GPU_Program const * program = gpu_program_get(material->gh_program);
+	if (program == NULL) { goto fail_uniforms; }
 
 	// @todo: arena/stack allocator
 	struct Buffer uniform_data_buffer = buffer_init(NULL);
 
 	FOR_GFX_UNIFORMS(&material->uniforms, it) {
-		struct GPU_Uniform const * gpu_uniform = hashmap_get(gpu_program_uniforms, &it.id);
+		struct GPU_Uniform const * gpu_uniform = hashmap_get(&program->uniforms, &it.id);
 		struct CString const uniform_name = string_system_get(it.id);
 
 		uint32_t const uniform_bytes = data_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;

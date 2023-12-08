@@ -5,7 +5,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
 #include "framework/assets/json.h"
-#include "framework/graphics/objects.h"
+#include "framework/graphics/gfx_objects.h"
 
 #include "framework/platform/file.h"
 

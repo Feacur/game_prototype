@@ -1,6 +1,6 @@
 #include "framework/containers/hashmap.h"
 #include "framework/graphics/gfx_types.h"
-#include "framework/graphics/objects.h"
+#include "framework/graphics/gfx_objects.h"
 #include "framework/systems/string_system.h"
 
 //
@@ -94,11 +94,11 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_pr
 	struct CString const property_prefix = S_("p_");
 
 	material->gh_program = gh_program;
-	struct Hashmap const * uniforms = gpu_program_get_uniforms(gh_program);
-	if (uniforms == NULL) { return; }
+	struct GPU_Program const * program = gpu_program_get(gh_program);
+	if (program == NULL) { return; }
 
 	uint32_t payload_bytes = 0, properties_count = 0;
-	FOR_HASHMAP(uniforms, it) {
+	FOR_HASHMAP(&program->uniforms, it) {
 		struct CString const uniform_name = string_system_get(it.hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 
@@ -111,7 +111,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_pr
 	array_resize(&material->uniforms.headers, properties_count);
 	buffer_resize(&material->uniforms.payload, payload_bytes);
 
-	FOR_HASHMAP(uniforms, it) {
+	FOR_HASHMAP(&program->uniforms, it) {
 		struct CString const uniform_name = string_system_get(it.hash);
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 

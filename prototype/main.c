@@ -17,7 +17,7 @@
 #include "framework/systems/asset_system.h"
 
 #include "framework/graphics/gfx_material.h"
-#include "framework/graphics/objects.h"
+#include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/command.h"
 
 #include "framework/containers/hashmap.h"
@@ -53,8 +53,8 @@ static void prototype_tick_cameras(void) {
 		camera->cached_size = screen_size;
 		if (!handle_is_null(camera->ah_target)) {
 			struct Asset_Target const * asset = asset_system_get(camera->ah_target);
-			struct Handle const gh_target = (asset != NULL) ? asset->gh_target : (struct Handle){0};
-			camera->cached_size = gpu_target_get_size(gh_target);
+			struct GPU_Target const * target = (asset != NULL) ? gpu_target_get(asset->gh_target) : NULL;
+			camera->cached_size = (target != NULL) ? target->size : (struct uvec2){0};
 		}
 	}
 }
