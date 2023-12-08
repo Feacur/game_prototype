@@ -14,5 +14,6 @@
 //
 
 extern uint32_t gs_ogl_version;
+extern uint32_t gs_glsl_version;
 
 #endif

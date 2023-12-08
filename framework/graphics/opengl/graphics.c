@@ -31,11 +31,34 @@
 
 #define GFX_TRACE(format, ...) formatter_log("[gfx] " format "\n", ## __VA_ARGS__)
 
+struct Graphics_Limits {
+	uint32_t units;
+	uint32_t units_vs;
+	uint32_t units_fs;
+	uint32_t units_cs;
+	//
+	uint32_t uniform_blocks;
+	uint32_t uniform_blocks_vs;
+	uint32_t uniform_blocks_fs;
+	uint32_t uniform_blocks_cs;
+	//
+	uint32_t storage_blocks;
+	uint32_t storage_blocks_vs;
+	uint32_t storage_blocks_fs;
+	uint32_t storage_blocks_cs;
+	//
+	uint32_t texture_size;
+	uint32_t renderbuffer_size;
+	uint32_t elements_vertices;
+	uint32_t elements_indices;
+	uint32_t uniform_locations;
+};
+
 static struct Graphics_State {
-	char * extensions;
+	struct Buffer          extensions;
+	struct Graphics_Limits limits;
 
-	struct Array units;   // `struct GPU_Unit_Internal`
-
+	struct Array     units;    // `struct GPU_Unit`
 	struct Sparseset programs; // `struct GPU_Program_Internal`
 	struct Sparseset targets;  // `struct GPU_Target_Internal`
 	struct Sparseset textures; // `struct GPU_Texture_Internal`
@@ -53,26 +76,6 @@ static struct Graphics_State {
 		float depth_near, depth_far;
 		float ndc_near, ndc_far;
 	} clip_space;
-
-	struct Graphics_State_Limits {
-		uint32_t units_vs;
-		uint32_t units_fs;
-		uint32_t units_cs;
-		//
-		uint32_t uniform_blocks_vs;
-		uint32_t uniform_blocks_fs;
-		uint32_t uniform_blocks_cs;
-		//
-		uint32_t storage_blocks_vs;
-		uint32_t storage_blocks_fs;
-		uint32_t storage_blocks_cs;
-		//
-		uint32_t texture_size;
-		uint32_t renderbuffer_size;
-		uint32_t elements_vertices;
-		uint32_t elements_indices;
-		uint32_t uniform_locations;
-	} limits;
 } gs_graphics_state;
 
 //
@@ -103,17 +106,7 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 		.uniforms = hashmap_init(&hash32, sizeof(uint32_t), sizeof(struct GPU_Uniform_Internal)),
 	}};
 
-	uint32_t glsl_version = 0;
-	switch (gs_ogl_version) {
-		case 20: glsl_version = 110; break;
-		case 21: glsl_version = 120; break;
-		case 30: glsl_version = 130; break;
-		case 31: glsl_version = 140; break;
-		case 32: glsl_version = 150; break;
-		default: glsl_version = gs_ogl_version * 10; break;
-	}
-
-	// header
+	// common header
 	GLchar header[256];
 	uint32_t header_length = formatter_fmt(
 		SIZE_OF_ARRAY(header), header, ""
@@ -129,7 +122,7 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 		"#define NDC_NEAR %g\n"
 		"#define NDC_FAR  %g\n"
 		"\n",
-		glsl_version,
+		gs_glsl_version,
 		//
 		ATTRIBUTE_TYPE_POSITION - 1,
 		ATTRIBUTE_TYPE_TEXCOORD - 1,
@@ -142,21 +135,20 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 		(double)gs_graphics_state.clip_space.ndc_far
 	);
 
-	// section headers, per shader type
+	// section headers
 	struct Section_Header {
 		GLenum type;
 		struct CString text;
 	};
 
 	uint32_t sections_count = 0;
-	struct Section_Header sections[4];
+	struct Section_Header sections[3];
 	ADD_SECTION_HEADER(VERTEX_SHADER,   20);
 	ADD_SECTION_HEADER(FRAGMENT_SHADER, 20);
-	ADD_SECTION_HEADER(GEOMETRY_SHADER, 32);
 	ADD_SECTION_HEADER(COMPUTE_SHADER,  43);
 
 	// compile shader objects
-	GLuint shader_ids[4];
+	GLuint shader_ids[ARRAYSIZE(sections)];
 	for (uint32_t i = 0; i < sections_count; i++) {
 		GLchar const * code[]   = {header,               sections[i].text.data,          (GLchar *)asset->data};
 		GLint const    length[] = {(GLint)header_length, (GLint)sections[i].text.length, (GLint)asset->size};
@@ -570,11 +562,11 @@ static struct GPU_Buffer_Internal gpu_buffer_on_aquire(struct Buffer const * ass
 	struct GPU_Buffer_Internal gpu_buffer = {.base = {
 		.capacity = asset->size,
 		.size = (asset->data != NULL)
-			? gpu_buffer.base.capacity
+			? asset->size
 			: 0,
 	}};
 
-	if (asset->size == 0) { return gpu_buffer; }
+	if (gpu_buffer.base.capacity == 0) { return gpu_buffer; }
 
 	// allocate and upload
 	glCreateBuffers(1, &gpu_buffer.id);
@@ -1139,7 +1131,9 @@ static void __stdcall opengl_debug_message_callback(
 	const void *userParam
 );
 
-static char * allocate_extensions_string(void);
+static struct Buffer get_extensions(void);
+static struct Graphics_Limits get_limits(void);
+
 void graphics_to_gpu_library_init(void) {
 	// setup debug
 	if (glDebugMessageCallback != NULL) {
@@ -1152,131 +1146,26 @@ void graphics_to_gpu_library_init(void) {
 	}
 
 	//
-	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
-	gs_graphics_state.extensions = allocate_extensions_string();
-
-	gs_graphics_state.units   = array_init(sizeof(struct GPU_Unit));
-
-	// init gpu objects
-	gs_graphics_state.programs = sparseset_init(sizeof(struct GPU_Program_Internal));
-	gs_graphics_state.targets  = sparseset_init(sizeof(struct GPU_Target_Internal));
-	gs_graphics_state.textures = sparseset_init(sizeof(struct GPU_Texture_Internal));
-	gs_graphics_state.buffers  = sparseset_init(sizeof(struct GPU_Buffer_Internal));
-	gs_graphics_state.meshes   = sparseset_init(sizeof(struct GPU_Mesh_Internal));
-
-	//
-	GLint max_units
-	    , max_units_vertex_shader
-	    , max_units_fragment_shader
-	    , max_units_compute_shader;
-
-	GLint max_uniform_blocks
-	    , max_vertex_uniform_blocks
-	    , max_fragment_uniform_blocks
-	    , max_compute_uniform_blocks;
-
-	GLint max_shader_storage_blocks
-	    , max_vertex_shader_storage_blocks
-	    , max_fragment_shader_storage_blocks
-	    , max_compute_shader_storage_blocks;
-
-	GLint max_texture_size, max_renderbuffer_size;
-	GLint max_elements_vertices, max_elements_indices;
-	GLint max_uniform_locations;
-
-	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,   &max_units);
-	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,            &max_units_fragment_shader);
-	glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS,     &max_units_vertex_shader);
-	glGetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS,    &max_units_compute_shader);
-
-	glGetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS,        &max_uniform_blocks);
-	glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS,          &max_vertex_uniform_blocks);
-	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS,        &max_fragment_uniform_blocks);
-	glGetIntegerv(GL_MAX_COMPUTE_UNIFORM_BLOCKS,         &max_compute_uniform_blocks);
-
-	glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &max_shader_storage_blocks);
-	glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS,   &max_vertex_shader_storage_blocks);
-	glGetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &max_fragment_shader_storage_blocks);
-	glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS,  &max_compute_shader_storage_blocks);
-
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE,                   &max_texture_size);
-	glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE,              &max_renderbuffer_size);
-	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,              &max_elements_vertices);
-	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,               &max_elements_indices);
-	glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS,              &max_uniform_locations);
-
-	LOG(
-		"> OpenGL limits:\n"
-		"  units ........... %d\n"
-		"  - VS ............ %d\n"
-		"  - FS ............ %d\n"
-		"  - CS ............ %d\n"
+	gs_graphics_state = (struct Graphics_State){
+		.extensions = get_extensions(),
+		.limits     = get_limits(),
 		//
-		"  uniform blocks .. %d\n"
-		"  - VS ............ %d\n"
-		"  - FS ............ %d\n"
-		"  - CS ............ %d\n"
-		//
-		"  storage blocks .. %d\n"
-		"  - VS ............ %d\n"
-		"  - FS ............ %d\n"
-		"  - CS ............ %d\n"
-		//
-		"  texture size .... %d\n"
-		"  target size ..... %d\n"
-		"  vertices ........ %d\n"
-		"  indices ......... %d\n"
-		"  uniforms ........ %d\n"
-		""
-		, max_units
-		, max_units_vertex_shader
-		, max_units_fragment_shader
-		, max_units_compute_shader
-		//
-		, max_uniform_blocks
-		, max_vertex_uniform_blocks
-		, max_fragment_uniform_blocks
-		, max_compute_uniform_blocks
-		//
-		, max_shader_storage_blocks
-		, max_vertex_shader_storage_blocks
-		, max_fragment_shader_storage_blocks
-		, max_compute_shader_storage_blocks
-		//
-		, max_texture_size
-		, max_renderbuffer_size
-		, max_elements_vertices
-		, max_elements_indices
-		, max_uniform_locations
-	);
-
-	gs_graphics_state.limits = (struct Graphics_State_Limits){
-		.units_vs          = (uint32_t)max_units_vertex_shader,
-		.units_fs          = (uint32_t)max_units_fragment_shader,
-		.units_cs          = (uint32_t)max_units_compute_shader,
-		//
-		.uniform_blocks_vs = (uint32_t)max_vertex_uniform_blocks,
-		.uniform_blocks_fs = (uint32_t)max_fragment_uniform_blocks,
-		.uniform_blocks_cs = (uint32_t)max_compute_uniform_blocks,
-		//
-		.storage_blocks_vs = (uint32_t)max_vertex_shader_storage_blocks,
-		.storage_blocks_fs = (uint32_t)max_fragment_shader_storage_blocks,
-		.storage_blocks_cs = (uint32_t)max_compute_shader_storage_blocks,
-		//
-		.texture_size      = (uint32_t)max_texture_size,
-		.renderbuffer_size = (uint32_t)max_renderbuffer_size,
-		.elements_vertices = (uint32_t)max_elements_vertices,
-		.elements_indices  = (uint32_t)max_elements_indices,
-		.uniform_locations = (uint32_t)max_uniform_locations,
+		.units    = array_init(sizeof(struct GPU_Unit)),
+		.programs = sparseset_init(sizeof(struct GPU_Program_Internal)),
+		.targets  = sparseset_init(sizeof(struct GPU_Target_Internal)),
+		.textures = sparseset_init(sizeof(struct GPU_Texture_Internal)),
+		.buffers  = sparseset_init(sizeof(struct GPU_Buffer_Internal)),
+		.meshes   = sparseset_init(sizeof(struct GPU_Mesh_Internal)),
 	};
 
-	array_resize(&gs_graphics_state.units, (uint32_t)max_units);
+	//
+	array_resize(&gs_graphics_state.units, gs_graphics_state.limits.units);
 	for (uint32_t i = 0; i < gs_graphics_state.units.capacity; i++) {
 		array_push_many(&gs_graphics_state.units, 1, &(struct GPU_Unit){0});
 	}
 
 	// @note: manage OpenGL's clip space instead of ours
-	bool const can_control_clip_space = (gs_ogl_version >= 45) || contains_full_word(gs_graphics_state.extensions, S_("GL_ARB_clip_control"));
+	bool const can_control_clip_space = (gs_ogl_version >= 45) || contains_full_word(gs_graphics_state.extensions.data, S_("GL_ARB_clip_control"));
 	if (can_control_clip_space) { glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); }
 
 	bool const reverse_z = true || can_control_clip_space;
@@ -1320,7 +1209,7 @@ void graphics_to_gpu_library_free(void) {
 
 	//
 	array_free(&gs_graphics_state.units);
-	MEMORY_FREE(gs_graphics_state.extensions);
+	buffer_free(&gs_graphics_state.extensions);
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
 
 	if (inst_count > 0) { DEBUG_BREAK(); }
@@ -1330,25 +1219,139 @@ void graphics_to_gpu_library_free(void) {
 
 //
 
-static char * allocate_extensions_string(void) {
-	// @note: used as a convenience
-	struct Buffer string = buffer_init(NULL);
+static struct Buffer get_extensions(void) {
+	struct Buffer buffer = buffer_init(NULL);
 
-	GLint extensions_count = 0;
-	glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);
+	GLint count = 0;
+	glGetIntegerv(GL_NUM_EXTENSIONS, &count);
 
-	// @note: heuristically reserve the buffer memory
-	buffer_resize(&string, (uint32_t)(extensions_count * 26));
-	for (GLint i = 0; i < extensions_count; i++) {
+	buffer_resize(&buffer, (uint32_t)(count * 26));
+	for (GLint i = 0; i < count; i++) {
 		GLubyte const * value = glGetStringi(GL_EXTENSIONS, (GLuint)i);
 		size_t const size = strlen((char const *)value);
-		buffer_push_many(&string, size, value);
-		buffer_push_many(&string, 1, " ");
+		buffer_push_many(&buffer, size, value);
+		buffer_push_many(&buffer, 1, " ");
 	}
-	buffer_push_many(&string, 1, "\0");
+	buffer_push_many(&buffer, 1, "\0");
 
-	// @note: memory ownership transfer
-	return (char *)string.data;
+	LOG(
+		"> OpenGL extensions: %.*s\n"
+		""
+		, (uint32_t)buffer.size - 1
+		, (char *)buffer.data
+	);
+
+	return buffer;
+}
+
+static struct Graphics_Limits get_limits(void) {
+	GLint units
+	    , units_vs
+	    , units_fs
+	    , units_cs;
+
+	GLint uniform_blocks
+	    , uniform_blocks_vs
+	    , uniform_blocks_fs
+	    , uniform_blocks_cs;
+
+	GLint storage_blocks
+	    , storage_blocks_vs
+	    , storage_blocks_fs
+	    , storage_blocks_cs;
+
+	GLint texture_size, renderbuffer_size;
+	GLint elements_vertices, elements_indices;
+	GLint uniform_locations;
+
+	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,   &units);
+	glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS,     &units_vs);
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,            &units_fs);
+	glGetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS,    &units_cs);
+
+	glGetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS,        &uniform_blocks);
+	glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS,          &uniform_blocks_vs);
+	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS,        &uniform_blocks_fs);
+	glGetIntegerv(GL_MAX_COMPUTE_UNIFORM_BLOCKS,         &uniform_blocks_cs);
+
+	glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &storage_blocks);
+	glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS,   &storage_blocks_vs);
+	glGetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &storage_blocks_fs);
+	glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS,  &storage_blocks_cs);
+
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE,                   &texture_size);
+	glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE,              &renderbuffer_size);
+	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,              &elements_vertices);
+	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,               &elements_indices);
+	glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS,              &uniform_locations);
+
+	LOG(
+		"> OpenGL limits:\n"
+		"  units ........... %d\n"
+		"  - VS ............ %d\n"
+		"  - FS ............ %d\n"
+		"  - CS ............ %d\n"
+		//
+		"  uniform blocks .. %d\n"
+		"  - VS ............ %d\n"
+		"  - FS ............ %d\n"
+		"  - CS ............ %d\n"
+		//
+		"  storage blocks .. %d\n"
+		"  - VS ............ %d\n"
+		"  - FS ............ %d\n"
+		"  - CS ............ %d\n"
+		//
+		"  texture size .... %d\n"
+		"  target size ..... %d\n"
+		"  vertices ........ %d\n"
+		"  indices ......... %d\n"
+		"  uniforms ........ %d\n"
+		""
+		, units
+		, units_vs
+		, units_fs
+		, units_cs
+		//
+		, uniform_blocks
+		, uniform_blocks_vs
+		, uniform_blocks_fs
+		, uniform_blocks_cs
+		//
+		, storage_blocks
+		, storage_blocks_vs
+		, storage_blocks_fs
+		, storage_blocks_cs
+		//
+		, texture_size
+		, renderbuffer_size
+		, elements_vertices
+		, elements_indices
+		, uniform_locations
+	);
+
+	return (struct Graphics_Limits){
+		.units             = (uint32_t)units,
+		.units_vs          = (uint32_t)units_vs,
+		.units_fs          = (uint32_t)units_fs,
+		.units_cs          = (uint32_t)units_cs,
+		//
+		.uniform_blocks    = (uint32_t)uniform_blocks,
+		.uniform_blocks_vs = (uint32_t)uniform_blocks_vs,
+		.uniform_blocks_fs = (uint32_t)uniform_blocks_fs,
+		.uniform_blocks_cs = (uint32_t)uniform_blocks_cs,
+		//
+		.storage_blocks    = (uint32_t)storage_blocks,
+		.storage_blocks_vs = (uint32_t)storage_blocks_vs,
+		.storage_blocks_fs = (uint32_t)storage_blocks_fs,
+		.storage_blocks_cs = (uint32_t)storage_blocks_cs,
+		//
+		.texture_size      = (uint32_t)texture_size,
+		.renderbuffer_size = (uint32_t)renderbuffer_size,
+		.elements_vertices = (uint32_t)elements_vertices,
+		.elements_indices  = (uint32_t)elements_indices,
+		.uniform_locations = (uint32_t)uniform_locations,
+	};
 }
 
 //

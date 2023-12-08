@@ -2,17 +2,10 @@
 	#define XMACRO(type, name)
 #endif
 
-// -- init
+// -- get
 // >= 2.0
 XMACRO(GETINTEGERV, GetIntegerv)
 XMACRO(GETSTRING,   GetString)
-
-#if defined(XMACRO_INIT)
-	XMACRO_INIT()
-	#undef XMACRO_INIT
-#endif
-
-// -- extensions
 // >= 3.0
 XMACRO(GETSTRINGI, GetStringi)
 

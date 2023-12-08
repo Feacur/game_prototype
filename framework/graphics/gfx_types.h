@@ -247,6 +247,10 @@ struct Mesh_Parameters {
 
 //
 
+struct GPU_Unit {
+	struct Handle gh_texture;
+};
+
 struct GPU_Uniform {
 	enum Data_Type type;
 	uint32_t array_size;
@@ -284,10 +288,6 @@ struct GPU_Mesh {
 	struct Array buffers;    // `struct Handle`
 	struct Array parameters; // `struct Mesh_Parameters`
 	// @idea: add an optional asset source
-};
-
-struct GPU_Unit {
-	struct Handle gh_texture;
 };
 
 //
