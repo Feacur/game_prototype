@@ -29,13 +29,13 @@ GLenum gpu_cull_mode(enum Cull_Mode value);
 GLenum gpu_winding_order(enum Winding_Order value);
 GLenum gpu_stencil_op(enum Stencil_Op value);
 
-struct Gpu_Blend_Mode {
+struct GPU_Blend_Mode {
 	GLboolean mask[4];
 	GLenum color_src, color_op, color_dst;
 	GLenum alpha_src, alpha_op, alpha_dst;
 } gpu_blend_mode(enum Blend_Mode value);
 
-struct Gpu_Depth_Mode {
+struct GPU_Depth_Mode {
 	GLboolean mask; GLenum op;
 } gpu_depth_mode(enum Depth_Mode value, bool reversed_z);
 

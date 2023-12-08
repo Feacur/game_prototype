@@ -29,6 +29,7 @@ enum Depth_Mode json_read_depth_mode(struct JSON const * json);
 
 struct Texture_Parameters json_read_texture_parameters(struct JSON const * json);
 struct Texture_Settings json_read_texture_settings(struct JSON const * json);
+struct Sampler_Settings json_read_sampler_settings(struct JSON const * json);
 
 // ----- ----- ----- ----- -----
 //     graphics objects

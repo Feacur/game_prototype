@@ -202,14 +202,19 @@ struct Texture_Parameters json_read_texture_parameters(struct JSON const * json)
 }
 
 struct Texture_Settings json_read_texture_settings(struct JSON const * json) {
-	struct Texture_Settings result = {
+	struct Texture_Settings result = {0};
+	json_read_many_u32(json_get(json, S_("max_lod")), 1, &result.max_lod);
+	return result;
+}
+
+struct Sampler_Settings json_read_sampler_settings(struct JSON const * json) {
+	struct Sampler_Settings result = {
 		.mipmap        = json_read_filter_mode(json_get(json, S_("mipmap"))),
 		.minification  = json_read_filter_mode(json_get(json, S_("minification"))),
 		.magnification = json_read_filter_mode(json_get(json, S_("magnification"))),
 		.wrap_x        = json_read_wrap_mode(json_get(json, S_("wrap_x"))),
 		.wrap_y        = json_read_wrap_mode(json_get(json, S_("wrap_y"))),
 	};
-	json_read_many_u32(json_get(json, S_("max_lod")), 1, &result.max_lod);
 	json_read_many_flt(json_get(json, S_("border")), 4, &result.border.x);
 	return result;
 }
@@ -229,8 +234,8 @@ struct Handle json_read_target(struct JSON const * json) {
 
 	uint32_t const buffers_count = json_count(buffers_json);
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct Texture_Parameters const texture_parameters = json_read_texture_parameters(json_at(buffers_json, i));
-		array_push_many(&parameters_buffer, 1, &texture_parameters);
+		struct Texture_Parameters const parameters = json_read_texture_parameters(json_at(buffers_json, i));
+		array_push_many(&parameters_buffer, 1, &parameters);
 	}
 
 	struct Handle result = (struct Handle){0};

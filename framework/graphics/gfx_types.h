@@ -180,7 +180,7 @@ enum Color_Channel {
 	COLOR_CHANNEL_FULL = COLOR_CHANNEL_RED | COLOR_CHANNEL_GREEN | COLOR_CHANNEL_BLUE | COLOR_CHANNEL_ALPHA,
 };
 
-struct Gpu_Uniform {
+struct GPU_Uniform {
 	enum Data_Type type;
 	uint32_t array_size;
 };
@@ -209,9 +209,12 @@ struct Texture_Parameters {
 
 struct Texture_Settings {
 	uint32_t max_lod;
+	enum Swizzle_Op swizzle[4];
+};
+
+struct Sampler_Settings {
 	enum Filter_Mode mipmap, minification, magnification;
 	enum Wrap_Mode wrap_x, wrap_y;
-	enum Swizzle_Op swizzle[4];
 	struct vec4 border;
 };
 

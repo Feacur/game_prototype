@@ -213,7 +213,7 @@ static uint32_t hashmap_find_key_index(struct Hashmap const * hashmap, void cons
 		if (hashmap->hashes[index] != hash) { continue; }
 
 		void const * ht_key = hashmap_get_key_at_unsafe(hashmap, index);
-		if (common_memcmp(ht_key, key, hashmap->key_size) == 0) { return index; }
+		if (equals(ht_key, key, hashmap->key_size)) { return index; }
 	}
 
 	return empty;

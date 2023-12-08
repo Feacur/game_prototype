@@ -35,7 +35,7 @@ struct Asset_Inst {
 };
 
 static void asset_system_add_dependency(struct Handle handle);
-static void asset_system_report(struct Handle handle, struct CString tag);
+static void asset_system_report(struct CString tag, struct Handle handle);
 static struct CString asset_system_name_to_extension(struct CString name);
 
 void asset_system_init(void) {
@@ -55,7 +55,7 @@ void asset_system_free(void) {
 		dropped_count += sparseset_get_count(&type->instances);
 		FOR_SPARSESET (&type->instances, it_inst) {
 			struct Asset_Inst * inst = it_inst.value;
-			asset_system_report(inst->header.ah_meta, S_("[free]"));
+			asset_system_report(S_("[free]"), inst->header.ah_meta);
 			if (type->info.drop != NULL) {
 				type->info.drop(inst->header.ah_meta);
 			}
@@ -108,7 +108,7 @@ void asset_system_del_type(struct CString type_name) {
 		struct Asset_Inst * inst = it.value;
 		struct Handle const ah_meta = inst->header.ah_meta;
 
-		asset_system_report(ah_meta, S_(""));
+		asset_system_report(S_(""), ah_meta);
 		array_push_many(&gs_asset_system.stack, 1, &ah_meta);
 		if (type->info.drop != NULL) {
 			type->info.drop(ah_meta);
@@ -145,7 +145,7 @@ struct Handle asset_system_load(struct CString name) {
 	if (ah_meta != NULL) {
 		asset_system_add_dependency(*ah_meta);
 		struct Asset_Meta * meta = sparseset_get(&gs_asset_system.meta, *ah_meta);
-		meta->ref_count++; asset_system_report(*ah_meta, S_("[refc]"));
+		meta->ref_count++; asset_system_report(S_("[refc]"), *ah_meta);
 		return *ah_meta;
 	}
 
@@ -177,7 +177,7 @@ struct Handle asset_system_load(struct CString name) {
 		.ah_meta = ah_meta_new,
 	};
 
-	asset_system_report(ah_meta_new, S_("[load]"));
+	asset_system_report(S_("[load]"), ah_meta_new);
 	array_push_many(&gs_asset_system.stack, 1, &ah_meta_new);
 	if (type->info.load != NULL) {
 		type->info.load(ah_meta_new);
@@ -191,7 +191,7 @@ void asset_system_drop(struct Handle handle) {
 	struct Asset_Meta * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return; }
 	if (meta->ref_count > 0) {
-		asset_system_report(handle, S_("[unrf]"));
+		asset_system_report(S_("[unrf]"), handle);
 		meta->ref_count--; return;
 	}
 
@@ -201,7 +201,7 @@ void asset_system_drop(struct Handle handle) {
 	struct Asset_Inst * inst = sparseset_get(&type->instances, meta->inst_handle);
 	if (inst == NULL) { WRN("meta w/o inst"); DEBUG_BREAK(); goto cleanup; }
 
-	asset_system_report(handle, S_("[drop]"));
+	asset_system_report(S_("[drop]"), handle);
 	array_push_many(&gs_asset_system.stack, 1, &handle);
 	if (type->info.drop != NULL) {
 		type->info.drop(inst->header.ah_meta);
@@ -262,7 +262,7 @@ static void asset_system_add_dependency(struct Handle handle) {
 	array_push_many(&meta->dependencies, 1, &handle);
 }
 
-static void asset_system_report(struct Handle handle, struct CString tag) {
+static void asset_system_report(struct CString tag, struct Handle handle) {
 	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 	struct CString const name = asset_system_get_name(handle);
 	uint32_t const indent = gs_asset_system.stack.count * 4;

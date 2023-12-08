@@ -61,6 +61,10 @@ bool cstring_ends(struct CString v1, struct CString v2) {
 //     standard
 // ----- ----- ----- ----- -----
 
+bool equals(void const * v1, void const * v2, size_t size) {
+	return memcmp(v1, v2, size) == 0;
+}
+
 __declspec(noreturn) void common_exit_success(void) { exit(EXIT_SUCCESS); }
 __declspec(noreturn) void common_exit_failure(void) { exit(EXIT_FAILURE); }
 
@@ -73,24 +77,12 @@ void common_memcpy(void * target, void const * source, size_t size) {
 	memcpy(target, source, size);
 }
 
-int32_t common_memcmp(void const * buffer_1, void const * buffer_2, size_t size) {
-	return memcmp(buffer_1, buffer_2, size);
-}
-
-void common_qsort(void * data, size_t count, size_t value_size, int (* compare)(void const * v1, void const * v2)) {
+void common_qsort(void * data, size_t count, size_t value_size, comparator * compare) {
 	qsort(data, count, value_size, compare);
 }
 
 char const * common_strstr(char const * buffer, char const * value) {
 	return strstr(buffer, value);
-}
-
-int32_t common_strcmp(char const * buffer_1, char const * buffer_2) {
-	return strcmp(buffer_1, buffer_2);
-}
-
-int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size) {
-	return strncmp(buffer_1, buffer_2, size);
 }
 
 // ----- ----- ----- ----- -----
@@ -118,7 +110,7 @@ bool contains_full_word(char const * container, struct CString value) {
 		if (end == NULL) { end = container + strlen(container); }
 
 		if ((size_t)(end - start) != value.length) { continue; }
-		if (common_memcmp(start, value.data, value.length) == 0) { return true; }
+		if (equals(start, value.data, value.length)) { return true; }
 	}
 
 	return false;

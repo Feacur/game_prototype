@@ -19,7 +19,7 @@
 //
 #include "image.h"
 
-struct Image image_init(struct Texture_Settings settings, struct Buffer const * buffer) {
+struct Image image_init(struct Buffer const * buffer) {
 	// @note: ensure image layout
 	stbi_set_flip_vertically_on_load(1);
 
@@ -34,7 +34,6 @@ struct Image image_init(struct Texture_Settings settings, struct Buffer const * 
 			.texture_type = TEXTURE_TYPE_COLOR,
 			.data_type = data_type_get_vector_type(DATA_TYPE_R8_UNORM, (uint32_t)channels),
 		},
-		.settings = settings,
 	};
 }
 

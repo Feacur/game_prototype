@@ -81,7 +81,7 @@ static struct WFObj_Token wfobj_lexer_make_number_token(struct WFObj_Lexer * lex
 
 static enum WFObj_Token_Type wfobj_lexer_check_keyword(struct WFObj_Lexer * lexer, uint32_t start, struct CString rest, enum WFObj_Token_Type type) {
 	if (lexer->current - lexer->start != start + rest.length) { return WFOBJ_TOKEN_IDENTIFIER; }
-	if (common_memcmp(lexer->start + start, rest.data, rest.length) != 0) { return WFOBJ_TOKEN_IDENTIFIER; }
+	if (!equals(lexer->start + start, rest.data, rest.length)) { return WFOBJ_TOKEN_IDENTIFIER; }
 	return type;
 }
 

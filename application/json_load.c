@@ -114,7 +114,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 	struct Buffer uniform_data_buffer = buffer_init(NULL);
 
 	FOR_GFX_UNIFORMS(&material->uniforms, it) {
-		struct Gpu_Uniform const * gpu_uniform = hashmap_get(gpu_program_uniforms, &it.id);
+		struct GPU_Uniform const * gpu_uniform = hashmap_get(gpu_program_uniforms, &it.id);
 		struct CString const uniform_name = string_system_get(it.id);
 
 		uint32_t const uniform_bytes = data_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;

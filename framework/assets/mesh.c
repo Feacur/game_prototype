@@ -23,8 +23,8 @@ static struct Mesh mesh_construct(
 	struct Array const * indices     // uint32_t
 );
 
-struct Mesh mesh_init(struct Buffer const * buffer) {
-	struct WFObj wfobj = wfobj_parse((char const *)buffer->data);
+struct Mesh mesh_init(struct Buffer const * source) {
+	struct WFObj wfobj = wfobj_parse((char const *)source->data);
 
 	//
 	struct Array vertices;

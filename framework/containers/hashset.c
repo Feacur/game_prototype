@@ -184,7 +184,7 @@ static uint32_t hashset_find_key_index(struct Hashset const * hashset, void cons
 		if (hashset->hashes[index] != hash) { continue; }
 
 		void const * ht_key = hashset_get_at_unsafe(hashset, index);
-		if (common_memcmp(ht_key, key, hashset->key_size) == 0) { return index; }
+		if (equals(ht_key, key, hashset->key_size)) { return index; }
 	}
 
 	return empty;

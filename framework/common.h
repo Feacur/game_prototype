@@ -55,16 +55,17 @@ bool cstring_ends(struct CString v1, struct CString v2);
 //     standard
 // ----- ----- ----- ----- -----
 
+bool equals(void const * v1, void const * v2, size_t size);
+
+typedef int comparator(void const * v1, void const * v2);
+
 void common_exit_success(void);
 void common_exit_failure(void);
 
 void common_memset(void * target, uint8_t value, size_t size);
 void common_memcpy(void * target, void const * source, size_t size);
-int32_t common_memcmp(void const * buffer_1, void const * buffer_2, size_t size);
-void common_qsort(void * data, size_t count, size_t value_size, int (* compare)(void const * v1, void const * v2));
+void common_qsort(void * data, size_t count, size_t value_size, comparator * compare);
 char const * common_strstr(char const * buffer, char const * value);
-int32_t common_strcmp(char const * buffer_1, char const * buffer_2);
-int32_t common_strncmp(char const * buffer_1, char const * buffer_2, size_t size);
 
 #define INDEX_EMPTY UINT32_MAX
 

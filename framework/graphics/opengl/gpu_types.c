@@ -368,41 +368,41 @@ GLenum gpu_stencil_op(enum Stencil_Op value) {
 	return GL_NONE;
 }
 
-struct Gpu_Blend_Mode gpu_blend_mode(enum Blend_Mode value) {
+struct GPU_Blend_Mode gpu_blend_mode(enum Blend_Mode value) {
 	switch (value) {
 		case BLEND_MODE_NONE: break;
 
-		case BLEND_MODE_MIX: return (struct Gpu_Blend_Mode){
+		case BLEND_MODE_MIX: return (struct GPU_Blend_Mode){
 			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
 			.color_src = GL_SRC_ALPHA, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE_MINUS_SRC_ALPHA,
 			.alpha_src = GL_ONE,       /**/ .alpha_op = GL_MAX,      /**/ .alpha_dst = GL_ONE,
 		};
 
-		case BLEND_MODE_PMA: return (struct Gpu_Blend_Mode){
+		case BLEND_MODE_PMA: return (struct GPU_Blend_Mode){
 			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
 			.color_src = GL_ONE, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE_MINUS_SRC_ALPHA,
 			.alpha_src = GL_ONE, /**/ .alpha_op = GL_MAX,      /**/ .alpha_dst = GL_ONE,
 		};
 
-		case BLEND_MODE_ADD: return (struct Gpu_Blend_Mode){
+		case BLEND_MODE_ADD: return (struct GPU_Blend_Mode){
 			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
 			.color_src = GL_ONE, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE,
 			.alpha_src = GL_ONE, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
 		};
 
-		case BLEND_MODE_SUB: return (struct Gpu_Blend_Mode){
+		case BLEND_MODE_SUB: return (struct GPU_Blend_Mode){
 			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
 			.color_src = GL_ONE, /**/.color_op = GL_FUNC_REVERSE_SUBTRACT, /**/ .color_dst = GL_ONE,
 			.alpha_src = GL_ONE, /**/.alpha_op = GL_FUNC_REVERSE_SUBTRACT, /**/ .alpha_dst = GL_ONE,
 		};
 
-		case BLEND_MODE_MUL: return (struct Gpu_Blend_Mode){
+		case BLEND_MODE_MUL: return (struct GPU_Blend_Mode){
 			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
 			.color_src = GL_ZERO, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_SRC_COLOR,
 			.alpha_src = GL_ZERO, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_SRC_ALPHA,
 		};
 
-		case BLEND_MODE_SCR: return (struct Gpu_Blend_Mode){
+		case BLEND_MODE_SCR: return (struct GPU_Blend_Mode){
 			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
 			.color_src = GL_ONE_MINUS_DST_COLOR, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE,
 			.alpha_src = GL_ONE_MINUS_DST_ALPHA, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
@@ -410,24 +410,24 @@ struct Gpu_Blend_Mode gpu_blend_mode(enum Blend_Mode value) {
 	}
 	ERR("unknown blend function");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
-	return (struct Gpu_Blend_Mode){0};
+	return (struct GPU_Blend_Mode){0};
 }
 
-struct Gpu_Depth_Mode gpu_depth_mode(enum Depth_Mode value, bool reversed_z) {
+struct GPU_Depth_Mode gpu_depth_mode(enum Depth_Mode value, bool reversed_z) {
 	switch (value) {
 		case DEPTH_MODE_NONE: break;
 
-		case DEPTH_MODE_TRANSPARENT: return (struct Gpu_Depth_Mode){
+		case DEPTH_MODE_TRANSPARENT: return (struct GPU_Depth_Mode){
 			.mask = GL_TRUE, /**/ .op = reversed_z ? GL_GREATER : GL_LESS,
 		};
 
-		case DEPTH_MODE_OPAQUE: return (struct Gpu_Depth_Mode){
+		case DEPTH_MODE_OPAQUE: return (struct GPU_Depth_Mode){
 			.mask = GL_TRUE, /**/ .op = reversed_z ? GL_GREATER : GL_LESS,
 		};
 	}
 	ERR("unknown depth function");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
-	return (struct Gpu_Depth_Mode){0};
+	return (struct GPU_Depth_Mode){0};
 }
 
 GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index) {

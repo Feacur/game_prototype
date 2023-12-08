@@ -91,7 +91,7 @@ static struct JSON_Token json_lexer_make_number_token(struct JSON_Lexer * lexer)
 
 static enum JSON_Token_Type json_lexer_check_keyword(struct JSON_Lexer * lexer, uint32_t start, struct CString rest, enum JSON_Token_Type type) {
 	if (lexer->current - lexer->start != start + rest.length) { return JSON_TOKEN_ERROR_IDENTIFIER; }
-	if (common_memcmp(lexer->start + start, rest.data, rest.length) != 0) { return JSON_TOKEN_ERROR_IDENTIFIER; }
+	if (!equals(lexer->start + start, rest.data, rest.length)) { return JSON_TOKEN_ERROR_IDENTIFIER; }
 	return type;
 }
 

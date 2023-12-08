@@ -12,7 +12,7 @@ struct Mesh {
 	struct Mesh_Parameters * parameters;
 };
 
-struct Mesh mesh_init(struct Buffer const * buffer);
+struct Mesh mesh_init(struct Buffer const * source);
 void mesh_free(struct Mesh * mesh);
 
 #endif

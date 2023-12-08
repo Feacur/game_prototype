@@ -122,9 +122,10 @@ static void asset_image_fill(struct JSON const * json, void * data) {
 		return;
 	}
 
-	struct Texture_Settings settings = json_read_texture_settings(json);
+	struct Image image = image_init(&file_buffer);
+	image.settings = json_read_texture_settings(json);
+	image.sampler = json_read_sampler_settings(json);
 
-	struct Image image = image_init(settings, &file_buffer);
 	buffer_free(&file_buffer);
 
 	*context->result = (struct Asset_Image){

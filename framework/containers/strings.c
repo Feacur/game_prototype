@@ -23,7 +23,9 @@ uint32_t strings_find(struct Strings const * strings, struct CString value) {
 	for (uint32_t i = 0; i < strings->lengths.count; i++) {
 		uint32_t const * length_at = array_at(&strings->lengths, i);
 		if (value.length == *length_at) {
-			if (common_memcmp(value.data, (uint8_t *)strings->buffer.data + offset, value.length) == 0) { return i + 1; }
+			if (equals(value.data, buffer_at(&strings->buffer, offset), value.length)) {
+				return i + 1;
+			}
 		}
 		offset += *length_at + 1;
 	}
@@ -37,7 +39,9 @@ uint32_t strings_add(struct Strings * strings, struct CString value) {
 	for (uint32_t i = 0; i < strings->lengths.count; i++) {
 		uint32_t const * length_at = array_at(&strings->lengths, i);
 		if (value.length == *length_at) {
-			if (common_memcmp(value.data, (uint8_t *)strings->buffer.data + offset, value.length) == 0) { return i + 1; }
+			if (equals(value.data, buffer_at(&strings->buffer, offset), value.length)) {
+				return i + 1;
+			}
 		}
 		offset += *length_at + 1;
 	}

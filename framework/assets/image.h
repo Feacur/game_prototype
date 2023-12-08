@@ -19,9 +19,10 @@ struct Image {
 	void * data;
 	struct Texture_Parameters parameters;
 	struct Texture_Settings settings;
+	struct Sampler_Settings sampler;
 };
 
-struct Image image_init(struct Texture_Settings settings, struct Buffer const * buffer);
+struct Image image_init(struct Buffer const * buffer);
 void image_free(struct Image * image);
 
 void image_ensure(struct Image * image, struct uvec2 size);
