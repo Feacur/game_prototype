@@ -265,7 +265,7 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 	return sparseset_aquire(&gs_graphics_state.programs, &gpu_program);
 }
 
-static void gpu_program_free_immediately(struct Handle handle) {
+void gpu_program_free(struct Handle handle) {
 	if (handle_equals(gs_graphics_state.active.gh_program, handle)) {
 		gs_graphics_state.active.gh_program = (struct Handle){0};
 	}
@@ -274,13 +274,6 @@ static void gpu_program_free_immediately(struct Handle handle) {
 		gpu_program_on_discard(gpu_program);
 		sparseset_discard(&gs_graphics_state.programs, handle);
 	}
-}
-
-void gpu_program_free(struct Handle handle) {
-	action_system_push((struct Action){
-		.handle = handle,
-		.action = gpu_program_free_immediately,
-	});
 }
 
 void gpu_program_update(struct Handle handle, struct Buffer const * asset) {
@@ -390,7 +383,7 @@ struct Handle gpu_texture_init(struct Image const * asset) {
 	return sparseset_aquire(&gs_graphics_state.textures, &gpu_texture);
 }
 
-static void gpu_texture_free_immediately(struct Handle handle) {
+void gpu_texture_free(struct Handle handle) {
 	FOR_ARRAY(&gs_graphics_state.units, it) {
 		struct GPU_Unit * unit = it.value;
 		if (handle_equals(unit->gh_texture, handle)) {
@@ -402,13 +395,6 @@ static void gpu_texture_free_immediately(struct Handle handle) {
 		gpu_texture_on_discard(gpu_texture);
 		sparseset_discard(&gs_graphics_state.textures, handle);
 	}
-}
-
-void gpu_texture_free(struct Handle handle) {
-	action_system_push((struct Action){
-		.handle = handle,
-		.action = gpu_texture_free_immediately,
-	});
 }
 
 void gpu_texture_update(struct Handle handle, struct Image const * asset) {
@@ -538,7 +524,7 @@ struct Handle gpu_target_init(struct GPU_Target_Asset asset) {
 	return sparseset_aquire(&gs_graphics_state.targets, &gpu_target);
 }
 
-static void gpu_target_free_immediately(struct Handle handle) {
+void gpu_target_free(struct Handle handle) {
 	if (handle_equals(gs_graphics_state.active.gh_target, handle)) {
 		gs_graphics_state.active.gh_target = (struct Handle){0};
 	}
@@ -547,13 +533,6 @@ static void gpu_target_free_immediately(struct Handle handle) {
 		gpu_target_on_discard(gpu_target);
 		sparseset_discard(&gs_graphics_state.targets, handle);
 	}
-}
-
-void gpu_target_free(struct Handle handle) {
-	action_system_push((struct Action){
-		.handle = handle,
-		.action = gpu_target_free_immediately,
-	});
 }
 
 void gpu_target_update(struct Handle handle, struct GPU_Target_Asset asset) {
@@ -621,19 +600,12 @@ struct Handle gpu_buffer_init(struct Buffer const * asset) {
 	return sparseset_aquire(&gs_graphics_state.buffers, &gpu_buffer);
 }
 
-static void gpu_buffer_free_immediately(struct Handle handle) {
+void gpu_buffer_free(struct Handle handle) {
 	struct GPU_Buffer_Internal * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, handle);
 	if (gpu_buffer != NULL) {
 		gpu_buffer_on_discard(gpu_buffer);
 		sparseset_discard(&gs_graphics_state.buffers, handle);
 	}
-}
-
-void gpu_buffer_free(struct Handle handle) {
-	action_system_push((struct Action){
-		.handle = handle,
-		.action = gpu_buffer_free_immediately,
-	});
 }
 
 void gpu_buffer_update(struct Handle handle, struct Buffer const * asset) {
@@ -766,7 +738,7 @@ struct Handle gpu_mesh_init(struct Mesh const * asset) {
 	return sparseset_aquire(&gs_graphics_state.meshes, &gpu_mesh);
 }
 
-static void gpu_mesh_free_immediately(struct Handle handle) {
+void gpu_mesh_free(struct Handle handle) {
 	if (handle_equals(gs_graphics_state.active.gh_mesh, handle)) {
 		gs_graphics_state.active.gh_mesh = (struct Handle){0};
 	}
@@ -775,13 +747,6 @@ static void gpu_mesh_free_immediately(struct Handle handle) {
 		gpu_mesh_on_discard(gpu_mesh);
 		sparseset_discard(&gs_graphics_state.meshes, handle);
 	}
-}
-
-void gpu_mesh_free(struct Handle handle) {
-	action_system_push((struct Action){
-		.handle = handle,
-		.action = gpu_mesh_free_immediately,
-	});
 }
 
 void gpu_mesh_update(struct Handle handle, struct Mesh const * asset) {
