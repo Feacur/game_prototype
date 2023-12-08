@@ -4,10 +4,15 @@
 #include "framework/platform/file.h"
 #include "framework/platform/system.h"
 #include "framework/platform/window.h"
+#include "framework/systems/action_system.h"
+#include "framework/systems/material_system.h"
+#include "framework/systems/asset_system.h"
 #include "framework/gpu_context.h"
 #include "framework/maths.h"
 #include "framework/input.h"
 #include "framework/formatter.h"
+
+#include "asset_registry.h"
 
 //
 #include "application.h"
@@ -41,6 +46,11 @@ static uint64_t get_fixed_ticks(uint64_t default_value) {
 }
 
 static void application_init(void) {
+	action_system_init();
+	material_system_init();
+	asset_system_init();
+	asset_types_init();
+
 	LOG(
 		"> application settings:\n"
 		"  size ......... %u x %u\n"
@@ -86,8 +96,14 @@ static void application_init(void) {
 
 static void application_free(void) {
 	if (gs_app.callbacks.free != NULL) { gs_app.callbacks.free(); }
-	if (gs_app.gpu_context != NULL) { gpu_context_free(gs_app.gpu_context); }
-	if (gs_app.window != NULL) { platform_window_free(gs_app.window); }
+	if (gs_app.gpu_context    != NULL) { gpu_context_free(gs_app.gpu_context); }
+	if (gs_app.window         != NULL) { platform_window_free(gs_app.window); }
+
+	asset_types_free();
+	asset_system_free();
+	material_system_free();
+	action_system_free();
+
 	common_memset(&gs_app, 0, sizeof(gs_app));
 }
 
@@ -104,6 +120,7 @@ static void application_draw_frame(void) {
 }
 
 static void application_end_frame(void) {
+	action_system_update();
 	platform_window_end_frame(gs_app.window);
 	gpu_context_end_frame(gs_app.gpu_context);
 }
@@ -146,6 +163,8 @@ void application_update(void) {
 		application_draw_frame();
 	}
 	application_end_frame();
+
+	action_system_update();
 
 	// maintain framerate
 	uint64_t const ticks_until = ticks_before + target_ticks;

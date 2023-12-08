@@ -16,6 +16,7 @@
 #include "framework/graphics/gfx_material.h"
 
 #include "framework/systems/string_system.h"
+#include "framework/systems/action_system.h"
 #include "framework/systems/material_system.h"
 
 #include "functions.h"
@@ -30,15 +31,9 @@
 
 #define GFX_TRACE(format, ...) formatter_log("[gfx] " format "\n", ## __VA_ARGS__)
 
-struct Graphics_Action {
-	struct Handle handle;
-	void (* action)(struct Handle handle);
-};
-
 static struct Graphics_State {
 	char * extensions;
 
-	struct Array actions; // `struct Graphics_Action`
 	struct Array units;   // `struct GPU_Unit_Internal`
 
 	struct Sparseset programs; // `struct GPU_Program_Internal`
@@ -282,7 +277,7 @@ static void gpu_program_free_immediately(struct Handle handle) {
 }
 
 void gpu_program_free(struct Handle handle) {
-	array_push_many(&gs_graphics_state.actions, 1, &(struct Graphics_Action){
+	action_system_push((struct Action){
 		.handle = handle,
 		.action = gpu_program_free_immediately,
 	});
@@ -410,7 +405,7 @@ static void gpu_texture_free_immediately(struct Handle handle) {
 }
 
 void gpu_texture_free(struct Handle handle) {
-	array_push_many(&gs_graphics_state.actions, 1, &(struct Graphics_Action){
+	action_system_push((struct Action){
 		.handle = handle,
 		.action = gpu_texture_free_immediately,
 	});
@@ -555,7 +550,7 @@ static void gpu_target_free_immediately(struct Handle handle) {
 }
 
 void gpu_target_free(struct Handle handle) {
-	array_push_many(&gs_graphics_state.actions, 1, &(struct Graphics_Action){
+	action_system_push((struct Action){
 		.handle = handle,
 		.action = gpu_target_free_immediately,
 	});
@@ -635,7 +630,7 @@ static void gpu_buffer_free_immediately(struct Handle handle) {
 }
 
 void gpu_buffer_free(struct Handle handle) {
-	array_push_many(&gs_graphics_state.actions, 1, &(struct Graphics_Action){
+	action_system_push((struct Action){
 		.handle = handle,
 		.action = gpu_buffer_free_immediately,
 	});
@@ -783,7 +778,7 @@ static void gpu_mesh_free_immediately(struct Handle handle) {
 }
 
 void gpu_mesh_free(struct Handle handle) {
-	array_push_many(&gs_graphics_state.actions, 1, &(struct Graphics_Action){
+	action_system_push((struct Action){
 		.handle = handle,
 		.action = gpu_mesh_free_immediately,
 	});
@@ -806,13 +801,7 @@ struct GPU_Mesh const * gpu_mesh_get(struct Handle handle) {
 //
 #include "framework/graphics/misc.h"
 
-void graphics_update(void) {
-	FOR_ARRAY(&gs_graphics_state.actions, it) {
-		struct Graphics_Action const * entry = it.value;
-		entry->action(entry->handle);
-	}
-	array_clear(&gs_graphics_state.actions);
-}
+void graphics_update(void) { }
 
 struct mat4 graphics_projection_mat4(
 	struct vec2 scale_xy, struct vec2 offset_xy,
@@ -1201,7 +1190,6 @@ void graphics_to_gpu_library_init(void) {
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
 	gs_graphics_state.extensions = allocate_extensions_string();
 
-	gs_graphics_state.actions = array_init(sizeof(struct Graphics_Action));
 	gs_graphics_state.units   = array_init(sizeof(struct GPU_Unit));
 
 	// init gpu objects
@@ -1367,7 +1355,6 @@ void graphics_to_gpu_library_free(void) {
 
 	//
 	array_free(&gs_graphics_state.units);
-	array_free(&gs_graphics_state.actions);
 	MEMORY_FREE(gs_graphics_state.extensions);
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
 

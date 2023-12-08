@@ -30,6 +30,7 @@ framework/assets/typeface.c
 framework/assets/font.c
 
 framework/systems/string_system.c
+framework/systems/action_system.c
 framework/systems/material_system.c
 framework/systems/asset_system.c
 

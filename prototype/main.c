@@ -13,6 +13,7 @@
 #include "framework/input.h"
 
 #include "framework/systems/string_system.h"
+#include "framework/systems/action_system.h"
 #include "framework/systems/material_system.h"
 #include "framework/systems/asset_system.h"
 
@@ -393,30 +394,23 @@ static void prototype_draw_ui(void) {
 static bool gs_main_exit;
 
 static void app_init(void) {
-	material_system_init();
-	asset_system_init();
-	asset_types_init();
 	renderer_init();
 	game_init();
-
 	ui_init();
+	prototype_init();
+
 	ui_set_shader(S_("assets/shaders/batcher_2d.glsl"));
 	ui_set_image(S_("assets/images/ui.image"));
 	ui_set_font(S_("assets/test.font"));
-
-	prototype_init();
 }
 
 static void app_free(void) {
 	prototype_free();
-
 	ui_free();
-
 	game_free();
 	renderer_free();
-	asset_types_free();
-	asset_system_free();
-	material_system_free();
+
+	action_system_update();
 }
 
 static void app_fixed_tick(void) {

@@ -4,7 +4,7 @@
 #include "material_system.h"
 
 static struct Material_System {
-	struct Sparseset instances;
+	struct Sparseset instances; // `struct Gfx_Material`
 } gs_material_system;
 
 void material_system_init(void) {

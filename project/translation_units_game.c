@@ -31,6 +31,7 @@
 #include "framework/assets/font.c"
 
 #include "framework/systems/string_system.c"
+#include "framework/systems/action_system.c"
 #include "framework/systems/material_system.c"
 #include "framework/systems/asset_system.c"
 
