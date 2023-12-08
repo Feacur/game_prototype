@@ -526,26 +526,28 @@ static struct GPU_Target gpu_target_on_aquire(struct GPU_Target_Asset asset) {
 			array_push_many(&gpu_target.textures, 1, &gh_texture);
 		}
 		else {
-			GLuint buffer_id;
-			glCreateRenderbuffers(1, &buffer_id);
+			struct GPU_Target_Buffer buffer = {
+				.parameters = asset.parameters[i],
+			};
+			glCreateRenderbuffers(1, &buffer.id);
 			glNamedRenderbufferStorage(
-				buffer_id,
+				buffer.id,
 				gpu_sized_internal_format(asset.parameters[i].texture_type, asset.parameters[i].data_type),
 				(GLsizei)gpu_target.size.x, (GLsizei)gpu_target.size.y
 			);
-			array_push_many(&gpu_target.buffers, 1, &(struct GPU_Target_Buffer){
-				.id = buffer_id,
-				.parameters = asset.parameters[i],
-			});
+			array_push_many(&gpu_target.buffers, 1, &buffer);
 		}
 	}
 
 	// chart
-	uint32_t attachment = 0;
+	uint32_t attachments_count = 0;
 	FOR_ARRAY(&gpu_target.textures, it) {
 		struct Handle const * gh_texture = it.value;
 		struct GPU_Texture const * gpu_texture = sparseset_get(&gs_graphics_state.textures, *gh_texture);
 		if (gpu_texture == NULL) { continue; }
+
+		uint32_t const attachment = attachments_count;
+		if (gpu_texture->parameters.texture_type == TEXTURE_TYPE_COLOR) { attachments_count++; }
 
 		GLint const level = 0;
 		glNamedFramebufferTexture(
@@ -554,19 +556,19 @@ static struct GPU_Target gpu_target_on_aquire(struct GPU_Target_Asset asset) {
 			gpu_texture->id,
 			level
 		);
-
-		if (gpu_texture->parameters.texture_type == TEXTURE_TYPE_COLOR) { attachment++; }
 	}
 	FOR_ARRAY(&gpu_target.buffers, it) {
 		struct GPU_Target_Buffer const * buffer = it.value;
+
+		uint32_t const attachment = attachments_count;
+		if (buffer->parameters.texture_type == TEXTURE_TYPE_COLOR) { attachments_count++; }
+
 		glNamedFramebufferRenderbuffer(
 			gpu_target.id,
 			gpu_attachment_point(buffer->parameters.texture_type, attachment),
 			GL_RENDERBUFFER,
 			buffer->id
 		);
-
-		if (buffer->parameters.texture_type == TEXTURE_TYPE_COLOR) { attachment++; }
 	}
 
 	GFX_TRACE("aquire target %d", gpu_target.id);
@@ -631,12 +633,16 @@ struct Handle gpu_target_get_texture_handle(struct Handle handle, enum Texture_T
 	struct GPU_Target const * gpu_target = sparseset_get(&gs_graphics_state.targets, handle);
 	if (gpu_target == NULL) { return (struct Handle){0}; }
 
-	uint32_t attachment = 0;
+	uint32_t attachments_count = 0;
 	FOR_ARRAY(&gpu_target->textures, it) {
 		struct Handle const * gh_texture = it.value;
 		struct GPU_Texture const * gpu_texture = sparseset_get(&gs_graphics_state.textures, *gh_texture);
-		if (gpu_texture->parameters.texture_type == type) {
-			if (type == TEXTURE_TYPE_COLOR && attachment != index) { attachment++; continue; }
+		if (gpu_texture == NULL) { continue; }
+
+		uint32_t const attachment = attachments_count;
+		if (gpu_texture->parameters.texture_type == TEXTURE_TYPE_COLOR) { attachments_count++; }
+
+		if (gpu_texture->parameters.texture_type == type && attachment == index) {
 			return *gh_texture;
 		}
 	}
