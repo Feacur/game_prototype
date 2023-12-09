@@ -220,8 +220,9 @@ static void prototype_draw_objects(void) {
 
 	// process global
 	{
-		graphics_buffer_align(&gs_renderer.global, BUFFER_MODE_UNIFORM);
-		size_t const offset = gs_renderer.global.size;
+		// @note: consider global block unique and extendable
+		// graphics_buffer_align(&gs_renderer.global, BUFFER_MODE_UNIFORM);
+		// size_t const offset = gs_renderer.global.size;
 
 		struct Shader_Global {
 			float dummy;
@@ -232,8 +233,8 @@ static void prototype_draw_objects(void) {
 			.type = GPU_COMMAND_TYPE_BUFFER,
 			.as.buffer = {
 				.gh_buffer = gs_renderer.gh_camera,
-				.offset = offset,
-				.length = gs_renderer.global.size - offset,
+				// .offset = offset,
+				// .length = gs_renderer.global.size - offset,
 				.mode = BUFFER_MODE_UNIFORM,
 				.index = BLOCK_TYPE_GLOBAL - 1,
 			},
@@ -249,11 +250,17 @@ static void prototype_draw_objects(void) {
 			struct mat4 view;
 			struct mat4 projection;
 			struct mat4 projection_view;
-		} sc;
-
-		sc.viewport_size = camera->cached_size;
-		sc.view = mat4_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
-		sc.projection = camera_get_projection(&camera->params, sc.viewport_size);
+		} sc = {
+			.viewport_size = camera->cached_size,
+			.view = mat4_inverse_transformation(
+				camera->transform.position,
+				camera->transform.scale,
+				camera->transform.rotation
+			),
+			.projection = camera_get_projection(
+				&camera->params, camera->cached_size
+			),
+		};
 		sc.projection_view = mat4_mul_mat(sc.projection, sc.view);
 
 		// process camera

@@ -1237,6 +1237,14 @@ inline static void gpu_execute_buffer(struct GPU_Command_Buffer const * command)
 	struct GPU_Buffer_Internal const * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, command->gh_buffer);
 	if (gpu_buffer == NULL) { return; }
 
+	if (command->offset == 0 && command->length == 0) {
+		gl.BindBufferBase(
+			gpu_buffer_mode(command->mode)
+			, command->index, gpu_buffer->id
+		);
+		return;
+	}
+
 	uint32_t const length = min_u32(
 		(uint32_t)command->length,
 		get_buffer_mode_size(command->mode)
