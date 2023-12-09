@@ -2,6 +2,7 @@
 #define FRAMEWORK_INPUT_KEYS
 
 enum Scan_Code {
+	SC_NONE,
 	// letters
 	SC_A                = 0x1e, // A
 	SC_B                = 0x30, // B
@@ -126,6 +127,7 @@ enum Scan_Code {
 };
 
 enum Key_Code {
+	KC_NONE,
 	// letters
 	KC_A                = 'A',
 	KC_B                = 'B',
@@ -252,6 +254,7 @@ enum Key_Code {
 };
 
 enum Mouse_Code {
+	MC_NONE,
 	MC_LEFT,
 	MC_RIGHT,
 	MC_MIDDLE,

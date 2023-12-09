@@ -15,6 +15,7 @@
 - [tech] handle GPU samplers' lifetime
 - [feature] allow assets to be dynamic
 - [tech] update assets dependecies, like if swapping materials' shaders or textures
+- [tech] consider dropping resources on the floor on exit
 
 # Changelog
 

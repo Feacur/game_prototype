@@ -235,7 +235,7 @@ static void prototype_draw_objects(void) {
 				.offset = offset,
 				.length = gs_renderer.global.size - offset,
 				.mode = BUFFER_MODE_UNIFORM,
-				.index = 0,
+				.index = BLOCK_TYPE_GLOBAL - 1,
 			},
 		});
 	}
@@ -269,7 +269,7 @@ static void prototype_draw_objects(void) {
 					.offset = offset,
 					.length = gs_renderer.camera.size - offset,
 					.mode = BUFFER_MODE_UNIFORM,
-					.index = 1,
+					.index = BLOCK_TYPE_CAMERA - 1,
 				},
 			});
 		}

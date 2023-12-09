@@ -512,7 +512,7 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 						.offset = batch->buffer_offset,
 						.length = batch->buffer_length,
 						.mode = BUFFER_MODE_STORAGE,
-						.index = 2,
+						.index = BLOCK_TYPE_DYNAMIC - 1,
 					},
 				},
 				{

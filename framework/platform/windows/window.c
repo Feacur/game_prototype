@@ -228,13 +228,13 @@ static void platform_window_internal_syscommand_move(struct Window * window, uin
 static void platform_window_internal_syscommand_size(struct Window * window, uint8_t mode) {
 	if (window->command != WINDOW_COMMAND_NONE) { return; }
 	switch (mode) {
-		case WMSZ_LEFT:        window->command = WINDOW_COMMAND_SIZE_LEFT; break;
-		case WMSZ_RIGHT:       window->command = WINDOW_COMMAND_SIZE_RIGHT; break;
-		case WMSZ_TOP:         window->command = WINDOW_COMMAND_SIZE_TOP; break;
-		case WMSZ_TOPLEFT:     window->command = WINDOW_COMMAND_SIZE_TOPLEFT; break;
-		case WMSZ_TOPRIGHT:    window->command = WINDOW_COMMAND_SIZE_TOPRIGHT; break;
-		case WMSZ_BOTTOM:      window->command = WINDOW_COMMAND_SIZE_BOTTOM; break;
-		case WMSZ_BOTTOMLEFT:  window->command = WINDOW_COMMAND_SIZE_BOTTOMLEFT; break;
+		case WMSZ_LEFT:        window->command = WINDOW_COMMAND_SIZE_LEFT;        break;
+		case WMSZ_RIGHT:       window->command = WINDOW_COMMAND_SIZE_RIGHT;       break;
+		case WMSZ_TOP:         window->command = WINDOW_COMMAND_SIZE_TOP;         break;
+		case WMSZ_TOPLEFT:     window->command = WINDOW_COMMAND_SIZE_TOPLEFT;     break;
+		case WMSZ_TOPRIGHT:    window->command = WINDOW_COMMAND_SIZE_TOPRIGHT;    break;
+		case WMSZ_BOTTOM:      window->command = WINDOW_COMMAND_SIZE_BOTTOM;      break;
+		case WMSZ_BOTTOMLEFT:  window->command = WINDOW_COMMAND_SIZE_BOTTOMLEFT;  break;
 		case WMSZ_BOTTOMRIGHT: window->command = WINDOW_COMMAND_SIZE_BOTTOMRIGHT; break;
 		default: return;
 	}
@@ -287,8 +287,8 @@ static void platform_window_internal_handle_moving(struct Window * window) {
 }
 
 static void platform_window_internal_handle_sizing(struct Window * window) {
-	if (window->command < WINDOW_COMMAND_SIZE_LEFT) { return; }
-	if (window->command > WINDOW_COMMAND_SIZE_BOTTOMRIGHT) { return; }
+	if (window->command <= WINDOW_COMMAND_NONE) { return; }
+	if (window->command >= WINDOW_COMMAND_MOVE) { return; }
 	if (!(GetKeyState(VK_LBUTTON) & 0x80)) { // !input_mouse(MC_LEFT)
 		window->command = WINDOW_COMMAND_NONE;
 	}

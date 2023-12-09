@@ -1,8 +1,8 @@
-layout (std140, binding = 0) uniform Global {
+BLOCK_GLOBAL Global {
 	float dummy;
 } global;
 
-layout (std140, binding = 1) uniform Camera {
+BLOCK_CAMERA Camera {
 	uvec2 viewport_size;
 	// padding
 	mat4 view;
@@ -14,8 +14,8 @@ layout (std140, binding = 1) uniform Camera {
 
 
 #if defined(VERTEX_SHADER)
-layout(location = ATTRIBUTE_TYPE_POSITION) in vec3 a_Position;
-layout(location = ATTRIBUTE_TYPE_TEXCOORD) in vec2 a_TexCoord;
+ATTRIBUTE_POSITION vec3 a_Position;
+ATTRIBUTE_TEXCOORD vec2 a_TexCoord;
 
 uniform mat4 u_Model;
 

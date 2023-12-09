@@ -12,7 +12,6 @@
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
 
-#include "framework/graphics/gfx_types.h"
 #include "framework/graphics/gfx_material.h"
 
 #include "framework/systems/buffer_system.h"
@@ -40,20 +39,18 @@ struct Graphics_Limits {
 	uint32_t uniform_blocks_vs;
 	uint32_t uniform_blocks_fs;
 	uint32_t uniform_blocks_cs;
+	uint32_t uniform_blocks_size;
+	uint32_t uniform_blocks_alignment;
 	//
 	uint32_t storage_blocks;
 	uint32_t storage_blocks_vs;
 	uint32_t storage_blocks_fs;
 	uint32_t storage_blocks_cs;
+	uint32_t storage_blocks_size;
+	uint32_t storage_blocks_alignment;
 	//
 	uint32_t texture_size;
-	uint32_t renderbuffer_size;
-	uint32_t elements_vertices;
-	uint32_t elements_indices;
-	uint32_t uniform_locations;
-	//
-	uint32_t ub_alignment;
-	uint32_t sb_alignment;
+	uint32_t target_size;
 };
 
 static struct Graphics_State {
@@ -82,6 +79,24 @@ static struct Graphics_State {
 
 //
 #include "framework/graphics/gfx_objects.h"
+
+static uint32_t get_buffer_mode_size(enum Buffer_Mode mode) {
+	switch (mode) {
+		case BUFFER_MODE_NONE:    return 0;
+		case BUFFER_MODE_UNIFORM: return gs_graphics_state.limits.uniform_blocks_size;
+		case BUFFER_MODE_STORAGE: return gs_graphics_state.limits.storage_blocks_size;
+	}
+	return 0;
+}
+
+static uint32_t get_buffer_mode_alignment(enum Buffer_Mode mode) {
+	switch (mode) {
+		case BUFFER_MODE_NONE:    return 0;
+		case BUFFER_MODE_UNIFORM: return gs_graphics_state.limits.uniform_blocks_alignment;
+		case BUFFER_MODE_STORAGE: return gs_graphics_state.limits.storage_blocks_alignment;
+	}
+	return 0;
+}
 
 // ----- ----- ----- ----- -----
 //     GPU program part
@@ -306,8 +321,9 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 #define ADD_SECTION_HEADER(shader_type, target) \
 	do { \
 		if (common_strstr((char const *)asset->data, #shader_type)) {\
-			if (gl.version < (target)) { ERR("'" #shader_type "' is unavailable"); \
-				REPORT_CALLSTACK(); DEBUG_BREAK(); break; \
+			if (gl.version < (target)) { \
+				ERR("'" #shader_type "' is unavailable"); \
+				DEBUG_BREAK(); \
 			} \
 			sections[sections_count++] = (struct Section_Header){ \
 				.type = GL_##shader_type, \
@@ -321,15 +337,20 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 	}};
 
 	// common header
-	GLchar header[256];
+	GLchar header[1024];
 	uint32_t header_length = formatter_fmt(
 		SIZE_OF_ARRAY(header), header, ""
 		"#version %u core\n"
 		"\n"
-		"#define ATTRIBUTE_TYPE_POSITION %u\n"
-		"#define ATTRIBUTE_TYPE_TEXCOORD %u\n"
-		"#define ATTRIBUTE_TYPE_NORMAL   %u\n"
-		"#define ATTRIBUTE_TYPE_COLOR    %u\n"
+		"#define ATTRIBUTE_POSITION layout(location = %u) in\n"
+		"#define ATTRIBUTE_TEXCOORD layout(location = %u) in\n"
+		"#define ATTRIBUTE_NORMAL   layout(location = %u) in\n"
+		"#define ATTRIBUTE_COLOR    layout(location = %u) in\n"
+		"\n"
+		"#define BLOCK_GLOBAL  layout(std140, binding = %u) uniform\n"
+		"#define BLOCK_CAMERA  layout(std140, binding = %u) uniform\n"
+		"#define BLOCK_MODEL   layout(std140, binding = %u) uniform\n"
+		"#define BLOCK_DYNAMIC layout(std430, binding = %u) readonly buffer\n"
 		"\n"
 		"#define DEPTH_NEAR %g\n"
 		"#define DEPTH_FAR  %g\n"
@@ -342,6 +363,11 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 		ATTRIBUTE_TYPE_TEXCOORD - 1,
 		ATTRIBUTE_TYPE_NORMAL - 1,
 		ATTRIBUTE_TYPE_COLOR - 1,
+		//
+		BLOCK_TYPE_GLOBAL - 1,
+		BLOCK_TYPE_CAMERA - 1,
+		BLOCK_TYPE_MODEL - 1,
+		BLOCK_TYPE_DYNAMIC - 1,
 		//
 		(double)gs_graphics_state.clip_space.depth_near,
 		(double)gs_graphics_state.clip_space.depth_far,
@@ -491,6 +517,8 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 		.settings   = asset->settings,
 		.sampler    = asset->sampler,
 	}};
+	if (gpu_texture.base.size.x < asset->size.x) { WRN("texture x exceeds limits"); DEBUG_BREAK(); }
+	if (gpu_texture.base.size.y < asset->size.y) { WRN("texture y exceeds limits"); DEBUG_BREAK(); }
 
 	if (gpu_texture.base.size.x == 0)  { return gpu_texture; }
 	if (gpu_texture.base.size.y == 0)  { return gpu_texture; }
@@ -572,10 +600,12 @@ static struct GPU_Target_Internal gpu_target_on_aquire(struct GPU_Target_Asset a
 		.textures = array_init(sizeof(struct Handle)),
 		.buffers  = array_init(sizeof(struct GPU_Target_Buffer_Internal)),
 		.size = {
-			min_u32(asset.size.x, gs_graphics_state.limits.renderbuffer_size),
-			min_u32(asset.size.y, gs_graphics_state.limits.renderbuffer_size),
+			min_u32(asset.size.x, gs_graphics_state.limits.target_size),
+			min_u32(asset.size.y, gs_graphics_state.limits.target_size),
 		},
 	}};
+	if (gpu_target.base.size.x < asset.size.x) { WRN("target x exceeds limits"); DEBUG_BREAK(); }
+	if (gpu_target.base.size.y < asset.size.y) { WRN("target y exceeds limits"); DEBUG_BREAK(); }
 
 	{ // prepare arrays
 		uint32_t textures_count = 0;
@@ -931,17 +961,8 @@ struct mat4 graphics_projection_mat4(
 	);
 }
 
-static uint32_t graphics_buffer_get_alignment(enum Buffer_Mode mode) {
-	switch (mode) {
-		case BUFFER_MODE_NONE:    return 0;
-		case BUFFER_MODE_UNIFORM: return gs_graphics_state.limits.ub_alignment;
-		case BUFFER_MODE_STORAGE: return gs_graphics_state.limits.sb_alignment;
-	}
-	return 0;
-}
-
 void graphics_buffer_align(struct Buffer * buffer, enum Buffer_Mode mode) {
-	uint32_t const alignment = graphics_buffer_get_alignment(mode);
+	uint32_t const alignment = get_buffer_mode_alignment(mode);
 	size_t const align = alignment - (buffer->size % alignment);
 	buffer_push_many(buffer, align, NULL);
 }
@@ -985,26 +1006,23 @@ static uint32_t graphics_unit_find(struct Handle gh_texture) {
 }
 
 static uint32_t gpu_unit_init(struct Handle gh_texture) {
-	uint32_t const existing_unit = graphics_unit_find(gh_texture);
-	if (existing_unit != 0) { return existing_unit; }
-
-	uint32_t const free_id = graphics_unit_find((struct Handle){0});
-	if (free_id == 0) {
-		WRN("failure: no spare texture/sampler units");
-		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
-	}
-
 	struct GPU_Texture_Internal const * gpu_texture = sparseset_get(&gs_graphics_state.textures, gh_texture);
-	if (gpu_texture == NULL) {
+	if (gpu_texture == NULL) { return 0; }
+
+	uint32_t const id = graphics_unit_find(gh_texture);
+	if (id != 0) { return id; }
+
+	uint32_t const id_new = graphics_unit_find((struct Handle){0});
+	if (id_new == 0) {
 		WRN("failure: no spare texture/sampler units");
-		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
+		DEBUG_BREAK(); return 0;
 	}
 
-	struct GPU_Unit * unit = array_at(&gs_graphics_state.units, free_id - 1);
+	struct GPU_Unit * unit = array_at(&gs_graphics_state.units, id_new - 1);
 	unit->gh_texture = gh_texture;
 
-	gl.BindTextureUnit((GLuint)free_id, gpu_texture->id);
-	return free_id;
+	gl.BindTextureUnit((GLuint)id_new, gpu_texture->id);
+	return id_new;
 }
 
 // static void gpu_unit_free(struct Handle gh_texture) {
@@ -1045,7 +1063,7 @@ static void gpu_upload_single_uniform(struct GPU_Program_Internal const * gpu_pr
 	switch (field->base.type) {
 		default: {
 			WRN("unsupported field type '0x%x'", field->base.type);
-			REPORT_CALLSTACK(); DEBUG_BREAK();
+			DEBUG_BREAK();
 		} break;
 
 		case DATA_TYPE_UNIT_U:
@@ -1160,7 +1178,7 @@ inline static void gpu_execute_target(struct GPU_Command_Target const * command)
 inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 	if (command->mask == TEXTURE_TYPE_NONE) {
 		WRN("clear mask is empty");
-		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
+		DEBUG_BREAK(); return;
 	}
 
 	float const depth   = gs_graphics_state.clip_space.depth_far;
@@ -1219,10 +1237,16 @@ inline static void gpu_execute_buffer(struct GPU_Command_Buffer const * command)
 	struct GPU_Buffer_Internal const * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, command->gh_buffer);
 	if (gpu_buffer == NULL) { return; }
 
+	uint32_t const length = min_u32(
+		(uint32_t)command->length,
+		get_buffer_mode_size(command->mode)
+	);
+	if (length < command->length) { WRN("buffer exceeds limits"); DEBUG_BREAK(); }
+
 	gl.BindBufferRange(
 		gpu_buffer_mode(command->mode)
 		, command->index, gpu_buffer->id
-		, (GLsizeiptr)command->offset, (GLsizeiptr)command->length
+		, (GLsizeiptr)command->offset, (GLsizeiptr)length
 	);
 }
 
@@ -1282,7 +1306,7 @@ void gpu_execute(uint32_t length, struct GPU_Command const * commands) {
 		switch (command->type) {
 			default: {
 				ERR("unknown command");
-				REPORT_CALLSTACK(); DEBUG_BREAK();
+				DEBUG_BREAK();
 			} break;
 
 			case GPU_COMMAND_TYPE_CULL:     gpu_execute_cull(&command->as.cull);         break;
@@ -1432,41 +1456,40 @@ static struct Graphics_Limits get_limits(void) {
 	GLint uniform_blocks
 	    , uniform_blocks_vs
 	    , uniform_blocks_fs
-	    , uniform_blocks_cs;
+	    , uniform_blocks_cs
+	    , uniform_blocks_size
+	    , uniform_blocks_alignment;
 
 	GLint storage_blocks
 	    , storage_blocks_vs
 	    , storage_blocks_fs
-	    , storage_blocks_cs;
+	    , storage_blocks_cs
+	    , storage_blocks_size
+	    , storage_blocks_alignment;
 
-	GLint texture_size, renderbuffer_size;
-	GLint elements_vertices, elements_indices;
-	GLint uniform_locations;
-	GLint ub_alignment, sb_alignment;
+	GLint texture_size, target_size;
 
-	gl.GetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,   &units);
-	gl.GetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS,     &units_vs);
-	gl.GetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,            &units_fs);
-	gl.GetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS,    &units_cs);
+	gl.GetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,       &units);
+	gl.GetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS,         &units_vs);
+	gl.GetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,                &units_fs);
+	gl.GetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS,        &units_cs);
 
-	gl.GetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS,        &uniform_blocks);
-	gl.GetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS,          &uniform_blocks_vs);
-	gl.GetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS,        &uniform_blocks_fs);
-	gl.GetIntegerv(GL_MAX_COMPUTE_UNIFORM_BLOCKS,         &uniform_blocks_cs);
+	gl.GetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS,            &uniform_blocks);
+	gl.GetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS,              &uniform_blocks_vs);
+	gl.GetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS,            &uniform_blocks_fs);
+	gl.GetIntegerv(GL_MAX_COMPUTE_UNIFORM_BLOCKS,             &uniform_blocks_cs);
+	gl.GetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,                 &uniform_blocks_size);
+	gl.GetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT,        &uniform_blocks_alignment);
 
-	gl.GetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &storage_blocks);
-	gl.GetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS,   &storage_blocks_vs);
-	gl.GetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &storage_blocks_fs);
-	gl.GetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS,  &storage_blocks_cs);
+	gl.GetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS,     &storage_blocks);
+	gl.GetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS,       &storage_blocks_vs);
+	gl.GetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS,     &storage_blocks_fs);
+	gl.GetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS,      &storage_blocks_cs);
+	gl.GetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE,          &storage_blocks_size);
+	gl.GetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &storage_blocks_alignment);
 
-	gl.GetIntegerv(GL_MAX_TEXTURE_SIZE,                   &texture_size);
-	gl.GetIntegerv(GL_MAX_RENDERBUFFER_SIZE,              &renderbuffer_size);
-	gl.GetIntegerv(GL_MAX_ELEMENTS_VERTICES,              &elements_vertices);
-	gl.GetIntegerv(GL_MAX_ELEMENTS_INDICES,               &elements_indices);
-	gl.GetIntegerv(GL_MAX_UNIFORM_LOCATIONS,              &uniform_locations);
-
-	gl.GetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT,        &ub_alignment);
-	gl.GetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &sb_alignment);
+	gl.GetIntegerv(GL_MAX_TEXTURE_SIZE,                       &texture_size);
+	gl.GetIntegerv(GL_MAX_RENDERBUFFER_SIZE,                  &target_size);
 
 	LOG(
 		"> OpenGL limits:\n"
@@ -1479,20 +1502,19 @@ static struct Graphics_Limits get_limits(void) {
 		"  - VS ............ %d\n"
 		"  - FS ............ %d\n"
 		"  - CS ............ %d\n"
+		"  - size .......... %d\n"
+		"  - alignment ..... %d\n"
 		//
 		"  storage blocks .. %d\n"
 		"  - VS ............ %d\n"
 		"  - FS ............ %d\n"
 		"  - CS ............ %d\n"
+		"  - size .......... %d\n"
+		"  - alignment ..... %d\n"
 		//
 		"  texture size .... %d\n"
 		"  target size ..... %d\n"
-		"  vertices ........ %d\n"
-		"  indices ......... %d\n"
-		"  uniforms ........ %d\n"
 		//
-		" UB alignment ..... %d\n"
-		" SB alignment ..... %d\n"
 		""
 		, units
 		, units_vs
@@ -1503,46 +1525,42 @@ static struct Graphics_Limits get_limits(void) {
 		, uniform_blocks_vs
 		, uniform_blocks_fs
 		, uniform_blocks_cs
+		, uniform_blocks_size
+		, uniform_blocks_alignment
 		//
 		, storage_blocks
 		, storage_blocks_vs
 		, storage_blocks_fs
 		, storage_blocks_cs
+		, storage_blocks_size
+		, storage_blocks_alignment
 		//
 		, texture_size
-		, renderbuffer_size
-		, elements_vertices
-		, elements_indices
-		, uniform_locations
-		//
-		, ub_alignment
-		, sb_alignment
+		, target_size
 	);
 
 	return (struct Graphics_Limits){
-		.units             = (uint32_t)units,
-		.units_vs          = (uint32_t)units_vs,
-		.units_fs          = (uint32_t)units_fs,
-		.units_cs          = (uint32_t)units_cs,
+		.units                    = (uint32_t)units,
+		.units_vs                 = (uint32_t)units_vs,
+		.units_fs                 = (uint32_t)units_fs,
+		.units_cs                 = (uint32_t)units_cs,
 		//
-		.uniform_blocks    = (uint32_t)uniform_blocks,
-		.uniform_blocks_vs = (uint32_t)uniform_blocks_vs,
-		.uniform_blocks_fs = (uint32_t)uniform_blocks_fs,
-		.uniform_blocks_cs = (uint32_t)uniform_blocks_cs,
+		.uniform_blocks           = (uint32_t)uniform_blocks,
+		.uniform_blocks_vs        = (uint32_t)uniform_blocks_vs,
+		.uniform_blocks_fs        = (uint32_t)uniform_blocks_fs,
+		.uniform_blocks_cs        = (uint32_t)uniform_blocks_cs,
+		.uniform_blocks_size      = (uint32_t)uniform_blocks_size,
+		.uniform_blocks_alignment = (uint32_t)uniform_blocks_alignment,
 		//
-		.storage_blocks    = (uint32_t)storage_blocks,
-		.storage_blocks_vs = (uint32_t)storage_blocks_vs,
-		.storage_blocks_fs = (uint32_t)storage_blocks_fs,
-		.storage_blocks_cs = (uint32_t)storage_blocks_cs,
+		.storage_blocks           = (uint32_t)storage_blocks,
+		.storage_blocks_vs        = (uint32_t)storage_blocks_vs,
+		.storage_blocks_fs        = (uint32_t)storage_blocks_fs,
+		.storage_blocks_cs        = (uint32_t)storage_blocks_cs,
+		.storage_blocks_size      = (uint32_t)storage_blocks_size,
+		.storage_blocks_alignment = (uint32_t)storage_blocks_alignment,
 		//
-		.texture_size      = (uint32_t)texture_size,
-		.renderbuffer_size = (uint32_t)renderbuffer_size,
-		.elements_vertices = (uint32_t)elements_vertices,
-		.elements_indices  = (uint32_t)elements_indices,
-		.uniform_locations = (uint32_t)uniform_locations,
-		//
-		.ub_alignment      = (uint32_t)ub_alignment,
-		.sb_alignment      = (uint32_t)sb_alignment,
+		.texture_size             = (uint32_t)texture_size,
+		.target_size              = (uint32_t)target_size,
 	};
 }
 

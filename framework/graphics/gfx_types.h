@@ -251,6 +251,14 @@ enum Buffer_Mode {
 	BUFFER_MODE_STORAGE,
 };
 
+enum Block_Type {
+	BLOCK_TYPE_NONE,
+	BLOCK_TYPE_GLOBAL,
+	BLOCK_TYPE_CAMERA,
+	BLOCK_TYPE_MODEL,
+	BLOCK_TYPE_DYNAMIC,
+};
+
 //
 
 struct GPU_Unit {

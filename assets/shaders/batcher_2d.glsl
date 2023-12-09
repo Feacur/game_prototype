@@ -1,8 +1,8 @@
-layout (std140, binding = 0) uniform Global {
+BLOCK_GLOBAL Global {
 	float dummy;
 } global;
 
-layout (std140, binding = 1) uniform Camera {
+BLOCK_CAMERA Camera {
 	uvec2 viewport_size;
 	// padding
 	mat4 view;
@@ -30,9 +30,9 @@ struct Instance {
 	vec4 color;
 };
 
-layout(std430, binding = 2) buffer Buffer {
+BLOCK_DYNAMIC Dynamic {
 	Instance instances[];
-} buff;
+} dyn;
 
 out Vertex {
 	vec4 color;
@@ -40,7 +40,7 @@ out Vertex {
 } vert;
 
 void main() {
-	Instance inst = buff.instances[gl_InstanceID];
+	Instance inst = dyn.instances[gl_InstanceID];
 
 	vec2 position[6] = {
 		inst.quad.xy, inst.quad.zy, inst.quad.zw,
