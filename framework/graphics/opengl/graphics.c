@@ -15,14 +15,13 @@
 #include "framework/graphics/gfx_types.h"
 #include "framework/graphics/gfx_material.h"
 
+#include "framework/systems/buffer_system.h"
 #include "framework/systems/string_system.h"
 #include "framework/systems/action_system.h"
 #include "framework/systems/material_system.h"
 
 #include "functions.h"
 #include "gpu_types.h"
-
-#include <malloc.h> // alloca
 
 // @todo: GPU scissor test
 // @todo: expose screen buffer settings, as well as OpenGL's
@@ -52,6 +51,9 @@ struct Graphics_Limits {
 	uint32_t elements_vertices;
 	uint32_t elements_indices;
 	uint32_t uniform_locations;
+	//
+	uint32_t ub_alignment;
+	uint32_t sb_alignment;
 };
 
 static struct Graphics_State {
@@ -87,6 +89,218 @@ static struct Graphics_State {
 
 static void verify_shader(GLuint id);
 static void verify_program(GLuint id);
+
+static void gpu_program_introspect_uniforms(struct GPU_Program_Internal * gpu_program) {
+	enum Param {
+		PARAM_NAME_LENGTH,
+		PARAM_TYPE,
+		PARAM_ARRAY_SIZE,
+		PARAM_BLOCK_INDEX,
+		PARAM_ARRAY_STRIDE,
+		PARAM_LOCATION,
+	};
+	static GLenum const c_props[] = {
+		[PARAM_NAME_LENGTH]      = GL_NAME_LENGTH,
+		[PARAM_TYPE]             = GL_TYPE,
+		[PARAM_ARRAY_SIZE]       = GL_ARRAY_SIZE,
+		[PARAM_BLOCK_INDEX]      = GL_BLOCK_INDEX,
+		[PARAM_ARRAY_STRIDE]     = GL_ARRAY_STRIDE,
+		[PARAM_LOCATION]         = GL_LOCATION,
+	};
+
+	GLint count;
+	gl.GetProgramInterfaceiv(gpu_program->id, GL_UNIFORM, GL_ACTIVE_RESOURCES, &count);
+	hashmap_ensure(&gpu_program->base.uniforms, (uint32_t)count);
+	for (GLint i = 0; i < count; i++) {
+
+		GLint params[SIZE_OF_ARRAY(c_props)];
+		gl.GetProgramResourceiv(gpu_program->id, GL_UNIFORM, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
+
+		// @note: skip blocks
+		if (params[PARAM_BLOCK_INDEX] >= 0) { continue; }
+		if (params[PARAM_LOCATION]     < 0) { continue; }
+
+		GLsizei name_length = params[PARAM_NAME_LENGTH] - 1;
+		char * name_data = buffer_system_get((size_t)name_length + 1);
+		gl.GetProgramResourceName(gpu_program->id, GL_UNIFORM, (GLuint)i, (GLsizei)name_length + 1, NULL, name_data);
+
+		// TRC(
+		// 	"array %5d block %5d stride %5d loc %5d -- %.*s"
+		// 	, params[PARAM_ARRAY_SIZE]
+		// 	, params[PARAM_BLOCK_INDEX]
+		// 	, params[PARAM_ARRAY_STRIDE]
+		// 	, params[PARAM_LOCATION]
+		// 	, name_length, name_data
+		// );
+
+		uint32_t const id = string_system_add((struct CString){
+			.length = (uint32_t)name_length,
+			.data = name_data,
+		});
+		hashmap_set(&gpu_program->base.uniforms, &id, &(struct GPU_Uniform_Internal){
+			.base = {
+				.type = translate_program_data_type(params[PARAM_TYPE]),
+				.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
+			},
+			.index = (GLuint)i,
+			.location = params[PARAM_LOCATION],
+		});
+	}
+}
+
+static void gpu_program_introspect_block(struct GPU_Program_Internal * gpu_program, GLenum interface) {
+	enum Param {
+		PARAM_NAME_LENGTH,
+		PARAM_BUFFER_BINDING,
+		PARAM_BUFFER_DATA_SIZE,
+	};
+	static GLenum const c_props[] = {
+		[PARAM_NAME_LENGTH]      = GL_NAME_LENGTH,
+		[PARAM_BUFFER_BINDING]   = GL_BUFFER_BINDING,
+		[PARAM_BUFFER_DATA_SIZE] = GL_BUFFER_DATA_SIZE,
+	};
+
+	GLint count;
+	gl.GetProgramInterfaceiv(gpu_program->id, interface, GL_ACTIVE_RESOURCES, &count);
+	for (GLint i = 0; i < count; i++) {
+
+		GLint params[SIZE_OF_ARRAY(c_props)];
+		gl.GetProgramResourceiv(gpu_program->id, interface, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
+
+		GLsizei name_length = params[PARAM_NAME_LENGTH] - 1;
+		char * name_data = buffer_system_get((size_t)name_length + 1);
+		gl.GetProgramResourceName(gpu_program->id, interface, (GLuint)i, (GLsizei)name_length + 1, NULL, name_data);
+
+		TRC(
+			"bind %5d size %5d -- %.*s"
+			, params[PARAM_BUFFER_BINDING]
+			, params[PARAM_BUFFER_DATA_SIZE]
+			, name_length, name_data
+		);
+	}
+}
+
+static void gpu_program_introspect_buffer(struct GPU_Program_Internal * gpu_program) {
+	enum Param {
+		PARAM_NAME_LENGTH,
+		PARAM_ARRAY_SIZE,
+		PARAM_BLOCK_INDEX,
+		PARAM_ARRAY_STRIDE,
+		PARAM_TOP_LEVEL_ARRAY_SIZE,
+		PARAM_TOP_LEVEL_ARRAY_STRIDE,
+	};
+	static GLenum const c_props[] = {
+		[PARAM_NAME_LENGTH]      = GL_NAME_LENGTH,
+		[PARAM_ARRAY_SIZE]       = GL_ARRAY_SIZE,
+		[PARAM_BLOCK_INDEX]      = GL_BLOCK_INDEX,
+		[PARAM_ARRAY_STRIDE]     = GL_ARRAY_STRIDE,
+		[PARAM_TOP_LEVEL_ARRAY_SIZE]         = GL_TOP_LEVEL_ARRAY_SIZE,
+		[PARAM_TOP_LEVEL_ARRAY_STRIDE]         = GL_TOP_LEVEL_ARRAY_STRIDE,
+	};
+
+	GLint count;
+	gl.GetProgramInterfaceiv(gpu_program->id, GL_BUFFER_VARIABLE, GL_ACTIVE_RESOURCES, &count);
+	for (GLint i = 0; i < count; i++) {
+
+		GLint params[SIZE_OF_ARRAY(c_props)];
+		gl.GetProgramResourceiv(gpu_program->id, GL_BUFFER_VARIABLE, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
+
+		GLsizei name_length = params[PARAM_NAME_LENGTH] - 1;
+		char * name_data = buffer_system_get((size_t)name_length + 1);
+		gl.GetProgramResourceName(gpu_program->id, GL_BUFFER_VARIABLE, (GLuint)i, (GLsizei)name_length + 1, NULL, name_data);
+
+		TRC(
+			"array %5d block %5d stride %5d tl array %5d tl stride %5d -- %.*s"
+			, params[PARAM_ARRAY_SIZE]
+			, params[PARAM_BLOCK_INDEX]
+			, params[PARAM_ARRAY_STRIDE]
+			, params[PARAM_TOP_LEVEL_ARRAY_SIZE]
+			, params[PARAM_TOP_LEVEL_ARRAY_STRIDE]
+			, name_length, name_data
+		);
+	}
+}
+
+static void gpu_program_introspect_input(struct GPU_Program_Internal * gpu_program) {
+	enum Param {
+		PARAM_NAME_LENGTH,
+		PARAM_TYPE,
+		PARAM_ARRAY_SIZE,
+		PARAM_LOCATION,
+		PARAM_LOCATION_COMPONENT,
+	};
+	static GLenum const c_props[] = {
+		[PARAM_NAME_LENGTH]        = GL_NAME_LENGTH,
+		[PARAM_TYPE]               = GL_TYPE,
+		[PARAM_ARRAY_SIZE]         = GL_ARRAY_SIZE,
+		[PARAM_LOCATION]           = GL_LOCATION,
+		[PARAM_LOCATION_COMPONENT] = GL_LOCATION_COMPONENT,
+	};
+
+	GLint count;
+	gl.GetProgramInterfaceiv(gpu_program->id, GL_PROGRAM_INPUT, GL_ACTIVE_RESOURCES, &count);
+	for (GLint i = 0; i < count; i++) {
+
+		GLint params[SIZE_OF_ARRAY(c_props)];
+		gl.GetProgramResourceiv(gpu_program->id, GL_PROGRAM_INPUT, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
+
+		if (params[PARAM_LOCATION] < 0) { continue; }
+
+		GLsizei name_length = params[PARAM_NAME_LENGTH] - 1;
+		char * name_data = buffer_system_get((size_t)name_length + 1);
+		gl.GetProgramResourceName(gpu_program->id, GL_PROGRAM_INPUT, (GLuint)i, (GLsizei)name_length + 1, NULL, name_data);
+
+		TRC(
+			"array %5d location %5d component %5d -- %.*s"
+			, params[PARAM_ARRAY_SIZE]
+			, params[PARAM_LOCATION]
+			, params[PARAM_LOCATION_COMPONENT]
+			, name_length, name_data
+		);
+	}
+}
+
+static void gpu_program_introspect_output(struct GPU_Program_Internal * gpu_program) {
+	enum Param {
+		PARAM_NAME_LENGTH,
+		PARAM_TYPE,
+		PARAM_ARRAY_SIZE,
+		PARAM_LOCATION,
+		PARAM_LOCATION_INDEX,
+		PARAM_LOCATION_COMPONENT,
+	};
+	static GLenum const c_props[] = {
+		[PARAM_NAME_LENGTH]        = GL_NAME_LENGTH,
+		[PARAM_TYPE]               = GL_TYPE,
+		[PARAM_ARRAY_SIZE]         = GL_ARRAY_SIZE,
+		[PARAM_LOCATION]           = GL_LOCATION,
+		[PARAM_LOCATION_INDEX]     = GL_LOCATION_INDEX,
+		[PARAM_LOCATION_COMPONENT] = GL_LOCATION_COMPONENT,
+	};
+
+	GLint count;
+	gl.GetProgramInterfaceiv(gpu_program->id, GL_PROGRAM_OUTPUT, GL_ACTIVE_RESOURCES, &count);
+	for (GLint i = 0; i < count; i++) {
+
+		GLint params[SIZE_OF_ARRAY(c_props)];
+		gl.GetProgramResourceiv(gpu_program->id, GL_PROGRAM_OUTPUT, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
+
+		if (params[PARAM_LOCATION] < 0) { continue; }
+
+		GLsizei name_length = params[PARAM_NAME_LENGTH] - 1;
+		char * name_data = buffer_system_get((size_t)name_length + 1);
+		gl.GetProgramResourceName(gpu_program->id, GL_PROGRAM_OUTPUT, (GLuint)i, (GLsizei)name_length + 1, NULL, name_data);
+
+		TRC(
+			"array %5d location %5d index %5d component %5d -- %.*s"
+			, params[PARAM_ARRAY_SIZE]
+			, params[PARAM_LOCATION]
+			, params[PARAM_LOCATION_INDEX]
+			, params[PARAM_LOCATION_COMPONENT]
+			, name_length, name_data
+		);
+	}
+}
 
 static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * asset) {
 #define ADD_SECTION_HEADER(shader_type, target) \
@@ -177,66 +391,12 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 	}
 
 	// introspect the program
-	GLint uniforms_count;
-	gl.GetProgramInterfaceiv(gpu_program.id, GL_UNIFORM, GL_ACTIVE_RESOURCES, &uniforms_count);
-	
-	GLint uniform_name_buffer_length; // includes zero-terminator
-	gl.GetProgramInterfaceiv(gpu_program.id, GL_UNIFORM, GL_MAX_NAME_LENGTH, &uniform_name_buffer_length);
-	GLchar * uniform_name_buffer = alloca(sizeof(GLchar) * (size_t)uniform_name_buffer_length);
-
-	hashmap_ensure(&gpu_program.base.uniforms, (uint32_t)uniforms_count);
-
-	for (GLint i = 0; i < uniforms_count; i++) {
-		enum Param {
-			PARAM_TYPE,
-			PARAM_ARRAY_SIZE,
-			PARAM_LOCATION,
-			// PARAM_ROW_MAJOR,
-			// PARAM_NAME_LENGTH,
-		};
-		static GLenum const c_props[] = {
-			[PARAM_TYPE]        = GL_TYPE,
-			[PARAM_ARRAY_SIZE]  = GL_ARRAY_SIZE,
-			[PARAM_LOCATION]    = GL_LOCATION,
-			// [PARAM_ROW_MAJOR]   = GL_IS_ROW_MAJOR,
-			// [PARAM_NAME_LENGTH] = GL_NAME_LENGTH,
-		};
-		GLint params[SIZE_OF_ARRAY(c_props)];
-		gl.GetProgramResourceiv(gpu_program.id, GL_UNIFORM, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
-
-		GLsizei name_length;
-		gl.GetProgramResourceName(gpu_program.id, GL_UNIFORM, (GLuint)i, uniform_name_buffer_length, &name_length, uniform_name_buffer);
-
-		struct CString uniform_name = {
-			.data = uniform_name_buffer,
-			.length = (uint32_t)name_length,
-		};
-
-		if (cstring_contains(uniform_name, S_("[0][0]"))) {
-			// @todo: provide a convenient API for nested arrays in GLSL
-			WRN("nested arrays are not supported");
-			REPORT_CALLSTACK(); DEBUG_BREAK(); continue;
-		}
-
-		if (cstring_contains(uniform_name, S_("[0]."))) {
-			// @todo: provide a convenient API for array of structs in GLSL
-			WRN("arrays of structs are not supported");
-			REPORT_CALLSTACK(); DEBUG_BREAK(); continue;
-		}
-
-		if (params[PARAM_ARRAY_SIZE] > 1) {
-			uniform_name.length -= 3; // arrays have suffix `[0]`
-		}
-
-		uint32_t const id = string_system_add(uniform_name);
-		hashmap_set(&gpu_program.base.uniforms, &id, &(struct GPU_Uniform_Internal){
-			.base = {
-				.type = translate_program_data_type(params[PARAM_TYPE]),
-				.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
-			},
-			.location = params[PARAM_LOCATION],
-		});
-	}
+	gpu_program_introspect_uniforms(&gpu_program);
+	(void)gpu_program_introspect_block; // (&gpu_program, GL_UNIFORM_BLOCK);
+	(void)gpu_program_introspect_block; // (&gpu_program, GL_SHADER_STORAGE_BLOCK);
+	(void)gpu_program_introspect_buffer; // (&gpu_program);
+	(void)gpu_program_introspect_input; // (&gpu_program);
+	(void)gpu_program_introspect_output; // (&gpu_program);
 
 	GFX_TRACE("aquire program %d", gpu_program.id);
 	return gpu_program;
@@ -771,6 +931,21 @@ struct mat4 graphics_projection_mat4(
 	);
 }
 
+static uint32_t graphics_buffer_get_alignment(enum Buffer_Mode mode) {
+	switch (mode) {
+		case BUFFER_MODE_NONE:    return 0;
+		case BUFFER_MODE_UNIFORM: return gs_graphics_state.limits.ub_alignment;
+		case BUFFER_MODE_STORAGE: return gs_graphics_state.limits.sb_alignment;
+	}
+	return 0;
+}
+
+void graphics_buffer_align(struct Buffer * buffer, enum Buffer_Mode mode) {
+	uint32_t const alignment = graphics_buffer_get_alignment(mode);
+	size_t const align = alignment - (buffer->size % alignment);
+	buffer_push_many(buffer, align, NULL);
+}
+
 // static void graphics_stencil_test(void) {
 // 	enum Comparison_Op comparison_op = COMPARISON_OP_NONE;
 // 	uint32_t comparison_ref = 0;
@@ -876,7 +1051,7 @@ static void gpu_upload_single_uniform(struct GPU_Program_Internal const * gpu_pr
 		case DATA_TYPE_UNIT_U:
 		case DATA_TYPE_UNIT_S:
 		case DATA_TYPE_UNIT_F: {
-			GLint * units = alloca(sizeof(GLint) * field->base.array_size);
+			GLint * units = buffer_system_get(sizeof(GLint) * field->base.array_size);
 			uint32_t units_count = 0;
 
 			// @todo: automatically rebind in a circular buffer manner
@@ -1044,7 +1219,11 @@ inline static void gpu_execute_buffer(struct GPU_Command_Buffer const * command)
 	struct GPU_Buffer_Internal const * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, command->gh_buffer);
 	if (gpu_buffer == NULL) { return; }
 
-	gl.BindBufferRange(GL_SHADER_STORAGE_BUFFER, command->index, gpu_buffer->id, (GLsizeiptr)command->offset, (GLsizeiptr)command->length);
+	gl.BindBufferRange(
+		gpu_buffer_mode(command->mode)
+		, command->index, gpu_buffer->id
+		, (GLsizeiptr)command->offset, (GLsizeiptr)command->length
+	);
 }
 
 inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
@@ -1263,6 +1442,7 @@ static struct Graphics_Limits get_limits(void) {
 	GLint texture_size, renderbuffer_size;
 	GLint elements_vertices, elements_indices;
 	GLint uniform_locations;
+	GLint ub_alignment, sb_alignment;
 
 	gl.GetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,   &units);
 	gl.GetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS,     &units_vs);
@@ -1284,6 +1464,9 @@ static struct Graphics_Limits get_limits(void) {
 	gl.GetIntegerv(GL_MAX_ELEMENTS_VERTICES,              &elements_vertices);
 	gl.GetIntegerv(GL_MAX_ELEMENTS_INDICES,               &elements_indices);
 	gl.GetIntegerv(GL_MAX_UNIFORM_LOCATIONS,              &uniform_locations);
+
+	gl.GetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT,        &ub_alignment);
+	gl.GetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &sb_alignment);
 
 	LOG(
 		"> OpenGL limits:\n"
@@ -1307,6 +1490,9 @@ static struct Graphics_Limits get_limits(void) {
 		"  vertices ........ %d\n"
 		"  indices ......... %d\n"
 		"  uniforms ........ %d\n"
+		//
+		" UB alignment ..... %d\n"
+		" SB alignment ..... %d\n"
 		""
 		, units
 		, units_vs
@@ -1328,6 +1514,9 @@ static struct Graphics_Limits get_limits(void) {
 		, elements_vertices
 		, elements_indices
 		, uniform_locations
+		//
+		, ub_alignment
+		, sb_alignment
 	);
 
 	return (struct Graphics_Limits){
@@ -1351,6 +1540,9 @@ static struct Graphics_Limits get_limits(void) {
 		.elements_vertices = (uint32_t)elements_vertices,
 		.elements_indices  = (uint32_t)elements_indices,
 		.uniform_locations = (uint32_t)uniform_locations,
+		//
+		.ub_alignment      = (uint32_t)ub_alignment,
+		.sb_alignment      = (uint32_t)sb_alignment,
 	};
 }
 
@@ -1365,8 +1557,7 @@ static void verify_shader(GLuint id) {
 	gl.GetShaderiv(id, GL_INFO_LOG_LENGTH, &max_length);
 	if (max_length <= 0) { return; }
 
-	// @todo: (?) arena/stack allocator
-	GLchar * buffer = alloca(sizeof(GLchar) * (size_t)max_length);
+	GLchar * buffer = buffer_system_get(sizeof(GLchar) * (size_t)max_length);
 	gl.GetShaderInfoLog(id, max_length, &max_length, buffer);
 	ERR("%s", buffer);
 }
@@ -1380,8 +1571,7 @@ static void verify_program(GLuint id) {
 	gl.GetProgramiv(id, GL_INFO_LOG_LENGTH, &max_length);
 	if (max_length <= 0) { return; }
 
-	// @todo: (?) arena/stack allocator
-	GLchar * buffer = alloca(sizeof(GLchar) * (size_t)max_length);
+	GLchar * buffer = buffer_system_get(sizeof(GLchar) * (size_t)max_length);
 	gl.GetProgramInfoLog(id, max_length, &max_length, buffer);
 	ERR("%s", buffer);
 }

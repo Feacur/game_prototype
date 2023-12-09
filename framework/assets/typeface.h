@@ -5,12 +5,12 @@
 
 #include "glyph_params.h"
 
-// @note: `typeface_init` takes memory ownership of the buffer
+// @note: `typeface_init` takes memory ownership of the source
 
 struct Typeface;
 struct Buffer;
 
-struct Typeface * typeface_init(struct Buffer * buffer);
+struct Typeface * typeface_init(struct Buffer * source);
 void typeface_free(struct Typeface * typeface);
 
 uint32_t typeface_get_glyph_id(struct Typeface const * typeface, uint32_t codepoint);

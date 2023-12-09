@@ -10,6 +10,7 @@
 
 struct GPU_Uniform_Internal {
 	struct GPU_Uniform base;
+	GLuint index;
 	GLint location;
 };
 
@@ -79,5 +80,7 @@ struct GPU_Depth_Mode {
 GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index);
 
 GLenum gpu_mesh_mode(enum Mesh_Mode value);
+
+GLenum gpu_buffer_mode(enum Buffer_Mode value);
 
 #endif

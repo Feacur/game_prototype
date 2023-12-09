@@ -21,13 +21,13 @@ static void typeface_memory_free(void * pointer, struct Buffer * scratch);
 #include "typeface.h"
 
 struct Typeface {
-	void * data;
+	struct Buffer source;
 	stbtt_fontinfo api;
 	int ascent, descent, line_gap;
 	struct Buffer * scratch;
 };
 
-struct Typeface * typeface_init(struct Buffer * buffer) {
+struct Typeface * typeface_init(struct Buffer * source) {
 	struct Typeface * typeface = MEMORY_ALLOCATE(struct Typeface);
 	*typeface = (struct Typeface){0};
 
@@ -35,11 +35,11 @@ struct Typeface * typeface_init(struct Buffer * buffer) {
 	*typeface->scratch = buffer_init(NULL);
 
 	// @note: memory ownership transfer
-	typeface->data = buffer->data;
-	*buffer = (struct Buffer){0};
+	typeface->source = *source;
+	*source = (struct Buffer){0};
 
 	typeface->api.userdata = typeface->scratch;
-	if (!stbtt_InitFont(&typeface->api, typeface->data, stbtt_GetFontOffsetForIndex(typeface->data, 0))) {
+	if (!stbtt_InitFont(&typeface->api, typeface->source.data, stbtt_GetFontOffsetForIndex(typeface->source.data, 0))) {
 		ERR("failure: can't read typeface data");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 	}
@@ -54,7 +54,7 @@ struct Typeface * typeface_init(struct Buffer * buffer) {
 void typeface_free(struct Typeface * typeface) {
 	if (typeface == NULL) { WRN("freeing NULL typeface"); return; }
 	buffer_free(typeface->scratch); MEMORY_FREE(typeface->scratch);
-	MEMORY_FREE(typeface->data);
+	buffer_free(&typeface->source);
 	common_memset(typeface, 0, sizeof(*typeface));
 	MEMORY_FREE(typeface);
 }

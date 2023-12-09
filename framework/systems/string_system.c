@@ -8,12 +8,14 @@ static struct String_System {
 } gs_string_system;
 
 void string_system_init(void) {
-	gs_string_system.instances = strings_init();
-	// common_memset(&gs_string_system, 0, sizeof(gs_string_system));
+	gs_string_system = (struct String_System){
+		.instances = strings_init(),
+	};
 }
 
 void string_system_free(void) {
 	strings_free(&gs_string_system.instances);
+	// common_memset(&gs_string_system, 0, sizeof(gs_string_system));
 }
 
 uint32_t string_system_add(struct CString value) {

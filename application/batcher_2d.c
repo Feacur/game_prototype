@@ -13,6 +13,7 @@
 #include "framework/graphics/gfx_material.h"
 #include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/command.h"
+#include "framework/graphics/misc.h"
 
 #include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"
@@ -116,17 +117,17 @@ void batcher_2d_set_matrix(struct Batcher_2D * batcher, struct mat4 const value)
 }
 
 static void batcher_2d_internal_bake_pass(struct Batcher_2D * batcher) {
-	size_t   const buffer_offset  = batcher->buffer.size;
 	uint32_t const uniform_offset = batcher->uniforms.headers.count;
-	if (batcher->batch.buffer_offset < buffer_offset || batcher->batch.uniform_offset < uniform_offset) {
-		batcher->batch.buffer_length  = buffer_offset  - batcher->batch.buffer_offset;
+	if (batcher->batch.buffer_offset < batcher->buffer.size || batcher->batch.uniform_offset < uniform_offset) {
+		batcher->batch.buffer_length  = batcher->buffer.size  - batcher->batch.buffer_offset;
 		batcher->batch.uniform_length = uniform_offset - batcher->batch.uniform_offset;
 		array_push_many(&batcher->batches, 1, &batcher->batch);
 
-		batcher->batch.buffer_offset = buffer_offset;
-		batcher->batch.uniform_offset = uniform_offset;
-
+		graphics_buffer_align(&batcher->buffer, BUFFER_MODE_STORAGE);
+		batcher->batch.buffer_offset = batcher->buffer.size;
 		batcher->batch.buffer_length = 0;
+
+		batcher->batch.uniform_offset = uniform_offset;
 		batcher->batch.uniform_length = 0;
 	}
 }
@@ -510,6 +511,8 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 						.gh_buffer = batcher->gh_buffer,
 						.offset = batch->buffer_offset,
 						.length = batch->buffer_length,
+						.mode = BUFFER_MODE_STORAGE,
+						.index = 2,
 					},
 				},
 				{

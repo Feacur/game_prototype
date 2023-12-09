@@ -1,15 +1,31 @@
+layout (std140, binding = 0) uniform Global {
+	float dummy;
+} global;
+
+layout (std140, binding = 1) uniform Camera {
+	uvec2 viewport_size;
+	// padding
+	mat4 view;
+	mat4 projection;
+	mat4 projection_view;
+} camera;
+
+
+
+
 #if defined(VERTEX_SHADER)
 layout(location = ATTRIBUTE_TYPE_POSITION) in vec3 a_Position;
 layout(location = ATTRIBUTE_TYPE_TEXCOORD) in vec2 a_TexCoord;
 
-uniform mat4 u_ProjectionView;
 uniform mat4 u_Model;
 
-out vec2 v_TexCoord;
+out Vertex {
+	vec2 tex_coord;
+} vert;
 
 void main() {
-	v_TexCoord = a_TexCoord;
-	gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1);
+	vert.tex_coord = a_TexCoord;
+	gl_Position = camera.projection_view * u_Model * vec4(a_Position, 1);
 }
 #endif
 
@@ -17,22 +33,21 @@ void main() {
 
 
 #if defined(FRAGMENT_SHADER)
-in vec2 v_TexCoord;
+in Vertex {
+	vec2 tex_coord;
+} vert;
 
 uniform vec4 p_Tint;
 uniform sampler2D p_Texture;
 uniform vec4 p_Texture_OS;
 
-uniform mat4 u_Projection;
-uniform uvec2 u_ViewportSize;
-
-layout(location = 0) out vec4 out_color;
+layout(location = 0) out vec4 frag;
 
 float linearize_depth(float ndc_fraction) {
 	float ndc = mix(NDC_NEAR, NDC_FAR, ndc_fraction);
-	float scale = u_Projection[2][2];
-	float offset = u_Projection[3][2];
-	float ortho = u_Projection[3][3];
+	float scale = camera.projection[2][2];
+	float offset = camera.projection[3][2];
+	float ortho = camera.projection[3][3];
 	return mix(offset / (ndc - scale), scale / (ndc - offset), ortho);
 }
 
@@ -43,9 +58,9 @@ float visualize_depth(float depth, float factor) {
 }
 
 void main() {
-	vec4 texture_pixel = texture(p_Texture, v_TexCoord * p_Texture_OS.zw + p_Texture_OS.xy);
+	vec4 texture_pixel = texture(p_Texture, vert.tex_coord * p_Texture_OS.zw + p_Texture_OS.xy);
 	float depth = visualize_depth(gl_FragCoord.z, 20);
-	out_color = texture_pixel * p_Tint;
-	out_color = mix(out_color, vec4(depth, depth, depth, 1), gl_FragCoord.x / u_ViewportSize.x < 0.5);
+	frag = texture_pixel * p_Tint;
+	frag = mix(frag, vec4(depth, depth, depth, 1), gl_FragCoord.x / camera.viewport_size.x < 0.5);
 }
 #endif

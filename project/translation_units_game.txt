@@ -29,6 +29,7 @@ framework/assets/image.c
 framework/assets/typeface.c
 framework/assets/font.c
 
+framework/systems/buffer_system.c
 framework/systems/string_system.c
 framework/systems/action_system.c
 framework/systems/material_system.c

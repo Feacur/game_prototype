@@ -1,3 +1,18 @@
+layout (std140, binding = 0) uniform Global {
+	float dummy;
+} global;
+
+layout (std140, binding = 1) uniform Camera {
+	uvec2 viewport_size;
+	// padding
+	mat4 view;
+	mat4 projection;
+	mat4 projection_view;
+} camera;
+
+
+
+
 #if defined(VERTEX_SHADER)
 
 // quad layout
@@ -15,15 +30,17 @@ struct Instance {
 	vec4 color;
 };
 
-layout(std430, binding = 0) buffer Buffer {
+layout(std430, binding = 2) buffer Buffer {
 	Instance instances[];
-};
+} buff;
 
-out vec4 v_Color;
-out vec2 v_TexCoord;
+out Vertex {
+	vec4 color;
+	vec2 tex_coord;
+} vert;
 
 void main() {
-	Instance inst = instances[gl_InstanceID];
+	Instance inst = buff.instances[gl_InstanceID];
 
 	vec2 position[6] = {
 		inst.quad.xy, inst.quad.zy, inst.quad.zw,
@@ -35,8 +52,8 @@ void main() {
 		inst.uv.zw, inst.uv.xw, inst.uv.xy,
 	};
 
-	v_Color = inst.color;
-	v_TexCoord = tex_coords[gl_VertexID];
+	vert.color = inst.color;
+	vert.tex_coord = tex_coords[gl_VertexID];
 	gl_Position = vec4(position[gl_VertexID], 0, 1);
 }
 #endif
@@ -45,16 +62,18 @@ void main() {
 
 
 #if defined(FRAGMENT_SHADER)
-in vec4 v_Color;
-in vec2 v_TexCoord;
+in Vertex {
+	vec4 color;
+	vec2 tex_coord;
+} vert;
 
 uniform vec4 p_Tint;
 uniform sampler2D p_Texture;
 
-layout(location = 0) out vec4 out_color;
+layout(location = 0) out vec4 frag;
 
 void main() {
-	vec4 texture_pixel = texture(p_Texture, v_TexCoord);
-	out_color = texture_pixel * v_Color * p_Tint;
+	vec4 texture_pixel = texture(p_Texture, vert.tex_coord);
+	frag = texture_pixel * vert.color * p_Tint;
 }
 #endif

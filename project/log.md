@@ -1,11 +1,9 @@
 # To do
 - [feature] immediate UI framework
 - [tech] imUI transformations stack
-- [tech] handle GPU uniforms through buffers
 - [tech] render text via - multichannel - SDF glyphs
 - [tech] optionally generate ligature codepoints at the time of decoding UTF-8
 - [tech] track materials' textures as assets
-- [tech] region-based memory allocator
 - [feature] default shaders in case of compilation errors
 - [tech] compile thirdparties as separate units
 - [tech] builder with file time or hash tracking
@@ -19,6 +17,10 @@
 - [tech] update assets dependecies, like if swapping materials' shaders or textures
 
 # Changelog
+
+## 2023.12.09
+- [tech] handle GPU uniforms through buffers
+- [tech] region-based memory allocator, kinda
 
 ## 2023.10.21
 - [tech] handle assets lifetime

@@ -1,6 +1,7 @@
 #include "framework/memory.h"
 #include "framework/formatter.h"
 #include "framework/gpu_context.h"
+#include "framework/systems/buffer_system.h"
 #include "framework/internal/input_to_window.h"
 
 #include "internal/system.h"
@@ -8,7 +9,6 @@
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 #include <hidusage.h>
-#include <malloc.h> // alloca
 
 #define HANDLE_PROP_WINDOW_NAME "prop_window"
 
@@ -520,9 +520,9 @@ static enum Key_Code virtual_to_key(uint8_t key, bool is_extended) {
 static bool platform_window_internal_has_raw_input(struct Window * window) {
 	UINT count;
 	GetRegisteredRawInputDevices(NULL, &count, sizeof(RAWINPUTDEVICE));
+	if (count == 0) { return false; }
 
-	// @todo: arena/stack allocator (?)
-	RAWINPUTDEVICE * devices = alloca(sizeof(RAWINPUTDEVICE) * count);
+	RAWINPUTDEVICE * devices = buffer_system_get(sizeof(RAWINPUTDEVICE) * count);
 	if (GetRegisteredRawInputDevices(devices, &count, sizeof(RAWINPUTDEVICE)) != (UINT)-1) {
 		for (uint32_t i = 0; i < count; i++) {
 			if (devices[i].hwndTarget == window->handle) {
@@ -663,8 +663,7 @@ static void handle_message_input_raw(struct Window * window, WPARAM wParam, LPAR
 
 	RAWINPUTHEADER header; UINT header_size = sizeof(header);
 	if (GetRawInputData((HRAWINPUT)lParam, RID_HEADER, &header, &header_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
-		// @todo: arena/stack allocator (?)
-		RAWINPUT * input = alloca(header.dwSize); UINT input_size = header.dwSize;
+		RAWINPUT * input = buffer_system_get(header.dwSize); UINT input_size = header.dwSize;
 		if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, input, &input_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
 			switch (input->header.dwType) {
 				case RIM_TYPEKEYBOARD: handle_input_keyboard_raw(window, &input->data.keyboard); break;

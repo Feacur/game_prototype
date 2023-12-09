@@ -56,6 +56,7 @@ struct GPU_Command_Uniform {
 struct GPU_Command_Buffer {
 	struct Handle gh_buffer;
 	size_t offset, length;
+	enum Buffer_Mode mode;
 	uint32_t index;
 };
 

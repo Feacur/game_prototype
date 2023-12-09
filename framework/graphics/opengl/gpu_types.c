@@ -467,3 +467,15 @@ GLenum gpu_mesh_mode(enum Mesh_Mode value) {
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return GL_NONE;
 }
+
+GLenum gpu_buffer_mode(enum Buffer_Mode value) {
+	switch (value) {
+		case BUFFER_MODE_NONE: break;
+
+		case BUFFER_MODE_UNIFORM: return GL_UNIFORM_BUFFER;
+		case BUFFER_MODE_STORAGE: return GL_SHADER_STORAGE_BUFFER;
+	}
+	ERR("unknown mesh mode");
+	REPORT_CALLSTACK(); DEBUG_BREAK();
+	return GL_NONE;
+}

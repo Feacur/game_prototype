@@ -12,6 +12,7 @@
 #include "framework/maths.h"
 #include "framework/input.h"
 
+#include "framework/systems/buffer_system.h"
 #include "framework/systems/string_system.h"
 #include "framework/systems/action_system.h"
 #include "framework/systems/material_system.h"
@@ -20,6 +21,7 @@
 #include "framework/graphics/gfx_material.h"
 #include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/command.h"
+#include "framework/graphics/misc.h"
 
 #include "framework/containers/hashmap.h"
 
@@ -216,28 +218,58 @@ static void prototype_draw_objects(void) {
 
 	batcher_2d_set_color(gs_renderer.batcher_2d, (struct vec4){1, 1, 1, 1});
 
+	// process global
+	{
+		graphics_buffer_align(&gs_renderer.global, BUFFER_MODE_UNIFORM);
+		size_t const offset = gs_renderer.global.size;
+
+		struct Shader_Global {
+			float dummy;
+		} sg;
+
+		buffer_push_many(&gs_renderer.global, sizeof(sg), &sg);
+		array_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
+			.type = GPU_COMMAND_TYPE_BUFFER,
+			.as.buffer = {
+				.gh_buffer = gs_renderer.gh_camera,
+				.offset = offset,
+				.length = gs_renderer.global.size - offset,
+				.mode = BUFFER_MODE_UNIFORM,
+				.index = 0,
+			},
+		});
+	}
+
 	FOR_ARRAY(&gs_game.cameras, it_camera) {
 		struct Camera const * camera = it_camera.value;
-		struct uvec2 const u_ViewportSize = camera->cached_size;
 
-		struct mat4 const u_Projection = camera_get_projection(&camera->params, u_ViewportSize);
-		struct mat4 const u_View = mat4_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
-		struct mat4 const u_ProjectionView = mat4_mul_mat(u_Projection, u_View);
+		struct Shader_Camera {
+			struct uvec2 viewport_size;
+			uint8_t _padding0[sizeof(struct vec4) - sizeof(struct uvec2)];
+			struct mat4 view;
+			struct mat4 projection;
+			struct mat4 projection_view;
+		} sc;
+
+		sc.viewport_size = camera->cached_size;
+		sc.view = mat4_inverse_transformation(camera->transform.position, camera->transform.scale, camera->transform.rotation);
+		sc.projection = camera_get_projection(&camera->params, sc.viewport_size);
+		sc.projection_view = mat4_mul_mat(sc.projection, sc.view);
 
 		// process camera
 		{
-			uint32_t const override_offset = gs_renderer.uniforms.headers.count;
-			gfx_uniforms_push(&gs_renderer.uniforms, S_("u_ProjectionView"), A_(u_ProjectionView));
-			gfx_uniforms_push(&gs_renderer.uniforms, S_("u_Projection"),     A_(u_Projection));
-			gfx_uniforms_push(&gs_renderer.uniforms, S_("u_View"),           A_(u_View));
-			gfx_uniforms_push(&gs_renderer.uniforms, S_("u_ViewportSize"),   A_(u_ViewportSize));
+			graphics_buffer_align(&gs_renderer.camera, BUFFER_MODE_UNIFORM);
+			size_t const offset = gs_renderer.camera.size;
 
+			buffer_push_many(&gs_renderer.camera, sizeof(sc), &sc);
 			array_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
-				.type = GPU_COMMAND_TYPE_UNIFORM,
-				.as.uniform = {
-					.uniforms = &gs_renderer.uniforms,
-					.offset = override_offset,
-					.count = (gs_renderer.uniforms.headers.count - override_offset),
+				.type = GPU_COMMAND_TYPE_BUFFER,
+				.as.buffer = {
+					.gh_buffer = gs_renderer.gh_camera,
+					.offset = offset,
+					.length = gs_renderer.camera.size - offset,
+					.mode = BUFFER_MODE_UNIFORM,
+					.index = 1,
 				},
 			});
 		}
@@ -287,7 +319,7 @@ static void prototype_draw_objects(void) {
 
 				case ENTITY_TYPE_QUAD_2D:
 				case ENTITY_TYPE_TEXT_2D: {
-					struct mat4 const matrix = mat4_mul_mat(u_ProjectionView, u_Model);
+					struct mat4 const matrix = mat4_mul_mat(sc.projection_view, u_Model);
 					batcher_2d_set_matrix(gs_renderer.batcher_2d, matrix);
 					batcher_2d_set_material(gs_renderer.batcher_2d, material_asset->mh_mat);
 				} break;
@@ -410,13 +442,15 @@ static void app_free(void) {
 	game_free();
 	renderer_free();
 
-	action_system_update();
+	action_system_invoke();
 }
 
 static void app_fixed_tick(void) {
 }
 
 static void app_frame_tick(void) {
+	buffer_system_reset();
+
 	if (input_key(KC_LALT, IT_DOWN) && input_key(KC_F4, IT_DOWN)) {
 		gs_main_exit = !input_key(KC_LSHIFT, IT_DOWN);
 		application_exit();
@@ -471,6 +505,7 @@ static void main_fill_config(struct JSON const * json, void * data) {
 }
 
 static void main_run_application(void) {
+	buffer_system_init();
 	string_system_init();
 
 	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
@@ -494,6 +529,7 @@ static void main_run_application(void) {
 
 	finalize:
 	string_system_free();
+	buffer_system_free();
 	return;
 
 	// process errors

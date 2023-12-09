@@ -4,6 +4,7 @@
 #include "framework/platform/file.h"
 #include "framework/platform/system.h"
 #include "framework/platform/window.h"
+#include "framework/systems/buffer_system.h"
 #include "framework/systems/action_system.h"
 #include "framework/systems/material_system.h"
 #include "framework/systems/asset_system.h"
@@ -120,7 +121,7 @@ static void application_draw_frame(void) {
 }
 
 static void application_end_frame(void) {
-	action_system_update();
+	action_system_invoke();
 	platform_window_end_frame(gs_app.window);
 	gpu_context_end_frame(gs_app.gpu_context);
 }
@@ -164,7 +165,7 @@ void application_update(void) {
 	}
 	application_end_frame();
 
-	action_system_update();
+	action_system_invoke();
 
 	// maintain framerate
 	uint64_t const ticks_until = ticks_before + target_ticks;

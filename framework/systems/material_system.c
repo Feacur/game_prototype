@@ -8,7 +8,7 @@ static struct Material_System {
 } gs_material_system;
 
 void material_system_init(void) {
-	gs_material_system = (struct Material_System) {
+	gs_material_system = (struct Material_System){
 		.instances = sparseset_init(sizeof(struct Gfx_Material)),
 	};
 }

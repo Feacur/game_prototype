@@ -245,6 +245,12 @@ struct Mesh_Parameters {
 	uint32_t attributes[MESH_ATTRIBUTES_CAPACITY];
 };
 
+enum Buffer_Mode {
+	BUFFER_MODE_NONE,
+	BUFFER_MODE_UNIFORM,
+	BUFFER_MODE_STORAGE,
+};
+
 //
 
 struct GPU_Unit {
