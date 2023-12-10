@@ -10,54 +10,56 @@
 //
 #include "memory.h"
 
-static struct Memory_Header {
-	size_t checksum, size;
-	struct Memory_Header * prev;
-	struct Memory_Header * next;
+static struct Memory_Header_Internal {
+	struct Memory_Header_Internal * prev;
+	struct Memory_Header_Internal * next;
 	struct Callstack callstack;
+	struct Memory_Header base;
 } * gs_memory;
 
 ALLOCATOR(memory_reallocate) {
-	struct Memory_Header * pointer_header = (pointer != NULL)
-		? (struct Memory_Header *)pointer - 1
+	struct Memory_Header_Internal * header = (pointer != NULL)
+		? (struct Memory_Header_Internal *)pointer - 1
 		: NULL;
 
-	if (pointer_header != NULL) {
-		if (pointer_header->checksum != (size_t)pointer_header) {
+	if (header != NULL) {
+		if (header->base.checksum != (size_t)header) {
 			goto fail;
 		}
 
-		if (gs_memory == pointer_header) { gs_memory = pointer_header->next; }
-		if (pointer_header->next != NULL) { pointer_header->next->prev = pointer_header->prev; }
-		if (pointer_header->prev != NULL) { pointer_header->prev->next = pointer_header->next; }
-		pointer_header->checksum = 0;
-		// common_memset(pointer_header, 0, sizeof(*pointer_header) + pointer_header->size);
+		if (gs_memory == header) { gs_memory = header->next; }
+		if (header->next != NULL) { header->next->prev = header->prev; }
+		if (header->prev != NULL) { header->prev->next = header->next; }
+		header->base.checksum = 0;
+		// common_memset(pointer_header, 0, sizeof(*pointer_header) + pointer_header->base.size);
 	}
 
 	// free
 	if (size == 0) {
-		if (pointer_header == NULL) { return NULL; }
-		common_memset(pointer_header, 0, sizeof(*pointer_header) + pointer_header->size);
-		free(pointer_header);
+		if (header == NULL) { return NULL; }
+		common_memset(header, 0, sizeof(*header) + header->base.size);
+		free(header);
 		return NULL;
 	}
 
 	// allocate or reallocate
-	struct Memory_Header * reallocated_header = realloc(pointer_header, sizeof(*pointer_header) + size);
-	if (reallocated_header == NULL) { goto fail; }
+	struct Memory_Header_Internal * new_header = realloc(header, sizeof(*header) + size);
+	if (new_header == NULL) { goto fail; }
 
 	// track memory
-	*reallocated_header = (struct Memory_Header){
-		.checksum = (size_t)reallocated_header,
-		.size = size,
+	*new_header = (struct Memory_Header_Internal){
+		.base = {
+			.checksum = (size_t)new_header,
+			.size = size,
+		},
 		.callstack = platform_debug_get_callstack(0),
 	};
 
-	reallocated_header->next = gs_memory;
-	if (gs_memory != NULL) { gs_memory->prev = reallocated_header; }
-	gs_memory = reallocated_header;
+	new_header->next = gs_memory;
+	if (gs_memory != NULL) { gs_memory->prev = new_header; }
+	gs_memory = new_header;
 
-	return reallocated_header + 1;
+	return new_header + 1;
 
 	// failed
 	fail: ERR("'realloc' failed:");
@@ -66,14 +68,18 @@ ALLOCATOR(memory_reallocate) {
 }
 
 ALLOCATOR(memory_reallocate_without_tracking) {
+	struct Memory_Header * header = (pointer != NULL)
+		? (struct Memory_Header *)pointer - 1
+		: NULL;
+
 	// free
-	if (size == 0) { free(pointer); return NULL; }
+	if (size == 0) { free(header); return NULL; }
 
 	// allocate or reallocate
-	void * reallocated = realloc(pointer, size);
-	if (reallocated == NULL) { goto fail; }
+	struct Memory_Header * new_header = realloc(header, sizeof(*header) + size);
+	if (new_header == NULL) { goto fail; }
 
-	return reallocated;
+	return new_header + 1;
 
 	// failed
 	fail: ERR("'realloc' failed:");
@@ -93,9 +99,9 @@ void memory_to_system_free(void) {
 
 	uint32_t total_count = 0;
 	uint64_t total_bytes = 0;
-	for (struct Memory_Header * it = gs_memory; it; it = it->next) {
+	for (struct Memory_Header_Internal * it = gs_memory; it; it = it->next) {
 		total_count++;
-		total_bytes += it->size;
+		total_bytes += it->base.size;
 	}
 
 	uint32_t bytes_digits_count = 0;
@@ -115,14 +121,14 @@ void memory_to_system_free(void) {
 		);
 	}
 
-	for (struct Memory_Header const * it = gs_memory; it != NULL; it = it->next) {
+	for (struct Memory_Header_Internal const * it = gs_memory; it != NULL; it = it->next) {
 		struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack);
 		WRN(
 			"  [0x%.*zx] (bytes: %*.zu) stacktrace:\n"
 			"%.*s"
 			""
 			, pointer_digits_count, (size_t)(it + 1)
-			, bytes_digits_count,   it->size
+			, bytes_digits_count,   it->base.size
 			, stacktrace.length,    stacktrace.data
 		);
 	}

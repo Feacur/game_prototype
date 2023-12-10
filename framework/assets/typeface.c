@@ -7,8 +7,8 @@
 #include "framework/platform/file.h"
 
 #include "framework/__warnings_push.h"
-	#define STBTT_malloc(size, user_data)  buffer_system_get(size)
-	#define STBTT_free(pointer, user_data) (void)0
+	#define STBTT_malloc(size, user_data)  buffer_system_push(size)
+	#define STBTT_free(pointer, user_data) buffer_system_pop(pointer)
 
 	#define STBTT_STATIC
 	#define STB_TRUETYPE_IMPLEMENTATION

@@ -3,6 +3,10 @@
 
 #include "common.h"
 
+struct Memory_Header {
+	size_t checksum, size;
+};
+
 ALLOCATOR(memory_reallocate);
 ALLOCATOR(memory_reallocate_without_tracking);
 

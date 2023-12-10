@@ -522,7 +522,7 @@ static bool platform_window_internal_has_raw_input(struct Window * window) {
 	GetRegisteredRawInputDevices(NULL, &count, sizeof(RAWINPUTDEVICE));
 	if (count == 0) { return false; }
 
-	RAWINPUTDEVICE * devices = buffer_system_get(sizeof(RAWINPUTDEVICE) * count);
+	RAWINPUTDEVICE * devices = buffer_system_push(sizeof(RAWINPUTDEVICE) * count);
 	if (GetRegisteredRawInputDevices(devices, &count, sizeof(RAWINPUTDEVICE)) != (UINT)-1) {
 		for (uint32_t i = 0; i < count; i++) {
 			if (devices[i].hwndTarget == window->handle) {
@@ -663,7 +663,7 @@ static void handle_message_input_raw(struct Window * window, WPARAM wParam, LPAR
 
 	RAWINPUTHEADER header; UINT header_size = sizeof(header);
 	if (GetRawInputData((HRAWINPUT)lParam, RID_HEADER, &header, &header_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
-		RAWINPUT * input = buffer_system_get(header.dwSize); UINT input_size = header.dwSize;
+		RAWINPUT * input = buffer_system_push(header.dwSize); UINT input_size = header.dwSize;
 		if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, input, &input_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
 			switch (input->header.dwType) {
 				case RIM_TYPEKEYBOARD: handle_input_keyboard_raw(window, &input->data.keyboard); break;

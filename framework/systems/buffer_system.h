@@ -6,7 +6,8 @@
 void buffer_system_init(void);
 void buffer_system_free(void);
 
-void * buffer_system_get(size_t size);
+void * buffer_system_push(size_t size);
+void buffer_system_pop(void * pointer);
 void buffer_system_reset(void);
 
 #endif

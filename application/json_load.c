@@ -9,6 +9,7 @@
 #include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/gfx_material.h"
 
+#include "framework/systems/buffer_system.h"
 #include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
@@ -110,9 +111,6 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 	struct GPU_Program const * program = gpu_program_get(material->gh_program);
 	if (program == NULL) { goto fail_uniforms; }
 
-	// @todo: arena/stack allocator
-	struct Buffer uniform_data_buffer = buffer_init(NULL);
-
 	FOR_GFX_UNIFORMS(&material->uniforms, it) {
 		struct GPU_Uniform const * gpu_uniform = hashmap_get(&program->uniforms, &it.id);
 		struct CString const uniform_name = string_system_get(it.id);
@@ -137,7 +135,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 			); goto fail_field;
 		}
 
-		buffer_ensure(&uniform_data_buffer, it.size);
+		void * buffer = buffer_system_push(it.size);
 		switch (data_type_get_element_type(gpu_uniform->type)) {
 			default: ERR("unknown data type");
 				goto fail_field;
@@ -145,33 +143,31 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 			case DATA_TYPE_UNIT_U:
 			case DATA_TYPE_UNIT_S:
 			case DATA_TYPE_UNIT_F: {
-				json_load_many_texture(uniform_json, uniform_count, uniform_data_buffer.data);
+				json_load_many_texture(uniform_json, uniform_count, buffer);
 			} break;
 
 			case DATA_TYPE_R32_U: {
-				json_read_many_u32(uniform_json, uniform_count, uniform_data_buffer.data);
+				json_read_many_u32(uniform_json, uniform_count, buffer);
 			} break;
 
 			case DATA_TYPE_R32_S: {
-				json_read_many_s32(uniform_json, uniform_count,  uniform_data_buffer.data);
+				json_read_many_s32(uniform_json, uniform_count,  buffer);
 			} break;
 
 			case DATA_TYPE_R32_F: {
-				json_read_many_flt(uniform_json, uniform_count, uniform_data_buffer.data);
+				json_read_many_flt(uniform_json, uniform_count, buffer);
 			} break;
 		}
 
-		common_memcpy(it.value, uniform_data_buffer.data, it.size);
+		common_memcpy(it.value, buffer, it.size);
 		continue;
 
 		// process errors
 		fail_field:
-		common_memset(uniform_data_buffer.data, 0, it.size);
 		REPORT_CALLSTACK(); DEBUG_BREAK();
 
 	}
 
-	buffer_free(&uniform_data_buffer);
 	return;
 
 	// process errors
