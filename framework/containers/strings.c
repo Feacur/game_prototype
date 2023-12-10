@@ -5,7 +5,7 @@ struct Strings strings_init(void) {
 	return (struct Strings){
 		.offsets = array_init(sizeof(uint32_t)),
 		.lengths = array_init(sizeof(uint32_t)),
-		.buffer = buffer_init(NULL),
+		.buffer = buffer_init(),
 	};
 }
 
@@ -14,6 +14,12 @@ void strings_free(struct Strings * strings) {
 	array_free(&strings->lengths);
 	buffer_free(&strings->buffer);
 	// common_memset(strings, 0, sizeof(*strings));
+}
+
+void strings_clear(struct Strings * strings, bool deallocate) {
+	array_clear(&strings->offsets, deallocate);
+	array_clear(&strings->lengths, deallocate);
+	buffer_clear(&strings->buffer, deallocate);
 }
 
 uint32_t strings_find(struct Strings const * strings, struct CString value) {

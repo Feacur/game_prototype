@@ -13,17 +13,26 @@ struct Array array_init(uint32_t value_size) {
 }
 
 void array_free(struct Array * array) {
-	MEMORY_FREE(array->data);
+	if (array->allocate == NULL) { return; }
+	array->allocate(array->data, 0);
 	common_memset(array, 0, sizeof(*array));
 }
 
-void array_clear(struct Array * array) {
+void array_clear(struct Array * array, bool deallocate) {
+	if (array->allocate == NULL) { return; }
+	if (deallocate) {
+		array->allocate(array->data, 0); array->data = NULL;
+		array->capacity = 0;
+	}
 	array->count = 0;
 }
 
 void array_resize(struct Array * array, uint32_t capacity) {
 	if (array->capacity == capacity) { return; }
-	void * data = memory_reallocate(array->data, array->value_size * capacity);
+	if (array->allocate == NULL) {
+		array->allocate = memory_reallocate;
+	}
+	void * data = array->allocate(array->data, capacity * array->value_size);
 	if (data == NULL) { return; }
 	array->capacity = capacity;
 	array->count = min_u32(array->count, capacity);

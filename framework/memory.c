@@ -97,12 +97,7 @@ ALLOCATOR(memory_reallocate_without_tracking) {
 	return NULL;
 }
 
-//
-#include "framework/internal/memory_to_system.h"
-
-bool memory_to_system_init(void) { return true; }
-
-void memory_to_system_free(void) {
+void memory_report(void) {
 	if (gs_memory == NULL) { return; }
 
 	uint32_t const pointer_digits_count = sizeof(size_t) * 2;
@@ -143,10 +138,12 @@ void memory_to_system_free(void) {
 		);
 	}
 
+	DEBUG_BREAK();
+}
+
+void memory_clear(void) {
 	while (gs_memory != NULL) {
 		void * pointer = (gs_memory + 1);
 		memory_reallocate(pointer, 0);
 	}
-
-	DEBUG_BREAK();
 }

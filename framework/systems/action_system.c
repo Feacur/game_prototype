@@ -5,7 +5,11 @@
 
 static struct Action_System {
 	struct Array actions; // `struct Action`
-} gs_action_system;
+} gs_action_system = {
+	.actions = {
+		.value_size = sizeof(struct Action),
+	},
+};
 
 static PREDICATE(action_is_empty) {
 	struct Action const * action = value;
@@ -13,16 +17,15 @@ static PREDICATE(action_is_empty) {
 	    || action->invoke == NULL;
 }
 
-void action_system_init(void) {
-	gs_action_system = (struct Action_System){
-		.actions = array_init(sizeof(struct Action)),
-	};
-}
-
-void action_system_free(void) {
-	action_system_invoke();
-	array_free(&gs_action_system.actions);
-	// common_memset(&gs_action_system, 0, sizeof(gs_action_system));
+void action_system_clear(bool deallocate) {
+	// dependencies
+	FOR_ARRAY(&gs_action_system.actions, it) {
+		if (action_is_empty(it.value)) { continue; }
+		struct Action * action = it.value;
+		action->invoke(action->handle);
+	}
+	// personal
+	array_clear(&gs_action_system.actions, deallocate);
 }
 
 void action_system_push(struct Action action) {

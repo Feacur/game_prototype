@@ -12,14 +12,14 @@ struct Sparseset_Iterator {
 struct Sparseset {
 	struct Array packed; // of value_size
 	struct Array sparse; // `struct Handle`
-	uint32_t * ids;      // into `sparse`
+	struct Array ids;    // `uint32_t` into `sparse`
 	uint32_t free_list;  // into `sparse`
 };
 
 struct Sparseset sparseset_init(uint32_t value_size);
 void sparseset_free(struct Sparseset * sparseset);
 
-void sparseset_clear(struct Sparseset * sparseset);
+void sparseset_clear(struct Sparseset * sparseset, bool deallocate);
 void sparseset_ensure(struct Sparseset * sparseset, uint32_t capacity);
 
 struct Handle sparseset_aquire(struct Sparseset * sparseset, void const * value);

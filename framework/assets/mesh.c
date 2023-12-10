@@ -11,32 +11,24 @@
 #include "mesh.h"
 
 static void wfobj_repack(
-	struct WFObj const * wfobj,
-	struct Array * vertices,   // float
-	struct Array * attributes, // uint32_t
-	struct Array * indices     // uint32_t
+	struct WFObj * wfobj,
+	struct Array * vertices,  // float
+	struct Array * indices,   // uint32_t
+	struct Array * attributes // uint32_t
 );
 
 static struct Mesh mesh_construct(
-	struct Array const * vertices,   // float
-	struct Array const * attributes, // uint32_t
-	struct Array const * indices     // uint32_t
+	struct Array * vertices,  // float
+	struct Array * indices,   // uint32_t
+	struct Array * attributes // uint32_t
 );
 
 struct Mesh mesh_init(struct Buffer const * source) {
 	struct WFObj wfobj = wfobj_parse((char const *)source->data);
 
-	//
-	struct Array vertices;
-	struct Array attributes;
-	struct Array indices;
-
-	wfobj_repack(&wfobj, &vertices, &attributes, &indices);
-	wfobj_free(&wfobj);
-
-	array_push_many(&attributes, 2, (uint32_t[]){0, 0});
-	struct Mesh mesh = mesh_construct(&vertices, &attributes, &indices);
-	array_free(&attributes);
+	struct Array vertices, indices, attributes;
+	wfobj_repack(&wfobj, &vertices, &indices, &attributes);
+	struct Mesh mesh = mesh_construct(&vertices, &indices, &attributes);
 
 	return mesh;
 }
@@ -53,14 +45,14 @@ void mesh_free(struct Mesh * mesh) {
 //
 
 static void wfobj_repack(
-	struct WFObj const * wfobj,
-	struct Array * vertices,   // float
-	struct Array * attributes, // uint32_t
-	struct Array * indices     // uint32_t
+	struct WFObj * wfobj,
+	struct Array * vertices,  // float
+	struct Array * indices,   // uint32_t
+	struct Array * attributes // uint32_t
 ) {
 	*vertices   = array_init(sizeof(float));
-	*attributes = array_init(sizeof(uint32_t));
 	*indices    = array_init(sizeof(uint32_t));
+	*attributes = array_init(sizeof(uint32_t));
 
 	uint32_t attributes_buffer[MESH_ATTRIBUTES_CAPACITY];
 	uint32_t attributes_count = 0;
@@ -70,6 +62,7 @@ static void wfobj_repack(
 	if (wfobj->normals.count   > 0) { attributes_buffer[attributes_count++] = ATTRIBUTE_TYPE_NORMAL;   attributes_buffer[attributes_count++] = 3; }
 
 	array_push_many(attributes, attributes_count, attributes_buffer);
+	array_push_many(attributes, 2, (uint32_t[]){0, 0});
 
 	uint32_t indices_count = wfobj->triangles.count / 3;
 	for (uint32_t i = 0, vertex_id = 0; i < indices_count; i++) {
@@ -88,16 +81,15 @@ static void wfobj_repack(
 		array_push_many(indices, 1, &vertex_id);
 		vertex_id++;
 	}
+
+	wfobj_free(wfobj);
 }
 
 static struct Mesh mesh_construct(
-	struct Array const * vertices,   // float
-	struct Array const * attributes, // uint32_t
-	struct Array const * indices     // uint32_t
+	struct Array * vertices,  // float
+	struct Array * indices,   // uint32_t
+	struct Array * attributes // uint32_t
 ) {
-	if (vertices->count == 0) { return (struct Mesh){0}; }
-	if (indices->count == 0) { return (struct Mesh){0}; }
-
 	uint32_t const count = 2;
 	struct Mesh mesh = {
 		.capacity = count,
@@ -105,18 +97,21 @@ static struct Mesh mesh_construct(
 		.buffers    = MEMORY_ALLOCATE_ARRAY(struct Buffer, count),
 		.parameters = MEMORY_ALLOCATE_ARRAY(struct Mesh_Parameters, count),
 	};
-	//
+
 	mesh.buffers[0] = (struct Buffer){
-		.data = vertices->data,
-		.capacity = sizeof(float) * vertices->capacity,
-		.size = sizeof(float) * vertices->count,
-	};
+		.allocate = vertices->allocate,
+		.data     = vertices->data,
+		.capacity = vertices->capacity * sizeof(float),
+		.size     = vertices->count * sizeof(float),
+	}; *vertices = (struct Array){0};
+
 	mesh.buffers[1] = (struct Buffer){
-		.data = indices->data,
-		.capacity = sizeof(uint32_t) * indices->capacity,
-		.size = sizeof(uint32_t) * indices->count,
-	};
-	//
+		.allocate = indices->allocate,
+		.data     = indices->data,
+		.capacity = indices->capacity * sizeof(uint32_t),
+		.size     = indices->count * sizeof(uint32_t),
+	}; *indices = (struct Array){0};
+
 	mesh.parameters[0] = (struct Mesh_Parameters){
 		.type = DATA_TYPE_R32_F,
 	};
@@ -129,6 +124,7 @@ static struct Mesh mesh_construct(
 	size_t const attribute_size = SIZE_OF_MEMBER(struct Mesh_Parameters, attributes[0]);
 	common_memcpy(mesh.parameters[0].attributes, attributes->data, attribute_size * attributes->count);
 	common_memset(mesh.parameters[0].attributes + attributes->count, 0, attribute_size * (MESH_ATTRIBUTES_CAPACITY - attributes->count));
+	array_free(attributes);
 
 	return mesh;
 }

@@ -10,9 +10,9 @@ struct Memory_Header {
 ALLOCATOR(memory_reallocate);
 ALLOCATOR(memory_reallocate_without_tracking);
 
-inline static Allocator * default_allocator(Allocator * allocator) {
-	return (allocator != NULL) ? allocator : memory_reallocate;
-}
+void memory_report(void);
+void memory_clear(void);
+
 
 #define MEMORY_ALLOCATE(type) memory_reallocate((type *)NULL, sizeof(type))
 #define MEMORY_ALLOCATE_SIZE(size) memory_reallocate(NULL, (size_t)(size))

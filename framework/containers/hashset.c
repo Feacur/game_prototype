@@ -13,15 +13,31 @@ struct Hashset hashset_init(Hasher * get_hash, uint32_t key_size) {
 }
 
 void hashset_free(struct Hashset * hashset) {
-	MEMORY_FREE(hashset->hashes);
-	MEMORY_FREE(hashset->keys);
-	MEMORY_FREE(hashset->marks);
+	if (hashset->allocate == NULL) { return; }
+	hashset->allocate(hashset->hashes, 0);
+	hashset->allocate(hashset->keys,   0);
+	hashset->allocate(hashset->marks,  0);
 	common_memset(hashset, 0, sizeof(*hashset));
+}
+
+void hashset_clear(struct Hashset * hashset, bool deallocate) {
+	if (hashset->allocate == NULL) { return; }
+	if (deallocate) {
+		hashset->allocate(hashset->hashes, 0); hashset->hashes = NULL;
+		hashset->allocate(hashset->keys,   0); hashset->keys   = NULL;
+		hashset->allocate(hashset->marks,  0); hashset->marks  = NULL;
+		hashset->capacity = 0;
+	}
+	hashset->count = 0;
+	common_memset(hashset->marks, HASH_MARK_NONE, sizeof(*hashset->marks) * hashset->capacity);
 }
 
 static uint32_t hashset_find_key_index(struct Hashset const * hashset, void const * key, uint32_t hash);
 void hashset_ensure(struct Hashset * hashset, uint32_t capacity) {
 	if (!growth_hash_check(hashset->capacity, capacity)) { return; }
+	if (hashset->allocate == NULL) {
+		hashset->allocate = memory_reallocate;
+	}
 	capacity = growth_hash_adjust(hashset->capacity, capacity);
 
 	if (capacity <= hashset->capacity) {
@@ -33,9 +49,9 @@ void hashset_ensure(struct Hashset * hashset, uint32_t capacity) {
 	uint8_t  * keys   = hashset->keys;
 	uint8_t  * marks  = hashset->marks;
 
-	hashset->hashes = MEMORY_ALLOCATE_ARRAY(uint32_t, capacity);
-	hashset->keys   = MEMORY_ALLOCATE_ARRAY(uint8_t, hashset->key_size * capacity);
-	hashset->marks  = MEMORY_ALLOCATE_ARRAY(uint8_t, capacity);
+	hashset->hashes = hashset->allocate(NULL, sizeof(uint32_t) * capacity);
+	hashset->keys   = hashset->allocate(NULL, sizeof(uint8_t)  * capacity * hashset->key_size);
+	hashset->marks  = hashset->allocate(NULL, sizeof(uint8_t)  * capacity);
 
 	common_memset(hashset->marks, HASH_MARK_NONE, sizeof(*hashset->marks) * capacity);
 
@@ -60,14 +76,9 @@ void hashset_ensure(struct Hashset * hashset, uint32_t capacity) {
 		hashset->marks[key_index] = HASH_MARK_FULL;
 	}
 
-	MEMORY_FREE(hashes);
-	MEMORY_FREE(keys);
-	MEMORY_FREE(marks);
-}
-
-void hashset_clear(struct Hashset * hashset) {
-	hashset->count = 0;
-	common_memset(hashset->marks, HASH_MARK_NONE, sizeof(*hashset->marks) * hashset->capacity);
+	hashset->allocate(hashes, 0);
+	hashset->allocate(keys,   0);
+	hashset->allocate(marks,  0);
 }
 
 bool hashset_get(struct Hashset const * hashset, void const * key) {

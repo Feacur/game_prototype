@@ -54,7 +54,7 @@
 
 #include "application/json_load.c"
 #include "application/application.c"
-#include "application/asset_registry.c"
+#include "application/asset_types.c"
 #include "application/app_components.c"
 #include "application/batcher_2d.c"
 #include "application/renderer.c"

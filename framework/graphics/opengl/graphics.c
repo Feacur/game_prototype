@@ -1431,7 +1431,7 @@ void graphics_to_gpu_library_free(void) {
 //
 
 static struct Buffer get_extensions(void) {
-	struct Buffer buffer = buffer_init(NULL);
+	struct Buffer buffer = buffer_init();
 
 	GLint count = 0;
 	gl.GetIntegerv(GL_NUM_EXTENSIONS, &count);

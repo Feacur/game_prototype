@@ -18,7 +18,7 @@ struct File {
 };
 
 struct Buffer platform_file_read_entire(struct CString path) {
-	struct Buffer buffer = buffer_init(NULL);
+	struct Buffer buffer = buffer_init();
 
 	struct File * file = platform_file_init(path, FILE_MODE_NONE);
 	if (file == NULL) { goto finalize; }

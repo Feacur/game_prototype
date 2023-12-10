@@ -3,8 +3,7 @@
 
 #include "framework/common.h"
 
-void string_system_init(void);
-void string_system_free(void);
+void string_system_clear(bool deallocate);
 
 uint32_t string_system_add(struct CString value);
 uint32_t string_system_find(struct CString value);

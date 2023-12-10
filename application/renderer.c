@@ -9,7 +9,6 @@
 
 #include "application/json_load.h"
 #include "application/asset_types.h"
-#include "application/asset_registry.h"
 #include "application/app_components.h"
 #include "application/batcher_2d.h"
 
@@ -21,9 +20,9 @@ struct Renderer gs_renderer;
 void renderer_init(void) {
 	gs_renderer = (struct Renderer){
 		.batcher_2d = batcher_2d_init(),
-		.global = buffer_init(NULL),
+		.global = buffer_init(),
 		.gh_global = gpu_buffer_init(&(struct Buffer){0}),
-		.camera = buffer_init(NULL),
+		.camera = buffer_init(),
 		.gh_camera = gpu_buffer_init(&(struct Buffer){0}),
 		.uniforms = gfx_uniforms_init(),
 		.gpu_commands = array_init(sizeof(struct GPU_Command)),
@@ -43,10 +42,10 @@ void renderer_free(void) {
 
 void renderer_start_frame(void) {
 	batcher_2d_clear(gs_renderer.batcher_2d);
-	buffer_clear(&gs_renderer.global);
-	buffer_clear(&gs_renderer.camera);
+	buffer_clear(&gs_renderer.global, false);
+	buffer_clear(&gs_renderer.camera, false);
 	gfx_uniforms_clear(&gs_renderer.uniforms);
-	array_clear(&gs_renderer.gpu_commands);
+	array_clear(&gs_renderer.gpu_commands, false);
 }
 
 void renderer_end_frame(void) {

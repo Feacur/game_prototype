@@ -1,5 +1,4 @@
 #include "framework/internal/input_to_system.h"
-#include "framework/internal/memory_to_system.h"
 #include "framework/containers/buffer.h"
 #include "framework/memory.h"
 #include "framework/unicode.h"
@@ -91,7 +90,6 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 		// https://learn.microsoft.com/windows/win32/dxtecharts/game-timing-and-multicore-processors
 	}
 
-	if (!memory_to_system_init())      { goto fail; }
 	if (!debug_to_system_init())       { goto fail; }
 	if (!timer_to_system_init())       { goto fail; }
 	if (!window_to_system_init())      { goto fail; }
@@ -113,7 +111,6 @@ void platform_system_free(void) {
 	window_to_system_free();
 	timer_to_system_free();
 	debug_to_system_free();
-	memory_to_system_free();
 
 	RemoveVectoredContinueHandler(gs_platform_system.vectored);
 	signal(SIGABRT, SIG_DFL);

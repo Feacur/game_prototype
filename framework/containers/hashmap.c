@@ -14,16 +14,34 @@ struct Hashmap hashmap_init(Hasher * get_hash, uint32_t key_size, uint32_t value
 }
 
 void hashmap_free(struct Hashmap * hashmap) {
-	MEMORY_FREE(hashmap->hashes);
-	MEMORY_FREE(hashmap->keys);
-	MEMORY_FREE(hashmap->values);
-	MEMORY_FREE(hashmap->marks);
+	if (hashmap->allocate == NULL) { return; }
+	hashmap->allocate(hashmap->hashes, 0);
+	hashmap->allocate(hashmap->keys,   0);
+	hashmap->allocate(hashmap->values, 0);
+	hashmap->allocate(hashmap->marks,  0);
 	common_memset(hashmap, 0, sizeof(*hashmap));
+}
+
+void hashmap_clear(struct Hashmap * hashmap, bool deallocate) {
+	if (hashmap->allocate == NULL) { return; }
+	if (deallocate) {
+		hashmap->allocate(hashmap->hashes, 0); hashmap->hashes = NULL;
+		hashmap->allocate(hashmap->keys,   0); hashmap->keys   = NULL;
+		hashmap->allocate(hashmap->values, 0); hashmap->values = NULL;
+		hashmap->allocate(hashmap->marks,  0); hashmap->marks  = NULL;
+		hashmap->capacity = 0;
+	}
+	hashmap->count = 0;
+	common_memset(hashmap->marks, HASH_MARK_NONE, sizeof(*hashmap->marks) * hashmap->capacity);
 }
 
 static uint32_t hashmap_find_key_index(struct Hashmap const * hashmap, void const * key, uint32_t hash);
 void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity) {
 	if (!growth_hash_check(hashmap->capacity, capacity)) { return; }
+	if (hashmap->allocate == NULL) {
+		hashmap->allocate = memory_reallocate;
+	}
+
 	capacity = growth_hash_adjust(hashmap->capacity, capacity);
 
 	if (capacity <= hashmap->capacity) {
@@ -36,10 +54,10 @@ void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity) {
 	uint8_t  * values = hashmap->values;
 	uint8_t  * marks  = hashmap->marks;
 
-	hashmap->hashes = MEMORY_ALLOCATE_ARRAY(uint32_t, capacity);
-	hashmap->keys   = MEMORY_ALLOCATE_ARRAY(uint8_t, hashmap->key_size * capacity);
-	hashmap->values = MEMORY_ALLOCATE_ARRAY(uint8_t, hashmap->value_size * capacity);
-	hashmap->marks  = MEMORY_ALLOCATE_ARRAY(uint8_t, capacity);
+	hashmap->hashes = hashmap->allocate(NULL, sizeof(uint32_t) * capacity);
+	hashmap->keys   = hashmap->allocate(NULL, sizeof(uint8_t)  * capacity * hashmap->key_size);
+	hashmap->values = hashmap->allocate(NULL, sizeof(uint8_t)  * capacity * hashmap->value_size);
+	hashmap->marks  = hashmap->allocate(NULL, sizeof(uint8_t)  * capacity);
 
 	common_memset(hashmap->marks, HASH_MARK_NONE, sizeof(*hashmap->marks) * capacity);
 
@@ -69,15 +87,10 @@ void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity) {
 		hashmap->marks[key_index] = HASH_MARK_FULL;
 	}
 
-	MEMORY_FREE(hashes);
-	MEMORY_FREE(keys);
-	MEMORY_FREE(values);
-	MEMORY_FREE(marks);
-}
-
-void hashmap_clear(struct Hashmap * hashmap) {
-	hashmap->count = 0;
-	common_memset(hashmap->marks, HASH_MARK_NONE, sizeof(*hashmap->marks) * hashmap->capacity);
+	hashmap->allocate(hashes, 0);
+	hashmap->allocate(keys,   0);
+	hashmap->allocate(values, 0);
+	hashmap->allocate(marks,  0);
 }
 
 void * hashmap_get(struct Hashmap const * hashmap, void const * key) {

@@ -6,24 +6,31 @@
 //
 #include "buffer.h"
 
-struct Buffer buffer_init(Allocator * allocator) {
-	return (struct Buffer){
-		.allocate = allocator,
-	};
+struct Buffer buffer_init(void) {
+	return (struct Buffer){0};
 }
 
 void buffer_free(struct Buffer * buffer) {
-	default_allocator(buffer->allocate)(buffer->data, 0);
+	if (buffer->allocate == NULL) { return; }
+	buffer->allocate(buffer->data, 0);
 	common_memset(buffer, 0, sizeof(*buffer));
 }
 
-void buffer_clear(struct Buffer * buffer) {
+void buffer_clear(struct Buffer * buffer, bool deallocate) {
+	if (buffer->allocate == NULL) { return; }
+	if (deallocate) {
+		buffer->allocate(buffer->data, 0); buffer->data = NULL;
+		buffer->capacity = 0;
+	}
 	buffer->size = 0;
 }
 
 void buffer_resize(struct Buffer * buffer, size_t capacity) {
 	if (buffer->capacity == capacity) { return; }
-	void * data = default_allocator(buffer->allocate)(buffer->data, capacity);
+	if (buffer->allocate == NULL) {
+		buffer->allocate = memory_reallocate;
+	}
+	void * data = buffer->allocate(buffer->data, capacity);
 	if (data == NULL) { return; }
 	buffer->capacity = capacity;
 	buffer->size = min_size(buffer->size, capacity);

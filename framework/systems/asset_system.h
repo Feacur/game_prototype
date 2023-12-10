@@ -9,12 +9,11 @@ struct Asset_Info {
 	void (* drop)(struct Handle handle);
 };
 
-void asset_system_init(void);
-void asset_system_free(void);
+void asset_system_clear(bool deallocate);
 
-void asset_system_map_extension(struct CString type_name, struct CString extension);
-void asset_system_set_type(struct CString type_name, struct Asset_Info info);
-void asset_system_del_type(struct CString type_name);
+void asset_system_type_map(struct CString type_name, struct CString extension);
+void asset_system_type_set(struct CString type_name, struct Asset_Info info);
+void asset_system_type_del(struct CString type_name);
 
 struct Handle asset_system_load(struct CString name);
 void asset_system_drop(struct Handle handle);

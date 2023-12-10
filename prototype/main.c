@@ -32,7 +32,6 @@
 
 #include "application/json_load.h"
 #include "application/application.h"
-#include "application/asset_registry.h"
 #include "application/asset_types.h"
 #include "application/app_components.h"
 #include "application/batcher_2d.h"
@@ -448,16 +447,12 @@ static void app_free(void) {
 	ui_free();
 	game_free();
 	renderer_free();
-
-	action_system_invoke();
 }
 
 static void app_fixed_tick(void) {
 }
 
 static void app_frame_tick(void) {
-	arena_system_reset();
-
 	if (input_key(KC_LALT, IT_DOWN) && input_key(KC_F4, IT_DOWN)) {
 		gs_main_exit = !input_key(KC_LSHIFT, IT_DOWN);
 		application_exit();
@@ -511,9 +506,20 @@ static void main_fill_config(struct JSON const * json, void * data) {
 	result->fixed_refresh_rate  = (uint32_t)json_get_number(json, S_("fixed_refresh_rate"));
 }
 
+static void main_system_clear(bool deallocate) {
+	asset_system_clear(deallocate);
+	material_system_clear(deallocate);
+	action_system_clear(deallocate);
+	string_system_clear(deallocate);
+	arena_system_clear(deallocate);
+}
+
 static void main_run_application(void) {
-	arena_system_init();
-	string_system_init();
+	main_system_clear(false);
+
+	// @note: all types were invalidated with the string system
+	asset_types_map();
+	asset_types_set();
 
 	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
 	if (gs_main_settings.config_id == 0) { goto fail; }
@@ -534,15 +540,11 @@ static void main_run_application(void) {
 	});
 	TRC("application has ended");
 
-	finalize:
-	string_system_free();
-	arena_system_free();
 	return;
 
 	// process errors
 	fail: ERR("failed to launch application");
 	platform_system_sleep(1000);
-	goto finalize;
 }
 
 int main (int argc, char * argv[]) {
@@ -551,6 +553,7 @@ int main (int argc, char * argv[]) {
 		LOG("  %s\n", argv[i]);
 	}
 
+	arena_system_ensure((64 + 32) * (1 << 10));
 	platform_system_init((struct Platform_Callbacks){
 		.quit = app_platform_quit,
 	});
@@ -559,6 +562,16 @@ int main (int argc, char * argv[]) {
 		main_run_application();
 	}
 
-	platform_system_free();
+	// @note: drop everythin on the floor and quit
+#if defined (GAME_TARGET_DEBUG)
+	{
+		main_system_clear(true);
+
+		memory_report();
+		platform_system_free();
+		memory_clear();
+	}
+#endif
+
 	return 0;
 }

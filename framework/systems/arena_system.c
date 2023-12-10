@@ -13,60 +13,57 @@ static struct Arena_System {
 	struct Array buffered;   // `struct Memory_Header *`
 	struct Hashset fallback; // `struct Memory_Header *`
 	size_t required, peak;
-} gs_arena_system;
+} gs_arena_system = {
+	.buffer = {
+		.allocate = memory_reallocate_without_tracking,
+	},
+	.buffered = {
+		.allocate = memory_reallocate_without_tracking,
+		.value_size = sizeof(struct Memory_Header *),
+	},
+	.fallback = {
+		.allocate = memory_reallocate_without_tracking,
+		.get_hash = hash64,
+		.key_size = sizeof(struct Memory_Header *),
+	},
+};
 
 inline static size_t arena_system_checksum(void const * pointer) {
 	return (size_t)pointer ^ 0x0123456789abcdef;
 }
 
-static void arena_system_fallback_free(void) {
+void arena_system_clear(bool deallocate) {
+	// dependencies
 	FOR_HASHSET(&gs_arena_system.fallback, it) {
 		void * const * pointer = it.key;
-		MEMORY_FREE(*pointer);
+		gs_arena_system.fallback.allocate(*pointer, 0);
 	}
-}
-
-void arena_system_init(void) {
-	gs_arena_system = (struct Arena_System){
-		.buffer = buffer_init(NULL),
-		.buffered = array_init(sizeof(struct Memory_Header *)),
-		.fallback = hashset_init(hash64, sizeof(struct Memory_Header *)),
-	};
-	// @note: so far the most offending was `stb_truetype`
-	// with multiple 25kb per allocation without frees
-	uint32_t const preallocate = 64 + 32;
-	buffer_resize(&gs_arena_system.buffer, preallocate * (1 << 10));
-	array_resize(&gs_arena_system.buffered, preallocate);
-}
-
-void arena_system_free(void) {
-	arena_system_fallback_free();
-	buffer_free(&gs_arena_system.buffer);
-	array_free(&gs_arena_system.buffered);
-	hashset_free(&gs_arena_system.fallback);
-	common_memset(&gs_arena_system, 0, sizeof(gs_arena_system));
-}
-
-void arena_system_reset(void) {
+	// personal
+	buffer_clear(&gs_arena_system.buffer, deallocate);
+	array_clear(&gs_arena_system.buffered, deallocate);
+	hashset_clear(&gs_arena_system.fallback, deallocate);
+	gs_arena_system.required = 0;
+	//
+	if (deallocate) {
+		gs_arena_system.peak = 0;
+	}
+	//
 	if (gs_arena_system.buffer.capacity < gs_arena_system.peak) {
 		WRN(
 			"> buffer system\n"
 			"  capacity .. %zu\n"
-			"  size ...... %zu\n"
 			"  peak ...... %zu\n"
 			""
 			, gs_arena_system.buffer.capacity
-			, gs_arena_system.buffer.size
 			, gs_arena_system.peak
 		);
 		buffer_resize(&gs_arena_system.buffer, gs_arena_system.peak);
 	}
-	//
-	arena_system_fallback_free();
-	buffer_clear(&gs_arena_system.buffer);
-	array_clear(&gs_arena_system.buffered);
-	hashset_clear(&gs_arena_system.fallback);
-	gs_arena_system.required = 0;
+}
+
+void arena_system_ensure(size_t size) {
+	buffer_resize(&gs_arena_system.buffer, size);
+	array_resize(&gs_arena_system.buffered, (uint32_t)(size / (1 << 10)));
 }
 
 static void * arena_system_push(size_t size) {
@@ -120,7 +117,7 @@ static ALLOCATOR(arena_fallback) {
 		gs_arena_system.required -= sizeof(*header) + header->size;
 	}
 
-	void * const new_pointer = memory_reallocate(pointer, size);
+	void * const new_pointer = gs_arena_system.fallback.allocate(pointer, size);
 	if (new_pointer == NULL) { return NULL; }
 
 	hashset_set(&gs_arena_system.fallback, &new_pointer);

@@ -13,7 +13,7 @@
 struct Gfx_Uniforms gfx_uniforms_init(void) {
 	return (struct Gfx_Uniforms){
 		.headers = array_init(sizeof(struct Gfx_Uniforms_Entry)),
-		.payload = buffer_init(NULL),
+		.payload = buffer_init(),
 	};
 }
 
@@ -24,8 +24,8 @@ void gfx_uniforms_free(struct Gfx_Uniforms * uniforms) {
 }
 
 void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {
-	array_clear(&uniforms->headers);
-	buffer_clear(&uniforms->payload);
+	array_clear(&uniforms->headers, false);
+	buffer_clear(&uniforms->payload, false);
 }
 
 struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, struct CString name, uint32_t offset) {

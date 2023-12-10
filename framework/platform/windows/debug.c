@@ -13,8 +13,11 @@
 
 static struct Platform_Debug {
 	struct Buffer buffer;
-	struct Buffer scratch;
-} gs_platform_debug;
+} gs_platform_debug = {
+	.buffer = {
+		.allocate = memory_reallocate_without_tracking,
+	},
+};
 
 // @note: tested for `AMD64`; the whole thing depends heavily
 //        on the platform; might require dynamic dll calls
@@ -59,8 +62,12 @@ struct Callstack platform_debug_get_callstack(uint32_t skip) {
 struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 	static uint32_t const FRAMES_MAX = SIZE_OF_MEMBER(struct Callstack, data);
 
+	if (gs_platform_debug.buffer.capacity == 0) {
+		DEBUG_BREAK();
+		return (struct CString){0};
+	}
+
 	gs_platform_debug.buffer.size = 0;
-	gs_platform_debug.scratch.size = 0;
 
 	DWORD64 symbol_offset = 0;
 	union {
@@ -77,7 +84,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 	IMAGEHLP_MODULE64 module = {.SizeOfStruct = sizeof(module)};
 
 	HANDLE const process = GetCurrentProcess();
-	for (uint32_t i = 0; i < FRAMES_MAX && callstack.data[i] > 0; i++) {
+	for (uint32_t i = 0; i < FRAMES_MAX && callstack.data[i] != 0; i++) {
 		// fetch function, source file, and line
 		BOOL const valid_module = SymGetModuleInfo64(process, callstack.data[i], &module);
 		BOOL const valid_symbol = SymFromAddr(process, callstack.data[i], &symbol_offset, &symbol.header);
@@ -139,24 +146,14 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 #include "internal/debug_to_system.h"
 
 bool debug_to_system_init(void) {
+	buffer_resize(&gs_platform_debug.buffer, 4096);
 	SymInitialize(GetCurrentProcess(), NULL, TRUE);
-
-	gs_platform_debug = (struct Platform_Debug){
-		.buffer  = buffer_init(memory_reallocate_without_tracking),
-		.scratch = buffer_init(memory_reallocate_without_tracking),
-	};
-	buffer_resize(&gs_platform_debug.buffer,  4096);
-	buffer_resize(&gs_platform_debug.scratch, 512);
-
 	return true;
 }
 
 void debug_to_system_free(void) {
-	buffer_free(&gs_platform_debug.buffer);
-	buffer_free(&gs_platform_debug.scratch);
-	common_memset(&gs_platform_debug, 0, sizeof(gs_platform_debug));
-
 	SymCleanup(GetCurrentProcess());
+	buffer_free(&gs_platform_debug.buffer);
 }
 
 #else

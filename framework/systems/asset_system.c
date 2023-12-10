@@ -6,25 +6,12 @@
 //
 #include "asset_system.h"
 
-static struct Asset_System {
-	struct Sparseset meta;  // `struct Asset_Meta`
-	struct Hashmap handles; // name string id : `struct Handle`
-	struct Hashmap types;   // type string id : `struct Asset_Type`
-	struct Hashmap map;     // extension string id : type string id
-	struct Array stack;     // `struct Handle`
-} gs_asset_system;
-
 struct Asset_Meta {
 	struct Array dependencies; // `struct Handle`
 	struct Handle inst_handle;
 	uint32_t ref_count; // zero-based
 	uint32_t type_id;
 	uint32_t name_id;
-};
-
-struct Asset_Type {
-	struct Asset_Info info;
-	struct Sparseset instances; // `struct Asset_Inst`
 };
 
 struct Asset_Inst {
@@ -34,21 +21,55 @@ struct Asset_Inst {
 	uint8_t payload[FLEXIBLE_ARRAY];
 };
 
+struct Asset_Type {
+	struct Asset_Info info;
+	struct Sparseset instances; // `struct Asset_Inst`
+};
+
+static struct Asset_System {
+	struct Sparseset meta;  // `struct Asset_Meta`
+	struct Hashmap handles; // name string id : `struct Handle`
+	struct Hashmap types;   // type string id : `struct Asset_Type`
+	struct Hashmap map;     // extension string id : type string id
+	struct Array stack;     // `struct Handle`
+} gs_asset_system = {
+	.meta = {
+		.packed = {
+			.value_size = sizeof(struct Asset_Meta),
+		},
+		.sparse = {
+			.value_size = sizeof(struct Handle),
+		},
+		.ids = {
+			.value_size = sizeof(uint32_t),
+		},
+	},
+	.handles = {
+		.get_hash = hash32,
+		.key_size = sizeof(uint32_t),
+		.value_size = sizeof(struct Handle),
+	},
+	.types = {
+		.get_hash = hash32,
+		.key_size = sizeof(uint32_t),
+		.value_size = sizeof(struct Asset_Type),
+	},
+	.map = {
+		.get_hash = hash32,
+		.key_size = sizeof(uint32_t),
+		.value_size = sizeof(uint32_t),
+	},
+	.stack = {
+		.value_size = sizeof(struct Handle),
+	},
+};
+
 static void asset_system_add_dependency(struct Handle handle);
 static void asset_system_report(struct CString tag, struct Handle handle);
 static struct CString asset_system_name_to_extension(struct CString name);
 
-void asset_system_init(void) {
-	gs_asset_system = (struct Asset_System){
-		.meta = sparseset_init(sizeof(struct Asset_Meta)),
-		.handles = hashmap_init(&hash32, sizeof(uint32_t), sizeof(struct Handle)),
-		.types = hashmap_init(&hash32, sizeof(uint32_t), sizeof(struct Asset_Type)),
-		.map = hashmap_init(&hash32, sizeof(uint32_t), sizeof(uint32_t)),
-		.stack = array_init(sizeof(struct Handle)),
-	};
-}
-
-void asset_system_free(void) {
+void asset_system_clear(bool deallocate) {
+	// dependecies
 	uint32_t dropped_count = 0;
 	FOR_HASHMAP (&gs_asset_system.types, it_type) {
 		struct Asset_Type * type = it_type.value;
@@ -60,22 +81,22 @@ void asset_system_free(void) {
 				type->info.drop(inst->header.ah_meta);
 			}
 		}
-		sparseset_free(&type->instances);
+		sparseset_clear(&type->instances, deallocate);
 	}
+	if (dropped_count > 0) { DEBUG_BREAK(); }
 	FOR_SPARSESET (&gs_asset_system.meta, it) {
 		struct Asset_Meta * meta = it.value;
-		array_free(&meta->dependencies);
+		array_clear(&meta->dependencies, deallocate);
 	}
-	sparseset_free(&gs_asset_system.meta);
-	hashmap_free(&gs_asset_system.handles);
-	hashmap_free(&gs_asset_system.types);
-	hashmap_free(&gs_asset_system.map);
-	array_free(&gs_asset_system.stack);
-	// common_memset(&gs_asset_system, 0, sizeof(gs_asset_system));
-	if (dropped_count > 0) { DEBUG_BREAK(); }
+	// personal
+	sparseset_clear(&gs_asset_system.meta, deallocate);
+	hashmap_clear(&gs_asset_system.handles, deallocate);
+	hashmap_clear(&gs_asset_system.types, deallocate);
+	hashmap_clear(&gs_asset_system.map, deallocate);
+	array_clear(&gs_asset_system.stack, deallocate);
 }
 
-void asset_system_map_extension(struct CString type, struct CString extension) {
+void asset_system_type_map(struct CString type, struct CString extension) {
 	uint32_t const type_id = string_system_add(type);
 	if (type_id == 0) { WRN("empty type"); goto fail; }
 	uint32_t const extension_id = string_system_add(extension);
@@ -87,7 +108,7 @@ void asset_system_map_extension(struct CString type, struct CString extension) {
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 }
 
-void asset_system_set_type(struct CString type, struct Asset_Info info) {
+void asset_system_type_set(struct CString type, struct Asset_Info info) {
 	uint32_t const type_id = string_system_add(type);
 	hashmap_set(&gs_asset_system.types, &type_id, &(struct Asset_Type){
 		.info = info,
@@ -95,7 +116,7 @@ void asset_system_set_type(struct CString type, struct Asset_Info info) {
 	});
 }
 
-void asset_system_del_type(struct CString type_name) {
+void asset_system_type_del(struct CString type_name) {
 	uint32_t const type_id = string_system_find(type_name);
 	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &type_id);
 	if (type == NULL) { return; }

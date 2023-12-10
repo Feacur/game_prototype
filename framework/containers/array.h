@@ -9,6 +9,7 @@ struct Array_Iterator {
 };
 
 struct Array {
+	Allocator * allocate;
 	uint32_t value_size;
 	uint32_t capacity, count;
 	void * data;
@@ -17,7 +18,7 @@ struct Array {
 struct Array array_init(uint32_t value_size);
 void array_free(struct Array * array);
 
-void array_clear(struct Array * array);
+void array_clear(struct Array * array, bool deallocate);
 void array_resize(struct Array * array, uint32_t capacity);
 void array_ensure(struct Array * array, uint32_t capacity);
 

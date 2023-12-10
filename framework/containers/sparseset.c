@@ -11,20 +11,21 @@ struct Sparseset sparseset_init(uint32_t value_size) {
 	return (struct Sparseset){
 		.packed = array_init(value_size),
 		.sparse = array_init(sizeof(struct Handle)),
+		.ids    = array_init(sizeof(uint32_t)),
 	};
 }
 
 void sparseset_free(struct Sparseset * sparseset) {
 	array_free(&sparseset->packed);
 	array_free(&sparseset->sparse);
-	MEMORY_FREE(sparseset->ids);
+	array_free(&sparseset->ids);
 	common_memset(sparseset, 0, sizeof(*sparseset));
 }
 
-void sparseset_clear(struct Sparseset * sparseset) {
-	array_clear(&sparseset->packed);
-	array_clear(&sparseset->sparse);
-	common_memset(sparseset->ids, 0, sizeof(*sparseset->ids) * sparseset->packed.capacity);
+void sparseset_clear(struct Sparseset * sparseset, bool deallocate) {
+	array_clear(&sparseset->packed, deallocate);
+	array_clear(&sparseset->sparse, deallocate);
+	array_clear(&sparseset->ids, deallocate); sparseset->ids.count = sparseset->ids.capacity;
 	sparseset->free_list = 0;
 }
 
@@ -34,7 +35,7 @@ void sparseset_ensure(struct Sparseset * sparseset, uint32_t capacity) {
 
 	array_resize(&sparseset->packed, capacity);
 	array_resize(&sparseset->sparse, capacity);
-	sparseset->ids = MEMORY_REALLOCATE_ARRAY(sparseset->ids, capacity);
+	array_resize(&sparseset->ids,    capacity); sparseset->ids.count = capacity;
 }
 
 struct Handle sparseset_aquire(struct Sparseset * sparseset, void const * value) {
@@ -48,18 +49,18 @@ struct Handle sparseset_aquire(struct Sparseset * sparseset, void const * value)
 			.id = handle_id + 1,
 		});
 	}
-	struct Handle * entry = array_at(&sparseset->sparse, handle_id);
-	sparseset->free_list = entry->id;
+	struct Handle * entry_handle = array_at(&sparseset->sparse, handle_id);
+	sparseset->free_list = entry_handle->id;
 
 	// claim the entry
-	sparseset->ids[sparseset->packed.count] = handle_id;
-	entry->id = sparseset->packed.count;
+	array_set_many(&sparseset->ids, sparseset->packed.count, 1, &handle_id);
+	entry_handle->id = sparseset->packed.count;
 	array_push_many(&sparseset->packed, 1, value);
 
 	//
 	return (struct Handle){
 		.id = handle_id + 1,
-		.gen = entry->gen,
+		.gen = entry_handle->gen,
 	};
 }
 
@@ -68,26 +69,28 @@ void sparseset_discard(struct Sparseset * sparseset, struct Handle handle) {
 	if (handle.id > sparseset->sparse.count) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	uint32_t const handle_id = handle.id - 1;
-	struct Handle * entry = array_at(&sparseset->sparse, handle_id);
-	if (handle.gen != entry->gen)                { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-	if (handle_id  != sparseset->ids[entry->id]) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	struct Handle * entry_handle = array_at(&sparseset->sparse, handle_id);
+	if (handle.gen != entry_handle->gen) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	uint32_t const * entry_id = array_at(&sparseset->ids, entry_handle->id);
+	if (handle_id  != *entry_id) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	// swap the removed entry with the last one, maintain packing
-	void const * value = array_pop(&sparseset->packed, 1);
-	if (entry->id < sparseset->packed.count) {
-		uint32_t const swap_id = sparseset->ids[sparseset->packed.count];
-		struct Handle * swap = array_at(&sparseset->sparse, swap_id);
-		if (swap->id != sparseset->packed.count) { REPORT_CALLSTACK(); DEBUG_BREAK(); }
+	void const * swap_pack = array_pop(&sparseset->packed, 1);
+	if (entry_handle->id < sparseset->packed.count) {
+		uint32_t const * swap_id = array_at(&sparseset->ids, sparseset->packed.count);
+		struct Handle * swap_handle = array_at(&sparseset->sparse, *swap_id);
+		if (swap_handle->id != sparseset->packed.count) { REPORT_CALLSTACK(); DEBUG_BREAK(); }
 
-		sparseset->ids[entry->id] = swap_id;
-		swap->id = entry->id;
-		array_set_many(&sparseset->packed, entry->id, 1, value);
+		array_set_many(&sparseset->ids,    entry_handle->id, 1, swap_id);
+		array_set_many(&sparseset->packed, entry_handle->id, 1, swap_pack);
+
+		swap_handle->id = entry_handle->id;
 	}
 
 	// update the free list
-	*entry = (struct Handle){
+	*entry_handle = (struct Handle){
 		.id = sparseset->free_list,
-		.gen = (entry->gen + 1) & 0xff,
+		.gen = (entry_handle->gen + 1) & 0xff,
 	};
 	sparseset->free_list = handle_id;
 }
@@ -97,11 +100,12 @@ void * sparseset_get(struct Sparseset const * sparseset, struct Handle handle) {
 	if (handle.id > sparseset->sparse.count) { return NULL; }
 
 	uint32_t const handle_id = handle.id - 1;
-	struct Handle const * entry = array_at(&sparseset->sparse, handle_id);
-	if (handle.gen != entry->gen)                { return NULL; }
-	if (handle_id  != sparseset->ids[entry->id]) { return NULL; }
+	struct Handle const * entry_handle = array_at(&sparseset->sparse, handle_id);
+	if (handle.gen != entry_handle->gen) { return NULL; }
+	uint32_t const * entry_id = array_at(&sparseset->ids, entry_handle->id);
+	if (handle_id  != *entry_id) { return NULL; }
 
-	return array_at(&sparseset->packed, entry->id);
+	return array_at(&sparseset->packed, entry_handle->id);
 }
 
 void sparseset_set(struct Sparseset * sparseset, struct Handle handle, void const * value) {
@@ -109,11 +113,12 @@ void sparseset_set(struct Sparseset * sparseset, struct Handle handle, void cons
 	if (handle.id > sparseset->sparse.count) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
 	uint32_t const handle_id = handle.id - 1;
-	struct Handle const * entry = array_at(&sparseset->sparse, handle_id);
-	if (handle.gen != entry->gen)                { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-	if (handle_id  != sparseset->ids[entry->id]) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	struct Handle const * entry_handle = array_at(&sparseset->sparse, handle_id);
+	if (handle.gen != entry_handle->gen) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	uint32_t const * entry_id = array_at(&sparseset->ids, entry_handle->id);
+	if (handle_id  != *entry_id) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
-	array_set_many(&sparseset->packed, entry->id, 1, value);
+	array_set_many(&sparseset->packed, entry_handle->id, 1, value);
 }
 
 uint32_t sparseset_get_count(struct Sparseset const * sparseset) {
@@ -125,11 +130,11 @@ void * sparseset_get_at(struct Sparseset const * sparseset, uint32_t index) {
 }
 
 static struct Handle sparseset_get_handle_at(struct Sparseset const * sparseset, uint32_t index) {
-	uint32_t const handle_id = sparseset->ids[index];
-	struct Handle const * entry = array_at_unsafe(&sparseset->sparse, handle_id);
+	uint32_t const * id = array_at(&sparseset->ids, index);
+	struct Handle const * entry_handle = array_at_unsafe(&sparseset->sparse, *id);
 	return (struct Handle){
-		.id = handle_id + 1,
-		.gen = entry->gen,
+		.id = *id + 1,
+		.gen = entry_handle->gen,
 	};
 }
 

@@ -48,7 +48,7 @@ framework/graphics/opengl/graphics.c
 
 application/json_load.c
 application/application.c
-application/asset_registry.c
+application/asset_types.c
 application/app_components.c
 application/batcher_2d.c
 application/renderer.c

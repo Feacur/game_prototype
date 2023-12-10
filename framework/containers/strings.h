@@ -16,6 +16,8 @@ struct Strings {
 struct Strings strings_init(void);
 void strings_free(struct Strings * strings);
 
+void strings_clear(struct Strings * strings, bool deallocate);
+
 uint32_t strings_find(struct Strings const * strings, struct CString value);
 uint32_t strings_add(struct Strings * strings, struct CString value);
 struct CString strings_get(struct Strings const * strings, uint32_t id);

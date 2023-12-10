@@ -44,4 +44,7 @@ struct Asset_Material {
 	struct Handle mh_mat;
 };
 
+void asset_types_map(void);
+void asset_types_set(void);
+
 #endif

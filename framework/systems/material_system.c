@@ -5,17 +5,27 @@
 
 static struct Material_System {
 	struct Sparseset instances; // `struct Gfx_Material`
-} gs_material_system;
+} gs_material_system = {
+	.instances = {
+		.packed = {
+			.value_size = sizeof(struct Gfx_Material),
+		},
+		.sparse = {
+			.value_size = sizeof(struct Handle),
+		},
+		.ids = {
+			.value_size = sizeof(uint32_t),
+		},
+	},
+};
 
-void material_system_init(void) {
-	gs_material_system = (struct Material_System){
-		.instances = sparseset_init(sizeof(struct Gfx_Material)),
-	};
-}
-
-void material_system_free(void) {
-	sparseset_free(&gs_material_system.instances);
-	// common_memset(&gs_material_system, 0, sizeof(gs_material_system));
+void material_system_clear(bool deallocate) {
+	// dependecies
+	FOR_SPARSESET(&gs_material_system.instances, it) {
+		gfx_material_free(it.value);
+	}
+	// personal
+	sparseset_clear(&gs_material_system.instances, deallocate);
 }
 
 struct Handle material_system_aquire(void) {

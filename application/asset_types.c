@@ -325,78 +325,67 @@ static void asset_material_drop(struct Handle handle) {
 }
 
 //
-#include "asset_registry.h"
 
-void asset_types_init(void) {
-	asset_system_map_extension(S_("bytes"),    S_("txt"));
-	asset_system_map_extension(S_("shader"),   S_("glsl"));
-	asset_system_map_extension(S_("typeface"), S_("ttf"));
-	asset_system_map_extension(S_("typeface"), S_("otf"));
-	asset_system_map_extension(S_("model"),    S_("obj"));
+void asset_types_map(void) {
+	asset_system_type_map(S_("bytes"),    S_("txt"));
+	asset_system_type_map(S_("shader"),   S_("glsl"));
+	asset_system_type_map(S_("typeface"), S_("ttf"));
+	asset_system_type_map(S_("typeface"), S_("otf"));
+	asset_system_type_map(S_("model"),    S_("obj"));
+}
 
-	asset_system_set_type(S_("bytes"), (struct Asset_Info){
+void asset_types_set(void) {
+	asset_system_type_set(S_("bytes"), (struct Asset_Info){
 		.size = sizeof(struct Asset_Bytes),
 		.load = asset_bytes_load,
 		.drop = asset_bytes_drop,
 	});
 
-	asset_system_set_type(S_("json"), (struct Asset_Info){
+	asset_system_type_set(S_("json"), (struct Asset_Info){
 		.size = sizeof(struct Asset_JSON),
 		.load = asset_json_load,
 		.drop = asset_json_drop,
 	});
 
-	asset_system_set_type(S_("shader"), (struct Asset_Info){
+	asset_system_type_set(S_("shader"), (struct Asset_Info){
 		.size = sizeof(struct Asset_Shader),
 		.load = asset_shader_load,
 		.drop = asset_shader_drop,
 	});
 
-	asset_system_set_type(S_("image"), (struct Asset_Info){
+	asset_system_type_set(S_("image"), (struct Asset_Info){
 		.size = sizeof(struct Asset_Image),
 		.load = asset_image_load,
 		.drop = asset_image_drop,
 	});
 
-	asset_system_set_type(S_("typeface"), (struct Asset_Info){
+	asset_system_type_set(S_("typeface"), (struct Asset_Info){
 		.size = sizeof(struct Asset_Typeface),
 		.load = asset_typeface_load,
 		.drop = asset_typeface_drop,
 	});
 
-	asset_system_set_type(S_("font"), (struct Asset_Info){
+	asset_system_type_set(S_("font"), (struct Asset_Info){
 		.size = sizeof(struct Asset_Font),
 		.load = asset_font_load,
 		.drop = asset_font_drop,
 	});
 
-	asset_system_set_type(S_("target"), (struct Asset_Info){
+	asset_system_type_set(S_("target"), (struct Asset_Info){
 		.size = sizeof(struct Asset_Target),
 		.load = asset_target_load,
 		.drop = asset_target_drop,
 	});
 
-	asset_system_set_type(S_("model"), (struct Asset_Info){
+	asset_system_type_set(S_("model"), (struct Asset_Info){
 		.size = sizeof(struct Asset_Model),
 		.load = asset_model_load,
 		.drop = asset_model_drop,
 	});
 
-	asset_system_set_type(S_("material"), (struct Asset_Info){
+	asset_system_type_set(S_("material"), (struct Asset_Info){
 		.size = sizeof(struct Asset_Material),
 		.load = asset_material_load,
 		.drop = asset_material_drop,
 	});
-}
-
-void asset_types_free(void) {
-	asset_system_del_type(S_("bytes"));
-	asset_system_del_type(S_("json"));
-	asset_system_del_type(S_("shader"));
-	asset_system_del_type(S_("image"));
-	asset_system_del_type(S_("typeface"));
-	asset_system_del_type(S_("font"));
-	asset_system_del_type(S_("target"));
-	asset_system_del_type(S_("model"));
-	asset_system_del_type(S_("material"));
 }

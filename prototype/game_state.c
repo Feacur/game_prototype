@@ -215,8 +215,8 @@ void game_free(void) {
 }
 
 void game_fill_scene(struct JSON const * json, void * data) {
-	array_clear(&gs_game.cameras);
-	array_clear(&gs_game.entities);
+	array_clear(&gs_game.cameras,  false);
+	array_clear(&gs_game.entities, false);
 
 	if (json->type == JSON_ERROR) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 	if (data != &gs_game)         { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }

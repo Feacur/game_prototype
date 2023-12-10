@@ -83,7 +83,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 		.batches         = array_init(sizeof(struct Batcher_2D_Batch)),
 		.words           = array_init(sizeof(struct Batcher_2D_Word)),
 		.fonts           = hashset_init(&hash32, sizeof(struct Handle)),
-		.buffer          = buffer_init(NULL),
+		.buffer          = buffer_init(),
 		.gh_buffer       = gpu_buffer_init(&(struct Buffer){0}),
 		.gh_mesh         = gpu_mesh_init(&(struct Mesh){0}),
 	};
@@ -406,7 +406,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 	// render and upload the atlases
 	{
 		// @todo: (?) arena/stack allocator
-		hashset_clear(&batcher->fonts);
+		hashset_clear(&batcher->fonts, false);
 
 		FOR_ARRAY(&batcher->words, it) {
 			struct Batcher_2D_Word const * word = it.value;
@@ -453,10 +453,10 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 
 void batcher_2d_clear(struct Batcher_2D * batcher) {
 	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
-	array_clear(&batcher->codepoints);
-	array_clear(&batcher->batches);
-	array_clear(&batcher->words);
-	buffer_clear(&batcher->buffer);
+	array_clear(&batcher->codepoints, false);
+	array_clear(&batcher->batches, false);
+	array_clear(&batcher->words, false);
+	buffer_clear(&batcher->buffer, false);
 	gfx_uniforms_clear(&batcher->uniforms);
 }
 
@@ -526,7 +526,7 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 			});
 		}
 	}
-	array_clear(&batcher->batches);
+	array_clear(&batcher->batches, false);
 }
 
 void batcher_2d_bake(struct Batcher_2D * batcher) {
