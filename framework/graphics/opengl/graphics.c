@@ -136,7 +136,7 @@ static void gpu_program_introspect_uniforms(struct GPU_Program_Internal * gpu_pr
 		if (params[PARAM_LOCATION]     < 0) { continue; }
 
 		GLsizei name_length = params[PARAM_NAME_LENGTH] - 1;
-		char * name_data = BUFFER_ALLOCATE_SIZE((size_t)name_length + 1);
+		char * name_data = BUFFER_ALLOCATE_ARRAY(char, name_length + 1);
 		gl.GetProgramResourceName(gpu_program->id, GL_UNIFORM, (GLuint)i, (GLsizei)name_length + 1, NULL, name_data);
 
 		// TRC(
@@ -183,7 +183,7 @@ static void gpu_program_introspect_block(struct GPU_Program_Internal * gpu_progr
 		gl.GetProgramResourceiv(gpu_program->id, interface, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
 
 		GLsizei name_length = params[PARAM_NAME_LENGTH] - 1;
-		char * name_data = BUFFER_ALLOCATE_SIZE((size_t)name_length + 1);
+		char * name_data = BUFFER_ALLOCATE_ARRAY(char, name_length + 1);
 		gl.GetProgramResourceName(gpu_program->id, interface, (GLuint)i, (GLsizei)name_length + 1, NULL, name_data);
 
 		TRC(
@@ -221,7 +221,7 @@ static void gpu_program_introspect_buffer(struct GPU_Program_Internal * gpu_prog
 		gl.GetProgramResourceiv(gpu_program->id, GL_BUFFER_VARIABLE, (GLuint)i, SIZE_OF_ARRAY(c_props), c_props, SIZE_OF_ARRAY(params), NULL, params);
 
 		GLsizei name_length = params[PARAM_NAME_LENGTH] - 1;
-		char * name_data = BUFFER_ALLOCATE_SIZE((size_t)name_length + 1);
+		char * name_data = BUFFER_ALLOCATE_ARRAY(char, name_length + 1);
 		gl.GetProgramResourceName(gpu_program->id, GL_BUFFER_VARIABLE, (GLuint)i, (GLsizei)name_length + 1, NULL, name_data);
 
 		TRC(
@@ -262,7 +262,7 @@ static void gpu_program_introspect_input(struct GPU_Program_Internal * gpu_progr
 		if (params[PARAM_LOCATION] < 0) { continue; }
 
 		GLsizei name_length = params[PARAM_NAME_LENGTH] - 1;
-		char * name_data = BUFFER_ALLOCATE_SIZE((size_t)name_length + 1);
+		char * name_data = BUFFER_ALLOCATE_ARRAY(char, name_length + 1);
 		gl.GetProgramResourceName(gpu_program->id, GL_PROGRAM_INPUT, (GLuint)i, (GLsizei)name_length + 1, NULL, name_data);
 
 		TRC(
@@ -303,7 +303,7 @@ static void gpu_program_introspect_output(struct GPU_Program_Internal * gpu_prog
 		if (params[PARAM_LOCATION] < 0) { continue; }
 
 		GLsizei name_length = params[PARAM_NAME_LENGTH] - 1;
-		char * name_data = BUFFER_ALLOCATE_SIZE((size_t)name_length + 1);
+		char * name_data = BUFFER_ALLOCATE_ARRAY(char, name_length + 1);
 		gl.GetProgramResourceName(gpu_program->id, GL_PROGRAM_OUTPUT, (GLuint)i, (GLsizei)name_length + 1, NULL, name_data);
 
 		TRC(
@@ -1069,7 +1069,7 @@ static void gpu_upload_single_uniform(struct GPU_Program_Internal const * gpu_pr
 		case DATA_TYPE_UNIT_U:
 		case DATA_TYPE_UNIT_S:
 		case DATA_TYPE_UNIT_F: {
-			GLint * units = BUFFER_ALLOCATE_SIZE(sizeof(GLint) * field->base.array_size);
+			GLint * units = BUFFER_ALLOCATE_ARRAY(GLint, field->base.array_size);
 			uint32_t units_count = 0;
 
 			// @todo: automatically rebind in a circular buffer manner
@@ -1583,7 +1583,7 @@ static void verify_shader(GLuint id) {
 	gl.GetShaderiv(id, GL_INFO_LOG_LENGTH, &max_length);
 	if (max_length <= 0) { return; }
 
-	GLchar * buffer = BUFFER_ALLOCATE_SIZE(sizeof(GLchar) * (size_t)max_length);
+	GLchar * buffer = BUFFER_ALLOCATE_ARRAY(GLchar, max_length);
 	gl.GetShaderInfoLog(id, max_length, &max_length, buffer);
 	ERR("%s", buffer);
 }
@@ -1597,7 +1597,7 @@ static void verify_program(GLuint id) {
 	gl.GetProgramiv(id, GL_INFO_LOG_LENGTH, &max_length);
 	if (max_length <= 0) { return; }
 
-	GLchar * buffer = BUFFER_ALLOCATE_SIZE(sizeof(GLchar) * (size_t)max_length);
+	GLchar * buffer = BUFFER_ALLOCATE_ARRAY(GLchar, max_length);
 	gl.GetProgramInfoLog(id, max_length, &max_length, buffer);
 	ERR("%s", buffer);
 }

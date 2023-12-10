@@ -47,7 +47,7 @@ void image_ensure(struct Image * image, struct uvec2 size) {
 	uint32_t const data_size = data_type_get_size(image->parameters.data_type);
 	uint32_t const target_capacity = size.x * size.y * channels;
 	if (image->capacity < target_capacity) {
-		image->data = MEMORY_REALLOCATE_SIZE(image->data, size.x * size.y * data_size);
+		image->data = memory_reallocate(image->data, size.x * size.y * data_size);
 		image->capacity = target_capacity;
 	}
 	image->size = size;

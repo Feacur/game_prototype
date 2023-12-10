@@ -522,7 +522,7 @@ static bool platform_window_internal_has_raw_input(struct Window * window) {
 	GetRegisteredRawInputDevices(NULL, &count, sizeof(RAWINPUTDEVICE));
 	if (count == 0) { return false; }
 
-	RAWINPUTDEVICE * devices = BUFFER_ALLOCATE_SIZE(sizeof(RAWINPUTDEVICE) * count);
+	RAWINPUTDEVICE * devices = BUFFER_ALLOCATE_ARRAY(RAWINPUTDEVICE, count);
 	if (GetRegisteredRawInputDevices(devices, &count, sizeof(RAWINPUTDEVICE)) != (UINT)-1) {
 		for (uint32_t i = 0; i < count; i++) {
 			if (devices[i].hwndTarget == window->handle) {
