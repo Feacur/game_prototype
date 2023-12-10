@@ -4,7 +4,7 @@
 #include "framework/platform/file.h"
 #include "framework/platform/system.h"
 #include "framework/platform/window.h"
-#include "framework/systems/buffer_system.h"
+#include "framework/systems/arena_system.h"
 #include "framework/systems/action_system.h"
 #include "framework/systems/material_system.h"
 #include "framework/systems/asset_system.h"

@@ -2,13 +2,13 @@
 #include "framework/formatter.h"
 #include "framework/maths.h"
 #include "framework/containers/buffer.h"
-#include "framework/systems/buffer_system.h"
+#include "framework/systems/arena_system.h"
 
 #include "framework/platform/file.h"
 
 #include "framework/__warnings_push.h"
-	#define STBTT_malloc(size, user_data)  BUFFER_ALLOCATE_SIZE(size)
-	#define STBTT_free(pointer, user_data) BUFFER_FREE(pointer)
+	#define STBTT_malloc(size, user_data)  ARENA_ALLOCATE_SIZE(size)
+	#define STBTT_free(pointer, user_data) ARENA_FREE(pointer)
 
 	#define STBTT_STATIC
 	#define STB_TRUETYPE_IMPLEMENTATION

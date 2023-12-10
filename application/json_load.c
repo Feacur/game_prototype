@@ -9,7 +9,7 @@
 #include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/gfx_material.h"
 
-#include "framework/systems/buffer_system.h"
+#include "framework/systems/arena_system.h"
 #include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
@@ -135,7 +135,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 			); goto fail_field;
 		}
 
-		void * buffer = BUFFER_ALLOCATE_SIZE(it.size);
+		void * buffer = ARENA_ALLOCATE_SIZE(it.size);
 		switch (data_type_get_element_type(gpu_uniform->type)) {
 			default: ERR("unknown data type");
 				goto fail_field;

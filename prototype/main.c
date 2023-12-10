@@ -12,7 +12,7 @@
 #include "framework/maths.h"
 #include "framework/input.h"
 
-#include "framework/systems/buffer_system.h"
+#include "framework/systems/arena_system.h"
 #include "framework/systems/string_system.h"
 #include "framework/systems/action_system.h"
 #include "framework/systems/material_system.h"
@@ -456,7 +456,7 @@ static void app_fixed_tick(void) {
 }
 
 static void app_frame_tick(void) {
-	buffer_system_reset();
+	arena_system_reset();
 
 	if (input_key(KC_LALT, IT_DOWN) && input_key(KC_F4, IT_DOWN)) {
 		gs_main_exit = !input_key(KC_LSHIFT, IT_DOWN);
@@ -512,7 +512,7 @@ static void main_fill_config(struct JSON const * json, void * data) {
 }
 
 static void main_run_application(void) {
-	buffer_system_init();
+	arena_system_init();
 	string_system_init();
 
 	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
@@ -536,7 +536,7 @@ static void main_run_application(void) {
 
 	finalize:
 	string_system_free();
-	buffer_system_free();
+	arena_system_free();
 	return;
 
 	// process errors
