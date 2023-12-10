@@ -2,15 +2,13 @@
 #include "framework/formatter.h"
 #include "framework/maths.h"
 #include "framework/containers/buffer.h"
+#include "framework/systems/buffer_system.h"
 
 #include "framework/platform/file.h"
 
-static void * typeface_memory_allocate(size_t size, struct Buffer * scratch);
-static void typeface_memory_free(void * pointer, struct Buffer * scratch);
-
 #include "framework/__warnings_push.h"
-	#define STBTT_malloc(size, user_data)  typeface_memory_allocate(size, user_data)
-	#define STBTT_free(pointer, user_data) typeface_memory_free(pointer, user_data)
+	#define STBTT_malloc(size, user_data)  buffer_system_get(size)
+	#define STBTT_free(pointer, user_data) (void)0
 
 	#define STBTT_STATIC
 	#define STB_TRUETYPE_IMPLEMENTATION
@@ -24,21 +22,16 @@ struct Typeface {
 	struct Buffer source;
 	stbtt_fontinfo api;
 	int ascent, descent, line_gap;
-	struct Buffer * scratch;
 };
 
 struct Typeface * typeface_init(struct Buffer * source) {
 	struct Typeface * typeface = MEMORY_ALLOCATE(struct Typeface);
 	*typeface = (struct Typeface){0};
 
-	typeface->scratch = MEMORY_ALLOCATE(struct Buffer);
-	*typeface->scratch = buffer_init(NULL);
-
 	// @note: memory ownership transfer
 	typeface->source = *source;
 	*source = (struct Buffer){0};
 
-	typeface->api.userdata = typeface->scratch;
 	if (!stbtt_InitFont(&typeface->api, typeface->source.data, stbtt_GetFontOffsetForIndex(typeface->source.data, 0))) {
 		ERR("failure: can't read typeface data");
 		REPORT_CALLSTACK(); DEBUG_BREAK();
@@ -53,7 +46,6 @@ struct Typeface * typeface_init(struct Buffer * source) {
 
 void typeface_free(struct Typeface * typeface) {
 	if (typeface == NULL) { WRN("freeing NULL typeface"); return; }
-	buffer_free(typeface->scratch); MEMORY_FREE(typeface->scratch);
 	buffer_free(&typeface->source);
 	common_memset(typeface, 0, sizeof(*typeface));
 	MEMORY_FREE(typeface);
@@ -143,10 +135,6 @@ void typeface_render_glyph(
 		scale, scale,
 		(int)glyph_id
 	);
-
-	// @todo: arena/stack allocator
-	buffer_ensure(typeface->scratch, typeface->scratch->size);
-	buffer_clear(typeface->scratch);
 }
 
 float typeface_get_scale(struct Typeface const * typeface, float pixels_size) {
@@ -169,24 +157,4 @@ int32_t typeface_get_gap(struct Typeface const * typeface) {
 
 int32_t typeface_get_kerning(struct Typeface const * typeface, uint32_t glyph_id1, uint32_t glyph_id2) {
 	return (int32_t)stbtt_GetGlyphKernAdvance(&typeface->api, (int)glyph_id1, (int)glyph_id2);
-}
-
-//
-
-static void * typeface_memory_allocate(size_t size, struct Buffer * scratch) {
-	// @note: grow count, even past capacity
-	size_t const offset = scratch->size;
-	scratch->size += size;
-
-	// @note: use the scratch buffer until it's memory should be reallocated
-	if (scratch->size > scratch->capacity) { return MEMORY_ALLOCATE_SIZE(size); }
-	return (uint8_t *)scratch->data + offset;
-}
-
-static void typeface_memory_free(void * pointer, struct Buffer * scratch) {
-	// @note: free only non-buffered allocations
-	void const * scratch_end = (uint8_t *)scratch->data + scratch->capacity;
-	if (pointer < scratch->data || scratch_end < pointer) {
-		MEMORY_FREE(pointer);
-	}
 }
