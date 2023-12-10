@@ -4,6 +4,7 @@
 #include "framework/common.h"
 
 struct Action {
+	uint32_t frames;
 	struct Handle handle;
 	void (* invoke)(struct Handle handle);
 };

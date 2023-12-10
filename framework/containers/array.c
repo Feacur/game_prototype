@@ -36,6 +36,28 @@ void array_ensure(struct Array * array, uint32_t capacity) {
 	array_resize(array, capacity);
 }
 
+uint32_t array_find_if(struct Array * array, Predicate * predicate) {
+	FOR_ARRAY(array, it) {
+		if (predicate(it.value)) {
+			return it.curr;
+		}
+	}
+	return INDEX_EMPTY;
+}
+
+void array_remove_if(struct Array * array, Predicate * predicate) {
+	uint32_t empty_index = array_find_if(array, predicate);
+	if (empty_index == INDEX_EMPTY) { return; }
+	for (uint32_t i = empty_index + 1; i < array->count; i++) {
+		void const * value = array_at_unsafe(array, i);
+		if (predicate(value)) { continue; }
+
+		void * empty = array_at_unsafe(array, empty_index++);
+		common_memcpy(empty, value, array->value_size);
+	}
+	array->count = empty_index;
+}
+
 void array_push_many(struct Array * array, uint32_t count, void const * value) {
 	array_ensure(array, array->count + count);
 	uint8_t * end = (uint8_t *)array->data + array->value_size * array->count;

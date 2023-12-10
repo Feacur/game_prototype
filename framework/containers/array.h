@@ -21,6 +21,9 @@ void array_clear(struct Array * array);
 void array_resize(struct Array * array, uint32_t capacity);
 void array_ensure(struct Array * array, uint32_t capacity);
 
+uint32_t array_find_if(struct Array * array, Predicate * predicate);
+void array_remove_if(struct Array * array, Predicate * predicate);
+
 void array_push_many(struct Array * array, uint32_t count, void const * value);
 void array_set_many(struct Array * array, uint32_t index, uint32_t count, void const * value);
 void array_insert_many(struct Array * array, uint32_t index, uint32_t count, void const * value);

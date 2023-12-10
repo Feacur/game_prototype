@@ -1,3 +1,4 @@
+#include "framework/systems/action_system.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
 
@@ -103,21 +104,30 @@ void ui_set_color(struct vec4 color) {
 }
 
 void ui_set_shader(struct CString name) {
-	struct Handle const prev = gs_ui.ah_shader;
+	action_system_push((struct Action){
+		.frames = 1,
+		.handle = gs_ui.ah_shader,
+		.invoke = asset_system_drop,
+	});
 	gs_ui.ah_shader = asset_system_load(name);
-	asset_system_drop(prev);
 }
 
 void ui_set_image(struct CString name) {
-	struct Handle const prev = gs_ui.ah_image;
+	action_system_push((struct Action){
+		.frames = 1,
+		.handle = gs_ui.ah_image,
+		.invoke = asset_system_drop,
+	});
 	gs_ui.ah_image = asset_system_load(name);
-	asset_system_drop(prev);
 }
 
 void ui_set_font(struct CString name) {
-	struct Handle const prev = gs_ui.ah_font;
+	action_system_push((struct Action){
+		.frames = 1,
+		.handle = gs_ui.ah_font,
+		.invoke = asset_system_drop,
+	});
 	gs_ui.ah_font = asset_system_load(name);
-	asset_system_drop(prev);
 }
 
 void ui_quad(struct rect uv) {

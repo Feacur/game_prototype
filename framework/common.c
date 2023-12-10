@@ -77,7 +77,7 @@ void common_memcpy(void * target, void const * source, size_t size) {
 	memcpy(target, source, size);
 }
 
-void common_qsort(void * data, size_t count, size_t value_size, comparator * compare) {
+void common_qsort(void * data, size_t count, size_t value_size, Comparator * compare) {
 	qsort(data, count, value_size, compare);
 }
 
@@ -88,16 +88,6 @@ char const * common_strstr(char const * buffer, char const * value) {
 // ----- ----- ----- ----- -----
 //     utilities
 // ----- ----- ----- ----- -----
-
-uint32_t align_u32(uint32_t value) {
-	uint32_t const alignment = 8 - 1;
-	return ((value | alignment) & ~alignment);
-}
-
-uint64_t align_u64(uint64_t value) {
-	uint64_t const alignment = 8 - 1;
-	return ((value | alignment) & ~alignment);
-}
 
 bool contains_full_word(char const * container, struct CString value) {
 	if (container == NULL)  { return false; }
@@ -117,7 +107,7 @@ bool contains_full_word(char const * container, struct CString value) {
 }
 
 // ----- ----- ----- ----- -----
-//     callstack
+//     debug
 // ----- ----- ----- ----- -----
 
 void report_callstack(void) {

@@ -7,6 +7,12 @@ static struct Action_System {
 	struct Array actions; // `struct Action`
 } gs_action_system;
 
+static PREDICATE(action_is_empty) {
+	struct Action const * action = value;
+	return handle_is_null(action->handle)
+	    || action->invoke == NULL;
+}
+
 void action_system_init(void) {
 	gs_action_system = (struct Action_System){
 		.actions = array_init(sizeof(struct Action)),
@@ -24,9 +30,11 @@ void action_system_push(struct Action action) {
 }
 
 void action_system_invoke(void) {
+	array_remove_if(&gs_action_system.actions, action_is_empty);
 	FOR_ARRAY(&gs_action_system.actions, it) {
-		struct Action const * action = it.value;
+		struct Action * action = it.value;
+		if (action->frames > 0) { action->frames--; continue; }
 		action->invoke(action->handle);
+		action->handle = (struct Handle){0};
 	}
-	array_clear(&gs_action_system.actions);
 }
