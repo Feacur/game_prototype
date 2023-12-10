@@ -170,6 +170,12 @@ inline static HASHER(hash32) {
 	return *(uint32_t const *)v;
 }
 
+inline static HASHER(hash64) {
+	struct Data { uint32_t v1, v2; };
+	struct Data const * data = v;
+	return data->v1 ^ data->v2;
+}
+
 // ----- ----- ----- ----- -----
 //     debug
 // ----- ----- ----- ----- -----

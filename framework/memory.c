@@ -50,10 +50,10 @@ ALLOCATOR(memory_reallocate) {
 			.checksum = (size_t)new_header,
 			.size = size,
 		},
-		.next = gs_memory,
 		.callstack = platform_debug_get_callstack(0),
 	};
 
+	new_header->next = gs_memory;
 	if (gs_memory != NULL) { gs_memory->prev = new_header; }
 	gs_memory = new_header;
 
