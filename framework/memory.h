@@ -5,6 +5,7 @@
 
 struct Memory_Header {
 	size_t checksum, size;
+	// uint8_t payload[FLEXIBLE_ARRAY];
 };
 
 ALLOCATOR(memory_reallocate);

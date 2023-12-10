@@ -26,12 +26,11 @@ ALLOCATOR(memory_reallocate) {
 		if (header->base.checksum != (size_t)header) {
 			goto fail;
 		}
+		header->base.checksum = 0;
 
 		if (gs_memory == header) { gs_memory = header->next; }
 		if (header->next != NULL) { header->next->prev = header->prev; }
 		if (header->prev != NULL) { header->prev->next = header->next; }
-		header->base.checksum = 0;
-		// common_memset(pointer_header, 0, sizeof(*pointer_header) + pointer_header->base.size);
 	}
 
 	// free
@@ -46,16 +45,15 @@ ALLOCATOR(memory_reallocate) {
 	struct Memory_Header_Internal * new_header = realloc(header, sizeof(*header) + size);
 	if (new_header == NULL) { goto fail; }
 
-	// track memory
 	*new_header = (struct Memory_Header_Internal){
 		.base = {
 			.checksum = (size_t)new_header,
 			.size = size,
 		},
+		.next = gs_memory,
 		.callstack = platform_debug_get_callstack(0),
 	};
 
-	new_header->next = gs_memory;
 	if (gs_memory != NULL) { gs_memory->prev = new_header; }
 	gs_memory = new_header;
 
@@ -72,12 +70,24 @@ ALLOCATOR(memory_reallocate_without_tracking) {
 		? (struct Memory_Header *)pointer - 1
 		: NULL;
 
+	if (header != NULL) {
+		if (header->checksum != ~(size_t)header) {
+			goto fail;
+		}
+		header->checksum = 0;
+	}
+
 	// free
 	if (size == 0) { free(header); return NULL; }
 
 	// allocate or reallocate
 	struct Memory_Header * new_header = realloc(header, sizeof(*header) + size);
 	if (new_header == NULL) { goto fail; }
+
+	*new_header = (struct Memory_Header){
+		.checksum = ~(size_t)new_header,
+		.size = size,
+	};
 
 	return new_header + 1;
 
