@@ -5,19 +5,15 @@
 
 #include "framework/formatter.h"
 #include "framework/memory.h"
-#include "framework/containers/buffer.h"
+#include "framework/systems/arena_system.h"
 
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 #include <DbgHelp.h>
 
 static struct Platform_Debug {
-	struct Buffer buffer;
-} gs_platform_debug = {
-	.buffer = {
-		.allocate = memory_reallocate_without_tracking,
-	},
-};
+	bool init;
+} gs_platform_debug;
 
 // @note: tested for `AMD64`; the whole thing depends heavily
 //        on the platform; might require dynamic dll calls
@@ -62,12 +58,10 @@ struct Callstack platform_debug_get_callstack(uint32_t skip) {
 struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 	static uint32_t const FRAMES_MAX = SIZE_OF_MEMBER(struct Callstack, data);
 
-	if (gs_platform_debug.buffer.capacity == 0) {
+	if (!gs_platform_debug.init) {
 		DEBUG_BREAK();
 		return (struct CString){0};
 	}
-
-	gs_platform_debug.buffer.size = 0;
 
 	DWORD64 symbol_offset = 0;
 	union {
@@ -82,6 +76,9 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 	DWORD source_offset = 0;
 	IMAGEHLP_LINE64 source = {.SizeOfStruct = sizeof(source)};
 	IMAGEHLP_MODULE64 module = {.SizeOfStruct = sizeof(module)};
+
+	size_t size = 0;
+	char * buffer = NULL;
 
 	HANDLE const process = GetCurrentProcess();
 	for (uint32_t i = 0; i < FRAMES_MAX && callstack.data[i] != 0; i++) {
@@ -99,18 +96,18 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 		char const * source_data = source.FileName;
 
 		// reserve output buffer
-		buffer_ensure(&gs_platform_debug.buffer,
-			gs_platform_debug.buffer.size
+		size_t const capacity = size
 			+ module_length + symbol_length + source_length
 			+ 34 // chars
 			+ 11 // UINT32_MAX
 			+ 11 // UINT32_MAX
-		);
+			;
+		buffer = arena_reallocate(buffer, capacity * sizeof(char));
 
 		// fill the buffer
-		uint32_t const written = formatter_fmt(
-			(uint32_t)(gs_platform_debug.buffer.capacity - gs_platform_debug.buffer.size),
-			(char *)gs_platform_debug.buffer.data + gs_platform_debug.buffer.size,
+		size += formatter_fmt(
+			(uint32_t)(capacity - size),
+			buffer + size,
 			"[%.*s] %.*s at '%.*s:%u:%u'\n"
 			""
 			, module_length, module_data
@@ -119,23 +116,18 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 			, (uint32_t)source.LineNumber
 			, (uint32_t)source_offset
 		);
-		gs_platform_debug.buffer.size += written;
 
 		struct CString const cs_symbol = {.length = symbol_length, .data = symbol_data};
 		if (cstring_equals(cs_symbol, S_("main"))) { break; }
 	}
 
-	if (gs_platform_debug.buffer.size > 0) {
-		// @note: strip last LF
-		char const * last = buffer_peek(&gs_platform_debug.buffer, 0);
-		if (last[0] == '\n') { gs_platform_debug.buffer.size--; }
+	if (size > 0) { // @note: strip last LF
+		if (buffer[size - 1] == '\n') { size--; }
 	}
 
 	return (struct CString){
-		.length = (uint32_t)gs_platform_debug.buffer.size,
-		.data = (gs_platform_debug.buffer.size > 0)
-			? gs_platform_debug.buffer.data
-			: NULL,
+		.length = (uint32_t)size,
+		.data = buffer,
 	};
 
 	// https://learn.microsoft.com/windows/win32/api/dbghelp/nf-dbghelp-symfromaddr
@@ -146,14 +138,15 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 #include "internal/debug_to_system.h"
 
 bool debug_to_system_init(void) {
-	buffer_resize(&gs_platform_debug.buffer, 4096);
-	SymInitialize(GetCurrentProcess(), NULL, TRUE);
+	gs_platform_debug = (struct Platform_Debug){
+		.init = SymInitialize(GetCurrentProcess(), NULL, TRUE),
+	};
 	return true;
 }
 
 void debug_to_system_free(void) {
 	SymCleanup(GetCurrentProcess());
-	buffer_free(&gs_platform_debug.buffer);
+	common_memset(&gs_platform_debug, 0, sizeof(gs_platform_debug));
 }
 
 #else
