@@ -85,7 +85,7 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 		SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE
 	);
 
-	struct Window * const window = MEMORY_ALLOCATE(struct Window);
+	struct Window * const window = ALLOCATE(struct Window);
 	if (window == NULL) { goto fail_window; }
 	if (!SetProp(handle, TEXT(HANDLE_PROP_WINDOW_NAME), window)) { goto fail_window; }
 
@@ -101,7 +101,7 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 
 	// process errors
 	fail_window:
-	if (window != NULL) { MEMORY_FREE(window); }
+	if (window != NULL) { FREE(window); }
 	else { ERR("failed to initialize application window"); }
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 
@@ -120,7 +120,7 @@ void platform_window_free(struct Window * window) {
 		// delegate all the work to WM_DESTROY
 	}
 	else {
-		MEMORY_FREE(window);
+		FREE(window);
 		// WM_CLOSE has been processed; now, just free the application window
 	}
 }
@@ -663,7 +663,7 @@ static void handle_message_input_raw(struct Window * window, WPARAM wParam, LPAR
 
 	RAWINPUTHEADER header; UINT header_size = sizeof(header);
 	if (GetRawInputData((HRAWINPUT)lParam, RID_HEADER, &header, &header_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
-		RAWINPUT * input = ARENA_ALLOCATE_SIZE(header.dwSize); UINT input_size = header.dwSize;
+		RAWINPUT * input = arena_reallocate(NULL, header.dwSize); UINT input_size = header.dwSize;
 		if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, input, &input_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
 			switch (input->header.dwType) {
 				case RIM_TYPEKEYBOARD: handle_input_keyboard_raw(window, &input->data.keyboard); break;
@@ -856,7 +856,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			RemoveProp(hwnd, TEXT(APPLICATION_CLASS_NAME));
 			input_to_platform_reset();
 			common_memset(window, 0, sizeof(*window));
-			if (should_free) { MEMORY_FREE(window); }
+			if (should_free) { FREE(window); }
 			return 0;
 		}
 	}

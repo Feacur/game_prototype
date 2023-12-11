@@ -51,7 +51,7 @@ struct Glyph_Codepoint {
 };
 
 struct Font * font_init(void) {
-	struct Font * font = MEMORY_ALLOCATE(struct Font);
+	struct Font * font = ALLOCATE(struct Font);
 	*font = (struct Font){
 		.buffer = {
 			.parameters = {
@@ -80,7 +80,7 @@ void font_free(struct Font * font) {
 	hashmap_free(&font->table);
 
 	common_memset(font, 0, sizeof(*font));
-	MEMORY_FREE(font);
+	FREE(font);
 }
 
 struct Typeface const * font_get_typeface(struct Font const * font, uint32_t codepoint) {
@@ -199,7 +199,7 @@ void font_render(struct Font * font) {
 
 	// collect visible glyphs
 	uint32_t symbols_count = 0;
-	struct Typeface_Symbol * symbols_to_render = MEMORY_ALLOCATE_ARRAY(struct Typeface_Symbol, font->table.count);
+	struct Typeface_Symbol * symbols_to_render = ALLOCATE_ARRAY(struct Typeface_Symbol, font->table.count);
 
 	FOR_HASHMAP (&font->table, it) {
 		struct Glyph * glyph = it.value;
@@ -359,7 +359,7 @@ void font_render(struct Font * font) {
 		}
 	}
 
-	MEMORY_FREE(symbols_to_render);
+	FREE(symbols_to_render);
 
 	// reuse error glyph UVs
 	FOR_HASHMAP (&font->table, it) {

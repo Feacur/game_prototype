@@ -10,20 +10,60 @@
 //
 #include "memory.h"
 
-static struct Memory_Header_Internal {
-	struct Memory_Header_Internal * prev;
-	struct Memory_Header_Internal * next;
+// ----- ----- ----- ----- -----
+//     generic
+// ----- ----- ----- ----- -----
+
+ALLOCATOR(generic_reallocate) {
+	struct Memory_Header * header = (pointer != NULL)
+		? (struct Memory_Header *)pointer - 1
+		: NULL;
+
+	if (header != NULL) {
+		if (header->checksum != (size_t)header) {
+			goto fail;
+		}
+		header->checksum = 0;
+	}
+
+	// free
+	if (size == 0) { free(header); return NULL; }
+
+	// allocate or reallocate
+	struct Memory_Header * new_header = realloc(header, sizeof(*header) + size);
+	if (new_header == NULL) { goto fail; }
+
+	*new_header = (struct Memory_Header){
+		.checksum = (size_t)new_header,
+		.size = size,
+	};
+
+	return new_header + 1;
+
+	// failed
+	fail: ERR("'realloc' failed:");
+	REPORT_CALLSTACK(); DEBUG_BREAK();
+	return NULL;
+}
+
+// ----- ----- ----- ----- -----
+//     debug
+// ----- ----- ----- ----- -----
+
+static struct Memory_Header_Debug {
+	struct Memory_Header_Debug * prev;
+	struct Memory_Header_Debug * next;
 	struct Callstack callstack;
 	struct Memory_Header base;
 } * gs_memory;
 
-ALLOCATOR(memory_reallocate) {
-	struct Memory_Header_Internal * header = (pointer != NULL)
-		? (struct Memory_Header_Internal *)pointer - 1
+ALLOCATOR(debug_reallocate) {
+	struct Memory_Header_Debug * header = (pointer != NULL)
+		? (struct Memory_Header_Debug *)pointer - 1
 		: NULL;
 
 	if (header != NULL) {
-		if (header->base.checksum != (size_t)header) {
+		if (header->base.checksum != ~(size_t)header) {
 			goto fail;
 		}
 		header->base.checksum = 0;
@@ -42,12 +82,12 @@ ALLOCATOR(memory_reallocate) {
 	}
 
 	// allocate or reallocate
-	struct Memory_Header_Internal * new_header = realloc(header, sizeof(*header) + size);
+	struct Memory_Header_Debug * new_header = realloc(header, sizeof(*header) + size);
 	if (new_header == NULL) { goto fail; }
 
-	*new_header = (struct Memory_Header_Internal){
+	*new_header = (struct Memory_Header_Debug){
 		.base = {
-			.checksum = (size_t)new_header,
+			.checksum = ~(size_t)new_header,
 			.size = size,
 		},
 		.callstack = platform_debug_get_callstack(0),
@@ -65,46 +105,14 @@ ALLOCATOR(memory_reallocate) {
 	return NULL;
 }
 
-ALLOCATOR(memory_reallocate_without_tracking) {
-	struct Memory_Header * header = (pointer != NULL)
-		? (struct Memory_Header *)pointer - 1
-		: NULL;
-
-	if (header != NULL) {
-		if (header->checksum != ~(size_t)header) {
-			goto fail;
-		}
-		header->checksum = 0;
-	}
-
-	// free
-	if (size == 0) { free(header); return NULL; }
-
-	// allocate or reallocate
-	struct Memory_Header * new_header = realloc(header, sizeof(*header) + size);
-	if (new_header == NULL) { goto fail; }
-
-	*new_header = (struct Memory_Header){
-		.checksum = ~(size_t)new_header,
-		.size = size,
-	};
-
-	return new_header + 1;
-
-	// failed
-	fail: ERR("'realloc' failed:");
-	REPORT_CALLSTACK(); DEBUG_BREAK();
-	return NULL;
-}
-
-void memory_report(void) {
+void memory_debug_report(void) {
 	if (gs_memory == NULL) { return; }
 
 	uint32_t const pointer_digits_count = sizeof(size_t) * 2;
 
 	uint32_t total_count = 0;
 	uint64_t total_bytes = 0;
-	for (struct Memory_Header_Internal * it = gs_memory; it; it = it->next) {
+	for (struct Memory_Header_Debug * it = gs_memory; it; it = it->next) {
 		total_count++;
 		total_bytes += it->base.size;
 	}
@@ -126,7 +134,7 @@ void memory_report(void) {
 		);
 	}
 
-	for (struct Memory_Header_Internal const * it = gs_memory; it != NULL; it = it->next) {
+	for (struct Memory_Header_Debug const * it = gs_memory; it != NULL; it = it->next) {
 		struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack);
 		WRN(
 			"  [0x%.*zx] (bytes: %*.zu) stacktrace:\n"
@@ -141,9 +149,10 @@ void memory_report(void) {
 	DEBUG_BREAK();
 }
 
-void memory_clear(void) {
+void memory_debug_clear(void) {
 	while (gs_memory != NULL) {
-		void * pointer = (gs_memory + 1);
-		memory_reallocate(pointer, 0);
+		void * const header = gs_memory;
+		gs_memory = gs_memory->next;
+		free(header);
 	}
 }

@@ -7,9 +7,9 @@
 #include "framework/__warnings_push.h"
 	#define STBI_ONLY_PNG
 
-	#define STBI_MALLOC(size)           MEMORY_ALLOCATE_SIZE(size)
-	#define STBI_REALLOC(pointer, size) memory_reallocate(pointer, size)
-	#define STBI_FREE(pointer)          MEMORY_FREE(pointer)
+	#define STBI_MALLOC(size)           REALLOCATE(NULL,    size)
+	#define STBI_REALLOC(pointer, size) REALLOCATE(pointer, size)
+	#define STBI_FREE(pointer)          REALLOCATE(pointer, 0)
 
 	#define STB_IMAGE_STATIC
 	#define STB_IMAGE_IMPLEMENTATION
@@ -38,7 +38,7 @@ struct Image image_init(struct Buffer const * buffer) {
 }
 
 void image_free(struct Image * image) {
-	MEMORY_FREE(image->data);
+	FREE(image->data);
 	common_memset(image, 0, sizeof(*image));
 }
 
@@ -47,7 +47,7 @@ void image_ensure(struct Image * image, struct uvec2 size) {
 	uint32_t const data_size = data_type_get_size(image->parameters.data_type);
 	uint32_t const target_capacity = size.x * size.y * channels;
 	if (image->capacity < target_capacity) {
-		image->data = memory_reallocate(image->data, size.x * size.y * data_size);
+		image->data = REALLOCATE(image->data, size.x * size.y * data_size);
 		image->capacity = target_capacity;
 	}
 	image->size = size;

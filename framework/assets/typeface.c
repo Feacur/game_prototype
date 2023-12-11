@@ -7,8 +7,8 @@
 #include "framework/platform/file.h"
 
 #include "framework/__warnings_push.h"
-	#define STBTT_malloc(size, user_data)  ARENA_ALLOCATE_SIZE(size)
-	#define STBTT_free(pointer, user_data) ARENA_FREE(pointer)
+	#define STBTT_malloc(size, user_data)  arena_reallocate(NULL, size)
+	#define STBTT_free(pointer, user_data) arena_reallocate(pointer, 0)
 
 	#define STBTT_STATIC
 	#define STB_TRUETYPE_IMPLEMENTATION
@@ -25,7 +25,7 @@ struct Typeface {
 };
 
 struct Typeface * typeface_init(struct Buffer * source) {
-	struct Typeface * typeface = MEMORY_ALLOCATE(struct Typeface);
+	struct Typeface * typeface = ALLOCATE(struct Typeface);
 	*typeface = (struct Typeface){0};
 
 	// @note: memory ownership transfer
@@ -48,7 +48,7 @@ void typeface_free(struct Typeface * typeface) {
 	if (typeface == NULL) { WRN("freeing NULL typeface"); return; }
 	buffer_free(&typeface->source);
 	common_memset(typeface, 0, sizeof(*typeface));
-	MEMORY_FREE(typeface);
+	FREE(typeface);
 }
 
 uint32_t typeface_get_glyph_id(struct Typeface const * typeface, uint32_t codepoint) {

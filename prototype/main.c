@@ -567,9 +567,9 @@ int main (int argc, char * argv[]) {
 	{
 		main_system_clear(true);
 
-		memory_report();
+		memory_debug_report();
 		platform_system_free();
-		memory_clear();
+		memory_debug_clear();
 	}
 #endif
 

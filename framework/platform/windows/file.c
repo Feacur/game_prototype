@@ -51,12 +51,12 @@ struct File * platform_file_init(struct CString path, enum File_Mode mode) {
 	HANDLE handle = platform_file_internal_create(path, mode);
 	if (handle == INVALID_HANDLE_VALUE) { goto fail; }
 
-	struct File * file = MEMORY_ALLOCATE(struct File);
+	struct File * file = ALLOCATE(struct File);
 	*file = (struct File){
 		.handle = handle,
 		.mode = mode,
 		.path_length = path.length,
-		.path = MEMORY_ALLOCATE_ARRAY(char, path.length),
+		.path = ALLOCATE_ARRAY(char, path.length),
 	};
 	common_memcpy(file->path, path.data, file->path_length);
 
@@ -70,9 +70,9 @@ struct File * platform_file_init(struct CString path, enum File_Mode mode) {
 
 void platform_file_free(struct File * file) {
 	CloseHandle(file->handle);
-	MEMORY_FREE(file->path);
+	FREE(file->path);
 	common_memset(file, 0, sizeof(*file));
-	MEMORY_FREE(file);
+	FREE(file);
 }
 
 void platform_file_end(struct File * file) {

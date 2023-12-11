@@ -39,7 +39,7 @@ static uint32_t hashmap_find_key_index(struct Hashmap const * hashmap, void cons
 void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity) {
 	if (!growth_hash_check(hashmap->capacity, capacity)) { return; }
 	if (hashmap->allocate == NULL) {
-		hashmap->allocate = memory_reallocate;
+		hashmap->allocate = DEFAULT_REALLOCATOR;
 	}
 
 	capacity = growth_hash_adjust(hashmap->capacity, capacity);

@@ -43,7 +43,7 @@ static void asset_bytes_load(struct Handle handle) {
 
 static void asset_bytes_drop(struct Handle handle) {
 	struct Asset_Bytes * asset = asset_system_get(handle);
-	MEMORY_FREE(asset->data);
+	FREE(asset->data);
 	common_memset(asset, 0, sizeof(*asset));
 }
 

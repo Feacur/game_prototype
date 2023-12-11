@@ -36,7 +36,7 @@ static uint32_t hashset_find_key_index(struct Hashset const * hashset, void cons
 void hashset_ensure(struct Hashset * hashset, uint32_t capacity) {
 	if (!growth_hash_check(hashset->capacity, capacity)) { return; }
 	if (hashset->allocate == NULL) {
-		hashset->allocate = memory_reallocate;
+		hashset->allocate = DEFAULT_REALLOCATOR;
 	}
 	capacity = growth_hash_adjust(hashset->capacity, capacity);
 

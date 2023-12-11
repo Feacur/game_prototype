@@ -135,7 +135,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 			); goto fail_field;
 		}
 
-		void * buffer = ARENA_ALLOCATE_SIZE(it.size);
+		void * buffer = arena_reallocate(NULL, it.size);
 		switch (data_type_get_element_type(gpu_uniform->type)) {
 			default: ERR("unknown data type");
 				goto fail_field;

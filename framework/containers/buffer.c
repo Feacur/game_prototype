@@ -28,7 +28,7 @@ void buffer_clear(struct Buffer * buffer, bool deallocate) {
 void buffer_resize(struct Buffer * buffer, size_t capacity) {
 	if (buffer->capacity == capacity) { return; }
 	if (buffer->allocate == NULL) {
-		buffer->allocate = memory_reallocate;
+		buffer->allocate = DEFAULT_REALLOCATOR;
 	}
 	void * data = buffer->allocate(buffer->data, capacity);
 	if (data == NULL) { return; }

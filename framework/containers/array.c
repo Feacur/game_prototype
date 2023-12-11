@@ -30,7 +30,7 @@ void array_clear(struct Array * array, bool deallocate) {
 void array_resize(struct Array * array, uint32_t capacity) {
 	if (array->capacity == capacity) { return; }
 	if (array->allocate == NULL) {
-		array->allocate = memory_reallocate;
+		array->allocate = DEFAULT_REALLOCATOR;
 	}
 	void * data = array->allocate(array->data, capacity * array->value_size);
 	if (data == NULL) { return; }

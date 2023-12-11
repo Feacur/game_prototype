@@ -7,18 +7,23 @@ struct Memory_Header {
 	size_t checksum, size;
 };
 
-ALLOCATOR(memory_reallocate);
-ALLOCATOR(memory_reallocate_without_tracking);
+ALLOCATOR(generic_reallocate);
+ALLOCATOR(debug_reallocate);
 
-void memory_report(void);
-void memory_clear(void);
+#if defined(GAME_TARGET_RELEASE)
+	#define DEFAULT_REALLOCATOR generic_reallocate
+#else
+	#define DEFAULT_REALLOCATOR debug_reallocate
+#endif
+
+#define REALLOCATE(pointer, size) DEFAULT_REALLOCATOR(pointer, size)
+
+void memory_debug_report(void);
+void memory_debug_clear(void);
 
 
-#define MEMORY_ALLOCATE(type) memory_reallocate((type *)NULL, sizeof(type))
-#define MEMORY_ALLOCATE_SIZE(size) memory_reallocate(NULL, (size_t)(size))
-#define MEMORY_ALLOCATE_ARRAY(type, count) memory_reallocate((type *)NULL, sizeof(type) * (size_t)(count))
-
-#define MEMORY_FREE(pointer) memory_reallocate(pointer, 0)
-#define MEMORY_REALLOCATE_ARRAY(pointer, count) memory_reallocate(pointer, sizeof(*pointer) * (size_t)(count))
+#define FREE(pointer) REALLOCATE(pointer, 0)
+#define ALLOCATE(type) REALLOCATE((type *)NULL, sizeof(type))
+#define ALLOCATE_ARRAY(type, count) REALLOCATE((type *)NULL, sizeof(type) * (size_t)(count))
 
 #endif

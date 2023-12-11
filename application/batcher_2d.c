@@ -74,7 +74,7 @@ struct Batcher_2D {
 #include "batcher_2d.h"
 
 struct Batcher_2D * batcher_2d_init(void) {
-	struct Batcher_2D * batcher = MEMORY_ALLOCATE(struct Batcher_2D);
+	struct Batcher_2D * batcher = ALLOCATE(struct Batcher_2D);
 	*batcher = (struct Batcher_2D){
 		.uniforms = gfx_uniforms_init(),
 		.color = (struct vec4){1, 1, 1, 1},
@@ -105,7 +105,7 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	gfx_uniforms_free(&batcher->uniforms);
 	//
 	common_memset(batcher, 0, sizeof(*batcher));
-	MEMORY_FREE(batcher);
+	FREE(batcher);
 }
 
 void batcher_2d_set_color(struct Batcher_2D * batcher, struct vec4 value) {

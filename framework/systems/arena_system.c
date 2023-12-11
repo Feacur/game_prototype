@@ -15,14 +15,14 @@ static struct Arena_System {
 	size_t required, peak;
 } gs_arena_system = {
 	.buffer = {
-		.allocate = memory_reallocate_without_tracking,
+		.allocate = generic_reallocate,
 	},
 	.buffered = {
-		.allocate = memory_reallocate_without_tracking,
+		.allocate = generic_reallocate,
 		.value_size = sizeof(struct Memory_Header *),
 	},
 	.fallback = {
-		.allocate = memory_reallocate_without_tracking,
+		.allocate = generic_reallocate,
 		.get_hash = hash64,
 		.key_size = sizeof(struct Memory_Header *),
 	},

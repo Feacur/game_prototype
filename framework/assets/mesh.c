@@ -37,8 +37,8 @@ void mesh_free(struct Mesh * mesh) {
 	for (uint32_t i = 0; i < mesh->capacity; i++) {
 		buffer_free(mesh->buffers + i);
 	}
-	MEMORY_FREE(mesh->buffers);
-	MEMORY_FREE(mesh->parameters);
+	FREE(mesh->buffers);
+	FREE(mesh->parameters);
 	common_memset(mesh, 0, sizeof(*mesh));
 }
 
@@ -94,8 +94,8 @@ static struct Mesh mesh_construct(
 	struct Mesh mesh = {
 		.capacity = count,
 		.count = count,
-		.buffers    = MEMORY_ALLOCATE_ARRAY(struct Buffer, count),
-		.parameters = MEMORY_ALLOCATE_ARRAY(struct Mesh_Parameters, count),
+		.buffers    = ALLOCATE_ARRAY(struct Buffer, count),
+		.parameters = ALLOCATE_ARRAY(struct Mesh_Parameters, count),
 	};
 
 	mesh.buffers[0] = (struct Buffer){
