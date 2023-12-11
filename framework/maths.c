@@ -42,11 +42,10 @@ uint64_t convert_bits_r64_u64(double value) {
 }
 
 uint32_t hash_u32_bytes_fnv1(uint8_t const * value, uint64_t length) {
-	uint32_t const prime = UINT32_C(0x01000193);
-	uint32_t hash = UINT32_C(0x811c9dc5);
+	uint32_t hash = UINT32_C(2166136261);
 	for (uint64_t i = 0; i < length; i++) {
+		hash *= UINT32_C(16777619);
 		hash ^= value[i];
-		hash *= prime;
 	}
 	return hash;
 }
@@ -59,11 +58,10 @@ uint32_t hash_u32_xorshift(uint32_t value) {
 }
 
 uint64_t hash_u64_bytes_fnv1(uint8_t const * value, uint64_t length) {
-	uint64_t const prime = UINT64_C(0x00000100000001B3);
-	uint64_t hash = UINT64_C(0xcbf29ce484222325);
+	uint64_t hash = UINT64_C(14695981039346656037);
 	for (uint64_t i = 0; i < length; i++) {
+		hash *= UINT64_C(1099511628211);
 		hash ^= value[i];
-		hash *= prime;
 	}
 	return hash;
 }
