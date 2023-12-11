@@ -81,12 +81,12 @@ void asset_system_clear(bool deallocate) {
 				type->info.drop(inst->header.ah_meta);
 			}
 		}
-		sparseset_clear(&type->instances, deallocate);
+		sparseset_free(&type->instances);
 	}
 	if (dropped_count > 0) { DEBUG_BREAK(); }
 	FOR_SPARSESET (&gs_asset_system.meta, it) {
 		struct Asset_Meta * meta = it.value;
-		array_clear(&meta->dependencies, deallocate);
+		array_free(&meta->dependencies);
 	}
 	// personal
 	sparseset_clear(&gs_asset_system.meta, deallocate);
@@ -108,8 +108,8 @@ void asset_system_type_map(struct CString type, struct CString extension) {
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 }
 
-void asset_system_type_set(struct CString type, struct Asset_Info info) {
-	uint32_t const type_id = string_system_add(type);
+void asset_system_type_set(struct CString type_name, struct Asset_Info info) {
+	uint32_t const type_id = string_system_add(type_name);
 	hashmap_set(&gs_asset_system.types, &type_id, &(struct Asset_Type){
 		.info = info,
 		.instances = sparseset_init(SIZE_OF_MEMBER(struct Asset_Inst, header) + info.size),
