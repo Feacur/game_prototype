@@ -91,10 +91,11 @@ static void * arena_system_push(size_t size) {
 	return new_header + 1;
 }
 
-static void arena_system_pop(void * pointer) {
-	if (pointer == NULL) { return; }
+static struct Memory_Header * arena_system_pop(void * pointer) {
+	if (pointer == NULL) { return NULL; }
 
 	struct Memory_Header * header = (struct Memory_Header *)pointer - 1;
+	if (header->checksum != arena_system_checksum(header)) { return NULL; }
 	header->checksum = 0;
 
 	for (uint32_t i = 0; i < gs_arena_system.buffered.count; i++) {
@@ -108,6 +109,8 @@ static void arena_system_pop(void * pointer) {
 		gs_arena_system.buffer.size -= buffered_size;
 		gs_arena_system.buffered.count -= 1;
 	}
+
+	return header;
 }
 
 static ALLOCATOR(arena_fallback) {
@@ -129,34 +132,27 @@ static ALLOCATOR(arena_fallback) {
 }
 
 ALLOCATOR(arena_reallocate) {
-	if (pointer == NULL) {
-		if (size == 0) { return NULL; }
-
-		void * const new_buffered = arena_system_push(size);
-		if (new_buffered != NULL) { return new_buffered; }
-
-		return arena_fallback(NULL, size);
-	}
-
-	// reallocate `buffered`
-	struct Memory_Header const * header = (struct Memory_Header *)pointer - 1;
-	if (header->checksum == arena_system_checksum(header)) {
-		arena_system_pop(pointer);
-		void * const new_buffered = arena_system_push(size);
-		if (new_buffered == NULL && size != 0) {
-			void * const new_fallback = arena_fallback(NULL, size);
-			common_memcpy(new_fallback, pointer, min_size(size, header->size));
-			return new_fallback;
-		}
-		return new_buffered;
-	}
-
-	// reallocate `fallback`
+	struct Memory_Header const * header = arena_system_pop(pointer);
 	void * const new_buffered = arena_system_push(size);
+
+	if (header != NULL) {
+		// buffered -> buffered
+		if (new_buffered != NULL) { return new_buffered; }
+		if (size == 0) { return new_buffered; }
+
+		// buffered -> fallback
+		void * const new_fallback = arena_fallback(NULL, size);
+		common_memcpy(new_fallback, pointer, min_size(size, header->size));
+		return new_fallback;
+	}
+
+	// fallback -> fallback
 	if (new_buffered == NULL && size != 0) {
 		return arena_fallback(pointer, size);
 	}
-	common_memcpy(new_buffered, pointer, min_size(size, header->size));
-	arena_fallback(pointer, 0);
+
+	// fallback -> buffered
+	common_memcpy(new_buffered, pointer, size);
+	FREE(pointer);
 	return new_buffered;
 }

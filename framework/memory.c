@@ -14,13 +14,17 @@
 //     generic
 // ----- ----- ----- ----- -----
 
+inline static size_t memory_generic_checksum(void const * pointer) {
+	return (size_t)pointer;
+}
+
 ALLOCATOR(generic_reallocate) {
 	struct Memory_Header * header = (pointer != NULL)
 		? (struct Memory_Header *)pointer - 1
 		: NULL;
 
 	if (header != NULL) {
-		if (header->checksum != (size_t)header) {
+		if (header->checksum != memory_generic_checksum(header)) {
 			goto fail;
 		}
 		header->checksum = 0;
@@ -34,7 +38,7 @@ ALLOCATOR(generic_reallocate) {
 	if (new_header == NULL) { goto fail; }
 
 	*new_header = (struct Memory_Header){
-		.checksum = (size_t)new_header,
+		.checksum = memory_generic_checksum(new_header),
 		.size = size,
 	};
 
@@ -57,13 +61,17 @@ static struct Memory_Header_Debug {
 	struct Memory_Header base;
 } * gs_memory;
 
+inline static size_t memory_debug_checksum(void const * pointer) {
+	return ~(size_t)pointer;
+}
+
 ALLOCATOR(debug_reallocate) {
 	struct Memory_Header_Debug * header = (pointer != NULL)
 		? (struct Memory_Header_Debug *)pointer - 1
 		: NULL;
 
 	if (header != NULL) {
-		if (header->base.checksum != ~(size_t)header) {
+		if (header->base.checksum != memory_debug_checksum(header)) {
 			goto fail;
 		}
 		header->base.checksum = 0;
@@ -87,7 +95,7 @@ ALLOCATOR(debug_reallocate) {
 
 	*new_header = (struct Memory_Header_Debug){
 		.base = {
-			.checksum = ~(size_t)new_header,
+			.checksum = memory_debug_checksum(new_header),
 			.size = size,
 		},
 		.callstack = platform_debug_get_callstack(0),
