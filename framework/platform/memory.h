@@ -1,7 +1,7 @@
-#if !defined(FRAMEWORK_MEMORY)
-#define FRAMEWORK_MEMORY
+#if !defined(FRAMEWORK_PLATFORM_MEMORY)
+#define FRAMEWORK_PLATFORM_MEMORY
 
-#include "common.h"
+#include "framework/common.h"
 
 struct Memory_Header {
 	size_t checksum, size;

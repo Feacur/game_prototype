@@ -2,15 +2,16 @@
 	#error "this an executable entry point"
 #endif
 
-#include "framework/memory.h"
 #include "framework/unicode.h"
 #include "framework/json_read.h"
-#include "framework/platform/system.h"
-#include "framework/platform/file.h"
-#include "framework/formatter.h"
-
 #include "framework/maths.h"
 #include "framework/input.h"
+#include "framework/formatter.h"
+
+#include "framework/platform/system.h"
+#include "framework/platform/file.h"
+#include "framework/platform/memory.h"
+#include "framework/containers/hashmap.h"
 
 #include "framework/systems/arena_system.h"
 #include "framework/systems/string_system.h"
@@ -22,8 +23,6 @@
 #include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/command.h"
 #include "framework/graphics/misc.h"
-
-#include "framework/containers/hashmap.h"
 
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
@@ -42,6 +41,7 @@
 #include "game_state.h"
 #include "proto_components.h"
 #include "ui.h"
+
 
 static struct Main_Settings {
 	uint32_t config_id;

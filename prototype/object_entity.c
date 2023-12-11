@@ -1,11 +1,12 @@
 #include "framework/formatter.h"
 #include "framework/maths.h"
 
+#include "framework/systems/asset_system.h"
+#include "framework/systems/material_system.h"
+
 #include "framework/graphics/gfx_material.h"
 #include "framework/graphics/gfx_objects.h"
 
-#include "framework/systems/asset_system.h"
-#include "framework/systems/material_system.h"
 
 //
 #include "object_entity.h"

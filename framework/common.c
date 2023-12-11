@@ -1,9 +1,10 @@
-#include "platform/debug.h"
 #include "formatter.h"
 #include "parsing.h"
+#include "platform/debug.h"
 
 #include <stdlib.h>
 #include <string.h>
+
 
 //
 #include "common.h"

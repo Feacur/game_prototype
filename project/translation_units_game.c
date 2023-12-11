@@ -1,7 +1,6 @@
 // unity build
 #include "framework/common.c"
 #include "framework/maths.c"
-#include "framework/memory.c"
 #include "framework/input.c"
 #include "framework/unicode.c"
 #include "framework/maths_types.c"
@@ -36,6 +35,7 @@
 #include "framework/systems/material_system.c"
 #include "framework/systems/asset_system.c"
 
+#include "framework/platform/memory.c"
 #define GAME_GRAPHICS_IS_OPENGL
 #if defined(_WIN32) || defined(_WIN64)
 	#include "framework/platform/windows/timer.c"

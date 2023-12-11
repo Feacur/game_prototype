@@ -1,11 +1,12 @@
-#include "framework/internal/input_to_system.h"
-#include "framework/containers/buffer.h"
-#include "framework/memory.h"
 #include "framework/unicode.h"
 #include "framework/input_keys.h"
 #include "framework/formatter.h"
-#include "framework/platform/debug.h"
 
+#include "framework/platform/memory.h"
+#include "framework/platform/debug.h"
+#include "framework/containers/buffer.h"
+
+#include "framework/internal/input_to_system.h"
 #include "internal/debug_to_system.h"
 #include "internal/timer_to_system.h"
 #include "internal/window_to_system.h"
@@ -14,6 +15,7 @@
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 #include <signal.h>
+
 
 // http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
 // Global Variable NvOptimusEnablement (new in Driver Release 302)

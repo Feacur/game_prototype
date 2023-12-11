@@ -4,6 +4,7 @@
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 
+
 static struct Platform_Timer {
 	LARGE_INTEGER ticks_per_second;
 } gs_platform_timer;

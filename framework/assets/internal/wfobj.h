@@ -4,6 +4,10 @@
 #include "framework/containers/array.h"
 #include "framework/containers/array.h"
 
+// ----- ----- ----- ----- -----
+//     personal
+// ----- ----- ----- ----- -----
+
 struct WFObj {
 	struct Array positions; // float
 	struct Array texcoords; // float
@@ -13,6 +17,10 @@ struct WFObj {
 
 struct WFObj wfobj_init(void);
 void wfobj_free(struct WFObj * obj);
+
+// ----- ----- ----- ----- -----
+//     parsing
+// ----- ----- ----- ----- -----
 
 struct WFObj wfobj_parse(char const * text);
 

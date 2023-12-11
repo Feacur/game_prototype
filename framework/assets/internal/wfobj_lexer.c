@@ -1,5 +1,6 @@
-#include "framework/memory.h"
 #include "framework/parsing.h"
+#include "framework/platform/memory.h"
+
 
 //
 #include "wfobj_lexer.h"

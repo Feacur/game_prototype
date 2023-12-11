@@ -1,11 +1,16 @@
-#include "framework/memory.h"
 #include "framework/formatter.h"
 #include "framework/parsing.h"
+#include "framework/platform/memory.h"
 
 #include "wfobj_lexer.h"
 
+
 //
 #include "wfobj.h"
+
+// ----- ----- ----- ----- -----
+//     personal
+// ----- ----- ----- ----- -----
 
 struct WFObj wfobj_init(void) {
 	return (struct WFObj){
@@ -24,7 +29,9 @@ void wfobj_free(struct WFObj * obj) {
 	// common_memset(obj, 0, sizeof(*obj));
 }
 
-//
+// ----- ----- ----- ----- -----
+//     parsing
+// ----- ----- ----- ----- -----
 
 static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
 	static char const * c_wfobj_token_names[] = {

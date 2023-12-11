@@ -1,6 +1,5 @@
 framework/common.c
 framework/maths.c
-framework/memory.c
 framework/input.c
 framework/unicode.c
 framework/maths_types.c
@@ -35,6 +34,7 @@ framework/systems/action_system.c
 framework/systems/material_system.c
 framework/systems/asset_system.c
 
+framework/platform/memory.c
 framework/platform/windows/timer.c
 framework/platform/windows/file.c
 framework/platform/windows/system.c

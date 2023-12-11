@@ -1,7 +1,7 @@
-#include "framework/memory.h"
 #include "framework/formatter.h"
 #include "framework/maths.h"
 
+#include "framework/platform/memory.h"
 #include "framework/containers/strings.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/array.h"
@@ -9,10 +9,9 @@
 #include "framework/containers/hashmap.h"
 #include "framework/containers/sparseset.h"
 
+#include "framework/graphics/gfx_material.h"
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
-
-#include "framework/graphics/gfx_material.h"
 
 #include "framework/systems/arena_system.h"
 #include "framework/systems/string_system.h"
@@ -21,6 +20,7 @@
 
 #include "functions.h"
 #include "gpu_types.h"
+
 
 // @todo: GPU scissor test
 // @todo: expose screen buffer settings, as well as OpenGL's
@@ -64,7 +64,7 @@ static struct Graphics_State {
 	struct Sparseset buffers;  // `struct GPU_Buffer_Internal`
 	struct Sparseset meshes;   // `struct GPU_Mesh_Internal`
 
-	struct Graphics_State_Active {
+	struct {
 		struct Handle gh_program;
 		struct Handle gh_target;
 		struct Handle gh_mesh;

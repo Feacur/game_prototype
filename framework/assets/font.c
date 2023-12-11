@@ -1,5 +1,8 @@
 #include "framework/maths.h"
+#include "framework/formatter.h"
+#include "framework/unicode.h"
 
+#include "framework/platform/memory.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/array.h"
 #include "framework/containers/hashmap.h"
@@ -7,10 +10,6 @@
 #include "framework/assets/image.h"
 #include "framework/assets/typeface.h"
 
-#include "framework/memory.h"
-#include "framework/formatter.h"
-#include "framework/unicode.h"
-#include "framework/maths.h"
 
 #define GLYPH_GC_TIMEOUT_MAX UINT8_MAX
 
@@ -34,8 +33,12 @@ struct Typeface_Key {
 
 static HASHER(font_hash_typeface_key) {
 	struct Typeface_Key const * k = v;
-	return k->codepoint
-	     ^ convert_bits_r32_u32(k->size);
+	// kinda FNV-1
+	uint32_t const prime = UINT32_C(16777619);
+	uint32_t hash = UINT32_C(2166136261);
+	hash = (hash * prime) ^ k->codepoint;
+	hash = (hash * prime) ^ convert_bits_r32_u32(k->size);
+	return hash;
 }
 
 //

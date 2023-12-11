@@ -1,5 +1,6 @@
 #include "maths.h"
 
+
 #define PARSE_INTEGER(type, value) \
 	while (is_digit(*text)) { \
 		type const next_value = value * 10 + (type)(*text - '0'); \

@@ -1,15 +1,17 @@
-#include "framework/graphics/misc.h"
+#include "framework/maths.h"
+#include "framework/input.h"
+#include "framework/formatter.h"
 
 #include "framework/platform/timer.h"
 #include "framework/platform/file.h"
 #include "framework/platform/system.h"
 #include "framework/platform/window.h"
+#include "framework/platform/gpu_context.h"
 #include "framework/systems/arena_system.h"
 #include "framework/systems/action_system.h"
-#include "framework/gpu_context.h"
-#include "framework/maths.h"
-#include "framework/input.h"
-#include "framework/formatter.h"
+
+#include "framework/graphics/misc.h"
+
 
 //
 #include "application.h"

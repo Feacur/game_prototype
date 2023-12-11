@@ -4,6 +4,7 @@
 #include "framework/maths_types.h"
 #include "framework/platform/window_callbacks.h"
 
+
 // @note: adaptive vsync mode (-1) might not make sense and is not tested
 
 // @note: actual target frame time depends both on `vsync` and `target_refresh_rate`

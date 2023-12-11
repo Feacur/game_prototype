@@ -1,14 +1,15 @@
-#include "framework/memory.h"
 #include "framework/formatter.h"
 #include "framework/maths.h"
 #include "framework/json_read.h"
+
 #include "framework/platform/file.h"
+#include "framework/platform/memory.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
-#include "framework/graphics/gfx_objects.h"
 
+#include "framework/graphics/gfx_objects.h"
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
 #include "framework/assets/json.h"
@@ -16,6 +17,7 @@
 #include "framework/assets/font.h"
 
 #include "json_load.h"
+
 
 //
 #include "asset_types.h"

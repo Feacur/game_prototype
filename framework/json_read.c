@@ -2,16 +2,17 @@
 #include "framework/formatter.h"
 #include "framework/parsing.h"
 #include "framework/json_read.h"
-#include "framework/containers/buffer.h"
-#include "framework/containers/strings.h"
-#include "framework/assets/json.h"
-#include "framework/graphics/gfx_objects.h"
 
 #include "framework/platform/file.h"
+#include "framework/containers/buffer.h"
+#include "framework/containers/strings.h"
 
-#include "json_read.h"
+#include "framework/graphics/gfx_objects.h"
+#include "framework/assets/json.h"
+
 
 //
+#include "json_read.h"
 
 void process_json(struct CString path, void * data, void (* action)(struct JSON const * json, void * output)) {
 	struct Buffer file_buffer = platform_file_read_entire(path);

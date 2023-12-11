@@ -1,5 +1,6 @@
 #include "framework/formatter.h"
 
+
 // @note: UTF-8 is based off of rfc3629
 
 static uint8_t utf8_get_codepoint_length(uint32_t codepoint) {

@@ -1,10 +1,11 @@
 #include "framework/formatter.h"
 #include "framework/json_read.h"
-#include "framework/containers/strings.h"
-#include "framework/assets/json.h"
 
+#include "framework/containers/strings.h"
 #include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"
+
+#include "framework/assets/json.h"
 
 #include "application/json_load.h"
 #include "application/asset_types.h"
@@ -12,6 +13,7 @@
 #include "proto_components.h"
 #include "object_camera.h"
 #include "object_entity.h"
+
 
 //
 #include "game_state.h"

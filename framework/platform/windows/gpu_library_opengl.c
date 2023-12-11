@@ -1,5 +1,5 @@
-#include "framework/memory.h"
 #include "framework/formatter.h"
+#include "framework/platform/memory.h"
 
 #include "framework/graphics/opengl/functions.h"
 #include "framework/graphics/opengl/internal/functions_to_gpu_library.h"
@@ -13,6 +13,7 @@
 #include "framework/__warnings_push.h"
 	#include <GL/wgl.h>
 #include "framework/__warnings_pop.h"
+
 
 static struct Gpu_Library {
 	HMODULE handle;
@@ -96,7 +97,7 @@ void gpu_library_to_system_free(void) {
 }
 
 //
-#include "framework/gpu_context.h"
+#include "framework/platform/gpu_context.h"
 
 struct Pixel_Format {
 	int id;

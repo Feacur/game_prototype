@@ -1,27 +1,26 @@
+#include "framework/maths.h"
 #include "framework/common.h"
-#include "framework/memory.h"
 #include "framework/unicode.h"
 #include "framework/formatter.h"
 
+#include "framework/platform/memory.h"
 #include "framework/containers/hashset.h"
 #include "framework/containers/array.h"
 #include "framework/containers/buffer.h"
-
-#include "framework/assets/mesh.h"
-#include "framework/assets/font.h"
-
-#include "framework/graphics/gfx_material.h"
-#include "framework/graphics/gfx_objects.h"
-#include "framework/graphics/command.h"
-#include "framework/graphics/misc.h"
 
 #include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
 
-#include "framework/maths.h"
+#include "framework/graphics/gfx_material.h"
+#include "framework/graphics/gfx_objects.h"
+#include "framework/graphics/command.h"
+#include "framework/graphics/misc.h"
+#include "framework/assets/mesh.h"
+#include "framework/assets/font.h"
 
 #include "asset_types.h"
+
 
 // @todo: UTF-8 edge cases, different languages, LTR/RTL, ligatures, etc.
 // @idea: point to a `Gfx_Material` with an `Asset_Handle` instead

@@ -1,14 +1,15 @@
-#include "framework/memory.h"
 #include "framework/formatter.h"
-#include "framework/gpu_context.h"
+#include "framework/platform/gpu_context.h"
+#include "framework/platform/memory.h"
 #include "framework/systems/arena_system.h"
-#include "framework/internal/input_to_window.h"
 
+#include "framework/internal/input_to_window.h"
 #include "internal/system.h"
 
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 #include <hidusage.h>
+
 
 #define HANDLE_PROP_WINDOW_NAME "prop_window"
 
