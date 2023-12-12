@@ -176,7 +176,7 @@ static void json_parser_synchronize_object(struct JSON_Parser * parser) {
 	while (parser->current.type != JSON_TOKEN_EOF) {
 		json_parser_consume(parser);
 		if (parser->current.type == JSON_TOKEN_RIGHT_BRACE) { break; }
-		if (parser->previous.type == JSON_TOKEN_COMMA && parser->current.type == JSON_TOKEN_STRING) { break; }
+		if (parser->previous.type == JSON_TOKEN_COMMA) { break; }
 	}
 	parser->panic = false;
 }

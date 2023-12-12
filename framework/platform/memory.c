@@ -26,7 +26,7 @@ ALLOCATOR(generic_reallocate) {
 
 	if (header != NULL) {
 		if (header->checksum != memory_generic_checksum(header)) {
-			goto fail;
+			ERR("is not generic memory:"); goto fail;
 		}
 		header->checksum = 0;
 	}
@@ -36,7 +36,7 @@ ALLOCATOR(generic_reallocate) {
 
 	// allocate or reallocate
 	struct Memory_Header * new_header = realloc(header, sizeof(*header) + size);
-	if (new_header == NULL) { goto fail; }
+	if (new_header == NULL) { ERR("'realloc' failed:"); goto fail; }
 
 	*new_header = (struct Memory_Header){
 		.checksum = memory_generic_checksum(new_header),
@@ -46,8 +46,7 @@ ALLOCATOR(generic_reallocate) {
 	return new_header + 1;
 
 	// failed
-	fail: ERR("'realloc' failed:");
-	REPORT_CALLSTACK(); DEBUG_BREAK();
+	fail: REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
 
@@ -73,7 +72,7 @@ ALLOCATOR(debug_reallocate) {
 
 	if (header != NULL) {
 		if (header->base.checksum != memory_debug_checksum(header)) {
-			goto fail;
+			ERR("is not debug memory:"); goto fail;
 		}
 		header->base.checksum = 0;
 
@@ -92,7 +91,7 @@ ALLOCATOR(debug_reallocate) {
 
 	// allocate or reallocate
 	struct Memory_Header_Debug * new_header = realloc(header, sizeof(*header) + size);
-	if (new_header == NULL) { goto fail; }
+	if (new_header == NULL) { ERR("'realloc' failed:"); goto fail; }
 
 	*new_header = (struct Memory_Header_Debug){
 		.base = {
@@ -109,8 +108,7 @@ ALLOCATOR(debug_reallocate) {
 	return new_header + 1;
 
 	// failed
-	fail: ERR("'realloc' failed:");
-	REPORT_CALLSTACK(); DEBUG_BREAK();
+	fail: REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
 

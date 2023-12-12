@@ -69,3 +69,24 @@ class BuildOutputGotoCommand(sublime_plugin.TextCommand):
 					return "%s:%s:%s" % (os.path.abspath(match.group(1)), match.group(2), match.group(3))
 			line_range = view.line(line_range.begin() - 1)
 		return None
+
+class MoveViewCommand(sublime_plugin.WindowCommand):
+
+	def run(self, position):
+		view = self.window.active_view()
+		group, index = self.window.get_view_index(view)
+		if index < 0: return
+
+		if isinstance(position, str) and position[0] in '-+':
+			position = index + int(position)
+
+		count = len(self.window.views_in_group(group))
+		position = min(max(0, int(position)), count - 1)
+
+		if position != index:
+			self.window.set_view_index(view, group, position)
+			self.window.focus_view(view)
+
+	def is_enabled(self):
+		(group, index) = self.window.get_view_index(self.window.active_view())
+		return -1 not in (group, index) and len(self.window.views_in_group(group)) > 1
