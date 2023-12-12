@@ -216,7 +216,7 @@ void game_free(void) {
 	common_memset(&gs_game, 0, sizeof(gs_game));
 }
 
-void game_fill_scene(struct JSON const * json, void * data) {
+JSON_PROCESSOR(game_fill_scene) {
 	array_clear(&gs_game.cameras,  false);
 	array_clear(&gs_game.entities, false);
 

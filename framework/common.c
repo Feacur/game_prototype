@@ -22,8 +22,13 @@ struct CArray carray_const(struct CArray_Mut value) {
 
 bool carray_equals(struct CArray v1, struct CArray v2) {
 	if (v1.size != v2.size) { return false; }
-	if (v1.data == v2.data) { return true; }
-	return memcmp(v1.data, v2.data, v2.size) == 0;
+	return equals(v1.data, v2.data, v2.size);
+}
+
+bool carray_empty(struct CArray value) {
+	if (value.size == 0) { return true; }
+	if (value.data == NULL) { return true; }
+	return false;
 }
 
 // ----- ----- ----- ----- -----
@@ -37,25 +42,30 @@ struct CString cstring_const(struct CString_Mut value) {
 	};
 }
 
+bool cstring_equals(struct CString v1, struct CString v2) {
+	if (v1.length != v2.length) { return false; }
+	return equals(v1.data, v2.data, v2.length);
+}
+
+bool cstring_empty(struct CString value) {
+	if (value.length == 0) { return true; }
+	if (value.data == NULL) { return true; }
+	return false;
+}
+
 bool cstring_contains(struct CString v1, struct CString v2) {
 	if (v1.length < v2.length) { return false; }
 	return strstr(v1.data, v2.data) != NULL;
 }
 
-bool cstring_equals(struct CString v1, struct CString v2) {
-	if (v1.length != v2.length) { return false; }
-	if (v1.data == v2.data) { return true; }
-	return memcmp(v1.data, v2.data, v2.length) == 0;
-}
-
 bool cstring_starts(struct CString v1, struct CString v2) {
 	if (v1.length < v2.length) { return false; }
-	return memcmp(v1.data, v2.data, v2.length) == 0;
+	return equals(v1.data, v2.data, v2.length);
 }
 
 bool cstring_ends(struct CString v1, struct CString v2) {
 	if (v1.length < v2.length) { return false; }
-	return memcmp(v1.data + v1.length - v2.length, v2.data, v2.length) == 0;
+	return equals(v1.data + v1.length - v2.length, v2.data, v2.length);
 }
 
 // ----- ----- ----- ----- -----
@@ -63,6 +73,7 @@ bool cstring_ends(struct CString v1, struct CString v2) {
 // ----- ----- ----- ----- -----
 
 bool equals(void const * v1, void const * v2, size_t size) {
+	if (v1 == v2) { return true; }
 	return memcmp(v1, v2, size) == 0;
 }
 
@@ -100,8 +111,11 @@ bool contains_full_word(char const * container, struct CString value) {
 		end = strchr(start, ' ');
 		if (end == NULL) { end = container + strlen(container); }
 
-		if ((size_t)(end - start) != value.length) { continue; }
-		if (equals(start, value.data, value.length)) { return true; }
+		struct CString const it = {
+			.length = (uint32_t)(end - start),
+			.data = start,
+		};
+		if (cstring_equals(it, value)) { return true; }
 	}
 
 	return false;

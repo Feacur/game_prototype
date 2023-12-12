@@ -33,19 +33,19 @@ void wfobj_free(struct WFObj * obj) {
 //     parsing
 // ----- ----- ----- ----- -----
 
-static void wfobj_error_at(struct WFObj_Token * token, char const * message) {
-	static char const * c_wfobj_token_names[] = {
-		[WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER] = "unknown character",
-		[WFOBJ_TOKEN_EOF]                     = "eof",
+static void wfobj_error_at(struct WFObj_Token * token, struct CString message) {
+	static struct CString c_wfobj_token_names[] = {
+		[WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER] = S__("unknown character"),
+		[WFOBJ_TOKEN_EOF]                     = S__("eof"),
 	};
 
-	char const * const reason = c_wfobj_token_names[token->type];
+	struct CString const reason = c_wfobj_token_names[token->type];
 
 	LOG("[wfobj]");
 	LOG(" [line: %u]", token->line + 1);
 	LOG(" [context: '%.*s']", token->text.length, token->text.data);
-	if (reason != NULL) { LOG(" [%s]", reason); }
-	if (message != NULL) { LOG(": %s", message); }
+	if (!cstring_empty(reason)) { LOG(" [%.*s]", reason.length, reason.data); }
+	if (!cstring_empty(message)) { LOG(": %.*s", message.length, message.data); }
 	LOG("\n");
 }
 
@@ -56,7 +56,7 @@ static void wfobj_advance(struct WFObj_Lexer * lexer, struct WFObj_Token * token
 			case WFOBJ_TOKEN_COMMENT: continue;
 
 			case WFOBJ_TOKEN_ERROR_UNKNOWN_CHARACTER:
-				wfobj_error_at(token, "lexer error");
+				wfobj_error_at(token, S_("lexer error"));
 				continue;
 
 			default: return;
@@ -74,7 +74,7 @@ static bool wfobj_consume_float(struct WFObj_Lexer * lexer, struct WFObj_Token *
 		return true;
 	}
 
-	wfobj_error_at(token, "expected a number");
+	wfobj_error_at(token, S_("expected a number"));
 	return false;
 
 #undef ADVANCE
@@ -90,7 +90,7 @@ static bool wfobj_consume_s32(struct WFObj_Lexer * lexer, struct WFObj_Token * t
 		return true;
 	}
 
-	wfobj_error_at(token, "expected a number");
+	wfobj_error_at(token, S_("expected a number"));
 	return false;
 
 #undef ADVANCE
@@ -107,7 +107,7 @@ static void wfobj_do_vertex(struct WFObj_Lexer * lexer, struct WFObj_Token * tok
 
 	uint32_t entries = 0;
 	while (token->type != WFOBJ_TOKEN_EOF && token->type != WFOBJ_TOKEN_NEW_LINE) {
-		if (entries >= limit) { wfobj_error_at(token, "expected less elements"); }
+		if (entries >= limit) { wfobj_error_at(token, S_("expected less elements")); }
 
 		float value;
 		if (wfobj_consume_float(lexer, token, &value)) {
@@ -117,7 +117,7 @@ static void wfobj_do_vertex(struct WFObj_Lexer * lexer, struct WFObj_Token * tok
 		else { ADVANCE(); }
 	}
 
-	if (entries < limit) { wfobj_error_at(token, "expected more elements"); }
+	if (entries < limit) { wfobj_error_at(token, S_("expected more elements")); }
 
 #undef ADVANCE
 }
@@ -177,7 +177,7 @@ static void wfobj_do_faces(
 #undef ADVANCE
 }
 
-struct WFObj wfobj_parse(char const * text) {
+struct WFObj wfobj_parse(struct CString text) {
 #define ADVANCE() wfobj_advance(&lexer, &token)
 
 	struct WFObj result = wfobj_init();
@@ -225,7 +225,7 @@ struct WFObj wfobj_parse(char const * text) {
 			case WFOBJ_TOKEN_NEW_LINE: break;
 
 			// errors
-			default: wfobj_error_at(&token, "lexer error"); break;
+			default: wfobj_error_at(&token, S_("lexer error")); break;
 
 			// valid
 			case WFOBJ_TOKEN_POSITION: { ADVANCE();

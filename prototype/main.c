@@ -311,7 +311,7 @@ static void prototype_draw_objects(void) {
 			if (entity->camera != it_camera.curr) { continue; }
 
 			struct Asset_Material const * material_asset = asset_system_get(entity->ah_material);
-			struct Gfx_Material const * material = material_system_take(material_asset->mh_mat);
+			struct Gfx_Material const * material = material_system_get(material_asset->mh_mat);
 
 			struct mat4 const u_Model = mat4_transformation(
 				entity->transform.position,
@@ -482,7 +482,7 @@ static bool app_window_close(void) {
 //     main part
 // ----- ----- ----- ----- -----
 
-static void main_fill_settings(struct JSON const * json, void * data) {
+static JSON_PROCESSOR(main_fill_settings) {
 	struct Main_Settings * result = data;
 	*result = (struct Main_Settings){0};
 
@@ -493,7 +493,7 @@ static void main_fill_settings(struct JSON const * json, void * data) {
 	result->scene_id = string_system_add(json_get_string(json, S_("scene")));
 }
 
-static void main_fill_config(struct JSON const * json, void * data) {
+static JSON_PROCESSOR(main_fill_config) {
 	struct Application_Config * result = data;
 	*result = (struct Application_Config){0};
 

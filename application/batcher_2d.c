@@ -466,7 +466,7 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 
 		struct Handle gh_program = {0};
 		if (!handle_is_null(batch->mh_mat)) {
-			struct Gfx_Material const * material = material_system_take(batch->mh_mat);
+			struct Gfx_Material const * material = material_system_get(batch->mh_mat);
 			gh_program = material->gh_program;
 			array_push_many(gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_MATERIAL,

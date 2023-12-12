@@ -23,35 +23,24 @@ void strings_clear(struct Strings * strings, bool deallocate) {
 }
 
 uint32_t strings_find(struct Strings const * strings, struct CString value) {
-	if (value.length == 0) { return 0; }
-	if (value.data == NULL) { return 0; }
+	if (cstring_empty(value)) { return 0; }
 	uint32_t offset = 0;
-	for (uint32_t i = 0; i < strings->lengths.count; i++) {
-		uint32_t const * length_at = array_at(&strings->lengths, i);
-		if (value.length == *length_at) {
-			if (equals(value.data, buffer_at(&strings->buffer, offset), value.length)) {
-				return i + 1;
-			}
-		}
-		offset += *length_at + 1;
+	FOR_ARRAY(&strings->lengths, it) {
+		struct CString const word = {
+			.length = *(uint32_t *)it.value,
+			.data = buffer_at(&strings->buffer, offset),
+		};
+		if (cstring_equals(word, value)) { return it.curr + 1; }
+		offset += word.length + 1;
 	}
 	return 0;
 }
 
 uint32_t strings_add(struct Strings * strings, struct CString value) {
-	if (value.length == 0) { return 0; }
-	if (value.data == NULL) { return 0; }
-	uint32_t offset = 0;
-	for (uint32_t i = 0; i < strings->lengths.count; i++) {
-		uint32_t const * length_at = array_at(&strings->lengths, i);
-		if (value.length == *length_at) {
-			if (equals(value.data, buffer_at(&strings->buffer, offset), value.length)) {
-				return i + 1;
-			}
-		}
-		offset += *length_at + 1;
-	}
+	uint32_t id = strings_find(strings, value);
+	if (id != 0) { return id; }
 
+	uint32_t const offset = (uint32_t)strings->buffer.size;
 	array_push_many(&strings->offsets, 1, &offset);
 	array_push_many(&strings->lengths, 1, &value.length);
 	buffer_push_many(&strings->buffer, value.length, value.data);
@@ -63,10 +52,9 @@ uint32_t strings_add(struct Strings * strings, struct CString value) {
 struct CString strings_get(struct Strings const * strings, uint32_t id) {
 	if (id > strings->lengths.count) { return (struct CString){0}; }
 	uint32_t const index = id - 1;
-	uint32_t const * length_at = array_at(&strings->lengths, index);
 	uint32_t const * offset_at = array_at(&strings->offsets, index);
 	return (struct CString){
-		.length = *length_at,
+		.length = *(uint32_t *)array_at(&strings->lengths, index),
 		.data = (char const *)strings->buffer.data + *offset_at,
 	};
 }

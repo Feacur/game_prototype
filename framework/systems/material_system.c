@@ -43,6 +43,6 @@ void material_system_discard(struct Handle handle) {
 	}
 }
 
-struct Gfx_Material * material_system_take(struct Handle handle) {
+struct Gfx_Material * material_system_get(struct Handle handle) {
 	return sparseset_get(&gs_material_system.instances, handle);
 }

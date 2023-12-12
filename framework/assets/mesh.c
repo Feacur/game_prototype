@@ -28,7 +28,10 @@ static struct Mesh mesh_construct(
 );
 
 struct Mesh mesh_init(struct Buffer const * source) {
-	struct WFObj wfobj = wfobj_parse((char const *)source->data);
+	struct WFObj wfobj = wfobj_parse((struct CString){
+		.length = (uint32_t)source->size,
+		.data = source->data,
+	});
 
 	struct Array vertices, indices, attributes;
 	wfobj_repack(&wfobj, &vertices, &indices, &attributes);

@@ -43,7 +43,7 @@ struct uvec2 entity_get_content_size(
 		case ENTITY_TYPE_QUAD_2D: {
 			struct Entity_Quad const * e_quad = &entity->as.quad;
 
-			struct Gfx_Material const * material = material_system_take(material_handle);
+			struct Gfx_Material const * material = material_system_get(material_handle);
 			struct CArray_Mut const field = gfx_uniforms_id_get(&material->uniforms, e_quad->uniform_id, 0);
 
 			if (field.data == NULL) { return (struct uvec2){0, 0}; }

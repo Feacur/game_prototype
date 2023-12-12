@@ -3,8 +3,6 @@
 
 #include "framework/containers/array.h"
 
-struct JSON;
-
 extern struct Game_State {
 	struct Array cameras;  // `struct Camera`
 	struct Array entities; // `struct Entity`
@@ -15,6 +13,6 @@ extern struct Game_State {
 void game_init(void);
 void game_free(void);
 
-void game_fill_scene(struct JSON const * json, void * data);
+JSON_PROCESSOR(game_fill_scene);
 
 #endif

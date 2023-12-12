@@ -44,7 +44,7 @@ struct JSON_Lexer {
 	uint32_t line_start, line_current;
 };
 
-struct JSON_Lexer json_lexer_init(char const * text);
+struct JSON_Lexer json_lexer_init(struct CString text);
 void json_lexer_free(struct JSON_Lexer * lexer);
 
 struct JSON_Token json_lexer_next(struct JSON_Lexer * lexer);

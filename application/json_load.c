@@ -26,7 +26,7 @@ struct Handle json_load_gfx_material(struct JSON const * json) {
 	struct Handle ms_handle = material_system_aquire();
 	if (json->type != JSON_OBJECT) { goto fail; }
 
-	struct Gfx_Material * material = material_system_take(ms_handle);
+	struct Gfx_Material * material = material_system_get(ms_handle);
 	material->blend_mode = json_read_blend_mode(json_get(json, S_("blend")));
 	material->depth_mode = json_read_depth_mode(json_get(json, S_("depth")));
 

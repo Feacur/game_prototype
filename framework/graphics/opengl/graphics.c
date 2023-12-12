@@ -1200,7 +1200,7 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 }
 
 inline static void gpu_execute_material(struct GPU_Command_Material const * command) {
-	struct Gfx_Material const * material = material_system_take(command->mh_mat);
+	struct Gfx_Material const * material = material_system_get(command->mh_mat);
 	struct Handle const gh_program = (material != NULL)
 		? material->gh_program
 		: (struct Handle){0};
@@ -1604,41 +1604,41 @@ static void verify_program(GLuint id) {
 
 //
 
-static char const * opengl_debug_get_severity(GLenum value) {
+static struct CString opengl_debug_get_severity(GLenum value) {
 	switch (value) {
-		case GL_DEBUG_SEVERITY_HIGH:         return "[crt]"; // All OpenGL Errors, shader compilation/linking errors, or highly-dangerous undefined behavior
-		case GL_DEBUG_SEVERITY_MEDIUM:       return "[err]"; // Major performance warnings, shader compilation/linking warnings, or the use of deprecated functionality
-		case GL_DEBUG_SEVERITY_LOW:          return "[wrn]"; // Redundant state change performance warning, or unimportant undefined behavior
-		case GL_DEBUG_SEVERITY_NOTIFICATION: return "[trc]"; // Anything that isn't an error or performance issue.
+		case GL_DEBUG_SEVERITY_HIGH:         return S_("[crt]"); // All OpenGL Errors, shader compilation/linking errors, or highly-dangerous undefined behavior
+		case GL_DEBUG_SEVERITY_MEDIUM:       return S_("[err]"); // Major performance warnings, shader compilation/linking warnings, or the use of deprecated functionality
+		case GL_DEBUG_SEVERITY_LOW:          return S_("[wrn]"); // Redundant state change performance warning, or unimportant undefined behavior
+		case GL_DEBUG_SEVERITY_NOTIFICATION: return S_("[trc]"); // Anything that isn't an error or performance issue.
 	}
-	return "[???]";
+	return S_("[???]");
 }
 
-static char const * opengl_debug_get_source(GLenum value) {
+static struct CString opengl_debug_get_source(GLenum value) {
 	switch (value) {
-		case GL_DEBUG_SOURCE_API:             return "API";
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   return "window system";
-		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "shader compiler";
-		case GL_DEBUG_SOURCE_THIRD_PARTY:     return "third party";
-		case GL_DEBUG_SOURCE_APPLICATION:     return "application";
-		case GL_DEBUG_SOURCE_OTHER:           return "other";
+		case GL_DEBUG_SOURCE_API:             return S_("API");
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   return S_("window system");
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: return S_("shader compiler");
+		case GL_DEBUG_SOURCE_THIRD_PARTY:     return S_("third party");
+		case GL_DEBUG_SOURCE_APPLICATION:     return S_("application");
+		case GL_DEBUG_SOURCE_OTHER:           return S_("other");
 	}
-	return "unknown";
+	return S_("unknown");
 }
 
-static char const * opengl_debug_get_type(GLenum value) {
+static struct CString opengl_debug_get_type(GLenum value) {
 	switch (value) {
-		case GL_DEBUG_TYPE_ERROR:               return "error";
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "deprecated behavior";
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  return "undefined behavior";
-		case GL_DEBUG_TYPE_PORTABILITY:         return "portability";
-		case GL_DEBUG_TYPE_PERFORMANCE:         return "performance";
-		case GL_DEBUG_TYPE_MARKER:              return "marker";
-		case GL_DEBUG_TYPE_PUSH_GROUP:          return "push group";
-		case GL_DEBUG_TYPE_POP_GROUP:           return "pop group";
-		case GL_DEBUG_TYPE_OTHER:               return "other";
+		case GL_DEBUG_TYPE_ERROR:               return S_("error");
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return S_("deprecated behavior");
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  return S_("undefined behavior");
+		case GL_DEBUG_TYPE_PORTABILITY:         return S_("portability");
+		case GL_DEBUG_TYPE_PERFORMANCE:         return S_("performance");
+		case GL_DEBUG_TYPE_MARKER:              return S_("marker");
+		case GL_DEBUG_TYPE_PUSH_GROUP:          return S_("push group");
+		case GL_DEBUG_TYPE_POP_GROUP:           return S_("pop group");
+		case GL_DEBUG_TYPE_OTHER:               return S_("other");
 	}
-	return "unknown";
+	return S_("unknown");
 }
 
 static void __stdcall opengl_debug_message_callback(
@@ -1651,17 +1651,20 @@ static void __stdcall opengl_debug_message_callback(
 	const void *userParam
 ) {
 	(void)userParam;
+	struct CString const s_severity = opengl_debug_get_severity(severity);
+	struct CString const s_source = opengl_debug_get_source(source);
+	struct CString const s_type = opengl_debug_get_type(type);
 	LOG(
 		"> OpenGL message '0x%x'\n"
-		"  severity: %s\n"
-		"  source:   %s\n"
-		"  type:     %s\n"
+		"  severity: %.*s\n"
+		"  source:   %.*s\n"
+		"  type:     %.*s\n"
 		"  message:  %.*s\n"
 		""
 		, id
-		, opengl_debug_get_severity(severity)
-		, opengl_debug_get_source(source)
-		, opengl_debug_get_type(type)
+		, s_severity.length, s_severity.data
+		, s_source.length, s_source.data
+		, s_type.length, s_type.data
 		, length, message
 	);
 	REPORT_CALLSTACK();

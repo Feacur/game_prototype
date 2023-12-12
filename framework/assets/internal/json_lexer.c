@@ -5,11 +5,11 @@
 //
 #include "json_lexer.h"
 
-struct JSON_Lexer json_lexer_init(char const * text) {
-	if (text == NULL) { text = ""; }
+struct JSON_Lexer json_lexer_init(struct CString text) {
+	if (cstring_empty(text)) { text = S_(""); }
 	return (struct JSON_Lexer){
-		.start = text,
-		.current = text,
+		.start = text.data,
+		.current = text.data,
 	};
 }
 
@@ -90,10 +90,13 @@ static struct JSON_Token json_lexer_make_number_token(struct JSON_Lexer * lexer)
 	return json_lexer_make_token(lexer, JSON_TOKEN_NUMBER);
 }
 
-static enum JSON_Token_Type json_lexer_check_keyword(struct JSON_Lexer * lexer, uint32_t start, struct CString rest, enum JSON_Token_Type type) {
-	if (lexer->current - lexer->start != start + rest.length) { return JSON_TOKEN_ERROR_IDENTIFIER; }
-	if (!equals(lexer->start + start, rest.data, rest.length)) { return JSON_TOKEN_ERROR_IDENTIFIER; }
-	return type;
+static enum JSON_Token_Type json_lexer_check_keyword(struct JSON_Lexer * lexer, uint32_t offset, struct CString rest, enum JSON_Token_Type type) {
+	struct CString const word = {
+		.length = (uint32_t)(lexer->current - lexer->start - offset),
+		.data = lexer->start + offset,
+	};
+	return cstring_equals(word, rest) ? type
+		: JSON_TOKEN_ERROR_IDENTIFIER;
 }
 
 static enum JSON_Token_Type json_lexer_identifier_type(struct JSON_Lexer * lexer) {

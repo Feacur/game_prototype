@@ -133,8 +133,8 @@ static void json_parser_error_at(struct JSON_Parser * parser, struct JSON_Token 
 	LOG("[json]");
 	LOG(" [line: %u]", token->line + 1);
 	LOG(" [context: '%.*s']", token->text.length, token->text.data);
-	if (reason.data != NULL) { LOG(" [%.*s]", reason.length, reason.data); }
-	if (message.data != NULL) { LOG(": %.*s", message.length, message.data); }
+	if (!cstring_empty(reason)) { LOG(" [%.*s]", reason.length, reason.data); }
+	if (!cstring_empty(message)) { LOG(": %.*s", message.length, message.data); }
 	LOG("\n");
 }
 
@@ -308,9 +308,9 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 	*value = c_json_error;
 }
 
-struct JSON json_parse(char const * data) {
+struct JSON json_parse(struct CString text) {
 	struct JSON_Parser parser = {
-		.lexer = json_lexer_init(data),
+		.lexer = json_lexer_init(text),
 	};
 	json_parser_consume(&parser);
 

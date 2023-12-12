@@ -14,14 +14,17 @@
 //
 #include "json_read.h"
 
-void process_json(struct CString path, void * data, void (* action)(struct JSON const * json, void * output)) {
+void process_json(struct CString path, void * data, JSON_Processor * process) {
 	struct Buffer file_buffer = platform_file_read_entire(path);
-	if (file_buffer.capacity == 0) { action(&c_json_error, data); return; }
+	if (file_buffer.capacity == 0) { process(&c_json_error, data); return; }
 
-	struct JSON json = json_parse((char const *)file_buffer.data);
+	struct JSON json = json_parse((struct CString){
+		.length = (uint32_t)file_buffer.size,
+		.data = file_buffer.data,
+	});
 	buffer_free(&file_buffer);
 
-	action(&json, data);
+	process(&json, data);
 
 	json_free(&json);
 }

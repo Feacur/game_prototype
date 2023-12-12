@@ -3,9 +3,7 @@
 
 #include "framework/graphics/gfx_types.h"
 
-struct JSON;
-
-void process_json(struct CString path, void * data, void (* action)(struct JSON const * json, void * output));
+void process_json(struct CString path, void * data, JSON_Processor * process);
 
 // ----- ----- ----- ----- -----
 //     common

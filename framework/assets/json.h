@@ -54,7 +54,7 @@ bool json_at_boolean(struct JSON const * value, uint32_t index);
 //     parsing
 // ----- ----- ----- ----- -----
 
-struct JSON json_parse(char const * data);
+struct JSON json_parse(struct CString text);
 
 // ----- ----- ----- ----- -----
 //     constants

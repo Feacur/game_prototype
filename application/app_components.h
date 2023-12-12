@@ -35,8 +35,6 @@ void transform_rect_get_pivot_and_rect(
 //     deserialization
 // ----- ----- ----- ----- -----
 
-struct JSON;
-
 void json_read_transform_3d(struct JSON const * json, struct Transform_3D * transform);
 void json_read_transform_2d(struct JSON const * json, struct Transform_2D * transform);
 void json_read_transform_rect(struct JSON const * json, struct Transform_Rect * transform);

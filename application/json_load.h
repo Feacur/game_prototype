@@ -3,7 +3,6 @@
 
 #include "framework/common.h"
 
-struct JSON;
 struct Font;
 
 struct Handle json_load_gfx_material(struct JSON const * json);

@@ -10,6 +10,6 @@ void material_system_clear(bool deallocate);
 struct Handle material_system_aquire(void);
 void material_system_discard(struct Handle handle);
 
-struct Gfx_Material * material_system_take(struct Handle handle);
+struct Gfx_Material * material_system_get(struct Handle handle);
 
 #endif

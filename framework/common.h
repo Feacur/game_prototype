@@ -40,6 +40,12 @@
 #endif
 
 // ----- ----- ----- ----- -----
+//     forward
+// ----- ----- ----- ----- -----
+
+struct JSON;
+
+// ----- ----- ----- ----- -----
 //     delegates
 // ----- ----- ----- ----- -----
 
@@ -54,6 +60,9 @@ typedef ALLOCATOR(Allocator);
 
 #define HASHER(name) uint32_t (name)(void const * v)
 typedef HASHER(Hasher);
+
+#define JSON_PROCESSOR(name) void name(struct JSON const * json, void * data)
+typedef JSON_PROCESSOR(JSON_Processor);
 
 // ----- ----- ----- ----- -----
 //     handle
@@ -86,6 +95,7 @@ struct CArray_Mut {
 
 struct CArray carray_const(struct CArray_Mut value);
 bool carray_equals(struct CArray v1, struct CArray v2);
+bool carray_empty(struct CArray value);
 
 #define A_(value) (struct CArray){.size = sizeof(value), .data = &value}
 
@@ -106,8 +116,10 @@ struct CString_Mut {
 };
 
 struct CString cstring_const(struct CString_Mut value);
-bool cstring_contains(struct CString v1, struct CString v2);
 bool cstring_equals(struct CString v1, struct CString v2);
+bool cstring_empty(struct CString value);
+
+bool cstring_contains(struct CString v1, struct CString v2);
 bool cstring_starts(struct CString v1, struct CString v2);
 bool cstring_ends(struct CString v1, struct CString v2);
 

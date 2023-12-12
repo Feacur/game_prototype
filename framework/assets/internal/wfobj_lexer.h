@@ -42,7 +42,7 @@ struct WFObj_Lexer {
 	uint32_t line_start, line_current;
 };
 
-struct WFObj_Lexer wfobj_lexer_init(char const * text);
+struct WFObj_Lexer wfobj_lexer_init(struct CString text);
 void wfobj_lexer_free(struct WFObj_Lexer * lexer);
 
 struct WFObj_Token wfobj_lexer_next(struct WFObj_Lexer * lexer);

@@ -22,6 +22,6 @@ void wfobj_free(struct WFObj * obj);
 //     parsing
 // ----- ----- ----- ----- -----
 
-struct WFObj wfobj_parse(char const * text);
+struct WFObj wfobj_parse(struct CString text);
 
 #endif

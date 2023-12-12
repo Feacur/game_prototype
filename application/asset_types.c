@@ -64,7 +64,10 @@ static void asset_json_load(struct Handle handle) {
 	}
 
 	*asset = (struct Asset_JSON){
-		.value = json_parse((char const *)file_buffer.data),
+		.value = json_parse((struct CString){
+			.length = (uint32_t)file_buffer.size,
+			.data = file_buffer.data,
+		}),
 	};
 	buffer_free(&file_buffer);
 }
@@ -110,7 +113,7 @@ struct Asset_Image_Context {
 	struct Asset_Image * result;
 };
 
-static void asset_image_fill(struct JSON const * json, void * data) {
+static JSON_PROCESSOR(asset_image_fill) {
 	struct Asset_Image_Context * context = data;
 	if (json->type == JSON_ERROR) {
 		common_memset(context->result, 0, sizeof(*context->result));
@@ -185,7 +188,7 @@ struct Asset_Font_Context {
 	struct Handle ah_font;
 };
 
-static void asset_font_fill(struct JSON const * json, void * data) {
+static JSON_PROCESSOR(asset_font_fill) {
 	struct Asset_Font_Context * context = data;
 	struct Asset_Font * asset = asset_system_get(context->ah_font);
 	if (json->type == JSON_ERROR) {
@@ -239,7 +242,7 @@ struct Asset_Target_Context {
 	struct Asset_Target * result;
 };
 
-static void asset_target_fill(struct JSON const * json, void * data) {
+static JSON_PROCESSOR(asset_target_fill) {
 	struct Asset_Target_Context * context = data;
 	if (json->type == JSON_ERROR) {
 		common_memset(context->result, 0, sizeof(*context->result));
@@ -301,7 +304,7 @@ struct Asset_Material_Context {
 	struct Handle ah_material;
 };
 
-static void asset_material_fill(struct JSON const * json, void * data) {
+static JSON_PROCESSOR(asset_material_fill) {
 	struct Asset_Material_Context * context = data;
 	struct Asset_Material * asset = asset_system_get(context->ah_material);
 	if (json->type == JSON_ERROR) {
