@@ -49,10 +49,10 @@ struct JSON;
 //     delegates
 // ----- ----- ----- ----- -----
 
-#define PREDICATE(name) bool name(void const * value)
+#define PREDICATE(name) bool (name)(void const * value)
 typedef PREDICATE(Predicate);
 
-#define COMPARATOR(name) int name(void const * v1, void const * v2)
+#define COMPARATOR(name) int (name)(void const * v1, void const * v2)
 typedef COMPARATOR(Comparator);
 
 #define ALLOCATOR(name) void * (name)(void * pointer, size_t size)
@@ -61,7 +61,7 @@ typedef ALLOCATOR(Allocator);
 #define HASHER(name) uint32_t (name)(void const * v)
 typedef HASHER(Hasher);
 
-#define JSON_PROCESSOR(name) void name(struct JSON const * json, void * data)
+#define JSON_PROCESSOR(name) void (name)(struct JSON const * json, void * data)
 typedef JSON_PROCESSOR(JSON_Processor);
 
 // ----- ----- ----- ----- -----

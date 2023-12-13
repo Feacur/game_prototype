@@ -35,8 +35,6 @@ static enum Camera_Mode json_read_camera_mode(struct JSON const * json) {
 			return CAMERA_MODE_ASPECT_Y;
 		}
 	}
-	ERR("unknown camera mode");
-	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return CAMERA_MODE_NONE;
 }
 
