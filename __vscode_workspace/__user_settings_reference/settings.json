@@ -12,6 +12,7 @@
 	"telemetry.telemetryLevel": "off",
 	"window.restoreWindows": "none",
 	"debug.toolBarLocation": "commandCenter",
+	"update.mode": "start",
 	// -- files
 	"files.trimFinalNewlines": false,
 	"files.trimTrailingWhitespace": false,
@@ -24,15 +25,16 @@
 	"github.gitAuthentication": false,
 	// -- workbench
 	"workbench.startupEditor": "newUntitledFile",
+	"workbench.activityBar.location": "hidden",
 	"workbench.sideBar.location": "right",
-	"workbench.activityBar.visible": false,
-	"workbench.editor.empty.hint": "hidden",
-	"workbench.editor.restoreViewState": false,
 	"workbench.commandPalette.history": 0,
 	"workbench.colorTheme": "Gruvbox Dark Medium",
+	"workbench.editor.empty.hint": "hidden",
+	"workbench.editor.restoreViewState": false,
 	"workbench.editor.preferHistoryBasedLanguageDetection": false,
 	"workbench.editor.historyBasedLanguageDetection": false,
 	"workbench.editor.focusRecentEditorAfterClose": false,
+	"workbench.editor.closeEmptyGroups": false,
 	"workbench.editor.autoLockGroups": {
 		"terminalEditor": false
 	},
@@ -102,10 +104,11 @@
 	"godot_tools.editor_path": "godot",
 	"godot_tools.gdscript_lsp_server_port": 6005,
 	// -- extensions: ziglang.vscode-zig
+	"zig.initialSetupDone": true,
+	"zig.checkForUpdate": false,
 	"zig.zigPath": "",
 	"zig.zls.enabled": true,
 	"zig.zls.path": "zls.exe",
-	"zig.checkForUpdate": false,
 	"zig.zls.checkForUpdate": false,
 }
 // extensions:

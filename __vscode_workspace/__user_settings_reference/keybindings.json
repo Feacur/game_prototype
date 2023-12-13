@@ -6,6 +6,8 @@
 	{ "key": "ctrl+down", "command": "-scrollLineDown", },
 	{ "key": "alt+pageup", "command": "-scrollPageUp", },
 	{ "key": "alt+pagedown", "command": "-scrollPageDown", },
+	{ "key": "ctrl+-", "command": "-workbench.action.zoomOut" },
+	{ "key": "ctrl+=", "command": "-workbench.action.zoomIn" },
 	{ "key": "ctrl+0", "command": "-workbench.action.focusSideBar" },
 	{ "key": "ctrl+1", "command": "-workbench.action.focusFirstEditorGroup" },
 	{ "key": "ctrl+2", "command": "-workbench.action.focusSecondEditorGroup" },
@@ -31,6 +33,10 @@
 	{ "key": "ctrl+pagedown", "command": "-workbench.action.nextEditor" },
 	{ "key": "ctrl+shift+pageup", "command": "-workbench.action.moveEditorLeftInGroup" },
 	{ "key": "ctrl+shift+pagedown", "command": "-workbench.action.moveEditorRightInGroup" },
+	{ "key": "ctrl+f9", "command": "-workbench.action.chat.nextFileTree" },
+	{ "key": "ctrl+shift+k", "command": "-editor.action.deleteLines" },
+	{ "key": "ctrl+alt+shift+down", "command": "-cursorColumnSelectDown", },
+	{ "key": "ctrl+alt+shift+up", "command": "-cursorColumnSelectUp", },
 	// -- utilities
 	{
 		"key": "ctrl+shift+r",
@@ -41,16 +47,20 @@
 		"command": "workbench.action.toggleTabsVisibility",
 	},
 	{
-		"key": "ctrl+alt+\\",
-		"command": "workbench.action.splitEditorDown",
-	},
-	{
 		"key": "shift+f11",
 		"command": "workbench.action.toggleZenMode",
 	},
 	{
+		"key": "ctrl+-",
+		"command": "editor.action.fontZoomOut"
+	},
+	{
+		"key": "ctrl+=",
+		"command": "editor.action.fontZoomIn"
+	},
+	{
 		"key": "ctrl+0",
-		"command": "workbench.action.zoomReset",
+		"command": "editor.action.fontZoomReset"
 	},
 	// -- RMB
 	{
@@ -233,28 +243,39 @@
 	},
 	// -- windowing
 	{
-		"key": "ctrl+shift+alt+[",
+		"key": "ctrl+alt+\\",
+		"command": "workbench.action.focusSideBar",
+	},
+	{
+		"key": "ctrl+alt+shift+[",
 		"command": "workbench.action.closeGroup",
 	},
 	{
-		"key": "ctrl+shift+alt+]",
-		"command": "workbench.action.newGroupRight",
+		"key": "ctrl+alt+shift+]",
+		"command": "runCommands",
+		"args": {
+			"commands": [
+				"workbench.action.newGroupRight",
+				"workbench.action.focusLeftGroupWithoutWrap",
+				"workbench.action.moveEditorToRightGroup",
+			]
+		}
 	},
 	{
-		"key": "ctrl+shift+alt+left",
+		"key": "ctrl+alt+[",
+		"command": "workbench.action.focusLeftGroup",
+	},
+	{
+		"key": "ctrl+alt+]",
+		"command": "workbench.action.focusRightGroup",
+	},
+	{
+		"key": "ctrl+alt+shift+left",
 		"command": "workbench.action.moveEditorToLeftGroup",
 	},
 	{
-		"key": "ctrl+shift+alt+right",
+		"key": "ctrl+alt+shift+right",
 		"command": "workbench.action.moveEditorToRightGroup",
-	},
-	{
-		"key": "ctrl+shift+alt+down",
-		"command": "workbench.action.moveEditorToBelowGroup",
-	},
-	{
-		"key": "ctrl+shift+alt+up",
-		"command": "workbench.action.moveEditorToAboveGroup",
 	},
 	// -- edit lines
 	{

@@ -90,3 +90,13 @@ class MoveViewCommand(sublime_plugin.WindowCommand):
 	def is_enabled(self):
 		(group, index) = self.window.get_view_index(self.window.active_view())
 		return -1 not in (group, index) and len(self.window.views_in_group(group)) > 1
+
+class SetFontSizeCommand(sublime_plugin.ApplicationCommand):
+	def run(self, font_size = None):
+		s = sublime.load_settings("Preferences.sublime-settings")
+		if not font_size:
+			s.erase("font_size")
+		else:
+			s.set('font_size', font_size)
+
+		sublime.save_settings("Preferences.sublime-settings")
