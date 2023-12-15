@@ -1,6 +1,6 @@
 #include "framework/formatter.h"
 #include "framework/platform/gpu_context.h"
-#include "framework/platform/memory.h"
+#include "framework/systems/memory_system.h"
 #include "framework/systems/arena_system.h"
 
 #include "framework/internal/input_to_window.h"
@@ -672,6 +672,8 @@ static void handle_message_input_raw(struct Window * window, WPARAM wParam, LPAR
 				case RIM_TYPEHID:      handle_input_hid_raw(window, &input->data.hid); break;
 			}
 		}
+		// @note: this is not necessary, but responsible
+		ARENA_FREE(input);
 	}
 
 	// https://learn.microsoft.com/windows/win32/inputdev/raw-input
@@ -688,7 +690,7 @@ static void handle_message_input_keyboard(struct Window * window, WPARAM wParam,
 		: LOBYTE(flags) | (is_extended ? 0xe000 : 0x0000);
 
 	uint8_t const key = fix_virtual_key((uint8_t)wParam, scan);
-	TRC("0x%x", key);
+	TRC("%#x", key);
 	if (key == 0x00) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 	if (key == 0xff) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 

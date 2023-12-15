@@ -2,9 +2,8 @@
 #include "framework/maths.h"
 
 #include "framework/platform/file.h"
-#include "framework/platform/memory.h"
 #include "framework/containers/buffer.h"
-
+#include "framework/systems/memory_system.h"
 #include "framework/systems/arena_system.h"
 
 #include "framework/__warnings_push.h"

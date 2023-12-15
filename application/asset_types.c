@@ -3,9 +3,10 @@
 #include "framework/json_read.h"
 
 #include "framework/platform/file.h"
-#include "framework/platform/memory.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
+
+#include "framework/systems/memory_system.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
 

@@ -1,13 +1,13 @@
 #include "framework/formatter.h"
 #include "framework/maths.h"
 
-#include "framework/platform/memory.h"
 #include "framework/containers/strings.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/array.h"
 #include "framework/containers/array.h"
 #include "framework/containers/hashmap.h"
 #include "framework/containers/sparseset.h"
+#include "framework/systems/memory_system.h"
 
 #include "framework/graphics/gfx_material.h"
 #include "framework/assets/mesh.h"
@@ -160,6 +160,9 @@ static void gpu_program_introspect_uniforms(struct GPU_Program_Internal * gpu_pr
 			.index = (GLuint)i,
 			.location = params[PARAM_LOCATION],
 		});
+
+		// @note: this is not necessary, but responsible
+		ARENA_FREE(name_data);
 	}
 }
 
@@ -192,6 +195,9 @@ static void gpu_program_introspect_block(struct GPU_Program_Internal * gpu_progr
 			, params[PARAM_BUFFER_DATA_SIZE]
 			, name_length, name_data
 		);
+
+		// @note: this is not necessary, but responsible
+		ARENA_FREE(name_data);
 	}
 }
 
@@ -233,6 +239,9 @@ static void gpu_program_introspect_buffer(struct GPU_Program_Internal * gpu_prog
 			, params[PARAM_TOP_LEVEL_ARRAY_STRIDE]
 			, name_length, name_data
 		);
+
+		// @note: this is not necessary, but responsible
+		ARENA_FREE(name_data);
 	}
 }
 
@@ -272,6 +281,9 @@ static void gpu_program_introspect_input(struct GPU_Program_Internal * gpu_progr
 			, params[PARAM_LOCATION_COMPONENT]
 			, name_length, name_data
 		);
+
+		// @note: this is not necessary, but responsible
+		ARENA_FREE(name_data);
 	}
 }
 
@@ -314,6 +326,9 @@ static void gpu_program_introspect_output(struct GPU_Program_Internal * gpu_prog
 			, params[PARAM_LOCATION_COMPONENT]
 			, name_length, name_data
 		);
+
+		// @note: this is not necessary, but responsible
+		ARENA_FREE(name_data);
 	}
 }
 
@@ -1062,7 +1077,7 @@ static void gpu_select_mesh(struct Handle handle) {
 static void gpu_upload_single_uniform(struct GPU_Program_Internal const * gpu_program, struct GPU_Uniform_Internal const * field, void const * data) {
 	switch (field->base.type) {
 		default: {
-			WRN("unsupported field type '0x%x'", field->base.type);
+			WRN("unsupported field type '%#x'", field->base.type);
 			DEBUG_BREAK();
 		} break;
 
@@ -1082,6 +1097,9 @@ static void gpu_upload_single_uniform(struct GPU_Program_Internal const * gpu_pr
 				units[units_count++] = (GLint)unit;
 			}
 			gl.ProgramUniform1iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, units);
+
+			// @note: this is not necessary, but responsible
+			ARENA_FREE(units);
 		} break;
 
 		case DATA_TYPE_R32_U:    gl.ProgramUniform1uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
@@ -1223,7 +1241,7 @@ inline static void gpu_execute_shader(struct GPU_Command_Shader const * command)
 
 inline static void gpu_execute_uniform(struct GPU_Command_Uniform const * command) {
 	if (handle_is_null(command->gh_program)) {
-		FOR_SPARSESET (&gs_graphics_state.programs, it) {
+		FOR_SPARSESET(&gs_graphics_state.programs, it) {
 			gpu_upload_uniforms(it.value, command->uniforms, command->offset, command->count);
 		}
 	}
@@ -1405,7 +1423,7 @@ void graphics_to_gpu_library_free(void) {
 #define GPU_FREE(name, action) do { \
 	struct Sparseset * data = &gs_graphics_state.name; \
 	inst_count += sparseset_get_count(data); \
-	FOR_SPARSESET (data, it) { action(it.value); } \
+	FOR_SPARSESET(data, it) { action(it.value); } \
 	sparseset_free(data); \
 } while (false) \
 
@@ -1586,6 +1604,9 @@ static void verify_shader(GLuint id) {
 	GLchar * buffer = ARENA_ALLOCATE_ARRAY(GLchar, max_length);
 	gl.GetShaderInfoLog(id, max_length, &max_length, buffer);
 	ERR("%s", buffer);
+
+	// @note: this is not necessary, but responsible
+	ARENA_FREE(buffer);
 }
 
 static void verify_program(GLuint id) {
@@ -1600,6 +1621,9 @@ static void verify_program(GLuint id) {
 	GLchar * buffer = ARENA_ALLOCATE_ARRAY(GLchar, max_length);
 	gl.GetProgramInfoLog(id, max_length, &max_length, buffer);
 	ERR("%s", buffer);
+
+	// @note: this is not necessary, but responsible
+	ARENA_FREE(buffer);
 }
 
 //
@@ -1655,7 +1679,7 @@ static void __stdcall opengl_debug_message_callback(
 	struct CString const s_source = opengl_debug_get_source(source);
 	struct CString const s_type = opengl_debug_get_type(type);
 	LOG(
-		"> OpenGL message '0x%x'\n"
+		"> OpenGL message '%#x'\n"
 		"  severity: %.*s\n"
 		"  source:   %.*s\n"
 		"  type:     %.*s\n"

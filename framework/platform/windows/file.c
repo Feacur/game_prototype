@@ -1,6 +1,6 @@
 #include "framework/formatter.h"
-#include "framework/platform/memory.h"
 #include "framework/containers/buffer.h"
+#include "framework/systems/memory_system.h"
 
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>

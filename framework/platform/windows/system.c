@@ -2,13 +2,11 @@
 #include "framework/input_keys.h"
 #include "framework/formatter.h"
 
-#include "framework/platform/memory.h"
-#include "framework/platform/debug.h"
 #include "framework/containers/buffer.h"
+#include "framework/systems/memory_system.h"
 
 #include "framework/internal/input_to_system.h"
 #include "internal/debug_to_system.h"
-#include "internal/timer_to_system.h"
 #include "internal/window_to_system.h"
 #include "internal/gpu_library_to_system.h"
 
@@ -93,7 +91,6 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 	}
 
 	if (!debug_to_system_init())       { goto fail; }
-	if (!timer_to_system_init())       { goto fail; }
 	if (!window_to_system_init())      { goto fail; }
 	if (!gpu_library_to_system_init()) { goto fail; }
 	if (!input_to_system_init())       { goto fail; }
@@ -111,7 +108,6 @@ void platform_system_free(void) {
 	input_to_system_free();
 	gpu_library_to_system_free();
 	window_to_system_free();
-	timer_to_system_free();
 	debug_to_system_free();
 
 	RemoveVectoredContinueHandler(gs_platform_system.vectored);
@@ -222,7 +218,7 @@ static void system_signal_handler(int value) {
 	if (gs_platform_system.has_error) { return; }
 
 	LOG(
-		"> system signal '0x%x'\n"
+		"> system signal '%#x'\n"
 		"  type: %.*s\n"
 		""
 		, value
@@ -320,7 +316,7 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	bool const noncontinuable = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == EXCEPTION_NONCONTINUABLE;
 
 	LOG(
-		"> system vector '0x%lx'\n"
+		"> system vector '%#lx'\n"
 		"  type: %.*s\n"
 		""
 		, code

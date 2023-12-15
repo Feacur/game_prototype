@@ -1,6 +1,6 @@
 #include "framework/maths.h"
 #include "framework/formatter.h"
-#include "framework/platform/memory.h"
+#include "framework/systems/memory_system.h"
 
 #include "internal/helpers.h"
 
@@ -47,7 +47,7 @@ void buffer_ensure(struct Buffer * buffer, size_t capacity) {
 
 void buffer_push_many(struct Buffer * buffer, size_t size, void const * value) {
 	buffer_ensure(buffer, buffer->size + size);
-	uint8_t * end = (uint8_t *)buffer->data + buffer->size;
+	uint8_t * end = buffer_at_unsafe(buffer, buffer->size);
 	common_memcpy(end, value, size);
 	buffer->size += size;
 }
@@ -57,7 +57,7 @@ void buffer_set_many(struct Buffer * buffer, size_t offset, size_t size, void co
 		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
-	uint8_t * at = (uint8_t *)buffer->data + offset;
+	uint8_t * at  = buffer_at_unsafe(buffer, offset);
 	common_memcpy(at, value, size);
 }
 
@@ -68,8 +68,8 @@ void buffer_insert_many(struct Buffer * buffer, size_t offset, size_t size, void
 	}
 	buffer_ensure(buffer, buffer->size + size);
 	//
-	uint8_t * at  = (uint8_t *)buffer->data + offset;
-	uint8_t * end = (uint8_t *)buffer->data + buffer->size;
+	uint8_t * at  = buffer_at_unsafe(buffer, offset);
+	uint8_t * end = buffer_at_unsafe(buffer, buffer->size);
 	for (uint8_t * it = end; it > at; it -= 1) {
 		common_memcpy(it, it - size, 1);
 	}
@@ -83,8 +83,7 @@ void * buffer_pop(struct Buffer * buffer, size_t size) {
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	buffer->size -= size;
-	size_t const offset = buffer->size;
-	return (uint8_t *)buffer->data + offset;
+	return buffer_at(buffer, buffer->size);
 }
 
 void * buffer_peek(struct Buffer const * buffer, size_t depth) {
@@ -92,8 +91,7 @@ void * buffer_peek(struct Buffer const * buffer, size_t depth) {
 		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
-	size_t const offset = buffer->size - depth - 1;
-	return (uint8_t *)buffer->data + offset;
+	return buffer_at(buffer, buffer->size - depth - 1);
 }
 
 void * buffer_at(struct Buffer const * buffer, size_t offset) {
@@ -101,5 +99,11 @@ void * buffer_at(struct Buffer const * buffer, size_t offset) {
 		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
+	return buffer_at_unsafe(buffer, offset);
+}
+
+void * buffer_at_unsafe(struct Buffer const * buffer, size_t offset) {
+	// @note: places that call it shoud do the check
+	// if (offset >= buffer->capacity) { return NULL; }
 	return (uint8_t *)buffer->data + offset;
 }

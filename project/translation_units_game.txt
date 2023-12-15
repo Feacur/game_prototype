@@ -1,5 +1,6 @@
 framework/common.c
 framework/maths.c
+framework/input_keys.c
 framework/input.c
 framework/unicode.c
 framework/maths_types.c
@@ -7,34 +8,11 @@ framework/formatter.c
 framework/parsing.c
 framework/json_read.c
 
-framework/graphics/gfx_types.c
-framework/graphics/gfx_objects.c
-framework/graphics/gfx_material.c
 
-framework/containers/internal/helpers.c
-framework/containers/array.c
-framework/containers/buffer.c
-framework/containers/hashmap.c
-framework/containers/hashset.c
-framework/containers/sparseset.c
-framework/containers/strings.c
 
-framework/assets/internal/wfobj_lexer.c
-framework/assets/internal/json_lexer.c
-framework/assets/internal/wfobj.c
-framework/assets/json.c
-framework/assets/mesh.c
-framework/assets/image.c
-framework/assets/typeface.c
-framework/assets/font.c
 
-framework/systems/arena_system.c
-framework/systems/string_system.c
-framework/systems/action_system.c
-framework/systems/material_system.c
-framework/systems/asset_system.c
+framework/platform/allocator.c
 
-framework/platform/memory.c
 framework/platform/windows/timer.c
 framework/platform/windows/file.c
 framework/platform/windows/system.c
@@ -45,6 +23,36 @@ framework/platform/windows/gpu_library_opengl.c
 framework/graphics/opengl/functions.c
 framework/graphics/opengl/gpu_types.c
 framework/graphics/opengl/graphics.c
+
+
+
+
+framework/containers/internal/helpers.c
+framework/containers/array.c
+framework/containers/buffer.c
+framework/containers/hashmap.c
+framework/containers/sparseset.c
+framework/containers/strings.c
+
+framework/systems/memory_system.c
+framework/systems/arena_system.c
+framework/systems/string_system.c
+framework/systems/action_system.c
+framework/systems/material_system.c
+framework/systems/asset_system.c
+
+framework/graphics/gfx_types.c
+framework/graphics/gfx_objects.c
+framework/graphics/gfx_material.c
+
+framework/assets/internal/wfobj_lexer.c
+framework/assets/internal/json_lexer.c
+framework/assets/internal/wfobj.c
+framework/assets/json.c
+framework/assets/mesh.c
+framework/assets/image.c
+framework/assets/typeface.c
+framework/assets/font.c
 
 application/json_load.c
 application/application.c

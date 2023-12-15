@@ -2,10 +2,10 @@
 #include "framework/maths.h"
 #include "framework/json_read.h"
 
-#include "framework/platform/memory.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/hashmap.h"
 
+#include "framework/systems/memory_system.h"
 #include "framework/systems/arena_system.h"
 #include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"
@@ -160,6 +160,9 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 		}
 
 		common_memcpy(it.value, buffer, it.size);
+
+		// @note: this is not necessary, but responsible
+		ARENA_FREE(buffer);
 		continue;
 
 		// process errors

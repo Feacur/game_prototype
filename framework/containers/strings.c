@@ -52,9 +52,9 @@ uint32_t strings_add(struct Strings * strings, struct CString value) {
 struct CString strings_get(struct Strings const * strings, uint32_t id) {
 	if (id > strings->lengths.count) { return (struct CString){0}; }
 	uint32_t const index = id - 1;
-	uint32_t const * offset_at = array_at(&strings->offsets, index);
+	uint32_t const * offset_at = array_at_unsafe(&strings->offsets, index);
 	return (struct CString){
-		.length = *(uint32_t *)array_at(&strings->lengths, index),
-		.data = (char const *)strings->buffer.data + *offset_at,
+		.length = *(uint32_t *)array_at_unsafe(&strings->lengths, index),
+		.data = buffer_at_unsafe(&strings->buffer, *offset_at),
 	};
 }

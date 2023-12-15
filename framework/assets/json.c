@@ -22,7 +22,7 @@ void json_free(struct JSON * value) {
 
 		case JSON_OBJECT: {
 			struct Hashmap * table = &value->as.table;
-			FOR_HASHMAP (table, it) { json_free(it.value); }
+			FOR_HASHMAP(table, it) { json_free(it.value); }
 			hashmap_free(table);
 		} break;
 

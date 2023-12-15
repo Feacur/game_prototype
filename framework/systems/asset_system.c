@@ -72,10 +72,10 @@ static struct CString asset_system_name_to_extension(struct CString name);
 void asset_system_clear(bool deallocate) {
 	// dependecies
 	uint32_t dropped_count = 0;
-	FOR_HASHMAP (&gs_asset_system.types, it_type) {
+	FOR_HASHMAP(&gs_asset_system.types, it_type) {
 		struct Asset_Type * type = it_type.value;
 		dropped_count += sparseset_get_count(&type->instances);
-		FOR_SPARSESET (&type->instances, it_inst) {
+		FOR_SPARSESET(&type->instances, it_inst) {
 			struct Asset_Inst * inst = it_inst.value;
 			asset_system_report(S_("[free]"), inst->header.ah_meta);
 			if (type->info.drop != NULL) {
@@ -85,7 +85,7 @@ void asset_system_clear(bool deallocate) {
 		sparseset_free(&type->instances);
 	}
 	if (dropped_count > 0) { DEBUG_BREAK(); }
-	FOR_SPARSESET (&gs_asset_system.meta, it) {
+	FOR_SPARSESET(&gs_asset_system.meta, it) {
 		struct Asset_Meta * meta = it.value;
 		array_free(&meta->dependencies);
 	}
@@ -126,7 +126,7 @@ void asset_system_type_del(struct CString type_name) {
 
 	LOG("[type] %.*s\n", type_name.length, type_name.data);
 	array_push_many(&gs_asset_system.stack, 1, &(struct Handle){0});
-	FOR_SPARSESET (&type->instances, it) {
+	FOR_SPARSESET(&type->instances, it) {
 		struct Asset_Inst * inst = it.value;
 		struct Handle const ah_meta = inst->header.ah_meta;
 

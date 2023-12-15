@@ -3,11 +3,11 @@
 #include "framework/unicode.h"
 #include "framework/formatter.h"
 
-#include "framework/platform/memory.h"
-#include "framework/containers/hashset.h"
+#include "framework/containers/hashmap.h"
 #include "framework/containers/array.h"
 #include "framework/containers/buffer.h"
 
+#include "framework/systems/memory_system.h"
 #include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
@@ -59,7 +59,7 @@ struct Batcher_2D {
 	struct Array codepoints; // uint32_t
 	struct Array batches;    // `struct Batcher_2D_Batch`
 	struct Array words;      // `struct Batcher_2D_Word`
-	struct Hashset fonts;    // `struct Handle`
+	struct Hashmap fonts;    // `struct Handle`
 	//
 	struct vec4 color;
 	struct mat4 matrix;
@@ -81,7 +81,7 @@ struct Batcher_2D * batcher_2d_init(void) {
 		.codepoints      = array_init(sizeof(uint32_t)),
 		.batches         = array_init(sizeof(struct Batcher_2D_Batch)),
 		.words           = array_init(sizeof(struct Batcher_2D_Word)),
-		.fonts           = hashset_init(&hash32, sizeof(struct Handle)),
+		.fonts           = hashmap_init(&hash32, sizeof(struct Handle), 0),
 		.buffer          = buffer_init(),
 		.gh_buffer       = gpu_buffer_init(&(struct Buffer){0}),
 		.gh_mesh         = gpu_mesh_init(&(struct Mesh){0}),
@@ -98,7 +98,7 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	array_free(&batcher->codepoints);
 	array_free(&batcher->batches);
 	array_free(&batcher->words);
-	hashset_free(&batcher->fonts);
+	hashmap_free(&batcher->fonts);
 	buffer_free(&batcher->buffer);
 	//
 	gfx_uniforms_free(&batcher->uniforms);
@@ -405,20 +405,20 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 	// render and upload the atlases
 	{
 		// @todo: (?) arena/stack allocator
-		hashset_clear(&batcher->fonts, false);
+		hashmap_clear(&batcher->fonts, false);
 
 		FOR_ARRAY(&batcher->words, it) {
 			struct Batcher_2D_Word const * word = it.value;
-			hashset_set(&batcher->fonts, &word->ah_font);
+			hashmap_set(&batcher->fonts, &word->ah_font, NULL);
 		}
 
-		FOR_HASHSET (&batcher->fonts, it) {
+		FOR_HASHMAP(&batcher->fonts, it) {
 			struct Handle const * ah_font = it.key;
 			struct Asset_Font const * font = asset_system_get(*ah_font);
 			font_render(font->font);
 		}
 
-		FOR_HASHSET (&batcher->fonts, it) {
+		FOR_HASHMAP(&batcher->fonts, it) {
 			struct Handle const * ah_font = it.key;
 			struct Asset_Font const * font = asset_system_get(*ah_font);
 			gpu_texture_update(font->gh_texture, font_get_asset(font->font));

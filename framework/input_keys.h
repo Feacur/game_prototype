@@ -250,7 +250,7 @@ enum Key_Code {
 	KC_NUM0, // insert
 	KC_NUM_PERIOD,
 	//
-	KC_ERROR,
+	KC_ERROR = 0xff,
 };
 
 enum Mouse_Code {
@@ -269,5 +269,7 @@ enum Input_Type {
 	// shorthands
 	IT_DOWN_TRNS = IT_DOWN | IT_TRNS,
 };
+
+enum Key_Code scan_to_key(enum Scan_Code scan);
 
 #endif

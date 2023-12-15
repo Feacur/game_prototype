@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_PLATFORM_MEMORY)
-#define FRAMEWORK_PLATFORM_MEMORY
+#if !defined(FRAMEWORK_SYSTEMS_MEMORY_SYSTEM)
+#define FRAMEWORK_SYSTEMS_MEMORY_SYSTEM
 
 #include "framework/common.h"
 

@@ -31,6 +31,8 @@ void sparseset_set(struct Sparseset * sparseset, struct Handle handle, void cons
 uint32_t sparseset_get_count(struct Sparseset const * sparseset);
 void * sparseset_get_at(struct Sparseset const * sparseset, uint32_t index);
 
+void * sparseset_get_at_unsafe(struct Sparseset const * sparseset, uint32_t index);
+
 bool sparseset_iterate(struct Sparseset const * sparseset, struct Sparseset_Iterator * iterator);
 
 #define FOR_SPARSESET(data, it) for ( \

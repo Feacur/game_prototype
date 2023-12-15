@@ -1,9 +1,10 @@
 #include "framework/formatter.h"
 #include "framework/maths.h"
-#include "framework/platform/memory.h"
+#include "framework/platform/allocator.h"
 #include "framework/containers/array.h"
 #include "framework/containers/buffer.h"
-#include "framework/containers/hashset.h"
+#include "framework/containers/hashmap.h"
+#include "framework/systems/memory_system.h"
 
 
 //
@@ -12,14 +13,14 @@
 static struct Arena_System {
 	struct Buffer buffer;
 	struct Array buffered;   // `struct Memory_Header *`
-	struct Hashset fallback; // `struct Memory_Header *`
+	struct Hashmap fallback; // `struct Memory_Header *`
 	size_t required, peak;
 } gs_arena_system = {
 	.buffer = {
-		.allocate = generic_reallocate,
+		.allocate = platform_reallocate,
 	},
 	.buffered = {
-		.allocate = generic_reallocate,
+		.allocate = platform_reallocate,
 		.value_size = sizeof(struct Memory_Header *),
 	},
 	.fallback = {
@@ -34,24 +35,13 @@ inline static size_t arena_system_checksum(void const * pointer) {
 }
 
 void arena_system_clear(bool deallocate) {
-	// dependencies
-	FOR_HASHSET(&gs_arena_system.fallback, it) {
-		void * const * pointer = it.key;
-		gs_arena_system.fallback.allocate(*pointer, 0);
-	}
-	// personal
-	buffer_clear(&gs_arena_system.buffer, deallocate);
-	array_clear(&gs_arena_system.buffered, deallocate);
-	hashset_clear(&gs_arena_system.fallback, deallocate);
-	gs_arena_system.required = 0;
-	//
 	if (deallocate) {
 		gs_arena_system.peak = 0;
 	}
-	//
+	// growth
 	if (gs_arena_system.buffer.capacity < gs_arena_system.peak) {
 		WRN(
-			"> buffer system\n"
+			"> arena system\n"
 			"  capacity .. %zu\n"
 			"  peak ...... %zu\n"
 			""
@@ -60,6 +50,16 @@ void arena_system_clear(bool deallocate) {
 		);
 		buffer_resize(&gs_arena_system.buffer, gs_arena_system.peak);
 	}
+	// dependencies
+	FOR_HASHMAP(&gs_arena_system.fallback, it) {
+		void * const * pointer = it.key;
+		gs_arena_system.fallback.allocate(*pointer, 0);
+	}
+	// personal
+	buffer_clear(&gs_arena_system.buffer, deallocate);
+	array_clear(&gs_arena_system.buffered, deallocate);
+	hashmap_clear(&gs_arena_system.fallback, deallocate);
+	gs_arena_system.required = 0;
 }
 
 void arena_system_ensure(size_t size) {
@@ -79,17 +79,17 @@ static void * arena_system_push(size_t size) {
 	gs_arena_system.peak = max_size(gs_arena_system.peak, gs_arena_system.required);
 
 	size_t const offset = gs_arena_system.buffer.size;
-	gs_arena_system.buffer.size = gs_arena_system.required;
+	gs_arena_system.buffer.size += buffered_size;
 
-	struct Memory_Header * new_header = buffer_at(&gs_arena_system.buffer, offset);
-	array_push_many(&gs_arena_system.buffered, 1, &new_header);
+	struct Memory_Header * header = buffer_at(&gs_arena_system.buffer, offset);
+	array_push_many(&gs_arena_system.buffered, 1, &header);
 
-	*new_header = (struct Memory_Header){
-		.checksum = arena_system_checksum(new_header),
+	*header = (struct Memory_Header){
+		.checksum = arena_system_checksum(header),
 		.size = size,
 	};
 
-	return new_header + 1;
+	return header + 1;
 }
 
 static struct Memory_Header * arena_system_pop(void * pointer) {
@@ -116,44 +116,47 @@ static struct Memory_Header * arena_system_pop(void * pointer) {
 
 static ALLOCATOR(arena_fallback) {
 	if (pointer != NULL) {
-		hashset_del(&gs_arena_system.fallback, &pointer);
+		hashmap_del(&gs_arena_system.fallback, &pointer);
 		struct Memory_Header const * header = (struct Memory_Header *)pointer - 1;
 		gs_arena_system.required -= sizeof(*header) + header->size;
 	}
 
-	void * const new_pointer = gs_arena_system.fallback.allocate(pointer, size);
-	if (new_pointer == NULL) { return NULL; }
+	void * pointer1 = gs_arena_system.fallback.allocate(pointer, size);
+	if (pointer1 == NULL) { return NULL; }
 
-	hashset_set(&gs_arena_system.fallback, &new_pointer);
+	if (!hashmap_set(&gs_arena_system.fallback, &pointer1, NULL)) {
+		DEBUG_BREAK();
+	}
+	pointer = pointer1;
 
 	gs_arena_system.required += sizeof(struct Memory_Header) + size;
 	gs_arena_system.peak = max_size(gs_arena_system.peak, gs_arena_system.required);
 
-	return new_pointer;
+	return pointer;
 }
 
 ALLOCATOR(arena_reallocate) {
 	struct Memory_Header const * header = arena_system_pop(pointer);
-	void * const new_buffered = arena_system_push(size);
+	void * const buffered = arena_system_push(size);
 
 	if (header != NULL) {
 		// buffered -> buffered
-		if (new_buffered != NULL) { return new_buffered; }
-		if (size == 0) { return new_buffered; }
+		if (buffered != NULL) { return buffered; }
+		if (size == 0) { return buffered; }
 
 		// buffered -> fallback
-		void * const new_fallback = arena_fallback(NULL, size);
-		common_memcpy(new_fallback, pointer, min_size(size, header->size));
-		return new_fallback;
+		void * const fallback = arena_fallback(NULL, size);
+		common_memcpy(fallback, pointer, min_size(size, header->size));
+		return fallback;
 	}
 
 	// fallback -> fallback
-	if (new_buffered == NULL && size != 0) {
+	if (buffered == NULL && size != 0) {
 		return arena_fallback(pointer, size);
 	}
 
 	// fallback -> buffered
-	common_memcpy(new_buffered, pointer, size);
-	FREE(pointer);
-	return new_buffered;
+	common_memcpy(buffered, pointer, size);
+	arena_fallback(pointer, 0);
+	return buffered;
 }

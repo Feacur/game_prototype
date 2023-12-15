@@ -1,5 +1,5 @@
 #include "framework/formatter.h"
-#include "framework/platform/memory.h"
+#include "framework/systems/memory_system.h"
 
 #include "framework/graphics/opengl/functions.h"
 #include "framework/graphics/opengl/internal/functions_to_gpu_library.h"

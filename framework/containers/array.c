@@ -1,6 +1,6 @@
 #include "framework/maths.h"
 #include "framework/formatter.h"
-#include "framework/platform/memory.h"
+#include "framework/systems/memory_system.h"
 
 #include "internal/helpers.h"
 
@@ -71,7 +71,7 @@ void array_remove_if(struct Array * array, Predicate * predicate) {
 
 void array_push_many(struct Array * array, uint32_t count, void const * value) {
 	array_ensure(array, array->count + count);
-	uint8_t * end = (uint8_t *)array->data + array->value_size * array->count;
+	uint8_t * end = array_at_unsafe(array, array->count);
 	common_memcpy(end, value, array->value_size * count);
 	array->count += count;
 }
@@ -81,7 +81,7 @@ void array_set_many(struct Array * array, uint32_t index, uint32_t count, void c
 		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
 	}
-	uint8_t * at = (uint8_t *)array->data + array->value_size * index;
+	uint8_t * at = array_at_unsafe(array, index);
 	common_memcpy(at, value, array->value_size * count);
 }
 
@@ -93,8 +93,8 @@ void array_insert_many(struct Array * array, uint32_t index, uint32_t count, voi
 	array_ensure(array, array->count + count);
 	//
 	size_t const size = array->value_size * count;
-	uint8_t * at  = (uint8_t *)array->data + array->value_size * index;
-	uint8_t * end = (uint8_t *)array->data + array->value_size * array->count;
+	uint8_t * at  = array_at_unsafe(array, index);
+	uint8_t * end = array_at_unsafe(array, array->count);
 	for (uint8_t * it = end; it > at; it -= array->value_size) {
 		common_memcpy(it, it - size, array->value_size);
 	}
@@ -108,8 +108,7 @@ void * array_pop(struct Array * array, uint32_t count) {
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	array->count -= count;
-	size_t const offset = array->value_size * array->count;
-	return (uint8_t *)array->data + offset;
+	return array_at_unsafe(array, array->count);
 }
 
 void * array_peek(struct Array const * array, uint32_t depth) {
@@ -117,13 +116,7 @@ void * array_peek(struct Array const * array, uint32_t depth) {
 		ERR("out of bounds");
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
-	size_t const offset = array->value_size * (array->count - depth - 1);
-	return (uint8_t *)array->data + offset;
-}
-
-void * array_at_unsafe(struct Array const * array, uint32_t index) {
-	size_t const offset = array->value_size * index;
-	return (uint8_t *)array->data + offset;
+	return array_at_unsafe(array, array->count - depth - 1);
 }
 
 void * array_at(struct Array const * array, uint32_t index) {
@@ -132,6 +125,13 @@ void * array_at(struct Array const * array, uint32_t index) {
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
 	}
 	return array_at_unsafe(array, index);
+}
+
+void * array_at_unsafe(struct Array const * array, uint32_t index) {
+	// @note: places that call it shoud do the check
+	// if (index >= array->capacity) { return NULL; }
+	size_t const offset = array->value_size * index;
+	return (uint8_t *)array->data + offset;
 }
 
 bool array_iterate(struct Array const * array, struct Array_Iterator * iterator) {

@@ -2,10 +2,10 @@
 #include "framework/formatter.h"
 #include "framework/unicode.h"
 
-#include "framework/platform/memory.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/array.h"
 #include "framework/containers/hashmap.h"
+#include "framework/systems/memory_system.h"
 
 #include "framework/assets/image.h"
 #include "framework/assets/typeface.h"
@@ -114,10 +114,10 @@ void font_add_glyph(struct Font * font, uint32_t codepoint, float size) {
 	if (glyph != NULL) { glyph->gc_timeout = GLYPH_GC_TIMEOUT_MAX; return; }
 
 	struct Typeface const * typeface = font_get_typeface(font, codepoint);
-	if (typeface == NULL) { WRN("glyph atlas misses a typeface for codepoint '0x%x'", codepoint); return; }
+	if (typeface == NULL) { WRN("glyph atlas misses a typeface for codepoint '%#x'", codepoint); return; }
 
 	uint32_t const glyph_id = typeface_get_glyph_id(typeface, codepoint);
-	if (glyph_id == 0) { WRN("glyph atlas misses a glyph for codepoint '0x%x'", codepoint); }
+	if (glyph_id == 0) { WRN("glyph atlas misses a glyph for codepoint '%#x'", codepoint); }
 
 	struct Glyph_Params const glyph_params = typeface_get_glyph_parameters(
 		typeface, glyph_id, typeface_get_scale(typeface, size)
@@ -186,7 +186,7 @@ void font_render(struct Font * font) {
 	uint32_t const padding = 1;
 
 	// track glyphs usage
-	FOR_HASHMAP (&font->table, it) {
+	FOR_HASHMAP(&font->table, it) {
 		struct Glyph * glyph = it.value;
 		if (glyph->gc_timeout == 0) {
 			font->rendered = false;
@@ -204,7 +204,7 @@ void font_render(struct Font * font) {
 	uint32_t symbols_count = 0;
 	struct Typeface_Symbol * symbols_to_render = ALLOCATE_ARRAY(struct Typeface_Symbol, font->table.count);
 
-	FOR_HASHMAP (&font->table, it) {
+	FOR_HASHMAP(&font->table, it) {
 		struct Glyph * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 		if (glyph->id == 0) { continue; }
@@ -365,7 +365,7 @@ void font_render(struct Font * font) {
 	FREE(symbols_to_render);
 
 	// reuse error glyph UVs
-	FOR_HASHMAP (&font->table, it) {
+	FOR_HASHMAP(&font->table, it) {
 		struct Glyph * glyph = it.value;
 		if (glyph->params.is_empty) { continue; }
 		if (glyph->id != 0) { continue; }

@@ -197,10 +197,20 @@ inline static HASHER(hash64) {
 //     debug
 // ----- ----- ----- ----- -----
 
+struct Callstack {
+	uint64_t data[64];
+};
+
+void print_callstack(uint32_t padding, struct Callstack callstack);
 void report_callstack(void);
 
 #if !defined(GAME_TARGET_RELEASE)
+	#define PRINT_CALLSTACK(padding, callstack) print_callstack(padding, callstack)
 	#define REPORT_CALLSTACK() report_callstack()
+#endif
+
+#if !defined(PRINT_CALLSTACK)
+	#define PRINT_CALLSTACK(padding, callstack) (void)0
 #endif
 
 #if !defined(REPORT_CALLSTACK)

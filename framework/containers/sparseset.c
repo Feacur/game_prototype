@@ -1,5 +1,5 @@
 #include "framework/formatter.h"
-#include "framework/platform/memory.h"
+#include "framework/systems/memory_system.h"
 
 #include "internal/helpers.h"
 
@@ -131,8 +131,12 @@ void * sparseset_get_at(struct Sparseset const * sparseset, uint32_t index) {
 	return array_at(&sparseset->packed, index);
 }
 
-static struct Handle sparseset_get_handle_at(struct Sparseset const * sparseset, uint32_t index) {
-	uint32_t const * id = array_at(&sparseset->ids, index);
+void * sparseset_get_at_unsafe(struct Sparseset const * sparseset, uint32_t index) {
+	return array_at_unsafe(&sparseset->packed, index);
+}
+
+static struct Handle sparseset_get_handle_at_unsafe(struct Sparseset const * sparseset, uint32_t index) {
+	uint32_t const * id = array_at_unsafe(&sparseset->ids, index);
 	struct Handle const * entry_handle = array_at_unsafe(&sparseset->sparse, *id);
 	return (struct Handle){
 		.id = *id + 1,
@@ -145,7 +149,7 @@ bool sparseset_iterate(struct Sparseset const * sparseset, struct Sparseset_Iter
 		uint32_t const index = iterator->next++;
 		iterator->curr   = index;
 		iterator->value  = array_at_unsafe(&sparseset->packed, index);
-		iterator->handle = sparseset_get_handle_at(sparseset, index);
+		iterator->handle = sparseset_get_handle_at_unsafe(sparseset, index);
 		return true;
 	}
 	return false;

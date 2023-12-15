@@ -1,6 +1,6 @@
 #include "framework/formatter.h"
 #include "framework/parsing.h"
-#include "framework/platform/memory.h"
+#include "framework/systems/memory_system.h"
 
 #include "wfobj_lexer.h"
 

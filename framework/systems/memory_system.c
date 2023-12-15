@@ -1,15 +1,10 @@
 #include "framework/formatter.h"
+#include "framework/platform/allocator.h"
 #include "framework/platform/debug.h"
 
-#include <stdlib.h>
-
-
-// @todo: custom specialized allocators
-// @idea: use native OS backend and a custom allocators? if I ever want to learn that area deeper...
-// @idea: use OS-native allocators instead of CRT's
 
 //
-#include "memory.h"
+#include "memory_system.h"
 
 // ----- ----- ----- ----- -----
 //     generic
@@ -26,27 +21,27 @@ ALLOCATOR(generic_reallocate) {
 
 	if (header != NULL) {
 		if (header->checksum != memory_generic_checksum(header)) {
-			ERR("is not generic memory:"); goto fail;
+			ERR("is not generic memory:");
+			REPORT_CALLSTACK(); DEBUG_BREAK();
+			return NULL;
 		}
 		header->checksum = 0;
 	}
 
-	// free
-	if (size == 0) { free(header); return NULL; }
+	header = platform_reallocate(header, (size != 0)
+		? sizeof(*header) + size
+		: 0
+	);
 
-	// allocate or reallocate
-	struct Memory_Header * new_header = realloc(header, sizeof(*header) + size);
-	if (new_header == NULL) { ERR("'realloc' failed:"); goto fail; }
+	if (header != NULL) {
+		*header = (struct Memory_Header){
+			.checksum = memory_generic_checksum(header),
+			.size = size,
+		};
 
-	*new_header = (struct Memory_Header){
-		.checksum = memory_generic_checksum(new_header),
-		.size = size,
-	};
+		return header + 1;
+	}
 
-	return new_header + 1;
-
-	// failed
-	fail: REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
 
@@ -72,7 +67,10 @@ ALLOCATOR(debug_reallocate) {
 
 	if (header != NULL) {
 		if (header->base.checksum != memory_debug_checksum(header)) {
-			ERR("is not debug memory:"); goto fail;
+			ERR("> debug memory:");
+			PRINT_CALLSTACK(2, header->callstack);
+			REPORT_CALLSTACK(); DEBUG_BREAK();
+			return NULL;
 		}
 		header->base.checksum = 0;
 
@@ -81,34 +79,27 @@ ALLOCATOR(debug_reallocate) {
 		if (header->prev != NULL) { header->prev->next = header->next; }
 	}
 
-	// free
-	if (size == 0) {
-		if (header == NULL) { return NULL; }
-		common_memset(header, 0, sizeof(*header) + header->base.size);
-		free(header);
-		return NULL;
+	header = platform_reallocate(header, (size != 0)
+		? sizeof(*header) + size
+		: 0
+	);
+
+	if (header != NULL) {
+		*header = (struct Memory_Header_Debug){
+			.base = {
+				.checksum = memory_debug_checksum(header),
+				.size = size,
+			},
+			.callstack = platform_debug_get_callstack(1),
+		};
+
+		header->next = gs_memory;
+		if (gs_memory != NULL) { gs_memory->prev = header; }
+		gs_memory = header;
+
+		return header + 1;
 	}
 
-	// allocate or reallocate
-	struct Memory_Header_Debug * new_header = realloc(header, sizeof(*header) + size);
-	if (new_header == NULL) { ERR("'realloc' failed:"); goto fail; }
-
-	*new_header = (struct Memory_Header_Debug){
-		.base = {
-			.checksum = memory_debug_checksum(new_header),
-			.size = size,
-		},
-		.callstack = platform_debug_get_callstack(0),
-	};
-
-	new_header->next = gs_memory;
-	if (gs_memory != NULL) { gs_memory->prev = new_header; }
-	gs_memory = new_header;
-
-	return new_header + 1;
-
-	// failed
-	fail: REPORT_CALLSTACK(); DEBUG_BREAK();
 	return NULL;
 }
 
@@ -132,7 +123,7 @@ void memory_debug_report(void) {
 	{
 		struct CString const header = S_("memory report");
 		WRN(
-			"> %-*.*s (bytes: %*.zu | count: %u):"
+			"> %-*.*s (bytes: %*zu | count: %u):"
 			""
 			, pointer_digits_count + 4 // compensate for [0x]
 			, header.length, header.data
@@ -142,15 +133,13 @@ void memory_debug_report(void) {
 	}
 
 	for (struct Memory_Header_Debug const * it = gs_memory; it != NULL; it = it->next) {
-		struct CString const stacktrace = platform_debug_get_stacktrace(it->callstack);
 		WRN(
-			"  [0x%.*zx] (bytes: %*.zu) stacktrace:\n"
-			"%.*s"
+			"  [%#.*zx] (bytes: %*zu) stacktrace:\n"
 			""
 			, pointer_digits_count, (size_t)(it + 1)
 			, bytes_digits_count,   it->base.size
-			, stacktrace.length,    stacktrace.data
 		);
+		PRINT_CALLSTACK(2, it->callstack);
 	}
 
 	DEBUG_BREAK();
@@ -160,6 +149,6 @@ void memory_debug_clear(void) {
 	while (gs_memory != NULL) {
 		void * const header = gs_memory;
 		gs_memory = gs_memory->next;
-		free(header);
+		platform_reallocate(header, 0);
 	}
 }

@@ -10,7 +10,8 @@ struct Hashmap_Iterator {
 	void * value;
 };
 
-// @idea: hash the key automatically as bytes array?
+// @note: `value_size == 0` is a valid option
+// and effectively turns a hash MAP into a hash SET
 struct Hashmap {
 	Allocator * allocate;
 	Hasher * get_hash;

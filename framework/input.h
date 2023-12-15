@@ -10,6 +10,7 @@ void input_reset_delta(void);
 void input_update(void);
 
 bool input_key(enum Key_Code key, enum Input_Type state);
+bool input_scan(enum Scan_Code key, enum Input_Type state);
 void input_track_codepoints(bool state);
 struct Array const * input_get_codepoints(void);
 

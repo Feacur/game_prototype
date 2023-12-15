@@ -1,11 +1,23 @@
 #include "framework/formatter.h"
-#include "framework/platform/memory.h"
+#include "framework/systems/memory_system.h"
 
 #include "internal/helpers.h"
 
 
 //
 #include "hashmap.h"
+
+static void * hashmap_get_key_at_unsafe(struct Hashmap const * hashmap, uint32_t index) {
+	size_t const offset = hashmap->key_size * index;
+	return (uint8_t *)hashmap->keys + offset;
+}
+
+static void * hashmap_get_val_at_unsafe(struct Hashmap const * hashmap, uint32_t index) {
+	// @note: places that call it already do the check
+	// if (index >= hashmap->capacity) { return NULL; }
+	size_t const offset = hashmap->value_size * index;
+	return (uint8_t *)hashmap->values + offset;
+}
 
 struct Hashmap hashmap_init(Hasher * get_hash, uint32_t key_size, uint32_t value_size) {
 	return (struct Hashmap){
@@ -77,12 +89,12 @@ void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity) {
 
 		hashmap->hashes[key_index] = hashes[i];
 		common_memcpy(
-			(uint8_t *)hashmap->keys + hashmap->key_size * key_index,
+			hashmap_get_key_at_unsafe(hashmap, key_index),
 			ht_key,
 			hashmap->key_size
 		);
 		common_memcpy(
-			(uint8_t *)hashmap->values + hashmap->value_size * key_index,
+			hashmap_get_val_at_unsafe(hashmap, key_index),
 			values + hashmap->value_size * i,
 			hashmap->value_size
 		);
@@ -106,7 +118,7 @@ void * hashmap_get(struct Hashmap const * hashmap, void const * key) {
 	uint32_t const key_index = hashmap_find_key_index(hashmap, key, hash);
 	// if (key_index == INDEX_EMPTY) { return NULL; }
 	if (hashmap->marks[key_index] != HASH_MARK_FULL) { return NULL; }
-	return (uint8_t *)hashmap->values + hashmap->value_size * key_index;
+	return hashmap_get_val_at_unsafe(hashmap, key_index);
 }
 
 bool hashmap_set(struct Hashmap * hashmap, void const * key, void const * value) {
@@ -126,12 +138,12 @@ bool hashmap_set(struct Hashmap * hashmap, void const * key, void const * value)
 
 	hashmap->hashes[key_index] = hash;
 	common_memcpy(
-		(uint8_t *)hashmap->keys + hashmap->key_size * key_index,
+		hashmap_get_key_at_unsafe(hashmap, key_index),
 		key,
 		hashmap->key_size
 	);
 	common_memcpy(
-		(uint8_t *)hashmap->values + hashmap->value_size * key_index,
+		hashmap_get_val_at_unsafe(hashmap, key_index),
 		value,
 		hashmap->value_size
 	);
@@ -160,35 +172,21 @@ uint32_t hashmap_get_count(struct Hashmap const * hashmap) {
 	return hashmap->count;
 }
 
-static void * hashmap_get_key_at_unsafe(struct Hashmap const * hashmap, uint32_t index) {
-	size_t const offset = hashmap->key_size * index;
-	return (uint8_t *)hashmap->keys + offset;
-}
-
 void * hashmap_get_key_at(struct Hashmap const * hashmap, uint32_t index) {
-	if (index >= hashmap->count) {
-		ERR("out of bounds");
-		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
-	}
+	if (index >= hashmap->capacity)              { REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL; }
+	if (hashmap->marks[index] != HASH_MARK_FULL) { return NULL; }
 	return hashmap_get_key_at_unsafe(hashmap, index);
 }
 
-static void * hashmap_get_val_at_unsafe(struct Hashmap const * hashmap, uint32_t index) {
-	size_t const offset = hashmap->value_size * index;
-	return (uint8_t *)hashmap->values + offset;
-}
-
 void * hashmap_get_val_at(struct Hashmap const * hashmap, uint32_t index) {
-	if (index >= hashmap->count) {
-		ERR("out of bounds");
-		REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL;
-	}
+	if (index >= hashmap->capacity)              { REPORT_CALLSTACK(); DEBUG_BREAK(); return NULL; }
+	if (hashmap->marks[index] != HASH_MARK_FULL) { return NULL; }
 	return hashmap_get_val_at_unsafe(hashmap, index);
 }
 
 void hashmap_del_at(struct Hashmap * hashmap, uint32_t index) {
 	if (index >= hashmap->capacity)              { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-	if (hashmap->marks[index] != HASH_MARK_FULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
+	if (hashmap->marks[index] != HASH_MARK_FULL) { return; }
 	hashmap->marks[index] = HASH_MARK_SKIP;
 	hashmap->count--;
 }

@@ -24,4 +24,6 @@ void * buffer_pop(struct Buffer * buffer, size_t size);
 void * buffer_peek(struct Buffer const * buffer, size_t offset);
 void * buffer_at(struct Buffer const * buffer, size_t offset);
 
+void * buffer_at_unsafe(struct Buffer const * buffer, size_t offset);
+
 #endif

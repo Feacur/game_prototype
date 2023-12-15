@@ -125,12 +125,8 @@ bool contains_full_word(char const * container, struct CString value) {
 //     debug
 // ----- ----- ----- ----- -----
 
-void report_callstack(void) {
-	// @note: skip `report_callstack`
-	struct Callstack const callstack = platform_debug_get_callstack(1);
+void print_callstack(uint32_t padding, struct Callstack callstack) {
 	struct CString stacktrace = platform_debug_get_stacktrace(callstack);
-	if (stacktrace.length == 0) { stacktrace = S_("empty"); }
-	LOG("> callstack:\n");
 	do {
 		while (stacktrace.length > 0 && is_line(stacktrace.data[0])) {
 			stacktrace.length--;
@@ -141,9 +137,17 @@ void report_callstack(void) {
 			line_length++;
 		}
 		if (line_length > 0) {
-			LOG("  %.*s\n" , line_length, stacktrace.data);
+			LOG("%*s" , padding, "");
+			LOG("%.*s\n" , line_length, stacktrace.data);
 			stacktrace.length -= line_length;
 			stacktrace.data += line_length;
 		}
 	} while (stacktrace.length > 0);
+}
+
+void report_callstack(void) {
+	// @note: skip `report_callstack`
+	struct Callstack const callstack = platform_debug_get_callstack(1);
+	LOG("> callstack:\n");
+	print_callstack(2, callstack);
 }
