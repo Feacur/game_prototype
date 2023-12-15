@@ -459,7 +459,7 @@ static void app_fixed_tick(void) {
 }
 
 static void app_frame_tick(void) {
-	if (input_key(KC_LALT, IT_DOWN) && input_key(KC_F4, IT_DOWN)) {
+	if (input_scan(SC_LALT, IT_DOWN) && input_scan(SC_F4, IT_DOWN)) {
 		gs_main_exit = !input_key(KC_LSHIFT, IT_DOWN);
 		application_exit();
 	}
@@ -480,7 +480,7 @@ static void app_platform_quit(void) {
 }
 
 static bool app_window_close(void) {
-	gs_main_exit = !input_key(KC_LSHIFT, IT_DOWN);
+	gs_main_exit = !input_scan(SC_LSHIFT, IT_DOWN);
 	return true;
 }
 

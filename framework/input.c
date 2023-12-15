@@ -128,9 +128,8 @@ void input_to_platform_reset(void) {
 }
 
 void input_to_platform_on_key(enum Key_Code key, enum Scan_Code scan, bool is_down) {
-	gs_input_state.keyboard.keys[key] = is_down;
-	// @note: override translated key with a universal HID one
 	enum Key_Code translated = scan_to_key(scan);
+	gs_input_state.keyboard.keys[key] = is_down;
 	gs_input_state.keyboard.scans[translated] = is_down;
 }
 

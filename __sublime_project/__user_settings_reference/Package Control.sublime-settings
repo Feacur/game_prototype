@@ -15,6 +15,8 @@
 		"LSP-json",
 		"LSP-OmniSharp",
 		"LSP-rust-analyzer",
+		"MarkdownLivePreview",
+		"MarkdownPreview",
 		"OpenGL Shading Language (GLSL)",
 		"Package Control",
 		"PackageDev",
