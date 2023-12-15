@@ -37,6 +37,7 @@
 	{ "key": "ctrl+shift+k", "command": "-editor.action.deleteLines" },
 	{ "key": "ctrl+alt+shift+down", "command": "-cursorColumnSelectDown", },
 	{ "key": "ctrl+alt+shift+up", "command": "-cursorColumnSelectUp", },
+	{ "key": "ctrl+shift+m", "command": "-workbench.actions.view.problems", },
 	// -- utilities
 	{
 		"key": "ctrl+shift+r",

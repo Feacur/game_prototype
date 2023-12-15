@@ -221,12 +221,12 @@ static void prototype_draw_objects(void) {
 	{
 		// @note: consider global block unique and extendable
 		// graphics_buffer_align(&gs_renderer.global, BUFFER_MODE_UNIFORM);
-		// size_t const offset = gs_renderer.global.size;
 
 		struct Shader_Global {
 			float dummy;
 		} sg;
 
+		// size_t const offset = gs_renderer.global.size;
 		buffer_push_many(&gs_renderer.global, sizeof(sg), &sg);
 		array_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 			.type = GPU_COMMAND_TYPE_BUFFER,
@@ -245,10 +245,10 @@ static void prototype_draw_objects(void) {
 
 		struct Shader_Camera {
 			struct uvec2 viewport_size;
-			uint8_t _padding0[sizeof(struct vec4) - sizeof(struct uvec2)];
-			struct mat4 view;
-			struct mat4 projection;
-			struct mat4 projection_view;
+			uint8_t      view_padding_alignment[SIZE_OF_MEMBER(struct mat4, x) - sizeof(struct uvec2)];
+			struct mat4  view;
+			struct mat4  projection;
+			struct mat4  projection_view;
 		} sc = {
 			.viewport_size = camera->cached_size,
 			.view = mat4_inverse_transformation(
@@ -265,8 +265,8 @@ static void prototype_draw_objects(void) {
 		// process camera
 		{
 			graphics_buffer_align(&gs_renderer.camera, BUFFER_MODE_UNIFORM);
-			size_t const offset = gs_renderer.camera.size;
 
+			size_t const offset = gs_renderer.camera.size;
 			buffer_push_many(&gs_renderer.camera, sizeof(sc), &sc);
 			array_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_BUFFER,
@@ -370,10 +370,15 @@ static void prototype_draw_objects(void) {
 
 				case ENTITY_TYPE_QUAD_2D: {
 					struct Entity_Quad const * e_quad = &entity->as.quad;
+					enum Batcher_Flag flag = BATCHER_FLAG_NONE;
+					if (e_quad->uniform_id == string_system_find(S_("p_Font"))) {
+						flag |= BATCHER_FLAG_FONT;
+					}
 					batcher_2d_add_quad(
 						gs_renderer.batcher_2d,
 						entity->cached_rect,
-						e_quad->view
+						e_quad->view,
+						(uint32_t)flag
 					);
 				} break;
 
@@ -437,6 +442,7 @@ static void app_init(void) {
 	ui_init();
 	prototype_init();
 
+	// @note: essentially the same as `assets/materials/batcher_2d.material`
 	ui_set_shader(S_("assets/shaders/batcher_2d.glsl"));
 	ui_set_image(S_("assets/images/ui.image"));
 	ui_set_font(S_("assets/test.font"));

@@ -52,13 +52,13 @@ static void ui_internal_push_shader(void) {
 static void ui_internal_push_image(void) {
 	struct Asset_Image const * asset = asset_system_get(gs_ui.ah_image);
 	struct Handle const gpu_handle = asset ? asset->gh_texture : (struct Handle){0};
-	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Texture"), A_(gpu_handle));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Image"), A_(gpu_handle));
 }
 
 static void ui_internal_push_font(void) {
 	struct Asset_Font const * asset = asset_system_get(gs_ui.ah_font);
 	struct Handle const gpu_handle = asset ? asset->gh_texture : (struct Handle){0};
-	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Texture"), A_(gpu_handle));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Font"), A_(gpu_handle));
 }
 
 static void ui_internal_push_tint(void) {
@@ -136,7 +136,7 @@ void ui_quad(struct rect uv) {
 	ui_internal_push_shader();
 	ui_internal_push_image();
 	ui_internal_push_tint();
-	batcher_2d_add_quad(gs_renderer.batcher_2d, gs_ui.rect, uv);
+	batcher_2d_add_quad(gs_renderer.batcher_2d, gs_ui.rect, uv, (uint32_t)BATCHER_FLAG_NONE);
 }
 
 void ui_text(struct CString value, struct vec2 alignment, bool wrap, float size) {

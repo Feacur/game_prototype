@@ -1,6 +1,7 @@
 // %appdata%/Code/User
 {
 	"terminal.integrated.defaultProfile.windows": "Command Prompt",
+	"terminal.integrated.persistentSessionReviveProcess": "never",
 	"terminal.integrated.enablePersistentSessions": false,
 	"terminal.integrated.shellIntegration.history": 0,
 	"debug.console.historySuggestions": false,
@@ -12,6 +13,8 @@
 	"telemetry.telemetryLevel": "off",
 	"window.restoreWindows": "none",
 	"debug.toolBarLocation": "commandCenter",
+	"debug.internalConsoleOptions": "neverOpen",
+	"debug.console.closeOnEnd": true,
 	"update.mode": "start",
 	// -- files
 	"files.trimFinalNewlines": false,

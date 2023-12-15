@@ -50,6 +50,8 @@ struct Batcher_Instance {
 	struct rect quad;
 	struct rect uv;
 	struct vec4 color;
+	uint32_t    flags;
+	uint8_t     quad_padding_alignment[sizeof(struct rect) - sizeof(uint32_t)];
 };
 
 struct Batcher_2D {
@@ -86,8 +88,6 @@ struct Batcher_2D * batcher_2d_init(void) {
 		.gh_buffer       = gpu_buffer_init(&(struct Buffer){0}),
 		.gh_mesh         = gpu_mesh_init(&(struct Mesh){0}),
 	};
-
-
 	return batcher;
 }
 
@@ -159,11 +159,6 @@ void batcher_2d_set_shader(
 
 void batcher_2d_uniforms_push(struct Batcher_2D * batcher, struct CString name, struct CArray value) {
 	uint32_t const id = string_system_add(name);
-	batcher_2d_uniforms_id_push(batcher, id, value);
-}
-
-void batcher_2d_uniforms_id_push(struct Batcher_2D * batcher, uint32_t id, struct CArray value) {
-	if (id == 0) { return; }
 	struct CArray_Mut const field = gfx_uniforms_id_get(&batcher->uniforms, id, batcher->batch.uniform_offset);
 	if (field.data != NULL) {
 		if (carray_equals(carray_const(field), value)) { return; }
@@ -175,7 +170,8 @@ void batcher_2d_uniforms_id_push(struct Batcher_2D * batcher, uint32_t id, struc
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
 	struct rect rect,
-	struct rect uv
+	struct rect uv,
+	uint32_t flags
 ) {
 	struct mat4 const m = batcher->matrix;
 	struct Batcher_Instance const instance = {
@@ -191,6 +187,7 @@ void batcher_2d_add_quad(
 		},
 		.uv = uv,
 		.color = batcher->color,
+		.flags = flags,
 	};
 	buffer_push_many(&batcher->buffer, sizeof(instance), &instance);
 }
@@ -392,7 +389,8 @@ void batcher_2d_add_text(
 							((float)params.rect.max.y) + offset.y,
 						},
 					},
-					(struct rect){0} // @note: UVs are delayed, see `batcher_2d_bake_words`
+					(struct rect){0}, // @note: UVs are delayed, see `batcher_2d_bake_words`
+					(uint32_t)BATCHER_FLAG_FONT
 				);
 			}
 		}

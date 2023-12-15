@@ -50,13 +50,13 @@
 			"material": "assets/materials/back_buffer.material",
 			"type": "quad_2d",
 			"view": [0, 0, 1, 1],
-			"uniform": "p_Texture",
+			"uniform": "p_Image",
 			"mode": "fit",
 		},
 		// -- texts
 		{
 			"camera_uid": 2,
-			"material": "assets/materials/test.font.material",
+			"material": "assets/materials/batcher_2d.material",
 			"rect": {
 				"anchor_min": [0, 0],
 				"anchor_max": [0, 0],
@@ -72,7 +72,7 @@
 		},
 		{
 			"camera_uid": 2,
-			"material": "assets/materials/test.font.material",
+			"material": "assets/materials/batcher_2d.material",
 			"rect": {
 				"anchor_min": [0.5, 1],
 				"anchor_max": [0.5, 1],
@@ -89,7 +89,7 @@
 		// -- glyph atlases
 		{
 			"camera_uid": 2,
-			"material": "assets/materials/test.font.material",
+			"material": "assets/materials/batcher_2d.material",
 			"rect": {
 				"anchor_min": [0, 1],
 				"anchor_max": [0, 1],
@@ -97,7 +97,7 @@
 			},
 			"type": "quad_2d",
 			"view": [0, 0, 1, 1],
-			"uniform": "p_Texture",
+			"uniform": "p_Font",
 			"mode": "size",
 		},
 	],

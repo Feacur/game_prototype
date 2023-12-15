@@ -5,7 +5,6 @@
 #include "framework/graphics/gfx_types.h"
 
 struct Batcher_2D;
-
 struct Array;
 
 struct Batcher_2D * batcher_2d_init(void);
@@ -21,12 +20,12 @@ void batcher_2d_set_shader(
 );
 
 void batcher_2d_uniforms_push(struct Batcher_2D * batcher, struct CString name, struct CArray value);
-void batcher_2d_uniforms_id_push(struct Batcher_2D * batcher, uint32_t id, struct CArray value);
 
 void batcher_2d_add_quad(
 	struct Batcher_2D * batcher,
 	struct rect rect,
-	struct rect uv
+	struct rect uv,
+	uint32_t flags
 );
 
 void batcher_2d_add_text(

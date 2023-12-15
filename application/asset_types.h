@@ -6,6 +6,11 @@
 struct Typeface;
 struct Font;
 
+enum Batcher_Flag {
+	BATCHER_FLAG_NONE,
+	BATCHER_FLAG_FONT,
+};
+
 struct Asset_Bytes {
 	uint8_t * data;
 	uint32_t length;

@@ -2,7 +2,8 @@
 	"shader": "assets/shaders/batcher_2d.glsl",
 	"blend": "mix", "depth": "none",
 	"uniforms": {
-		"p_Texture": {"path": "assets/test.font"},
+		"p_Image": {"path": "assets/images/ui.image"},
+		"p_Font": {"path": "assets/test.font"},
 		"p_Tint": [1, 1, 1, 1],
 	},
 }

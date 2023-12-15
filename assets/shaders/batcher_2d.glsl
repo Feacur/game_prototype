@@ -4,11 +4,14 @@ BLOCK_GLOBAL Global {
 
 BLOCK_CAMERA Camera {
 	uvec2 viewport_size;
-	// padding
-	mat4 view;
-	mat4 projection;
-	mat4 projection_view;
+	float view_padding_alignment[2];
+	mat4  view;
+	mat4  projection;
+	mat4  projection_view;
 } camera;
+
+#define FLAG_NONE 0
+#define FLAG_FONT 1
 
 
 
@@ -28,6 +31,8 @@ struct Instance {
 	vec4 quad;
 	vec4 uv;
 	vec4 color;
+	uint flags;
+	uint quad_padding_alignment[3];
 };
 
 BLOCK_DYNAMIC Dynamic {
@@ -35,6 +40,7 @@ BLOCK_DYNAMIC Dynamic {
 } dyn;
 
 out Vertex {
+	uint flags;
 	vec4 color;
 	vec2 tex_coord;
 } vert;
@@ -52,6 +58,7 @@ void main() {
 		inst.uv.zw, inst.uv.xw, inst.uv.xy,
 	};
 
+	vert.flags = inst.flags;
 	vert.color = inst.color;
 	vert.tex_coord = tex_coords[gl_VertexID];
 	gl_Position = vec4(position[gl_VertexID], 0, 1);
@@ -63,17 +70,22 @@ void main() {
 
 #if defined(FRAGMENT_SHADER)
 in Vertex {
+	flat uint flags;
 	vec4 color;
 	vec2 tex_coord;
 } vert;
 
 uniform vec4 p_Tint;
-uniform sampler2D p_Texture;
+uniform sampler2D p_Font;
+uniform sampler2D p_Image;
 
 layout(location = 0) out vec4 frag;
 
 void main() {
-	vec4 texture_pixel = texture(p_Texture, vert.tex_coord);
+	vec4 texture_pixel = (bool(vert.flags & FLAG_FONT))
+		? texture(p_Font, vert.tex_coord)
+		: texture(p_Image, vert.tex_coord);
+	// if (texture_pixel.a == 0) { discard; }
 	frag = texture_pixel * vert.color * p_Tint;
 }
 #endif

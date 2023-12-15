@@ -976,10 +976,16 @@ struct mat4 graphics_projection_mat4(
 	);
 }
 
+size_t graphics_offest_align(size_t offset, enum Buffer_Mode mode) {
+	size_t const alignment = get_buffer_mode_alignment(mode);
+	size_t const mask = alignment - 1;
+	return (offset + mask) & ~mask;
+	// return ((offset + mask) / alignment) * alignment;
+}
+
 void graphics_buffer_align(struct Buffer * buffer, enum Buffer_Mode mode) {
-	uint32_t const alignment = get_buffer_mode_alignment(mode);
-	size_t const align = alignment - (buffer->size % alignment);
-	buffer_push_many(buffer, align, NULL);
+	size_t const padding = graphics_offest_align(buffer->size, mode) - buffer->size;
+	buffer_push_many(buffer, padding, NULL);
 }
 
 // static void graphics_stencil_test(void) {

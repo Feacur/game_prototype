@@ -110,21 +110,17 @@ static void asset_shader_drop(struct Handle handle) {
 //     Asset image part
 // ----- ----- ----- ----- -----
 
-struct Asset_Image_Context {
-	struct Asset_Image * result;
-};
-
 static JSON_PROCESSOR(asset_image_fill) {
-	struct Asset_Image_Context * context = data;
+	struct Asset_Image * context = data;
 	if (json->type == JSON_ERROR) {
-		common_memset(context->result, 0, sizeof(*context->result));
+		common_memset(context, 0, sizeof(*context));
 		return;
 	}
 
 	struct CString const path = json_get_string(json, S_("path"));
 	struct Buffer file_buffer = platform_file_read_entire(path);
 	if (file_buffer.capacity == 0) {
-		common_memset(context->result, 0, sizeof(*context->result));
+		common_memset(context, 0, sizeof(*context));
 		return;
 	}
 
@@ -134,7 +130,7 @@ static JSON_PROCESSOR(asset_image_fill) {
 
 	buffer_free(&file_buffer);
 
-	*context->result = (struct Asset_Image){
+	*context = (struct Asset_Image){
 		.gh_texture = gpu_texture_init(&image),
 	};
 	image_free(&image);
@@ -144,8 +140,7 @@ static JSON_PROCESSOR(asset_image_fill) {
 static void asset_image_load(struct Handle handle) {
 	struct Asset_Image * asset = asset_system_get(handle);
 	struct CString const name = asset_system_get_name(handle);
-	struct Asset_Image_Context context = { .result = asset };
-	process_json(name, &context, asset_image_fill);
+	process_json(name, asset, asset_image_fill);
 }
 
 static void asset_image_drop(struct Handle handle) {
@@ -185,13 +180,9 @@ static void asset_typeface_drop(struct Handle handle) {
 //     Asset glyph atlas part
 // ----- ----- ----- ----- -----
 
-struct Asset_Font_Context {
-	struct Handle ah_font;
-};
-
 static JSON_PROCESSOR(asset_font_fill) {
-	struct Asset_Font_Context * context = data;
-	struct Asset_Font * asset = asset_system_get(context->ah_font);
+	struct Handle const * context = data;
+	struct Asset_Font * asset = asset_system_get(*context);
 	if (json->type == JSON_ERROR) {
 		common_memset(asset, 0, sizeof(*asset));
 		return;
@@ -224,8 +215,7 @@ static JSON_PROCESSOR(asset_font_fill) {
 
 static void asset_font_load(struct Handle handle) {
 	struct CString const name = asset_system_get_name(handle);
-	struct Asset_Font_Context context = { .ah_font = handle };
-	process_json(name, &context, asset_font_fill);
+	process_json(name, &handle, asset_font_fill);
 }
 
 static void asset_font_drop(struct Handle handle) {
@@ -239,18 +229,14 @@ static void asset_font_drop(struct Handle handle) {
 // -- Asset target part
 // ----- ----- ----- ----- -----
 
-struct Asset_Target_Context {
-	struct Asset_Target * result;
-};
-
 static JSON_PROCESSOR(asset_target_fill) {
-	struct Asset_Target_Context * context = data;
+	struct Asset_Target * context = data;
 	if (json->type == JSON_ERROR) {
-		common_memset(context->result, 0, sizeof(*context->result));
+		common_memset(context, 0, sizeof(*context));
 		return;
 	}
 
-	*context->result = (struct Asset_Target){
+	*context = (struct Asset_Target){
 		.gh_target = json_read_target(json),
 	};
 }
@@ -258,8 +244,7 @@ static JSON_PROCESSOR(asset_target_fill) {
 static void asset_target_load(struct Handle handle) {
 	struct Asset_Target * asset = asset_system_get(handle);
 	struct CString const name = asset_system_get_name(handle);
-	struct Asset_Target_Context context = { .result = asset };
-	process_json(name, &context, asset_target_fill);
+	process_json(name, asset, asset_target_fill);
 }
 
 static void asset_target_drop(struct Handle handle) {
@@ -301,13 +286,9 @@ static void asset_model_drop(struct Handle handle) {
 // -- Asset material part
 // ----- ----- ----- ----- -----
 
-struct Asset_Material_Context {
-	struct Handle ah_material;
-};
-
 static JSON_PROCESSOR(asset_material_fill) {
-	struct Asset_Material_Context * context = data;
-	struct Asset_Material * asset = asset_system_get(context->ah_material);
+	struct Handle const * context = data;
+	struct Asset_Material * asset = asset_system_get(*context);
 	if (json->type == JSON_ERROR) {
 		common_memset(asset, 0, sizeof(*asset));
 		return;
@@ -320,8 +301,7 @@ static JSON_PROCESSOR(asset_material_fill) {
 
 static void asset_material_load(struct Handle handle) {
 	struct CString const name = asset_system_get_name(handle);
-	struct Asset_Material_Context context = { .ah_material = handle };
-	process_json(name, &context, asset_material_fill);
+	process_json(name, &handle, asset_material_fill);
 }
 
 static void asset_material_drop(struct Handle handle) {
