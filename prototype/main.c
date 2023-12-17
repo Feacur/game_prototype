@@ -167,7 +167,7 @@ static void prototype_init(void) {
 	gpu_execute(1, &(struct GPU_Command){
 		.type = GPU_COMMAND_TYPE_CULL,
 		.as.cull = {
-			.mode = CULL_MODE_BACK,
+			.flags = CULL_FLAG_BACK,
 			.order = WINDING_ORDER_POSITIVE,
 		},
 	});
@@ -203,7 +203,7 @@ static void prototype_draw_objects(void) {
 			{
 				.type = GPU_COMMAND_TYPE_CLEAR,
 				.as.clear = {
-					.mask  = TEXTURE_TYPE_COLOR | TEXTURE_TYPE_DEPTH | TEXTURE_TYPE_STENCIL,
+					.flags  = TEXTURE_FLAG_COLOR | TEXTURE_FLAG_DEPTH | TEXTURE_FLAG_STENCIL,
 				},
 			},
 		});
@@ -220,7 +220,7 @@ static void prototype_draw_objects(void) {
 	// process global
 	{
 		// @note: consider global block unique and extendable
-		// graphics_buffer_align(&gs_renderer.global, BUFFER_MODE_UNIFORM);
+		// graphics_buffer_align(&gs_renderer.global, BUFFER_TARGET_UNIFORM);
 
 		struct Shader_Global {
 			float dummy;
@@ -234,8 +234,8 @@ static void prototype_draw_objects(void) {
 				.gh_buffer = gs_renderer.gh_camera,
 				// .offset = offset,
 				// .length = gs_renderer.global.size - offset,
-				.mode = BUFFER_MODE_UNIFORM,
-				.index = BLOCK_TYPE_GLOBAL - 1,
+				.target = BUFFER_TARGET_UNIFORM,
+				.index = SHADER_BLOCK_GLOBAL - 1,
 			},
 		});
 	}
@@ -264,7 +264,7 @@ static void prototype_draw_objects(void) {
 
 		// process camera
 		{
-			graphics_buffer_align(&gs_renderer.camera, BUFFER_MODE_UNIFORM);
+			graphics_buffer_align(&gs_renderer.camera, BUFFER_TARGET_UNIFORM);
 
 			size_t const offset = gs_renderer.camera.size;
 			buffer_push_many(&gs_renderer.camera, sizeof(sc), &sc);
@@ -274,8 +274,8 @@ static void prototype_draw_objects(void) {
 					.gh_buffer = gs_renderer.gh_camera,
 					.offset = offset,
 					.length = gs_renderer.camera.size - offset,
-					.mode = BUFFER_MODE_UNIFORM,
-					.index = BLOCK_TYPE_CAMERA - 1,
+					.target = BUFFER_TARGET_UNIFORM,
+					.index = SHADER_BLOCK_CAMERA - 1,
 				},
 			});
 		}
@@ -294,12 +294,12 @@ static void prototype_draw_objects(void) {
 			});
 		}
 
-		if (camera->clear.mask != TEXTURE_TYPE_NONE) {
+		if (camera->clear.flags != TEXTURE_FLAG_NONE) {
 			batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 			array_push_many(&gs_renderer.gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_CLEAR,
 				.as.clear = {
-					.mask  = camera->clear.mask,
+					.flags = camera->clear.flags,
 					.color = camera->clear.color,
 				},
 			});

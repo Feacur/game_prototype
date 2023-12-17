@@ -4,7 +4,7 @@
 //
 #include "gfx_objects.h"
 
-struct Handle gpu_target_get_texture(struct Handle handle, enum Texture_Type type, uint32_t index) {
+struct Handle gpu_target_get_texture(struct Handle handle, enum Texture_Flag flags, uint32_t index) {
 	struct GPU_Target const * target = gpu_target_get(handle);
 	if (target == NULL) { return (struct Handle){0}; }
 
@@ -15,9 +15,9 @@ struct Handle gpu_target_get_texture(struct Handle handle, enum Texture_Type typ
 		if (texture == NULL) { continue; }
 
 		uint32_t const attachment = attachments_count;
-		if (texture->parameters.texture_type == TEXTURE_TYPE_COLOR) { attachments_count++; }
+		if (texture->parameters.flags & TEXTURE_FLAG_COLOR) { attachments_count++; }
 
-		if (texture->parameters.texture_type == type && attachment == index) {
+		if (texture->parameters.flags == flags && attachment == index) {
 			return *gh_texture;
 		}
 	}

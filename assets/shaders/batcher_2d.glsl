@@ -1,17 +1,14 @@
-BLOCK_GLOBAL Global {
+INTERFACE_BLOCK_GLOBAL Global {
 	float dummy;
 } global;
 
-BLOCK_CAMERA Camera {
+INTERFACE_BLOCK_CAMERA Camera {
 	uvec2 viewport_size;
 	float view_padding_alignment[2];
 	mat4  view;
 	mat4  projection;
 	mat4  projection_view;
 } camera;
-
-#define FLAG_NONE 0
-#define FLAG_FONT 1
 
 
 
@@ -35,7 +32,7 @@ struct Instance {
 	uint quad_padding_alignment[3];
 };
 
-BLOCK_DYNAMIC Dynamic {
+INTERFACE_BLOCK_DYNAMIC Dynamic {
 	Instance instances[];
 } dyn;
 
@@ -82,7 +79,7 @@ uniform sampler2D p_Image;
 layout(location = 0) out vec4 frag;
 
 void main() {
-	vec4 texture_pixel = (bool(vert.flags & FLAG_FONT))
+	vec4 texture_pixel = (bool(vert.flags & BATCHER_FLAG_FONT))
 		? texture(p_Font, vert.tex_coord)
 		: texture(p_Image, vert.tex_coord);
 	// if (texture_pixel.a == 0) { discard; }

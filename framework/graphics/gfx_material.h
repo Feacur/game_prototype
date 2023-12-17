@@ -10,15 +10,15 @@
 //     uniforms
 // ----- ----- ----- ----- -----
 
-struct Gfx_Uniforms_Entry {
-	uint32_t id;
-	uint32_t size, offset;
-};
-
 struct Gfx_Uniforms_Iterator {
 	uint32_t current, next;
 	uint32_t id, size;
 	void * value;
+};
+
+struct Gfx_Uniforms_Entry {
+	uint32_t id;
+	uint32_t size, offset;
 };
 
 struct Gfx_Uniforms {

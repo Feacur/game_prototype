@@ -16,7 +16,7 @@ struct mat4 graphics_projection_mat4(
 	float view_near, float view_far, float ortho
 );
 
-size_t graphics_offest_align(size_t offset, enum Buffer_Mode mode);
-void graphics_buffer_align(struct Buffer * buffer, enum Buffer_Mode mode);
+size_t graphics_offest_align(size_t offset, enum Buffer_Target target);
+void graphics_buffer_align(struct Buffer * buffer, enum Buffer_Target target);
 
 #endif

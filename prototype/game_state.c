@@ -48,7 +48,7 @@ static void json_read_camera(struct JSON const * json, struct Camera * camera) {
 		.ortho = (float)json_get_number(json, S_("ortho")),
 	};
 	camera->clear = (struct Camera_Clear){
-		.mask  = json_read_texture_type(json_get(json, S_("clear_mask"))),
+		.flags  = json_read_texture_flags(json_get(json, S_("clear_mask"))),
 		// .rgba = json_read_hex(json_get(json, S_("clear_rgba"))),
 	};
 	json_read_many_flt(json_get(json, S_("clear_color")), 4, &camera->clear.color.x);

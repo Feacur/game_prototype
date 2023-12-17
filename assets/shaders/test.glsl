@@ -1,8 +1,8 @@
-BLOCK_GLOBAL Global {
+INTERFACE_BLOCK_GLOBAL Global {
 	float dummy;
 } global;
 
-BLOCK_CAMERA Camera {
+INTERFACE_BLOCK_CAMERA Camera {
 	uvec2 viewport_size;
 	// padding
 	mat4 view;

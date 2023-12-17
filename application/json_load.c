@@ -80,9 +80,9 @@ static struct Handle json_load_texture(struct JSON const * json) {
 
 	if (cstring_equals(type, S_("target"))) {
 		struct Asset_Target const * asset = asset_ptr;
-		enum Texture_Type const texture_type = json_read_texture_type(json_get(json, S_("buffer_type")));
+		enum Texture_Flag const texture_flags = json_read_texture_flags(json_get(json, S_("buffer_type")));
 		uint32_t const index = (uint32_t)json_get_number(json, S_("index"));
-		return gpu_target_get_texture(asset->gh_target, texture_type, index);
+		return gpu_target_get_texture(asset->gh_target, texture_flags, index);
 	}
 
 	if (cstring_equals(type, S_("font"))) {

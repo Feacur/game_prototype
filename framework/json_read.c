@@ -82,24 +82,24 @@ void json_read_many_s32(struct JSON const * json, uint32_t length, int32_t * res
 //     graphics types
 // ----- ----- ----- ----- -----
 
-enum Texture_Type json_read_texture_type(struct JSON const * json) {
-	enum Texture_Type texture_type = TEXTURE_TYPE_NONE;
+enum Texture_Flag json_read_texture_flags(struct JSON const * json) {
+	enum Texture_Flag texture_flags = TEXTURE_FLAG_NONE;
 	if (json->type == JSON_ARRAY) {
 		uint32_t const count = json_count(json);
 		for (uint32_t i = 0; i < count; i++) {
 			struct CString const value = json_at_string(json, i);
 			if (cstring_equals(value, S_("color"))) {
-				texture_type |= TEXTURE_TYPE_COLOR;
+				texture_flags |= TEXTURE_FLAG_COLOR;
 			}
 			else if (cstring_equals(value, S_("depth"))) {
-				texture_type |= TEXTURE_TYPE_DEPTH;
+				texture_flags |= TEXTURE_FLAG_DEPTH;
 			}
 			else if (cstring_equals(value, S_("stencil"))) {
-				texture_type |= TEXTURE_TYPE_STENCIL;
+				texture_flags |= TEXTURE_FLAG_STENCIL;
 			}
 		}
 	}
-	return texture_type;
+	return texture_flags;
 }
 
 enum Filter_Mode json_read_filter_mode(struct JSON const * json) {
@@ -115,26 +115,23 @@ enum Filter_Mode json_read_filter_mode(struct JSON const * json) {
 	return FILTER_MODE_NONE;
 }
 
-enum Wrap_Mode json_read_wrap_mode(struct JSON const * json) {
+enum Wrap_Flag json_read_wrap_flags(struct JSON const * json) {
 	if (json->type == JSON_STRING) {
 		struct CString const value = json_as_string(json);
 		if (cstring_equals(value, S_("edge"))) {
-			return WRAP_MODE_EDGE;
+			return WRAP_FLAG_EDGE;
 		}
 		if (cstring_equals(value, S_("repeat"))) {
-			return WRAP_MODE_REPEAT;
-		}
-		if (cstring_equals(value, S_("border"))) {
-			return WRAP_MODE_BORDER;
+			return WRAP_FLAG_REPEAT;
 		}
 		if (cstring_equals(value, S_("mirror_edge"))) {
-			return WRAP_MODE_MIRROR_EDGE;
+			return WRAP_FLAG_MIRROR_EDGE;
 		}
 		if (cstring_equals(value, S_("mirror_repeat"))) {
-			return WRAP_MODE_MIRROR_REPEAT;
+			return WRAP_FLAG_MIRROR_REPEAT;
 		}
 	}
-	return WRAP_MODE_NONE;
+	return WRAP_FLAG_NONE;
 }
 
 enum Blend_Mode json_read_blend_mode(struct JSON const * json) {
@@ -175,34 +172,38 @@ enum Depth_Mode json_read_depth_mode(struct JSON const * json) {
 	return DEPTH_MODE_NONE;
 }
 
-struct Texture_Parameters json_read_texture_parameters(struct JSON const * json) {
+struct Target_Parameters json_read_target_parameters(struct JSON const * json) {
 	if (json->type != JSON_OBJECT) { goto fail; }
 
 	struct CString const type = json_get_string(json, S_("type"));
 	if (type.length == 0) { goto fail; }
 
-	bool const buffer_read = json_get_boolean(json, S_("read"));
+	bool const read = json_get_boolean(json, S_("read"));
 
 	if (cstring_equals(type, S_("color_rgba8_unorm"))) {
-		return (struct Texture_Parameters) {
-			.texture_type = TEXTURE_TYPE_COLOR,
-			.data_type = DATA_TYPE_RGBA8_UNORM,
-			.flags = buffer_read ? TEXTURE_FLAG_NONE : TEXTURE_FLAG_OPAQUE,
+		return (struct Target_Parameters) {
+			.image = {
+				.flags = TEXTURE_FLAG_COLOR,
+				.type = DATA_TYPE_RGBA8_UNORM,
+			},
+			.read = read,
 		};
 	}
 
 	if (cstring_equals(type, S_("depth_r32_f"))) {
-		return (struct Texture_Parameters) {
-			.texture_type = TEXTURE_TYPE_DEPTH,
-			.data_type = DATA_TYPE_R32_F,
-			.flags = buffer_read ? TEXTURE_FLAG_NONE : TEXTURE_FLAG_OPAQUE,
+		return (struct Target_Parameters) {
+			.image = {
+				.flags = TEXTURE_FLAG_DEPTH,
+				.type = DATA_TYPE_R32_F,
+			},
+			.read = read,
 		};
 	}
 
 	// process errors
-	fail: ERR("unknown texture parameters");
+	fail: ERR("unknown target parameters");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
-	return (struct Texture_Parameters){0};
+	return (struct Target_Parameters){0};
 }
 
 struct Texture_Settings json_read_texture_settings(struct JSON const * json) {
@@ -216,8 +217,8 @@ struct Sampler_Settings json_read_sampler_settings(struct JSON const * json) {
 		.mipmap        = json_read_filter_mode(json_get(json, S_("mipmap"))),
 		.minification  = json_read_filter_mode(json_get(json, S_("minification"))),
 		.magnification = json_read_filter_mode(json_get(json, S_("magnification"))),
-		.wrap_x        = json_read_wrap_mode(json_get(json, S_("wrap_x"))),
-		.wrap_y        = json_read_wrap_mode(json_get(json, S_("wrap_y"))),
+		.wrap_x        = json_read_wrap_flags(json_get(json, S_("wrap_x"))),
+		.wrap_y        = json_read_wrap_flags(json_get(json, S_("wrap_y"))),
 	};
 	json_read_many_flt(json_get(json, S_("border")), 4, &result.border.x);
 	return result;
@@ -234,11 +235,11 @@ struct Handle json_read_target(struct JSON const * json) {
 	if (buffers_json->type != JSON_ARRAY) { goto fail; }
 
 	// @todo: arena/stack allocator
-	struct Array parameters_buffer = array_init(sizeof(struct Texture_Parameters));
+	struct Array parameters_buffer = array_init(sizeof(struct Target_Parameters));
 
 	uint32_t const buffers_count = json_count(buffers_json);
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct Texture_Parameters const parameters = json_read_texture_parameters(json_at(buffers_json, i));
+		struct Target_Parameters const parameters = json_read_target_parameters(json_at(buffers_json, i));
 		array_push_many(&parameters_buffer, 1, &parameters);
 	}
 

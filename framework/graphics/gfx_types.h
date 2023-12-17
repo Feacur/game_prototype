@@ -2,8 +2,10 @@
 #define FRAMEWORK_GRAPHICS_TYPES
 
 #include "framework/maths_types.h"
-#include "framework/containers/array.h"
-#include "framework/containers/hashmap.h"
+
+// ----- ----- ----- ----- -----
+//     Basic
+// ----- ----- ----- ----- -----
 
 enum Data_Type {
 	DATA_TYPE_NONE,
@@ -91,50 +93,6 @@ enum Data_Type {
 	DATA_TYPE_MAT4,
 };
 
-enum Filter_Mode {
-	FILTER_MODE_NONE,
-	FILTER_MODE_POINT,
-	FILTER_MODE_LERP,
-};
-
-enum Wrap_Mode {
-	WRAP_MODE_NONE,
-	WRAP_MODE_EDGE,
-	WRAP_MODE_REPEAT,
-	WRAP_MODE_BORDER,
-	WRAP_MODE_MIRROR_EDGE,
-	WRAP_MODE_MIRROR_REPEAT,
-};
-
-enum Texture_Type {
-	TEXTURE_TYPE_NONE    = 0,
-	TEXTURE_TYPE_COLOR   = (1 << 0),
-	TEXTURE_TYPE_DEPTH   = (1 << 1),
-	TEXTURE_TYPE_STENCIL = (1 << 2),
-	// shorthands
-	TEXTURE_TYPE_DSTENCIL = TEXTURE_TYPE_DEPTH | TEXTURE_TYPE_STENCIL,
-};
-
-enum Texture_Flag {
-	TEXTURE_FLAG_NONE   = 0,
-	TEXTURE_FLAG_OPAQUE = (1 << 0),
-};
-
-enum Swizzle_Op {
-	SWIZZLE_OP_NONE,
-	SWIZZLE_OP_0,
-	SWIZZLE_OP_1,
-	SWIZZLE_OP_R,
-	SWIZZLE_OP_G,
-	SWIZZLE_OP_B,
-	SWIZZLE_OP_A,
-};
-
-enum Mesh_Flag {
-	MESH_FLAG_NONE  = 0,
-	MESH_FLAG_INDEX = (1 << 0),
-};
-
 enum Comparison_Op {
 	COMPARISON_OP_NONE,
 	COMPARISON_OP_FALSE,
@@ -147,12 +105,12 @@ enum Comparison_Op {
 	COMPARISON_OP_MORE_EQUAL,
 };
 
-enum Cull_Mode {
-	CULL_MODE_NONE  = 0,
-	CULL_MODE_BACK  = (1 << 0),
-	CULL_MODE_FRONT = (1 << 1),
+enum Cull_Flag {
+	CULL_FLAG_NONE  = 0,
+	CULL_FLAG_BACK  = (1 << 0),
+	CULL_FLAG_FRONT = (1 << 1),
 	// shorthands
-	CULL_MODE_BOTH = CULL_MODE_BACK | CULL_MODE_FRONT,
+	CULL_FLAG_BOTH = CULL_FLAG_BACK | CULL_FLAG_FRONT,
 };
 
 enum Winding_Order {
@@ -171,17 +129,6 @@ enum Stencil_Op {
 	STENCIL_OP_DECR_WRAP,
 };
 
-enum Color_Channel {
-	COLOR_CHANNEL_NONE  = 0,
-	COLOR_CHANNEL_RED   = (1 << 0),
-	COLOR_CHANNEL_GREEN = (1 << 1),
-	COLOR_CHANNEL_BLUE  = (1 << 2),
-	COLOR_CHANNEL_ALPHA = (1 << 3),
-	// shorthands
-	COLOR_CHANNEL_RGB  = COLOR_CHANNEL_RED | COLOR_CHANNEL_GREEN | COLOR_CHANNEL_BLUE,
-	COLOR_CHANNEL_FULL = COLOR_CHANNEL_RED | COLOR_CHANNEL_GREEN | COLOR_CHANNEL_BLUE | COLOR_CHANNEL_ALPHA,
-};
-
 enum Blend_Mode {
 	BLEND_MODE_NONE,
 	BLEND_MODE_MIX, // lerp(Drgb, Srgb, Sa), max(Da, Sa)
@@ -198,10 +145,85 @@ enum Depth_Mode {
 	DEPTH_MODE_OPAQUE,      // test and write
 };
 
+// ----- ----- ----- ----- -----
+//     Program part
+// ----- ----- ----- ----- -----
+
+enum Shader_Attribute {
+	SHADER_ATTRIBUTE_NONE,
+	SHADER_ATTRIBUTE_POSITION,
+	SHADER_ATTRIBUTE_TEXCOORD,
+	SHADER_ATTRIBUTE_NORMAL,
+	SHADER_ATTRIBUTE_COLOR,
+	//
+	SHADER_ATTRIBUTE_INTERNAL_COUNT,
+};
+
+enum Shader_Block {
+	SHADER_BLOCK_NONE,
+	SHADER_BLOCK_GLOBAL,
+	SHADER_BLOCK_CAMERA,
+	SHADER_BLOCK_MODEL,
+	SHADER_BLOCK_DYNAMIC,
+};
+
+enum Batcher_Flag {
+	BATCHER_FLAG_NONE = 0,
+	BATCHER_FLAG_FONT = (1 << 0),
+};
+
+// ----- ----- ----- ----- -----
+//     Sampler part
+// ----- ----- ----- ----- -----
+
+enum Filter_Mode {
+	FILTER_MODE_NONE,
+	FILTER_MODE_POINT,
+	FILTER_MODE_LERP,
+};
+
+enum Wrap_Flag {
+	WRAP_FLAG_NONE   = 0,
+	WRAP_FLAG_MIRROR = (1 << 0),
+	WRAP_FLAG_EDGE   = (1 << 1),
+	WRAP_FLAG_REPEAT = (1 << 2),
+	// shorthands
+	WRAP_FLAG_MIRROR_EDGE   = WRAP_FLAG_MIRROR | WRAP_FLAG_EDGE,
+	WRAP_FLAG_MIRROR_REPEAT = WRAP_FLAG_MIRROR | WRAP_FLAG_REPEAT,
+};
+
+struct Sampler_Settings {
+	enum Filter_Mode mipmap, minification, magnification;
+	enum Wrap_Flag wrap_x, wrap_y;
+	struct vec4 border;
+};
+
+// ----- ----- ----- ----- -----
+//     Texture part
+// ----- ----- ----- ----- -----
+
+enum Texture_Flag {
+	TEXTURE_FLAG_NONE    = 0,
+	TEXTURE_FLAG_COLOR   = (1 << 0),
+	TEXTURE_FLAG_DEPTH   = (1 << 1),
+	TEXTURE_FLAG_STENCIL = (1 << 2),
+	// shorthands
+	TEXTURE_FLAG_DSTENCIL = TEXTURE_FLAG_DEPTH | TEXTURE_FLAG_STENCIL,
+};
+
+enum Swizzle_Op {
+	SWIZZLE_OP_NONE,
+	SWIZZLE_OP_0,
+	SWIZZLE_OP_1,
+	SWIZZLE_OP_R,
+	SWIZZLE_OP_G,
+	SWIZZLE_OP_B,
+	SWIZZLE_OP_A,
+};
+
 struct Texture_Parameters {
-	enum Texture_Type texture_type;
-	enum Data_Type data_type;
 	enum Texture_Flag flags;
+	enum Data_Type    type;
 };
 
 struct Texture_Settings {
@@ -209,11 +231,28 @@ struct Texture_Settings {
 	enum Swizzle_Op swizzle[4];
 };
 
-struct Sampler_Settings {
-	enum Filter_Mode mipmap, minification, magnification;
-	enum Wrap_Mode wrap_x, wrap_y;
-	struct vec4 border;
+// ----- ----- ----- ----- -----
+//     Target part
+// ----- ----- ----- ----- -----
+
+struct Target_Parameters {
+	struct Texture_Parameters image;
+	bool read;
 };
+
+// ----- ----- ----- ----- -----
+//     Buffer part
+// ----- ----- ----- ----- -----
+
+enum Buffer_Target {
+	BUFFER_TARGET_NONE,
+	BUFFER_TARGET_UNIFORM,
+	BUFFER_TARGET_STORAGE,
+};
+
+// ----- ----- ----- ----- -----
+//     Mesh part
+// ----- ----- ----- ----- -----
 
 enum Mesh_Mode {
 	MESH_MODE_NONE,
@@ -226,85 +265,18 @@ enum Mesh_Mode {
 	MESH_MODE_TRIANGLE_FAN,
 };
 
-enum Attribute_Type {
-	ATTRIBUTE_TYPE_NONE,
-	ATTRIBUTE_TYPE_POSITION,
-	ATTRIBUTE_TYPE_TEXCOORD,
-	ATTRIBUTE_TYPE_NORMAL,
-	ATTRIBUTE_TYPE_COLOR,
-	//
-	ATTRIBUTE_TYPE_INTERNAL_COUNT,
-};
-
-#define MESH_ATTRIBUTES_CAPACITY (2 * ATTRIBUTE_TYPE_INTERNAL_COUNT)
-
-struct Mesh_Parameters {
+struct Mesh_Buffer_Parameters {
 	enum Mesh_Mode mode;
 	enum Data_Type type;
-	enum Mesh_Flag flags;
-	uint32_t attributes[MESH_ATTRIBUTES_CAPACITY];
 };
 
-enum Buffer_Mode {
-	BUFFER_MODE_NONE,
-	BUFFER_MODE_UNIFORM,
-	BUFFER_MODE_STORAGE,
+struct Mesh_Buffer_Attributes {
+	uint32_t data[2 * SHADER_ATTRIBUTE_INTERNAL_COUNT]; // type, count
 };
 
-enum Block_Type {
-	BLOCK_TYPE_NONE,
-	BLOCK_TYPE_GLOBAL,
-	BLOCK_TYPE_CAMERA,
-	BLOCK_TYPE_MODEL,
-	BLOCK_TYPE_DYNAMIC,
-};
-
-//
-
-struct GPU_Unit {
-	struct Handle gh_texture;
-};
-
-struct GPU_Uniform {
-	enum Data_Type type;
-	uint32_t array_size;
-};
-
-struct GPU_Program {
-	struct Hashmap uniforms; // uniform string id : `struct GPU_Uniform` (at least)
-	// @idea: add an optional asset source
-};
-
-struct GPU_Texture {
-	struct uvec2 size;
-	struct Texture_Parameters parameters;
-	struct Texture_Settings settings;
-	struct Sampler_Settings sampler;
-	// @idea: add an optional asset source
-};
-
-struct GPU_Target_Buffer {
-	struct Texture_Parameters parameters;
-};
-
-struct GPU_Target {
-	struct uvec2 size;
-	struct Array textures; // `struct Handle`
-	struct Array buffers;  // `struct GPU_Target_Buffer` (at least)
-	// @idea: add an optional asset source
-};
-
-struct GPU_Buffer {
-	size_t capacity, size;
-};
-
-struct GPU_Mesh {
-	struct Array buffers;    // `struct Handle`
-	struct Array parameters; // `struct Mesh_Parameters`
-	// @idea: add an optional asset source
-};
-
-//
+// ----- ----- ----- ----- -----
+//     Conversion
+// ----- ----- ----- ----- -----
 
 enum Data_Type data_type_get_element_type(enum Data_Type value);
 enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels);

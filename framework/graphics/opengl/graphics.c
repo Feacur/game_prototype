@@ -51,6 +51,45 @@ struct Graphics_Limits {
 	//
 	uint32_t texture_size;
 	uint32_t target_size;
+	uint32_t color_attachments;
+};
+
+//
+#include "framework/graphics/gfx_objects.h"
+
+struct GPU_Uniform_Internal {
+	struct GPU_Uniform base;
+	GLint location;
+};
+
+struct GPU_Program_Internal {
+	struct GPU_Program base;
+	GLuint id;
+};
+
+struct GPU_Texture_Internal {
+	struct GPU_Texture base;
+	GLuint id;
+};
+
+struct GPU_Target_Buffer_Internal {
+	struct GPU_Target_Buffer base;
+	GLuint id;
+};
+
+struct GPU_Target_Internal {
+	struct GPU_Target base;
+	GLuint id;
+};
+
+struct GPU_Buffer_Internal {
+	struct GPU_Buffer base;
+	GLuint id;
+};
+
+struct GPU_Mesh_Internal {
+	struct GPU_Mesh base;
+	GLuint id;
 };
 
 static struct Graphics_State {
@@ -77,23 +116,20 @@ static struct Graphics_State {
 	} clip_space;
 } gs_graphics_state;
 
-//
-#include "framework/graphics/gfx_objects.h"
-
-static uint32_t get_buffer_mode_size(enum Buffer_Mode mode) {
-	switch (mode) {
-		case BUFFER_MODE_NONE:    return 0;
-		case BUFFER_MODE_UNIFORM: return gs_graphics_state.limits.uniform_blocks_size;
-		case BUFFER_MODE_STORAGE: return gs_graphics_state.limits.storage_blocks_size;
+static uint32_t get_buffer_target_size(enum Buffer_Target target) {
+	switch (target) {
+		case BUFFER_TARGET_NONE:    return 0;
+		case BUFFER_TARGET_UNIFORM: return gs_graphics_state.limits.uniform_blocks_size;
+		case BUFFER_TARGET_STORAGE: return gs_graphics_state.limits.storage_blocks_size;
 	}
 	return 0;
 }
 
-static uint32_t get_buffer_mode_alignment(enum Buffer_Mode mode) {
-	switch (mode) {
-		case BUFFER_MODE_NONE:    return 0;
-		case BUFFER_MODE_UNIFORM: return gs_graphics_state.limits.uniform_blocks_alignment;
-		case BUFFER_MODE_STORAGE: return gs_graphics_state.limits.storage_blocks_alignment;
+static uint32_t get_buffer_target_alignment(enum Buffer_Target target) {
+	switch (target) {
+		case BUFFER_TARGET_NONE:    return 0;
+		case BUFFER_TARGET_UNIFORM: return gs_graphics_state.limits.uniform_blocks_alignment;
+		case BUFFER_TARGET_STORAGE: return gs_graphics_state.limits.storage_blocks_alignment;
 	}
 	return 0;
 }
@@ -157,7 +193,6 @@ static void gpu_program_introspect_uniforms(struct GPU_Program_Internal * gpu_pr
 				.type = translate_program_data_type(params[PARAM_TYPE]),
 				.array_size = (uint32_t)params[PARAM_ARRAY_SIZE],
 			},
-			.index = (GLuint)i,
 			.location = params[PARAM_LOCATION],
 		});
 
@@ -362,27 +397,33 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 		"#define ATTRIBUTE_NORMAL   layout(location = %u) in\n"
 		"#define ATTRIBUTE_COLOR    layout(location = %u) in\n"
 		"\n"
-		"#define BLOCK_GLOBAL  layout(std140, binding = %u) uniform\n"
-		"#define BLOCK_CAMERA  layout(std140, binding = %u) uniform\n"
-		"#define BLOCK_MODEL   layout(std140, binding = %u) uniform\n"
-		"#define BLOCK_DYNAMIC layout(std430, binding = %u) readonly buffer\n"
+		"#define INTERFACE_BLOCK_GLOBAL  layout(std140, binding = %u) uniform\n"
+		"#define INTERFACE_BLOCK_CAMERA  layout(std140, binding = %u) uniform\n"
+		"#define INTERFACE_BLOCK_MODEL   layout(std140, binding = %u) uniform\n"
+		"#define INTERFACE_BLOCK_DYNAMIC layout(std430, binding = %u) readonly buffer\n"
 		"\n"
-		"#define DEPTH_NEAR %g\n"
-		"#define DEPTH_FAR  %g\n"
-		"#define NDC_NEAR %g\n"
-		"#define NDC_FAR  %g\n"
+		"#define BATCHER_FLAG_NONE %u\n"
+		"#define BATCHER_FLAG_FONT %u\n"
+		"\n"
+		"#define DEPTH_NEAR %f\n"
+		"#define DEPTH_FAR  %f\n"
+		"#define NDC_NEAR %f\n"
+		"#define NDC_FAR  %f\n"
 		"\n",
 		gl.glsl,
 		//
-		ATTRIBUTE_TYPE_POSITION - 1,
-		ATTRIBUTE_TYPE_TEXCOORD - 1,
-		ATTRIBUTE_TYPE_NORMAL - 1,
-		ATTRIBUTE_TYPE_COLOR - 1,
+		SHADER_ATTRIBUTE_POSITION - 1,
+		SHADER_ATTRIBUTE_TEXCOORD - 1,
+		SHADER_ATTRIBUTE_NORMAL - 1,
+		SHADER_ATTRIBUTE_COLOR - 1,
 		//
-		BLOCK_TYPE_GLOBAL - 1,
-		BLOCK_TYPE_CAMERA - 1,
-		BLOCK_TYPE_MODEL - 1,
-		BLOCK_TYPE_DYNAMIC - 1,
+		SHADER_BLOCK_GLOBAL - 1,
+		SHADER_BLOCK_CAMERA - 1,
+		SHADER_BLOCK_MODEL - 1,
+		SHADER_BLOCK_DYNAMIC - 1,
+		//
+		BATCHER_FLAG_NONE,
+		BATCHER_FLAG_FONT,
 		//
 		(double)gs_graphics_state.clip_space.depth_near,
 		(double)gs_graphics_state.clip_space.depth_far,
@@ -489,20 +530,17 @@ static bool gpu_texture_upload(struct GPU_Texture_Internal * gpu_texture, struct
 	if (gpu_texture->base.size.x != asset->size.x) { return false; }
 	if (gpu_texture->base.size.y != asset->size.y) { return false; }
 
-	if (!equals(
-		&gpu_texture->base.parameters, &asset->parameters
-		, sizeof(struct Texture_Settings)
-	)) { return false; }
+	if (!carray_equals(A_(gpu_texture->base.parameters), A_(asset->parameters))) {
+		return false;
+	}
 
-	if (!equals(
-		&gpu_texture->base.settings, &asset->settings
-		, sizeof(struct Texture_Settings)
-	)) { return false; }
+	if (!carray_equals(A_(gpu_texture->base.settings), A_(asset->settings))) {
+		return false;
+	}
 
-	if (!equals(
-		&gpu_texture->base.sampler, &asset->sampler
-		, sizeof(struct Texture_Settings)
-	)) { return false; }
+	if (!carray_equals(A_(gpu_texture->base.sampler), A_(asset->sampler))) {
+		return false;
+	}
 
 	if (asset->data == NULL) { return true; }
 	if (asset->size.x == 0)  { return true; }
@@ -511,8 +549,8 @@ static bool gpu_texture_upload(struct GPU_Texture_Internal * gpu_texture, struct
 	gl.TextureSubImage2D(
 		gpu_texture->id, 0,
 		0, 0, (GLsizei)asset->size.x, (GLsizei)asset->size.y,
-		gpu_pixel_data_format(asset->parameters.texture_type, asset->parameters.data_type),
-		gpu_pixel_data_type(asset->parameters.texture_type, asset->parameters.data_type),
+		gpu_pixel_data_format(asset->parameters),
+		gpu_pixel_data_type(asset->parameters),
 		asset->data
 	);
 	if (gpu_texture->base.settings.max_lod != 0) {
@@ -542,7 +580,7 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 	gl.CreateTextures(GL_TEXTURE_2D, 1, &gpu_texture.id);
 	gl.TextureStorage2D(
 		gpu_texture.id, (GLsizei)(gpu_texture.base.settings.max_lod + 1)
-		, gpu_sized_internal_format(gpu_texture.base.parameters.texture_type, gpu_texture.base.parameters.data_type)
+		, gpu_sized_internal_format(gpu_texture.base.parameters)
 		, (GLsizei)gpu_texture.base.size.x, (GLsizei)gpu_texture.base.size.y
 	);
 	gpu_texture_upload(&gpu_texture, asset);
@@ -625,7 +663,7 @@ static struct GPU_Target_Internal gpu_target_on_aquire(struct GPU_Target_Asset a
 	{ // prepare arrays
 		uint32_t textures_count = 0;
 		for (uint32_t i = 0; i < asset.count; i++) {
-			if (!(asset.parameters[i].flags & TEXTURE_FLAG_OPAQUE)) {
+			if (asset.parameters[i].read) {
 				textures_count++;
 			}
 		}
@@ -638,26 +676,26 @@ static struct GPU_Target_Internal gpu_target_on_aquire(struct GPU_Target_Asset a
 	// allocate
 	gl.CreateFramebuffers(1, &gpu_target.id);
 	for (uint32_t i = 0; i < asset.count; i++) {
-		if (!(asset.parameters[i].flags & TEXTURE_FLAG_OPAQUE)) {
+		if (asset.parameters[i].read) {
 			// @idea: expose settings
 			struct Handle const gh_texture = gpu_texture_init(&(struct Image){
 				.size = gpu_target.base.size,
-				.parameters = asset.parameters[i],
+				.parameters = asset.parameters[i].image,
 				.sampler = (struct Sampler_Settings){
-					.wrap_x = WRAP_MODE_EDGE,
-					.wrap_y = WRAP_MODE_EDGE,
+					.wrap_x = WRAP_FLAG_EDGE,
+					.wrap_y = WRAP_FLAG_EDGE,
 				},
 			});
 			array_push_many(&gpu_target.base.textures, 1, &gh_texture);
 		}
 		else {
 			struct GPU_Target_Buffer_Internal buffer = {.base = {
-				.parameters = asset.parameters[i],
+				.parameters = asset.parameters[i].image,
 			}};
 			gl.CreateRenderbuffers(1, &buffer.id);
 			gl.NamedRenderbufferStorage(
 				buffer.id,
-				gpu_sized_internal_format(asset.parameters[i].texture_type, asset.parameters[i].data_type),
+				gpu_sized_internal_format(asset.parameters[i].image),
 				(GLsizei)gpu_target.base.size.x, (GLsizei)gpu_target.base.size.y
 			);
 			array_push_many(&gpu_target.base.buffers, 1, &buffer);
@@ -672,12 +710,15 @@ static struct GPU_Target_Internal gpu_target_on_aquire(struct GPU_Target_Asset a
 		if (gpu_texture == NULL) { continue; }
 
 		uint32_t const attachment = attachments_count;
-		if (gpu_texture->base.parameters.texture_type == TEXTURE_TYPE_COLOR) { attachments_count++; }
+		if (gpu_texture->base.parameters.flags & TEXTURE_FLAG_COLOR) { attachments_count++; }
 
 		GLint const level = 0;
 		gl.NamedFramebufferTexture(
 			gpu_target.id,
-			gpu_attachment_point(gpu_texture->base.parameters.texture_type, attachment),
+			gpu_attachment_point(
+				gpu_texture->base.parameters.flags,
+				attachment, gs_graphics_state.limits.color_attachments
+			),
 			gpu_texture->id,
 			level
 		);
@@ -686,11 +727,14 @@ static struct GPU_Target_Internal gpu_target_on_aquire(struct GPU_Target_Asset a
 		struct GPU_Target_Buffer_Internal const * buffer = it.value;
 
 		uint32_t const attachment = attachments_count;
-		if (buffer->base.parameters.texture_type == TEXTURE_TYPE_COLOR) { attachments_count++; }
+		if (buffer->base.parameters.flags & TEXTURE_FLAG_COLOR) { attachments_count++; }
 
 		gl.NamedFramebufferRenderbuffer(
 			gpu_target.id,
-			gpu_attachment_point(buffer->base.parameters.texture_type, attachment),
+			gpu_attachment_point(
+				buffer->base.parameters.flags,
+				attachment, gs_graphics_state.limits.color_attachments
+			),
 			GL_RENDERBUFFER,
 			buffer->id
 		);
@@ -824,22 +868,23 @@ struct GPU_Buffer const * gpu_buffer_get(struct Handle handle) {
 // ----- ----- ----- ----- -----
 
 static bool gpu_mesh_upload(struct GPU_Mesh_Internal * gpu_mesh, struct Mesh const * asset) {
-	if (gpu_mesh->base.buffers.count != asset->count) { return false; }
+	if (gpu_mesh->base.buffers.count != asset->buffers.count) { return false; }
 
-	FOR_ARRAY(&gpu_mesh->base.parameters, it) {
-		if (!equals(
-			it.value, asset->parameters + it.curr
-			, sizeof(struct Mesh_Parameters)
-		)) { return false; }
+	FOR_ARRAY(&gpu_mesh->base.buffers, it) {
+		struct GPU_Mesh_Buffer const * gpu_mesh_buffer = it.value;
+		struct Mesh_Buffer const * asset_buffer = array_at(&asset->buffers, it.curr);
+		if (!carray_equals(A_(gpu_mesh_buffer->parameters), A_(asset_buffer->parameters))) {
+			return false;
+		}
 	}
 
 	FOR_ARRAY(&gpu_mesh->base.buffers, it) {
-		struct Buffer const * asset_buffer = asset->buffers + it.curr;
+		struct GPU_Mesh_Buffer const * gpu_mesh_buffer = it.value;
+		struct Mesh_Buffer const * asset_buffer = array_at(&asset->buffers, it.curr);
 
-		struct Handle const * gh_buffer = it.value;
-		struct GPU_Buffer_Internal * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, *gh_buffer);
+		struct GPU_Buffer_Internal * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, gpu_mesh_buffer->gh_buffer);
 
-		if (!gpu_buffer_upload(gpu_buffer, asset_buffer)) {
+		if (!gpu_buffer_upload(gpu_buffer, &asset_buffer->buffer)) {
 			return false;
 		}
 	}
@@ -849,53 +894,53 @@ static bool gpu_mesh_upload(struct GPU_Mesh_Internal * gpu_mesh, struct Mesh con
 
 static struct GPU_Mesh_Internal gpu_mesh_on_aquire(struct Mesh const * asset) {
 	struct GPU_Mesh_Internal gpu_mesh = {.base = {
-		.buffers = array_init(sizeof(struct Handle)),
-		.parameters = array_init(sizeof(struct Mesh_Parameters)),
+		.buffers = array_init(sizeof(struct GPU_Mesh_Buffer)),
 	}};
 
 	{ // prepare arrays
-		array_resize(&gpu_mesh.base.buffers, asset->count);
-		array_resize(&gpu_mesh.base.parameters, asset->count);
+		array_resize(&gpu_mesh.base.buffers, asset->buffers.count);
 	}
 
 	// allocate and upload
 	gl.CreateVertexArrays(1, &gpu_mesh.id);
-	for (uint32_t i = 0; i < asset->count; i++) {
-		struct Handle gh_buffer = gpu_buffer_init(asset->buffers + i);
-		array_push_many(&gpu_mesh.base.buffers, 1, &gh_buffer);
-		array_push_many(&gpu_mesh.base.parameters, 1, asset->parameters + i);
+	FOR_ARRAY(&asset->buffers, it) {
+		struct Mesh_Buffer const * mesh_buffer = it.value;
+		array_push_many(&gpu_mesh.base.buffers, 1, &(struct GPU_Mesh_Buffer){
+			.gh_buffer = gpu_buffer_init(&mesh_buffer->buffer),
+			.parameters = mesh_buffer->parameters,
+			.attributes = mesh_buffer->attributes,
+			.index = mesh_buffer->index,
+		});
 	}
 
 	// chart
 	uint32_t binding = 0;
 	FOR_ARRAY(&gpu_mesh.base.buffers, it) {
-		struct Handle const * gh_buffer = it.value;
-		struct Mesh_Parameters const * parameters = array_at(&gpu_mesh.base.parameters, it.curr);
-
-		struct GPU_Buffer_Internal const * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, *gh_buffer);
+		struct GPU_Mesh_Buffer const * gpu_mesh_buffer = it.value;
+		struct GPU_Buffer_Internal const * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, gpu_mesh_buffer->gh_buffer);
 
 		// element buffer
-		if (parameters->flags & MESH_FLAG_INDEX) {
+		if (gpu_mesh_buffer->index) {
 			gl.VertexArrayElementBuffer(gpu_mesh.id, gpu_buffer->id);
 			continue;
 		}
 
 		// vertex buffer
 		uint32_t vertex_size = 0;
-		for (uint32_t atti = 0; atti < ATTRIBUTE_TYPE_INTERNAL_COUNT; atti++) {
-			uint32_t const count = parameters->attributes[atti * 2 + 1];
-			vertex_size += count * data_type_get_size(parameters->type);
+		for (uint32_t atti = 0; atti < SHADER_ATTRIBUTE_INTERNAL_COUNT; atti++) {
+			uint32_t const count = gpu_mesh_buffer->attributes.data[atti * 2 + 1];
+			vertex_size += count * data_type_get_size(gpu_mesh_buffer->parameters.type);
 		}
 
 		GLintptr const offset = 0;
 		gl.VertexArrayVertexBuffer(gpu_mesh.id, binding, gpu_buffer->id, offset, (GLsizei)vertex_size);
 
 		uint32_t attribute_offset = 0;
-		for (uint32_t atti = 0; atti < ATTRIBUTE_TYPE_INTERNAL_COUNT; atti++) {
-			enum Attribute_Type const type = (enum Attribute_Type)parameters->attributes[atti * 2];
-			if (type == ATTRIBUTE_TYPE_NONE) { continue; }
+		for (uint32_t atti = 0; atti < SHADER_ATTRIBUTE_INTERNAL_COUNT; atti++) {
+			enum Shader_Attribute const type = (enum Shader_Attribute)gpu_mesh_buffer->attributes.data[atti * 2];
+			if (type == SHADER_ATTRIBUTE_NONE) { continue; }
 
-			uint32_t const count = parameters->attributes[atti * 2 + 1];
+			uint32_t const count = gpu_mesh_buffer->attributes.data[atti * 2 + 1];
 			if (count == 0) { continue; }
 
 			GLuint const attribute = (GLuint)(type - 1);
@@ -904,11 +949,11 @@ static struct GPU_Mesh_Internal gpu_mesh_on_aquire(struct Mesh const * asset) {
 
 			gl.VertexArrayAttribFormat(
 				gpu_mesh.id, attribute,
-				(GLint)count, gpu_vertex_value_type(parameters->type),
+				(GLint)count, gpu_vertex_value_type(gpu_mesh_buffer->parameters.type),
 				GL_FALSE, attribute_offset
 			);
 
-			attribute_offset += count * data_type_get_size(parameters->type);
+			attribute_offset += count * data_type_get_size(gpu_mesh_buffer->parameters.type);
 		}
 
 		binding++;
@@ -922,11 +967,10 @@ static void gpu_mesh_on_discard(struct GPU_Mesh_Internal * gpu_mesh) {
 	if (gpu_mesh->id == 0) { return; }
 	GFX_TRACE("discard mesh %d", gpu_mesh->id);
 	FOR_ARRAY(&gpu_mesh->base.buffers, it) {
-		struct Handle const * gh_buffer = it.value;
-		gpu_buffer_free(*gh_buffer);
+		struct GPU_Mesh_Buffer const * gpu_mesh_buffer = it.value;
+		gpu_buffer_free(gpu_mesh_buffer->gh_buffer);
 	}
 	array_free(&gpu_mesh->base.buffers);
-	array_free(&gpu_mesh->base.parameters);
 	gl.DeleteVertexArrays(1, &gpu_mesh->id);
 }
 
@@ -976,15 +1020,15 @@ struct mat4 graphics_projection_mat4(
 	);
 }
 
-size_t graphics_offest_align(size_t offset, enum Buffer_Mode mode) {
-	size_t const alignment = get_buffer_mode_alignment(mode);
+size_t graphics_offest_align(size_t offset, enum Buffer_Target target) {
+	size_t const alignment = get_buffer_target_alignment(target);
 	size_t const mask = alignment - 1;
 	return (offset + mask) & ~mask;
 	// return ((offset + mask) / alignment) * alignment;
 }
 
-void graphics_buffer_align(struct Buffer * buffer, enum Buffer_Mode mode) {
-	size_t const padding = graphics_offest_align(buffer->size, mode) - buffer->size;
+void graphics_buffer_align(struct Buffer * buffer, enum Buffer_Target target) {
+	size_t const padding = graphics_offest_align(buffer->size, target) - buffer->size;
 	buffer_push_many(buffer, padding, NULL);
 }
 
@@ -1177,12 +1221,12 @@ static void gpu_set_depth_mode(enum Depth_Mode mode) {
 #include "framework/graphics/command.h"
 
 inline static void gpu_execute_cull(struct GPU_Command_Cull const * command) {
-	if (command->mode == CULL_MODE_NONE) {
+	if (command->flags == CULL_FLAG_NONE) {
 		gl.Disable(GL_CULL_FACE);
 	}
 	else {
 		gl.Enable(GL_CULL_FACE);
-		gl.CullFace(gpu_cull_mode(command->mode));
+		gl.CullFace(gpu_cull_mode(command->flags));
 		gl.FrontFace(gpu_winding_order(command->order));
 	}
 }
@@ -1200,7 +1244,7 @@ inline static void gpu_execute_target(struct GPU_Command_Target const * command)
 }
 
 inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
-	if (command->mask == TEXTURE_TYPE_NONE) {
+	if (command->flags == TEXTURE_FLAG_NONE) {
 		WRN("clear mask is empty");
 		DEBUG_BREAK(); return;
 	}
@@ -1213,9 +1257,9 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 	gpu_set_depth_mode(DEPTH_MODE_OPAQUE);
 
 	GLbitfield clear_bitfield = 0;
-	if (command->mask & TEXTURE_TYPE_COLOR)   { clear_bitfield |= GL_COLOR_BUFFER_BIT; }
-	if (command->mask & TEXTURE_TYPE_DEPTH)   { clear_bitfield |= GL_DEPTH_BUFFER_BIT; }
-	if (command->mask & TEXTURE_TYPE_STENCIL) { clear_bitfield |= GL_STENCIL_BUFFER_BIT; }
+	if (command->flags & TEXTURE_FLAG_COLOR)   { clear_bitfield |= GL_COLOR_BUFFER_BIT; }
+	if (command->flags & TEXTURE_FLAG_DEPTH)   { clear_bitfield |= GL_DEPTH_BUFFER_BIT; }
+	if (command->flags & TEXTURE_FLAG_STENCIL) { clear_bitfield |= GL_STENCIL_BUFFER_BIT; }
 	
 	gl.ClearColor(command->color.x, command->color.y, command->color.z, command->color.w);
 	gl.ClearDepthf(depth);
@@ -1263,7 +1307,7 @@ inline static void gpu_execute_buffer(struct GPU_Command_Buffer const * command)
 
 	if (command->offset == 0 && command->length == 0) {
 		gl.BindBufferBase(
-			gpu_buffer_mode(command->mode)
+			gpu_buffer_target(command->target)
 			, command->index, gpu_buffer->id
 		);
 		return;
@@ -1271,12 +1315,12 @@ inline static void gpu_execute_buffer(struct GPU_Command_Buffer const * command)
 
 	uint32_t const length = min_u32(
 		(uint32_t)command->length,
-		get_buffer_mode_size(command->mode)
+		get_buffer_target_size(command->target)
 	);
 	if (length < command->length) { WRN("buffer exceeds limits"); DEBUG_BREAK(); }
 
 	gl.BindBufferRange(
-		gpu_buffer_mode(command->mode)
+		gpu_buffer_target(command->target)
 		, command->index, gpu_buffer->id
 		, (GLsizeiptr)command->offset, (GLsizeiptr)length
 	);
@@ -1285,10 +1329,10 @@ inline static void gpu_execute_buffer(struct GPU_Command_Buffer const * command)
 inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 	gpu_select_mesh(command->gh_mesh);
 
-	struct GPU_Mesh_Internal const * mesh = sparseset_get(&gs_graphics_state.meshes, command->gh_mesh);
-	if (mesh == NULL) { return; }
+	struct GPU_Mesh_Internal const * gpu_mesh = sparseset_get(&gs_graphics_state.meshes, command->gh_mesh);
+	if (gpu_mesh == NULL) { return; }
 
-	if (mesh->base.buffers.count == 0 && command->mode != MESH_MODE_NONE) {
+	if (gpu_mesh->base.buffers.count == 0 && command->mode != MESH_MODE_NONE) {
 		gl.DrawArraysInstanced(
 			gpu_mesh_mode(command->mode),
 			(GLint)command->offset,
@@ -1297,24 +1341,24 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 		);
 	}
 
-	FOR_ARRAY(&mesh->base.buffers, it) {
-		struct Handle const * gh_buffer = it.value;
-		struct GPU_Buffer_Internal const * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, *gh_buffer);
-		struct Mesh_Parameters const * parameters = array_at(&mesh->base.parameters, it.curr);
-		if (parameters->mode == MESH_MODE_NONE) { continue; }
+	FOR_ARRAY(&gpu_mesh->base.buffers, it) {
+		struct GPU_Mesh_Buffer const * gpu_mesh_buffer = it.value;
+		struct GPU_Buffer_Internal const * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, gpu_mesh_buffer->gh_buffer);
+
+		if (gpu_mesh_buffer->parameters.mode == MESH_MODE_NONE) { continue; }
 		if (gpu_buffer->base.size == 0) { continue; }
 
 		uint32_t const offset = command->offset;
 		uint32_t const count = (command->count != 0)
 			? command->count
-			: (uint32_t)(gpu_buffer->base.size / data_type_get_size(parameters->type));
+			: (uint32_t)(gpu_buffer->base.size / data_type_get_size(gpu_mesh_buffer->parameters.type));
 
-		if (parameters->flags & MESH_FLAG_INDEX) {
-			enum Data_Type const elements_type = parameters->type;
+		if (gpu_mesh_buffer->index) {
+			enum Data_Type const elements_type = gpu_mesh_buffer->parameters.type;
 			size_t const bytes_offset = command->offset * data_type_get_size(elements_type);
 
 			gl.DrawElementsInstanced(
-				gpu_mesh_mode(parameters->mode),
+				gpu_mesh_mode(gpu_mesh_buffer->parameters.mode),
 				(GLsizei)count,
 				gpu_index_value_type(elements_type),
 				(void const *)bytes_offset,
@@ -1323,7 +1367,7 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 		}
 		else {
 			gl.DrawArraysInstanced(
-				gpu_mesh_mode(parameters->mode),
+				gpu_mesh_mode(gpu_mesh_buffer->parameters.mode),
 				(GLint)offset,
 				(GLsizei)count,
 				(GLsizei)max_u32(command->instances, 1)
@@ -1500,6 +1544,7 @@ static struct Graphics_Limits get_limits(void) {
 	    , storage_blocks_alignment;
 
 	GLint texture_size, target_size;
+	GLint color_attachments;
 
 	gl.GetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,       &units);
 	gl.GetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS,         &units_vs);
@@ -1522,30 +1567,32 @@ static struct Graphics_Limits get_limits(void) {
 
 	gl.GetIntegerv(GL_MAX_TEXTURE_SIZE,                       &texture_size);
 	gl.GetIntegerv(GL_MAX_RENDERBUFFER_SIZE,                  &target_size);
+	gl.GetIntegerv(GL_MAX_COLOR_ATTACHMENTS,                  &color_attachments);
 
 	LOG(
 		"> OpenGL limits:\n"
-		"  units ........... %d\n"
-		"  - VS ............ %d\n"
-		"  - FS ............ %d\n"
-		"  - CS ............ %d\n"
+		"  units .............. %d\n"
+		"  - VS ............... %d\n"
+		"  - FS ............... %d\n"
+		"  - CS ............... %d\n"
 		//
-		"  uniform blocks .. %d\n"
-		"  - VS ............ %d\n"
-		"  - FS ............ %d\n"
-		"  - CS ............ %d\n"
-		"  - size .......... %d\n"
-		"  - alignment ..... %d\n"
+		"  uniform blocks ..... %d\n"
+		"  - VS ............... %d\n"
+		"  - FS ............... %d\n"
+		"  - CS ............... %d\n"
+		"  - size ............. %d\n"
+		"  - alignment ........ %d\n"
 		//
-		"  storage blocks .. %d\n"
-		"  - VS ............ %d\n"
-		"  - FS ............ %d\n"
-		"  - CS ............ %d\n"
-		"  - size .......... %d\n"
-		"  - alignment ..... %d\n"
+		"  storage blocks ..... %d\n"
+		"  - VS ............... %d\n"
+		"  - FS ............... %d\n"
+		"  - CS ............... %d\n"
+		"  - size ............. %d\n"
+		"  - alignment ........ %d\n"
 		//
-		"  texture size .... %d\n"
-		"  target size ..... %d\n"
+		"  texture size ....... %d\n"
+		"  target size ........ %d\n"
+		"  color attachments .. %d\n"
 		//
 		""
 		, units
@@ -1569,6 +1616,7 @@ static struct Graphics_Limits get_limits(void) {
 		//
 		, texture_size
 		, target_size
+		, color_attachments
 	);
 
 	return (struct Graphics_Limits){
@@ -1593,6 +1641,7 @@ static struct Graphics_Limits get_limits(void) {
 		//
 		.texture_size             = (uint32_t)texture_size,
 		.target_size              = (uint32_t)target_size,
+		.color_attachments        = (uint32_t)color_attachments,
 	};
 }
 

@@ -5,6 +5,8 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/array.h"
 #include "framework/containers/hashmap.h"
+
+#include "framework/systems/arena_system.h"
 #include "framework/systems/memory_system.h"
 
 #include "framework/assets/image.h"
@@ -44,7 +46,7 @@ static HASHER(font_hash_typeface_key) {
 //
 #include "font.h"
 
-struct Typeface_Symbol {
+struct Symbol_To_Render {
 	struct Typeface_Key key;
 	struct Glyph * glyph; // @note: a short-lived pointer into a `font` table
 };
@@ -58,8 +60,8 @@ struct Font * font_init(void) {
 	*font = (struct Font){
 		.buffer = {
 			.parameters = {
-				.texture_type = TEXTURE_TYPE_COLOR,
-				.data_type = DATA_TYPE_R8_UNORM,
+				.flags = TEXTURE_FLAG_COLOR,
+				.type = DATA_TYPE_R8_UNORM,
 			},
 			.settings = {
 				.swizzle = {
@@ -202,7 +204,7 @@ void font_render(struct Font * font) {
 
 	// collect visible glyphs
 	uint32_t symbols_count = 0;
-	struct Typeface_Symbol * symbols_to_render = ALLOCATE_ARRAY(struct Typeface_Symbol, font->table.count);
+	struct Symbol_To_Render * symbols_to_render = ARENA_ALLOCATE_ARRAY(struct Symbol_To_Render, font->table.count);
 
 	FOR_HASHMAP(&font->table, it) {
 		struct Glyph * glyph = it.value;
@@ -212,7 +214,7 @@ void font_render(struct Font * font) {
 		struct Typeface_Key const * key = it.key;
 		if (codepoint_is_invisible(key->codepoint)) { continue; }
 
-		symbols_to_render[symbols_count++] = (struct Typeface_Symbol){
+		symbols_to_render[symbols_count++] = (struct Symbol_To_Render){
 			.key = *key,
 			.glyph = glyph,
 		};
@@ -225,7 +227,7 @@ void font_render(struct Font * font) {
 	struct Glyph error_glyph = {
 		.params.rect.max = {1, 1},
 	};
-	symbols_to_render[symbols_count++] = (struct Typeface_Symbol){
+	symbols_to_render[symbols_count++] = (struct Symbol_To_Render){
 		.glyph = &error_glyph,
 	};
 
@@ -234,7 +236,7 @@ void font_render(struct Font * font) {
 		// estimate the very minimum area
 		uint32_t minimum_area = 0;
 		for (uint32_t i = 0; i < symbols_count; i++) {
-			struct Typeface_Symbol const * symbol = symbols_to_render + i;
+			struct Symbol_To_Render const * symbol = symbols_to_render + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
 			struct uvec2 const glyph_size = {
 				(uint32_t)(params->rect.max.x - params->rect.min.x),
@@ -270,7 +272,7 @@ void font_render(struct Font * font) {
 		struct uvec2 offset = {padding, padding};
 		for (uint32_t i = 0; i < symbols_count; i++) {
 
-			struct Typeface_Symbol const * symbol = symbols_to_render + i;
+			struct Symbol_To_Render const * symbol = symbols_to_render + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
 
 			struct uvec2 const glyph_size = {
@@ -304,13 +306,13 @@ void font_render(struct Font * font) {
 	}
 
 	// render glyphs into the atlas, assuming they shall fit
-	uint32_t const buffer_data_size = data_type_get_size(font->buffer.parameters.data_type);
+	uint32_t const buffer_data_size = data_type_get_size(font->buffer.parameters.type);
 	common_memset(font->buffer.data, 0, font->buffer.size.x * font->buffer.size.y * buffer_data_size);
 	{
 		uint32_t line_height = 0;
 		struct uvec2 offset = {padding, padding};
 		for (uint32_t i = 0; i < symbols_count; i++) {
-			struct Typeface_Symbol const * symbol = symbols_to_render + i;
+			struct Symbol_To_Render const * symbol = symbols_to_render + i;
 			struct Glyph_Params const * params = &symbol->glyph->params;
 
 			struct Typeface const * typeface = font_get_typeface(font, symbol->key.codepoint);
@@ -362,7 +364,7 @@ void font_render(struct Font * font) {
 		}
 	}
 
-	FREE(symbols_to_render);
+	ARENA_FREE(symbols_to_render);
 
 	// reuse error glyph UVs
 	FOR_HASHMAP(&font->table, it) {
@@ -434,8 +436,8 @@ float font_get_kerning(struct Font const * font, uint32_t codepoint1, uint32_t c
 //
 
 static COMPARATOR(font_compare_symbols) {
-	struct Typeface_Symbol const * s1 = v1;
-	struct Typeface_Symbol const * s2 = v2;
+	struct Symbol_To_Render const * s1 = v1;
+	struct Symbol_To_Render const * s2 = v2;
 
 	struct srect const r1 = s1->glyph->params.rect;
 	struct srect const r2 = s2->glyph->params.rect;

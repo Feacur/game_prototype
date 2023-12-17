@@ -1,15 +1,20 @@
 #if !defined(FRAMEWORK_ASSETS_MESH)
 #define FRAMEWORK_ASSETS_MESH
 
-#include "framework/common.h"
+#include "framework/containers/buffer.h"
+#include "framework/graphics/gfx_types.h"
 
 struct Buffer;
-struct Mesh_Parameters;
+
+struct Mesh_Buffer {
+	struct Buffer buffer;
+	struct Mesh_Buffer_Parameters parameters;
+	struct Mesh_Buffer_Attributes attributes;
+	bool index;
+};
 
 struct Mesh {
-	uint32_t capacity, count;
-	struct Buffer * buffers;
-	struct Mesh_Parameters * parameters;
+	struct Array buffers; // `struct Mesh_Buffer`
 };
 
 struct Mesh mesh_init(struct Buffer const * source);

@@ -23,7 +23,7 @@ enum GPU_Command_Type {
 };
 
 struct GPU_Command_Cull {
-	enum Cull_Mode mode;
+	enum Cull_Flag flags;
 	enum Winding_Order order;
 };
 
@@ -33,7 +33,7 @@ struct GPU_Command_Target {
 };
 
 struct GPU_Command_Clear {
-	enum Texture_Type mask;
+	enum Texture_Flag flags;
 	struct vec4 color;
 };
 
@@ -56,7 +56,7 @@ struct GPU_Command_Uniform {
 struct GPU_Command_Buffer {
 	struct Handle gh_buffer;
 	size_t offset, length;
-	enum Buffer_Mode mode;
+	enum Buffer_Target target;
 	uint32_t index;
 };
 

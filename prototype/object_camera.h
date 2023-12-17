@@ -22,7 +22,7 @@ struct Camera {
 		float ncp, fcp, ortho;
 	} params;
 	struct Camera_Clear {
-		enum Texture_Type mask;
+		enum Texture_Flag flags;
 		struct vec4 color;
 	} clear;
 	struct Handle ah_target;

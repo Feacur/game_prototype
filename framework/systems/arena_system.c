@@ -13,7 +13,7 @@
 static struct Arena_System {
 	struct Buffer buffer;
 	struct Array buffered;   // `struct Memory_Header *`
-	struct Hashmap fallback; // `struct Memory_Header *`
+	struct Hashmap fallback; // `struct Memory_Header *` : NULL
 	size_t required, peak;
 } gs_arena_system = {
 	.buffer = {

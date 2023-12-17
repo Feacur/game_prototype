@@ -4,9 +4,6 @@
 // interface from `graphics.c` to anywhere
 // - gpu objects initialization and manipulation
 
-#include "framework/maths_types.h"
-#include "framework/graphics/gfx_types.h"
-
 // @note: texture coordinates
 // +------------+
 // |texture  1,1|
@@ -14,13 +11,33 @@
 // |0,0         |
 // +------------+
 
+#include "framework/containers/array.h"
+#include "framework/containers/hashmap.h"
+#include "framework/graphics/gfx_types.h"
+
 struct Buffer;
 struct Mesh;
 struct Image;
 
+struct GPU_Target_Asset {
+	struct uvec2 size;
+	uint32_t count;
+	struct Target_Parameters const * parameters;
+};
+
 // ----- ----- ----- ----- -----
 //     GPU program part
 // ----- ----- ----- ----- -----
+
+struct GPU_Uniform {
+	enum Data_Type type;
+	uint32_t array_size;
+};
+
+struct GPU_Program {
+	struct Hashmap uniforms; // uniform string id : `struct GPU_Uniform` (at least)
+	// @idea: add an optional asset source
+};
 
 struct Handle gpu_program_init(struct Buffer const * asset);
 void gpu_program_free(struct Handle handle);
@@ -30,8 +47,24 @@ void gpu_program_update(struct Handle handle, struct Buffer const * asset);
 struct GPU_Program const * gpu_program_get(struct Handle handle);
 
 // ----- ----- ----- ----- -----
+//     GPU sampler part
+// ----- ----- ----- ----- -----
+
+struct GPU_Unit {
+	struct Handle gh_texture;
+};
+
+// ----- ----- ----- ----- -----
 //     GPU texture part
 // ----- ----- ----- ----- -----
+
+struct GPU_Texture {
+	struct uvec2 size;
+	struct Texture_Parameters parameters;
+	struct Texture_Settings settings;
+	struct Sampler_Settings sampler;
+	// @idea: add an optional asset source
+};
 
 struct Handle gpu_texture_init(struct Image const * asset);
 void gpu_texture_free(struct Handle handle);
@@ -44,10 +77,15 @@ struct GPU_Texture const * gpu_texture_get(struct Handle handle);
 //     GPU target part
 // ----- ----- ----- ----- -----
 
-struct GPU_Target_Asset {
+struct GPU_Target_Buffer {
+	struct Texture_Parameters parameters;
+};
+
+struct GPU_Target {
 	struct uvec2 size;
-	uint32_t count;
-	struct Texture_Parameters const * parameters;
+	struct Array textures; // `struct Handle`
+	struct Array buffers;  // `struct GPU_Target_Buffer` (at least)
+	// @idea: add an optional asset source
 };
 
 struct Handle gpu_target_init(struct GPU_Target_Asset asset);
@@ -56,11 +94,15 @@ void gpu_target_free(struct Handle handle);
 void gpu_target_update(struct Handle handle, struct GPU_Target_Asset asset);
 
 struct GPU_Target const * gpu_target_get(struct Handle handle);
-struct Handle gpu_target_get_texture(struct Handle handle, enum Texture_Type type, uint32_t index);
+struct Handle gpu_target_get_texture(struct Handle handle, enum Texture_Flag flags, uint32_t index);
 
 // ----- ----- ----- ----- -----
-//     GPU storage part
+//     GPU buffer part
 // ----- ----- ----- ----- -----
+
+struct GPU_Buffer {
+	size_t capacity, size;
+};
 
 struct Handle gpu_buffer_init(struct Buffer const * asset);
 void gpu_buffer_free(struct Handle handle);
@@ -72,6 +114,18 @@ struct GPU_Buffer const * gpu_buffer_get(struct Handle handle);
 // ----- ----- ----- ----- -----
 //     GPU mesh part
 // ----- ----- ----- ----- -----
+
+struct GPU_Mesh_Buffer {
+	struct Handle gh_buffer;
+	struct Mesh_Buffer_Parameters parameters;
+	struct Mesh_Buffer_Attributes attributes;
+	bool index;
+};
+
+struct GPU_Mesh {
+	struct Array buffers; // `struct GPU_Mesh_Buffer`
+	// @idea: add an optional asset source
+};
 
 struct Handle gpu_mesh_init(struct Mesh const * asset);
 void gpu_mesh_free(struct Handle handle);

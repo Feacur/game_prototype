@@ -134,7 +134,7 @@ void memory_debug_report(void) {
 
 	for (struct Memory_Header_Debug const * it = gs_memory; it != NULL; it = it->next) {
 		WRN(
-			"  [%#.*zx] (bytes: %*zu) stacktrace:\n"
+			"  [%#.*zx] (bytes: %*zu) stacktrace:"
 			""
 			, pointer_digits_count, (size_t)(it + 1)
 			, bytes_digits_count,   it->base.size
