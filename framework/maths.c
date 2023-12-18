@@ -186,6 +186,9 @@ float r32_sin(float value) { return sinf(value); }
 float r32_cos(float value) { return cosf(value); }
 float r32_ldexp(float factor, int32_t power) { return ldexpf(factor, power); }
 float r32_trunc(float value) { return truncf(value); }
+float r32_log2(float value) { return log2f(value); }
+float r32_loge(float value) { return logf(value); }
+float r32_log10(float value) { return log10f(value); }
 
 bool r64_isinf(double value) {
 	// @note: check all exponent bits and no mantissa bits are set
@@ -207,6 +210,9 @@ double r64_sin(double value) { return sin(value); }
 double r64_cos(double value) { return cos(value); }
 double r64_ldexp(double factor, int32_t power) { return ldexp(factor, power); }
 double r64_trunc(double value) { return trunc(value); }
+double r64_log2(double value) { return log2(value); }
+double r64_loge(double value) { return log(value); }
+double r64_log10(double value) { return log10(value); }
 
 uint8_t map01_to_u8(float value) {
 	if (value < 0) { return 0; }

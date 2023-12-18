@@ -119,7 +119,7 @@ struct GPU_Mesh_Buffer {
 	struct Handle gh_buffer;
 	struct Mesh_Buffer_Parameters parameters;
 	struct Mesh_Buffer_Attributes attributes;
-	bool index;
+	bool is_index;
 };
 
 struct GPU_Mesh {

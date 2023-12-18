@@ -116,6 +116,9 @@ float r32_sin(float value);
 float r32_cos(float value);
 float r32_ldexp(float factor, int32_t power); // @note: `ldexp(a, b) == a * 2^b`
 float r32_trunc(float value);
+float r32_log2(float value);
+float r32_loge(float value);
+float r32_log10(float value);
 
 bool   r64_isinf(double value);
 bool   r64_isnan(double value);
@@ -126,6 +129,9 @@ double r64_sin(double value);
 double r64_cos(double value);
 double r64_ldexp(double factor, int32_t power); // @note: `ldexp(a, b) == a * 2^b`
 double r64_trunc(double value);
+double r64_log2(double value);
+double r64_loge(double value);
+double r64_log10(double value);
 
 uint8_t  map01_to_u8(float value);
 uint16_t map01_to_u16(float value);

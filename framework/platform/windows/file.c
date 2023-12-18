@@ -50,23 +50,19 @@ struct File * platform_file_init(struct CString path, enum File_Mode mode) {
 	if (path.data == NULL) { return NULL; }
 
 	HANDLE handle = platform_file_internal_create(path, mode);
-	if (handle == INVALID_HANDLE_VALUE) { goto fail; }
+	if (handle == INVALID_HANDLE_VALUE) { return NULL; }
 
 	struct File * file = ALLOCATE(struct File);
 	*file = (struct File){
 		.handle = handle,
 		.mode = mode,
 		.path_length = path.length,
-		.path = ALLOCATE_ARRAY(char, path.length),
+		.path = ALLOCATE_ARRAY(char, path.length + 1),
 	};
 	common_memcpy(file->path, path.data, file->path_length);
+	file->path[path.length] = '\0';
 
 	return file;
-
-	// process errors
-	fail: ERR("'CreateFile' failed; \"%.*s\"", path.length, path.data);
-	REPORT_CALLSTACK(); DEBUG_BREAK();
-	return NULL;
 }
 
 void platform_file_free(struct File * file) {

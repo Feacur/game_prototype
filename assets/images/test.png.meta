@@ -1,0 +1,8 @@
+{
+	"max_lod": 5,
+	"mipmap": "lerp",
+	"minification": "lerp",
+	"magnification": "point",
+	"wrap_x": ["repeat"],
+	"wrap_y": ["repeat"],
+}

@@ -4,6 +4,10 @@
 //
 #include "gfx_types.h"
 
+// ----- ----- ----- ----- -----
+//     Conversion
+// ----- ----- ----- ----- -----
+
 enum Data_Type data_type_get_element_type(enum Data_Type value) {
 	switch (value) {
 		default: break;

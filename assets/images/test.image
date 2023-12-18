@@ -1,9 +1,0 @@
-{
-	"path": "assets/images/checkerboard grey.png",
-	"wrap_x": "repeat",
-	"wrap_y": "repeat",
-	"mipmap": "lerp",
-	"minification": "lerp",
-	"magnification": "point",
-	"max_lod": 5,
-}

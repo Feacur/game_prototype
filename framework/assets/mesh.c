@@ -96,7 +96,7 @@ static struct Mesh mesh_init_wfobj(struct Buffer const * source) {
 				.mode = MESH_MODE_TRIANGLES,
 				.type = DATA_TYPE_R32_U,
 			},
-			.index = true,
+			.is_index = true,
 		},
 	});
 

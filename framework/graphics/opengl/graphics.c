@@ -523,6 +523,10 @@ struct GPU_Program const * gpu_program_get(struct Handle handle) {
 }
 
 // ----- ----- ----- ----- -----
+//     GPU sampler part
+// ----- ----- ----- ----- -----
+
+// ----- ----- ----- ----- -----
 //     GPU texture part
 // ----- ----- ----- ----- -----
 
@@ -568,7 +572,7 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 		},
 		.parameters = asset->parameters,
 		.settings   = asset->settings,
-		.sampler    = asset->sampler,
+		.sampler = asset->sampler,
 	}};
 	if (gpu_texture.base.size.x < asset->size.x) { WRN("texture x exceeds limits"); DEBUG_BREAK(); }
 	if (gpu_texture.base.size.y < asset->size.y) { WRN("texture y exceeds limits"); DEBUG_BREAK(); }
@@ -586,7 +590,6 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 	gpu_texture_upload(&gpu_texture, asset);
 
 	// chart
-	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MAX_LEVEL, (GLint)gpu_texture.base.settings.max_lod);
 	gl.TextureParameteriv(gpu_texture.id, GL_TEXTURE_SWIZZLE_RGBA, (GLint[]){
 		gpu_swizzle_op(gpu_texture.base.settings.swizzle[0], 0),
 		gpu_swizzle_op(gpu_texture.base.settings.swizzle[1], 1),
@@ -595,11 +598,12 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 	});
 
 	// @todo: separate sampler objects
-	gl.TextureParameterfv(gpu_texture.id, GL_TEXTURE_BORDER_COLOR, &gpu_texture.base.sampler.border.x);
+	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MAX_LEVEL, (GLint)gpu_texture.base.settings.max_lod);
 	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(gpu_texture.base.sampler.mipmap, gpu_texture.base.sampler.minification));
 	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(gpu_texture.base.sampler.magnification));
 	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(gpu_texture.base.sampler.wrap_x));
 	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(gpu_texture.base.sampler.wrap_y));
+	gl.TextureParameterfv(gpu_texture.id, GL_TEXTURE_BORDER_COLOR, &gpu_texture.base.sampler.border.x);
 
 	GFX_TRACE("aquire texture %d", gpu_texture.id);
 	return gpu_texture;
@@ -909,7 +913,7 @@ static struct GPU_Mesh_Internal gpu_mesh_on_aquire(struct Mesh const * asset) {
 			.gh_buffer = gpu_buffer_init(&mesh_buffer->buffer),
 			.parameters = mesh_buffer->parameters,
 			.attributes = mesh_buffer->attributes,
-			.index = mesh_buffer->index,
+			.is_index = mesh_buffer->is_index,
 		});
 	}
 
@@ -920,7 +924,7 @@ static struct GPU_Mesh_Internal gpu_mesh_on_aquire(struct Mesh const * asset) {
 		struct GPU_Buffer_Internal const * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, gpu_mesh_buffer->gh_buffer);
 
 		// element buffer
-		if (gpu_mesh_buffer->index) {
+		if (gpu_mesh_buffer->is_index) {
 			gl.VertexArrayElementBuffer(gpu_mesh.id, gpu_buffer->id);
 			continue;
 		}
@@ -1353,7 +1357,7 @@ inline static void gpu_execute_draw(struct GPU_Command_Draw const * command) {
 			? command->count
 			: (uint32_t)(gpu_buffer->base.size / data_type_get_size(gpu_mesh_buffer->parameters.type));
 
-		if (gpu_mesh_buffer->index) {
+		if (gpu_mesh_buffer->is_index) {
 			enum Data_Type const elements_type = gpu_mesh_buffer->parameters.type;
 			size_t const bytes_offset = command->offset * data_type_get_size(elements_type);
 

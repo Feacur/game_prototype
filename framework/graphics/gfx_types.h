@@ -146,7 +146,7 @@ enum Depth_Mode {
 };
 
 // ----- ----- ----- ----- -----
-//     Program part
+//     GPU program part
 // ----- ----- ----- ----- -----
 
 enum Shader_Attribute {
@@ -227,12 +227,12 @@ struct Texture_Parameters {
 };
 
 struct Texture_Settings {
-	uint32_t max_lod;
 	enum Swizzle_Op swizzle[4];
+	uint32_t max_lod;
 };
 
 // ----- ----- ----- ----- -----
-//     Target part
+//     GPU target part
 // ----- ----- ----- ----- -----
 
 struct Target_Parameters {
@@ -241,7 +241,7 @@ struct Target_Parameters {
 };
 
 // ----- ----- ----- ----- -----
-//     Buffer part
+//     GPU buffer part
 // ----- ----- ----- ----- -----
 
 enum Buffer_Target {
@@ -251,7 +251,7 @@ enum Buffer_Target {
 };
 
 // ----- ----- ----- ----- -----
-//     Mesh part
+//     GPU mesh part
 // ----- ----- ----- ----- -----
 
 enum Mesh_Mode {

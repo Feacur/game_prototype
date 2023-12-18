@@ -4,6 +4,10 @@
 //
 #include "gpu_types.h"
 
+// ----- ----- ----- ----- -----
+//     Common
+// ----- ----- ----- ----- -----
+
 enum Data_Type translate_program_data_type(GLint value) {
 	switch (value) {
 		case GL_UNSIGNED_INT_SAMPLER_2D: return DATA_TYPE_UNIT_U;
@@ -171,11 +175,11 @@ struct GPU_Depth_Mode gpu_depth_mode(enum Depth_Mode value, bool reversed_z) {
 }
 
 // ----- ----- ----- ----- -----
-//     Program part
+//     GPU program part
 // ----- ----- ----- ----- -----
 
 // ----- ----- ----- ----- -----
-//     Sampler part
+//     GPU sampler part
 // ----- ----- ----- ----- -----
 
 GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture) {
@@ -236,7 +240,7 @@ GLint gpu_wrap_mode(enum Wrap_Flag value) {
 }
 
 // ----- ----- ----- ----- -----
-//     Texture part
+//     GPU texture part
 // ----- ----- ----- ----- -----
 
 GLenum gpu_sized_internal_format(struct Texture_Parameters parameters) {
@@ -416,7 +420,7 @@ GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index) {
 }
 
 // ----- ----- ----- ----- -----
-//     Target part
+//     GPU target part
 // ----- ----- ----- ----- -----
 
 GLenum gpu_attachment_point(enum Texture_Flag texture_type, uint32_t index, uint32_t limit) {
@@ -438,7 +442,7 @@ GLenum gpu_attachment_point(enum Texture_Flag texture_type, uint32_t index, uint
 
 
 // ----- ----- ----- ----- -----
-//     Buffer part
+//     GPU buffer part
 // ----- ----- ----- ----- -----
 
 GLenum gpu_buffer_target(enum Buffer_Target value) {
@@ -454,7 +458,7 @@ GLenum gpu_buffer_target(enum Buffer_Target value) {
 }
 
 // ----- ----- ----- ----- -----
-//     Mesh part
+//     GPU mesh part
 // ----- ----- ----- ----- -----
 
 GLenum gpu_vertex_value_type(enum Data_Type value) {

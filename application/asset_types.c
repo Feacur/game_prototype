@@ -6,6 +6,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
 
+#include "framework/systems/arena_system.h"
 #include "framework/systems/memory_system.h"
 #include "framework/systems/asset_system.h"
 #include "framework/systems/material_system.h"
@@ -110,37 +111,55 @@ static void asset_shader_drop(struct Handle handle) {
 //     Asset image part
 // ----- ----- ----- ----- -----
 
-static JSON_PROCESSOR(asset_image_fill) {
-	struct Asset_Image * context = data;
-	if (json->type == JSON_ERROR) {
-		common_memset(context, 0, sizeof(*context));
-		return;
+static JSON_PROCESSOR(asset_image_meta_fill) {
+	struct Image * context = data;
+	if (json->type == JSON_OBJECT) {
+		context->settings = json_read_texture_settings(json);
+		context->sampler = json_read_sampler_settings(json);
+
+		context->settings.max_lod = min_u32(
+			context->settings.max_lod,
+			(uint32_t)r32_log2((float)max_u32(
+				context->size.x, context->size.y
+			))
+		);
+
 	}
-
-	struct CString const path = json_get_string(json, S_("path"));
-	struct Buffer file_buffer = platform_file_read_entire(path);
-	if (file_buffer.capacity == 0) {
-		common_memset(context, 0, sizeof(*context));
-		return;
-	}
-
-	struct Image image = image_init(&file_buffer);
-	image.settings = json_read_texture_settings(json);
-	image.sampler = json_read_sampler_settings(json);
-
-	buffer_free(&file_buffer);
-
-	*context = (struct Asset_Image){
-		.gh_texture = gpu_texture_init(&image),
-	};
-	image_free(&image);
-
 }
 
 static void asset_image_load(struct Handle handle) {
 	struct Asset_Image * asset = asset_system_get(handle);
 	struct CString const name = asset_system_get_name(handle);
-	process_json(name, asset, asset_image_fill);
+
+	// binary
+	struct Buffer file_buffer = platform_file_read_entire(name);
+	if (file_buffer.capacity == 0) {
+		common_memset(asset, 0, sizeof(*asset));
+		return;
+	}
+
+	struct Image image = image_init(&file_buffer);
+	buffer_free(&file_buffer); // @todo: optional arena allocator?
+
+	// meta
+	struct CString const meta_suffix = S_(".meta");
+	char * meta_name_data = ARENA_ALLOCATE_ARRAY(char, name.length + meta_suffix.length + 1);
+	common_memcpy(meta_name_data, name.data, name.length);
+	common_memcpy(meta_name_data + name.length, meta_suffix.data, meta_suffix.length);
+	meta_name_data[name.length + meta_suffix.length] = '\0';
+	struct CString const meta_name = {
+		.length = name.length + meta_suffix.length,
+		.data = meta_name_data,
+	};
+
+	process_json(meta_name, &image, asset_image_meta_fill);
+	ARENA_FREE(meta_name_data);
+
+	// upload
+	*asset = (struct Asset_Image){
+		.gh_texture = gpu_texture_init(&image),
+	};
+	image_free(&image); // @todo: optional arena allocator?
 }
 
 static void asset_image_drop(struct Handle handle) {
@@ -315,6 +334,7 @@ static void asset_material_drop(struct Handle handle) {
 void asset_types_map(void) {
 	asset_system_type_map(S_("bytes"),    S_("txt"));
 	asset_system_type_map(S_("shader"),   S_("glsl"));
+	asset_system_type_map(S_("image"),    S_("png"));
 	asset_system_type_map(S_("typeface"), S_("ttf"));
 	asset_system_type_map(S_("typeface"), S_("otf"));
 	asset_system_type_map(S_("model"),    S_("obj"));
