@@ -54,6 +54,10 @@ struct Graphics_Limits {
 	uint32_t color_attachments;
 };
 
+struct Graphics_Extensions {
+	bool clip_control;
+};
+
 //
 #include "framework/graphics/gfx_objects.h"
 
@@ -93,8 +97,8 @@ struct GPU_Mesh_Internal {
 };
 
 static struct Graphics_State {
-	struct Buffer          extensions;
 	struct Graphics_Limits limits;
+	struct Graphics_Extensions extensions;
 
 	struct Array     units;    // `struct GPU_Unit`
 	struct Sparseset programs; // `struct GPU_Program_Internal`
@@ -1414,8 +1418,8 @@ static void __stdcall opengl_debug_message_callback(
 	const void *userParam
 );
 
-static struct Buffer get_extensions(void);
 static struct Graphics_Limits get_limits(void);
+static struct Graphics_Extensions get_extensions(void);
 
 void graphics_to_gpu_library_init(void) {
 	// setup debug
@@ -1430,8 +1434,8 @@ void graphics_to_gpu_library_init(void) {
 
 	//
 	gs_graphics_state = (struct Graphics_State){
+		.limits = get_limits(),
 		.extensions = get_extensions(),
-		.limits     = get_limits(),
 		//
 		.units    = array_init(sizeof(struct GPU_Unit)),
 		.programs = sparseset_init(sizeof(struct GPU_Program_Internal)),
@@ -1448,7 +1452,7 @@ void graphics_to_gpu_library_init(void) {
 	}
 
 	// @note: manage OpenGL's clip space instead of ours
-	bool const can_control_clip_space = (gl.version >= 45) || contains_full_word(gs_graphics_state.extensions.data, S_("GL_ARB_clip_control"));
+	bool const can_control_clip_space = (gl.version >= 45) || gs_graphics_state.extensions.clip_control;
 	if (can_control_clip_space) { gl.ClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); }
 
 	bool const reverse_z = true || can_control_clip_space;
@@ -1492,7 +1496,6 @@ void graphics_to_gpu_library_free(void) {
 
 	//
 	array_free(&gs_graphics_state.units);
-	buffer_free(&gs_graphics_state.extensions);
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
 
 	if (inst_count > 0) { DEBUG_BREAK(); }
@@ -1501,31 +1504,6 @@ void graphics_to_gpu_library_free(void) {
 }
 
 //
-
-static struct Buffer get_extensions(void) {
-	struct Buffer buffer = buffer_init();
-
-	GLint count = 0;
-	gl.GetIntegerv(GL_NUM_EXTENSIONS, &count);
-
-	buffer_resize(&buffer, (uint32_t)(count * 26));
-	for (GLint i = 0; i < count; i++) {
-		GLubyte const * value = gl.GetStringi(GL_EXTENSIONS, (GLuint)i);
-		size_t const size = strlen((char const *)value);
-		buffer_push_many(&buffer, size, value);
-		buffer_push_many(&buffer, 1, " ");
-	}
-	buffer_push_many(&buffer, 1, "\0");
-
-	LOG(
-		"> OpenGL extensions: %.*s\n"
-		""
-		, (uint32_t)buffer.size - 1
-		, (char *)buffer.data
-	);
-
-	return buffer;
-}
 
 static struct Graphics_Limits get_limits(void) {
 	GLint units
@@ -1647,6 +1625,25 @@ static struct Graphics_Limits get_limits(void) {
 		.target_size              = (uint32_t)target_size,
 		.color_attachments        = (uint32_t)color_attachments,
 	};
+}
+
+static struct Graphics_Extensions get_extensions(void) {
+	LOG("> OpenGL extensions:\n");
+	struct Graphics_Extensions result = {0};
+
+	GLint count = 0; gl.GetIntegerv(GL_NUM_EXTENSIONS, &count);
+	for (GLint i = 0; i < count; i++) {
+		void const * data = gl.GetStringi(GL_EXTENSIONS, (GLuint)i);
+		struct CString const extension = {
+			.length = (uint32_t)strlen(data),
+			.data = data,
+		};
+
+		LOG("  %.*s\n", extension.length, extension.data);
+		if (cstring_equals(extension, S_("GL_ARB_clip_control"))) { result.clip_control = true; }
+	}
+
+	return result;
 }
 
 //
