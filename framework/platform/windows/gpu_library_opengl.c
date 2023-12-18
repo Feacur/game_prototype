@@ -1,12 +1,11 @@
 #include "framework/formatter.h"
+#include "framework/platform/system.h"
 #include "framework/systems/arena_system.h"
 #include "framework/systems/memory_system.h"
 
 #include "framework/graphics/opengl/functions.h"
 #include "framework/graphics/opengl/internal/functions_to_gpu_library.h"
 #include "framework/graphics/opengl/internal/graphics_to_gpu_library.h"
-
-#include "internal/system.h"
 
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
@@ -32,83 +31,16 @@ static struct Gpu_Library {
 	struct {
 		PFNWGLGETPIXELFORMATATTRIBIVARBPROC GetPixelFormatAttribiv;
 		PFNWGLCREATECONTEXTATTRIBSARBPROC   CreateContextAttribs;
-		bool multisample;
-		bool context_flush_control;
-		bool create_context_no_error;
-		bool create_context_robustness;
-		bool create_context_profile;
+		bool samples;
 	} arb;
 
 	struct {
 		PFNWGLGETSWAPINTERVALEXTPROC     GetSwapInterval;
 		PFNWGLSWAPINTERVALEXTPROC        SwapInterval;
-		bool swap_control;
-		bool framebuffer_sRGB;
+		bool srgb;
+		bool swap;
 	} ext;
 } gs_gpu_library;
-
-//
-#include "internal/gpu_library_to_system.h"
-
-static void * gpu_library_get_function(struct CString name);
-static bool gpu_library_wgl_init(void) {
-	HDC const device = gs_gpu_library.dll.GetCurrentDC();
-
-	// ARB
-	gs_gpu_library.arb.GetPixelFormatAttribiv = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)(void *)gs_gpu_library.dll.GetProcAddress("wglGetPixelFormatAttribivARB");
-	gs_gpu_library.arb.CreateContextAttribs   = (PFNWGLCREATECONTEXTATTRIBSARBPROC)  (void *)gs_gpu_library.dll.GetProcAddress("wglCreateContextAttribsARB");
-
-	PFNWGLGETEXTENSIONSSTRINGARBPROC arbGetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   (void *)gs_gpu_library.dll.GetProcAddress("wglGetExtensionsStringARB");
-	char const * arbString = arbGetExtensionsString(device);
-#define HAS_ARB(name) contains_full_word(arbString, S_("WGL_ARB_" #name))
-	gs_gpu_library.arb.multisample               = HAS_ARB(multisample);
-	gs_gpu_library.arb.context_flush_control     = HAS_ARB(context_flush_control);
-	gs_gpu_library.arb.create_context_no_error   = HAS_ARB(create_context_no_error);
-	gs_gpu_library.arb.create_context_robustness = HAS_ARB(create_context_robustness);
-	gs_gpu_library.arb.create_context_profile    = HAS_ARB(create_context_profile);
-#undef HAS_ARB
-
-	// EXT
-	gs_gpu_library.ext.GetSwapInterval = (PFNWGLGETSWAPINTERVALEXTPROC)    (void *)gs_gpu_library.dll.GetProcAddress("wglGetSwapIntervalEXT");
-	gs_gpu_library.ext.SwapInterval    = (PFNWGLSWAPINTERVALEXTPROC)       (void *)gs_gpu_library.dll.GetProcAddress("wglSwapIntervalEXT");
-
-	PFNWGLGETEXTENSIONSSTRINGEXTPROC extGetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)(void *)gs_gpu_library.dll.GetProcAddress("wglGetExtensionsStringEXT");
-	char const * extString = extGetExtensionsString();
-#define HAS_EXT(name) contains_full_word(extString, S_("WGL_EXT_" #name))
-	gs_gpu_library.ext.framebuffer_sRGB = HAS_EXT(framebuffer_sRGB);
-	gs_gpu_library.ext.swap_control     = HAS_EXT(swap_control);
-#undef HAS_EXT
-
-	// OGL
-	functions_to_gpu_library_init(gpu_library_get_function);
-	return true;
-}
-
-static bool gpu_library_do_using_temporary_context(bool (* action)(void));
-bool gpu_library_to_system_init(void) {
-	gs_gpu_library.handle = LoadLibrary(TEXT("opengl32.dll"));
-	if (gs_gpu_library.handle == NULL) { return false; }
-
-	// WGL
-	gs_gpu_library.dll.GetProcAddress    = (PFNWGLGETPROCADDRESSPROC)   (void *)GetProcAddress(gs_gpu_library.handle, "wglGetProcAddress");
-	gs_gpu_library.dll.CreateContext     = (PFNWGLCREATECONTEXTPROC)    (void *)GetProcAddress(gs_gpu_library.handle, "wglCreateContext");
-	gs_gpu_library.dll.DeleteContext     = (PFNWGLDELETECONTEXTPROC)    (void *)GetProcAddress(gs_gpu_library.handle, "wglDeleteContext");
-	gs_gpu_library.dll.MakeCurrent       = (PFNWGLMAKECURRENTPROC)      (void *)GetProcAddress(gs_gpu_library.handle, "wglMakeCurrent");
-	gs_gpu_library.dll.GetCurrentContext = (PFNWGLGETCURRENTCONTEXTPROC)(void *)GetProcAddress(gs_gpu_library.handle, "wglGetCurrentContext");
-	gs_gpu_library.dll.GetCurrentDC      = (PFNWGLGETCURRENTDCPROC)     (void *)GetProcAddress(gs_gpu_library.handle, "wglGetCurrentDC");
-	gs_gpu_library.dll.ShareLists        = (PFNWGLSHARELISTSPROC)       (void *)GetProcAddress(gs_gpu_library.handle, "wglShareLists");
-
-	return gpu_library_do_using_temporary_context(gpu_library_wgl_init);
-
-	// https://learn.microsoft.com/windows/win32/api/wingdi/
-	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
-}
-
-void gpu_library_to_system_free(void) {
-	functions_to_gpu_library_free();
-	FreeLibrary(gs_gpu_library.handle);
-	common_memset(&gs_gpu_library, 0, sizeof(gs_gpu_library));
-}
 
 //
 #include "framework/platform/gpu_context.h"
@@ -124,78 +56,6 @@ struct Gpu_Context {
 	struct Pixel_Format pixel_format;
 };
 
-static struct Gpu_Context gpu_context_internal_create(HDC device, HGLRC shared);
-
-struct Gpu_Context * gpu_context_init(void * device) {
-	struct Gpu_Context * gpu_context = ALLOCATE(struct Gpu_Context);
-	*gpu_context = gpu_context_internal_create(device, NULL);
-
-	if (gpu_context->handle != NULL) {
-		gs_gpu_library.dll.MakeCurrent(device, gpu_context->handle);
-		graphics_to_gpu_library_init();
-		gs_gpu_library.dll.MakeCurrent(NULL, NULL);
-	}
-
-	return gpu_context;
-}
-
-void gpu_context_free(struct Gpu_Context * gpu_context) {
-	graphics_to_gpu_library_free();
-
-	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
-	gs_gpu_library.dll.DeleteContext(gpu_context->handle);
-
-	common_memset(gpu_context, 0, sizeof(*gpu_context));
-	FREE(gpu_context);
-}
-
-void gpu_context_start_frame(struct Gpu_Context const * gpu_context, void * device) {
-	if (gs_gpu_library.dll.GetCurrentContext() != NULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-	if (gs_gpu_library.dll.GetCurrentDC() != NULL)      { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-
-	if (!device) { DEBUG_BREAK(); return; }
-
-	gs_gpu_library.dll.MakeCurrent(device, gpu_context->handle);
-}
-
-void gpu_context_draw_frame(struct Gpu_Context const * gpu_context) {
-	(void)gpu_context;
-	if (gs_gpu_library.dll.GetCurrentContext() == NULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-
-	HDC const device = gs_gpu_library.dll.GetCurrentDC();
-	if (device == NULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-
-	if (SwapBuffers(device)) { return; }
-	gl.Flush();
-}
-
-void gpu_context_end_frame(struct Gpu_Context const * gpu_context) {
-	(void)gpu_context;
-	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
-}
-
-int32_t gpu_context_get_vsync(struct Gpu_Context const * gpu_context) {
-	(void)gpu_context;
-	if (gs_gpu_library.dll.GetCurrentContext() == NULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return 0; }
-	if (gs_gpu_library.dll.GetCurrentDC() == NULL)      { REPORT_CALLSTACK(); DEBUG_BREAK(); return 0; }
-
-	if (!gs_gpu_library.ext.swap_control) { return 1; }
-	return gs_gpu_library.ext.GetSwapInterval();
-
-	// https://www.khronos.org/registry/OpenGL/extensions/EXT/WGL_EXT_swap_control.txt
-}
-
-void gpu_context_set_vsync(struct Gpu_Context * gpu_context, int32_t value) {
-	(void)gpu_context;
-	if (gs_gpu_library.dll.GetCurrentContext() == NULL) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-	if (gs_gpu_library.dll.GetCurrentDC() == NULL)      { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
-
-	if (!gs_gpu_library.ext.swap_control) { return; }
-	gs_gpu_library.ext.SwapInterval(value);
-}
-
-//
-
 inline static int pixel_format_translate_swap_method(int value) {
 	switch (value) {
 		case WGL_SWAP_UNDEFINED_ARB: return 1;
@@ -205,22 +65,7 @@ inline static int pixel_format_translate_swap_method(int value) {
 	return 0;
 }
 
-inline static bool pixel_format_is_preferable(struct Pixel_Format const * v1, struct Pixel_Format const * v2) {
-	// adequate storage
-	if (v2->color   < 32) { return false; }
-	if (v2->alpha   <  8) { return false; }
-	if (v2->depth   < 24) { return false; }
-	if (v2->stencil <  8) { return false; }
-
-	// prefer...
-	if (v1->srgb    < v2->srgb)    { return true; } // enabled sRGB color space
-	if (v1->samples > v2->samples) { return true; } // disabled multisampling
-	if (v1->swap    < v2->swap)    { return true; } // buffer pointers exchange
-
-	return false;
-}
-
-static struct Pixel_Format get_pixel_format(HDC device) {
+static struct Pixel_Format choose_pixel_format(HDC device, Comparator compare) {
 	enum Keys {
 		KEY_ACCELERATION,
 		KEY_DRAW_TO_WINDOW,
@@ -269,8 +114,8 @@ static struct Pixel_Format get_pixel_format(HDC device) {
 		}
 
 		// discard non-supported
-		if (!gs_gpu_library.ext.framebuffer_sRGB && vals[KEY_SRGB]) { continue; }
-		if (!gs_gpu_library.arb.multisample && vals[KEY_SAMPLES] > 0) { continue; }
+		if (!gs_gpu_library.ext.srgb && vals[KEY_SRGB]) { continue; }
+		if (!gs_gpu_library.arb.samples && vals[KEY_SAMPLES] > 0) { continue; }
 
 		// hardware-accelerated
 		if (vals[KEY_DRAW_TO_WINDOW] == false) { continue; }
@@ -289,7 +134,7 @@ static struct Pixel_Format get_pixel_format(HDC device) {
 			.samples = vals[KEY_SAMPLES],
 			.swap    = pixel_format_translate_swap_method(vals[KEY_SWAP]),
 		};
-		if (!pixel_format_is_preferable(&result, &format)) { continue; }
+		if (compare(&result, &format) >= 0) { continue; }
 		result = format;
 	}
 
@@ -300,20 +145,33 @@ static struct Pixel_Format get_pixel_format(HDC device) {
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_framebuffer_sRGB.txt
 }
 
-struct Context_Format {
-	int version, profile, deprecate;
-	int flush, no_error, debug, robust;
-};
+static COMPARATOR(compare_pixel_format) {
+	struct Pixel_Format const * pf1 = v1;
+	struct Pixel_Format const * pf2 = v2;
 
-static struct Gpu_Context gpu_context_internal_create(HDC device, HGLRC shared) {
-	struct Pixel_Format const pixel_format = get_pixel_format(device);
+	// adequate storage
+	if (pf2->color   < 32) { return 1; }
+	if (pf2->alpha   <  8) { return 1; }
+	if (pf2->depth   < 24) { return 1; }
+	if (pf2->stencil <  8) { return 1; }
+
+	// prefer...
+	if (pf1->srgb    < pf2->srgb)    { return -1; } // enabled sRGB color space
+	if (pf1->samples > pf2->samples) { return -1; } // disabled multisampling
+	if (pf1->swap    < pf2->swap)    { return -1; } // buffer pointers exchange
+
+	return 0;
+}
+
+static struct Gpu_Context gpu_context_internal_create(HDC surface, HGLRC shared) {
+	struct Pixel_Format const pixel_format = choose_pixel_format(surface, compare_pixel_format);
 	if (pixel_format.id == 0) { return (struct Gpu_Context){0}; }
 
 	PIXELFORMATDESCRIPTOR pfd;
-	DescribePixelFormat(device, pixel_format.id, sizeof(pfd), &pfd);
-	SetPixelFormat(device, pixel_format.id, &pfd);
+	DescribePixelFormat(surface, pixel_format.id, sizeof(pfd), &pfd);
+	SetPixelFormat(surface, pixel_format.id, &pfd);
 
-	HGLRC handle = gs_gpu_library.arb.CreateContextAttribs(device, shared, (int[]){
+	HGLRC handle = gs_gpu_library.arb.CreateContextAttribs(surface, shared, (int[]){
 		// use the newest API
 		WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
 		WGL_CONTEXT_MINOR_VERSION_ARB, 6,
@@ -334,29 +192,118 @@ static struct Gpu_Context gpu_context_internal_create(HDC device, HGLRC shared) 
 
 	// https://www.khronos.org/opengl/wiki/OpenGL_Context
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
-	// https://www.khronos.org/registry/OpenGL/extensions/KHR/KHR_context_flush_control.txt
-	// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_create_context_no_error.txt
-	// https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_create_context_robustness.txt
+}
+
+struct Gpu_Context * gpu_context_init(void * surface) {
+	struct Gpu_Context * gpu_context = ALLOCATE(struct Gpu_Context);
+	*gpu_context = gpu_context_internal_create(surface, NULL);
+
+	if (gpu_context->handle != NULL) {
+		gs_gpu_library.dll.MakeCurrent(surface, gpu_context->handle);
+		graphics_to_gpu_library_init();
+		gs_gpu_library.dll.MakeCurrent(NULL, NULL);
+	}
+
+	return gpu_context;
+}
+
+void gpu_context_free(struct Gpu_Context * gpu_context) {
+	graphics_to_gpu_library_free();
+
+	if (gs_gpu_library.dll.GetCurrentContext() == gpu_context->handle) {
+		gs_gpu_library.dll.MakeCurrent(NULL, NULL);
+	}
+	gs_gpu_library.dll.DeleteContext(gpu_context->handle);
+
+	common_memset(gpu_context, 0, sizeof(*gpu_context));
+	FREE(gpu_context);
+}
+
+bool gpu_context_exists(struct Gpu_Context const * gpu_context) {
+	return gpu_context->handle != NULL;
+}
+
+void gpu_context_start_frame(struct Gpu_Context const * gpu_context, void * surface) {
+	gs_gpu_library.dll.MakeCurrent(surface, gpu_context->handle);
+}
+
+void gpu_context_end_frame(struct Gpu_Context const * gpu_context) {
+	if (gs_gpu_library.dll.GetCurrentContext() != gpu_context->handle) { return; }
+	SwapBuffers(gs_gpu_library.dll.GetCurrentDC());
+	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
+}
+
+int32_t gpu_context_get_vsync(struct Gpu_Context const * gpu_context) {
+	if (gs_gpu_library.dll.GetCurrentContext() != gpu_context->handle) { return 1; }
+	if (!gs_gpu_library.ext.swap) { return 1; }
+	return gs_gpu_library.ext.GetSwapInterval();
+
+	// https://www.khronos.org/registry/OpenGL/extensions/EXT/WGL_EXT_swap_control.txt
+}
+
+void gpu_context_set_vsync(struct Gpu_Context * gpu_context, int32_t value) {
+	if (gs_gpu_library.dll.GetCurrentContext() != gpu_context->handle) { return; }
+	if (!gs_gpu_library.ext.swap) { return; }
+	gs_gpu_library.ext.SwapInterval(value);
 }
 
 //
+#include "internal/gpu_library_to_system.h"
 
-static void * gpu_library_get_function(struct CString name) {
-	if (name.data == NULL) { return NULL; }
-
-	PROC ogl_address = gs_gpu_library.dll.GetProcAddress(name.data);
-	if (ogl_address != NULL) { return (void *)ogl_address; }
-
-	FARPROC dll_address = GetProcAddress(gs_gpu_library.handle, name.data);
-	if (dll_address != NULL) { return (void *)dll_address; }
-
+static void * gpu_library_get_proc_fallback(struct CString name) {
+	void * address = (void *)GetProcAddress(gs_gpu_library.handle, name.data);
+	if (address != NULL) {
+		TRC("loaded %.*s", name.length, name.data);
+		return address;
+	}
+	TRC("failed to load %.*s", name.length, name.data);
 	return NULL;
 }
 
-static bool gpu_library_do_using_temporary_context(bool (* action)(void)) {
-#define OPENGL_CLASS_NAME "opengl_class"
-	if (action == NULL) { return false; }
+static void * gpu_library_get_proc_address(struct CString name) {
+	void * address = (void *)gs_gpu_library.dll.GetProcAddress(name.data);
+	if (address != NULL) {
+		TRC("loaded %.*s", name.length, name.data);
+		return address;
+	}
+	return gpu_library_get_proc_fallback(name);
+}
 
+static bool gpu_library_init(void) {
+	HDC const surface = gs_gpu_library.dll.GetCurrentDC();
+
+	// ARB
+	TRC("loading ARB");
+	gs_gpu_library.arb.GetPixelFormatAttribiv = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)(void *)gpu_library_get_proc_address(S_("wglGetPixelFormatAttribivARB"));
+	gs_gpu_library.arb.CreateContextAttribs   = (PFNWGLCREATECONTEXTATTRIBSARBPROC)  (void *)gpu_library_get_proc_address(S_("wglCreateContextAttribsARB"));
+
+	PFNWGLGETEXTENSIONSSTRINGARBPROC arbGetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   (void *)gpu_library_get_proc_address(S_("wglGetExtensionsStringARB"));
+	char const * arbString = arbGetExtensionsString(surface);
+	LOG("ARB extensions: %s\n", arbString);
+#define HAS_ARB(name) contains_full_word(arbString, S_("WGL_ARB_" #name))
+	gs_gpu_library.arb.samples = HAS_ARB(multisample);
+#undef HAS_ARB
+
+	// EXT
+	TRC("loading EXT");
+	gs_gpu_library.ext.GetSwapInterval = (PFNWGLGETSWAPINTERVALEXTPROC)(void *)gpu_library_get_proc_address(S_("wglGetSwapIntervalEXT"));
+	gs_gpu_library.ext.SwapInterval    = (PFNWGLSWAPINTERVALEXTPROC)   (void *)gpu_library_get_proc_address(S_("wglSwapIntervalEXT"));
+
+	PFNWGLGETEXTENSIONSSTRINGEXTPROC extGetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)(void *)gpu_library_get_proc_address(S_("wglGetExtensionsStringEXT"));
+	char const * extString = extGetExtensionsString();
+	LOG("EXT extensions: %s\n", extString);
+#define HAS_EXT(name) contains_full_word(extString, S_("WGL_EXT_" #name))
+	gs_gpu_library.ext.srgb = HAS_EXT(framebuffer_sRGB);
+	gs_gpu_library.ext.swap = HAS_EXT(swap_control);
+#undef HAS_EXT
+
+	// OGL
+	functions_to_gpu_library_init(gpu_library_get_proc_address);
+	return true;
+}
+
+static bool gpu_library_bootstrap(bool (* init)(void)) {
+#define OPENGL_CLASS_NAME "opengl_class"
 	DWORD const flags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER
 		| PFD_SUPPORT_COMPOSITION | PFD_SWAP_EXCHANGE
 		;
@@ -372,7 +319,8 @@ static bool gpu_library_do_using_temporary_context(bool (* action)(void)) {
 	};
 
 	// ... a temporary window
-	HINSTANCE const module = system_to_internal_get_module();
+	TRC("creating temporary bootstrap for WGL");
+	HINSTANCE const module = (HINSTANCE)platform_system_get_module();
 	RegisterClassEx(&(WNDCLASSEX){
 		.cbSize = sizeof(WNDCLASSEX),
 		.lpszClassName = TEXT(OPENGL_CLASS_NAME),
@@ -387,30 +335,57 @@ static bool gpu_library_do_using_temporary_context(bool (* action)(void)) {
 		0, 0, 1, 1,
 		HWND_DESKTOP, NULL, module, NULL
 	);
-	HDC const device = GetDC(hwnd);
+	HDC const surface = GetDC(hwnd);
 
 	// ... with a temporary pixel format
 	PIXELFORMATDESCRIPTOR pfd;
-	int const pfd_id = ChoosePixelFormat(device, &pfd_hint);
-	DescribePixelFormat(device, pfd_id, sizeof(pfd), &pfd);
-	SetPixelFormat(device, pfd_id, &pfd);
+	int const pfd_id = ChoosePixelFormat(surface, &pfd_hint);
+	DescribePixelFormat(surface, pfd_id, sizeof(pfd), &pfd);
+	SetPixelFormat(surface, pfd_id, &pfd);
 
 	// ... or a temporary rendering context
-	HGLRC const context = gs_gpu_library.dll.CreateContext(device);
-	gs_gpu_library.dll.MakeCurrent(device, context);
+	HGLRC const context = gs_gpu_library.dll.CreateContext(surface);
+	gs_gpu_library.dll.MakeCurrent(surface, context);
 
 	// ... for a persistent WGL
-	bool success = action();
+	bool success = init();
 
 	// ... and done
+	TRC("destroying bootstrap context for WGL");
 	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 	gs_gpu_library.dll.DeleteContext(context);
 
-	ReleaseDC(hwnd, device);
+	ReleaseDC(hwnd, surface);
 	DestroyWindow(hwnd);
 	UnregisterClass(TEXT(OPENGL_CLASS_NAME), module);
 
 	return success;
 
 #undef OPENGL_CLASS_NAME
+}
+
+bool gpu_library_to_system_init(void) {
+	gs_gpu_library.handle = LoadLibrary(TEXT("opengl32.dll"));
+	if (gs_gpu_library.handle == NULL) { return false; }
+
+	TRC("loading WGL");
+	gs_gpu_library.dll.GetProcAddress    = (PFNWGLGETPROCADDRESSPROC)   gpu_library_get_proc_fallback(S_("wglGetProcAddress"));
+	gs_gpu_library.dll.CreateContext     = (PFNWGLCREATECONTEXTPROC)    gpu_library_get_proc_fallback(S_("wglCreateContext"));
+	gs_gpu_library.dll.DeleteContext     = (PFNWGLDELETECONTEXTPROC)    gpu_library_get_proc_fallback(S_("wglDeleteContext"));
+	gs_gpu_library.dll.MakeCurrent       = (PFNWGLMAKECURRENTPROC)      gpu_library_get_proc_fallback(S_("wglMakeCurrent"));
+	gs_gpu_library.dll.GetCurrentContext = (PFNWGLGETCURRENTCONTEXTPROC)gpu_library_get_proc_fallback(S_("wglGetCurrentContext"));
+	gs_gpu_library.dll.GetCurrentDC      = (PFNWGLGETCURRENTDCPROC)     gpu_library_get_proc_fallback(S_("wglGetCurrentDC"));
+	gs_gpu_library.dll.ShareLists        = (PFNWGLSHARELISTSPROC)       gpu_library_get_proc_fallback(S_("wglShareLists"));
+
+	return gpu_library_bootstrap(gpu_library_init);
+
+	// https://learn.microsoft.com/windows/win32/api/wingdi/
+	// https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
+}
+
+void gpu_library_to_system_free(void) {
+	functions_to_gpu_library_free();
+	FreeLibrary(gs_gpu_library.handle);
+	common_memset(&gs_gpu_library, 0, sizeof(gs_gpu_library));
+	TRC("unloaded WGL, ARB, EXT");
 }

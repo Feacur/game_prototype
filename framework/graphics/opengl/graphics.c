@@ -1015,8 +1015,6 @@ struct GPU_Mesh const * gpu_mesh_get(struct Handle handle) {
 //
 #include "framework/graphics/misc.h"
 
-void graphics_update(void) { }
-
 struct mat4 graphics_projection_mat4(
 	struct vec2 scale_xy, struct vec2 offset_xy,
 	float view_near, float view_far, float ortho
@@ -1484,8 +1482,6 @@ void graphics_to_gpu_library_free(void) {
 	FOR_SPARSESET(data, it) { action(it.value); } \
 	sparseset_free(data); \
 } while (false) \
-
-	graphics_update();
 
 	uint32_t inst_count = 0;
 	GPU_FREE(programs, gpu_program_on_discard);

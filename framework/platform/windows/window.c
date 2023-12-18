@@ -1,14 +1,16 @@
 #include "framework/formatter.h"
+#include "framework/platform/system.h"
 #include "framework/platform/gpu_context.h"
 #include "framework/systems/memory_system.h"
 #include "framework/systems/arena_system.h"
 
 #include "framework/internal/input_to_window.h"
-#include "internal/system.h"
 
 #include <initguid.h> // `DEFINE_GUID`
 #include <Windows.h>
 #include <hidusage.h>
+
+#define APPLICATION_CLASS_NAME "game_prototype"
 
 
 //
@@ -25,8 +27,6 @@ struct Window {
 	// fullscreen
 	WINDOWPLACEMENT pre_fullscreen_position;
 	LONG_PTR pre_fullscreen_style;
-	// transient
-	HDC frame_cached_device;
 	// command
 	enum Window_Command {
 		WINDOW_COMMAND_NONE,
@@ -57,6 +57,8 @@ inline static DWORD window_style(enum Window_Settings settings) {
 }
 
 struct Window * platform_window_init(struct Window_Config config, struct Window_Callbacks callbacks) {
+	HINSTANCE const module = (HINSTANCE)platform_system_get_module();
+
 	struct Window * const window = ALLOCATE(struct Window);
 	if (window == NULL) { NULL; }
 
@@ -75,8 +77,7 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 		GetDpiForSystem()
 	);
 
-	HINSTANCE const module = system_to_internal_get_module();
-	HWND const handle = CreateWindowEx(
+	CreateWindowEx(
 		target_ex_style,
 		TEXT(APPLICATION_CLASS_NAME), TEXT("game prototype"),
 		target_style,
@@ -84,12 +85,6 @@ struct Window * platform_window_init(struct Window_Config config, struct Window_
 		target_rect.right - target_rect.left, target_rect.bottom - target_rect.top,
 		HWND_DESKTOP, NULL, module, window
 	);
-
-	if (handle == NULL) {
-		common_memset(window, 0, sizeof(*window));
-		FREE(window);
-		return NULL;
-	}
 
 	return window;
 }
@@ -100,10 +95,6 @@ void platform_window_free(struct Window * window) {
 	}
 	common_memset(window, 0, sizeof(*window));
 	FREE(window);
-}
-
-void platform_window_focus(struct Window const * window) {
-	SetForegroundWindow(window->handle);
 }
 
 bool platform_window_exists(struct Window const * window) {
@@ -117,24 +108,12 @@ void platform_window_update(struct Window * window) {
 	platform_window_internal_handle_sizing(window);
 }
 
-void platform_window_start_frame(struct Window * window) {
-	if (window->frame_cached_device != NULL) {
-		REPORT_CALLSTACK(); DEBUG_BREAK(); return;
-	}
-	window->frame_cached_device = GetDC(window->handle);
+void * platform_window_get_surface(struct Window * window) {
+	return GetDC(window->handle);
 }
 
-void platform_window_draw_frame(struct Window * window) {
-	(void)window;
-}
-
-void platform_window_end_frame(struct Window * window) {
-	ReleaseDC(window->handle, window->frame_cached_device);
-	window->frame_cached_device = NULL;
-}
-
-void * platform_window_get_cached_device(struct Window * window) {
-	return window->frame_cached_device;
+void platform_window_let_surface(struct Window * window, void * surface) {
+	ReleaseDC(window->handle, surface);
 }
 
 struct uvec2 platform_window_get_size(struct Window const * window) {
@@ -146,18 +125,50 @@ struct uvec2 platform_window_get_size(struct Window const * window) {
 }
 
 uint32_t platform_window_get_refresh_rate(struct Window const * window, uint32_t default_value) {
-	if (window->frame_cached_device == NULL) {
-		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
-	}
-
-	int value = GetDeviceCaps(window->frame_cached_device, VREFRESH);
+	HDC surface = GetDC(window->handle);
+	int value = GetDeviceCaps(surface, VREFRESH);
+	ReleaseDC(window->handle, surface);
 	return value > 1 ? (uint32_t)value : default_value;
 }
 
-static void platform_window_internal_toggle_borderless_fullscreen(struct Window * window);
 void platform_window_toggle_borderless_fullscreen(struct Window * window) {
 	ShowWindow(window->handle, SW_HIDE);
-	platform_window_internal_toggle_borderless_fullscreen(window);
+	LONG_PTR const window_style = GetWindowLongPtr(window->handle, GWL_STYLE);
+
+	if (window_style & WS_CAPTION) { // set borderless fullscreen mode
+		MONITORINFO monitor_info = {.cbSize = sizeof(MONITORINFO)};
+		if (!GetMonitorInfo(MonitorFromWindow(window->handle, MONITOR_DEFAULTTOPRIMARY), &monitor_info)) {
+			goto finalize;
+		}
+
+		WINDOWPLACEMENT placement = {.length = sizeof(placement)};
+		if (!GetWindowPlacement(window->handle, &placement)) {
+			goto finalize;
+		}
+
+		window->pre_fullscreen_position = placement;
+		window->pre_fullscreen_style = window_style;
+
+		SetWindowLongPtr(window->handle, GWL_STYLE, WS_CLIPSIBLINGS);
+		SetWindowPos(
+			window->handle, HWND_TOP,
+			monitor_info.rcMonitor.left, monitor_info.rcMonitor.top,
+			monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
+			monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
+			SWP_FRAMECHANGED
+		);
+	}
+	else { // restore windowed mode
+		SetWindowLongPtr(window->handle, GWL_STYLE, window->pre_fullscreen_style);
+		SetWindowPos(
+			window->handle, HWND_TOP,
+			0, 0, 0, 0,
+			SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE
+		);
+		SetWindowPlacement(window->handle, &window->pre_fullscreen_position);
+	}
+
+	finalize:
 	ShowWindow(window->handle, SW_SHOW);
 }
 
@@ -167,7 +178,7 @@ void platform_window_toggle_borderless_fullscreen(struct Window * window) {
 static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 bool window_to_system_init(void) {
-	HINSTANCE const module = system_to_internal_get_module();
+	HINSTANCE const module = (HINSTANCE)platform_system_get_module();
 	return RegisterClassEx(&(WNDCLASSEX){
 		.cbSize = sizeof(WNDCLASSEX),
 		.lpszClassName = TEXT(APPLICATION_CLASS_NAME),
@@ -184,7 +195,7 @@ bool window_to_system_init(void) {
 }
 
 void window_to_system_free(void) {
-	HINSTANCE const module = system_to_internal_get_module();
+	HINSTANCE const module = (HINSTANCE)platform_system_get_module();
 	UnregisterClass(TEXT(APPLICATION_CLASS_NAME), module);
 }
 
@@ -315,38 +326,6 @@ static void platform_window_internal_handle_sizing(struct Window * window) {
 		rect.bottom - rect.top,
 		FALSE
 	);
-}
-
-static void platform_window_internal_toggle_borderless_fullscreen(struct Window * window) {
-	LONG_PTR const window_style = GetWindowLongPtr(window->handle, GWL_STYLE);
-
-	if (window_style & WS_CAPTION) {
-		MONITORINFO monitor_info = {.cbSize = sizeof(MONITORINFO)};
-		if (!GetMonitorInfo(MonitorFromWindow(window->handle, MONITOR_DEFAULTTOPRIMARY), &monitor_info)) { return; }
-
-		if (!GetWindowPlacement(window->handle, &window->pre_fullscreen_position)) { return; }
-		window->pre_fullscreen_style = window_style;
-
-		// set borderless fullscreen mode
-		SetWindowLongPtr(window->handle, GWL_STYLE, WS_CLIPSIBLINGS);
-		SetWindowPos(
-			window->handle, HWND_TOP,
-			monitor_info.rcMonitor.left, monitor_info.rcMonitor.top,
-			monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
-			monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
-			SWP_FRAMECHANGED
-		);
-		return;
-	}
-
-	// restore windowed mode
-	SetWindowLongPtr(window->handle, GWL_STYLE, window->pre_fullscreen_style);
-	SetWindowPos(
-		window->handle, HWND_TOP,
-		0, 0, 0, 0,
-		SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE
-	);
-	SetWindowPlacement(window->handle, &window->pre_fullscreen_position);
 }
 
 static uint8_t fix_virtual_key(uint8_t key, enum Scan_Code scan) {
@@ -735,6 +714,7 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 			SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)window);
 			toggle_raw_input(hwnd, true);
 			input_to_platform_reset();
+			SetForegroundWindow(hwnd);
 		} return 0;
 
 		case WM_CLOSE: {

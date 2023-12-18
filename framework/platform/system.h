@@ -11,8 +11,11 @@ void platform_system_init(struct Platform_Callbacks callbacks);
 void platform_system_free(void);
 
 bool platform_system_is_error(void);
-void platform_system_update(void);
+void platform_system_log_last_error(void);
 
+void platform_system_update(void);
 void platform_system_sleep(uint32_t millis);
+
+void * platform_system_get_module(void);
 
 #endif

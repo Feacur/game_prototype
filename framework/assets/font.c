@@ -33,7 +33,7 @@ struct Typeface_Key {
 	float size; // @note: differs from scale
 };
 
-static HASHER(font_hash_typeface_key) {
+static HASHER(hash_typeface_key) {
 	struct Typeface_Key const * k = v;
 	// kinda FNV-1
 	uint32_t const prime = UINT32_C(16777619);
@@ -73,7 +73,7 @@ struct Font * font_init(void) {
 			},
 		},
 		.ranges = array_init(sizeof(struct Typeface_Range)),
-		.table = hashmap_init(&font_hash_typeface_key, sizeof(struct Typeface_Key), sizeof(struct Glyph)),
+		.table = hashmap_init(&hash_typeface_key, sizeof(struct Typeface_Key), sizeof(struct Glyph)),
 	};
 	return font;
 }
@@ -183,7 +183,7 @@ void font_add_defaults(struct Font *font, float size) {
 	font_add_default(font, CODEPOINT_NON_BREAKING_SPACE, size, glyph_space_size,     (struct srect){0});
 }
 
-static int font_compare_symbols(void const * v1, void const * v2);
+static int compare_symbol_to_render(void const * v1, void const * v2);
 void font_render(struct Font * font) {
 	uint32_t const padding = 1;
 
@@ -221,7 +221,7 @@ void font_render(struct Font * font) {
 	}
 
 	// sort glyphs by height, then by width
-	common_qsort(symbols_to_render, symbols_count, sizeof(*symbols_to_render), font_compare_symbols);
+	common_qsort(symbols_to_render, symbols_count, sizeof(*symbols_to_render), compare_symbol_to_render);
 
 	// append with a virtual error glyph
 	struct Glyph error_glyph = {
@@ -435,7 +435,7 @@ float font_get_kerning(struct Font const * font, uint32_t codepoint1, uint32_t c
 
 //
 
-static COMPARATOR(font_compare_symbols) {
+static COMPARATOR(compare_symbol_to_render) {
 	struct Symbol_To_Render const * s1 = v1;
 	struct Symbol_To_Render const * s2 = v2;
 

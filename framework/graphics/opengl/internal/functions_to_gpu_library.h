@@ -6,7 +6,7 @@
 
 #include "framework/common.h"
 
-void functions_to_gpu_library_init(void * (* get)(struct CString name));
+void functions_to_gpu_library_init(void * (* get_proc_address)(struct CString name));
 void functions_to_gpu_library_free(void);
 
 #endif

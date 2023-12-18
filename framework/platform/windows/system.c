@@ -36,8 +36,6 @@ static struct Platform_System {
 	struct Platform_Callbacks callbacks;
 
 	HMODULE module;
-	HANDLE process;
-	HANDLE thread;
 	HANDLE vectored;
 
 	bool has_error;
@@ -57,13 +55,9 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 	gs_platform_system = (struct Platform_System){
 		.callbacks = callbacks,
 		.module   = GetModuleHandle(NULL),
-		.process  = GetCurrentProcess(),
-		.thread   = GetCurrentThread(),
 		.vectored = AddVectoredExceptionHandler(0, system_vectored_handler),
 	};
 	if (gs_platform_system.module   == NULL) { goto fail; }
-	if (gs_platform_system.process  == NULL) { goto fail; }
-	if (gs_platform_system.thread   == NULL) { goto fail; }
 	if (gs_platform_system.vectored == NULL) { goto fail; }
 
 	{
@@ -81,13 +75,6 @@ void platform_system_init(struct Platform_Callbacks callbacks) {
 				SetConsoleMode(handle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 			}
 		}
-
-		// -- threading
-		// SetThreadAffinityMask(
-		// 	gs_platform_system.module,
-		// 	1 << GetCurrentProcessorNumber()
-		// );
-		// https://learn.microsoft.com/windows/win32/dxtecharts/game-timing-and-multicore-processors
 	}
 
 	if (!debug_to_system_init())       { goto fail; }
@@ -142,6 +129,21 @@ bool platform_system_is_error(void) {
 	return gs_platform_system.has_error;
 }
 
+void platform_system_log_last_error(void) {
+	DWORD id = GetLastError();
+	if (id == 0) { return; }
+
+	LPSTR message = NULL;
+	DWORD size = FormatMessageA(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS
+		, NULL, id, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)
+		, (LPSTR)&message, 0, NULL
+	);
+	if (size > 0 && message[size - 1] == '\n') { size -= 1; }
+	LOG("%.*s\n", (int)size, message);
+	LocalFree(message);
+}
+
 void platform_system_update(void) {
 	input_to_platform_before_update();
 
@@ -156,47 +158,16 @@ void platform_system_update(void) {
 		DispatchMessage(&message);
 	}
 
-	// high-order is state, low-order is toggle
-	// 1) SHORT const caps_lock = GetKeyState(VK_CAPITAL);
-	//    SHORT const num_lock = GetKeyState(VK_NUMLOCK);
-	// 2) BYTE key_states[256];
-	//    GetKeyboardState(key_states);
-
 	input_to_platform_after_update();
 }
-
-// void platform_system_quit(void) {
-// 	PostQuitMessage(0);
-// }
 
 void platform_system_sleep(uint32_t millis) {
 	if (millis == 0) { YieldProcessor(); return; }
 	Sleep(millis);
 }
 
-//
-#include "internal/system.h"
-
-void * system_to_internal_get_module(void) {
+void * platform_system_get_module(void) {
 	return gs_platform_system.module;
-}
-
-//
-
-static void log_last_error(struct CString prefix) {
-	DWORD id = GetLastError();
-	if (id == 0) { return; }
-
-	LPSTR message = NULL;
-	DWORD size = FormatMessageA(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS
-		, NULL, id, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)
-		, (LPSTR)&message, 0, NULL
-	);
-	if (size > 0 && message[size - 1] == '\n') { size -= 1; }
-	if (!cstring_empty(prefix)) { LOG("%.*s ", prefix.length, prefix.data); }
-	LOG("%.*s\n", (int)size, message);
-	LocalFree(message);
 }
 
 //
@@ -224,7 +195,7 @@ static void system_signal_handler(int value) {
 		, value
 		, s_value.length, s_value.data
 	);
-	log_last_error(S_("  message:"));
+	platform_system_log_last_error();
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 
 	gs_platform_system.has_error = true;
@@ -322,7 +293,7 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 		, code
 		, s_type.length, s_type.data
 	);
-	log_last_error(S_("  message:"));
+	platform_system_log_last_error();
 	REPORT_CALLSTACK();
 
 	if (noncontinuable) {
@@ -333,27 +304,6 @@ static LONG WINAPI system_vectored_handler(EXCEPTION_POINTERS * ExceptionInfo) {
 	return noncontinuable
 		? EXCEPTION_CONTINUE_EXECUTION
 		: EXCEPTION_CONTINUE_SEARCH;
-
-	// https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-exception_record
-	// https://learn.microsoft.com/visualstudio/debugger/how-to-set-a-thread-name-in-native-code
-	// https://wiki.winehq.org/Debugging_Hints
-
-	// This flag is reserved for system use.
-	// bool const software_originate = (ExceptionInfo->ExceptionRecord->ExceptionFlags & EXCEPTION_SOFTWARE_ORIGINATE) == EXCEPTION_SOFTWARE_ORIGINATE;
-
-	// switch (code)
-	// {
-	// 	case EXCEPTION_ACCESS_VIOLATION: {
-	// 		ULONGLONG const rw_flag = ExceptionInfo->ExceptionRecord->ExceptionInformation[0];
-	// 		ULONGLONG const address = ExceptionInfo->ExceptionRecord->ExceptionInformation[1];
-	// 	} break;
-	// 
-	// 	case EXCEPTION_IN_PAGE_ERROR: {
-	// 		ULONGLONG const rw_flag   = ExceptionInfo->ExceptionRecord->ExceptionInformation[0];
-	// 		ULONGLONG const address   = ExceptionInfo->ExceptionRecord->ExceptionInformation[1];
-	// 		ULONGLONG const nt_status = ExceptionInfo->ExceptionRecord->ExceptionInformation[2];
-	// 	} break;
-	// }
 }
 
 #undef SVE_IGNORE_CLR

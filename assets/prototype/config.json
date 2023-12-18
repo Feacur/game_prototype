@@ -2,6 +2,6 @@
 	"size": [1280, 720],
 	"resizable": true,
 	"vsync": 1,
-	"target_refresh_rate": 120,
+	"target_refresh_rate": 60,
 	"fixed_refresh_rate": 50,
 }

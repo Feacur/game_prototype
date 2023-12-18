@@ -9,9 +9,10 @@ struct OGL gl;
 //
 #include "internal/functions_to_gpu_library.h"
 
-void functions_to_gpu_library_init(void * (* get)(struct CString name)) {
+void functions_to_gpu_library_init(void * (* get_proc_address)(struct CString name)) {
+	TRC("loading OGL");
 	gl = (struct OGL){
-		#define XMACRO(type, name) .name = (PFNGL##type##PROC)get(S_("gl" #name)),
+		#define XMACRO(type, name) .name = (PFNGL##type##PROC)get_proc_address(S_("gl" #name)),
 		#include "internal/functions_xmacro.h"
 	};
 
@@ -46,4 +47,5 @@ void functions_to_gpu_library_init(void * (* get)(struct CString name)) {
 
 void functions_to_gpu_library_free(void) {
 	common_memset(&gl, 0, sizeof(gl));
+	TRC("unloaded OGL");
 }
