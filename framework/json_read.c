@@ -6,6 +6,7 @@
 #include "framework/platform/file.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/strings.h"
+#include "framework/systems/arena_system.h"
 
 #include "framework/graphics/gfx_objects.h"
 #include "framework/assets/json.h"
@@ -187,12 +188,12 @@ struct Sampler_Settings json_read_sampler_settings(struct JSON const * json) {
 
 struct Texture_Settings json_read_texture_settings(struct JSON const * json) {
 	struct Texture_Settings result = {
-		.max_lod = (uint32_t)json_get_number(json, S_("max_lod")),
+		.sublevels = (uint32_t)json_get_number(json, S_("sublevels")),
 	};
 	return result;
 }
 
-struct Target_Parameters json_read_target_parameters(struct JSON const * json) {
+struct Target_Format json_read_target_format(struct JSON const * json) {
 	if (json->type != JSON_OBJECT) { goto fail; }
 
 	struct CString const type = json_get_string(json, S_("type"));
@@ -201,8 +202,8 @@ struct Target_Parameters json_read_target_parameters(struct JSON const * json) {
 	bool const read = json_get_boolean(json, S_("read"));
 
 	if (cstring_equals(type, S_("color_rgba8_unorm"))) {
-		return (struct Target_Parameters) {
-			.image = {
+		return (struct Target_Format) {
+			.base = {
 				.flags = TEXTURE_FLAG_COLOR,
 				.type = DATA_TYPE_RGBA8_UNORM,
 			},
@@ -211,8 +212,8 @@ struct Target_Parameters json_read_target_parameters(struct JSON const * json) {
 	}
 
 	if (cstring_equals(type, S_("depth_r32_f"))) {
-		return (struct Target_Parameters) {
-			.image = {
+		return (struct Target_Format) {
+			.base = {
 				.flags = TEXTURE_FLAG_DEPTH,
 				.type = DATA_TYPE_R32_F,
 			},
@@ -221,9 +222,9 @@ struct Target_Parameters json_read_target_parameters(struct JSON const * json) {
 	}
 
 	// process errors
-	fail: ERR("unknown target parameters");
+	fail: ERR("unknown target format");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
-	return (struct Target_Parameters){0};
+	return (struct Target_Format){0};
 }
 
 // ----- ----- ----- ----- -----
@@ -236,29 +237,28 @@ struct Handle json_read_target(struct JSON const * json) {
 	struct JSON const * buffers_json = json_get(json, S_("buffers"));
 	if (buffers_json->type != JSON_ARRAY) { goto fail; }
 
-	// @todo: arena/stack allocator
-	struct Array parameters_buffer = array_init(sizeof(struct Target_Parameters));
+	struct Array formats = array_init(sizeof(struct Target_Format));
+	formats.allocate = arena_reallocate;
 
 	uint32_t const buffers_count = json_count(buffers_json);
 	for (uint32_t i = 0; i < buffers_count; i++) {
-		struct Target_Parameters const parameters = json_read_target_parameters(json_at(buffers_json, i));
-		array_push_many(&parameters_buffer, 1, &parameters);
+		struct Target_Format const format = json_read_target_format(json_at(buffers_json, i));
+		array_push_many(&formats, 1, &format);
 	}
 
 	struct Handle result = (struct Handle){0};
-	if (parameters_buffer.count > 0) {
+	if (formats.count > 0) {
 		struct uvec2 size = {0};
 		json_read_many_u32(json_get(json, S_("size")), 2, &size.x);
 		if (size.x > 0 && size.y > 0) {
 			result = gpu_target_init((struct GPU_Target_Asset){
 				.size = size,
-				.count = parameters_buffer.count,
-				.parameters = parameters_buffer.data,
+				.formats = formats,
 			});
 		}
 	}
 
-	array_free(&parameters_buffer);
+	array_free(&formats);
 	return result;
 
 	// process errors

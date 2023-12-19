@@ -56,19 +56,18 @@ struct Batcher_Instance {
 };
 
 struct Batcher_2D {
+	struct Handle gh_mesh;
+	struct Handle gh_buffer;
+	struct Buffer buffer;
 	struct Gfx_Uniforms uniforms;
-	//
-	struct Batcher_2D_Batch batch;
-	struct Array codepoints; // uint32_t
-	struct Array batches;    // `struct Batcher_2D_Batch`
-	struct Array words;      // `struct Batcher_2D_Word`
 	//
 	struct vec4 color;
 	struct mat4 matrix;
+	struct Batcher_2D_Batch batch;
 	//
-	struct Buffer buffer;
-	struct Handle gh_buffer;
-	struct Handle gh_mesh;
+	struct Array codepoints; // uint32_t
+	struct Array batches;    // `struct Batcher_2D_Batch`
+	struct Array words;      // `struct Batcher_2D_Word`
 };
 
 //
@@ -77,15 +76,17 @@ struct Batcher_2D {
 struct Batcher_2D * batcher_2d_init(void) {
 	struct Batcher_2D * batcher = ALLOCATE(struct Batcher_2D);
 	*batcher = (struct Batcher_2D){
-		.uniforms = gfx_uniforms_init(),
+		.gh_mesh         = gpu_mesh_init(&(struct Mesh){0}),
+		.gh_buffer       = gpu_buffer_init(&(struct Buffer){0}),
+		.buffer          = buffer_init(),
+		.uniforms        = gfx_uniforms_init(),
+		//
 		.color = (struct vec4){1, 1, 1, 1},
 		.matrix = c_mat4_identity,
+		//
 		.codepoints      = array_init(sizeof(uint32_t)),
 		.batches         = array_init(sizeof(struct Batcher_2D_Batch)),
 		.words           = array_init(sizeof(struct Batcher_2D_Word)),
-		.buffer          = buffer_init(),
-		.gh_buffer       = gpu_buffer_init(&(struct Buffer){0}),
-		.gh_mesh         = gpu_mesh_init(&(struct Mesh){0}),
 	};
 	return batcher;
 }
@@ -223,7 +224,6 @@ void batcher_2d_add_text(
 
 			word_width += full_size_x;
 			if (codepoint_is_word_break(it.codepoint)) {
-				// @todo: (?) arena/stack allocator
 				array_push_many(&batcher->words, 1, &(struct Batcher_2D_Word) {
 					.codepoints_offset = codepoints_offset, .codepoints_end = batcher->codepoints.count,
 					.ah_font = gh_font, .size = size,
@@ -237,7 +237,6 @@ void batcher_2d_add_text(
 			}
 
 			if (!codepoint_is_invisible(it.codepoint)) {
-				// @todo: (?) arena/stack allocator
 				array_push_many(&batcher->codepoints, 1, &it.codepoint);
 
 				//
@@ -247,7 +246,6 @@ void batcher_2d_add_text(
 		}
 
 		if (batcher->codepoints.count > codepoints_offset) {
-			// @todo: (?) arena/stack allocator
 			array_push_many(&batcher->words, 1, &(struct Batcher_2D_Word) {
 				.codepoints_offset = codepoints_offset, .codepoints_end = batcher->codepoints.count,
 				.ah_font = gh_font, .size = size,

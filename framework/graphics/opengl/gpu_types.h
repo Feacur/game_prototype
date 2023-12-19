@@ -12,7 +12,7 @@
 //     Common
 // ----- ----- ----- ----- -----
 
-enum Data_Type translate_program_data_type(GLint value);
+enum Gfx_Type translate_program_data_type(GLint value);
 
 GLenum gpu_comparison_op(enum Comparison_Op value);
 GLenum gpu_cull_mode(enum Cull_Flag value);
@@ -45,9 +45,9 @@ GLint gpu_wrap_mode(enum Wrap_Flag value);
 //     GPU texture part
 // ----- ----- ----- ----- -----
 
-GLenum gpu_sized_internal_format(struct Texture_Parameters parameters);
-GLenum gpu_pixel_data_format(struct Texture_Parameters parameters);
-GLenum gpu_pixel_data_type(struct Texture_Parameters parameters);
+GLenum gpu_sized_internal_format(struct Texture_Format format);
+GLenum gpu_pixel_data_format(struct Texture_Format format);
+GLenum gpu_pixel_data_type(struct Texture_Format format);
 GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index);
 
 // ----- ----- ----- ----- -----
@@ -66,8 +66,8 @@ GLenum gpu_buffer_target(enum Buffer_Target value);
 //     GPU mesh part
 // ----- ----- ----- ----- -----
 
-GLenum gpu_vertex_value_type(enum Data_Type value);
-GLenum gpu_index_value_type(enum Data_Type value);
+GLenum gpu_vertex_value_type(enum Gfx_Type value);
+GLenum gpu_index_value_type(enum Gfx_Type value);
 GLenum gpu_mesh_mode(enum Mesh_Mode value);
 
 #endif

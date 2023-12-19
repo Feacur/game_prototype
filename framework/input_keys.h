@@ -250,7 +250,7 @@ enum Key_Code {
 	KC_NUM0, // insert
 	KC_NUM_PERIOD,
 	//
-	KC_ERROR = 0xff,
+	KC_COUNT = 0xff,
 };
 
 enum Mouse_Code {
@@ -260,6 +260,8 @@ enum Mouse_Code {
 	MC_MIDDLE,
 	MC_X1,
 	MC_X2,
+	//
+	MC_COUNT = 8,
 };
 
 enum Input_Type {

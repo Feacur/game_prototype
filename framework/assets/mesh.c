@@ -42,7 +42,7 @@ static struct Mesh mesh_init_wfobj(struct Buffer const * source) {
 	struct Array indices  = array_init(sizeof(uint32_t));
 
 	uint32_t attributes_count = 0;
-	struct Mesh_Buffer_Attributes attributes = {0};
+	struct Mesh_Attributes attributes = {0};
 	if (wfobj.positions.count > 0) { attributes.data[attributes_count++] = SHADER_ATTRIBUTE_POSITION; attributes.data[attributes_count++] = 3; }
 	if (wfobj.texcoords.count > 0) { attributes.data[attributes_count++] = SHADER_ATTRIBUTE_TEXCOORD; attributes.data[attributes_count++] = 2; }
 	if (wfobj.normals.count   > 0) { attributes.data[attributes_count++] = SHADER_ATTRIBUTE_NORMAL;   attributes.data[attributes_count++] = 3; }
@@ -80,7 +80,7 @@ static struct Mesh mesh_init_wfobj(struct Buffer const * source) {
 				.capacity = vertices.capacity * vertices.value_size,
 				.size     = vertices.count * vertices.value_size,
 			},
-			.parameters = {
+			.format = {
 				.type = DATA_TYPE_R32_F,
 			},
 			.attributes = attributes,
@@ -92,7 +92,7 @@ static struct Mesh mesh_init_wfobj(struct Buffer const * source) {
 				.capacity = indices.capacity * indices.value_size,
 				.size     = indices.count * indices.value_size,
 			},
-			.parameters = {
+			.format = {
 				.mode = MESH_MODE_TRIANGLES,
 				.type = DATA_TYPE_R32_U,
 			},

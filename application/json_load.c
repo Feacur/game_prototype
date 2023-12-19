@@ -115,7 +115,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 		struct GPU_Uniform const * gpu_uniform = hashmap_get(&program->uniforms, &it.id);
 		struct CString const uniform_name = string_system_get(it.id);
 
-		uint32_t const uniform_bytes = data_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;
+		uint32_t const uniform_bytes = gfx_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;
 		if (it.size != uniform_bytes) {
 			ERR("uniform `%.*s` size mismatch: expected %u, material %u"
 				, uniform_name.length, uniform_name.data
@@ -126,7 +126,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 		struct JSON const * uniform_json = json_get(json, uniform_name);
 		if (uniform_json->type == JSON_NULL) { continue; }
 
-		uint32_t const uniform_count = data_type_get_count(gpu_uniform->type) * gpu_uniform->array_size;
+		uint32_t const uniform_count = gfx_type_get_count(gpu_uniform->type) * gpu_uniform->array_size;
 		uint32_t const json_elements_count = max_u32(1, json_count(uniform_json));
 		if (json_elements_count != uniform_count) {
 			ERR("uniform `%.*s` length mismatch: expected %u, json %u"
@@ -136,7 +136,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 		}
 
 		void * buffer = arena_reallocate(NULL, it.size);
-		switch (data_type_get_element_type(gpu_uniform->type)) {
+		switch (gfx_type_get_element_type(gpu_uniform->type)) {
 			default: ERR("unknown data type");
 				goto fail_field;
 

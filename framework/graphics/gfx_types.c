@@ -8,7 +8,7 @@
 //     Conversion
 // ----- ----- ----- ----- -----
 
-enum Data_Type data_type_get_element_type(enum Data_Type value) {
+enum Gfx_Type gfx_type_get_element_type(enum Gfx_Type value) {
 	switch (value) {
 		default: break;
 
@@ -88,7 +88,7 @@ enum Data_Type data_type_get_element_type(enum Data_Type value) {
 	return value;
 }
 
-enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels) {
+enum Gfx_Type gfx_type_get_vector_type(enum Gfx_Type value, uint32_t channels) {
 	switch (value) {
 		default: break;
 
@@ -188,7 +188,7 @@ enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels
 	return DATA_TYPE_NONE;
 }
 
-uint32_t data_type_get_count(enum Data_Type value) {
+uint32_t gfx_type_get_count(enum Gfx_Type value) {
 	switch (value) {
 		case DATA_TYPE_NONE: break;
 
@@ -279,7 +279,7 @@ uint32_t data_type_get_count(enum Data_Type value) {
 	return 0;
 }
 
-uint32_t data_type_get_size(enum Data_Type value) {
+uint32_t gfx_type_get_size(enum Gfx_Type value) {
 	switch (value) {
 		case DATA_TYPE_NONE: break;
 
@@ -370,8 +370,8 @@ uint32_t data_type_get_size(enum Data_Type value) {
 	return 0;
 }
 
-bool data_type_is_integer(enum Data_Type value) {
-	switch (data_type_get_element_type(value)) {
+bool gfx_type_is_integer(enum Gfx_Type value) {
+	switch (gfx_type_get_element_type(value)) {
 		default: break;
 
 		case DATA_TYPE_R8_U:

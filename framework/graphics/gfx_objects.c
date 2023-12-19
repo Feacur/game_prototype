@@ -15,9 +15,9 @@ struct Handle gpu_target_get_texture(struct Handle handle, enum Texture_Flag fla
 		if (texture == NULL) { continue; }
 
 		uint32_t const attachment = attachments_count;
-		if (texture->parameters.flags & TEXTURE_FLAG_COLOR) { attachments_count++; }
+		if (texture->format.flags & TEXTURE_FLAG_COLOR) { attachments_count++; }
 
-		if (texture->parameters.flags == flags && attachment == index) {
+		if (texture->format.flags == flags && attachment == index) {
 			return *gh_texture;
 		}
 	}

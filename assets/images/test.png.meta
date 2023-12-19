@@ -1,5 +1,5 @@
 {
-	"max_lod": 5,
+	"sublevels": 5,
 	"mipmap": "lerp",
 	"minification": "lerp",
 	"magnification": "point",

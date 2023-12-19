@@ -29,7 +29,7 @@ struct Sampler_Settings json_read_sampler_settings(struct JSON const * json);
 
 struct Texture_Settings json_read_texture_settings(struct JSON const * json);
 
-struct Target_Parameters json_read_target_parameters(struct JSON const * json);
+struct Target_Format json_read_target_format(struct JSON const * json);
 
 // ----- ----- ----- ----- -----
 //     graphics objects

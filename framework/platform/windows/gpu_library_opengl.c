@@ -15,7 +15,7 @@
 #include "framework/__warnings_pop.h"
 
 
-static struct Gpu_Library {
+static struct GPU_Library {
 	HMODULE handle;
 
 	struct {
@@ -51,7 +51,7 @@ struct Pixel_Format {
 	int srgb, samples, swap;
 };
 
-struct Gpu_Context {
+struct GPU_Context {
 	HGLRC handle;
 	struct Pixel_Format pixel_format;
 };
@@ -163,9 +163,9 @@ static COMPARATOR(compare_pixel_format) {
 	return 0;
 }
 
-static struct Gpu_Context gpu_context_internal_create(HDC surface, HGLRC shared) {
+static struct GPU_Context gpu_context_internal_create(HDC surface, HGLRC shared) {
 	struct Pixel_Format const pixel_format = choose_pixel_format(surface, compare_pixel_format);
-	if (pixel_format.id == 0) { return (struct Gpu_Context){0}; }
+	if (pixel_format.id == 0) { return (struct GPU_Context){0}; }
 
 	PIXELFORMATDESCRIPTOR pfd;
 	DescribePixelFormat(surface, pixel_format.id, sizeof(pfd), &pfd);
@@ -185,7 +185,7 @@ static struct Gpu_Context gpu_context_internal_create(HDC surface, HGLRC shared)
 		0,
 	});
 
-	return (struct Gpu_Context){
+	return (struct GPU_Context){
 		.handle = handle,
 		.pixel_format = pixel_format,
 	};
@@ -194,8 +194,8 @@ static struct Gpu_Context gpu_context_internal_create(HDC surface, HGLRC shared)
 	// https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
 }
 
-struct Gpu_Context * gpu_context_init(void * surface) {
-	struct Gpu_Context * gpu_context = ALLOCATE(struct Gpu_Context);
+struct GPU_Context * gpu_context_init(void * surface) {
+	struct GPU_Context * gpu_context = ALLOCATE(struct GPU_Context);
 	*gpu_context = gpu_context_internal_create(surface, NULL);
 
 	if (gpu_context->handle != NULL) {
@@ -207,7 +207,7 @@ struct Gpu_Context * gpu_context_init(void * surface) {
 	return gpu_context;
 }
 
-void gpu_context_free(struct Gpu_Context * gpu_context) {
+void gpu_context_free(struct GPU_Context * gpu_context) {
 	graphics_to_gpu_library_free();
 
 	if (gs_gpu_library.dll.GetCurrentContext() == gpu_context->handle) {
@@ -219,21 +219,21 @@ void gpu_context_free(struct Gpu_Context * gpu_context) {
 	FREE(gpu_context);
 }
 
-bool gpu_context_exists(struct Gpu_Context const * gpu_context) {
+bool gpu_context_exists(struct GPU_Context const * gpu_context) {
 	return gpu_context->handle != NULL;
 }
 
-void gpu_context_start_frame(struct Gpu_Context const * gpu_context, void * surface) {
+void gpu_context_start_frame(struct GPU_Context const * gpu_context, void * surface) {
 	gs_gpu_library.dll.MakeCurrent(surface, gpu_context->handle);
 }
 
-void gpu_context_end_frame(struct Gpu_Context const * gpu_context) {
+void gpu_context_end_frame(struct GPU_Context const * gpu_context) {
 	if (gs_gpu_library.dll.GetCurrentContext() != gpu_context->handle) { return; }
 	SwapBuffers(gs_gpu_library.dll.GetCurrentDC());
 	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 }
 
-int32_t gpu_context_get_vsync(struct Gpu_Context const * gpu_context) {
+int32_t gpu_context_get_vsync(struct GPU_Context const * gpu_context) {
 	if (gs_gpu_library.dll.GetCurrentContext() != gpu_context->handle) { return 1; }
 	if (!gs_gpu_library.ext.swap) { return 1; }
 	return gs_gpu_library.ext.GetSwapInterval();
@@ -241,7 +241,7 @@ int32_t gpu_context_get_vsync(struct Gpu_Context const * gpu_context) {
 	// https://www.khronos.org/registry/OpenGL/extensions/EXT/WGL_EXT_swap_control.txt
 }
 
-void gpu_context_set_vsync(struct Gpu_Context * gpu_context, int32_t value) {
+void gpu_context_set_vsync(struct GPU_Context * gpu_context, int32_t value) {
 	if (gs_gpu_library.dll.GetCurrentContext() != gpu_context->handle) { return; }
 	if (!gs_gpu_library.ext.swap) { return; }
 	gs_gpu_library.ext.SwapInterval(value);
@@ -250,7 +250,7 @@ void gpu_context_set_vsync(struct Gpu_Context * gpu_context, int32_t value) {
 //
 #include "internal/gpu_library_to_system.h"
 
-static void * gpu_library_get_proc_fallback(struct CString name) {
+static PROC_GETTER(gpu_library_get_proc_fallback) {
 	void * address = (void *)GetProcAddress(gs_gpu_library.handle, name.data);
 	if (address != NULL) {
 		TRC("loaded %.*s", name.length, name.data);
@@ -260,7 +260,7 @@ static void * gpu_library_get_proc_fallback(struct CString name) {
 	return NULL;
 }
 
-static void * gpu_library_get_proc_address(struct CString name) {
+static PROC_GETTER(gpu_library_get_proc_address) {
 	void * address = (void *)gs_gpu_library.dll.GetProcAddress(name.data);
 	if (address != NULL) {
 		TRC("loaded %.*s", name.length, name.data);

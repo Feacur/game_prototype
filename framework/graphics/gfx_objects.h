@@ -21,8 +21,7 @@ struct Image;
 
 struct GPU_Target_Asset {
 	struct uvec2 size;
-	uint32_t count;
-	struct Target_Parameters const * parameters;
+	struct Array formats; // `struct Target_Format`
 };
 
 // ----- ----- ----- ----- -----
@@ -30,7 +29,7 @@ struct GPU_Target_Asset {
 // ----- ----- ----- ----- -----
 
 struct GPU_Uniform {
-	enum Data_Type type;
+	enum Gfx_Type type;
 	uint32_t array_size;
 };
 
@@ -60,7 +59,7 @@ struct GPU_Unit {
 
 struct GPU_Texture {
 	struct uvec2 size;
-	struct Texture_Parameters parameters;
+	struct Texture_Format format;
 	struct Texture_Settings settings;
 	struct Sampler_Settings sampler;
 	// @idea: add an optional asset source
@@ -78,7 +77,7 @@ struct GPU_Texture const * gpu_texture_get(struct Handle handle);
 // ----- ----- ----- ----- -----
 
 struct GPU_Target_Buffer {
-	struct Texture_Parameters parameters;
+	struct Texture_Format format;
 };
 
 struct GPU_Target {
@@ -117,8 +116,8 @@ struct GPU_Buffer const * gpu_buffer_get(struct Handle handle);
 
 struct GPU_Mesh_Buffer {
 	struct Handle gh_buffer;
-	struct Mesh_Buffer_Parameters parameters;
-	struct Mesh_Buffer_Attributes attributes;
+	struct Mesh_Format format;
+	struct Mesh_Attributes attributes;
 	bool is_index;
 };
 

@@ -49,19 +49,19 @@ struct JSON;
 //     delegates
 // ----- ----- ----- ----- -----
 
-#define PREDICATE(name) bool (name)(void const * value)
+#define PREDICATE(func) bool (func)(void const * value)
 typedef PREDICATE(Predicate);
 
-#define COMPARATOR(name) int (name)(void const * v1, void const * v2)
+#define COMPARATOR(func) int (func)(void const * v1, void const * v2)
 typedef COMPARATOR(Comparator);
 
-#define ALLOCATOR(name) void * (name)(void * pointer, size_t size)
+#define ALLOCATOR(func) void * (func)(void * pointer, size_t size)
 typedef ALLOCATOR(Allocator);
 
-#define HASHER(name) uint32_t (name)(void const * v)
+#define HASHER(func) uint32_t (func)(void const * value)
 typedef HASHER(Hasher);
 
-#define JSON_PROCESSOR(name) void (name)(struct JSON const * json, void * data)
+#define JSON_PROCESSOR(func) void (func)(struct JSON const * json, void * data)
 typedef JSON_PROCESSOR(JSON_Processor);
 
 // ----- ----- ----- ----- -----
@@ -179,12 +179,11 @@ inline static bool is_alpha(char c) {
 }
 
 inline static HASHER(hash32) {
-	return *(uint32_t const *)v;
+	return *(uint32_t const *)value;
 }
 
 inline static HASHER(hash64) {
-	struct Data { uint32_t v1, v2; };
-	struct Data const * data = v;
+	struct Data { uint32_t v1, v2; } const * data = value;
 	// kinda FNV-1
 	uint32_t const prime = UINT32_C(16777619);
 	uint32_t hash = UINT32_C(2166136261);

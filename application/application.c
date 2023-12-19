@@ -22,7 +22,7 @@ static struct Application {
 
 	bool should_exit;
 	struct Window * window;
-	struct Gpu_Context * gpu_context;
+	struct GPU_Context * gpu_context;
 
 	struct Application_Ticks {
 		uint64_t elapsed;

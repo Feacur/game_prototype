@@ -535,23 +535,23 @@ static void handle_input_mouse_raw(struct Window * window, RAWMOUSE * data) {
 	}
 
 	//
-	static USHORT const c_keys_down[] = {
-		RI_MOUSE_LEFT_BUTTON_DOWN,
-		RI_MOUSE_RIGHT_BUTTON_DOWN,
-		RI_MOUSE_MIDDLE_BUTTON_DOWN,
-		RI_MOUSE_BUTTON_4_DOWN,
-		RI_MOUSE_BUTTON_5_DOWN,
+	static USHORT const c_keys_down[MC_COUNT] = {
+		[MC_LEFT]   = RI_MOUSE_LEFT_BUTTON_DOWN,
+		[MC_RIGHT]  = RI_MOUSE_RIGHT_BUTTON_DOWN,
+		[MC_MIDDLE] = RI_MOUSE_MIDDLE_BUTTON_DOWN,
+		[MC_X1]     = RI_MOUSE_BUTTON_4_DOWN,
+		[MC_X2]     = RI_MOUSE_BUTTON_5_DOWN,
 	};
 
-	static USHORT const c_keys_up[] = {
-		RI_MOUSE_LEFT_BUTTON_UP,
-		RI_MOUSE_RIGHT_BUTTON_UP,
-		RI_MOUSE_MIDDLE_BUTTON_UP,
-		RI_MOUSE_BUTTON_4_UP,
-		RI_MOUSE_BUTTON_5_UP,
+	static USHORT const c_keys_up[MC_COUNT] = {
+		[MC_LEFT]   = RI_MOUSE_LEFT_BUTTON_UP,
+		[MC_RIGHT]  = RI_MOUSE_RIGHT_BUTTON_UP,
+		[MC_MIDDLE] = RI_MOUSE_MIDDLE_BUTTON_UP,
+		[MC_X1]     = RI_MOUSE_BUTTON_4_UP,
+		[MC_X2]     = RI_MOUSE_BUTTON_5_UP,
 	};
 
-	for (uint8_t i = 0; i < SIZE_OF_ARRAY(c_keys_down); i++) {
+	for (enum Mouse_Code i = MC_NONE; i < MC_COUNT; i++) {
 		if (data->usButtonFlags & c_keys_down[i]) {
 			input_to_platform_on_mouse(i, true);
 		}
@@ -646,15 +646,16 @@ static void handle_message_input_mouse(struct Window * window, WPARAM wParam, LP
 
 	//
 	static WPARAM const c_key_masks[] = {
-		MK_LBUTTON,
-		MK_RBUTTON,
-		MK_MBUTTON,
-		MK_XBUTTON1,
-		MK_XBUTTON2,
+		[MC_LEFT]   = MK_LBUTTON,
+		[MC_RIGHT]  = MK_RBUTTON,
+		[MC_MIDDLE] = MK_MBUTTON,
+		[MC_X1]     = MK_XBUTTON1,
+		[MC_X2]     = MK_XBUTTON2,
 	};
 
-	for (uint8_t i = 0; i < SIZE_OF_ARRAY(c_key_masks); i++) {
-		bool const mask = c_key_masks[i];
+	for (enum Mouse_Code i = MC_NONE; i < MC_COUNT; i++) {
+		WPARAM const mask = c_key_masks[i];
+		if (mask == 0) { continue; }
 		bool const is_down = (wParam & mask) == mask;
 		input_to_platform_on_mouse(i, is_down);
 	}

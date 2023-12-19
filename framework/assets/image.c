@@ -31,9 +31,9 @@ struct Image image_init(struct Buffer const * buffer) {
 		.capacity = (uint32_t)(size_x * size_y),
 		.size = (struct uvec2){(uint32_t)size_x, (uint32_t)size_y},
 		.data = image_bytes,
-		.parameters = {
+		.format = {
 			.flags = TEXTURE_FLAG_COLOR,
-			.type = data_type_get_vector_type(DATA_TYPE_R8_UNORM, (uint32_t)channels),
+			.type = gfx_type_get_vector_type(DATA_TYPE_R8_UNORM, (uint32_t)channels),
 		},
 	};
 }
@@ -44,8 +44,8 @@ void image_free(struct Image * image) {
 }
 
 void image_ensure(struct Image * image, struct uvec2 size) {
-	uint32_t const channels = data_type_get_count(image->parameters.type);
-	uint32_t const data_size = data_type_get_size(image->parameters.type);
+	uint32_t const channels = gfx_type_get_count(image->format.type);
+	uint32_t const data_size = gfx_type_get_size(image->format.type);
 	uint32_t const target_capacity = size.x * size.y * channels;
 	if (image->capacity < target_capacity) {
 		image->data = REALLOCATE(image->data, size.x * size.y * data_size);

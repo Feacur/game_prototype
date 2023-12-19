@@ -8,7 +8,7 @@
 //     Common
 // ----- ----- ----- ----- -----
 
-enum Data_Type translate_program_data_type(GLint value) {
+enum Gfx_Type translate_program_data_type(GLint value) {
 	switch (value) {
 		case GL_UNSIGNED_INT_SAMPLER_2D: return DATA_TYPE_UNIT_U;
 		case GL_INT_SAMPLER_2D:          return DATA_TYPE_UNIT_S;
@@ -243,11 +243,11 @@ GLint gpu_wrap_mode(enum Wrap_Flag value) {
 //     GPU texture part
 // ----- ----- ----- ----- -----
 
-GLenum gpu_sized_internal_format(struct Texture_Parameters parameters) {
-	switch (parameters.flags) {
+GLenum gpu_sized_internal_format(struct Texture_Format format) {
+	switch (format.flags) {
 		case TEXTURE_FLAG_NONE: break;
 
-		case TEXTURE_FLAG_COLOR: switch (parameters.type) {
+		case TEXTURE_FLAG_COLOR: switch (format.type) {
 			default: break;
 
 			case DATA_TYPE_R8_U:    return GL_R8UI;
@@ -306,19 +306,19 @@ GLenum gpu_sized_internal_format(struct Texture_Parameters parameters) {
 			case DATA_TYPE_RGBA32_F: return GL_RGBA32F;
 		} break;
 
-		case TEXTURE_FLAG_DEPTH: switch (parameters.type) {
+		case TEXTURE_FLAG_DEPTH: switch (format.type) {
 			default: break;
 			case DATA_TYPE_R16_U: return GL_DEPTH_COMPONENT16;
 			case DATA_TYPE_R32_U: return GL_DEPTH_COMPONENT24;
 			case DATA_TYPE_R32_F: return GL_DEPTH_COMPONENT32F;
 		} break;
 
-		case TEXTURE_FLAG_STENCIL: switch (parameters.type) {
+		case TEXTURE_FLAG_STENCIL: switch (format.type) {
 			default: break;
 			case DATA_TYPE_R8_U: return GL_STENCIL_INDEX8;
 		} break;
 
-		case TEXTURE_FLAG_DSTENCIL: switch (parameters.type) {
+		case TEXTURE_FLAG_DSTENCIL: switch (format.type) {
 			default: break;
 			case DATA_TYPE_R32_U: return GL_DEPTH24_STENCIL8;
 			case DATA_TYPE_R32_F: return GL_DEPTH32F_STENCIL8;
@@ -329,17 +329,17 @@ GLenum gpu_sized_internal_format(struct Texture_Parameters parameters) {
 	return GL_NONE;
 }
 
-GLenum gpu_pixel_data_format(struct Texture_Parameters parameters) {
-	switch (parameters.flags) {
+GLenum gpu_pixel_data_format(struct Texture_Format format) {
+	switch (format.flags) {
 		case TEXTURE_FLAG_NONE: break;
 
-		case TEXTURE_FLAG_COLOR: switch (data_type_get_count(parameters.type)) {
+		case TEXTURE_FLAG_COLOR: switch (gfx_type_get_count(format.type)) {
 			default: break;
 
-			case 1: return data_type_is_integer(parameters.type) ? GL_RED_INTEGER  : GL_RED;
-			case 2: return data_type_is_integer(parameters.type) ? GL_RG_INTEGER   : GL_RG;
-			case 3: return data_type_is_integer(parameters.type) ? GL_RGB_INTEGER  : GL_RGB;
-			case 4: return data_type_is_integer(parameters.type) ? GL_RGBA_INTEGER : GL_RGBA;
+			case 1: return gfx_type_is_integer(format.type) ? GL_RED_INTEGER  : GL_RED;
+			case 2: return gfx_type_is_integer(format.type) ? GL_RG_INTEGER   : GL_RG;
+			case 3: return gfx_type_is_integer(format.type) ? GL_RGB_INTEGER  : GL_RGB;
+			case 4: return gfx_type_is_integer(format.type) ? GL_RGBA_INTEGER : GL_RGBA;
 		} break;
 
 		case TEXTURE_FLAG_DEPTH:    return GL_DEPTH_COMPONENT;
@@ -351,11 +351,11 @@ GLenum gpu_pixel_data_format(struct Texture_Parameters parameters) {
 	return GL_NONE;
 }
 
-GLenum gpu_pixel_data_type(struct Texture_Parameters parameters) {
-	switch (parameters.flags) {
+GLenum gpu_pixel_data_type(struct Texture_Format format) {
+	switch (format.flags) {
 		case TEXTURE_FLAG_NONE: break;
 
-		case TEXTURE_FLAG_COLOR: switch (data_type_get_element_type(parameters.type)) {
+		case TEXTURE_FLAG_COLOR: switch (gfx_type_get_element_type(format.type)) {
 			default: break;
 
 			case DATA_TYPE_R8_U:     return GL_UNSIGNED_BYTE;
@@ -375,19 +375,19 @@ GLenum gpu_pixel_data_type(struct Texture_Parameters parameters) {
 			case DATA_TYPE_R32_F: return GL_FLOAT;
 		} break;
 
-		case TEXTURE_FLAG_DEPTH: switch (parameters.type) {
+		case TEXTURE_FLAG_DEPTH: switch (format.type) {
 			default: break;
 			case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
 			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
 			case DATA_TYPE_R32_F: return GL_FLOAT;
 		} break;
 
-		case TEXTURE_FLAG_STENCIL: switch (parameters.type) {
+		case TEXTURE_FLAG_STENCIL: switch (format.type) {
 			default: break;
 			case DATA_TYPE_R8_U: return GL_UNSIGNED_BYTE;
 		} break;
 
-		case TEXTURE_FLAG_DSTENCIL: switch (parameters.type) {
+		case TEXTURE_FLAG_DSTENCIL: switch (format.type) {
 			default: break;
 			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT_24_8;
 			case DATA_TYPE_R32_F: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
@@ -461,7 +461,7 @@ GLenum gpu_buffer_target(enum Buffer_Target value) {
 //     GPU mesh part
 // ----- ----- ----- ----- -----
 
-GLenum gpu_vertex_value_type(enum Data_Type value) {
+GLenum gpu_vertex_value_type(enum Gfx_Type value) {
 	switch (value) {
 		default: break;
 
@@ -480,7 +480,7 @@ GLenum gpu_vertex_value_type(enum Data_Type value) {
 	return GL_NONE;
 }
 
-GLenum gpu_index_value_type(enum Data_Type value) {
+GLenum gpu_index_value_type(enum Gfx_Type value) {
 	switch (value) {
 		default: break;
 

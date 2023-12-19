@@ -10,7 +10,7 @@
 struct Strings {
 	struct Array offsets; // uint32_t
 	struct Array lengths; // uint32_t
-	struct Buffer buffer;
+	struct Buffer buffer; // null-terminated chunks
 };
 
 struct Strings strings_init(void);

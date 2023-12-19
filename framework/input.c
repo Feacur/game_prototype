@@ -10,8 +10,8 @@
 //
 #include "input.h"
 
-#define KEYBOARD_KEYS_MAX KC_ERROR + 1
-#define MOUSE_KEYS_MAX 8
+#define KEYBOARD_KEYS_MAX KC_COUNT + 1
+#define MOUSE_KEYS_MAX MC_COUNT + 1
 
 struct Keyboard_State {
 	bool keys[KEYBOARD_KEYS_MAX];

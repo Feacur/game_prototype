@@ -34,7 +34,7 @@ struct Typeface_Key {
 };
 
 static HASHER(hash_typeface_key) {
-	struct Typeface_Key const * k = v;
+	struct Typeface_Key const * k = value;
 	// kinda FNV-1
 	uint32_t const prime = UINT32_C(16777619);
 	uint32_t hash = UINT32_C(2166136261);
@@ -59,7 +59,7 @@ struct Font * font_init(void) {
 	struct Font * font = ALLOCATE(struct Font);
 	*font = (struct Font){
 		.buffer = {
-			.parameters = {
+			.format = {
 				.flags = TEXTURE_FLAG_COLOR,
 				.type = DATA_TYPE_R8_UNORM,
 			},
@@ -306,7 +306,7 @@ void font_render(struct Font * font) {
 	}
 
 	// render glyphs into the atlas, assuming they shall fit
-	uint32_t const buffer_data_size = data_type_get_size(font->buffer.parameters.type);
+	uint32_t const buffer_data_size = gfx_type_get_size(font->buffer.format.type);
 	common_memset(font->buffer.data, 0, font->buffer.size.x * font->buffer.size.y * buffer_data_size);
 	{
 		uint32_t line_height = 0;

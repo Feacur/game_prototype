@@ -117,8 +117,8 @@ static JSON_PROCESSOR(asset_image_meta_fill) {
 		context->settings = json_read_texture_settings(json);
 		context->sampler = json_read_sampler_settings(json);
 
-		context->settings.max_lod = min_u32(
-			context->settings.max_lod,
+		context->settings.sublevels = min_u32(
+			context->settings.sublevels,
 			(uint32_t)r32_log2((float)max_u32(
 				context->size.x, context->size.y
 			))

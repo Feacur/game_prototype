@@ -18,7 +18,7 @@ struct Image {
 	uint32_t capacity;
 	struct uvec2 size;
 	void * data;
-	struct Texture_Parameters parameters;
+	struct Texture_Format format;
 	struct Texture_Settings settings;
 	struct Sampler_Settings sampler;
 };

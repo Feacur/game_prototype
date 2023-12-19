@@ -104,7 +104,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_pr
 		if (!cstring_starts(uniform_name, property_prefix)) { continue; }
 
 		struct GPU_Uniform const * uniform = it.value;
-		payload_bytes += data_type_get_size(uniform->type) * uniform->array_size;
+		payload_bytes += gfx_type_get_size(uniform->type) * uniform->array_size;
 		properties_count++;
 	}
 
@@ -118,7 +118,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_pr
 
 		struct GPU_Uniform const * uniform = it.value;
 		gfx_uniforms_id_push(&material->uniforms, it.hash, (struct CArray){
-			.size = data_type_get_size(uniform->type) * uniform->array_size,
+			.size = gfx_type_get_size(uniform->type) * uniform->array_size,
 		});
 	}
 	common_memset(material->uniforms.payload.data, 0, payload_bytes);

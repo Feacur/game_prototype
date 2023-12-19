@@ -6,7 +6,7 @@
 #include "framework/__warnings_pop.h"
 
 
-#define FORMATTER_CALLBACK(name) char * (name)(char const * input, void * context_ptr, int length)
+#define FORMATTER_CALLBACK(func) char * (func)(char const * input, void * context_ptr, int length)
 typedef FORMATTER_CALLBACK(Formatter_Callback);
 
 //

@@ -5,12 +5,10 @@
 #include "framework/containers/buffer.h"
 #include "framework/graphics/gfx_types.h"
 
-struct Buffer;
-
 struct Mesh_Buffer {
 	struct Buffer buffer;
-	struct Mesh_Buffer_Parameters parameters;
-	struct Mesh_Buffer_Attributes attributes;
+	struct Mesh_Format format;
+	struct Mesh_Attributes attributes;
 	bool is_index;
 };
 

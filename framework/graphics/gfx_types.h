@@ -7,7 +7,7 @@
 //     Basic
 // ----- ----- ----- ----- -----
 
-enum Data_Type {
+enum Gfx_Type {
 	DATA_TYPE_NONE,
 
 	// samplers
@@ -221,22 +221,22 @@ enum Swizzle_Op {
 	SWIZZLE_OP_A,
 };
 
-struct Texture_Parameters {
+struct Texture_Format {
 	enum Texture_Flag flags;
-	enum Data_Type    type;
+	enum Gfx_Type     type;
 };
 
 struct Texture_Settings {
 	enum Swizzle_Op swizzle[4];
-	uint32_t max_lod;
+	uint32_t sublevels;
 };
 
 // ----- ----- ----- ----- -----
 //     GPU target part
 // ----- ----- ----- ----- -----
 
-struct Target_Parameters {
-	struct Texture_Parameters image;
+struct Target_Format {
+	struct Texture_Format base;
 	bool read;
 };
 
@@ -265,12 +265,12 @@ enum Mesh_Mode {
 	MESH_MODE_TRIANGLE_FAN,
 };
 
-struct Mesh_Buffer_Parameters {
+struct Mesh_Format {
 	enum Mesh_Mode mode;
-	enum Data_Type type;
+	enum Gfx_Type type;
 };
 
-struct Mesh_Buffer_Attributes {
+struct Mesh_Attributes {
 	uint32_t data[2 * SHADER_ATTRIBUTE_INTERNAL_COUNT]; // type, count
 };
 
@@ -278,10 +278,10 @@ struct Mesh_Buffer_Attributes {
 //     Conversion
 // ----- ----- ----- ----- -----
 
-enum Data_Type data_type_get_element_type(enum Data_Type value);
-enum Data_Type data_type_get_vector_type(enum Data_Type value, uint32_t channels);
-uint32_t data_type_get_count(enum Data_Type value);
-uint32_t data_type_get_size(enum Data_Type value);
-bool data_type_is_integer(enum Data_Type value);
+enum Gfx_Type gfx_type_get_element_type(enum Gfx_Type value);
+enum Gfx_Type gfx_type_get_vector_type(enum Gfx_Type value, uint32_t channels);
+uint32_t gfx_type_get_count(enum Gfx_Type value);
+uint32_t gfx_type_get_size(enum Gfx_Type value);
+bool gfx_type_is_integer(enum Gfx_Type value);
 
 #endif

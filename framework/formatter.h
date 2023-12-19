@@ -17,7 +17,7 @@ uint32_t formatter_fmt(size_t capacity, char * output, char const * format, ...)
 
 `*`    - might be a number or a leading parameter
 
-`%$zo` - size_t as oct with leading `0`
+`%#zo` - size_t as oct with leading `0`
 `%#zx` - size_t as hex with leading `0x`
 `%#f`  - float with decimal point
 `%zu`  - size_t as dec
