@@ -162,7 +162,7 @@ struct GPU_Depth_Mode gpu_depth_mode(enum Depth_Mode value, bool reversed_z) {
 		case DEPTH_MODE_NONE: break;
 
 		case DEPTH_MODE_TRANSPARENT: return (struct GPU_Depth_Mode){
-			.mask = GL_TRUE, /**/ .op = reversed_z ? GL_GREATER : GL_LESS,
+			.mask = GL_FALSE, /**/ .op = reversed_z ? GL_GREATER : GL_LESS,
 		};
 
 		case DEPTH_MODE_OPAQUE: return (struct GPU_Depth_Mode){
