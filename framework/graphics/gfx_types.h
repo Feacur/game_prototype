@@ -131,12 +131,12 @@ enum Stencil_Op {
 
 enum Blend_Mode {
 	BLEND_MODE_NONE,
-	BLEND_MODE_MIX, // lerp(Drgb, Srgb, Sa), max(Da, Sa)
-	BLEND_MODE_PMA, // Drgb * (1 - Sa) + Srgb, max(Da, Sa)
-	BLEND_MODE_ADD, // D + S
-	BLEND_MODE_SUB, // D - S
-	BLEND_MODE_MUL, // D * S
-	BLEND_MODE_SCR, // lerp(D, 1, S)
+	BLEND_MODE_MIX, // rgb: lerp(D, S, Sa)      a: Da
+	BLEND_MODE_PMA, // rgb: D * (1 - Sa) + S    a: Da
+	BLEND_MODE_ADD, // rgb: D + S               a: Da
+	BLEND_MODE_SUB, // rgb: D - S               a: Da
+	BLEND_MODE_MUL, // rgb: D * S               a: Da
+	BLEND_MODE_SCR, // rgb: lerp(D, 1, S)       a: Da
 };
 
 enum Depth_Mode {

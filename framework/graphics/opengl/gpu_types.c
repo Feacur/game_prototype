@@ -117,44 +117,54 @@ struct GPU_Blend_Mode gpu_blend_mode(enum Blend_Mode value) {
 		case BLEND_MODE_NONE: break;
 
 		case BLEND_MODE_MIX: return (struct GPU_Blend_Mode){
-			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
+			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE, },
 			.color_src = GL_SRC_ALPHA, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE_MINUS_SRC_ALPHA,
-			.alpha_src = GL_ONE,       /**/ .alpha_op = GL_MAX,      /**/ .alpha_dst = GL_ONE,
+			.alpha_src = GL_ZERO,      /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
 		};
 
 		case BLEND_MODE_PMA: return (struct GPU_Blend_Mode){
-			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
-			.color_src = GL_ONE, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE_MINUS_SRC_ALPHA,
-			.alpha_src = GL_ONE, /**/ .alpha_op = GL_MAX,      /**/ .alpha_dst = GL_ONE,
+			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE, },
+			.color_src = GL_ONE,  /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE_MINUS_SRC_ALPHA,
+			.alpha_src = GL_ZERO, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
 		};
 
 		case BLEND_MODE_ADD: return (struct GPU_Blend_Mode){
-			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
-			.color_src = GL_ONE, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE,
-			.alpha_src = GL_ONE, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
+			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE, },
+			.color_src = GL_ONE,  /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE,
+			.alpha_src = GL_ZERO, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
 		};
 
 		case BLEND_MODE_SUB: return (struct GPU_Blend_Mode){
-			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
-			.color_src = GL_ONE, /**/.color_op = GL_FUNC_REVERSE_SUBTRACT, /**/ .color_dst = GL_ONE,
-			.alpha_src = GL_ONE, /**/.alpha_op = GL_FUNC_REVERSE_SUBTRACT, /**/ .alpha_dst = GL_ONE,
+			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE, },
+			.color_src = GL_ONE,  /**/.color_op = GL_FUNC_REVERSE_SUBTRACT, /**/ .color_dst = GL_ONE,
+			.alpha_src = GL_ZERO, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
 		};
 
 		case BLEND_MODE_MUL: return (struct GPU_Blend_Mode){
-			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
+			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE, },
 			.color_src = GL_ZERO, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_SRC_COLOR,
-			.alpha_src = GL_ZERO, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_SRC_ALPHA,
+			.alpha_src = GL_ZERO, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
 		};
 
 		case BLEND_MODE_SCR: return (struct GPU_Blend_Mode){
-			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, },
+			.mask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE, },
 			.color_src = GL_ONE_MINUS_DST_COLOR, /**/ .color_op = GL_FUNC_ADD, /**/ .color_dst = GL_ONE,
-			.alpha_src = GL_ONE_MINUS_DST_ALPHA, /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
+			.alpha_src = GL_ZERO,                /**/ .alpha_op = GL_FUNC_ADD, /**/ .alpha_dst = GL_ONE,
 		};
 	}
 	ERR("unknown blend function");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
 	return (struct GPU_Blend_Mode){0};
+
+	// operator:
+	// - GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT
+	// - GL_MIN, GL_MAX
+	// factor:
+	// - GL_ZERO, GL_ONE
+	// - GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR
+	// - GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA
+	// - GL_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR
+	// - GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA
 }
 
 struct GPU_Depth_Mode gpu_depth_mode(enum Depth_Mode value, bool reversed_z) {
@@ -177,6 +187,43 @@ struct GPU_Depth_Mode gpu_depth_mode(enum Depth_Mode value, bool reversed_z) {
 // ----- ----- ----- ----- -----
 //     GPU program part
 // ----- ----- ----- ----- -----
+
+struct CString gpu_types_block(void) {
+	static char data[1024];
+	uint32_t length = formatter_fmt(
+		SIZE_OF_ARRAY(data), data,
+		"#define ATTRIBUTE_POSITION layout(location = %u) in\n"
+		"#define ATTRIBUTE_TEXCOORD layout(location = %u) in\n"
+		"#define ATTRIBUTE_NORMAL   layout(location = %u) in\n"
+		"#define ATTRIBUTE_COLOR    layout(location = %u) in\n"
+		"\n"
+		"#define INTERFACE_BLOCK_GLOBAL  layout(std140, binding = %u) uniform\n"
+		"#define INTERFACE_BLOCK_CAMERA  layout(std140, binding = %u) uniform\n"
+		"#define INTERFACE_BLOCK_MODEL   layout(std140, binding = %u) uniform\n"
+		"#define INTERFACE_BLOCK_DYNAMIC layout(std430, binding = %u) readonly buffer\n"
+		"\n"
+		"#define BATCHER_FLAG_NONE %u\n"
+		"#define BATCHER_FLAG_FONT %u\n"
+		"\n"
+		//
+		, SHADER_ATTRIBUTE_POSITION - 1
+		, SHADER_ATTRIBUTE_TEXCOORD - 1
+		, SHADER_ATTRIBUTE_NORMAL - 1
+		, SHADER_ATTRIBUTE_COLOR - 1
+		//
+		, SHADER_BLOCK_GLOBAL - 1
+		, SHADER_BLOCK_CAMERA - 1
+		, SHADER_BLOCK_MODEL - 1
+		, SHADER_BLOCK_DYNAMIC - 1
+		//
+		, BATCHER_FLAG_NONE
+		, BATCHER_FLAG_FONT
+	);
+	return (struct CString){
+		.length = length,
+		.data = data,
+	};
+}
 
 // ----- ----- ----- ----- -----
 //     GPU sampler part

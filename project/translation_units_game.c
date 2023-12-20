@@ -37,7 +37,6 @@
 #include "framework/containers/buffer.c"
 #include "framework/containers/hashmap.c"
 #include "framework/containers/sparseset.c"
-#include "framework/containers/strings.c"
 
 #include "framework/systems/memory_system.c"
 #include "framework/systems/arena_system.c"

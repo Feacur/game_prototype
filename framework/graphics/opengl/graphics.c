@@ -1,7 +1,6 @@
 #include "framework/formatter.h"
 #include "framework/maths.h"
 
-#include "framework/containers/strings.h"
 #include "framework/containers/buffer.h"
 #include "framework/containers/array.h"
 #include "framework/containers/array.h"
@@ -15,7 +14,6 @@
 
 #include "framework/systems/arena_system.h"
 #include "framework/systems/string_system.h"
-#include "framework/systems/action_system.h"
 #include "framework/systems/material_system.h"
 
 #include "functions.h"
@@ -391,49 +389,25 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 	}};
 
 	// common header
-	GLchar header[1024];
-	uint32_t header_length = formatter_fmt(
-		SIZE_OF_ARRAY(header), header, ""
+	GLchar header[256];
+	uint32_t const header_length = formatter_fmt(
+		SIZE_OF_ARRAY(header), header,
 		"#version %u core\n"
-		"\n"
-		"#define ATTRIBUTE_POSITION layout(location = %u) in\n"
-		"#define ATTRIBUTE_TEXCOORD layout(location = %u) in\n"
-		"#define ATTRIBUTE_NORMAL   layout(location = %u) in\n"
-		"#define ATTRIBUTE_COLOR    layout(location = %u) in\n"
-		"\n"
-		"#define INTERFACE_BLOCK_GLOBAL  layout(std140, binding = %u) uniform\n"
-		"#define INTERFACE_BLOCK_CAMERA  layout(std140, binding = %u) uniform\n"
-		"#define INTERFACE_BLOCK_MODEL   layout(std140, binding = %u) uniform\n"
-		"#define INTERFACE_BLOCK_DYNAMIC layout(std430, binding = %u) readonly buffer\n"
-		"\n"
-		"#define BATCHER_FLAG_NONE %u\n"
-		"#define BATCHER_FLAG_FONT %u\n"
 		"\n"
 		"#define DEPTH_NEAR %f\n"
 		"#define DEPTH_FAR  %f\n"
 		"#define NDC_NEAR %f\n"
 		"#define NDC_FAR  %f\n"
-		"\n",
-		gl.glsl,
+		"\n"
+		, gl.glsl
 		//
-		SHADER_ATTRIBUTE_POSITION - 1,
-		SHADER_ATTRIBUTE_TEXCOORD - 1,
-		SHADER_ATTRIBUTE_NORMAL - 1,
-		SHADER_ATTRIBUTE_COLOR - 1,
-		//
-		SHADER_BLOCK_GLOBAL - 1,
-		SHADER_BLOCK_CAMERA - 1,
-		SHADER_BLOCK_MODEL - 1,
-		SHADER_BLOCK_DYNAMIC - 1,
-		//
-		BATCHER_FLAG_NONE,
-		BATCHER_FLAG_FONT,
-		//
-		(double)gs_graphics_state.clip_space.depth_near,
-		(double)gs_graphics_state.clip_space.depth_far,
-		(double)gs_graphics_state.clip_space.ndc_near,
-		(double)gs_graphics_state.clip_space.ndc_far
+		, (double)gs_graphics_state.clip_space.depth_near
+		, (double)gs_graphics_state.clip_space.depth_far
+		, (double)gs_graphics_state.clip_space.ndc_near
+		, (double)gs_graphics_state.clip_space.ndc_far
 	);
+
+	struct CString const types_block = gpu_types_block();
 
 	// section headers
 	struct Section_Header {
@@ -450,8 +424,8 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 	// compile shader objects
 	GLuint shader_ids[ARRAYSIZE(sections)];
 	for (uint32_t i = 0; i < sections_count; i++) {
-		GLchar const * code[]   = {header,               sections[i].text.data,          (GLchar *)asset->data};
-		GLint const    length[] = {(GLint)header_length, (GLint)sections[i].text.length, (GLint)asset->size};
+		GLchar const * code[]   = {header,               types_block.data,          sections[i].text.data,          (GLchar *)asset->data};
+		GLint const    length[] = {(GLint)header_length, (GLint)types_block.length, (GLint)sections[i].text.length, (GLint)asset->size};
 
 		GLuint shader_id = gl.CreateShader(sections[i].type);
 		gl.ShaderSource(shader_id, SIZE_OF_ARRAY(code), code, length);
@@ -933,8 +907,10 @@ static struct GPU_Mesh_Internal gpu_mesh_on_aquire(struct Mesh const * asset) {
 		}
 
 		// vertex buffer
+		static uint32_t const ATTRIBUTES_COUNT = SIZE_OF_ARRAY(gpu_mesh_buffer->attributes.data) / 2;
+
 		uint32_t vertex_size = 0;
-		for (uint32_t atti = 0; atti < SHADER_ATTRIBUTE_INTERNAL_COUNT; atti++) {
+		for (uint32_t atti = 0; atti < ATTRIBUTES_COUNT; atti++) {
 			uint32_t const count = gpu_mesh_buffer->attributes.data[atti * 2 + 1];
 			vertex_size += count * gfx_type_get_size(gpu_mesh_buffer->format.type);
 		}
@@ -943,9 +919,9 @@ static struct GPU_Mesh_Internal gpu_mesh_on_aquire(struct Mesh const * asset) {
 		gl.VertexArrayVertexBuffer(gpu_mesh.id, binding, gpu_buffer->id, offset, (GLsizei)vertex_size);
 
 		uint32_t attribute_offset = 0;
-		for (uint32_t atti = 0; atti < SHADER_ATTRIBUTE_INTERNAL_COUNT; atti++) {
-			enum Shader_Attribute const type = (enum Shader_Attribute)gpu_mesh_buffer->attributes.data[atti * 2];
-			if (type == SHADER_ATTRIBUTE_NONE) { continue; }
+		for (uint32_t atti = 0; atti < ATTRIBUTES_COUNT; atti++) {
+			uint32_t const type = gpu_mesh_buffer->attributes.data[atti * 2];
+			if (type == 0) { continue; }
 
 			uint32_t const count = gpu_mesh_buffer->attributes.data[atti * 2 + 1];
 			if (count == 0) { continue; }

@@ -2,8 +2,6 @@
 #include "framework/maths.h"
 #include "framework/parsing.h"
 
-#include "framework/containers/strings.h"
-
 #include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/command.h"
 

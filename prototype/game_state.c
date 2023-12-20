@@ -1,7 +1,6 @@
 #include "framework/formatter.h"
 #include "framework/json_read.h"
 
-#include "framework/containers/strings.h"
 #include "framework/systems/string_system.h"
 #include "framework/systems/asset_system.h"
 

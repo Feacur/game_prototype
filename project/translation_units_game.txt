@@ -32,7 +32,6 @@ framework/containers/array.c
 framework/containers/buffer.c
 framework/containers/hashmap.c
 framework/containers/sparseset.c
-framework/containers/strings.c
 
 framework/systems/memory_system.c
 framework/systems/arena_system.c

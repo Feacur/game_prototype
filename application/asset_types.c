@@ -4,7 +4,6 @@
 
 #include "framework/platform/file.h"
 #include "framework/containers/buffer.h"
-#include "framework/containers/strings.h"
 
 #include "framework/systems/arena_system.h"
 #include "framework/systems/memory_system.h"

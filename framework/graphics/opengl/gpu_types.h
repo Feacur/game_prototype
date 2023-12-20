@@ -33,6 +33,8 @@ struct GPU_Depth_Mode {
 //     GPU program part
 // ----- ----- ----- ----- -----
 
+struct CString gpu_types_block(void);
+
 // ----- ----- ----- ----- -----
 //     GPU sampler part
 // ----- ----- ----- ----- -----

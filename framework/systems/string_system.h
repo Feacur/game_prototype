@@ -3,6 +3,9 @@
 
 #include "framework/common.h"
 
+// @purpose: strings interning structure
+// @note: `0` is a NULL id
+
 void string_system_clear(bool deallocate);
 
 uint32_t string_system_add(struct CString value);
