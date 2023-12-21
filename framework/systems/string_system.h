@@ -3,13 +3,10 @@
 
 #include "framework/common.h"
 
-// @purpose: strings interning structure
-// @note: `0` is a NULL id
-
 void string_system_clear(bool deallocate);
 
-uint32_t string_system_add(struct CString value);
-uint32_t string_system_find(struct CString value);
-struct CString string_system_get(uint32_t id);
+struct Handle string_system_add(struct CString value);
+struct Handle string_system_find(struct CString value);
+struct CString string_system_get(struct Handle handle);
 
 #endif

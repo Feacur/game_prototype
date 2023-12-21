@@ -19,9 +19,9 @@ enum JSON_Type {
 struct JSON {
 	enum JSON_Type type;
 	union {
-		struct Hashmap table; // key string id : `struct JSON`
-		struct Array array;   // `struct JSON`
-		uint32_t string_id;
+		struct Hashmap table;    // key `struct Handle` : `struct JSON`
+		struct Array array;      // `struct JSON`
+		struct Handle sh_string; // get `struct CString` via `string_system_get`
 		double number;
 		bool boolean;
 	} as;

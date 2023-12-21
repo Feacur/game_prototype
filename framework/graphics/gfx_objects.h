@@ -34,7 +34,7 @@ struct GPU_Uniform {
 };
 
 struct GPU_Program {
-	struct Hashmap uniforms; // uniform string id : `struct GPU_Uniform` (at least)
+	struct Hashmap uniforms; // name `struct Handle` : `struct GPU_Uniform` (at least)
 	// @idea: add an optional asset source
 };
 
@@ -82,7 +82,7 @@ struct GPU_Target_Buffer {
 
 struct GPU_Target {
 	struct uvec2 size;
-	struct Array textures; // `struct Handle`
+	struct Array textures; // texture `struct Handle`
 	struct Array buffers;  // `struct GPU_Target_Buffer` (at least)
 	// @idea: add an optional asset source
 };

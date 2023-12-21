@@ -40,9 +40,9 @@ struct JSON const * json_get(struct JSON const * value, struct CString key) {
 	if (value->type != JSON_OBJECT) {
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return &c_json_error;
 	}
-	uint32_t const key_id = string_system_find(key);
-	if (key_id == 0) { return &c_json_null; }
-	void const * result = hashmap_get(&value->as.table, &key_id);
+	struct Handle const sh_key = string_system_find(key);
+	if (handle_is_null(sh_key)) { return &c_json_null; }
+	void const * result = hashmap_get(&value->as.table, &sh_key);
 	return (result != NULL) ? result : &c_json_null;
 }
 
@@ -62,7 +62,7 @@ uint32_t json_count(struct JSON const * value) {
 // -- JSON as data
 struct CString json_as_string(struct JSON const * value) {
 	if (value->type != JSON_STRING) { return (struct CString){0}; }
-	return string_system_get(value->as.string_id);
+	return string_system_get(value->as.sh_string);
 }
 
 double json_as_number(struct JSON const * value) {
@@ -194,7 +194,7 @@ static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * valu
 static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * value) {
 	*value = (struct JSON){.type = JSON_OBJECT};
 	struct Hashmap * table = &value->as.table;
-	*table = hashmap_init(&hash32, SIZE_OF_MEMBER(struct JSON, as.string_id), sizeof(struct JSON));
+	*table = hashmap_init(&hash32, sizeof(struct Handle), sizeof(struct JSON));
 
 	enum JSON_Token_Type const scope = JSON_TOKEN_RIGHT_BRACE;
 	if (parser->current.type == scope) { json_parser_consume(parser); return; }
@@ -220,9 +220,9 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		}
 
 		// add
-		bool const is_new = hashmap_set(table, &entry_key.as.string_id, &entry_value);
+		bool const is_new = hashmap_set(table, &entry_key.as.sh_string, &entry_value);
 		if (!is_new) {
-			struct CString const key = string_system_get(entry_key.as.string_id);
+			struct CString const key = string_system_get(entry_key.as.sh_string);
 			WRN("key duplicate: \"%.*s\"", key.length, key.data);
 			REPORT_CALLSTACK(); DEBUG_BREAK();
 		}
@@ -273,8 +273,8 @@ static void json_parser_do_string(struct JSON_Parser * parser, struct JSON * val
 		.length = parser->current.text.length - 2,
 		.data = parser->current.text.data + 1,
 	};
-	uint32_t const string_id = string_system_add(cstring);
-	*value = (struct JSON){.type = JSON_STRING, .as.string_id = string_id};
+	struct Handle const sh_string = string_system_add(cstring);
+	*value = (struct JSON){.type = JSON_STRING, .as.sh_string = sh_string};
 	json_parser_consume(parser);
 }
 
@@ -287,6 +287,9 @@ static void json_parser_do_number(struct JSON_Parser * parser, struct JSON * val
 static void json_parser_do_value(struct JSON_Parser * parser, struct JSON * value) {
 	switch (parser->current.type) {
 		default: break;
+
+		// case JSON_TOKEN_LEFT_BRACE:  json_parser_do_object(parser, value); return;
+		// case JSON_TOKEN_LEFT_SQUARE: json_parser_do_array(parser, value);  return;
 
 		case JSON_TOKEN_STRING: json_parser_do_string(parser, value); return;
 		case JSON_TOKEN_NUMBER: json_parser_do_number(parser, value); return;

@@ -44,8 +44,8 @@
 
 
 static struct Main_Settings {
-	uint32_t config_id;
-	uint32_t scene_id;
+	struct Handle sh_config;
+	struct Handle sh_scene;
 } gs_main_settings;
 
 static void prototype_tick_cameras(void) {
@@ -157,12 +157,12 @@ static void prototype_tick_entities_quad_2d(void) {
 // ----- ----- ----- ----- -----
 
 static void prototype_init(void) {
-	if (gs_main_settings.scene_id == 0) {
+	if (handle_is_null(gs_main_settings.sh_scene)) {
 		WRN("no scene to initialize with");
 		return;
 	}
 
-	struct CString const scene_path = string_system_get(gs_main_settings.scene_id);
+	struct CString const scene_path = string_system_get(gs_main_settings.sh_scene);
 	process_json(scene_path, &gs_game, game_fill_scene);
 	gpu_execute(1, &(struct GPU_Command){
 		.type = GPU_COMMAND_TYPE_CULL,
@@ -371,7 +371,7 @@ static void prototype_draw_objects(void) {
 				case ENTITY_TYPE_QUAD_2D: {
 					struct Entity_Quad const * e_quad = &entity->as.quad;
 					enum Batcher_Flag flag = BATCHER_FLAG_NONE;
-					if (e_quad->uniform_id == string_system_find(S_("p_Font"))) {
+					if (handle_equals(e_quad->sh_uniform, string_system_find(S_("p_Font")))) {
 						flag |= BATCHER_FLAG_FONT;
 					}
 					batcher_2d_add_quad(
@@ -495,8 +495,8 @@ static JSON_PROCESSOR(main_fill_settings) {
 	if (json->type == JSON_ERROR)  { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 	if (data != &gs_main_settings) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 
-	result->config_id = string_system_add(json_get_string(json, S_("config")));
-	result->scene_id = string_system_add(json_get_string(json, S_("scene")));
+	result->sh_config = json_get(json, S_("config"))->as.sh_string;
+	result->sh_scene = json_get(json, S_("scene"))->as.sh_string;
 }
 
 static JSON_PROCESSOR(main_fill_config) {
@@ -528,10 +528,10 @@ static void main_run_application(void) {
 	asset_types_set();
 
 	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
-	if (gs_main_settings.config_id == 0) { goto fail; }
+	if (handle_is_null(gs_main_settings.sh_config)) { goto fail; }
 
 	struct Application_Config config;
-	struct CString const config_path = string_system_get(gs_main_settings.config_id);
+	struct CString const config_path = string_system_get(gs_main_settings.sh_config);
 	process_json(config_path, &config, main_fill_config);
 
 	TRC("launched application");

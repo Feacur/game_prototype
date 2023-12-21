@@ -12,12 +12,13 @@
 
 struct Gfx_Uniforms_Iterator {
 	uint32_t current, next;
-	uint32_t id, size;
+	struct Handle id;
+	uint32_t size;
 	void * value;
 };
 
 struct Gfx_Uniforms_Entry {
-	uint32_t id;
+	struct Handle id;
 	uint32_t size, offset;
 };
 
@@ -34,8 +35,8 @@ void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms);
 struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, struct CString name, uint32_t offset);
 void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, struct CString name, struct CArray value);
 
-struct CArray_Mut gfx_uniforms_id_get(struct Gfx_Uniforms const * uniforms, uint32_t id, uint32_t offset);
-void gfx_uniforms_id_push(struct Gfx_Uniforms * uniforms, uint32_t id, struct CArray value);
+struct CArray_Mut gfx_uniforms_id_get(struct Gfx_Uniforms const * uniforms, struct Handle sh_name, uint32_t offset);
+void gfx_uniforms_id_push(struct Gfx_Uniforms * uniforms, struct Handle sh_name, struct CArray value);
 
 bool gfx_uniforms_iterate(struct Gfx_Uniforms const * uniforms, struct Gfx_Uniforms_Iterator * iterator);
 

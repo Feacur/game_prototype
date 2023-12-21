@@ -157,7 +157,7 @@ void batcher_2d_set_shader(
 }
 
 void batcher_2d_uniforms_push(struct Batcher_2D * batcher, struct CString name, struct CArray value) {
-	uint32_t const id = string_system_add(name);
+	struct Handle const id = string_system_add(name);
 	struct CArray_Mut const field = gfx_uniforms_id_get(&batcher->uniforms, id, batcher->batch.uniform_offset);
 	if (field.data != NULL) {
 		if (carray_equals(carray_const(field), value)) { return; }

@@ -152,7 +152,7 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 		case ENTITY_TYPE_QUAD_2D: {
 			struct CString const uniform = json_get_string(json, S_("uniform"));
 			entity->as.quad = (struct Entity_Quad){
-				.uniform_id = string_system_add(uniform),
+				.sh_uniform = string_system_add(uniform),
 				.mode = json_read_entity_quad_mode(json_get(json, S_("mode"))),
 			};
 			json_read_many_flt(json_get(json, S_("view")), 4, &entity->as.quad.view.min.x);

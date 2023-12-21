@@ -10,10 +10,10 @@ struct Sparseset_Iterator {
 };
 
 struct Sparseset {
-	struct Array packed; // of value_size
-	struct Array sparse; // `struct Handle`
-	struct Array ids;    // `uint32_t` into `sparse`
-	uint32_t free_list;  // into `sparse`
+	struct Array payload; // of value_size
+	struct Array sparse;  // `struct Handle`; either aquired `packed` index or next free `sparse` index
+	struct Array packed;  // `uint32_t`; `sparse` index
+	struct Handle h_free; // into `sparse`
 };
 
 struct Sparseset sparseset_init(uint32_t value_size);

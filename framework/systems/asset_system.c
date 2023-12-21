@@ -8,16 +8,16 @@
 #include "asset_system.h"
 
 struct Asset_Meta {
-	struct Array dependencies; // `struct Handle`
-	struct Handle inst_handle;
-	uint32_t ref_count; // zero-based
-	uint32_t type_id;
-	uint32_t name_id;
+	struct Array dependencies; // meta `struct Handle`
+	struct Handle inst_handle; // into `struct Asset_Type : instances`
+	struct Handle sh_type;     // get `struct CString` via `string_system_get`
+	struct Handle sh_name;     // get `struct CString` via `string_system_get`
+	uint32_t ref_count;        // zero-based
 };
 
 struct Asset_Inst {
 	struct Asset_Inst_Header {
-		struct Handle ah_meta;
+		struct Handle ah_meta; // into `struct Asset_System : meta`
 	} header;
 	uint8_t payload[FLEXIBLE_ARRAY];
 };
@@ -29,19 +29,19 @@ struct Asset_Type {
 
 static struct Asset_System {
 	struct Sparseset meta;  // `struct Asset_Meta`
-	struct Hashmap handles; // name string id : `struct Handle`
-	struct Hashmap types;   // type string id : `struct Asset_Type`
-	struct Hashmap map;     // extension string id : type string id
-	struct Array stack;     // `struct Handle`
+	struct Hashmap handles; // name `struct Handle` : meta `struct Handle`
+	struct Hashmap types;   // type `struct Handle` : `struct Asset_Type`
+	struct Hashmap map;     // extension `struct Handle` : type `struct Handle`
+	struct Array stack;     // meta `struct Handle`
 } gs_asset_system = {
 	.meta = {
-		.packed = {
+		.payload = {
 			.value_size = sizeof(struct Asset_Meta),
 		},
 		.sparse = {
 			.value_size = sizeof(struct Handle),
 		},
-		.ids = {
+		.packed = {
 			.value_size = sizeof(uint32_t),
 		},
 	},
@@ -98,11 +98,11 @@ void asset_system_clear(bool deallocate) {
 }
 
 void asset_system_type_map(struct CString type, struct CString extension) {
-	uint32_t const type_id = string_system_add(type);
-	if (type_id == 0) { WRN("empty type"); goto fail; }
-	uint32_t const extension_id = string_system_add(extension);
-	if (extension_id == 0) { WRN("empty extension"); goto fail; }
-	hashmap_set(&gs_asset_system.map, &extension_id, &type_id);
+	struct Handle const sh_type = string_system_add(type);
+	if (handle_is_null(sh_type)) { WRN("empty type"); goto fail; }
+	struct Handle const sh_extension = string_system_add(extension);
+	if (handle_is_null(sh_extension)) { WRN("empty extension"); goto fail; }
+	hashmap_set(&gs_asset_system.map, &sh_extension, &sh_type);
 
 	return;
 	fail:
@@ -110,16 +110,16 @@ void asset_system_type_map(struct CString type, struct CString extension) {
 }
 
 void asset_system_type_set(struct CString type_name, struct Asset_Info info) {
-	uint32_t const type_id = string_system_add(type_name);
-	hashmap_set(&gs_asset_system.types, &type_id, &(struct Asset_Type){
+	struct Handle const sh_type = string_system_add(type_name);
+	hashmap_set(&gs_asset_system.types, &sh_type, &(struct Asset_Type){
 		.info = info,
 		.instances = sparseset_init(SIZE_OF_MEMBER(struct Asset_Inst, header) + info.size),
 	});
 }
 
 void asset_system_type_del(struct CString type_name) {
-	uint32_t const type_id = string_system_find(type_name);
-	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &type_id);
+	struct Handle const sh_type = string_system_find(type_name);
+	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &sh_type);
 	if (type == NULL) { return; }
 
 	uint32_t const inst_count = sparseset_get_count(&type->instances);
@@ -148,22 +148,22 @@ void asset_system_type_del(struct CString type_name) {
 		array_pop(&gs_asset_system.stack, 1);
 		array_free(&meta->dependencies);
 
-		hashmap_del(&gs_asset_system.handles, &meta->name_id);
+		hashmap_del(&gs_asset_system.handles, &meta->sh_name);
 		cleanup: sparseset_discard(&gs_asset_system.meta, ah_meta);
 	}
 	array_pop(&gs_asset_system.stack, 1);
 
 	sparseset_free(&type->instances);
-	hashmap_del(&gs_asset_system.types, &type_id);
+	hashmap_del(&gs_asset_system.types, &sh_type);
 
 	if (inst_count > 0) { DEBUG_BREAK(); }
 }
 
 struct Handle asset_system_load(struct CString name) {
-	uint32_t name_id = string_system_add(name);
-	if (name_id == 0) { return (struct Handle){0}; }
+	struct Handle const sh_name = string_system_add(name);
+	if (handle_is_null(sh_name)) { return (struct Handle){0}; }
 
-	struct Handle const * ah_meta = hashmap_get(&gs_asset_system.handles, &name_id);
+	struct Handle const * ah_meta = hashmap_get(&gs_asset_system.handles, &sh_name);
 	if (ah_meta != NULL) {
 		asset_system_add_dependency(*ah_meta);
 		struct Asset_Meta * meta = sparseset_get(&gs_asset_system.meta, *ah_meta);
@@ -173,14 +173,14 @@ struct Handle asset_system_load(struct CString name) {
 
 	//
 	struct CString const extension = asset_system_name_to_extension(name);
-	uint32_t const extension_id = string_system_find(extension);
-	if (extension_id == 0) { return (struct Handle){0}; }
+	struct Handle const sh_extension = string_system_find(extension);
+	if (handle_is_null(sh_extension)) { return (struct Handle){0}; }
 
-	uint32_t const * type_id_ptr = hashmap_get(&gs_asset_system.map, &extension_id);
-	uint32_t const type_id = (type_id_ptr != NULL) ? *type_id_ptr : extension_id;
+	struct Handle const * sh_type_ptr = hashmap_get(&gs_asset_system.map, &sh_extension);
+	struct Handle const sh_type = (sh_type_ptr != NULL) ? *sh_type_ptr : sh_extension;
 
 	//
-	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &type_id);
+	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &sh_type);
 	if (type == NULL) { return (struct Handle){0}; }
 
 	//
@@ -188,10 +188,10 @@ struct Handle asset_system_load(struct CString name) {
 	struct Handle const ah_meta_new = sparseset_aquire(&gs_asset_system.meta, &(struct Asset_Meta){
 		.dependencies = array_init(sizeof(struct Handle)),
 		.inst_handle = inst_handle,
-		.type_id = type_id,
-		.name_id = name_id,
+		.sh_type = sh_type,
+		.sh_name = sh_name,
 	});
-	hashmap_set(&gs_asset_system.handles, &name_id, &ah_meta_new);
+	hashmap_set(&gs_asset_system.handles, &sh_name, &ah_meta_new);
 	asset_system_add_dependency(ah_meta_new);
 
 	struct Asset_Inst * inst = sparseset_get(&type->instances, inst_handle);
@@ -217,7 +217,7 @@ void asset_system_drop(struct Handle handle) {
 		meta->ref_count--; return;
 	}
 
-	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &meta->type_id);
+	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &meta->sh_type);
 	if (type == NULL) { WRN("meta w/o type"); DEBUG_BREAK(); goto cleanup; }
 
 	struct Asset_Inst * inst = sparseset_get(&type->instances, meta->inst_handle);
@@ -240,7 +240,7 @@ void asset_system_drop(struct Handle handle) {
 	array_pop(&gs_asset_system.stack, 1);
 	array_free(&meta->dependencies);
 
-	hashmap_del(&gs_asset_system.handles, &meta->name_id);
+	hashmap_del(&gs_asset_system.handles, &meta->sh_name);
 	sparseset_discard(&gs_asset_system.meta, handle);
 }
 
@@ -248,7 +248,7 @@ void * asset_system_get(struct Handle handle) {
 	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return NULL; }
 
-	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &meta->type_id);
+	struct Asset_Type * type = hashmap_get(&gs_asset_system.types, &meta->sh_type);
 	struct Asset_Inst * inst = (type != NULL)
 		? sparseset_get(&type->instances, meta->inst_handle)
 		: NULL;
@@ -256,22 +256,22 @@ void * asset_system_get(struct Handle handle) {
 }
 
 struct Handle asset_system_find(struct CString name) {
-	uint32_t name_id = string_system_add(name);
-	if (name_id == 0) { return (struct Handle){0}; }
-	struct Handle const * ah_meta = hashmap_get(&gs_asset_system.handles, &name_id);
+	struct Handle const sh_name = string_system_add(name);
+	if (handle_is_null(sh_name)) { return (struct Handle){0}; }
+	struct Handle const * ah_meta = hashmap_get(&gs_asset_system.handles, &sh_name);
 	return (ah_meta != NULL) ? *ah_meta : (struct Handle){0};
 }
 
 struct CString asset_system_get_type(struct Handle handle) {
 	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return (struct CString){0}; }
-	return string_system_get(meta->type_id);
+	return string_system_get(meta->sh_type);
 }
 
 struct CString asset_system_get_name(struct Handle handle) {
 	struct Asset_Meta const * meta = sparseset_get(&gs_asset_system.meta, handle);
 	if (meta == NULL) { return (struct CString){0}; }
-	return string_system_get(meta->name_id);
+	return string_system_get(meta->sh_name);
 }
 
 //

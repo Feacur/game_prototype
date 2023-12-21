@@ -9,13 +9,13 @@ static struct Material_System {
 	struct Sparseset instances; // `struct Gfx_Material`
 } gs_material_system = {
 	.instances = {
-		.packed = {
+		.payload = {
 			.value_size = sizeof(struct Gfx_Material),
 		},
 		.sparse = {
 			.value_size = sizeof(struct Handle),
 		},
-		.ids = {
+		.packed = {
 			.value_size = sizeof(uint32_t),
 		},
 	},

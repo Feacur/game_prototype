@@ -186,7 +186,7 @@ static void gpu_program_introspect_uniforms(struct GPU_Program_Internal * gpu_pr
 		// 	, name_length, name_data
 		// );
 
-		uint32_t const id = string_system_add((struct CString){
+		struct Handle const id = string_system_add((struct CString){
 			.length = (uint32_t)name_length,
 			.data = name_data,
 		});

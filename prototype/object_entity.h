@@ -33,7 +33,7 @@ struct Entity_Mesh {
 
 struct Entity_Quad {
 	struct rect view;
-	uint32_t uniform_id;
+	struct Handle sh_uniform;
 	enum Entity_Quad_Mode mode;
 };
 
