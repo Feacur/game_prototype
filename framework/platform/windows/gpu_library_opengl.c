@@ -7,8 +7,7 @@
 #include "framework/graphics/opengl/internal/functions_to_gpu_library.h"
 #include "framework/graphics/opengl/internal/graphics_to_gpu_library.h"
 
-#include <initguid.h> // `DEFINE_GUID`
-#include <Windows.h>
+#include "__platform.h"
 
 #include "framework/__warnings_push.h"
 	#include <GL/wgl.h>

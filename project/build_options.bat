@@ -67,7 +67,6 @@ rem https://learn.microsoft.com/windows-server/administration/windows-commands/f
 rem https://learn.microsoft.com/windows-server/administration/windows-commands/setlocal
 
 set compiler=%compiler% -I".." -I"../third_party"
-set compiler=%compiler% -DSTRICT -DVC_EXTRALEAN -DWIN32_LEAN_AND_MEAN -DNOMINMAX
 
 set linker=%linker% -nologo -WX -incremental:no
 set libs=%libs% kernel32.lib user32.lib gdi32.lib
@@ -77,39 +76,35 @@ set source=%cd%/translation_units_%project%
 set unity_object=unity_build_%project%
 
 set linker=%linker% -nodefaultlib
-set compiler=%compiler% -D_CRT_SECURE_NO_WARNINGS
 if %runtime_mode% == static (
 	set linker=%linker% libucrt.lib libvcruntime.lib libcmt.lib
 ) else if %runtime_mode% == dynamic (
 	set linker=%linker% ucrt.lib vcruntime.lib msvcrt.lib
-	set compiler=%compiler% -D_MT -D_DLL
 ) else if %runtime_mode% == static_debug (
 	set linker=%linker% libucrtd.lib libvcruntimed.lib libcmtd.lib
-	set compiler=%compiler% -D_DEBUG
 ) else if %runtime_mode% == dynamic_debug (
 	set linker=%linker% ucrtd.lib vcruntimed.lib msvcrtd.lib
-	set compiler=%compiler% -D_MT -D_DLL -D_DEBUG
 ) else (
 	echo.unknown runtime_mode "%runtime_mode%"
 	exit /b 1
 )
 
 if %arch_mode% == shared (
-	set output=%project%.dll
-	set linker=%linker% -machine:x64 -DLL
 	set compiler=%compiler% -DGAME_ARCH_SHARED
+	set linker=%linker% -machine:x64 -DLL
+	set output=%project%.dll
 	rem [linker] -entry:_DllMainCRTStartup
 ) else if %arch_mode% == console (
-	set output=%project%.exe
+	set compiler=%compiler% -DGAME_ARCH_CONSOLE
 	set linker=%linker% -machine:x64 -subsystem:console
 	set libs=%libs% "temp/%project%.res"
-	set compiler=%compiler% -DGAME_ARCH_CONSOLE
+	set output=%project%.exe
 	rem [linker] -entry:mainCRTStartup
 ) else if %arch_mode% == windows (
-	set output=%project%.exe
+	set compiler=%compiler% -DGAME_ARCH_WINDOWS
 	set linker=%linker% -machine:x64 -subsystem:windows
 	set libs=%libs% "temp/%project%.res"
-	set compiler=%compiler% -DGAME_ARCH_WINDOWS
+	set output=%project%.exe
 	rem [linker] -entry:WinMainCRTStartup
 ) else (
 	echo.unknown arch_mode "%arch_mode%"
@@ -117,28 +112,23 @@ if %arch_mode% == shared (
 )
 
 if %configuration% == tiny (
-	set linker=%linker% -debug:none
 	set compiler=%compiler% -DGAME_TARGET_RELEASE
-	rem [linker] -opt:ref -opt:icf -opt:lbr
+	set linker=%linker% -debug:none
 ) else if %configuration% == fast (
-	set linker=%linker% -debug:none
 	set compiler=%compiler% -DGAME_TARGET_RELEASE
-	rem [linker] -opt:ref -opt:icf -opt:lbr
+	set linker=%linker% -debug:none
 ) else if %configuration% == tiny_dev (
+	set compiler=%compiler% -DGAME_TARGET_DEVELOPMENT
 	set linker=%linker% -debug:full
 	set libs=%libs% dbghelp.lib
-	set compiler=%compiler% -DGAME_TARGET_DEVELOPMENT
-	rem [linker] -opt:noref -opt:noicf -opt:nolbr
 ) else if %configuration% == fast_dev (
-	set linker=%linker% -debug:full
-	set libs=%libs% dbghelp.lib
 	set compiler=%compiler% -DGAME_TARGET_DEVELOPMENT
-	rem [linker] -opt:noref -opt:noicf -opt:nolbr
-) else if %configuration% == debug (
 	set linker=%linker% -debug:full
 	set libs=%libs% dbghelp.lib
+) else if %configuration% == debug (
 	set compiler=%compiler% -DGAME_TARGET_DEBUG
-	rem [linker] -opt:noref -opt:noicf -opt:nolbr
+	set linker=%linker% -debug:full
+	set libs=%libs% dbghelp.lib
 ) else (
 	echo.unknown configuration "%configuration%"
 	exit /b 1

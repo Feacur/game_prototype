@@ -97,6 +97,10 @@ char const * common_strstr(char const * buffer, char const * value) {
 	return strstr(buffer, value);
 }
 
+size_t common_strlen(char const * buffer) {
+	return strlen(buffer);
+}
+
 // ----- ----- ----- ----- -----
 //     utilities
 // ----- ----- ----- ----- -----

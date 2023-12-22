@@ -6,9 +6,7 @@
 
 #include "framework/internal/input_to_window.h"
 
-#include <initguid.h> // `DEFINE_GUID`
-#include <Windows.h>
-#include <hidusage.h>
+#include "__platform.h"
 
 #define APPLICATION_CLASS_NAME "game_prototype"
 

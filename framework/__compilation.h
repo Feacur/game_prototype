@@ -1,18 +1,29 @@
 #if !defined(FRAMEWORK_COMPILATION)
 #define FRAMEWORK_COMPILATION
 
-// ----- ----- ----- ----- -----
-//     windows
-// ----- ----- ----- ----- -----
+/*
+Language: C99 or C11
 
-#include "__warnings_push.h"
-	// @note: explicitly disregard -W API and rely on UTF-8 via -A API and `activeCodePage` manifest;
-	//        also CP_UTF8 for console is being set. it's trivial to restore the compatability code
-	//        via the `MultiByteToWideChar` and following defines; but for now I can stop caring.
-	#undef UNICODE
-	#undef _UNICODE
-	#undef DBGHELP_TRANSLATE_TCHAR
-#include "__warnings_pop.h"
+Includes:
+- ".."
+- "../third_party"
+
+Defines:
+- this game %configuration%
+  - GAME_TARGET_RELEASE
+  - GAME_TARGET_DEVELOPMENT
+  - GAME_TARGET_DEBUG
+- this game %arch_mode%
+  - DGAME_ARCH_SHARED
+  - DGAME_ARCH_CONSOLE
+  - DGAME_ARCH_WINDOWS
+
+Features:
+- disable exceptions
+- disable RTTI
+- maximum warnings level
+- warnings as errors
+*/
 
 // ----- ----- ----- ----- -----
 //     saner C99/C11
@@ -35,6 +46,28 @@
 #elif defined(_MSC_VER)
 	// https://learn.microsoft.com/cpp/error-messages/compiler-warnings/compiler-warnings-c4000-c5999
 	#pragma warning(disable : 4200) // nonstandard extension used : zero-sized array in struct/union
+
+	#if !defined(_CRT_SECURE_NO_WARNINGS)
+		#define _CRT_SECURE_NO_WARNINGS
+	#endif
+
+	#include "framework/__warnings_push.h"
+		#undef _UNICODE
+	#include "framework/__warnings_pop.h"
+#endif
+
+// ----- ----- ----- ----- -----
+//     windows
+// ----- ----- ----- ----- -----
+
+#if defined (_WIN32)
+	/*
+	Libs:
+	- dynamic:       ucrt.lib,     vcruntime.lib,     msvcrt.lib
+	- static:        libucrt.lib,  libvcruntime.lib,  libcmt.lib
+	- dynamic_debug: ucrtd.lib,    vcruntimed.lib,    msvcrtd.lib
+	- static_debug:  libucrtd.lib, libvcruntimed.lib, libcmtd.lib
+	*/
 #endif
 
 #endif

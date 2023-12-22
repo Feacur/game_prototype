@@ -10,9 +10,7 @@
 #include "internal/window_to_system.h"
 #include "internal/gpu_library_to_system.h"
 
-#include <initguid.h> // `DEFINE_GUID`
-#include <Windows.h>
-#include <signal.h>
+#include "__platform.h"
 
 
 // http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf

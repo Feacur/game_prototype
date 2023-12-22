@@ -141,6 +141,7 @@ void common_memset(void * target, uint8_t value, size_t size);
 void common_memcpy(void * target, void const * source, size_t size);
 void common_qsort(void * data, size_t count, size_t value_size, Comparator * compare);
 char const * common_strstr(char const * buffer, char const * value);
+size_t common_strlen(char const * buffer);
 
 // ----- ----- ----- ----- -----
 //     utilities

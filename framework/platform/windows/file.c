@@ -2,8 +2,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/systems/memory_system.h"
 
-#include <initguid.h> // `DEFINE_GUID`
-#include <Windows.h>
+#include "__platform.h"
 
 
 // @idea: async file access through OS API

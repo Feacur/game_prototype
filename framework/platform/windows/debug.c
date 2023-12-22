@@ -7,9 +7,7 @@
 #include "framework/platform/allocator.h"
 #include "framework/containers/buffer.h"
 
-#include <initguid.h> // `DEFINE_GUID`
-#include <Windows.h>
-#include <DbgHelp.h>
+#include "__platform.h"
 
 
 static struct Platform_Debug {
@@ -86,9 +84,9 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 		BOOL const valid_source = SymGetLineFromAddr64(process, callstack.data[i], &source_offset, &source) && (source.FileName != NULL);
 		if (!(valid_module || valid_symbol || valid_source)) { continue; }
 
-		uint32_t const module_length = valid_module ? (uint32_t)strlen(module.ModuleName) : 0;
+		uint32_t const module_length = valid_module ? (uint32_t)common_strlen(module.ModuleName) : 0;
 		uint32_t const symbol_length = valid_symbol ? (uint32_t)symbol.header.NameLen     : 0;
-		uint32_t const source_length = valid_source ? (uint32_t)strlen(source.FileName)   : 0;
+		uint32_t const source_length = valid_source ? (uint32_t)common_strlen(source.FileName)   : 0;
 		char const * module_data = module.ModuleName;
 		char const * symbol_data = symbol.header.Name;
 		char const * source_data = source.FileName;

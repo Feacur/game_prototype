@@ -1,8 +1,7 @@
 #include "framework/common.h"
 #include "framework/formatter.h"
 
-#include <initguid.h> // `DEFINE_GUID`
-#include <Windows.h>
+#include "__platform.h"
 
 
 //

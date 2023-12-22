@@ -422,7 +422,7 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 	ADD_SECTION_HEADER(COMPUTE_SHADER,  43);
 
 	// compile shader objects
-	GLuint shader_ids[ARRAYSIZE(sections)];
+	GLuint shader_ids[SIZE_OF_ARRAY(sections)];
 	for (uint32_t i = 0; i < sections_count; i++) {
 		GLchar const * code[]   = {header,               types_block.data,          sections[i].text.data,          (GLchar *)asset->data};
 		GLint const    length[] = {(GLint)header_length, (GLint)types_block.length, (GLint)sections[i].text.length, (GLint)asset->size};
@@ -1606,7 +1606,7 @@ static struct Graphics_Extensions get_extensions(void) {
 	for (GLint i = 0; i < count; i++) {
 		void const * data = gl.GetStringi(GL_EXTENSIONS, (GLuint)i);
 		struct CString const extension = {
-			.length = (uint32_t)strlen(data),
+			.length = (uint32_t)common_strlen(data),
 			.data = data,
 		};
 

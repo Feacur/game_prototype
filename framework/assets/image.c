@@ -5,6 +5,7 @@
 #include "framework/systems/memory_system.h"
 
 #include "framework/__warnings_push.h"
+	#define STBI_NO_STDIO
 	#define STBI_ONLY_PNG
 
 	#define STBI_MALLOC(size)           REALLOCATE(NULL,    size)

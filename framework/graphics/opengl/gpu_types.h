@@ -4,7 +4,6 @@
 #include "framework/graphics/gfx_types.h"
 
 #include "framework/__warnings_push.h"
-	#include <KHR/khrplatform.h>
 	#include <GL/glcorearb.h>
 #include "framework/__warnings_pop.h"
 
