@@ -20,7 +20,6 @@ struct Image {
 	void * data;
 	struct Texture_Format format;
 	struct Texture_Settings settings;
-	struct Sampler_Settings sampler;
 };
 
 struct Image image_init(struct Buffer const * buffer);

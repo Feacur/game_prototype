@@ -49,9 +49,16 @@ struct GPU_Program const * gpu_program_get(struct Handle handle);
 //     GPU sampler part
 // ----- ----- ----- ----- -----
 
-struct GPU_Unit {
-	struct Handle gh_texture;
+struct GPU_Sampler {
+	struct Gfx_Sampler settings;
 };
+
+struct Handle gpu_sampler_init(struct Gfx_Sampler const * asset);
+void gpu_sampler_free(struct Handle handle);
+
+void gpu_sampler_update(struct Handle handle, struct Gfx_Sampler const * asset);
+
+struct GPU_Sampler const * gpu_sampler_get(struct Handle handle);
 
 // ----- ----- ----- ----- -----
 //     GPU texture part
@@ -61,7 +68,6 @@ struct GPU_Texture {
 	struct uvec2 size;
 	struct Texture_Format format;
 	struct Texture_Settings settings;
-	struct Sampler_Settings sampler;
 	// @idea: add an optional asset source
 };
 
@@ -87,10 +93,10 @@ struct GPU_Target {
 	// @idea: add an optional asset source
 };
 
-struct Handle gpu_target_init(struct GPU_Target_Asset asset);
+struct Handle gpu_target_init(struct GPU_Target_Asset const * asset);
 void gpu_target_free(struct Handle handle);
 
-void gpu_target_update(struct Handle handle, struct GPU_Target_Asset asset);
+void gpu_target_update(struct Handle handle, struct GPU_Target_Asset const * asset);
 
 struct GPU_Target const * gpu_target_get(struct Handle handle);
 struct Handle gpu_target_get_texture(struct Handle handle, enum Texture_Flag flags, uint32_t index);

@@ -42,9 +42,9 @@ uint64_t convert_bits_r64_u64(double value) {
 	return data.value_u64;
 }
 
-uint32_t hash_u32_bytes_fnv1(uint8_t const * value, uint64_t length) {
+uint32_t hash_u32_bytes_fnv1(uint8_t const * value, size_t size) {
 	uint32_t hash = UINT32_C(2166136261);
-	for (uint64_t i = 0; i < length; i++) {
+	for (size_t i = 0; i < size; i++) {
 		hash *= UINT32_C(16777619);
 		hash ^= value[i];
 	}
@@ -58,9 +58,9 @@ uint32_t hash_u32_xorshift(uint32_t value) {
 	return value;
 }
 
-uint64_t hash_u64_bytes_fnv1(uint8_t const * value, uint64_t length) {
+uint64_t hash_u64_bytes_fnv1(uint8_t const * value, size_t size) {
 	uint64_t hash = UINT64_C(14695981039346656037);
-	for (uint64_t i = 0; i < length; i++) {
+	for (size_t i = 0; i < size; i++) {
 		hash *= UINT64_C(1099511628211);
 		hash ^= value[i];
 	}

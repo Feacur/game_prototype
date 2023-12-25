@@ -66,10 +66,10 @@ uint64_t convert_bits_r64_u64(double value);
 #define U64_TO_R64_12(value) convert_bits_u64_r64(UINT64_C(0x3ff0000000000000) | (value >> 9))
 #define U64_TO_R64_24(value) convert_bits_u64_r64(UINT64_C(0x4000000000000000) | (value >> 9))
 
-uint32_t hash_u32_bytes_fnv1(uint8_t const * value, uint64_t length);
+uint32_t hash_u32_bytes_fnv1(uint8_t const * value, size_t size);
 uint32_t hash_u32_xorshift(uint32_t value);
 
-uint64_t hash_u64_bytes_fnv1(uint8_t const * value, uint64_t length);
+uint64_t hash_u64_bytes_fnv1(uint8_t const * value, size_t size);
 uint64_t hash_u64_xorshift(uint64_t value);
 
 uint32_t po2_next_u32(uint32_t value);

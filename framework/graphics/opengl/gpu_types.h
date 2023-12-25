@@ -38,9 +38,9 @@ struct CString gpu_types_block(void);
 //     GPU sampler part
 // ----- ----- ----- ----- -----
 
-GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture);
+GLint gpu_min_filter_mode(enum Mipmap_Mode mipmap, enum Filter_Mode filter);
 GLint gpu_mag_filter_mode(enum Filter_Mode value);
-GLint gpu_wrap_mode(enum Wrap_Flag value);
+GLint gpu_addr_mode(enum Addr_Flag value);
 
 // ----- ----- ----- ----- -----
 //     GPU texture part
@@ -55,7 +55,7 @@ GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index);
 //     GPU target part
 // ----- ----- ----- ----- -----
 
-GLenum gpu_attachment_point(enum Texture_Flag texture_type, uint32_t index, uint32_t limit);
+GLenum gpu_attachment_point(enum Texture_Flag flags, uint32_t index, uint32_t limit);
 
 // ----- ----- ----- ----- -----
 //     GPU buffer part

@@ -59,6 +59,11 @@ struct Graphics_Extensions {
 //
 #include "framework/graphics/gfx_objects.h"
 
+struct GPU_Unit {
+	struct Handle gh_texture;
+	struct Handle gh_sampler;
+};
+
 struct GPU_Uniform_Internal {
 	struct GPU_Uniform base;
 	GLint location;
@@ -66,6 +71,11 @@ struct GPU_Uniform_Internal {
 
 struct GPU_Program_Internal {
 	struct GPU_Program base;
+	GLuint id;
+};
+
+struct GPU_Sampler_Internal {
+	struct GPU_Sampler base;
 	GLuint id;
 };
 
@@ -98,14 +108,15 @@ static struct Graphics_State {
 	struct Graphics_Limits limits;
 	struct Graphics_Extensions extensions;
 
-	struct Array     units;    // `struct GPU_Unit`
 	struct Sparseset programs; // `struct GPU_Program_Internal`
 	struct Sparseset targets;  // `struct GPU_Target_Internal`
+	struct Sparseset samplers; // `struct GPU_Sampler_Internal`
 	struct Sparseset textures; // `struct GPU_Texture_Internal`
 	struct Sparseset buffers;  // `struct GPU_Buffer_Internal`
 	struct Sparseset meshes;   // `struct GPU_Mesh_Internal`
 
 	struct {
+		struct Array  units; // `struct GPU_Unit`
 		struct Handle gh_program;
 		struct Handle gh_target;
 		struct Handle gh_mesh;
@@ -394,15 +405,11 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 		SIZE_OF_ARRAY(header), header,
 		"#version %u core\n"
 		"\n"
-		"#define DEPTH_NEAR %f\n"
-		"#define DEPTH_FAR  %f\n"
 		"#define NDC_NEAR %f\n"
 		"#define NDC_FAR  %f\n"
 		"\n"
 		, gl.glsl
 		//
-		, (double)gs_graphics_state.clip_space.depth_near
-		, (double)gs_graphics_state.clip_space.depth_far
 		, (double)gs_graphics_state.clip_space.ndc_near
 		, (double)gs_graphics_state.clip_space.ndc_far
 	);
@@ -452,10 +459,10 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 
 	// introspect the program
 	gpu_program_introspect_uniforms(&gpu_program);
-	(void)gpu_program_introspect_block; // (&gpu_program, GL_UNIFORM_BLOCK);
-	(void)gpu_program_introspect_block; // (&gpu_program, GL_SHADER_STORAGE_BLOCK);
+	(void)gpu_program_introspect_block;  // (&gpu_program, GL_UNIFORM_BLOCK);
+	(void)gpu_program_introspect_block;  // (&gpu_program, GL_SHADER_STORAGE_BLOCK);
 	(void)gpu_program_introspect_buffer; // (&gpu_program);
-	(void)gpu_program_introspect_input; // (&gpu_program);
+	(void)gpu_program_introspect_input;  // (&gpu_program);
 	(void)gpu_program_introspect_output; // (&gpu_program);
 
 	GFX_TRACE("aquire program %d", gpu_program.id);
@@ -473,7 +480,7 @@ static void gpu_program_on_discard(struct GPU_Program_Internal * gpu_program) {
 }
 
 struct Handle gpu_program_init(struct Buffer const * asset) {
-	struct GPU_Program_Internal gpu_program = gpu_program_on_aquire(asset);
+	struct GPU_Program_Internal const gpu_program = gpu_program_on_aquire(asset);
 	return sparseset_aquire(&gs_graphics_state.programs, &gpu_program);
 }
 
@@ -504,19 +511,78 @@ struct GPU_Program const * gpu_program_get(struct Handle handle) {
 //     GPU sampler part
 // ----- ----- ----- ----- -----
 
+static bool gpu_sampler_upload(struct GPU_Sampler_Internal * gpu_sampler, struct Gfx_Sampler const * asset) {
+	gpu_sampler->base.settings = *asset;
+	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(asset->mipmap, asset->min_filter));
+	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(asset->mag_filter));
+	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_WRAP_S, gpu_addr_mode(asset->addr_x));
+	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_WRAP_T, gpu_addr_mode(asset->addr_y));
+	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_WRAP_R, gpu_addr_mode(asset->addr_z));
+	gl.SamplerParameterfv(gpu_sampler->id, GL_TEXTURE_BORDER_COLOR, &asset->border.x);
+	return true;
+}
+
+static struct GPU_Sampler_Internal gpu_sampler_on_aquire(struct Gfx_Sampler const * asset) {
+	struct GPU_Sampler_Internal gpu_sampler = {.base = {
+		.settings = *asset,
+	}};
+
+	gl.CreateSamplers(1, &gpu_sampler.id);
+	gpu_sampler_upload(&gpu_sampler, asset);
+
+	GFX_TRACE("aquire sampler %d", gpu_sampler.id);
+	return gpu_sampler;
+}
+
+static void gpu_sampler_on_discard(struct GPU_Sampler_Internal * gpu_sampler) {
+	if (gpu_sampler->id == 0) { return; }
+	GFX_TRACE("discard sampler %d", gpu_sampler->id);
+	gl.DeleteSamplers(1, &gpu_sampler->id);
+}
+
+struct Handle gpu_sampler_init(struct Gfx_Sampler const * asset) {
+	FOR_SPARSESET(&gs_graphics_state.samplers, it) {
+		struct GPU_Sampler_Internal const * gpu_sampler = it.value;
+		if (carray_equals(A_(gpu_sampler->base.settings), A_(*asset))) {
+			return it.handle;
+		}
+	}
+	struct GPU_Sampler_Internal const gpu_sampler = gpu_sampler_on_aquire(asset);
+	return sparseset_aquire(&gs_graphics_state.samplers, &gpu_sampler);
+}
+
+void gpu_sampler_free(struct Handle handle) {
+	FOR_ARRAY(&gs_graphics_state.active.units, it) {
+		struct GPU_Unit * unit = it.value;
+		if (handle_equals(unit->gh_sampler, handle)) {
+			unit->gh_sampler = (struct Handle){0};
+			gl.BindSampler((GLuint)it.curr, 0);
+		}
+	}
+	struct GPU_Sampler_Internal * gpu_sampler = sparseset_get(&gs_graphics_state.samplers, handle);
+	if (gpu_sampler != NULL) {
+		gpu_sampler_on_discard(gpu_sampler);
+		sparseset_discard(&gs_graphics_state.samplers, handle);
+	}
+}
+
+void gpu_sampler_update(struct Handle handle, struct Gfx_Sampler const * asset) {
+	struct GPU_Sampler_Internal * gpu_sampler = sparseset_get(&gs_graphics_state.samplers, handle);
+	if (gpu_sampler == NULL) { return; }
+
+	if (gpu_sampler_upload(gpu_sampler, asset)) { return; }
+
+	gpu_sampler_on_discard(gpu_sampler);
+	*gpu_sampler = gpu_sampler_on_aquire(asset);
+}
+
+struct GPU_Sampler const * gpu_sampler_get(struct Handle handle) {
+	return sparseset_get(&gs_graphics_state.samplers, handle);
+}
+
 // ----- ----- ----- ----- -----
 //     GPU texture part
 // ----- ----- ----- ----- -----
-
-static void gpu_texture_sampler_upload(struct GPU_Texture_Internal * gpu_texture, struct Sampler_Settings const * settings) {
-	// @todo: separate sampler objects
-	gpu_texture->base.sampler = *settings;
-	gl.TextureParameteri(gpu_texture->id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(settings->mipmap, settings->minification));
-	gl.TextureParameteri(gpu_texture->id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(settings->magnification));
-	gl.TextureParameteri(gpu_texture->id, GL_TEXTURE_WRAP_S, gpu_wrap_mode(settings->wrap_x));
-	gl.TextureParameteri(gpu_texture->id, GL_TEXTURE_WRAP_T, gpu_wrap_mode(settings->wrap_y));
-	gl.TextureParameterfv(gpu_texture->id, GL_TEXTURE_BORDER_COLOR, &settings->border.x);
-}
 
 static bool gpu_texture_upload(struct GPU_Texture_Internal * gpu_texture, struct Image const * asset) {
 	if (gpu_texture->base.size.x != asset->size.x) { return false; }
@@ -572,7 +638,6 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 		, (GLsizei)gpu_texture.base.size.x, (GLsizei)gpu_texture.base.size.y
 	);
 	gpu_texture_upload(&gpu_texture, asset);
-	gpu_texture_sampler_upload(&gpu_texture, &asset->sampler);
 
 	// chart
 	gl.TextureParameteriv(gpu_texture.id, GL_TEXTURE_SWIZZLE_RGBA, (GLint[]){
@@ -581,6 +646,15 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 		gpu_swizzle_op(gpu_texture.base.settings.swizzle[2], 2),
 		gpu_swizzle_op(gpu_texture.base.settings.swizzle[3], 3),
 	});
+
+	// default sampler
+	struct Gfx_Sampler const sampler = {0};
+	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(sampler.mipmap, sampler.min_filter));
+	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(sampler.mag_filter));
+	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_WRAP_S, gpu_addr_mode(sampler.addr_x));
+	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_WRAP_T, gpu_addr_mode(sampler.addr_y));
+	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_WRAP_R, gpu_addr_mode(sampler.addr_z));
+	gl.TextureParameterfv(gpu_texture.id, GL_TEXTURE_BORDER_COLOR, &sampler.border.x);
 
 	GFX_TRACE("aquire texture %d", gpu_texture.id);
 	return gpu_texture;
@@ -593,15 +667,17 @@ static void gpu_texture_on_discard(struct GPU_Texture_Internal * gpu_texture) {
 }
 
 struct Handle gpu_texture_init(struct Image const * asset) {
-	struct GPU_Texture_Internal gpu_texture = gpu_texture_on_aquire(asset);
+	struct GPU_Texture_Internal const gpu_texture = gpu_texture_on_aquire(asset);
 	return sparseset_aquire(&gs_graphics_state.textures, &gpu_texture);
 }
 
 void gpu_texture_free(struct Handle handle) {
-	FOR_ARRAY(&gs_graphics_state.units, it) {
+	FOR_ARRAY(&gs_graphics_state.active.units, it) {
 		struct GPU_Unit * unit = it.value;
 		if (handle_equals(unit->gh_texture, handle)) {
-			unit->gh_texture = (struct Handle){0};
+			common_memset(unit, 0, sizeof(*unit));
+			gl.BindTextureUnit((GLuint)it.curr, 0);
+			gl.BindSampler((GLuint)it.curr, 0);
 		}
 	}
 	struct GPU_Texture_Internal * gpu_texture = sparseset_get(&gs_graphics_state.textures, handle);
@@ -615,10 +691,7 @@ void gpu_texture_update(struct Handle handle, struct Image const * asset) {
 	struct GPU_Texture_Internal * gpu_texture = sparseset_get(&gs_graphics_state.textures, handle);
 	if (gpu_texture == NULL) { return; }
 
-	if (gpu_texture_upload(gpu_texture, asset)) {
-		gpu_texture_sampler_upload(gpu_texture, &asset->sampler);
-		return;
-	}
+	if (gpu_texture_upload(gpu_texture, asset)) { return; }
 
 	gpu_texture_on_discard(gpu_texture);
 	*gpu_texture = gpu_texture_on_aquire(asset);
@@ -632,27 +705,27 @@ struct GPU_Texture const * gpu_texture_get(struct Handle handle) {
 //     GPU target part
 // ----- ----- ----- ----- -----
 
-static struct GPU_Target_Internal gpu_target_on_aquire(struct GPU_Target_Asset asset) {
+static struct GPU_Target_Internal gpu_target_on_aquire(struct GPU_Target_Asset const * asset) {
 	struct GPU_Target_Internal gpu_target = {.base = {
 		.textures = array_init(sizeof(struct Handle)),
 		.buffers  = array_init(sizeof(struct GPU_Target_Buffer_Internal)),
 		.size = {
-			min_u32(asset.size.x, gs_graphics_state.limits.target_size),
-			min_u32(asset.size.y, gs_graphics_state.limits.target_size),
+			min_u32(asset->size.x, gs_graphics_state.limits.target_size),
+			min_u32(asset->size.y, gs_graphics_state.limits.target_size),
 		},
 	}};
-	if (gpu_target.base.size.x < asset.size.x) { WRN("target x exceeds limits"); DEBUG_BREAK(); }
-	if (gpu_target.base.size.y < asset.size.y) { WRN("target y exceeds limits"); DEBUG_BREAK(); }
+	if (gpu_target.base.size.x < asset->size.x) { WRN("target x exceeds limits"); DEBUG_BREAK(); }
+	if (gpu_target.base.size.y < asset->size.y) { WRN("target y exceeds limits"); DEBUG_BREAK(); }
 
 	{ // prepare arrays
 		uint32_t textures_count = 0;
-		FOR_ARRAY(&asset.formats, it) {
+		FOR_ARRAY(&asset->formats, it) {
 			struct Target_Format const * format = it.value;
 			if (format->read) {
 				textures_count++;
 			}
 		}
-		uint32_t buffers_count = asset.formats.count - textures_count;
+		uint32_t buffers_count = asset->formats.count - textures_count;
 
 		array_resize(&gpu_target.base.textures, textures_count);
 		array_resize(&gpu_target.base.buffers,  buffers_count);
@@ -660,7 +733,7 @@ static struct GPU_Target_Internal gpu_target_on_aquire(struct GPU_Target_Asset a
 
 	// allocate
 	gl.CreateFramebuffers(1, &gpu_target.id);
-	FOR_ARRAY(&asset.formats, it) {
+	FOR_ARRAY(&asset->formats, it) {
 		struct Target_Format const * format = it.value;
 		if (format->read) {
 			struct Handle const gh_texture = gpu_texture_init(&(struct Image){
@@ -741,8 +814,8 @@ static void gpu_target_on_discard(struct GPU_Target_Internal * gpu_target) {
 	gl.DeleteFramebuffers(1, &gpu_target->id);
 }
 
-struct Handle gpu_target_init(struct GPU_Target_Asset asset) {
-	struct GPU_Target_Internal gpu_target = gpu_target_on_aquire(asset);
+struct Handle gpu_target_init(struct GPU_Target_Asset const * asset) {
+	struct GPU_Target_Internal const gpu_target = gpu_target_on_aquire(asset);
 	return sparseset_aquire(&gs_graphics_state.targets, &gpu_target);
 }
 
@@ -757,7 +830,7 @@ void gpu_target_free(struct Handle handle) {
 	}
 }
 
-void gpu_target_update(struct Handle handle, struct GPU_Target_Asset asset) {
+void gpu_target_update(struct Handle handle, struct GPU_Target_Asset const * asset) {
 	struct GPU_Target_Internal * gpu_target = sparseset_get(&gs_graphics_state.targets, handle);
 	if (gpu_target == NULL) { return; }
 
@@ -818,7 +891,7 @@ static void gpu_buffer_on_discard(struct GPU_Buffer_Internal * gpu_buffer) {
 }
 
 struct Handle gpu_buffer_init(struct Buffer const * asset) {
-	struct GPU_Buffer_Internal gpu_buffer = gpu_buffer_on_aquire(asset);
+	struct GPU_Buffer_Internal const gpu_buffer = gpu_buffer_on_aquire(asset);
 	return sparseset_aquire(&gs_graphics_state.buffers, &gpu_buffer);
 }
 
@@ -958,7 +1031,7 @@ static void gpu_mesh_on_discard(struct GPU_Mesh_Internal * gpu_mesh) {
 }
 
 struct Handle gpu_mesh_init(struct Mesh const * asset) {
-	struct GPU_Mesh_Internal gpu_mesh = gpu_mesh_on_aquire(asset);
+	struct GPU_Mesh_Internal const gpu_mesh = gpu_mesh_on_aquire(asset);
 	return sparseset_aquire(&gs_graphics_state.meshes, &gpu_mesh);
 }
 
@@ -1041,48 +1114,48 @@ void graphics_buffer_align(struct Buffer * buffer, enum Buffer_Target target) {
 // 	}
 // }
 
-static uint32_t graphics_unit_find(struct Handle gh_texture) {
-	FOR_ARRAY(&gs_graphics_state.units, it) {
+static uint32_t graphics_unit_find(struct Gfx_Unit asset) {
+	FOR_ARRAY(&gs_graphics_state.active.units, it) {
 		struct GPU_Unit const * unit = it.value;
-		if (unit->gh_texture.id != gh_texture.id) { continue; }
-		if (unit->gh_texture.gen != gh_texture.gen) { continue; }
+		if (!handle_equals(unit->gh_texture, asset.gh_texture)) { continue; }
+
+		struct GPU_Sampler_Internal const * gpu_sampler = sparseset_get(&gs_graphics_state.samplers, unit->gh_sampler);
+		struct Gfx_Sampler const gpu_sampler_settings = (gpu_sampler != NULL) ? gpu_sampler->base.settings : (struct Gfx_Sampler){0};
+		if (!carray_equals(A_(gpu_sampler_settings), A_(asset.sampler))) { continue; }
+
 		return it.curr + 1;
 	}
 	return 0;
 }
 
-static uint32_t gpu_unit_init(struct Handle gh_texture) {
-	struct GPU_Texture_Internal const * gpu_texture = sparseset_get(&gs_graphics_state.textures, gh_texture);
+static uint32_t gpu_unit_init(struct Gfx_Unit asset) {
+	// @todo: automatically rebind in a circular buffer manner
+
+	struct GPU_Texture_Internal const * gpu_texture = sparseset_get(&gs_graphics_state.textures, asset.gh_texture);
 	if (gpu_texture == NULL) { return 0; }
 
-	uint32_t const id = graphics_unit_find(gh_texture);
+	uint32_t const id = graphics_unit_find(asset);
 	if (id != 0) { return id; }
 
-	uint32_t const id_new = graphics_unit_find((struct Handle){0});
+	uint32_t const id_new = graphics_unit_find((struct Gfx_Unit){0});
 	if (id_new == 0) {
 		WRN("failure: no spare texture/sampler units");
 		DEBUG_BREAK(); return 0;
 	}
 
-	struct GPU_Unit * unit = array_at(&gs_graphics_state.units, id_new - 1);
-	unit->gh_texture = gh_texture;
+	struct GPU_Unit * unit = array_at(&gs_graphics_state.active.units, id_new - 1);
+	*unit = (struct GPU_Unit){
+		.gh_texture = asset.gh_texture,
+		.gh_sampler = gpu_sampler_init(&asset.sampler),
+	};
+
+	struct GPU_Sampler_Internal const * gpu_sampler = sparseset_get(&gs_graphics_state.samplers, unit->gh_sampler);
 
 	gl.BindTextureUnit((GLuint)id_new, gpu_texture->id);
+	gl.BindSampler((GLuint)id_new, gpu_sampler->id);
+
 	return id_new;
 }
-
-// static void gpu_unit_free(struct Handle gh_texture) {
-// 	if (gs_ogl_version > 0) {
-// 		uint32_t unit = graphics_unit_find(gh_texture);
-// 		if (unit == 0) { return; }
-// 
-// 		gs_graphics_state.units[unit] = (struct GPU_Unit){
-// 			.gpu_texture_handle = (struct Handle){0},
-// 		};
-// 
-// 		gl.BindTextureUnit((GLuint)unit, 0);
-// 	}
-// }
 
 static void gpu_select_program(struct Handle handle) {
 	if (handle_equals(gs_graphics_state.active.gh_program, handle)) { return; }
@@ -1112,45 +1185,41 @@ static void gpu_upload_single_uniform(struct GPU_Program_Internal const * gpu_pr
 			DEBUG_BREAK();
 		} break;
 
-		case DATA_TYPE_UNIT_U:
-		case DATA_TYPE_UNIT_S:
-		case DATA_TYPE_UNIT_F: {
-			GLint * units = ARENA_ALLOCATE_ARRAY(GLint, field->base.array_size);
+		case GFX_TYPE_UNIT_U:
+		case GFX_TYPE_UNIT_S:
+		case GFX_TYPE_UNIT_F: {
+			GLint * unit_ids = ARENA_ALLOCATE_ARRAY(GLint, field->base.array_size);
 			uint32_t units_count = 0;
 
-			// @todo: automatically rebind in a circular buffer manner
-			struct Handle const * gh_textures = (struct Handle const *)data;
+			struct Gfx_Unit const * units = data;
 			for (uint32_t i = 0; i < field->base.array_size; i++) {
-				uint32_t unit = graphics_unit_find(gh_textures[i]);
-				if (unit == 0) {
-					unit = gpu_unit_init(gh_textures[i]);
-				}
-				units[units_count++] = (GLint)unit;
+				uint32_t const id = gpu_unit_init(units[i]);
+				unit_ids[units_count++] = (GLint)id;
 			}
-			gl.ProgramUniform1iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, units);
+			gl.ProgramUniform1iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, unit_ids);
 
 			// @note: this is not necessary, but responsible
-			ARENA_FREE(units);
+			ARENA_FREE(unit_ids);
 		} break;
 
-		case DATA_TYPE_R32_U:    gl.ProgramUniform1uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_RG32_U:   gl.ProgramUniform2uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_RGB32_U:  gl.ProgramUniform3uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_RGBA32_U: gl.ProgramUniform4uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_R32_U:    gl.ProgramUniform1uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_RG32_U:   gl.ProgramUniform2uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_RGB32_U:  gl.ProgramUniform3uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_RGBA32_U: gl.ProgramUniform4uiv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
 
-		case DATA_TYPE_R32_S:    gl.ProgramUniform1iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_RG32_S:   gl.ProgramUniform2iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_RGB32_S:  gl.ProgramUniform3iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_RGBA32_S: gl.ProgramUniform4iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_R32_S:    gl.ProgramUniform1iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_RG32_S:   gl.ProgramUniform2iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_RGB32_S:  gl.ProgramUniform3iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_RGBA32_S: gl.ProgramUniform4iv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
 
-		case DATA_TYPE_R32_F:    gl.ProgramUniform1fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_RG32_F:   gl.ProgramUniform2fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_RGB32_F:  gl.ProgramUniform3fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
-		case DATA_TYPE_RGBA32_F: gl.ProgramUniform4fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_R32_F:    gl.ProgramUniform1fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_RG32_F:   gl.ProgramUniform2fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_RGB32_F:  gl.ProgramUniform3fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
+		case GFX_TYPE_RGBA32_F: gl.ProgramUniform4fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, data); break;
 
-		case DATA_TYPE_MAT2: gl.ProgramUniformMatrix2fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;
-		case DATA_TYPE_MAT3: gl.ProgramUniformMatrix3fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;
-		case DATA_TYPE_MAT4: gl.ProgramUniformMatrix4fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;
+		case GFX_TYPE_MAT2: gl.ProgramUniformMatrix2fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;
+		case GFX_TYPE_MAT3: gl.ProgramUniformMatrix3fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;
+		case GFX_TYPE_MAT4: gl.ProgramUniformMatrix4fv(gpu_program->id, field->location, (GLsizei)field->base.array_size, GL_FALSE, data); break;
 	}
 }
 
@@ -1410,18 +1479,21 @@ void graphics_to_gpu_library_init(void) {
 		.limits = get_limits(),
 		.extensions = get_extensions(),
 		//
-		.units    = array_init(sizeof(struct GPU_Unit)),
 		.programs = sparseset_init(sizeof(struct GPU_Program_Internal)),
-		.targets  = sparseset_init(sizeof(struct GPU_Target_Internal)),
+		.samplers = sparseset_init(sizeof(struct GPU_Sampler_Internal)),
 		.textures = sparseset_init(sizeof(struct GPU_Texture_Internal)),
+		.targets  = sparseset_init(sizeof(struct GPU_Target_Internal)),
 		.buffers  = sparseset_init(sizeof(struct GPU_Buffer_Internal)),
 		.meshes   = sparseset_init(sizeof(struct GPU_Mesh_Internal)),
+		.active = {
+			.units = array_init(sizeof(struct GPU_Unit)),
+		}
 	};
 
 	//
-	array_resize(&gs_graphics_state.units, gs_graphics_state.limits.units);
-	for (uint32_t i = 0; i < gs_graphics_state.units.capacity; i++) {
-		array_push_many(&gs_graphics_state.units, 1, &(struct GPU_Unit){0});
+	array_resize(&gs_graphics_state.active.units, gs_graphics_state.limits.units);
+	for (uint32_t i = 0; i < gs_graphics_state.active.units.capacity; i++) {
+		array_push_many(&gs_graphics_state.active.units, 1, &(struct GPU_Unit){0});
 	}
 
 	// @note: manage OpenGL's clip space instead of ours
@@ -1460,13 +1532,18 @@ void graphics_to_gpu_library_free(void) {
 
 	uint32_t inst_count = 0;
 	GPU_FREE(programs, gpu_program_on_discard);
-	GPU_FREE(targets,  gpu_target_on_discard);
+
+	// GPU_FREE(samplers, gpu_sampler_on_discard);
+	FOR_SPARSESET(&gs_graphics_state.samplers, it) { gpu_sampler_on_discard(it.value); }
+	sparseset_free(&gs_graphics_state.samplers);
+
 	GPU_FREE(textures, gpu_texture_on_discard);
+	GPU_FREE(targets,  gpu_target_on_discard);
 	GPU_FREE(buffers,  gpu_buffer_on_discard);
 	GPU_FREE(meshes,   gpu_mesh_on_discard);
 
 	//
-	array_free(&gs_graphics_state.units);
+	array_free(&gs_graphics_state.active.units);
 	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
 
 	if (inst_count > 0) { DEBUG_BREAK(); }

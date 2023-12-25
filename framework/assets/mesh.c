@@ -81,7 +81,7 @@ static struct Mesh mesh_init_wfobj(struct Buffer const * source) {
 				.size     = vertices.count * vertices.value_size,
 			},
 			.format = {
-				.type = DATA_TYPE_R32_F,
+				.type = GFX_TYPE_R32_F,
 			},
 			.attributes = attributes,
 		},
@@ -94,7 +94,7 @@ static struct Mesh mesh_init_wfobj(struct Buffer const * source) {
 			},
 			.format = {
 				.mode = MESH_MODE_TRIANGLES,
-				.type = DATA_TYPE_R32_U,
+				.type = GFX_TYPE_R32_U,
 			},
 			.is_index = true,
 		},

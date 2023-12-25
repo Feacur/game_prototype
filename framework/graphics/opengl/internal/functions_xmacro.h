@@ -2,14 +2,20 @@
 	#define XMACRO(type, name)
 #endif
 
-// -- get
+// ----- ----- ----- ----- -----
+//     GPU info part
+// ----- ----- ----- ----- -----
+
 // >= 2.0
 XMACRO(GETINTEGERV, GetIntegerv)
 XMACRO(GETSTRING,   GetString)
 // >= 3.0
 XMACRO(GETSTRINGI, GetStringi)
 
-// -- settings
+// ----- ----- ----- ----- -----
+//     GPU settings part
+// ----- ----- ----- ----- -----
+
 // >= 2.0
 XMACRO(DISABLE, Disable)
 XMACRO(ENABLE,  Enable)
@@ -19,21 +25,21 @@ XMACRO(DEBUGMESSAGECONTROL,  DebugMessageControl)
 // >= 4.5
 XMACRO(CLIPCONTROL, ClipControl)
 
-// -- color
+// ----- ----- ----- ----- -----
+//     GPU blending part
+// ----- ----- ----- ----- -----
+
 // >= 2.0
 XMACRO(CLEARCOLOR,            ClearColor)
 XMACRO(COLORMASK,             ColorMask)
 XMACRO(BLENDCOLOR,            BlendColor)
 XMACRO(BLENDFUNCSEPARATE,     BlendFuncSeparate)
 XMACRO(BLENDEQUATIONSEPARATE, BlendEquationSeparate)
-// >= 4.5
-XMACRO(NAMEDFRAMEBUFFERDRAWBUFFERS, NamedFramebufferDrawBuffers)
-XMACRO(CLEARNAMEDFRAMEBUFFERIV,     ClearNamedFramebufferiv)
-XMACRO(CLEARNAMEDFRAMEBUFFERUIV,    ClearNamedFramebufferuiv)
-XMACRO(CLEARNAMEDFRAMEBUFFERFV,     ClearNamedFramebufferfv)
-XMACRO(CLEARNAMEDFRAMEBUFFERFI,     ClearNamedFramebufferfi)
 
-// -- depth
+// ----- ----- ----- ----- -----
+//     GPU depth part
+// ----- ----- ----- ----- -----
+
 // >= 2.0
 XMACRO(DEPTHFUNC,  DepthFunc)
 XMACRO(DEPTHMASK,  DepthMask)
@@ -43,19 +49,28 @@ XMACRO(DEPTHMASK,  DepthMask)
 XMACRO(CLEARDEPTHF, ClearDepthf)
 XMACRO(DEPTHRANGEF, DepthRangef)
 
-// -- stencil
+// ----- ----- ----- ----- -----
+//     GPU stencil part
+// ----- ----- ----- ----- -----
+
 // >= 2.0
 XMACRO(CLEARSTENCIL, ClearStencil)
 //    XMACRO(STENCILMASK,  StencilMask)
 //    XMACRO(STENCILFUNC,  StencilFunc)
 //    XMACRO(STENCILOP,    StencilOp)
 
-// -- culling
+// ----- ----- ----- ----- -----
+//     GPU culling part
+// ----- ----- ----- ----- -----
+
 // >= 2.0
 XMACRO(CULLFACE,  CullFace)
 XMACRO(FRONTFACE, FrontFace)
 
-// -- GPU program
+// ----- ----- ----- ----- -----
+//     GPU program part
+// ----- ----- ----- ----- -----
+
 // >= 2.0
 XMACRO(ATTACHSHADER, AttachShader)
 XMACRO(DETACHSHADER, DetachShader)
@@ -106,21 +121,42 @@ XMACRO(PROGRAMUNIFORMMATRIX2FV, ProgramUniformMatrix2fv)
 XMACRO(PROGRAMUNIFORMMATRIX3FV, ProgramUniformMatrix3fv)
 XMACRO(PROGRAMUNIFORMMATRIX4FV, ProgramUniformMatrix4fv)
 
-// -- textures
+// ----- ----- ----- ----- -----
+//     GPU sampler part
+// ----- ----- ----- ----- -----
+
+// -- samplers
+// >= 3.2
+XMACRO(DELETESAMPLERS,    DeleteSamplers)
+XMACRO(BINDSAMPLER,       BindSampler)
+XMACRO(SAMPLERPARAMETERF, SamplerParameterf)
+XMACRO(SAMPLERPARAMETERI, SamplerParameteri)
+XMACRO(SAMPLERPARAMETERFV, SamplerParameterfv)
+XMACRO(SAMPLERPARAMETERIV, SamplerParameteriv)
+// >= 4.5
+XMACRO(CREATESAMPLERS, CreateSamplers)
+
+// ----- ----- ----- ----- -----
+//     GPU texture part
+// ----- ----- ----- ----- -----
+
 // >= 2.0
 XMACRO(DELETETEXTURES, DeleteTextures)
 // >= 4.5
-XMACRO(CREATETEXTURES,     CreateTextures)
-XMACRO(TEXTURESTORAGE2D,   TextureStorage2D)
-XMACRO(TEXTUREPARAMETERI,  TextureParameteri)
-XMACRO(TEXTUREPARAMETERIV, TextureParameteriv)
-XMACRO(TEXTUREPARAMETERF,  TextureParameterf)
-XMACRO(TEXTUREPARAMETERFV, TextureParameterfv)
-XMACRO(TEXTURESUBIMAGE2D,  TextureSubImage2D)
-XMACRO(BINDTEXTUREUNIT,    BindTextureUnit)
+XMACRO(CREATETEXTURES,        CreateTextures)
+XMACRO(TEXTURESTORAGE2D,      TextureStorage2D)
+XMACRO(TEXTURESUBIMAGE2D,     TextureSubImage2D)
 XMACRO(GENERATETEXTUREMIPMAP, GenerateTextureMipmap)
+XMACRO(TEXTUREPARAMETERF,  TextureParameterf)
+XMACRO(TEXTUREPARAMETERI,  TextureParameteri)
+XMACRO(TEXTUREPARAMETERFV, TextureParameterfv)
+XMACRO(TEXTUREPARAMETERIV, TextureParameteriv)
+XMACRO(BINDTEXTUREUNIT,    BindTextureUnit)
 
-// -- target
+// ----- ----- ----- ----- -----
+//     GPU target part
+// ----- ----- ----- ----- -----
+
 // >= 3.0
 XMACRO(DELETEFRAMEBUFFERS,  DeleteFramebuffers)
 XMACRO(DELETERENDERBUFFERS, DeleteRenderbuffers)
@@ -130,49 +166,53 @@ XMACRO(NAMEDFRAMEBUFFERTEXTURE,      NamedFramebufferTexture)
 XMACRO(CREATERENDERBUFFERS,          CreateRenderbuffers)
 XMACRO(NAMEDRENDERBUFFERSTORAGE,     NamedRenderbufferStorage)
 XMACRO(NAMEDFRAMEBUFFERRENDERBUFFER, NamedFramebufferRenderbuffer)
+XMACRO(NAMEDFRAMEBUFFERREADBUFFER,   NamedFramebufferReadBuffer)
+XMACRO(NAMEDFRAMEBUFFERDRAWBUFFER,   NamedFramebufferDrawBuffer)
 
-// -- samplers
-// >= 3.2
-//    XMACRO(GENSAMPLERS,       GenSamplers)
-//    XMACRO(DELETESAMPLERS,    DeleteSamplers)
-//    XMACRO(BINDSAMPLER,       BindSampler)
-//    XMACRO(SAMPLERPARAMETERI, SamplerParameteri)
-// >= 4.5
-//    XMACRO(CREATESAMPLERS, CreateSamplers)
+// ----- ----- ----- ----- -----
+//     GPU buffer part
+// ----- ----- ----- ----- -----
 
-// -- meshes
 // >= 2.0
 XMACRO(GENBUFFERS,    GenBuffers)
 XMACRO(DELETEBUFFERS, DeleteBuffers)
+// >= 3.0
+XMACRO(BINDBUFFERBASE,  BindBufferBase)
+XMACRO(BINDBUFFERRANGE, BindBufferRange)
+// >= 4.5
+XMACRO(CREATEBUFFERS,      CreateBuffers)
+XMACRO(NAMEDBUFFERSTORAGE, NamedBufferStorage)
+XMACRO(NAMEDBUFFERSUBDATA, NamedBufferSubData)
+
+// ----- ----- ----- ----- -----
+//     GPU mesh part
+// ----- ----- ----- ----- -----
+
 // >= 3.0
 XMACRO(DELETEVERTEXARRAYS, DeleteVertexArrays)
 XMACRO(BINDVERTEXARRAY,    BindVertexArray)
 // >= 4.5
 XMACRO(CREATEVERTEXARRAYS,       CreateVertexArrays)
-XMACRO(CREATEBUFFERS,            CreateBuffers)
 XMACRO(VERTEXARRAYELEMENTBUFFER, VertexArrayElementBuffer)
 XMACRO(VERTEXARRAYVERTEXBUFFER,  VertexArrayVertexBuffer)
 XMACRO(ENABLEVERTEXARRAYATTRIB,  EnableVertexArrayAttrib)
 XMACRO(DISABLEVERTEXARRAYATTRIB, DisableVertexArrayAttrib)
 XMACRO(VERTEXARRAYATTRIBBINDING, VertexArrayAttribBinding)
 XMACRO(VERTEXARRAYATTRIBFORMAT,  VertexArrayAttribFormat)
-XMACRO(NAMEDBUFFERSTORAGE,       NamedBufferStorage)
-XMACRO(NAMEDBUFFERSUBDATA,       NamedBufferSubData)
 
-// -- storage
-// >= 3.0
-XMACRO(BINDBUFFERBASE,  BindBufferBase)
-XMACRO(BINDBUFFERRANGE, BindBufferRange)
+// ----- ----- ----- ----- -----
+//     GPU drawing part
+// ----- ----- ----- ----- -----
 
 // -- display
 // >= 2.0
 XMACRO(VIEWPORT,        Viewport)
 XMACRO(BINDFRAMEBUFFER, BindFramebuffer)
 //
-XMACRO(CLEAR,        Clear)
 XMACRO(DRAWELEMENTSINSTANCED, DrawElementsInstanced)
 XMACRO(DRAWARRAYSINSTANCED,   DrawArraysInstanced)
-XMACRO(FINISH,       Finish)
-XMACRO(FLUSH,        Flush)
+XMACRO(CLEAR,  Clear)
+XMACRO(FLUSH,  Flush)
+XMACRO(FINISH, Finish)
 
 #undef XMACRO

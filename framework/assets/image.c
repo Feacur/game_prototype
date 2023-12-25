@@ -34,7 +34,7 @@ struct Image image_init(struct Buffer const * buffer) {
 		.data = image_bytes,
 		.format = {
 			.flags = TEXTURE_FLAG_COLOR,
-			.type = gfx_type_get_vector_type(DATA_TYPE_R8_UNORM, (uint32_t)channels),
+			.type = gfx_type_get_vector_type(GFX_TYPE_R8_UNORM, (uint32_t)channels),
 		},
 	};
 }

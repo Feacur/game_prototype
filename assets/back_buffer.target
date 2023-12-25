@@ -2,11 +2,13 @@
 	"size": [320, 180],
 	"buffers": [
 		{
-			"type": "color_rgba8_unorm",
+			"flags": ["color"],
+			"type": "rgba8_unorm",
 			"read": true,
 		},
 		{
-			"type": "depth_r32_f",
+			"flags": ["depth"],
+			"type": "r32_f",
 		},
 	],
 }

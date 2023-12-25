@@ -47,9 +47,9 @@ struct uvec2 entity_get_content_size(
 			struct CArray_Mut const field = gfx_uniforms_id_get(&material->uniforms, e_quad->sh_uniform, 0);
 
 			if (field.data == NULL) { return (struct uvec2){0, 0}; }
-			struct Handle const gh_texture = *(struct Handle *)field.data;
+			struct GPU_Unit const * unit = field.data;
 
-			struct GPU_Texture const * texture = gpu_texture_get(gh_texture);
+			struct GPU_Texture const * texture = gpu_texture_get(unit->gh_texture);
 			struct uvec2 const texture_size = (texture != NULL) ? texture->size : (struct uvec2){0};
 
 			return (struct uvec2){

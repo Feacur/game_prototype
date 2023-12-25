@@ -80,9 +80,9 @@ static struct Handle json_load_texture(struct JSON const * json) {
 
 	if (cstring_equals(type, S_("target"))) {
 		struct Asset_Target const * asset = asset_ptr;
-		enum Texture_Flag const texture_flags = json_read_texture_flags(json_get(json, S_("buffer_type")));
+		enum Texture_Flag const flags = json_read_texture_flags(json_get(json, S_("flags")));
 		uint32_t const index = (uint32_t)json_get_number(json, S_("index"));
-		return gpu_target_get_texture(asset->gh_target, texture_flags, index);
+		return gpu_target_get_texture(asset->gh_target, flags, index);
 	}
 
 	if (cstring_equals(type, S_("font"))) {
@@ -95,15 +95,23 @@ static struct Handle json_load_texture(struct JSON const * json) {
 	return (struct Handle){0};
 }
 
-static void json_load_many_texture(struct JSON const * json, uint32_t length, struct Handle * result) {
+static struct Gfx_Unit json_load_unit(struct JSON const * json) {
+	struct JSON const * sampler = json_get(json, S_("sampler"));
+	return (struct Gfx_Unit){
+		.gh_texture = json_load_texture(json),
+		.sampler = json_read_sampler(sampler),
+	};
+}
+
+static void json_load_many_units(struct JSON const * json, uint32_t length, struct Gfx_Unit * result) {
 	if (json->type == JSON_ARRAY) {
 		uint32_t const count = min_u32(length, json_count(json));
 		for (uint32_t i = 0; i < count; i++) {
-			result[i] = json_load_texture(json_at(json, i));
+			result[i] = json_load_unit(json_at(json, i));
 		}
 	}
 	else {
-		*result = json_load_texture(json);
+		*result = json_load_unit(json);
 	}
 }
 
@@ -140,21 +148,21 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 			default: ERR("unknown data type");
 				goto fail_field;
 
-			case DATA_TYPE_UNIT_U:
-			case DATA_TYPE_UNIT_S:
-			case DATA_TYPE_UNIT_F: {
-				json_load_many_texture(uniform_json, uniform_count, buffer);
+			case GFX_TYPE_UNIT_U:
+			case GFX_TYPE_UNIT_S:
+			case GFX_TYPE_UNIT_F: {
+				json_load_many_units(uniform_json, uniform_count, buffer);
 			} break;
 
-			case DATA_TYPE_R32_U: {
+			case GFX_TYPE_R32_U: {
 				json_read_many_u32(uniform_json, uniform_count, buffer);
 			} break;
 
-			case DATA_TYPE_R32_S: {
+			case GFX_TYPE_R32_S: {
 				json_read_many_s32(uniform_json, uniform_count,  buffer);
 			} break;
 
-			case DATA_TYPE_R32_F: {
+			case GFX_TYPE_R32_F: {
 				json_read_many_flt(uniform_json, uniform_count, buffer);
 			} break;
 		}

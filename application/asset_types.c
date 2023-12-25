@@ -114,7 +114,6 @@ static JSON_PROCESSOR(asset_image_meta_fill) {
 	struct Image * context = data;
 	if (json->type == JSON_OBJECT) {
 		context->settings = json_read_texture_settings(json);
-		context->sampler = json_read_sampler_settings(json);
 
 		context->settings.sublevels = min_u32(
 			context->settings.sublevels,

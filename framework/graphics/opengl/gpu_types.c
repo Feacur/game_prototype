@@ -10,51 +10,51 @@
 
 enum Gfx_Type translate_program_data_type(GLint value) {
 	switch (value) {
-		case GL_UNSIGNED_INT_SAMPLER_2D: return DATA_TYPE_UNIT_U;
-		case GL_INT_SAMPLER_2D:          return DATA_TYPE_UNIT_S;
-		case GL_SAMPLER_2D:              return DATA_TYPE_UNIT_F;
+		case GL_UNSIGNED_INT_SAMPLER_2D: return GFX_TYPE_UNIT_U;
+		case GL_INT_SAMPLER_2D:          return GFX_TYPE_UNIT_S;
+		case GL_SAMPLER_2D:              return GFX_TYPE_UNIT_F;
 
 		// u8, s8
-		case GL_UNSIGNED_BYTE: return DATA_TYPE_R8_U;
-		case GL_BYTE:          return DATA_TYPE_R8_S;
+		case GL_UNSIGNED_BYTE: return GFX_TYPE_R8_U;
+		case GL_BYTE:          return GFX_TYPE_R8_S;
 
 		// u16, s16
-		case GL_UNSIGNED_SHORT: return DATA_TYPE_R16_U;
-		case GL_SHORT:          return DATA_TYPE_R16_S;
+		case GL_UNSIGNED_SHORT: return GFX_TYPE_R16_U;
+		case GL_SHORT:          return GFX_TYPE_R16_S;
 
 		// u32
-		case GL_UNSIGNED_INT:      return DATA_TYPE_R32_U;
-		case GL_UNSIGNED_INT_VEC2: return DATA_TYPE_RG32_U;
-		case GL_UNSIGNED_INT_VEC3: return DATA_TYPE_RGB32_U;
-		case GL_UNSIGNED_INT_VEC4: return DATA_TYPE_RGBA32_U;
+		case GL_UNSIGNED_INT:      return GFX_TYPE_R32_U;
+		case GL_UNSIGNED_INT_VEC2: return GFX_TYPE_RG32_U;
+		case GL_UNSIGNED_INT_VEC3: return GFX_TYPE_RGB32_U;
+		case GL_UNSIGNED_INT_VEC4: return GFX_TYPE_RGBA32_U;
 
 		// s32
-		case GL_INT:      return DATA_TYPE_R32_S;
-		case GL_INT_VEC2: return DATA_TYPE_RG32_S;
-		case GL_INT_VEC3: return DATA_TYPE_RGB32_S;
-		case GL_INT_VEC4: return DATA_TYPE_RGBA32_S;
+		case GL_INT:      return GFX_TYPE_R32_S;
+		case GL_INT_VEC2: return GFX_TYPE_RG32_S;
+		case GL_INT_VEC3: return GFX_TYPE_RGB32_S;
+		case GL_INT_VEC4: return GFX_TYPE_RGBA32_S;
 
 		// floats
-		case GL_HALF_FLOAT: return DATA_TYPE_R16_F;
+		case GL_HALF_FLOAT: return GFX_TYPE_R16_F;
 
-		case GL_FLOAT:      return DATA_TYPE_R32_F;
-		case GL_FLOAT_VEC2: return DATA_TYPE_RG32_F;
-		case GL_FLOAT_VEC3: return DATA_TYPE_RGB32_F;
-		case GL_FLOAT_VEC4: return DATA_TYPE_RGBA32_F;
+		case GL_FLOAT:      return GFX_TYPE_R32_F;
+		case GL_FLOAT_VEC2: return GFX_TYPE_RG32_F;
+		case GL_FLOAT_VEC3: return GFX_TYPE_RGB32_F;
+		case GL_FLOAT_VEC4: return GFX_TYPE_RGBA32_F;
 
-		case GL_DOUBLE:      return DATA_TYPE_R64_F;
-		case GL_DOUBLE_VEC2: return DATA_TYPE_RG64_F;
-		case GL_DOUBLE_VEC3: return DATA_TYPE_RGB64_F;
-		case GL_DOUBLE_VEC4: return DATA_TYPE_RGBA64_F;
+		case GL_DOUBLE:      return GFX_TYPE_R64_F;
+		case GL_DOUBLE_VEC2: return GFX_TYPE_RG64_F;
+		case GL_DOUBLE_VEC3: return GFX_TYPE_RGB64_F;
+		case GL_DOUBLE_VEC4: return GFX_TYPE_RGBA64_F;
 
 		// matrices
-		case GL_FLOAT_MAT2: return DATA_TYPE_MAT2;
-		case GL_FLOAT_MAT3: return DATA_TYPE_MAT3;
-		case GL_FLOAT_MAT4: return DATA_TYPE_MAT4;
+		case GL_FLOAT_MAT2: return GFX_TYPE_MAT2;
+		case GL_FLOAT_MAT3: return GFX_TYPE_MAT3;
+		case GL_FLOAT_MAT4: return GFX_TYPE_MAT4;
 	}
 	ERR("unknown GL type");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
-	return DATA_TYPE_NONE;
+	return GFX_TYPE_NONE;
 }
 
 GLenum gpu_comparison_op(enum Comparison_Op value) {
@@ -229,29 +229,29 @@ struct CString gpu_types_block(void) {
 //     GPU sampler part
 // ----- ----- ----- ----- -----
 
-GLint gpu_min_filter_mode(enum Filter_Mode mipmap, enum Filter_Mode texture) {
+GLint gpu_min_filter_mode(enum Mipmap_Mode mipmap, enum Filter_Mode filter) {
 	switch (mipmap) {
 		// choose 1 or lerp 4 texels
-		case FILTER_MODE_NONE: switch (texture) {
+		case MIPMAP_MODE_NONE: switch (filter) {
 			case FILTER_MODE_NONE:  return GL_NEAREST;
-			case FILTER_MODE_POINT: return GL_NEAREST;
+			case FILTER_MODE_NEAR:  return GL_NEAREST;
 			case FILTER_MODE_LERP:  return GL_LINEAR;
 		} break;
 
 		// choose 1 mip-map
 		// choose 1 or lerp 4 texels
-		case FILTER_MODE_POINT: switch (texture) {
+		case MIPMAP_MODE_NEAR: switch (filter) {
 			case FILTER_MODE_NONE:  return GL_NEAREST_MIPMAP_NEAREST;
-			case FILTER_MODE_POINT: return GL_NEAREST_MIPMAP_NEAREST;
+			case FILTER_MODE_NEAR:  return GL_NEAREST_MIPMAP_NEAREST;
 			case FILTER_MODE_LERP:  return GL_LINEAR_MIPMAP_NEAREST;
 		} break;
 
 		// choose 2 mip-maps
 		// choose 1 or lerp 4 texels
 		// lerp 2 values
-		case FILTER_MODE_LERP: switch (texture) {
+		case MIPMAP_MODE_LERP: switch (filter) {
 			case FILTER_MODE_NONE:  return GL_NEAREST_MIPMAP_LINEAR;
-			case FILTER_MODE_POINT: return GL_NEAREST_MIPMAP_LINEAR;
+			case FILTER_MODE_NEAR:  return GL_NEAREST_MIPMAP_LINEAR;
 			case FILTER_MODE_LERP:  return GL_LINEAR_MIPMAP_LINEAR;
 		} break;
 	}
@@ -264,7 +264,7 @@ GLint gpu_mag_filter_mode(enum Filter_Mode value) {
 	// choose 1 or lerp 4 texels
 	switch (value) {
 		case FILTER_MODE_NONE:  return GL_NEAREST;
-		case FILTER_MODE_POINT: return GL_NEAREST;
+		case FILTER_MODE_NEAR:  return GL_NEAREST;
 		case FILTER_MODE_LERP:  return GL_LINEAR;
 	}
 	ERR("unknown mag filter mode");
@@ -272,14 +272,15 @@ GLint gpu_mag_filter_mode(enum Filter_Mode value) {
 	return GL_NONE;
 }
 
-GLint gpu_wrap_mode(enum Wrap_Flag value) {
+GLint gpu_addr_mode(enum Addr_Flag value) {
 	switch (value) {
-		case WRAP_FLAG_NONE:          return GL_CLAMP_TO_BORDER;
-		case WRAP_FLAG_MIRROR:        return GL_CLAMP_TO_BORDER; // nothing mirrored is nothing
-		case WRAP_FLAG_EDGE:          return GL_CLAMP_TO_EDGE;
-		case WRAP_FLAG_REPEAT:        return GL_REPEAT;
-		case WRAP_FLAG_MIRROR_EDGE:   return GL_MIRROR_CLAMP_TO_EDGE;
-		case WRAP_FLAG_MIRROR_REPEAT: return GL_MIRRORED_REPEAT;
+		default: break;
+
+		case ADDR_FLAG_NONE:          return GL_CLAMP_TO_BORDER;
+		case ADDR_FLAG_EDGE:          return GL_CLAMP_TO_EDGE;
+		case ADDR_FLAG_REPEAT:        return GL_REPEAT;
+		case ADDR_FLAG_MIRROR_EDGE:   return GL_MIRROR_CLAMP_TO_EDGE;
+		case ADDR_FLAG_MIRROR_REPEAT: return GL_MIRRORED_REPEAT;
 	}
 	ERR("unknown wrap mode");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
@@ -297,78 +298,78 @@ GLenum gpu_sized_internal_format(struct Texture_Format format) {
 		case TEXTURE_FLAG_COLOR: switch (format.type) {
 			default: break;
 
-			case DATA_TYPE_R8_U:    return GL_R8UI;
-			case DATA_TYPE_RG8_U:   return GL_RG8UI;
-			case DATA_TYPE_RGB8_U:  return GL_RGB8UI;
-			case DATA_TYPE_RGBA8_U: return GL_RGBA8UI;
+			case GFX_TYPE_R8_U:    return GL_R8UI;
+			case GFX_TYPE_RG8_U:   return GL_RG8UI;
+			case GFX_TYPE_RGB8_U:  return GL_RGB8UI;
+			case GFX_TYPE_RGBA8_U: return GL_RGBA8UI;
 
-			case DATA_TYPE_R8_UNORM:    return GL_R8;
-			case DATA_TYPE_RG8_UNORM:   return GL_RG8;
-			case DATA_TYPE_RGB8_UNORM:  return GL_RGB8;
-			case DATA_TYPE_RGBA8_UNORM: return GL_RGBA8;
+			case GFX_TYPE_R8_UNORM:    return GL_R8;
+			case GFX_TYPE_RG8_UNORM:   return GL_RG8;
+			case GFX_TYPE_RGB8_UNORM:  return GL_RGB8;
+			case GFX_TYPE_RGBA8_UNORM: return GL_RGBA8;
 
-			case DATA_TYPE_R8_S:    return GL_R8I;
-			case DATA_TYPE_RG8_S:   return GL_RG8I;
-			case DATA_TYPE_RGB8_S:  return GL_RGB8I;
-			case DATA_TYPE_RGBA8_S: return GL_RGBA8I;
+			case GFX_TYPE_R8_S:    return GL_R8I;
+			case GFX_TYPE_RG8_S:   return GL_RG8I;
+			case GFX_TYPE_RGB8_S:  return GL_RGB8I;
+			case GFX_TYPE_RGBA8_S: return GL_RGBA8I;
 
-			case DATA_TYPE_R8_SNORM:    return GL_R8_SNORM;
-			case DATA_TYPE_RG8_SNORM:   return GL_RG8_SNORM;
-			case DATA_TYPE_RGB8_SNORM:  return GL_RGB8_SNORM;
-			case DATA_TYPE_RGBA8_SNORM: return GL_RGBA8_SNORM;
+			case GFX_TYPE_R8_SNORM:    return GL_R8_SNORM;
+			case GFX_TYPE_RG8_SNORM:   return GL_RG8_SNORM;
+			case GFX_TYPE_RGB8_SNORM:  return GL_RGB8_SNORM;
+			case GFX_TYPE_RGBA8_SNORM: return GL_RGBA8_SNORM;
 
-			case DATA_TYPE_R16_U:    return GL_R16UI;
-			case DATA_TYPE_RG16_U:   return GL_RG16UI;
-			case DATA_TYPE_RGB16_U:  return GL_RGB16UI;
-			case DATA_TYPE_RGBA16_U: return GL_RGBA16UI;
+			case GFX_TYPE_R16_U:    return GL_R16UI;
+			case GFX_TYPE_RG16_U:   return GL_RG16UI;
+			case GFX_TYPE_RGB16_U:  return GL_RGB16UI;
+			case GFX_TYPE_RGBA16_U: return GL_RGBA16UI;
 
-			case DATA_TYPE_R16_UNORM:    return GL_R16;
-			case DATA_TYPE_RG16_UNORM:   return GL_RG16;
-			case DATA_TYPE_RGB16_UNORM:  return GL_RGB16;
-			case DATA_TYPE_RGBA16_UNORM: return GL_RGBA16;
+			case GFX_TYPE_R16_UNORM:    return GL_R16;
+			case GFX_TYPE_RG16_UNORM:   return GL_RG16;
+			case GFX_TYPE_RGB16_UNORM:  return GL_RGB16;
+			case GFX_TYPE_RGBA16_UNORM: return GL_RGBA16;
 
-			case DATA_TYPE_R16_S:    return GL_R16I;
-			case DATA_TYPE_RG16_S:   return GL_RG16I;
-			case DATA_TYPE_RGB16_S:  return GL_RGB16I;
-			case DATA_TYPE_RGBA16_S: return GL_RGBA16I;
+			case GFX_TYPE_R16_S:    return GL_R16I;
+			case GFX_TYPE_RG16_S:   return GL_RG16I;
+			case GFX_TYPE_RGB16_S:  return GL_RGB16I;
+			case GFX_TYPE_RGBA16_S: return GL_RGBA16I;
 
-			case DATA_TYPE_R16_SNORM:    return GL_R16_SNORM;
-			case DATA_TYPE_RG16_SNORM:   return GL_RG16_SNORM;
-			case DATA_TYPE_RGB16_SNORM:  return GL_RGB16_SNORM;
-			case DATA_TYPE_RGBA16_SNORM: return GL_RGBA16_SNORM;
+			case GFX_TYPE_R16_SNORM:    return GL_R16_SNORM;
+			case GFX_TYPE_RG16_SNORM:   return GL_RG16_SNORM;
+			case GFX_TYPE_RGB16_SNORM:  return GL_RGB16_SNORM;
+			case GFX_TYPE_RGBA16_SNORM: return GL_RGBA16_SNORM;
 
-			case DATA_TYPE_R32_U:    return GL_R32UI;
-			case DATA_TYPE_RG32_U:   return GL_RG32UI;
-			case DATA_TYPE_RGB32_U:  return GL_RGB32UI;
-			case DATA_TYPE_RGBA32_U: return GL_RGBA32UI;
+			case GFX_TYPE_R32_U:    return GL_R32UI;
+			case GFX_TYPE_RG32_U:   return GL_RG32UI;
+			case GFX_TYPE_RGB32_U:  return GL_RGB32UI;
+			case GFX_TYPE_RGBA32_U: return GL_RGBA32UI;
 
-			case DATA_TYPE_R32_S:    return GL_R32I;
-			case DATA_TYPE_RG32_S:   return GL_RG32I;
-			case DATA_TYPE_RGB32_S:  return GL_RGB32I;
-			case DATA_TYPE_RGBA32_S: return GL_RGBA32I;
+			case GFX_TYPE_R32_S:    return GL_R32I;
+			case GFX_TYPE_RG32_S:   return GL_RG32I;
+			case GFX_TYPE_RGB32_S:  return GL_RGB32I;
+			case GFX_TYPE_RGBA32_S: return GL_RGBA32I;
 
-			case DATA_TYPE_R32_F:    return GL_R32F;
-			case DATA_TYPE_RG32_F:   return GL_RG32F;
-			case DATA_TYPE_RGB32_F:  return GL_RGB32F;
-			case DATA_TYPE_RGBA32_F: return GL_RGBA32F;
+			case GFX_TYPE_R32_F:    return GL_R32F;
+			case GFX_TYPE_RG32_F:   return GL_RG32F;
+			case GFX_TYPE_RGB32_F:  return GL_RGB32F;
+			case GFX_TYPE_RGBA32_F: return GL_RGBA32F;
 		} break;
 
 		case TEXTURE_FLAG_DEPTH: switch (format.type) {
 			default: break;
-			case DATA_TYPE_R16_U: return GL_DEPTH_COMPONENT16;
-			case DATA_TYPE_R32_U: return GL_DEPTH_COMPONENT24;
-			case DATA_TYPE_R32_F: return GL_DEPTH_COMPONENT32F;
+			case GFX_TYPE_R16_U: return GL_DEPTH_COMPONENT16;
+			case GFX_TYPE_R32_U: return GL_DEPTH_COMPONENT24;
+			case GFX_TYPE_R32_F: return GL_DEPTH_COMPONENT32F;
 		} break;
 
 		case TEXTURE_FLAG_STENCIL: switch (format.type) {
 			default: break;
-			case DATA_TYPE_R8_U: return GL_STENCIL_INDEX8;
+			case GFX_TYPE_R8_U: return GL_STENCIL_INDEX8;
 		} break;
 
 		case TEXTURE_FLAG_DSTENCIL: switch (format.type) {
 			default: break;
-			case DATA_TYPE_R32_U: return GL_DEPTH24_STENCIL8;
-			case DATA_TYPE_R32_F: return GL_DEPTH32F_STENCIL8;
+			case GFX_TYPE_R32_U: return GL_DEPTH24_STENCIL8;
+			case GFX_TYPE_R32_F: return GL_DEPTH32F_STENCIL8;
 		} break;
 	}
 	ERR("unknown sized internal format");
@@ -405,39 +406,39 @@ GLenum gpu_pixel_data_type(struct Texture_Format format) {
 		case TEXTURE_FLAG_COLOR: switch (gfx_type_get_element_type(format.type)) {
 			default: break;
 
-			case DATA_TYPE_R8_U:     return GL_UNSIGNED_BYTE;
-			case DATA_TYPE_R8_UNORM: return GL_UNSIGNED_BYTE;
+			case GFX_TYPE_R8_U:     return GL_UNSIGNED_BYTE;
+			case GFX_TYPE_R8_UNORM: return GL_UNSIGNED_BYTE;
 
-			case DATA_TYPE_R8_S:     return GL_BYTE;
-			case DATA_TYPE_R8_SNORM: return GL_BYTE;
+			case GFX_TYPE_R8_S:     return GL_BYTE;
+			case GFX_TYPE_R8_SNORM: return GL_BYTE;
 
-			case DATA_TYPE_R16_U:     return GL_UNSIGNED_SHORT;
-			case DATA_TYPE_R16_UNORM: return GL_UNSIGNED_SHORT;
+			case GFX_TYPE_R16_U:     return GL_UNSIGNED_SHORT;
+			case GFX_TYPE_R16_UNORM: return GL_UNSIGNED_SHORT;
 
-			case DATA_TYPE_R16_S:     return GL_SHORT;
-			case DATA_TYPE_R16_SNORM: return GL_SHORT;
+			case GFX_TYPE_R16_S:     return GL_SHORT;
+			case GFX_TYPE_R16_SNORM: return GL_SHORT;
 
-			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
-			case DATA_TYPE_R32_S: return GL_INT;
-			case DATA_TYPE_R32_F: return GL_FLOAT;
+			case GFX_TYPE_R32_U: return GL_UNSIGNED_INT;
+			case GFX_TYPE_R32_S: return GL_INT;
+			case GFX_TYPE_R32_F: return GL_FLOAT;
 		} break;
 
 		case TEXTURE_FLAG_DEPTH: switch (format.type) {
 			default: break;
-			case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
-			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
-			case DATA_TYPE_R32_F: return GL_FLOAT;
+			case GFX_TYPE_R16_U: return GL_UNSIGNED_SHORT;
+			case GFX_TYPE_R32_U: return GL_UNSIGNED_INT;
+			case GFX_TYPE_R32_F: return GL_FLOAT;
 		} break;
 
 		case TEXTURE_FLAG_STENCIL: switch (format.type) {
 			default: break;
-			case DATA_TYPE_R8_U: return GL_UNSIGNED_BYTE;
+			case GFX_TYPE_R8_U: return GL_UNSIGNED_BYTE;
 		} break;
 
 		case TEXTURE_FLAG_DSTENCIL: switch (format.type) {
 			default: break;
-			case DATA_TYPE_R32_U: return GL_UNSIGNED_INT_24_8;
-			case DATA_TYPE_R32_F: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
+			case GFX_TYPE_R32_U: return GL_UNSIGNED_INT_24_8;
+			case GFX_TYPE_R32_F: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
 		} break;
 	}
 	ERR("unknown pixel data type");
@@ -470,8 +471,8 @@ GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index) {
 //     GPU target part
 // ----- ----- ----- ----- -----
 
-GLenum gpu_attachment_point(enum Texture_Flag texture_type, uint32_t index, uint32_t limit) {
-	switch (texture_type) {
+GLenum gpu_attachment_point(enum Texture_Flag flags, uint32_t index, uint32_t limit) {
+	switch (flags) {
 		case TEXTURE_FLAG_NONE: break;
 
 		case TEXTURE_FLAG_COLOR: if (index < limit) {
@@ -512,15 +513,15 @@ GLenum gpu_vertex_value_type(enum Gfx_Type value) {
 	switch (value) {
 		default: break;
 
-		case DATA_TYPE_R8_U:  return GL_UNSIGNED_BYTE;
-		case DATA_TYPE_R8_S:  return GL_BYTE;
-		case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
-		case DATA_TYPE_R16_S: return GL_SHORT;
-		case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
-		case DATA_TYPE_R32_S: return GL_INT;
-		case DATA_TYPE_R16_F: return GL_HALF_FLOAT;
-		case DATA_TYPE_R32_F: return GL_FLOAT;
-		case DATA_TYPE_R64_F: return GL_DOUBLE;
+		case GFX_TYPE_R8_U:  return GL_UNSIGNED_BYTE;
+		case GFX_TYPE_R8_S:  return GL_BYTE;
+		case GFX_TYPE_R16_U: return GL_UNSIGNED_SHORT;
+		case GFX_TYPE_R16_S: return GL_SHORT;
+		case GFX_TYPE_R32_U: return GL_UNSIGNED_INT;
+		case GFX_TYPE_R32_S: return GL_INT;
+		case GFX_TYPE_R16_F: return GL_HALF_FLOAT;
+		case GFX_TYPE_R32_F: return GL_FLOAT;
+		case GFX_TYPE_R64_F: return GL_DOUBLE;
 	}
 	ERR("unknown vertex value type");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
@@ -531,9 +532,9 @@ GLenum gpu_index_value_type(enum Gfx_Type value) {
 	switch (value) {
 		default: break;
 
-		case DATA_TYPE_R8_U:  return GL_UNSIGNED_BYTE;
-		case DATA_TYPE_R16_U: return GL_UNSIGNED_SHORT;
-		case DATA_TYPE_R32_U: return GL_UNSIGNED_INT;
+		case GFX_TYPE_R8_U:  return GL_UNSIGNED_BYTE;
+		case GFX_TYPE_R16_U: return GL_UNSIGNED_SHORT;
+		case GFX_TYPE_R32_U: return GL_UNSIGNED_INT;
 	}
 	ERR("unknown index value type");
 	REPORT_CALLSTACK(); DEBUG_BREAK();
