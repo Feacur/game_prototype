@@ -99,8 +99,8 @@ static struct Memory_Header * arena_system_pop(void * pointer) {
 	if (header->checksum != arena_system_checksum(header)) { return NULL; }
 	header->checksum = 0;
 
-	for (uint32_t i = 0; i < gs_arena_system.buffered.count; i++) {
-		void * const * it = array_peek(&gs_arena_system.buffered, i);
+	for (uint32_t i = gs_arena_system.buffered.count; i > 0; i--) {
+		void * const * it = array_at(&gs_arena_system.buffered, i - 1);
 		struct Memory_Header const * buffered = *it;
 		if (buffered->checksum != 0) { break; }
 
