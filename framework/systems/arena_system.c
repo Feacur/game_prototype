@@ -116,7 +116,9 @@ static struct Memory_Header * arena_system_pop(void * pointer) {
 
 static ALLOCATOR(arena_fallback) {
 	if (pointer != NULL) {
-		hashmap_del(&gs_arena_system.fallback, &pointer);
+		if (!hashmap_del(&gs_arena_system.fallback, &pointer)) {
+			DEBUG_BREAK();
+		}
 		struct Memory_Header const * header = (struct Memory_Header *)pointer - 1;
 		gs_arena_system.required -= sizeof(*header) + header->size;
 	}
