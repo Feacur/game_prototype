@@ -4,12 +4,7 @@
 	"uniforms": {
 		"p_Texture": {
 			"path": "assets/images/test.png",
-			"sampler": {
-				"mipmap": "lerp",
-				"min_filter": "lerp",
-				"wrap_x": ["repeat"],
-				"wrap_y": ["repeat"],
-			},
+			"sampler": "assets/samplers/mipmap.sampler",
 		},
 		"p_Texture_OS": [0, 0, 1, 1],
 		"p_Tint": [0.2, 0.6, 1, 1],

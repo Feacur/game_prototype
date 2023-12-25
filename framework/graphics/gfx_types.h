@@ -205,11 +205,6 @@ struct Gfx_Sampler {
 	struct vec4 border;
 };
 
-struct Gfx_Unit {
-	struct Handle gh_texture;
-	struct Gfx_Sampler sampler;
-};
-
 // ----- ----- ----- ----- -----
 //     GPU texture part
 // ----- ----- ----- ----- -----
@@ -241,6 +236,15 @@ struct Texture_Format {
 struct Texture_Settings {
 	enum Swizzle_Op swizzle[4];
 	uint32_t sublevels;
+};
+
+// ----- ----- ----- ----- -----
+//     GPU unit part
+// ----- ----- ----- ----- -----
+
+struct Gfx_Unit {
+	struct Handle gh_texture;
+	struct Handle gh_sampler;
 };
 
 // ----- ----- ----- ----- -----

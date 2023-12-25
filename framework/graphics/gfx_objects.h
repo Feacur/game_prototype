@@ -49,16 +49,12 @@ struct GPU_Program const * gpu_program_get(struct Handle handle);
 //     GPU sampler part
 // ----- ----- ----- ----- -----
 
-struct GPU_Sampler {
-	struct Gfx_Sampler settings;
-};
-
 struct Handle gpu_sampler_init(struct Gfx_Sampler const * asset);
 void gpu_sampler_free(struct Handle handle);
 
 void gpu_sampler_update(struct Handle handle, struct Gfx_Sampler const * asset);
 
-struct GPU_Sampler const * gpu_sampler_get(struct Handle handle);
+struct Gfx_Sampler const * gpu_sampler_get(struct Handle handle);
 
 // ----- ----- ----- ----- -----
 //     GPU texture part
@@ -77,6 +73,10 @@ void gpu_texture_free(struct Handle handle);
 void gpu_texture_update(struct Handle handle, struct Image const * asset);
 
 struct GPU_Texture const * gpu_texture_get(struct Handle handle);
+
+// ----- ----- ----- ----- -----
+//     GPU unit part
+// ----- ----- ----- ----- -----
 
 // ----- ----- ----- ----- -----
 //     GPU target part

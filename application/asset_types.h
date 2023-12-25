@@ -19,6 +19,10 @@ struct Asset_Shader {
 	struct Handle gh_program;
 };
 
+struct Asset_Sampler {
+	struct Handle gh_sampler;
+};
+
 struct Asset_Image {
 	struct Handle gh_texture;
 };

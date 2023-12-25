@@ -52,6 +52,10 @@ GLenum gpu_pixel_data_type(struct Texture_Format format);
 GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index);
 
 // ----- ----- ----- ----- -----
+//     GPU unit part
+// ----- ----- ----- ----- -----
+
+// ----- ----- ----- ----- -----
 //     GPU target part
 // ----- ----- ----- ----- -----
 

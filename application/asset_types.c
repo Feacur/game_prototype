@@ -110,6 +110,30 @@ static void asset_shader_drop(struct Handle handle) {
 //     Asset image part
 // ----- ----- ----- ----- -----
 
+static JSON_PROCESSOR(asset_sampler_fill) {
+	struct Asset_Sampler * context = data;
+	if (json->type == JSON_OBJECT) {
+		struct Gfx_Sampler const settings = json_read_sampler(json);
+		context->gh_sampler = gpu_sampler_init(&settings);
+	}
+}
+
+static void asset_sampler_load(struct Handle handle) {
+	struct Asset_Sampler * asset = asset_system_get(handle);
+	struct CString const name = asset_system_get_name(handle);
+	process_json(name, asset, asset_sampler_fill);
+}
+
+static void asset_sampler_drop(struct Handle handle) {
+	struct Asset_Sampler * asset = asset_system_get(handle);
+	gpu_sampler_free(asset->gh_sampler);
+	common_memset(asset, 0, sizeof(*asset));
+}
+
+// ----- ----- ----- ----- -----
+//     Asset image part
+// ----- ----- ----- ----- -----
+
 static JSON_PROCESSOR(asset_image_meta_fill) {
 	struct Image * context = data;
 	if (json->type == JSON_OBJECT) {
@@ -355,6 +379,12 @@ void asset_types_set(void) {
 		.size = sizeof(struct Asset_Shader),
 		.load = asset_shader_load,
 		.drop = asset_shader_drop,
+	});
+
+	asset_system_type_set(S_("sampler"), (struct Asset_Info){
+		.size = sizeof(struct Asset_Sampler),
+		.load = asset_sampler_load,
+		.drop = asset_sampler_drop,
 	});
 
 	asset_system_type_set(S_("image"), (struct Asset_Info){

@@ -468,6 +468,10 @@ GLint gpu_swizzle_op(enum Swizzle_Op value, uint32_t index) {
 }
 
 // ----- ----- ----- ----- -----
+//     GPU unit part
+// ----- ----- ----- ----- -----
+
+// ----- ----- ----- ----- -----
 //     GPU target part
 // ----- ----- ----- ----- -----
 

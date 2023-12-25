@@ -96,10 +96,14 @@ static struct Handle json_load_texture(struct JSON const * json) {
 }
 
 static struct Gfx_Unit json_load_unit(struct JSON const * json) {
-	struct JSON const * sampler = json_get(json, S_("sampler"));
+	struct CString const sampler_path = json_get_string(json, S_("sampler"));
+	struct Handle const ah_sampler = asset_system_load(sampler_path);
+	struct Asset_Sampler const * sampler = asset_system_get(ah_sampler);
 	return (struct Gfx_Unit){
 		.gh_texture = json_load_texture(json),
-		.sampler = json_read_sampler(sampler),
+		.gh_sampler = (sampler != NULL)
+			? sampler->gh_sampler
+			: (struct Handle){0},
 	};
 }
 

@@ -4,7 +4,6 @@
 - [tech] track materials' textures as assets
 - [tech] hot reloading of assets
 - [tech] hot reloading of DLL modules; treat them as assets? needs a set of API function-pointer
-- [tech] expose GPU samplers instead of embedding them within textures
 - [bug] glyph atlas metrics should account for multiple typefaces; not sure how
 - [feature] allow scaling glyph atlas range on top of font size
 - [feature] introduce persistent ranges for glyph atlases, which can be rendered beforehand and kept indefinitely
@@ -16,6 +15,13 @@
 - [tech] builder with file time or hash tracking (like tsoding's `nobuild`)
 
 # Changelog
+
+## 2023.12.25
+- [tech] use `struct Handle` for strings
+- [tech] switch to explicit GPU samplers
+- [tech] bundle platform build settings into a `__platform.h` file, at least as a reference
+- [tech] handle images metadata via `*.meta` files
+- [tech] init Win32 platform window via the window procedure and `GWLP_USERDATA`
 
 ## 2023.12.15
 - [tech] a number of allocators, interchangeable to an extent: platform, generic, debug, arena

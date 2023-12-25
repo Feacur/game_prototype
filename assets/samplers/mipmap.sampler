@@ -1,0 +1,6 @@
+{
+	"mipmap": "lerp",
+	"min_filter": "lerp",
+	"wrap_x": ["repeat"],
+	"wrap_y": ["repeat"],
+}
