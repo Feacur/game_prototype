@@ -39,7 +39,7 @@ static HASHER(hash_typeface_key) {
 	uint32_t const prime = UINT32_C(16777619);
 	uint32_t hash = UINT32_C(2166136261);
 	hash = (hash * prime) ^ k->codepoint;
-	hash = (hash * prime) ^ convert_bits_r32_u32(k->size);
+	hash = (hash * prime) ^ bits_r32_u32(k->size);
 	return hash;
 }
 
