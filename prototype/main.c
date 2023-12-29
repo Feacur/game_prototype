@@ -15,7 +15,7 @@
 #include "framework/systems/memory_system.h"
 #include "framework/systems/arena_system.h"
 #include "framework/systems/string_system.h"
-#include "framework/systems/action_system.h"
+#include "framework/systems/defer_system.h"
 #include "framework/systems/material_system.h"
 #include "framework/systems/asset_system.h"
 
@@ -515,7 +515,7 @@ static JSON_PROCESSOR(main_fill_config) {
 static void main_system_clear(bool deallocate) {
 	asset_system_clear(deallocate);
 	material_system_clear(deallocate);
-	action_system_clear(deallocate);
+	defer_system_clear(deallocate);
 	string_system_clear(deallocate);
 	arena_system_clear(deallocate);
 }

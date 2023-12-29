@@ -2,11 +2,11 @@
 
 
 //
-#include "action_system.h"
+#include "defer_system.h"
 
-static struct Action_System {
+static struct Defer_System {
 	struct Array actions; // `struct Action`
-} gs_action_system = {
+} gs_defer_system = {
 	.actions = {
 		.value_size = sizeof(struct Action),
 	},
@@ -18,24 +18,24 @@ static PREDICATE(action_is_empty) {
 	    || action->invoke == NULL;
 }
 
-void action_system_clear(bool deallocate) {
+void defer_system_clear(bool deallocate) {
 	// dependencies
-	FOR_ARRAY(&gs_action_system.actions, it) {
+	FOR_ARRAY(&gs_defer_system.actions, it) {
 		if (action_is_empty(it.value)) { continue; }
 		struct Action * action = it.value;
 		action->invoke(action->handle);
 	}
 	// personal
-	array_clear(&gs_action_system.actions, deallocate);
+	array_clear(&gs_defer_system.actions, deallocate);
 }
 
-void action_system_push(struct Action action) {
-	array_push_many(&gs_action_system.actions, 1, &action);
+void defer_system_push(struct Action action) {
+	array_push_many(&gs_defer_system.actions, 1, &action);
 }
 
-void action_system_invoke(void) {
-	array_remove_if(&gs_action_system.actions, action_is_empty);
-	FOR_ARRAY(&gs_action_system.actions, it) {
+void defer_system_invoke(void) {
+	array_remove_if(&gs_defer_system.actions, action_is_empty);
+	FOR_ARRAY(&gs_defer_system.actions, it) {
 		struct Action * action = it.value;
 		if (action->frames > 0) { action->frames--; continue; }
 		action->invoke(action->handle);

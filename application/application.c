@@ -8,7 +8,7 @@
 #include "framework/platform/window.h"
 #include "framework/platform/gpu_context.h"
 #include "framework/systems/arena_system.h"
-#include "framework/systems/action_system.h"
+#include "framework/systems/defer_system.h"
 
 #include "framework/graphics/misc.h"
 
@@ -130,7 +130,7 @@ void application_update(void) {
 	}
 
 	// finalize defered actions and the whole frame
-	action_system_invoke();
+	defer_system_invoke();
 	gpu_context_end_frame(gs_app.gpu_context);
 	platform_window_let_surface(gs_app.window, surface);
 
