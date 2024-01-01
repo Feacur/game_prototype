@@ -4,7 +4,7 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/array.h"
 #include "framework/containers/array.h"
-#include "framework/systems/memory_system.h"
+#include "framework/systems/memory.h"
 
 #include "framework/graphics/gfx_types.h"
 

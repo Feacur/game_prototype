@@ -33,12 +33,11 @@ framework/containers/buffer.c
 framework/containers/hashmap.c
 framework/containers/sparseset.c
 
-framework/systems/memory_system.c
-framework/systems/arena_system.c
-framework/systems/string_system.c
-framework/systems/defer_system.c
-framework/systems/material_system.c
-framework/systems/asset_system.c
+framework/systems/memory.c
+framework/systems/defer.c
+framework/systems/strings.c
+framework/systems/materials.c
+framework/systems/assets.c
 
 framework/graphics/gfx_types.c
 framework/graphics/gfx_objects.c

@@ -2,7 +2,7 @@
 
 #include "framework/platform/file.h"
 #include "framework/containers/buffer.h"
-#include "framework/systems/memory_system.h"
+#include "framework/systems/memory.h"
 
 #include "framework/__warnings_push.h"
 	#define STBI_NO_STDIO

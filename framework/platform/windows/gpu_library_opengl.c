@@ -1,7 +1,6 @@
 #include "framework/formatter.h"
 #include "framework/platform/system.h"
-#include "framework/systems/arena_system.h"
-#include "framework/systems/memory_system.h"
+#include "framework/systems/memory.h"
 
 #include "framework/graphics/opengl/functions.h"
 #include "framework/graphics/opengl/internal/functions_to_gpu_library.h"

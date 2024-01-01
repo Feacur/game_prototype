@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_JSON)
-#define FRAMEWORK_ASSETS_JSON
+#if !defined(FRAMEWORK_system_assets_JSON)
+#define FRAMEWORK_system_assets_JSON
 
 #include "framework/containers/array.h"
 #include "framework/containers/hashmap.h"
@@ -21,7 +21,7 @@ struct JSON {
 	union {
 		struct Hashmap table;    // key `struct Handle` : `struct JSON`
 		struct Array array;      // `struct JSON`
-		struct Handle sh_string; // get `struct CString` via `string_system_get`
+		struct Handle sh_string; // get `struct CString` via `system_strings_get`
 		double number;
 		bool boolean;
 	} as;

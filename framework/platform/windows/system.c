@@ -3,7 +3,7 @@
 #include "framework/formatter.h"
 
 #include "framework/containers/buffer.h"
-#include "framework/systems/memory_system.h"
+#include "framework/systems/memory.h"
 
 #include "framework/internal/input_to_system.h"
 #include "internal/debug_to_system.h"

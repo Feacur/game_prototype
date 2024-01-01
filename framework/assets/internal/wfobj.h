@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_WFOBJ)
-#define FRAMEWORK_ASSETS_WFOBJ
+#if !defined(FRAMEWORK_system_assets_WFOBJ)
+#define FRAMEWORK_system_assets_WFOBJ
 
 #include "framework/containers/array.h"
 #include "framework/containers/array.h"

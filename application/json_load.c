@@ -5,11 +5,10 @@
 #include "framework/containers/buffer.h"
 #include "framework/containers/hashmap.h"
 
-#include "framework/systems/memory_system.h"
-#include "framework/systems/arena_system.h"
-#include "framework/systems/string_system.h"
-#include "framework/systems/asset_system.h"
-#include "framework/systems/material_system.h"
+#include "framework/systems/memory.h"
+#include "framework/systems/strings.h"
+#include "framework/systems/assets.h"
+#include "framework/systems/materials.h"
 
 #include "framework/graphics/gfx_objects.h"
 #include "framework/graphics/gfx_material.h"
@@ -23,18 +22,18 @@
 
 static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * material);
 struct Handle json_load_gfx_material(struct JSON const * json) {
-	struct Handle ms_handle = material_system_aquire();
+	struct Handle ms_handle = system_materials_aquire();
 	if (json->type != JSON_OBJECT) { goto fail; }
 
-	struct Gfx_Material * material = material_system_get(ms_handle);
+	struct Gfx_Material * material = system_materials_get(ms_handle);
 	material->blend_mode = json_read_blend_mode(json_get(json, S_("blend")));
 	material->depth_mode = json_read_depth_mode(json_get(json, S_("depth")));
 
 	struct CString const shader_path = json_get_string(json, S_("shader"));
 	if (shader_path.data == NULL) { goto fail; }
 
-	struct Handle const ah_shader = asset_system_load(shader_path);
-	struct Asset_Shader const * shader = asset_system_get(ah_shader);
+	struct Handle const ah_shader = system_assets_load(shader_path);
+	struct Asset_Shader const * shader = system_assets_get(ah_shader);
 	if (shader == NULL) { goto fail; }
 
 	gfx_material_set_shader(material, shader->gh_program);
@@ -54,7 +53,7 @@ struct Handle json_load_font_range(struct JSON const * json, uint32_t * from, ui
 	*from = (uint32_t)json_get_number(json, S_("from"));
 	*to   = (uint32_t)json_get_number(json, S_("to"));
 
-	return asset_system_load(path);
+	return system_assets_load(path);
 }
 
 //
@@ -65,13 +64,13 @@ static struct Handle json_load_texture(struct JSON const * json) {
 	struct CString const path = json_get_string(json, S_("path"));
 	if (path.data == NULL) { goto fail; }
 
-	struct Handle const ah_texture = asset_system_load(path);
+	struct Handle const ah_texture = system_assets_load(path);
 	if (handle_is_null(ah_texture)) { goto fail; }
 
-	void const * asset_ptr = asset_system_get(ah_texture);
+	void const * asset_ptr = system_assets_get(ah_texture);
 	if (asset_ptr == NULL) { goto fail; }
 
-	struct CString const type = asset_system_get_type(ah_texture);
+	struct CString const type = system_assets_get_type(ah_texture);
 
 	if (cstring_equals(type, S_("image"))) {
 		struct Asset_Image const * asset = asset_ptr;
@@ -97,8 +96,8 @@ static struct Handle json_load_texture(struct JSON const * json) {
 
 static struct Gfx_Unit json_load_unit(struct JSON const * json) {
 	struct CString const sampler_path = json_get_string(json, S_("sampler"));
-	struct Handle const ah_sampler = asset_system_load(sampler_path);
-	struct Asset_Sampler const * sampler = asset_system_get(ah_sampler);
+	struct Handle const ah_sampler = system_assets_load(sampler_path);
+	struct Asset_Sampler const * sampler = system_assets_get(ah_sampler);
 	return (struct Gfx_Unit){
 		.gh_texture = json_load_texture(json),
 		.gh_sampler = (sampler != NULL)
@@ -125,7 +124,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 
 	FOR_GFX_UNIFORMS(&material->uniforms, it) {
 		struct GPU_Uniform const * gpu_uniform = hashmap_get(&program->uniforms, &it.id);
-		struct CString const uniform_name = string_system_get(it.id);
+		struct CString const uniform_name = system_strings_get(it.id);
 
 		uint32_t const uniform_bytes = gfx_type_get_size(gpu_uniform->type) * gpu_uniform->array_size;
 		if (it.size != uniform_bytes) {
@@ -147,7 +146,7 @@ static void json_fill_uniforms(struct JSON const * json, struct Gfx_Material * m
 			); goto fail_field;
 		}
 
-		void * buffer = arena_reallocate(NULL, it.size);
+		void * buffer = realloc_arena(NULL, it.size);
 		switch (gfx_type_get_element_type(gpu_uniform->type)) {
 			default: ERR("unknown data type");
 				goto fail_field;

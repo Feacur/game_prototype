@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_GLYPH_PARAMS)
-#define FRAMEWORK_ASSETS_GLYPH_PARAMS
+#if !defined(FRAMEWORK_system_assets_GLYPH_PARAMS)
+#define FRAMEWORK_system_assets_GLYPH_PARAMS
 
 #include "framework/maths_types.h"
 

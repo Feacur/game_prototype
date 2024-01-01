@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_GPU_CONTEXT)
-#define FRAMEWORK_GPU_CONTEXT
+#if !defined(FRAMEWORK_PLATFORM_GPU_CONTEXT)
+#define FRAMEWORK_PLATFORM_GPU_CONTEXT
 
 #include "framework/common.h"
 

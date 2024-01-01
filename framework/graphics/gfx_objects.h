@@ -39,7 +39,7 @@ struct GPU_Program {
 };
 
 struct Handle gpu_program_init(struct Buffer const * asset);
-void gpu_program_free(struct Handle handle);
+HANDLE_ACTION(gpu_program_free);
 
 void gpu_program_update(struct Handle handle, struct Buffer const * asset);
 
@@ -50,7 +50,7 @@ struct GPU_Program const * gpu_program_get(struct Handle handle);
 // ----- ----- ----- ----- -----
 
 struct Handle gpu_sampler_init(struct Gfx_Sampler const * asset);
-void gpu_sampler_free(struct Handle handle);
+HANDLE_ACTION(gpu_sampler_free);
 
 void gpu_sampler_update(struct Handle handle, struct Gfx_Sampler const * asset);
 
@@ -68,7 +68,7 @@ struct GPU_Texture {
 };
 
 struct Handle gpu_texture_init(struct Image const * asset);
-void gpu_texture_free(struct Handle handle);
+HANDLE_ACTION(gpu_texture_free);
 
 void gpu_texture_update(struct Handle handle, struct Image const * asset);
 
@@ -94,7 +94,7 @@ struct GPU_Target {
 };
 
 struct Handle gpu_target_init(struct GPU_Target_Asset const * asset);
-void gpu_target_free(struct Handle handle);
+HANDLE_ACTION(gpu_target_free);
 
 void gpu_target_update(struct Handle handle, struct GPU_Target_Asset const * asset);
 
@@ -110,7 +110,7 @@ struct GPU_Buffer {
 };
 
 struct Handle gpu_buffer_init(struct Buffer const * asset);
-void gpu_buffer_free(struct Handle handle);
+HANDLE_ACTION(gpu_buffer_free);
 
 void gpu_buffer_update(struct Handle handle, struct Buffer const * asset);
 
@@ -133,7 +133,7 @@ struct GPU_Mesh {
 };
 
 struct Handle gpu_mesh_init(struct Mesh const * asset);
-void gpu_mesh_free(struct Handle handle);
+HANDLE_ACTION(gpu_mesh_free);
 
 void gpu_mesh_update(struct Handle handle, struct Mesh const * asset);
 

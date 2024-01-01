@@ -1,6 +1,6 @@
 #include "framework/maths.h"
 #include "framework/formatter.h"
-#include "framework/systems/asset_system.h"
+#include "framework/systems/assets.h"
 #include "framework/graphics/misc.h"
 
 
@@ -12,7 +12,7 @@ struct Camera camera_init(void) {
 }
 
 void camera_free(struct Camera * camera) {
-	asset_system_drop(camera->ah_target);
+	system_assets_drop(camera->ah_target);
 }
 
 struct mat4 camera_get_projection(

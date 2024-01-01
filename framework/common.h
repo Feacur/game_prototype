@@ -46,6 +46,21 @@
 struct JSON;
 
 // ----- ----- ----- ----- -----
+//     handle
+// ----- ----- ----- ----- -----
+
+struct Handle {
+	uint32_t id  : 24; // ((1 << 24) - 1) == 0x00ffffff
+	uint32_t gen :  8; // ((1 <<  8) - 1) == 0x000000ff
+};
+STATIC_ASSERT(sizeof(struct Handle) == sizeof(uint32_t), common);
+
+inline static bool handle_is_null(struct Handle h) { return h.id == 0; }
+inline static bool handle_equals(struct Handle h1, struct Handle h2) {
+	return h1.gen == h2.gen && h1.id == h2.id;
+}
+
+// ----- ----- ----- ----- -----
 //     delegates
 // ----- ----- ----- ----- -----
 
@@ -64,20 +79,8 @@ typedef HASHER(Hasher);
 #define JSON_PROCESSOR(func) void (func)(struct JSON const * json, void * data)
 typedef JSON_PROCESSOR(JSON_Processor);
 
-// ----- ----- ----- ----- -----
-//     handle
-// ----- ----- ----- ----- -----
-
-struct Handle {
-	uint32_t id  : 24; // ((1 << 24) - 1) == 0x00ffffff
-	uint32_t gen :  8; // ((1 <<  8) - 1) == 0x000000ff
-};
-STATIC_ASSERT(sizeof(struct Handle) == sizeof(uint32_t), common);
-
-inline static bool handle_is_null(struct Handle h) { return h.id == 0; }
-inline static bool handle_equals(struct Handle h1, struct Handle h2) {
-	return h1.gen == h2.gen && h1.id == h2.id;
-}
+#define HANDLE_ACTION(func) void (func)(struct Handle handle)
+typedef HANDLE_ACTION(Handle_Action);
 
 // ----- ----- ----- ----- -----
 //     array

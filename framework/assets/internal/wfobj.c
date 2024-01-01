@@ -1,7 +1,6 @@
 #include "framework/formatter.h"
 #include "framework/parsing.h"
-#include "framework/systems/arena_system.h"
-#include "framework/systems/memory_system.h"
+#include "framework/systems/memory.h"
 
 #include "wfobj_lexer.h"
 
@@ -214,7 +213,7 @@ struct WFObj wfobj_parse(struct CString text) {
 
 	//
 	struct Array scratch_u32 = array_init(sizeof(uint32_t));
-	scratch_u32.allocate = arena_reallocate;
+	scratch_u32.allocate = realloc_arena;
 	array_resize(&scratch_u32, 3 * 4);
 
 	lexer = wfobj_lexer_init(text);

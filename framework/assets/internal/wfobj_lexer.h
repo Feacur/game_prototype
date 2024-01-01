@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_WFOBJ_LEXER)
-#define FRAMEWORK_ASSETS_WFOBJ_LEXER
+#if !defined(FRAMEWORK_system_assets_WFOBJ_LEXER)
+#define FRAMEWORK_system_assets_WFOBJ_LEXER
 
 #include "framework/common.h"
 

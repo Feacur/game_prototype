@@ -38,12 +38,11 @@
 #include "framework/containers/hashmap.c"
 #include "framework/containers/sparseset.c"
 
-#include "framework/systems/memory_system.c"
-#include "framework/systems/arena_system.c"
-#include "framework/systems/string_system.c"
-#include "framework/systems/defer_system.c"
-#include "framework/systems/material_system.c"
-#include "framework/systems/asset_system.c"
+#include "framework/systems/memory.c"
+#include "framework/systems/defer.c"
+#include "framework/systems/strings.c"
+#include "framework/systems/materials.c"
+#include "framework/systems/assets.c"
 
 #include "framework/graphics/gfx_types.c"
 #include "framework/graphics/gfx_objects.c"

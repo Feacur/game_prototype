@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_JSON_LEXER)
-#define FRAMEWORK_ASSETS_JSON_LEXER
+#if !defined(FRAMEWORK_system_assets_JSON_LEXER)
+#define FRAMEWORK_system_assets_JSON_LEXER
 
 #include "framework/common.h"
 

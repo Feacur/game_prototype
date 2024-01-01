@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_FONT)
-#define FRAMEWORK_ASSETS_FONT
+#if !defined(FRAMEWORK_system_assets_FONT)
+#define FRAMEWORK_system_assets_FONT
 
 #include "framework/assets/glyph_params.h"
 

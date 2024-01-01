@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_MESH)
-#define FRAMEWORK_ASSETS_MESH
+#if !defined(FRAMEWORK_system_assets_MESH)
+#define FRAMEWORK_system_assets_MESH
 
 #include "framework/containers/array.h"
 #include "framework/containers/buffer.h"

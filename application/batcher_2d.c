@@ -7,11 +7,10 @@
 #include "framework/containers/array.h"
 #include "framework/containers/buffer.h"
 
-#include "framework/systems/arena_system.h"
-#include "framework/systems/memory_system.h"
-#include "framework/systems/string_system.h"
-#include "framework/systems/asset_system.h"
-#include "framework/systems/material_system.h"
+#include "framework/systems/memory.h"
+#include "framework/systems/strings.h"
+#include "framework/systems/assets.h"
+#include "framework/systems/materials.h"
 
 #include "framework/graphics/gfx_material.h"
 #include "framework/graphics/gfx_objects.h"
@@ -157,7 +156,7 @@ void batcher_2d_set_shader(
 }
 
 void batcher_2d_uniforms_push(struct Batcher_2D * batcher, struct CString name, struct CArray value) {
-	struct Handle const id = string_system_add(name);
+	struct Handle const id = system_strings_add(name);
 	struct CArray_Mut const field = gfx_uniforms_id_get(&batcher->uniforms, id, batcher->batch.uniform_offset);
 	if (field.data != NULL) {
 		if (carray_equals(carray_const(field), value)) { return; }
@@ -196,7 +195,7 @@ void batcher_2d_add_text(
 	struct rect rect, struct vec2 alignment, bool wrap,
 	struct Handle gh_font, struct CString value, float size
 ) {
-	struct Asset_Font const * font_asset = asset_system_get(gh_font);
+	struct Asset_Font const * font_asset = system_assets_get(gh_font);
 	if (font_asset == NULL) { return; }
 	if (font_asset->font == NULL) { return; }
 
@@ -270,10 +269,10 @@ void batcher_2d_add_text(
 			word->position = offset;
 
 			// process word
-			for (uint32_t strings_i = word->codepoints_offset; strings_i < word->codepoints_end; strings_i++) {
+			for (uint32_t deferi = word->codepoints_offset; deferi < word->codepoints_end; deferi++) {
 				char const char0 = '\0';
-				uint32_t const * codepoint = array_at(&batcher->codepoints, strings_i);
-				uint32_t const * previous = (strings_i > word->codepoints_offset) ? array_at(&batcher->codepoints, strings_i - 1) : &char0;
+				uint32_t const * codepoint = array_at(&batcher->codepoints, deferi);
+				uint32_t const * previous = (deferi > word->codepoints_offset) ? array_at(&batcher->codepoints, deferi - 1) : &char0;
 
 				struct Glyph const * glyph = font_get_glyph(font_asset->font, *codepoint, word->size);
 				float const full_size_x = (glyph != NULL) ? glyph->params.full_size_x : glyph_error->params.full_size_x;
@@ -357,10 +356,10 @@ void batcher_2d_add_text(
 		if (offset.y > rect.max.y) { word->codepoints_end = word->codepoints_offset; continue; } // void entry
 		if (offset.y < rect.min.y) { batcher->words.count = word_i;                  break; }    // drop rest
 
-		for (uint32_t strings_i = word->codepoints_offset; strings_i < word->codepoints_end; strings_i++) {
+		for (uint32_t deferi = word->codepoints_offset; deferi < word->codepoints_end; deferi++) {
 			char const char0 = '\0';
-			uint32_t const * codepoint = array_at(&batcher->codepoints, strings_i);
-			uint32_t const * previous = (strings_i > word->codepoints_offset) ? array_at(&batcher->codepoints, strings_i - 1) : &char0;
+			uint32_t const * codepoint = array_at(&batcher->codepoints, deferi);
+			uint32_t const * previous = (deferi > word->codepoints_offset) ? array_at(&batcher->codepoints, deferi - 1) : &char0;
 
 			struct Glyph const * glyph = font_get_glyph(font_asset->font, *codepoint, word->size);
 			struct Glyph_Params const params = (glyph != NULL) ? glyph->params : glyph_error->params;
@@ -369,8 +368,8 @@ void batcher_2d_add_text(
 			float const offset_x = offset.x + kerning;
 			offset.x += params.full_size_x + kerning;
 
-			if (offset_x < rect.min.x) { word->codepoints_offset = strings_i + 1; continue; } // skip glyph
-			if (offset.x > rect.max.x) { word->codepoints_end    = strings_i;     break; }    // drop rest
+			if (offset_x < rect.min.x) { word->codepoints_offset = deferi + 1; continue; } // skip glyph
+			if (offset.x > rect.max.x) { word->codepoints_end    = deferi;     break; }    // drop rest
 
 			if (!codepoint_is_invisible(*codepoint)) {
 				batcher_2d_add_quad(
@@ -399,7 +398,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 	// render and upload the atlases
 	{
 		struct Hashmap fonts = hashmap_init(&hash32, sizeof(struct Handle), 0);
-		fonts.allocate = arena_reallocate;
+		fonts.allocate = realloc_arena;
 
 		FOR_ARRAY(&batcher->words, it) {
 			struct Batcher_2D_Word const * word = it.value;
@@ -408,13 +407,13 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 
 		FOR_HASHMAP(&fonts, it) {
 			struct Handle const * ah_font = it.key;
-			struct Asset_Font const * font = asset_system_get(*ah_font);
+			struct Asset_Font const * font = system_assets_get(*ah_font);
 			font_render(font->font);
 		}
 
 		FOR_HASHMAP(&fonts, it) {
 			struct Handle const * ah_font = it.key;
-			struct Asset_Font const * font = asset_system_get(*ah_font);
+			struct Asset_Font const * font = system_assets_get(*ah_font);
 			gpu_texture_update(font->gh_texture, font_get_asset(font->font));
 		}
 
@@ -426,7 +425,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 		struct Batcher_2D_Word const * word = it.value;
 		size_t b_offset = word->buffer_offset;
 
-		struct Asset_Font const * font_asset = asset_system_get(word->ah_font);
+		struct Asset_Font const * font_asset = system_assets_get(word->ah_font);
 		struct Glyph const * glyph_error = font_get_glyph(font_asset->font, '\0', word->size);
 		struct rect const glyph_error_uv = glyph_error->uv;
 
@@ -462,7 +461,7 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 
 		struct Handle gh_program = {0};
 		if (!handle_is_null(batch->mh_mat)) {
-			struct Gfx_Material const * material = material_system_get(batch->mh_mat);
+			struct Gfx_Material const * material = system_materials_get(batch->mh_mat);
 			gh_program = material->gh_program;
 			array_push_many(gpu_commands, 1, &(struct GPU_Command){
 				.type = GPU_COMMAND_TYPE_MATERIAL,

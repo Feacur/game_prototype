@@ -1,7 +1,7 @@
 #include "framework/parsing.h"
 #include "framework/formatter.h"
 #include "framework/containers/buffer.h"
-#include "framework/systems/string_system.h"
+#include "framework/systems/strings.h"
 
 
 // @note: JSON is based off of rfc8259
@@ -40,7 +40,7 @@ struct JSON const * json_get(struct JSON const * value, struct CString key) {
 	if (value->type != JSON_OBJECT) {
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return &c_json_error;
 	}
-	struct Handle const sh_key = string_system_find(key);
+	struct Handle const sh_key = system_strings_find(key);
 	if (handle_is_null(sh_key)) { return &c_json_null; }
 	void const * result = hashmap_get(&value->as.table, &sh_key);
 	return (result != NULL) ? result : &c_json_null;
@@ -62,7 +62,7 @@ uint32_t json_count(struct JSON const * value) {
 // -- JSON as data
 struct CString json_as_string(struct JSON const * value) {
 	if (value->type != JSON_STRING) { return (struct CString){0}; }
-	return string_system_get(value->as.sh_string);
+	return system_strings_get(value->as.sh_string);
 }
 
 double json_as_number(struct JSON const * value) {
@@ -222,7 +222,7 @@ static void json_parser_do_object(struct JSON_Parser * parser, struct JSON * val
 		// add
 		bool const is_new = hashmap_set(table, &entry_key.as.sh_string, &entry_value);
 		if (!is_new) {
-			struct CString const key = string_system_get(entry_key.as.sh_string);
+			struct CString const key = system_strings_get(entry_key.as.sh_string);
 			WRN("key duplicate: \"%.*s\"", key.length, key.data);
 			REPORT_CALLSTACK(); DEBUG_BREAK();
 		}
@@ -273,7 +273,7 @@ static void json_parser_do_string(struct JSON_Parser * parser, struct JSON * val
 		.length = parser->current.text.length - 2,
 		.data = parser->current.text.data + 1,
 	};
-	struct Handle const sh_string = string_system_add(cstring);
+	struct Handle const sh_string = system_strings_add(cstring);
 	*value = (struct JSON){.type = JSON_STRING, .as.sh_string = sh_string};
 	json_parser_consume(parser);
 }

@@ -1,8 +1,7 @@
 #include "framework/formatter.h"
 #include "framework/platform/system.h"
 #include "framework/platform/gpu_context.h"
-#include "framework/systems/memory_system.h"
-#include "framework/systems/arena_system.h"
+#include "framework/systems/memory.h"
 
 #include "framework/internal/input_to_window.h"
 
@@ -575,7 +574,7 @@ static void handle_message_input_raw(struct Window * window, WPARAM wParam, LPAR
 
 	RAWINPUTHEADER header; UINT header_size = sizeof(header);
 	if (GetRawInputData((HRAWINPUT)lParam, RID_HEADER, &header, &header_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
-		RAWINPUT * input = arena_reallocate(NULL, header.dwSize); UINT input_size = header.dwSize;
+		RAWINPUT * input = realloc_arena(NULL, header.dwSize); UINT input_size = header.dwSize;
 		if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, input, &input_size, sizeof(RAWINPUTHEADER)) != (UINT)-1) {
 			switch (input->header.dwType) {
 				case RIM_TYPEKEYBOARD: handle_input_keyboard_raw(window, &input->data.keyboard); break;

@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_TYPEFACE)
-#define FRAMEWORK_ASSETS_TYPEFACE
+#if !defined(FRAMEWORK_system_assets_TYPEFACE)
+#define FRAMEWORK_system_assets_TYPEFACE
 
 #include "framework/maths_types.h"
 

@@ -1,8 +1,8 @@
 #include "framework/formatter.h"
 #include "framework/maths.h"
 
-#include "framework/systems/asset_system.h"
-#include "framework/systems/material_system.h"
+#include "framework/systems/assets.h"
+#include "framework/systems/materials.h"
 
 #include "framework/graphics/gfx_material.h"
 #include "framework/graphics/gfx_objects.h"
@@ -20,15 +20,15 @@ void entity_free(struct Entity * entity) {
 		default: break;
 
 		case ENTITY_TYPE_MESH:
-			asset_system_drop(entity->as.mesh.ah_mesh);
+			system_assets_drop(entity->as.mesh.ah_mesh);
 			break;
 
 		case ENTITY_TYPE_TEXT_2D:
-			asset_system_drop(entity->as.text.ah_font);
-			asset_system_drop(entity->as.text.ah_text);
+			system_assets_drop(entity->as.text.ah_font);
+			system_assets_drop(entity->as.text.ah_text);
 			break;
 	}
-	asset_system_drop(entity->ah_material);
+	system_assets_drop(entity->ah_material);
 }
 
 struct uvec2 entity_get_content_size(
@@ -43,7 +43,7 @@ struct uvec2 entity_get_content_size(
 		case ENTITY_TYPE_QUAD_2D: {
 			struct Entity_Quad const * e_quad = &entity->as.quad;
 
-			struct Gfx_Material const * material = material_system_get(material_handle);
+			struct Gfx_Material const * material = system_materials_get(material_handle);
 			struct CArray_Mut const field = gfx_uniforms_id_get(&material->uniforms, e_quad->sh_uniform, 0);
 
 			if (field.data == NULL) { return (struct uvec2){0, 0}; }

@@ -6,15 +6,15 @@
 #include "framework/containers/array.h"
 #include "framework/containers/hashmap.h"
 #include "framework/containers/sparseset.h"
-#include "framework/systems/memory_system.h"
+#include "framework/systems/memory.h"
 
 #include "framework/graphics/gfx_material.h"
 #include "framework/assets/mesh.h"
 #include "framework/assets/image.h"
 
-#include "framework/systems/arena_system.h"
-#include "framework/systems/string_system.h"
-#include "framework/systems/material_system.h"
+#include "framework/systems/memory.h"
+#include "framework/systems/strings.h"
+#include "framework/systems/materials.h"
 
 #include "functions.h"
 #include "gpu_types.h"
@@ -143,7 +143,7 @@ static uint32_t get_buffer_target_alignment(enum Buffer_Target target) {
 //     GPU program part
 // ----- ----- ----- ----- -----
 
-static void gpu_select_program(struct Handle handle) {
+static HANDLE_ACTION(gpu_select_program) {
 	if (handle_equals(gs_graphics_state.active.gh_program, handle)) { return; }
 	gs_graphics_state.active.gh_program = handle;
 	struct GPU_Program_Internal const * gpu_program = sparseset_get(&gs_graphics_state.programs, handle);
@@ -196,7 +196,7 @@ static void gpu_program_introspect_uniforms(struct GPU_Program_Internal * gpu_pr
 		// 	, name_length, name_data
 		// );
 
-		struct Handle const id = string_system_add((struct CString){
+		struct Handle const id = system_strings_add((struct CString){
 			.length = (uint32_t)name_length,
 			.data = name_data,
 		});
@@ -483,7 +483,7 @@ struct Handle gpu_program_init(struct Buffer const * asset) {
 	return sparseset_aquire(&gs_graphics_state.programs, &gpu_program);
 }
 
-void gpu_program_free(struct Handle handle) {
+HANDLE_ACTION(gpu_program_free) {
 	if (handle_equals(gs_graphics_state.active.gh_program, handle)) {
 		gs_graphics_state.active.gh_program = (struct Handle){0};
 	}
@@ -544,7 +544,7 @@ struct Handle gpu_sampler_init(struct Gfx_Sampler const * asset) {
 	return sparseset_aquire(&gs_graphics_state.samplers, &gpu_sampler);
 }
 
-void gpu_sampler_free(struct Handle handle) {
+HANDLE_ACTION(gpu_sampler_free) {
 	struct GPU_Sampler_Internal * gpu_sampler = sparseset_get(&gs_graphics_state.samplers, handle);
 	if (gpu_sampler != NULL) {
 		gpu_sampler_on_discard(gpu_sampler);
@@ -674,7 +674,7 @@ struct Handle gpu_texture_init(struct Image const * asset) {
 	return sparseset_aquire(&gs_graphics_state.textures, &gpu_texture);
 }
 
-void gpu_texture_free(struct Handle handle) {
+HANDLE_ACTION(gpu_texture_free) {
 	struct GPU_Texture_Internal * gpu_texture = sparseset_get(&gs_graphics_state.textures, handle);
 	if (gpu_texture != NULL) {
 		gpu_texture_on_discard(gpu_texture);
@@ -762,7 +762,7 @@ static uint32_t gpu_unit_init(struct Gfx_Unit asset) {
 //     GPU target part
 // ----- ----- ----- ----- -----
 
-static void gpu_select_target(struct Handle handle) {
+static HANDLE_ACTION(gpu_select_target) {
 	if (handle_equals(gs_graphics_state.active.gh_target, handle)) { return; }
 	gs_graphics_state.active.gh_target = handle;
 	struct GPU_Target_Internal const * gpu_target = sparseset_get(&gs_graphics_state.targets, handle);
@@ -883,7 +883,7 @@ struct Handle gpu_target_init(struct GPU_Target_Asset const * asset) {
 	return sparseset_aquire(&gs_graphics_state.targets, &gpu_target);
 }
 
-void gpu_target_free(struct Handle handle) {
+HANDLE_ACTION(gpu_target_free) {
 	if (handle_equals(gs_graphics_state.active.gh_target, handle)) {
 		gs_graphics_state.active.gh_target = (struct Handle){0};
 	}
@@ -959,7 +959,7 @@ struct Handle gpu_buffer_init(struct Buffer const * asset) {
 	return sparseset_aquire(&gs_graphics_state.buffers, &gpu_buffer);
 }
 
-void gpu_buffer_free(struct Handle handle) {
+HANDLE_ACTION(gpu_buffer_free) {
 	struct GPU_Buffer_Internal * gpu_buffer = sparseset_get(&gs_graphics_state.buffers, handle);
 	if (gpu_buffer != NULL) {
 		gpu_buffer_on_discard(gpu_buffer);
@@ -985,7 +985,7 @@ struct GPU_Buffer const * gpu_buffer_get(struct Handle handle) {
 //     GPU mesh part
 // ----- ----- ----- ----- -----
 
-static void gpu_select_mesh(struct Handle handle) {
+static HANDLE_ACTION(gpu_select_mesh) {
 	if (handle_equals(gs_graphics_state.active.gh_mesh, handle)) { return; }
 	gs_graphics_state.active.gh_mesh = handle;
 	struct GPU_Mesh_Internal const * gpu_mesh = sparseset_get(&gs_graphics_state.meshes, handle);
@@ -1106,7 +1106,7 @@ struct Handle gpu_mesh_init(struct Mesh const * asset) {
 	return sparseset_aquire(&gs_graphics_state.meshes, &gpu_mesh);
 }
 
-void gpu_mesh_free(struct Handle handle) {
+HANDLE_ACTION(gpu_mesh_free) {
 	if (handle_equals(gs_graphics_state.active.gh_mesh, handle)) {
 		gs_graphics_state.active.gh_mesh = (struct Handle){0};
 	}
@@ -1325,7 +1325,7 @@ inline static void gpu_execute_clear(struct GPU_Command_Clear const * command) {
 }
 
 inline static void gpu_execute_material(struct GPU_Command_Material const * command) {
-	struct Gfx_Material const * material = material_system_get(command->mh_mat);
+	struct Gfx_Material const * material = system_materials_get(command->mh_mat);
 	struct Handle const gh_program = (material != NULL)
 		? material->gh_program
 		: (struct Handle){0};

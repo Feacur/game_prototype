@@ -5,7 +5,7 @@
 
 #include "framework/platform/file.h"
 #include "framework/containers/buffer.h"
-#include "framework/systems/arena_system.h"
+#include "framework/systems/memory.h"
 
 #include "framework/graphics/gfx_objects.h"
 #include "framework/assets/json.h"
@@ -16,7 +16,7 @@
 
 void process_json(struct CString path, void * data, JSON_Processor * process) {
 	struct Buffer file_buffer = platform_file_read_entire(path);
-	if (file_buffer.capacity == 0) { process(&c_json_error, data); return; }
+	if (file_buffer.capacity == 0) { process(&c_json_null, data); return; }
 
 	struct JSON json = json_parse((struct CString){
 		.length = (uint32_t)file_buffer.size,
@@ -313,7 +313,7 @@ struct Handle json_read_target(struct JSON const * json) {
 	if (buffers_json->type != JSON_ARRAY) { goto fail; }
 
 	struct Array formats = array_init(sizeof(struct Target_Format));
-	formats.allocate = arena_reallocate;
+	formats.allocate = realloc_arena;
 
 	uint32_t const buffers_count = json_count(buffers_json);
 	for (uint32_t i = 0; i < buffers_count; i++) {

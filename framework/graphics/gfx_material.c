@@ -1,7 +1,7 @@
 #include "framework/containers/hashmap.h"
 #include "framework/graphics/gfx_types.h"
 #include "framework/graphics/gfx_objects.h"
-#include "framework/systems/string_system.h"
+#include "framework/systems/strings.h"
 
 
 //
@@ -30,12 +30,12 @@ void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {
 }
 
 struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, struct CString name, uint32_t offset) {
-	struct Handle const sh_name = string_system_find(name);
+	struct Handle const sh_name = system_strings_find(name);
 	return gfx_uniforms_id_get(uniforms, sh_name, offset);
 }
 
 void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, struct CString name, struct CArray value) {
-	struct Handle const sh_name = string_system_add(name);
+	struct Handle const sh_name = system_strings_add(name);
 	gfx_uniforms_id_push(uniforms, sh_name, value);
 }
 
@@ -101,7 +101,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_pr
 	uint32_t payload_bytes = 0, properties_count = 0;
 	FOR_HASHMAP(&program->uniforms, it) {
 		struct Handle const * sh_name = it.key;
-		struct CString const name = string_system_get(*sh_name);
+		struct CString const name = system_strings_get(*sh_name);
 		if (!cstring_starts(name, property_prefix)) { continue; }
 
 		struct GPU_Uniform const * uniform = it.value;
@@ -115,7 +115,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_pr
 
 	FOR_HASHMAP(&program->uniforms, it) {
 		struct Handle const * sh_name = it.key;
-		struct CString const name = string_system_get(*sh_name);
+		struct CString const name = system_strings_get(*sh_name);
 		if (!cstring_starts(name, property_prefix)) { continue; }
 
 		struct GPU_Uniform const * uniform = it.value;

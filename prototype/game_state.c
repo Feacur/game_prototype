@@ -1,8 +1,8 @@
 #include "framework/formatter.h"
 #include "framework/json_read.h"
 
-#include "framework/systems/string_system.h"
-#include "framework/systems/asset_system.h"
+#include "framework/systems/strings.h"
+#include "framework/systems/assets.h"
 
 #include "framework/assets/json.h"
 
@@ -54,7 +54,7 @@ static void json_read_camera(struct JSON const * json, struct Camera * camera) {
 
 	struct CString const target = json_get_string(json, S_("target"));
 	if (target.data != NULL) {
-		camera->ah_target = asset_system_load(target);
+		camera->ah_target = system_assets_load(target);
 	}
 	else { camera->ah_target = (struct Handle){0}; }
 }
@@ -136,7 +136,7 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 	entity->camera = (uint32_t)json_get_number(json, S_("camera_uid")) - 1;
 
 	struct CString const material_path = json_get_string(json, S_("material"));
-	entity->ah_material = asset_system_load(material_path);
+	entity->ah_material = system_assets_load(material_path);
 
 	entity->type = json_read_entity_type(json_get(json, S_("type")));
 	switch (entity->type) {
@@ -145,14 +145,14 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 		case ENTITY_TYPE_MESH: {
 			struct CString const model_path = json_get_string(json, S_("model"));
 			entity->as.mesh = (struct Entity_Mesh){
-				.ah_mesh = asset_system_load(model_path),
+				.ah_mesh = system_assets_load(model_path),
 			};
 		} break;
 
 		case ENTITY_TYPE_QUAD_2D: {
 			struct CString const uniform = json_get_string(json, S_("uniform"));
 			entity->as.quad = (struct Entity_Quad){
-				.sh_uniform = string_system_add(uniform),
+				.sh_uniform = system_strings_add(uniform),
 				.mode = json_read_entity_quad_mode(json_get(json, S_("mode"))),
 			};
 			json_read_many_flt(json_get(json, S_("view")), 4, &entity->as.quad.view.min.x);
@@ -162,8 +162,8 @@ static void json_read_entity(struct JSON const * json, struct Entity * entity) {
 			struct CString const font_path = json_get_string(json, S_("font"));
 			struct CString const text_path = json_get_string(json, S_("text"));
 			entity->as.text = (struct Entity_Text){
-				.ah_font = asset_system_load(font_path),
-				.ah_text = asset_system_load(text_path),
+				.ah_font = system_assets_load(font_path),
+				.ah_text = system_assets_load(text_path),
 				.size = (float)json_get_number(json, S_("size")),
 			};
 			json_read_many_flt(json_get(json, S_("alignment")), 2, &entity->as.text.alignment.x);

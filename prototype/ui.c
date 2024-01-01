@@ -1,8 +1,8 @@
 #include "framework/maths.h"
 
-#include "framework/systems/defer_system.h"
-#include "framework/systems/asset_system.h"
-#include "framework/systems/material_system.h"
+#include "framework/systems/defer.h"
+#include "framework/systems/assets.h"
+#include "framework/systems/materials.h"
 
 #include "framework/graphics/gfx_material.h"
 #include "framework/graphics/command.h"
@@ -34,14 +34,14 @@ void ui_init(void) {
 }
 
 void ui_free(void) {
-	asset_system_drop(gs_ui.ah_shader);
-	asset_system_drop(gs_ui.ah_image);
-	asset_system_drop(gs_ui.ah_font);
+	system_assets_drop(gs_ui.ah_shader);
+	system_assets_drop(gs_ui.ah_image);
+	system_assets_drop(gs_ui.ah_font);
 	common_memset(&gs_ui, 0, sizeof(gs_ui));
 }
 
 static void ui_internal_push_shader(void) {
-	struct Asset_Shader const * shader = asset_system_get(gs_ui.ah_shader);
+	struct Asset_Shader const * shader = system_assets_get(gs_ui.ah_shader);
 	batcher_2d_set_shader(
 		gs_renderer.batcher_2d,
 		shader->gh_program,
@@ -50,13 +50,13 @@ static void ui_internal_push_shader(void) {
 }
 
 static void ui_internal_push_image(void) {
-	struct Asset_Image const * asset = asset_system_get(gs_ui.ah_image);
+	struct Asset_Image const * asset = system_assets_get(gs_ui.ah_image);
 	struct Handle const gpu_handle = asset ? asset->gh_texture : (struct Handle){0};
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Image"), A_(gpu_handle));
 }
 
 static void ui_internal_push_font(void) {
-	struct Asset_Font const * asset = asset_system_get(gs_ui.ah_font);
+	struct Asset_Font const * asset = system_assets_get(gs_ui.ah_font);
 	struct Handle const gpu_handle = asset ? asset->gh_texture : (struct Handle){0};
 	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Font"), A_(gpu_handle));
 }
@@ -106,30 +106,30 @@ void ui_set_color(struct vec4 color) {
 }
 
 void ui_set_shader(struct CString name) {
-	defer_system_push((struct Action){
+	system_defer_push((struct Action){
 		.frames = 1,
 		.handle = gs_ui.ah_shader,
-		.invoke = asset_system_drop,
+		.invoke = system_assets_drop,
 	});
-	gs_ui.ah_shader = asset_system_load(name);
+	gs_ui.ah_shader = system_assets_load(name);
 }
 
 void ui_set_image(struct CString name) {
-	defer_system_push((struct Action){
+	system_defer_push((struct Action){
 		.frames = 1,
 		.handle = gs_ui.ah_image,
-		.invoke = asset_system_drop,
+		.invoke = system_assets_drop,
 	});
-	gs_ui.ah_image = asset_system_load(name);
+	gs_ui.ah_image = system_assets_load(name);
 }
 
 void ui_set_font(struct CString name) {
-	defer_system_push((struct Action){
+	system_defer_push((struct Action){
 		.frames = 1,
 		.handle = gs_ui.ah_font,
-		.invoke = asset_system_drop,
+		.invoke = system_assets_drop,
 	});
-	gs_ui.ah_font = asset_system_load(name);
+	gs_ui.ah_font = system_assets_load(name);
 }
 
 void ui_quad(struct rect uv) {

@@ -1,5 +1,5 @@
-#if !defined(FRAMEWORK_ASSETS_IMAGE)
-#define FRAMEWORK_ASSETS_IMAGE
+#if !defined(FRAMEWORK_system_assets_IMAGE)
+#define FRAMEWORK_system_assets_IMAGE
 
 // @note: image layout
 // +----------+

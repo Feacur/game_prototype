@@ -3,7 +3,7 @@
 
 #include "application/app_components.h"
 
-struct Asset_System;
+struct assets;
 
 void ui_init(void);
 void ui_free(void);

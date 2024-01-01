@@ -7,8 +7,8 @@
 #include "framework/platform/system.h"
 #include "framework/platform/window.h"
 #include "framework/platform/gpu_context.h"
-#include "framework/systems/arena_system.h"
-#include "framework/systems/defer_system.h"
+#include "framework/systems/memory.h"
+#include "framework/systems/defer.h"
 
 #include "framework/graphics/misc.h"
 
@@ -96,7 +96,7 @@ void application_update(void) {
 	uint64_t const ticks_before = platform_timer_get_ticks();
 
 	// reset per-frame data / poll platform events
-	arena_system_clear(false);
+	system_memory_arena_clear(false);
 	platform_system_update();
 
 	// window might be closed by platform
@@ -130,7 +130,7 @@ void application_update(void) {
 	}
 
 	// finalize defered actions and the whole frame
-	defer_system_invoke();
+	system_defer_invoke();
 	gpu_context_end_frame(gs_app.gpu_context);
 	platform_window_let_surface(gs_app.window, surface);
 

@@ -12,12 +12,11 @@
 #include "framework/platform/file.h"
 #include "framework/containers/hashmap.h"
 
-#include "framework/systems/memory_system.h"
-#include "framework/systems/arena_system.h"
-#include "framework/systems/string_system.h"
-#include "framework/systems/defer_system.h"
-#include "framework/systems/material_system.h"
-#include "framework/systems/asset_system.h"
+#include "framework/systems/memory.h"
+#include "framework/systems/strings.h"
+#include "framework/systems/defer.h"
+#include "framework/systems/materials.h"
+#include "framework/systems/assets.h"
 
 #include "framework/graphics/gfx_material.h"
 #include "framework/graphics/gfx_objects.h"
@@ -54,7 +53,7 @@ static void prototype_tick_cameras(void) {
 		struct Camera * camera = it.value;
 		camera->cached_size = screen_size;
 		if (!handle_is_null(camera->ah_target)) {
-			struct Asset_Target const * asset = asset_system_get(camera->ah_target);
+			struct Asset_Target const * asset = system_assets_get(camera->ah_target);
 			struct GPU_Target const * target = (asset != NULL) ? gpu_target_get(asset->gh_target) : NULL;
 			camera->cached_size = (target != NULL) ? target->size : (struct uvec2){0};
 		}
@@ -121,7 +120,7 @@ static void prototype_tick_entities_quad_2d(void) {
 		struct Camera const * camera = array_at(&gs_game.cameras, entity->camera);
 		struct uvec2 const viewport_size = camera->cached_size;
 
-		struct Asset_Material const * material = asset_system_get(entity->ah_material);
+		struct Asset_Material const * material = system_assets_get(entity->ah_material);
 		struct uvec2 const content_size = entity_get_content_size(entity, material->mh_mat, viewport_size);
 		if (content_size.x == 0 || content_size.y == 0) { break; }
 
@@ -162,7 +161,7 @@ static void prototype_init(void) {
 		return;
 	}
 
-	struct CString const scene_path = string_system_get(gs_main_settings.sh_scene);
+	struct CString const scene_path = system_strings_get(gs_main_settings.sh_scene);
 	process_json(scene_path, &gs_game, game_fill_scene);
 	gpu_execute(1, &(struct GPU_Command){
 		.type = GPU_COMMAND_TYPE_CULL,
@@ -280,7 +279,7 @@ static void prototype_draw_objects(void) {
 			});
 		}
 
-		struct Asset_Target const * asset = asset_system_get(camera->ah_target);
+		struct Asset_Target const * asset = system_assets_get(camera->ah_target);
 		struct Handle const gh_target = (asset != NULL) ? asset->gh_target : (struct Handle){0};
 		if (!handle_equals(gh_program_prev, gh_target)) {
 			gh_program_prev = gh_target;
@@ -310,8 +309,8 @@ static void prototype_draw_objects(void) {
 			struct Entity const * entity = it_entity.value;
 			if (entity->camera != it_camera.curr) { continue; }
 
-			struct Asset_Material const * material_asset = asset_system_get(entity->ah_material);
-			struct Gfx_Material const * material = material_system_get(material_asset->mh_mat);
+			struct Asset_Material const * material_asset = system_assets_get(entity->ah_material);
+			struct Gfx_Material const * material = system_materials_get(material_asset->mh_mat);
 
 			struct mat4 const u_Model = mat4_transformation(
 				entity->transform.position,
@@ -338,7 +337,7 @@ static void prototype_draw_objects(void) {
 					batcher_2d_issue_commands(gs_renderer.batcher_2d, &gs_renderer.gpu_commands);
 
 					struct Entity_Mesh const * e_mesh = &entity->as.mesh;
-					struct Asset_Model const * model = asset_system_get(e_mesh->ah_mesh);
+					struct Asset_Model const * model = system_assets_get(e_mesh->ah_mesh);
 
 					uint32_t const override_offset = gs_renderer.uniforms.headers.count;
 					gfx_uniforms_push(&gs_renderer.uniforms, S_("u_Model"), A_(u_Model));
@@ -371,7 +370,7 @@ static void prototype_draw_objects(void) {
 				case ENTITY_TYPE_QUAD_2D: {
 					struct Entity_Quad const * e_quad = &entity->as.quad;
 					enum Batcher_Flag flag = BATCHER_FLAG_NONE;
-					if (handle_equals(e_quad->sh_uniform, string_system_find(S_("p_Font")))) {
+					if (handle_equals(e_quad->sh_uniform, system_strings_find(S_("p_Font")))) {
 						flag |= BATCHER_FLAG_FONT;
 					}
 					batcher_2d_add_quad(
@@ -384,7 +383,7 @@ static void prototype_draw_objects(void) {
 
 				case ENTITY_TYPE_TEXT_2D: {
 					struct Entity_Text const * e_text = &entity->as.text;
-					struct Asset_Bytes const * text_bytes = asset_system_get(e_text->ah_text);
+					struct Asset_Bytes const * text_bytes = system_assets_get(e_text->ah_text);
 					struct CString const value = {
 						.length = text_bytes->length,
 						.data = (char const *)text_bytes->data,
@@ -513,11 +512,11 @@ static JSON_PROCESSOR(main_fill_config) {
 }
 
 static void main_system_clear(bool deallocate) {
-	asset_system_clear(deallocate);
-	material_system_clear(deallocate);
-	defer_system_clear(deallocate);
-	string_system_clear(deallocate);
-	arena_system_clear(deallocate);
+	system_assets_clear(deallocate);
+	system_materials_clear(deallocate);
+	system_defer_clear(deallocate);
+	system_strings_clear(deallocate);
+	system_memory_arena_clear(deallocate);
 }
 
 static void main_run_application(void) {
@@ -531,7 +530,7 @@ static void main_run_application(void) {
 	if (handle_is_null(gs_main_settings.sh_config)) { goto fail; }
 
 	struct Application_Config config;
-	struct CString const config_path = string_system_get(gs_main_settings.sh_config);
+	struct CString const config_path = system_strings_get(gs_main_settings.sh_config);
 	process_json(config_path, &config, main_fill_config);
 
 	TRC("launched application");
@@ -559,7 +558,7 @@ int main (int argc, char * argv[]) {
 		LOG("  %s\n", argv[i]);
 	}
 
-	arena_system_ensure((64 + 32) * (1 << 10));
+	system_memory_arena_ensure((64 + 32) * (1 << 10));
 	platform_system_init((struct Platform_Callbacks){
 		.quit = app_platform_quit,
 	});
@@ -573,9 +572,9 @@ int main (int argc, char * argv[]) {
 	{
 		main_system_clear(true);
 
-		memory_debug_report();
+		system_memory_debug_report();
 		platform_system_free();
-		memory_debug_clear();
+		system_memory_debug_clear();
 	}
 #endif
 

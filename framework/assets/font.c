@@ -6,8 +6,7 @@
 #include "framework/containers/array.h"
 #include "framework/containers/hashmap.h"
 
-#include "framework/systems/arena_system.h"
-#include "framework/systems/memory_system.h"
+#include "framework/systems/memory.h"
 
 #include "framework/assets/image.h"
 #include "framework/assets/typeface.h"

@@ -3,12 +3,11 @@
 
 #include "framework/platform/file.h"
 #include "framework/containers/buffer.h"
-#include "framework/systems/memory_system.h"
-#include "framework/systems/arena_system.h"
+#include "framework/systems/memory.h"
 
 #include "framework/__warnings_push.h"
-	#define STBTT_malloc(size, user_data)  arena_reallocate(NULL, size)
-	#define STBTT_free(pointer, user_data) arena_reallocate(pointer, 0)
+	#define STBTT_malloc(size, user_data)  realloc_arena(NULL, size)
+	#define STBTT_free(pointer, user_data) realloc_arena(pointer, 0)
 
 	#define STBTT_STATIC
 	#define STB_TRUETYPE_IMPLEMENTATION
