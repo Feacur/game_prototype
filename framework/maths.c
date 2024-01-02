@@ -7,9 +7,9 @@
 #include "maths.h"
 
 uint32_t hash_u32_fnv1(uint8_t const * value, size_t size) {
-	uint32_t hash = UINT32_C(2166136261);
+	uint32_t hash = 2166136261u;
 	for (size_t i = 0; i < size; i++) {
-		hash *= UINT32_C(16777619);
+		hash *= 16777619u;
 		hash ^= value[i];
 	}
 	return hash;
@@ -23,9 +23,9 @@ uint32_t hash_u32_xorshift(uint32_t value) {
 }
 
 uint64_t hash_u64_fnv1(uint8_t const * value, size_t size) {
-	uint64_t hash = UINT64_C(14695981039346656037);
+	uint64_t hash = 14695981039346656037ull;
 	for (size_t i = 0; i < size; i++) {
-		hash *= UINT64_C(1099511628211);
+		hash *= 1099511628211ull;
 		hash ^= value[i];
 	}
 	return hash;
@@ -40,7 +40,7 @@ uint64_t hash_u64_xorshift(uint64_t value) {
 
 uint32_t po2_next_u32(uint32_t value) {
 #if !defined(GAME_TARGET_RELEASE)
-	if (value > (UINT32_C(1) << 31)) {
+	if (value >> 31) {
 		ERR("PO2 overflow: %u", value);
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
@@ -57,7 +57,7 @@ uint32_t po2_next_u32(uint32_t value) {
 
 uint64_t po2_next_u64(uint64_t value) {
 #if !defined(GAME_TARGET_RELEASE)
-	if (value > (UINT64_C(1) << 63)) {
+	if (value >> 63) {
 		ERR("PO2 overflow: %llu", value);
 		REPORT_CALLSTACK(); DEBUG_BREAK(); return 0;
 	}
@@ -132,15 +132,15 @@ float inverse_eerp(float v1, float v2, float value) { return logf(value / v1) / 
 
 bool r32_isinf(float value) {
 	// @note: check all exponent bits and no mantissa bits are set
-	// uint32_t const bits = convert_bits_r32_u32(value);
-	// return (bits & UINT32_C(0x7fffffff)) == UINT32_C(0x7f800000);
+	// uint32_t const bits = bits_r32_u32(value);
+	// return (bits & 0x7fffffffu) == 0x7f800000u;
 	return isinf(value);
 }
 bool r32_isnan(float value) {
 	// @note: check all exponent bits and some mantissa bits are set
-	// uint32_t const bits = convert_bits_r32_u32(value);
-	// return (bits & UINT32_C(0x7f800000)) == UINT32_C(0x7f800000)
-	//     && (bits & UINT32_C(0x7fffffff)) != UINT32_C(0x7f800000);
+	// uint32_t const bits = bits_r32_u32(value);
+	// return (bits & 0x7f800000u) == 0x7f800000u
+	//     && (bits & 0x7fffffffu) != 0x7f800000u;
 	return isnan(value);
 }
 float r32_floor(float value) { return floorf(value); }
@@ -156,15 +156,15 @@ float r32_log10(float value) { return log10f(value); }
 
 bool r64_isinf(double value) {
 	// @note: check all exponent bits and no mantissa bits are set
-	// uint64_t const bits = convert_bits_r64_u64(value);
-	// return (bits & UINT64_C(0x7fffffffffffffff)) == UINT64_C(0x7ff0000000000000);
+	// uint64_t const bits = bits_r64_u64(value);
+	// return (bits & 0x7fffffffffffffffull) == 0x7ff0000000000000ull;
 	return isinf(value);
 }
 bool r64_isnan(double value) {
 	// @note: check all exponent bits and some mantissa bits are set
-	// uint64_t const bits = convert_bits_r64_u64(value);
-	// return (bits & UINT64_C(0x7ff0000000000000)) == UINT64_C(0x7ff0000000000000)
-	//     && (bits & UINT64_C(0x7fffffffffffffff)) != UINT64_C(0x7ff0000000000000);
+	// uint64_t const bits = bits_r64_u64(value);
+	// return (bits & 0x7ff0000000000000ull) == 0x7ff0000000000000ull
+	//     && (bits & 0x7fffffffffffffffull) != 0x7ff0000000000000ull;
 	return isnan(value);
 }
 double r64_floor(double value) { return floor(value); }

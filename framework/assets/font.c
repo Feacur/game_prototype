@@ -35,8 +35,8 @@ struct Typeface_Key {
 static HASHER(hash_typeface_key) {
 	struct Typeface_Key const * k = value;
 	// kinda FNV-1
-	uint32_t const prime = UINT32_C(16777619);
-	uint32_t hash = UINT32_C(2166136261);
+	uint32_t const prime = 16777619u;
+	uint32_t hash = 2166136261u;
 	hash = (hash * prime) ^ k->codepoint;
 	hash = (hash * prime) ^ bits_r32_u32(k->size);
 	return hash;

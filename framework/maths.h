@@ -38,27 +38,27 @@ thus, each window precision is `(window_max - window_min) / mantissa_max`
 #define MATHS_PI  3.14159265359f
 #define MATHS_TAU 6.28318530718f
 
-#define R32_NAN bits_u32_r32(UINT32_C(0x7fc00000))     // like inf, but non-zero mantissa
-#define R32_INF_POS bits_u32_r32(UINT32_C(0x7f800000)) //  2^128
-#define R32_INF_NEG bits_u32_r32(UINT32_C(0xff800000)) // -2^128
-#define R32_MAX bits_u32_r32(UINT32_C(0x7f7fffff))     //  2^127 * [1 .. 2)
-#define R32_MIN bits_u32_r32(UINT32_C(0xff7fffff))     // -2^127 * [1 .. 2)
-#define R32_SEQ_MIN bits_u32_r32(UINT32_C(0xcb800000)) // -2^24 == -16_777_216
-#define R32_SEQ_MAX bits_u32_r32(UINT32_C(0x4b800000)) //  2^24 ==  16_777_216
+#define R32_SEQ_MIN bits_u32_r32(0xcb800000u) // -2^ 24 == -16_777_216
+#define R32_SEQ_MAX bits_u32_r32(0x4b800000u) //  2^ 24 ==  16_777_216
+#define R32_MAX     bits_u32_r32(0x7f7fffffu) //  2^127 * [1 .. 2)
+#define R32_MIN     bits_u32_r32(0xff7fffffu) // -2^127 * [1 .. 2)
+#define R32_INF_POS bits_u32_r32(0x7f800000u) //  2^128
+#define R32_INF_NEG bits_u32_r32(0xff800000u) // -2^128
+#define R32_NAN     bits_u32_r32(0x7fe00000u) // ?2^128 * (1 .. 2)
 
-#define R64_NAN bits_u64_r64(UINT64_C(0x7ff8000000000000))     // like inf, but non-zero mantissa
-#define R64_INF_POS bits_u64_r64(UINT64_C(0x7ff0000000000000)) //  2^1024
-#define R64_INF_NEG bits_u64_r64(UINT64_C(0xfff0000000000000)) // -2^1024
-#define R64_MAX bits_u64_r64(UINT64_C(0x7fefffffffffffff))     //  2^1023 * [1 .. 2)
-#define R64_MIN bits_u64_r64(UINT64_C(0xffefffffffffffff))     // -2^1023 * [1 .. 2)
-#define R64_SEQ_MIN bits_u64_r64(UINT64_C(0xc340000000000000)) // -2^53 == -9_007_199_254_740_992
-#define R64_SEQ_MAX bits_u64_r64(UINT64_C(0x4340000000000000)) //  2^53 ==  9_007_199_254_740_992
+#define R64_SEQ_MIN bits_u64_r64(0xc340000000000000ull) // -2^  53 == -9_007_199_254_740_992
+#define R64_SEQ_MAX bits_u64_r64(0x4340000000000000ull) //  2^  53 ==  9_007_199_254_740_992
+#define R64_MAX     bits_u64_r64(0x7fefffffffffffffull) //  2^1023 * [1 .. 2)
+#define R64_MIN     bits_u64_r64(0xffefffffffffffffull) // -2^1023 * [1 .. 2)
+#define R64_INF_POS bits_u64_r64(0x7ff0000000000000ull) //  2^1024
+#define R64_INF_NEG bits_u64_r64(0xfff0000000000000ull) // -2^1024
+#define R64_NAN     bits_u64_r64(0x7ffc000000000000ull) // ?2^1024 * (1 .. 2)
 
-#define U32_TO_R32_12(value) bits_u32_r32(UINT32_C(0x3f800000) | (value >> 9)) // [1 .. 2] | mantissa
-#define U32_TO_R32_24(value) bits_u32_r32(UINT32_C(0x40000000) | (value >> 9)) // [2 .. 4] | mantissa
+#define U32_TO_R32_12(value) bits_u32_r32(0x3f800000u | ((value) >> 9)) // [1 .. 2] | mantissa
+#define U32_TO_R32_24(value) bits_u32_r32(0x40000000u | ((value) >> 9)) // [2 .. 4] | mantissa
 
-#define U64_TO_R64_12(value) bits_u64_r64(UINT64_C(0x3ff0000000000000) | (value >> 12)) // [1 .. 2] | mantissa
-#define U64_TO_R64_24(value) bits_u64_r64(UINT64_C(0x4000000000000000) | (value >> 12)) // [2 .. 4] | mantissa
+#define U64_TO_R64_12(value) bits_u64_r64(0x3ff0000000000000ull | ((value) >> 12)) // [1 .. 2] | mantissa
+#define U64_TO_R64_24(value) bits_u64_r64(0x4000000000000000ull | ((value) >> 12)) // [2 .. 4] | mantissa
 
 uint32_t hash_u32_fnv1(uint8_t const * value, size_t size);
 uint32_t hash_u32_xorshift(uint32_t value);
