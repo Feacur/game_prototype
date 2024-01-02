@@ -6,42 +6,6 @@
 //
 #include "maths.h"
 
-float bits_u32_r32(uint32_t value) {
-	union {
-		uint32_t value_u32;
-		float value_r32;
-	} data;
-	data.value_u32 = value;
-	return data.value_r32;
-}
-
-uint32_t bits_r32_u32(float value) {
-	union {
-		uint32_t value_u32;
-		float value_r32;
-	} data;
-	data.value_r32 = value;
-	return data.value_u32;
-}
-
-double bits_u64_r64(uint64_t value) {
-	union {
-		uint64_t value_u64;
-		double value_r64;
-	} data;
-	data.value_u64 = value;
-	return data.value_r64;
-}
-
-uint64_t bits_r64_u64(double value) {
-	union {
-		uint64_t value_u64;
-		double value_r64;
-	} data;
-	data.value_r64 = value;
-	return data.value_u64;
-}
-
 uint32_t hash_u32_fnv1(uint8_t const * value, size_t size) {
 	uint32_t hash = UINT32_C(2166136261);
 	for (size_t i = 0; i < size; i++) {

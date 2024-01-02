@@ -54,12 +54,6 @@ thus, each window precision is `(window_max - window_min) / mantissa_max`
 #define R64_SEQ_MIN bits_u64_r64(UINT64_C(0xc340000000000000)) // -2^53 == -9_007_199_254_740_992
 #define R64_SEQ_MAX bits_u64_r64(UINT64_C(0x4340000000000000)) //  2^53 ==  9_007_199_254_740_992
 
-float bits_u32_r32(uint32_t value);
-uint32_t bits_r32_u32(float value);
-
-double bits_u64_r64(uint64_t value);
-uint64_t bits_r64_u64(double value);
-
 #define U32_TO_R32_12(value) bits_u32_r32(UINT32_C(0x3f800000) | (value >> 9)) // [1 .. 2] | mantissa
 #define U32_TO_R32_24(value) bits_u32_r32(UINT32_C(0x40000000) | (value >> 9)) // [2 .. 4] | mantissa
 

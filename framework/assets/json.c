@@ -279,7 +279,7 @@ static void json_parser_do_string(struct JSON_Parser * parser, struct JSON * val
 }
 
 static void json_parser_do_number(struct JSON_Parser * parser, struct JSON * value) {
-	double const number = parse_double(parser->current.text.data);
+	double const number = parse_r64(parser->current.text.data);
 	*value = (struct JSON){.type = JSON_NUMBER, .as.number = number};
 	json_parser_consume(parser);
 }

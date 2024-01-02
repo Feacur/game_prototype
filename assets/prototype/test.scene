@@ -9,7 +9,7 @@
 				"scale": [1.78, 1.78, 1],
 			},
 			"mode": "aspect_y",
-			"ncp": 0.1, "fcp": 1e39,
+			"ncp": 0.1, "fcp": 1e309, // infinity
 			// -- render to the buffer
 			"target": "assets/back_buffer.target",
 			"clear_mask": ["color", "depth"],

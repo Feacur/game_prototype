@@ -46,6 +46,38 @@
 struct JSON;
 
 // ----- ----- ----- ----- -----
+//     conversion
+// ----- ----- ----- ----- -----
+
+union Bits32 {
+	uint32_t as_u;
+	int32_t  as_s;
+	float    as_r;
+};
+
+union Bits64 {
+	uint64_t as_u;
+	int64_t  as_s;
+	double   as_r;
+};
+
+inline static float bits_u32_r32(uint32_t value) {
+	return (union Bits32){.as_u = value}.as_r;
+}
+
+inline static uint32_t bits_r32_u32(float value) {
+	return (union Bits32){.as_r = value}.as_u;
+}
+
+inline static double bits_u64_r64(uint64_t value) {
+	return (union Bits64){.as_u = value}.as_r;
+}
+
+inline static uint64_t bits_r64_u64(double value) {
+	return (union Bits64){.as_r = value}.as_u;
+}
+
+// ----- ----- ----- ----- -----
 //     handle
 // ----- ----- ----- ----- -----
 

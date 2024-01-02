@@ -68,8 +68,7 @@ static bool wfobj_consume_float(struct WFObj_Lexer * lexer, struct WFObj_Token *
 #define ADVANCE() wfobj_advance(lexer, token)
 
 	if (token->type == WFOBJ_TOKEN_NUMBER) {
-		// *value = strtof(token->start, NULL);
-		*value = parse_float(token->text.data);
+		*value = parse_r32(token->text.data);
 		ADVANCE();
 		return true;
 	}
@@ -84,7 +83,6 @@ static bool wfobj_consume_s32(struct WFObj_Lexer * lexer, struct WFObj_Token * t
 #define ADVANCE() wfobj_advance(lexer, token)
 
 	if (token->type == WFOBJ_TOKEN_NUMBER) {
-		// *value = (int32_t)strtoul(token->start, NULL, 10);
 		*value = parse_s32(token->text.data);
 		ADVANCE();
 		return true;
