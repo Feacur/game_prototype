@@ -26,7 +26,7 @@ void mesh_free(struct Mesh * mesh) {
 		buffer_free(&mesh_buffer->buffer);
 	}
 	array_free(&mesh->buffers);
-	common_memset(mesh, 0, sizeof(*mesh));
+	zero_out(AMP_(mesh));
 }
 
 //

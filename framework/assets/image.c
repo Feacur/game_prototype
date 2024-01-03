@@ -41,7 +41,7 @@ struct Image image_init(struct Buffer const * buffer) {
 
 void image_free(struct Image * image) {
 	FREE(image->data);
-	common_memset(image, 0, sizeof(*image));
+	zero_out(AMP_(image));
 }
 
 void image_ensure(struct Image * image, struct uvec2 size) {

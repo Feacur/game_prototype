@@ -101,7 +101,7 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	//
 	gfx_uniforms_free(&batcher->uniforms);
 	//
-	common_memset(batcher, 0, sizeof(*batcher));
+	zero_out(AMP_(batcher));
 	FREE(batcher);
 }
 
@@ -446,7 +446,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 }
 
 void batcher_2d_clear(struct Batcher_2D * batcher) {
-	common_memset(&batcher->batch, 0, sizeof(batcher->batch));
+	zero_out(AM_(batcher->batch));
 	array_clear(&batcher->codepoints, false);
 	array_clear(&batcher->batches, false);
 	array_clear(&batcher->words, false);

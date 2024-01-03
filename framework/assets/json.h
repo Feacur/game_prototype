@@ -19,11 +19,11 @@ enum JSON_Type {
 struct JSON {
 	enum JSON_Type type;
 	union {
-		struct Hashmap table;    // key `struct Handle` : `struct JSON`
-		struct Array array;      // `struct JSON`
-		struct Handle sh_string; // get `struct CString` via `system_strings_get`
-		double number;
-		bool boolean;
+		struct Hashmap table;     // key `struct Handle` : `struct JSON`
+		struct Array   array;     // `struct JSON`
+		struct Handle  sh_string; // get `struct CString` via `system_strings_get`
+		double         number;
+		bool           boolean;
 	} as;
 };
 

@@ -14,7 +14,7 @@ struct JSON_Lexer json_lexer_init(struct CString text) {
 }
 
 void json_lexer_free(struct JSON_Lexer * lexer) {
-	common_memset(lexer, 0, sizeof(*lexer));
+	zero_out(AMP_(lexer));
 }
 
 inline static struct JSON_Token json_lexer_next_internal(struct JSON_Lexer * lexer);

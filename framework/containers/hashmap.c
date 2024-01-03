@@ -33,7 +33,7 @@ void hashmap_free(struct Hashmap * hashmap) {
 	hashmap->allocate(hashmap->keys,   0);
 	hashmap->allocate(hashmap->values, 0);
 	hashmap->allocate(hashmap->marks,  0);
-	common_memset(hashmap, 0, sizeof(*hashmap));
+	zero_out(AMP_(hashmap));
 }
 
 void hashmap_clear(struct Hashmap * hashmap, bool deallocate) {
@@ -46,7 +46,10 @@ void hashmap_clear(struct Hashmap * hashmap, bool deallocate) {
 		hashmap->capacity = 0;
 	}
 	hashmap->count = 0;
-	common_memset(hashmap->marks, HASH_MARK_NONE, sizeof(*hashmap->marks) * hashmap->capacity);
+	zero_out((struct CArray_Mut){
+		.size = sizeof(*hashmap->marks) * hashmap->capacity,
+		.data = hashmap->marks,
+	});
 }
 
 static uint32_t hashmap_find_key_index(struct Hashmap const * hashmap, void const * key, uint32_t hash);
@@ -73,7 +76,10 @@ void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity) {
 	hashmap->values = hashmap->allocate(NULL, sizeof(uint8_t)  * capacity * hashmap->value_size);
 	hashmap->marks  = hashmap->allocate(NULL, sizeof(uint8_t)  * capacity);
 
-	common_memset(hashmap->marks, HASH_MARK_NONE, sizeof(*hashmap->marks) * capacity);
+	zero_out((struct CArray_Mut){
+		.size = sizeof(*hashmap->marks) * capacity,
+		.data = hashmap->marks,
+	});
 
 	// @note: `hashmap->count` remains as is
 	uint32_t const prev_capacity = hashmap->capacity;

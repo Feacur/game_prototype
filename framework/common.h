@@ -133,6 +133,8 @@ bool carray_equals(struct CArray v1, struct CArray v2);
 bool carray_empty(struct CArray value);
 
 #define A_(value) (struct CArray){.size = sizeof(value), .data = &value}
+#define AM_(value) (struct CArray_Mut){.size = sizeof(value), .data = &value}
+#define AMP_(pointer) (struct CArray_Mut){.size = sizeof(*pointer), .data = pointer}
 
 #define INDEX_EMPTY UINT32_MAX
 
@@ -167,32 +169,23 @@ bool cstring_ends(struct CString v1, struct CString v2);
 //     standard
 // ----- ----- ----- ----- -----
 
+uint32_t find_null(char const * buffer);
 bool equals(void const * v1, void const * v2, size_t size);
 
 void common_exit_success(void);
 void common_exit_failure(void);
 
-void common_memset(void * target, uint8_t value, size_t size);
 void common_memcpy(void * target, void const * source, size_t size);
 void common_qsort(void * data, size_t count, size_t value_size, Comparator * compare);
 char const * common_strstr(char const * buffer, char const * value);
-size_t common_strlen(char const * buffer);
 
 // ----- ----- ----- ----- -----
 //     utilities
 // ----- ----- ----- ----- -----
 
+void zero_out(struct CArray_Mut value);
+
 bool contains_full_word(char const * container, struct CString value);
-
-inline static uint32_t align_u32(uint32_t value) {
-	uint32_t const alignment = 8 - 1;
-	return ((value | alignment) & ~alignment);
-}
-
-inline static uint64_t align_u64(uint64_t value) {
-	uint64_t const alignment = 8 - 1;
-	return ((value | alignment) & ~alignment);
-}
 
 inline static bool is_line(char c) {
 	return c == '\n' || c == '\r';

@@ -72,6 +72,10 @@ bool cstring_ends(struct CString v1, struct CString v2) {
 //     standard
 // ----- ----- ----- ----- -----
 
+uint32_t find_null(char const * buffer) {
+	return (uint32_t)strlen(buffer);
+}
+
 bool equals(void const * v1, void const * v2, size_t size) {
 	if (v1 == v2) { return true; }
 	return memcmp(v1, v2, size) == 0;
@@ -79,10 +83,6 @@ bool equals(void const * v1, void const * v2, size_t size) {
 
 __declspec(noreturn) void common_exit_success(void) { exit(EXIT_SUCCESS); }
 __declspec(noreturn) void common_exit_failure(void) { exit(EXIT_FAILURE); }
-
-void common_memset(void * target, uint8_t value, size_t size) {
-	memset(target, value, size);
-}
 
 void common_memcpy(void * target, void const * source, size_t size) {
 	if (source == NULL) { return; }
@@ -97,13 +97,15 @@ char const * common_strstr(char const * buffer, char const * value) {
 	return strstr(buffer, value);
 }
 
-size_t common_strlen(char const * buffer) {
-	return strlen(buffer);
-}
-
 // ----- ----- ----- ----- -----
 //     utilities
 // ----- ----- ----- ----- -----
+
+void zero_out(struct CArray_Mut value) {
+	if (value.size == 0) { return; }
+	if (value.data == NULL) { return; }
+	memset(value.data, 0, value.size);
+}
 
 bool contains_full_word(char const * container, struct CString value) {
 	if (container == NULL)  { return false; }

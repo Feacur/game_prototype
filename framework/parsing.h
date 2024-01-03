@@ -3,12 +3,12 @@
 
 #include "common.h"
 
-uint32_t parse_u32(char const * text);
-uint32_t parse_h32(char const * text);
+uint32_t parse_u32(struct CString value);
+uint32_t parse_h32(struct CString value);
 
-int32_t parse_s32(char const * text);
+int32_t parse_s32(struct CString value);
 
-float parse_r32(char const * text);
-double parse_r64(char const * text);
+float parse_r32(struct CString value);
+double parse_r64(struct CString value);
 
 #endif

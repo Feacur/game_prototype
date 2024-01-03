@@ -32,7 +32,7 @@ static HANDLE_ACTION(asset_bytes_load) {
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		common_memset(asset, 0, sizeof(*asset));
+		zero_out(AMP_(asset));
 		return;
 	}
 
@@ -46,7 +46,7 @@ static HANDLE_ACTION(asset_bytes_load) {
 static HANDLE_ACTION(asset_bytes_drop) {
 	struct Asset_Bytes * asset = system_assets_get(handle);
 	FREE(asset->data);
-	common_memset(asset, 0, sizeof(*asset));
+	zero_out(AMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -59,7 +59,7 @@ static HANDLE_ACTION(asset_json_load) {
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		common_memset(asset, 0, sizeof(*asset));
+		zero_out(AMP_(asset));
 		return;
 	}
 
@@ -75,7 +75,7 @@ static HANDLE_ACTION(asset_json_load) {
 static HANDLE_ACTION(asset_json_drop) {
 	struct Asset_JSON * asset = system_assets_get(handle);
 	json_free(&asset->value);
-	// common_memset(asset, 0, sizeof(*asset));
+	// zero_out(AMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -88,7 +88,7 @@ static HANDLE_ACTION(asset_shader_load) {
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		common_memset(asset, 0, sizeof(*asset));
+		zero_out(AMP_(asset));
 		return;
 	}
 	// @todo: return error shader?
@@ -102,7 +102,7 @@ static HANDLE_ACTION(asset_shader_load) {
 static HANDLE_ACTION(asset_shader_drop) {
 	struct Asset_Shader * asset = system_assets_get(handle);
 	gpu_program_free(asset->gh_program);
-	common_memset(asset, 0, sizeof(*asset));
+	zero_out(AMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -126,7 +126,7 @@ static HANDLE_ACTION(asset_sampler_load) {
 static HANDLE_ACTION(asset_sampler_drop) {
 	struct Asset_Sampler * asset = system_assets_get(handle);
 	gpu_sampler_free(asset->gh_sampler);
-	common_memset(asset, 0, sizeof(*asset));
+	zero_out(AMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -155,7 +155,7 @@ static HANDLE_ACTION(asset_image_load) {
 	// binary
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		common_memset(asset, 0, sizeof(*asset));
+		zero_out(AMP_(asset));
 		return;
 	}
 
@@ -186,7 +186,7 @@ static HANDLE_ACTION(asset_image_load) {
 static HANDLE_ACTION(asset_image_drop) {
 	struct Asset_Image * asset = system_assets_get(handle);
 	gpu_texture_free(asset->gh_texture);
-	common_memset(asset, 0, sizeof(*asset));
+	zero_out(AMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -199,7 +199,7 @@ static HANDLE_ACTION(asset_typeface_load) {
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		common_memset(asset, 0, sizeof(*asset));
+		zero_out(AMP_(asset));
 		return;
 	}
 
@@ -213,7 +213,7 @@ static HANDLE_ACTION(asset_typeface_load) {
 static HANDLE_ACTION(asset_typeface_drop) {
 	struct Asset_Typeface * asset = system_assets_get(handle);
 	typeface_free(asset->typeface);
-	common_memset(asset, 0, sizeof(*asset));
+	zero_out(AMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -224,7 +224,7 @@ static JSON_PROCESSOR(asset_font_fill) {
 	struct Handle const * context = data;
 	struct Asset_Font * asset = system_assets_get(*context);
 	if (json->type == JSON_ERROR) {
-		common_memset(asset, 0, sizeof(*asset));
+		zero_out(AMP_(asset));
 		return;
 	}
 
@@ -262,7 +262,7 @@ static HANDLE_ACTION(asset_font_drop) {
 	struct Asset_Font * asset = system_assets_get(handle);
 	font_free(asset->font);
 	gpu_texture_free(asset->gh_texture);
-	common_memset(asset, 0, sizeof(*asset));
+	zero_out(AMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -272,7 +272,7 @@ static HANDLE_ACTION(asset_font_drop) {
 static JSON_PROCESSOR(asset_target_fill) {
 	struct Asset_Target * context = data;
 	if (json->type == JSON_ERROR) {
-		common_memset(context, 0, sizeof(*context));
+		zero_out(AMP_(context));
 		return;
 	}
 
@@ -290,7 +290,7 @@ static HANDLE_ACTION(asset_target_load) {
 static HANDLE_ACTION(asset_target_drop) {
 	struct Asset_Target * asset = system_assets_get(handle);
 	gpu_target_free(asset->gh_target);
-	common_memset(asset, 0, sizeof(*asset));
+	zero_out(AMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -303,7 +303,7 @@ static HANDLE_ACTION(asset_model_load) {
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		common_memset(asset, 0, sizeof(*asset));
+		zero_out(AMP_(asset));
 		return;
 	}
 
@@ -319,7 +319,7 @@ static HANDLE_ACTION(asset_model_load) {
 static HANDLE_ACTION(asset_model_drop) {
 	struct Asset_Model * asset = system_assets_get(handle);
 	gpu_mesh_free(asset->gh_mesh);
-	common_memset(asset, 0, sizeof(*asset));
+	zero_out(AMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -330,7 +330,7 @@ static JSON_PROCESSOR(asset_material_fill) {
 	struct Handle const * context = data;
 	struct Asset_Material * asset = system_assets_get(*context);
 	if (json->type == JSON_ERROR) {
-		common_memset(asset, 0, sizeof(*asset));
+		zero_out(AMP_(asset));
 		return;
 	}
 
@@ -347,7 +347,7 @@ static HANDLE_ACTION(asset_material_load) {
 static HANDLE_ACTION(asset_material_drop) {
 	struct Asset_Material * asset = system_assets_get(handle);
 	system_materials_discard(asset->mh_mat);
-	common_memset(asset, 0, sizeof(*asset));
+	zero_out(AMP_(asset));
 }
 
 //

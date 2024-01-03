@@ -103,7 +103,7 @@ void platform_system_free(void) {
 	signal(SIGSEGV, SIG_DFL);
 	signal(SIGTERM, SIG_DFL);
 
-	common_memset(&gs_platform_system, 0, sizeof(gs_platform_system));
+	zero_out(AM_(gs_platform_system));
 }
 
 // bool platform_system_is_powered(void) {

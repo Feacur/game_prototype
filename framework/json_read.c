@@ -35,11 +35,7 @@ void process_json(struct CString path, void * data, JSON_Processor * process) {
 
 uint32_t json_read_hex(struct JSON const * json) {
 	struct CString const value = json_as_string(json);
-	if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x')
-	{
-		return parse_h32(value.data + 2);
-	}
-	return parse_h32(value.data);
+	return parse_h32(value);
 }
 
 void json_read_many_flt(struct JSON const * json, uint32_t length, float * result) {

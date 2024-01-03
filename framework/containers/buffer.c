@@ -15,7 +15,7 @@ struct Buffer buffer_init(void) {
 void buffer_free(struct Buffer * buffer) {
 	if (buffer->allocate == NULL) { return; }
 	buffer->allocate(buffer->data, 0);
-	common_memset(buffer, 0, sizeof(*buffer));
+	zero_out(AMP_(buffer));
 }
 
 void buffer_clear(struct Buffer * buffer, bool deallocate) {

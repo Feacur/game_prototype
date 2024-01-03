@@ -37,7 +37,7 @@ void ui_free(void) {
 	system_assets_drop(gs_ui.ah_shader);
 	system_assets_drop(gs_ui.ah_image);
 	system_assets_drop(gs_ui.ah_font);
-	common_memset(&gs_ui, 0, sizeof(gs_ui));
+	zero_out(AM_(gs_ui));
 }
 
 static void ui_internal_push_shader(void) {

@@ -83,7 +83,7 @@ void font_free(struct Font * font) {
 	array_free(&font->ranges);
 	hashmap_free(&font->table);
 
-	common_memset(font, 0, sizeof(*font));
+	zero_out(AMP_(font));
 	FREE(font);
 }
 
@@ -306,7 +306,10 @@ void font_render(struct Font * font) {
 
 	// render glyphs into the atlas, assuming they shall fit
 	uint32_t const buffer_data_size = gfx_type_get_size(font->buffer.format.type);
-	common_memset(font->buffer.data, 0, font->buffer.size.x * font->buffer.size.y * buffer_data_size);
+	zero_out((struct CArray_Mut){
+		.size = font->buffer.size.x * font->buffer.size.y * buffer_data_size,
+		.data = font->buffer.data,
+	});
 	{
 		uint32_t line_height = 0;
 		struct uvec2 offset = {padding, padding};

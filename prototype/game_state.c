@@ -48,7 +48,6 @@ static void json_read_camera(struct JSON const * json, struct Camera * camera) {
 	};
 	camera->clear = (struct Camera_Clear){
 		.flags  = json_read_texture_flags(json_get(json, S_("clear_mask"))),
-		// .rgba = json_read_hex(json_get(json, S_("clear_rgba"))),
 	};
 	json_read_many_flt(json_get(json, S_("clear_color")), 4, &camera->clear.color.x);
 
@@ -210,7 +209,7 @@ void game_free(void) {
 	array_free(&gs_game.cameras);
 	array_free(&gs_game.entities);
 
-	common_memset(&gs_game, 0, sizeof(gs_game));
+	zero_out(AM_(gs_game));
 }
 
 JSON_PROCESSOR(game_fill_scene) {

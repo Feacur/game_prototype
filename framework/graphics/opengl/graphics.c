@@ -684,7 +684,7 @@ HANDLE_ACTION(gpu_texture_free) {
 	FOR_ARRAY(&gs_graphics_state.active.units, it) {
 		struct Gfx_Unit * unit = it.value;
 		if (handle_equals(unit->gh_texture, handle)) {
-			common_memset(unit, 0, sizeof(*unit));
+			zero_out(AMP_(unit));
 			uint32_t const id = it.curr + 1;
 			gl.BindTextureUnit((GLuint)id, 0);
 			gl.BindSampler((GLuint)id, 0);
@@ -1551,7 +1551,7 @@ void graphics_to_gpu_library_free(void) {
 
 	//
 	array_free(&gs_graphics_state.active.units);
-	common_memset(&gs_graphics_state, 0, sizeof(gs_graphics_state));
+	zero_out(AM_(gs_graphics_state));
 
 	if (inst_count > 0) { DEBUG_BREAK(); }
 
@@ -1690,7 +1690,7 @@ static struct Graphics_Extensions get_extensions(void) {
 	for (GLint i = 0; i < count; i++) {
 		void const * data = gl.GetStringi(GL_EXTENSIONS, (GLuint)i);
 		struct CString const extension = {
-			.length = (uint32_t)common_strlen(data),
+			.length = find_null(data),
 			.data = data,
 		};
 

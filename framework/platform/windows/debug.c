@@ -84,9 +84,9 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 		BOOL const valid_source = SymGetLineFromAddr64(process, callstack.data[i], &source_offset, &source) && (source.FileName != NULL);
 		if (!(valid_module || valid_symbol || valid_source)) { continue; }
 
-		uint32_t const module_length = valid_module ? (uint32_t)common_strlen(module.ModuleName) : 0;
-		uint32_t const symbol_length = valid_symbol ? (uint32_t)symbol.header.NameLen     : 0;
-		uint32_t const source_length = valid_source ? (uint32_t)common_strlen(source.FileName)   : 0;
+		uint32_t const module_length = valid_module ? find_null(module.ModuleName)    : 0;
+		uint32_t const symbol_length = valid_symbol ? (uint32_t)symbol.header.NameLen : 0;
+		uint32_t const source_length = valid_source ? find_null(source.FileName)      : 0;
 		char const * module_data = module.ModuleName;
 		char const * symbol_data = symbol.header.Name;
 		char const * source_data = source.FileName;
@@ -147,7 +147,7 @@ bool debug_to_system_init(void) {
 void debug_to_system_free(void) {
 	SymCleanup(GetCurrentProcess());
 	buffer_free(&gs_platform_debug.buffer);
-	common_memset(&gs_platform_debug, 0, sizeof(gs_platform_debug));
+	zero_out(AM_(gs_platform_debug));
 }
 
 #else

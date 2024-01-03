@@ -14,7 +14,7 @@ struct WFObj_Lexer wfobj_lexer_init(struct CString text) {
 }
 
 void wfobj_lexer_free(struct WFObj_Lexer * lexer) {
-	common_memset(lexer, 0, sizeof(*lexer));
+	zero_out(AMP_(lexer));
 }
 
 inline static struct WFObj_Token wfobj_lexer_next_internal(struct WFObj_Lexer * lexer);

@@ -95,7 +95,7 @@ bool input_to_system_init(void) {
 
 void input_to_system_free(void) {
 	array_free(&gs_input_state.codepoints);
-	common_memset(&gs_input_state, 0, sizeof(gs_input_state));
+	zero_out(AM_(gs_input_state));
 }
 
 void input_to_platform_before_update(void) {
@@ -121,10 +121,10 @@ void input_to_platform_after_update(void) {
 #include "framework/internal/input_to_window.h"
 
 void input_to_platform_reset(void) {
-	common_memset(&gs_input_state.keyboard, 0, sizeof(gs_input_state.keyboard));
-	common_memset(&gs_input_state.keyboard_prev, 0, sizeof(gs_input_state.keyboard_prev));
-	common_memset(&gs_input_state.mouse, 0, sizeof(gs_input_state.mouse));
-	common_memset(&gs_input_state.mouse_prev, 0, sizeof(gs_input_state.mouse_prev));
+	zero_out(AM_(gs_input_state.keyboard));
+	zero_out(AM_(gs_input_state.keyboard_prev));
+	zero_out(AM_(gs_input_state.mouse));
+	zero_out(AM_(gs_input_state.mouse_prev));
 }
 
 void input_to_platform_on_key(enum Key_Code key, enum Scan_Code scan, bool is_down) {

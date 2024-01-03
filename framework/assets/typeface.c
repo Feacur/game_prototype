@@ -47,7 +47,7 @@ struct Typeface * typeface_init(struct Buffer * source) {
 void typeface_free(struct Typeface * typeface) {
 	if (typeface == NULL) { WRN("freeing NULL typeface"); return; }
 	buffer_free(&typeface->source);
-	common_memset(typeface, 0, sizeof(*typeface));
+	zero_out(AMP_(typeface));
 	FREE(typeface);
 }
 
@@ -114,9 +114,11 @@ void typeface_render_glyph(
 
 	if (glyph_id == 0) {
 		uint8_t * base_target = buffer + offset.y * buffer_width + offset.x;
-		uint32_t const bytes_to_set = glyph_size.x * sizeof(*buffer);
 		for (uint32_t y = 0; y < glyph_size.y; y++) {
-			common_memset(base_target + y * buffer_width, 0xff, bytes_to_set);
+			uint8_t * target = base_target + y * buffer_width;
+			for (uint32_t x = 0; x < glyph_size.x; x++) {
+				*target = 0xff;
+			}
 		}
 		return;
 	}

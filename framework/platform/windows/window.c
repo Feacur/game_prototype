@@ -90,7 +90,7 @@ void platform_window_free(struct Window * window) {
 	if (window->handle != NULL) {
 		DestroyWindow(window->handle);
 	}
-	common_memset(window, 0, sizeof(*window));
+	zero_out(AMP_(window));
 	FREE(window);
 }
 

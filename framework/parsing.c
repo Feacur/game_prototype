@@ -22,28 +22,31 @@ static uint8_t const LUT_base16[256] = {
 	['F'] = 15, ['f'] = 15,
 };
 
-#define PARSE_SIGN(value) do { \
-		switch (*text) { \
-			default:          value = 0; break; \
-			case '+': text++; value = 0; break; \
-			case '-': text++; value = 1; break; \
+#define PARSE_SIGN(result) do { \
+		switch (*value.data) { \
+			default:                result = 0; break; \
+			case '+': value.data++; result = 0; break; \
+			case '-': value.data++; result = 1; break; \
 		} \
-		value <<= sizeof(value) * 8 - 1; \
+		result <<= sizeof(result) * 8 - 1; \
 	} while (0) \
 
-#define PARSE_BASE10(value) do { \
-		while (is_digit(*text)) { \
-			uint8_t const digit = LUT_base10[*(uint8_t const *)text]; \
-			value = value * 10 + digit; \
-			text++; \
+#define PARSE_BASE10(result) do { \
+		while (is_digit(*value.data)) { \
+			uint8_t const digit = LUT_base10[*(uint8_t const *)value.data]; \
+			result = result * 10 + digit; \
+			value.data++; \
 		} \
 	} while (0) \
 
-#define PARSE_BASE16(value) do { \
-		while (is_digit(*text)) { \
-			uint8_t const digit = LUT_base16[*(uint8_t const *)text]; \
-			value = (value << 4) | digit; \
-			text++; \
+#define PARSE_BASE16(result) do { \
+		if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x') { \
+			value.data += 2; \
+		} \
+		while (is_digit(*value.data)) { \
+			uint8_t const digit = LUT_base16[*(uint8_t const *)value.data]; \
+			result = (result << 4) | digit; \
+			value.data++; \
 		} \
 	} while (0) \
 
@@ -66,35 +69,35 @@ static uint8_t const LUT_base16[256] = {
 //
 #include "parsing.h"
 
-uint32_t parse_u32(char const * text) {
-	uint32_t value = 0; PARSE_BASE10(value);
-	return value;
+uint32_t parse_u32(struct CString value) {
+	uint32_t result = 0; PARSE_BASE10(result);
+	return result;
 }
 
-uint32_t parse_h32(char const * text) {
-	uint32_t value = 0; PARSE_BASE16(value);
-	return value;
+uint32_t parse_h32(struct CString value) {
+	uint32_t result = 0; PARSE_BASE16(result);
+	return result;
 }
 
-int32_t parse_s32(char const * text) {
-	uint32_t     sign;        PARSE_SIGN(sign);
-	union Bits32 value = {0}; PARSE_BASE10(value.as_s);
-	value.as_u |= sign;
-	return value.as_s;
+int32_t parse_s32(struct CString value) {
+	uint32_t     sign;         PARSE_SIGN(sign);
+	union Bits32 result = {0}; PARSE_BASE10(result.as_s);
+	result.as_u |= sign;
+	return result.as_s;
 }
 
-float parse_r32(char const * text) {
+float parse_r32(struct CString value) {
 	uint32_t     sign;           PARSE_SIGN(sign);
 	union Bits32 mantissa = {0}; PARSE_BASE10(mantissa.as_u);
 
 	int32_t exponent = 0;
-	if (*text == '.') { text++;
-		char const * const text_start = text;
+	if (*value.data == '.') { value.data++;
+		struct CString const text_start = value;
 		PARSE_BASE10(mantissa.as_u);
-		exponent += (int32_t)(text_start - text);
+		exponent += (int32_t)(text_start.data - value.data);
 	}
 
-	if (*text == 'e' || *text == 'E') { text++;
+	if (*value.data == 'e' || *value.data == 'E') { value.data++;
 		uint32_t     e_sign;  PARSE_SIGN(e_sign);
 		union Bits32 e = {0}; PARSE_BASE10(e.as_s);
 		e.as_u |= e_sign;
@@ -115,18 +118,18 @@ float parse_r32(char const * text) {
 	return mantissa.as_r;
 }
 
-double parse_r64(char const * text) {
+double parse_r64(struct CString value) {
 	uint64_t     sign;           PARSE_SIGN(sign);
 	union Bits64 mantissa = {0}; PARSE_BASE10(mantissa.as_u);
 
 	int32_t exponent = 0;
-	if (*text == '.') { text++;
-		char const * const text_start = text;
+	if (*value.data == '.') { value.data++;
+		struct CString const text_start = value;
 		PARSE_BASE10(mantissa.as_u);
-		exponent += (int32_t)(text_start - text);
+		exponent += (int32_t)(text_start.data - value.data);
 	}
 
-	if (*text == 'e' || *text == 'E') { text++;
+	if (*value.data == 'e' || *value.data == 'E') { value.data++;
 		uint32_t     e_sign;  PARSE_SIGN(e_sign);
 		union Bits32 e = {0}; PARSE_BASE10(e.as_s);
 		e.as_u |= e_sign;
