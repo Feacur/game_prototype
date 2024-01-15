@@ -213,7 +213,7 @@ void gpu_context_free(struct GPU_Context * gpu_context) {
 	}
 	gs_gpu_library.dll.DeleteContext(gpu_context->handle);
 
-	zero_out(AMP_(gpu_context));
+	zero_out(CBMP_(gpu_context));
 	FREE(gpu_context);
 }
 
@@ -384,6 +384,6 @@ bool gpu_library_to_system_init(void) {
 void gpu_library_to_system_free(void) {
 	functions_to_gpu_library_free();
 	FreeLibrary(gs_gpu_library.handle);
-	zero_out(AM_(gs_gpu_library));
+	zero_out(CBM_(gs_gpu_library));
 	TRC("unloaded WGL, ARB, EXT");
 }

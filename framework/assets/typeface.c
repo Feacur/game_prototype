@@ -47,7 +47,7 @@ struct Typeface * typeface_init(struct Buffer * source) {
 void typeface_free(struct Typeface * typeface) {
 	if (typeface == NULL) { WRN("freeing NULL typeface"); return; }
 	buffer_free(&typeface->source);
-	zero_out(AMP_(typeface));
+	zero_out(CBMP_(typeface));
 	FREE(typeface);
 }
 

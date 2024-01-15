@@ -37,7 +37,7 @@ void ui_free(void) {
 	system_assets_drop(gs_ui.ah_shader);
 	system_assets_drop(gs_ui.ah_image);
 	system_assets_drop(gs_ui.ah_font);
-	zero_out(AM_(gs_ui));
+	zero_out(CBM_(gs_ui));
 }
 
 static void ui_internal_push_shader(void) {
@@ -52,18 +52,18 @@ static void ui_internal_push_shader(void) {
 static void ui_internal_push_image(void) {
 	struct Asset_Image const * asset = system_assets_get(gs_ui.ah_image);
 	struct Handle const gpu_handle = asset ? asset->gh_texture : (struct Handle){0};
-	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Image"), A_(gpu_handle));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Image"), CB_(gpu_handle));
 }
 
 static void ui_internal_push_font(void) {
 	struct Asset_Font const * asset = system_assets_get(gs_ui.ah_font);
 	struct Handle const gpu_handle = asset ? asset->gh_texture : (struct Handle){0};
-	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Font"), A_(gpu_handle));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Font"), CB_(gpu_handle));
 }
 
 static void ui_internal_push_tint(void) {
 	struct vec4 const vec4_Tint = {1, 1, 1, 1};
-	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Tint"), A_(vec4_Tint));
+	batcher_2d_uniforms_push(gs_renderer.batcher_2d, S_("p_Tint"), CB_(vec4_Tint));
 }
 
 void ui_start_frame(void) {

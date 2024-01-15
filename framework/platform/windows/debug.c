@@ -147,7 +147,7 @@ bool debug_to_system_init(void) {
 void debug_to_system_free(void) {
 	SymCleanup(GetCurrentProcess());
 	buffer_free(&gs_platform_debug.buffer);
-	zero_out(AM_(gs_platform_debug));
+	zero_out(CBM_(gs_platform_debug));
 }
 
 #else

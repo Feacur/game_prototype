@@ -17,7 +17,7 @@ struct Array array_init(uint32_t value_size) {
 void array_free(struct Array * array) {
 	if (array->allocate == NULL) { return; }
 	array->allocate(array->data, 0);
-	zero_out(AMP_(array));
+	zero_out(CBMP_(array));
 }
 
 void array_clear(struct Array * array, bool deallocate) {

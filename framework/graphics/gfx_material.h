@@ -32,11 +32,11 @@ void gfx_uniforms_free(struct Gfx_Uniforms * uniforms);
 
 void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms);
 
-struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, struct CString name, uint32_t offset);
-void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, struct CString name, struct CArray value);
+struct CBuffer_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, struct CString name, uint32_t offset);
+void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, struct CString name, struct CBuffer value);
 
-struct CArray_Mut gfx_uniforms_id_get(struct Gfx_Uniforms const * uniforms, struct Handle sh_name, uint32_t offset);
-void gfx_uniforms_id_push(struct Gfx_Uniforms * uniforms, struct Handle sh_name, struct CArray value);
+struct CBuffer_Mut gfx_uniforms_id_get(struct Gfx_Uniforms const * uniforms, struct Handle sh_name, uint32_t offset);
+void gfx_uniforms_id_push(struct Gfx_Uniforms * uniforms, struct Handle sh_name, struct CBuffer value);
 
 bool gfx_uniforms_iterate(struct Gfx_Uniforms const * uniforms, struct Gfx_Uniforms_Iterator * iterator);
 

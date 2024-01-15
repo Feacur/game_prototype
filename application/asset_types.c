@@ -32,7 +32,7 @@ static HANDLE_ACTION(asset_bytes_load) {
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		zero_out(AMP_(asset));
+		zero_out(CBMP_(asset));
 		return;
 	}
 
@@ -46,7 +46,7 @@ static HANDLE_ACTION(asset_bytes_load) {
 static HANDLE_ACTION(asset_bytes_drop) {
 	struct Asset_Bytes * asset = system_assets_get(handle);
 	FREE(asset->data);
-	zero_out(AMP_(asset));
+	zero_out(CBMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -59,7 +59,7 @@ static HANDLE_ACTION(asset_json_load) {
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		zero_out(AMP_(asset));
+		zero_out(CBMP_(asset));
 		return;
 	}
 
@@ -75,7 +75,7 @@ static HANDLE_ACTION(asset_json_load) {
 static HANDLE_ACTION(asset_json_drop) {
 	struct Asset_JSON * asset = system_assets_get(handle);
 	json_free(&asset->value);
-	// zero_out(AMP_(asset));
+	// zero_out(CBMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -88,7 +88,7 @@ static HANDLE_ACTION(asset_shader_load) {
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		zero_out(AMP_(asset));
+		zero_out(CBMP_(asset));
 		return;
 	}
 	// @todo: return error shader?
@@ -102,7 +102,7 @@ static HANDLE_ACTION(asset_shader_load) {
 static HANDLE_ACTION(asset_shader_drop) {
 	struct Asset_Shader * asset = system_assets_get(handle);
 	gpu_program_free(asset->gh_program);
-	zero_out(AMP_(asset));
+	zero_out(CBMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -126,7 +126,7 @@ static HANDLE_ACTION(asset_sampler_load) {
 static HANDLE_ACTION(asset_sampler_drop) {
 	struct Asset_Sampler * asset = system_assets_get(handle);
 	gpu_sampler_free(asset->gh_sampler);
-	zero_out(AMP_(asset));
+	zero_out(CBMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -155,7 +155,7 @@ static HANDLE_ACTION(asset_image_load) {
 	// binary
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		zero_out(AMP_(asset));
+		zero_out(CBMP_(asset));
 		return;
 	}
 
@@ -186,7 +186,7 @@ static HANDLE_ACTION(asset_image_load) {
 static HANDLE_ACTION(asset_image_drop) {
 	struct Asset_Image * asset = system_assets_get(handle);
 	gpu_texture_free(asset->gh_texture);
-	zero_out(AMP_(asset));
+	zero_out(CBMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -199,7 +199,7 @@ static HANDLE_ACTION(asset_typeface_load) {
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		zero_out(AMP_(asset));
+		zero_out(CBMP_(asset));
 		return;
 	}
 
@@ -213,7 +213,7 @@ static HANDLE_ACTION(asset_typeface_load) {
 static HANDLE_ACTION(asset_typeface_drop) {
 	struct Asset_Typeface * asset = system_assets_get(handle);
 	typeface_free(asset->typeface);
-	zero_out(AMP_(asset));
+	zero_out(CBMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -224,7 +224,7 @@ static JSON_PROCESSOR(asset_font_fill) {
 	struct Handle const * context = data;
 	struct Asset_Font * asset = system_assets_get(*context);
 	if (json->type == JSON_ERROR) {
-		zero_out(AMP_(asset));
+		zero_out(CBMP_(asset));
 		return;
 	}
 
@@ -262,7 +262,7 @@ static HANDLE_ACTION(asset_font_drop) {
 	struct Asset_Font * asset = system_assets_get(handle);
 	font_free(asset->font);
 	gpu_texture_free(asset->gh_texture);
-	zero_out(AMP_(asset));
+	zero_out(CBMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -272,7 +272,7 @@ static HANDLE_ACTION(asset_font_drop) {
 static JSON_PROCESSOR(asset_target_fill) {
 	struct Asset_Target * context = data;
 	if (json->type == JSON_ERROR) {
-		zero_out(AMP_(context));
+		zero_out(CBMP_(context));
 		return;
 	}
 
@@ -290,7 +290,7 @@ static HANDLE_ACTION(asset_target_load) {
 static HANDLE_ACTION(asset_target_drop) {
 	struct Asset_Target * asset = system_assets_get(handle);
 	gpu_target_free(asset->gh_target);
-	zero_out(AMP_(asset));
+	zero_out(CBMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -303,7 +303,7 @@ static HANDLE_ACTION(asset_model_load) {
 
 	struct Buffer file_buffer = platform_file_read_entire(name);
 	if (file_buffer.capacity == 0) {
-		zero_out(AMP_(asset));
+		zero_out(CBMP_(asset));
 		return;
 	}
 
@@ -319,7 +319,7 @@ static HANDLE_ACTION(asset_model_load) {
 static HANDLE_ACTION(asset_model_drop) {
 	struct Asset_Model * asset = system_assets_get(handle);
 	gpu_mesh_free(asset->gh_mesh);
-	zero_out(AMP_(asset));
+	zero_out(CBMP_(asset));
 }
 
 // ----- ----- ----- ----- -----
@@ -330,7 +330,7 @@ static JSON_PROCESSOR(asset_material_fill) {
 	struct Handle const * context = data;
 	struct Asset_Material * asset = system_assets_get(*context);
 	if (json->type == JSON_ERROR) {
-		zero_out(AMP_(asset));
+		zero_out(CBMP_(asset));
 		return;
 	}
 
@@ -347,7 +347,7 @@ static HANDLE_ACTION(asset_material_load) {
 static HANDLE_ACTION(asset_material_drop) {
 	struct Asset_Material * asset = system_assets_get(handle);
 	system_materials_discard(asset->mh_mat);
-	zero_out(AMP_(asset));
+	zero_out(CBMP_(asset));
 }
 
 //

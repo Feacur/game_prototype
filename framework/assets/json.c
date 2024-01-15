@@ -32,7 +32,7 @@ void json_free(struct JSON * value) {
 			array_free(array);
 		} break;
 	}
-	zero_out(AMP_(value));
+	zero_out(CBMP_(value));
 }
 
 // -- JSON get/at element

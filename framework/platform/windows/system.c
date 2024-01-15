@@ -103,7 +103,7 @@ void platform_system_free(void) {
 	signal(SIGSEGV, SIG_DFL);
 	signal(SIGTERM, SIG_DFL);
 
-	zero_out(AM_(gs_platform_system));
+	zero_out(CBM_(gs_platform_system));
 }
 
 // bool platform_system_is_powered(void) {

@@ -1,5 +1,6 @@
 // %appdata%/Code/User
 {
+	"terminal.integrated.defaultLocation": "editor",
 	"terminal.integrated.defaultProfile.windows": "Command Prompt",
 	"terminal.integrated.persistentSessionReviveProcess": "never",
 	"terminal.integrated.enablePersistentSessions": false,

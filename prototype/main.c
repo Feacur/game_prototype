@@ -340,7 +340,7 @@ static void prototype_draw_objects(void) {
 					struct Asset_Model const * model = system_assets_get(e_mesh->ah_mesh);
 
 					uint32_t const override_offset = gs_renderer.uniforms.headers.count;
-					gfx_uniforms_push(&gs_renderer.uniforms, S_("u_Model"), A_(u_Model));
+					gfx_uniforms_push(&gs_renderer.uniforms, S_("u_Model"), CB_(u_Model));
 
 					array_push_many(&gs_renderer.gpu_commands, 3, (struct GPU_Command[]){
 						(struct GPU_Command){

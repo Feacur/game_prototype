@@ -87,7 +87,7 @@ static void application_free(void) {
 	if (gs_app.callbacks.free != NULL) { gs_app.callbacks.free(); }
 	gpu_context_free(gs_app.gpu_context);
 	platform_window_free(gs_app.window);
-	zero_out(AM_(gs_app));
+	zero_out(CBM_(gs_app));
 }
 
 void application_update(void) {

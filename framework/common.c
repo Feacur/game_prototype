@@ -15,17 +15,42 @@
 
 struct CArray carray_const(struct CArray_Mut value) {
 	return (struct CArray){
-		.size = value.size,
+		.value_size = value.value_size,
+		.count = value.count,
 		.data = value.data,
 	};
 }
 
 bool carray_equals(struct CArray v1, struct CArray v2) {
+	if (v1.value_size != v2.value_size) { return false; }
+	if (v1.count != v2.count) { return false; }
+	return equals(v1.data, v2.data, v2.value_size * v2.count);
+}
+
+bool carray_empty(struct CArray value) {
+	if (value.value_size == 0) { return true; }
+	if (value.count == 0) { return true; }
+	if (value.data == NULL) { return true; }
+	return false;
+}
+
+// ----- ----- ----- ----- -----
+//     buffer
+// ----- ----- ----- ----- -----
+
+struct CBuffer cbuffer_const(struct CBuffer_Mut value) {
+	return (struct CBuffer){
+		.size = value.size,
+		.data = value.data,
+	};
+}
+
+bool cbuffer_equals(struct CBuffer v1, struct CBuffer v2) {
 	if (v1.size != v2.size) { return false; }
 	return equals(v1.data, v2.data, v2.size);
 }
 
-bool carray_empty(struct CArray value) {
+bool cbuffer_empty(struct CBuffer value) {
 	if (value.size == 0) { return true; }
 	if (value.data == NULL) { return true; }
 	return false;
@@ -101,7 +126,7 @@ char const * common_strstr(char const * buffer, char const * value) {
 //     utilities
 // ----- ----- ----- ----- -----
 
-void zero_out(struct CArray_Mut value) {
+void zero_out(struct CBuffer_Mut value) {
 	if (value.size == 0) { return; }
 	if (value.data == NULL) { return; }
 	memset(value.data, 0, value.size);

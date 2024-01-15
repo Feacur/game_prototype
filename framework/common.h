@@ -40,6 +40,12 @@
 #endif
 
 // ----- ----- ----- ----- -----
+//     constants
+// ----- ----- ----- ----- -----
+
+#define INDEX_EMPTY UINT32_MAX
+
+// ----- ----- ----- ----- -----
 //     forward
 // ----- ----- ----- ----- -----
 
@@ -119,12 +125,14 @@ typedef HANDLE_ACTION(Handle_Action);
 // ----- ----- ----- ----- -----
 
 struct CArray {
-	size_t size;
+	uint32_t value_size;
+	uint32_t count;
 	void const * data;
 };
 
 struct CArray_Mut {
-	size_t size;
+	uint32_t value_size;
+	uint32_t count;
 	void * data;
 };
 
@@ -132,11 +140,31 @@ struct CArray carray_const(struct CArray_Mut value);
 bool carray_equals(struct CArray v1, struct CArray v2);
 bool carray_empty(struct CArray value);
 
-#define A_(value) (struct CArray){.size = sizeof(value), .data = &value}
-#define AM_(value) (struct CArray_Mut){.size = sizeof(value), .data = &value}
-#define AMP_(pointer) (struct CArray_Mut){.size = sizeof(*pointer), .data = pointer}
+#define CA_(value) (struct CArray){.value_size = sizeof(value), .count = 1, .data = &value}
+#define CAM_(value) (struct CArray_Mut){.value_size = sizeof(value), .count = 1, .data = &value}
+#define CAMP_(pointer) (struct CArray_Mut){.value_size = sizeof(*pointer), .count = 1, .data = pointer}
 
-#define INDEX_EMPTY UINT32_MAX
+// ----- ----- ----- ----- -----
+//     buffer
+// ----- ----- ----- ----- -----
+
+struct CBuffer {
+	size_t size;
+	void const * data;
+};
+
+struct CBuffer_Mut {
+	size_t size;
+	void * data;
+};
+
+struct CBuffer cbuffer_const(struct CBuffer_Mut value);
+bool cbuffer_equals(struct CBuffer v1, struct CBuffer v2);
+bool cbuffer_empty(struct CBuffer value);
+
+#define CB_(value) (struct CBuffer){.size = sizeof(value), .data = &value}
+#define CBM_(value) (struct CBuffer_Mut){.size = sizeof(value), .data = &value}
+#define CBMP_(pointer) (struct CBuffer_Mut){.size = sizeof(*pointer), .data = pointer}
 
 // ----- ----- ----- ----- -----
 //     string
@@ -183,7 +211,7 @@ char const * common_strstr(char const * buffer, char const * value);
 //     utilities
 // ----- ----- ----- ----- -----
 
-void zero_out(struct CArray_Mut value);
+void zero_out(struct CBuffer_Mut value);
 
 bool contains_full_word(char const * container, struct CString value);
 

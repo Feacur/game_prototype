@@ -46,6 +46,6 @@ void functions_to_gpu_library_init(Proc_Getter * get_proc) {
 }
 
 void functions_to_gpu_library_free(void) {
-	zero_out(AM_(gl));
+	zero_out(CBM_(gl));
 	TRC("unloaded OGL");
 }

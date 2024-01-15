@@ -21,7 +21,7 @@ struct Gfx_Uniforms gfx_uniforms_init(void) {
 void gfx_uniforms_free(struct Gfx_Uniforms * uniforms) {
 	array_free(&uniforms->headers);
 	buffer_free(&uniforms->payload);
-	// zero_out(AMP_(uniforms));
+	// zero_out(CBMP_(uniforms));
 }
 
 void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {
@@ -29,30 +29,30 @@ void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {
 	buffer_clear(&uniforms->payload, false);
 }
 
-struct CArray_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, struct CString name, uint32_t offset) {
+struct CBuffer_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, struct CString name, uint32_t offset) {
 	struct Handle const sh_name = system_strings_find(name);
 	return gfx_uniforms_id_get(uniforms, sh_name, offset);
 }
 
-void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, struct CString name, struct CArray value) {
+void gfx_uniforms_push(struct Gfx_Uniforms * uniforms, struct CString name, struct CBuffer value) {
 	struct Handle const sh_name = system_strings_add(name);
 	gfx_uniforms_id_push(uniforms, sh_name, value);
 }
 
-struct CArray_Mut gfx_uniforms_id_get(struct Gfx_Uniforms const * uniforms, struct Handle id, uint32_t offset) {
+struct CBuffer_Mut gfx_uniforms_id_get(struct Gfx_Uniforms const * uniforms, struct Handle id, uint32_t offset) {
 	if (handle_is_null(id)) { goto null; }
 	for (uint32_t i = offset; i < uniforms->headers.count; i++) {
 		struct Gfx_Uniforms_Entry const * entry = array_at(&uniforms->headers, i);
 		if (!handle_equals(entry->id, id)) { continue; }
-		return (struct CArray_Mut){
+		return (struct CBuffer_Mut){
 			.data = (uint8_t *)uniforms->payload.data + entry->offset,
 			.size = entry->size,
 		};
 	}
-	null: return (struct CArray_Mut){0};
+	null: return (struct CBuffer_Mut){0};
 }
 
-void gfx_uniforms_id_push(struct Gfx_Uniforms * uniforms, struct Handle sh_name, struct CArray value) {
+void gfx_uniforms_id_push(struct Gfx_Uniforms * uniforms, struct Handle sh_name, struct CBuffer value) {
 	if (handle_is_null(sh_name)) { return; }
 	array_push_many(&uniforms->headers, 1, &(struct Gfx_Uniforms_Entry){
 		.id = sh_name,
@@ -88,7 +88,7 @@ struct Gfx_Material gfx_material_init(void) {
 
 void gfx_material_free(struct Gfx_Material * material) {
 	gfx_uniforms_free(&material->uniforms);
-	zero_out(AMP_(material));
+	zero_out(CBMP_(material));
 }
 
 void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_program) {
@@ -119,11 +119,11 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_pr
 		if (!cstring_starts(name, property_prefix)) { continue; }
 
 		struct GPU_Uniform const * uniform = it.value;
-		gfx_uniforms_id_push(&material->uniforms, *sh_name, (struct CArray){
+		gfx_uniforms_id_push(&material->uniforms, *sh_name, (struct CBuffer){
 			.size = gfx_type_get_size(uniform->type) * uniform->array_size,
 		});
 	}
-	zero_out((struct CArray_Mut){
+	zero_out((struct CBuffer_Mut){
 		.size = payload_bytes,
 		.data = material->uniforms.payload.data,
 	});

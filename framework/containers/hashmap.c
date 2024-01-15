@@ -33,7 +33,7 @@ void hashmap_free(struct Hashmap * hashmap) {
 	hashmap->allocate(hashmap->keys,   0);
 	hashmap->allocate(hashmap->values, 0);
 	hashmap->allocate(hashmap->marks,  0);
-	zero_out(AMP_(hashmap));
+	zero_out(CBMP_(hashmap));
 }
 
 void hashmap_clear(struct Hashmap * hashmap, bool deallocate) {
@@ -46,7 +46,7 @@ void hashmap_clear(struct Hashmap * hashmap, bool deallocate) {
 		hashmap->capacity = 0;
 	}
 	hashmap->count = 0;
-	zero_out((struct CArray_Mut){
+	zero_out((struct CBuffer_Mut){
 		.size = sizeof(*hashmap->marks) * hashmap->capacity,
 		.data = hashmap->marks,
 	});
@@ -76,7 +76,7 @@ void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity) {
 	hashmap->values = hashmap->allocate(NULL, sizeof(uint8_t)  * capacity * hashmap->value_size);
 	hashmap->marks  = hashmap->allocate(NULL, sizeof(uint8_t)  * capacity);
 
-	zero_out((struct CArray_Mut){
+	zero_out((struct CBuffer_Mut){
 		.size = sizeof(*hashmap->marks) * capacity,
 		.data = hashmap->marks,
 	});

@@ -591,11 +591,11 @@ static bool gpu_texture_upload(struct GPU_Texture_Internal * gpu_texture, struct
 	if (gpu_texture->base.size.x != asset->size.x) { return false; }
 	if (gpu_texture->base.size.y != asset->size.y) { return false; }
 
-	if (!carray_equals(A_(gpu_texture->base.format), A_(asset->format))) {
+	if (!cbuffer_equals(CB_(gpu_texture->base.format), CB_(asset->format))) {
 		return false;
 	}
 
-	if (!carray_equals(A_(gpu_texture->base.settings), A_(asset->settings))) {
+	if (!cbuffer_equals(CB_(gpu_texture->base.settings), CB_(asset->settings))) {
 		return false;
 	}
 
@@ -684,7 +684,7 @@ HANDLE_ACTION(gpu_texture_free) {
 	FOR_ARRAY(&gs_graphics_state.active.units, it) {
 		struct Gfx_Unit * unit = it.value;
 		if (handle_equals(unit->gh_texture, handle)) {
-			zero_out(AMP_(unit));
+			zero_out(CBMP_(unit));
 			uint32_t const id = it.curr + 1;
 			gl.BindTextureUnit((GLuint)id, 0);
 			gl.BindSampler((GLuint)id, 0);
@@ -998,7 +998,7 @@ static bool gpu_mesh_upload(struct GPU_Mesh_Internal * gpu_mesh, struct Mesh con
 	FOR_ARRAY(&gpu_mesh->base.buffers, it) {
 		struct GPU_Mesh_Buffer const * gpu_mesh_buffer = it.value;
 		struct Mesh_Buffer const * asset_buffer = array_at(&asset->buffers, it.curr);
-		if (!carray_equals(A_(gpu_mesh_buffer->format), A_(asset_buffer->format))) {
+		if (!cbuffer_equals(CB_(gpu_mesh_buffer->format), CB_(asset_buffer->format))) {
 			return false;
 		}
 	}
@@ -1551,7 +1551,7 @@ void graphics_to_gpu_library_free(void) {
 
 	//
 	array_free(&gs_graphics_state.active.units);
-	zero_out(AM_(gs_graphics_state));
+	zero_out(CBM_(gs_graphics_state));
 
 	if (inst_count > 0) { DEBUG_BREAK(); }
 

@@ -101,7 +101,7 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	//
 	gfx_uniforms_free(&batcher->uniforms);
 	//
-	zero_out(AMP_(batcher));
+	zero_out(CBMP_(batcher));
 	FREE(batcher);
 }
 
@@ -155,11 +155,11 @@ void batcher_2d_set_shader(
 	batcher->batch.depth_mode = depth_mode;
 }
 
-void batcher_2d_uniforms_push(struct Batcher_2D * batcher, struct CString name, struct CArray value) {
+void batcher_2d_uniforms_push(struct Batcher_2D * batcher, struct CString name, struct CBuffer value) {
 	struct Handle const id = system_strings_add(name);
-	struct CArray_Mut const field = gfx_uniforms_id_get(&batcher->uniforms, id, batcher->batch.uniform_offset);
+	struct CBuffer_Mut const field = gfx_uniforms_id_get(&batcher->uniforms, id, batcher->batch.uniform_offset);
 	if (field.data != NULL) {
-		if (carray_equals(carray_const(field), value)) { return; }
+		if (cbuffer_equals(cbuffer_const(field), value)) { return; }
 		batcher_2d_internal_bake_pass(batcher);
 	}
 	gfx_uniforms_id_push(&batcher->uniforms, id, value);
@@ -446,7 +446,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 }
 
 void batcher_2d_clear(struct Batcher_2D * batcher) {
-	zero_out(AM_(batcher->batch));
+	zero_out(CBM_(batcher->batch));
 	array_clear(&batcher->codepoints, false);
 	array_clear(&batcher->batches, false);
 	array_clear(&batcher->words, false);
