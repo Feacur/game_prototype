@@ -112,14 +112,14 @@ static struct Pixel_Format choose_pixel_format(HDC device, Comparator compare) {
 		}
 
 		// discard non-supported
-		if (!gs_gpu_library.ext.srgb && vals[KEY_SRGB]) { continue; }
-		if (!gs_gpu_library.arb.samples && vals[KEY_SAMPLES] > 0) { continue; }
+		if (!gs_gpu_library.ext.srgb && vals[KEY_SRGB])       { continue; }
+		if (!gs_gpu_library.arb.samples && vals[KEY_SAMPLES]) { continue; }
 
 		// hardware-accelerated
-		if (vals[KEY_DRAW_TO_WINDOW] == false) { continue; }
-		if (vals[KEY_SUPPORT_OPENGL] == false) { continue; }
-		if (vals[KEY_DOUBLE_BUFFER]  == false) { continue; }
-		if (vals[KEY_PIXEL_TYPE]   != WGL_TYPE_RGBA_ARB) { continue; }
+		if (!vals[KEY_DRAW_TO_WINDOW]) { continue; }
+		if (!vals[KEY_SUPPORT_OPENGL]) { continue; }
+		if (!vals[KEY_DOUBLE_BUFFER])  { continue; }
+		if (vals[KEY_PIXEL_TYPE]   != WGL_TYPE_RGBA_ARB)         { continue; }
 		if (vals[KEY_ACCELERATION] != WGL_FULL_ACCELERATION_ARB) { continue; }
 
 		struct Pixel_Format const format = {
@@ -341,14 +341,14 @@ static bool gpu_library_bootstrap(bool (* init)(void)) {
 	DescribePixelFormat(surface, pfd_id, sizeof(pfd), &pfd);
 	SetPixelFormat(surface, pfd_id, &pfd);
 
-	// ... or a temporary rendering context
+	// ... and a temporary rendering context
 	HGLRC const context = gs_gpu_library.dll.CreateContext(surface);
 	gs_gpu_library.dll.MakeCurrent(surface, context);
 
 	// ... for a persistent WGL
 	bool success = init();
 
-	// ... and done
+	// ... ta-da
 	TRC("destroying bootstrap context for WGL");
 	gs_gpu_library.dll.MakeCurrent(NULL, NULL);
 	gs_gpu_library.dll.DeleteContext(context);

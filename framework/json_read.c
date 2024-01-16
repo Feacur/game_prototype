@@ -214,30 +214,17 @@ enum Texture_Flag json_read_texture_flags(struct JSON const * json) {
 	return flags;
 }
 
-enum Mipmap_Mode json_read_mipmap_mode(struct JSON const * json) {
+enum Lookup_Mode json_read_lookup_mode(struct JSON const * json) {
 	if (json->type == JSON_STRING) {
 		struct CString const value = json_as_string(json);
 		if (cstring_equals(value, S_("near"))) {
-			return MIPMAP_MODE_NEAR;
+			return LOOKUP_MODE_LERP;
 		}
 		if (cstring_equals(value, S_("lerp"))) {
-			return MIPMAP_MODE_LERP;
+			return LOOKUP_MODE_LERP;
 		}
 	}
-	return MIPMAP_MODE_NONE;
-}
-
-enum Filter_Mode json_read_filter_mode(struct JSON const * json) {
-	if (json->type == JSON_STRING) {
-		struct CString const value = json_as_string(json);
-		if (cstring_equals(value, S_("near"))) {
-			return FILTER_MODE_LERP;
-		}
-		if (cstring_equals(value, S_("lerp"))) {
-			return FILTER_MODE_LERP;
-		}
-	}
-	return FILTER_MODE_NONE;
+	return LOOKUP_MODE_NONE;
 }
 
 enum Addr_Flag json_read_addr_flags(struct JSON const * json) {
@@ -263,9 +250,9 @@ enum Addr_Flag json_read_addr_flags(struct JSON const * json) {
 struct Gfx_Sampler json_read_sampler(struct JSON const * json) {
 	if (json->type != JSON_OBJECT) { return (struct Gfx_Sampler){0}; }
 	struct Gfx_Sampler result = {
-		.mipmap     = json_read_mipmap_mode(json_get(json, S_("mipmap"))),
-		.min_filter = json_read_filter_mode(json_get(json, S_("min_filter"))),
-		.mag_filter = json_read_filter_mode(json_get(json, S_("mag_filter"))),
+		.mipmap     = json_read_lookup_mode(json_get(json, S_("mipmap"))),
+		.filter_min = json_read_lookup_mode(json_get(json, S_("min_filter"))),
+		.filter_mag = json_read_lookup_mode(json_get(json, S_("mag_filter"))),
 		.addr_x     = json_read_addr_flags(json_get(json, S_("wrap_x"))),
 		.addr_y     = json_read_addr_flags(json_get(json, S_("wrap_y"))),
 		.addr_z     = json_read_addr_flags(json_get(json, S_("wrap_z"))),

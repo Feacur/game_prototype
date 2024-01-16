@@ -22,6 +22,7 @@ uint32_t formatter_fmt(size_t capacity, char * output, char const * format, ...)
 `%#f`  - float with decimal point
 `%zu`  - size_t as dec
 
+`%-`   - left-justify
 `%*`   - pad a with leading ` `
 
 `%.*d` - pad a with leading `0`

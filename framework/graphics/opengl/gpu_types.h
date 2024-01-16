@@ -38,8 +38,8 @@ struct CString gpu_types_block(void);
 //     GPU sampler part
 // ----- ----- ----- ----- -----
 
-GLint gpu_min_filter_mode(enum Mipmap_Mode mipmap, enum Filter_Mode filter);
-GLint gpu_mag_filter_mode(enum Filter_Mode value);
+GLint gpu_min_filter_mode(enum Lookup_Mode mipmap, enum Lookup_Mode filter);
+GLint gpu_mag_filter_mode(enum Lookup_Mode value);
 GLint gpu_addr_mode(enum Addr_Flag value);
 
 // ----- ----- ----- ----- -----

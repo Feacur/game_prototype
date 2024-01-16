@@ -176,16 +176,10 @@ enum Batcher_Flag {
 //     GPU sampler part
 // ----- ----- ----- ----- -----
 
-enum Mipmap_Mode {
-	MIPMAP_MODE_NONE,
-	MIPMAP_MODE_NEAR,
-	MIPMAP_MODE_LERP,
-};
-
-enum Filter_Mode {
-	FILTER_MODE_NONE,
-	FILTER_MODE_NEAR,
-	FILTER_MODE_LERP,
+enum Lookup_Mode {
+	LOOKUP_MODE_NONE,
+	LOOKUP_MODE_NEAR,
+	LOOKUP_MODE_LERP,
 };
 
 enum Addr_Flag {
@@ -199,8 +193,8 @@ enum Addr_Flag {
 };
 
 struct Gfx_Sampler {
-	enum Mipmap_Mode mipmap;
-	enum Filter_Mode min_filter, mag_filter;
+	enum Lookup_Mode mipmap;
+	enum Lookup_Mode filter_min, filter_mag;
 	enum Addr_Flag addr_x, addr_y, addr_z;
 	struct vec4 border;
 };

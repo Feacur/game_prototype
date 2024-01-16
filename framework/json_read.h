@@ -25,8 +25,7 @@ enum Blend_Mode json_read_blend_mode(struct JSON const * json);
 enum Depth_Mode json_read_depth_mode(struct JSON const * json);
 
 enum Texture_Flag json_read_texture_flags(struct JSON const * json);
-enum Mipmap_Mode json_read_mipmap_mode(struct JSON const * json);
-enum Filter_Mode json_read_filter_mode(struct JSON const * json);
+enum Lookup_Mode json_read_lookup_mode(struct JSON const * json);
 enum Addr_Flag json_read_addr_flags(struct JSON const * json);
 struct Gfx_Sampler json_read_sampler(struct JSON const * json);
 

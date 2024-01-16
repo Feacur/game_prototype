@@ -229,30 +229,30 @@ struct CString gpu_types_block(void) {
 //     GPU sampler part
 // ----- ----- ----- ----- -----
 
-GLint gpu_min_filter_mode(enum Mipmap_Mode mipmap, enum Filter_Mode filter) {
+GLint gpu_min_filter_mode(enum Lookup_Mode mipmap, enum Lookup_Mode filter) {
 	switch (mipmap) {
 		// choose 1 or lerp 4 texels
-		case MIPMAP_MODE_NONE: switch (filter) {
-			case FILTER_MODE_NONE:  return GL_NEAREST;
-			case FILTER_MODE_NEAR:  return GL_NEAREST;
-			case FILTER_MODE_LERP:  return GL_LINEAR;
+		case LOOKUP_MODE_NONE: switch (filter) {
+			case LOOKUP_MODE_NONE:  return GL_NEAREST;
+			case LOOKUP_MODE_NEAR:  return GL_NEAREST;
+			case LOOKUP_MODE_LERP:  return GL_LINEAR;
 		} break;
 
 		// choose 1 mip-map
 		// choose 1 or lerp 4 texels
-		case MIPMAP_MODE_NEAR: switch (filter) {
-			case FILTER_MODE_NONE:  return GL_NEAREST_MIPMAP_NEAREST;
-			case FILTER_MODE_NEAR:  return GL_NEAREST_MIPMAP_NEAREST;
-			case FILTER_MODE_LERP:  return GL_LINEAR_MIPMAP_NEAREST;
+		case LOOKUP_MODE_NEAR: switch (filter) {
+			case LOOKUP_MODE_NONE:  return GL_NEAREST_MIPMAP_NEAREST;
+			case LOOKUP_MODE_NEAR:  return GL_NEAREST_MIPMAP_NEAREST;
+			case LOOKUP_MODE_LERP:  return GL_LINEAR_MIPMAP_NEAREST;
 		} break;
 
 		// choose 2 mip-maps
 		// choose 1 or lerp 4 texels
 		// lerp 2 values
-		case MIPMAP_MODE_LERP: switch (filter) {
-			case FILTER_MODE_NONE:  return GL_NEAREST_MIPMAP_LINEAR;
-			case FILTER_MODE_NEAR:  return GL_NEAREST_MIPMAP_LINEAR;
-			case FILTER_MODE_LERP:  return GL_LINEAR_MIPMAP_LINEAR;
+		case LOOKUP_MODE_LERP: switch (filter) {
+			case LOOKUP_MODE_NONE:  return GL_NEAREST_MIPMAP_LINEAR;
+			case LOOKUP_MODE_NEAR:  return GL_NEAREST_MIPMAP_LINEAR;
+			case LOOKUP_MODE_LERP:  return GL_LINEAR_MIPMAP_LINEAR;
 		} break;
 	}
 	ERR("unknown min filter mode");
@@ -260,12 +260,12 @@ GLint gpu_min_filter_mode(enum Mipmap_Mode mipmap, enum Filter_Mode filter) {
 	return GL_NONE;
 }
 
-GLint gpu_mag_filter_mode(enum Filter_Mode value) {
+GLint gpu_mag_filter_mode(enum Lookup_Mode value) {
 	// choose 1 or lerp 4 texels
 	switch (value) {
-		case FILTER_MODE_NONE:  return GL_NEAREST;
-		case FILTER_MODE_NEAR:  return GL_NEAREST;
-		case FILTER_MODE_LERP:  return GL_LINEAR;
+		case LOOKUP_MODE_NONE:  return GL_NEAREST;
+		case LOOKUP_MODE_NEAR:  return GL_NEAREST;
+		case LOOKUP_MODE_LERP:  return GL_LINEAR;
 	}
 	ERR("unknown mag filter mode");
 	REPORT_CALLSTACK(); DEBUG_BREAK();

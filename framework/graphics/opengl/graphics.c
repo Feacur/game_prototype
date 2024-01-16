@@ -512,8 +512,8 @@ struct GPU_Program const * gpu_program_get(struct Handle handle) {
 
 static bool gpu_sampler_upload(struct GPU_Sampler_Internal * gpu_sampler, struct Gfx_Sampler const * asset) {
 	gpu_sampler->base = *asset;
-	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(asset->mipmap, asset->min_filter));
-	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(asset->mag_filter));
+	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(asset->mipmap, asset->filter_min));
+	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(asset->filter_mag));
 	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_WRAP_S, gpu_addr_mode(asset->addr_x));
 	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_WRAP_T, gpu_addr_mode(asset->addr_y));
 	gl.SamplerParameteri(gpu_sampler->id, GL_TEXTURE_WRAP_R, gpu_addr_mode(asset->addr_z));
@@ -643,6 +643,7 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 	gpu_texture_upload(&gpu_texture, asset);
 
 	// chart
+	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MAX_LEVEL, (GLint)gpu_texture.base.settings.sublevels);
 	gl.TextureParameteriv(gpu_texture.id, GL_TEXTURE_SWIZZLE_RGBA, (GLint[]){
 		gpu_swizzle_op(gpu_texture.base.settings.swizzle[0], 0),
 		gpu_swizzle_op(gpu_texture.base.settings.swizzle[1], 1),
@@ -652,8 +653,8 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 
 	// default sampler
 	struct Gfx_Sampler const sampler = {0};
-	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(sampler.mipmap, sampler.min_filter));
-	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(sampler.mag_filter));
+	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MIN_FILTER, gpu_min_filter_mode(sampler.mipmap, sampler.filter_min));
+	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MAG_FILTER, gpu_mag_filter_mode(sampler.filter_mag));
 	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_WRAP_S, gpu_addr_mode(sampler.addr_x));
 	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_WRAP_T, gpu_addr_mode(sampler.addr_y));
 	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_WRAP_R, gpu_addr_mode(sampler.addr_z));
