@@ -229,7 +229,7 @@ struct Texture_Format {
 
 struct Texture_Settings {
 	enum Swizzle_Op swizzle[4];
-	uint32_t sublevels;
+	uint32_t levels;
 };
 
 // ----- ----- ----- ----- -----

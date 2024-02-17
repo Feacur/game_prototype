@@ -74,6 +74,8 @@ void gpu_texture_update(struct Handle handle, struct Image const * asset);
 
 struct GPU_Texture const * gpu_texture_get(struct Handle handle);
 
+uint32_t gpu_texture_get_levels(struct GPU_Texture const * gpu_texture);
+
 // ----- ----- ----- ----- -----
 //     GPU unit part
 // ----- ----- ----- ----- -----

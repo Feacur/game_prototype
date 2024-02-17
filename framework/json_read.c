@@ -263,7 +263,7 @@ struct Gfx_Sampler json_read_sampler(struct JSON const * json) {
 
 struct Texture_Settings json_read_texture_settings(struct JSON const * json) {
 	struct Texture_Settings result = {
-		.sublevels = (uint32_t)json_get_number(json, S_("sublevels")),
+		.levels = (uint32_t)json_get_number(json, S_("levels")),
 	};
 	return result;
 }

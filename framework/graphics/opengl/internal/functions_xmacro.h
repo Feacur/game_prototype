@@ -151,6 +151,8 @@ XMACRO(TEXTUREPARAMETERF,  TextureParameterf)
 XMACRO(TEXTUREPARAMETERI,  TextureParameteri)
 XMACRO(TEXTUREPARAMETERFV, TextureParameterfv)
 XMACRO(TEXTUREPARAMETERIV, TextureParameteriv)
+XMACRO(GETTEXTUREPARAMETERFV, GetTextureParameterfv)
+XMACRO(GETTEXTUREPARAMETERIV, GetTextureParameteriv)
 XMACRO(BINDTEXTUREUNIT,    BindTextureUnit)
 
 // ----- ----- ----- ----- -----

@@ -603,7 +603,6 @@ static bool gpu_texture_upload(struct GPU_Texture_Internal * gpu_texture, struct
 	if (asset->size.x == 0)  { return true; }
 	if (asset->size.y == 0)  { return true; }
 
-	// @idea: individual levels loading
 	gl.TextureSubImage2D(
 		gpu_texture->id, 0,
 		0, 0, (GLsizei)asset->size.x, (GLsizei)asset->size.y,
@@ -611,9 +610,9 @@ static bool gpu_texture_upload(struct GPU_Texture_Internal * gpu_texture, struct
 		gpu_pixel_data_type(asset->format),
 		asset->data
 	);
-	if (gpu_texture->base.settings.sublevels != 0) {
-		gl.GenerateTextureMipmap(gpu_texture->id);
-	}
+
+	uint32_t const levels = gpu_texture_get_levels(&gpu_texture->base);
+	if (levels > 1) { gl.GenerateTextureMipmap(gpu_texture->id); }
 
 	return true;
 }
@@ -630,20 +629,23 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 	if (gpu_texture.base.size.x < asset->size.x) { WRN("texture x exceeds limits"); DEBUG_BREAK(); }
 	if (gpu_texture.base.size.y < asset->size.y) { WRN("texture y exceeds limits"); DEBUG_BREAK(); }
 
-	if (gpu_texture.base.size.x == 0)  { return gpu_texture; }
-	if (gpu_texture.base.size.y == 0)  { return gpu_texture; }
+	uint32_t const levels = gpu_texture_get_levels(&gpu_texture.base);
+	if (levels < asset->settings.levels) { WRN("texture levels count exceeds limits"); DEBUG_BREAK(); }
+
+	if (gpu_texture.base.size.x == 0) { return gpu_texture; }
+	if (gpu_texture.base.size.y == 0) { return gpu_texture; }
 
 	// allocate and upload
 	gl.CreateTextures(GL_TEXTURE_2D, 1, &gpu_texture.id);
 	gl.TextureStorage2D(
-		gpu_texture.id, (GLsizei)(gpu_texture.base.settings.sublevels + 1)
+		gpu_texture.id, (GLsizei)levels
 		, gpu_sized_internal_format(gpu_texture.base.format)
 		, (GLsizei)gpu_texture.base.size.x, (GLsizei)gpu_texture.base.size.y
 	);
 	gpu_texture_upload(&gpu_texture, asset);
 
 	// chart
-	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MAX_LEVEL, (GLint)gpu_texture.base.settings.sublevels);
+	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_MAX_LEVEL, (GLint)(levels - 1));
 	gl.TextureParameteriv(gpu_texture.id, GL_TEXTURE_SWIZZLE_RGBA, (GLint[]){
 		gpu_swizzle_op(gpu_texture.base.settings.swizzle[0], 0),
 		gpu_swizzle_op(gpu_texture.base.settings.swizzle[1], 1),

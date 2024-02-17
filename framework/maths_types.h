@@ -42,7 +42,7 @@ struct mat4 { struct vec4 x, y, z, w; };
 
 struct urect { struct uvec2 min, max; };
 struct srect { struct svec2 min, max; };
-struct rect { struct vec2 min, max; };
+struct rect  { struct vec2  min, max; };
 
 // ----- ----- ----- ----- -----
 //     constants
