@@ -110,8 +110,7 @@
 	// -- extensions: ziglang.vscode-zig
 	"zig.initialSetupDone": true,
 	"zig.checkForUpdate": false,
-	"zig.zigPath": "",
-	"zig.zls.enabled": true,
+	"zig.path": "zig.exe",
 	"zig.zls.path": "zls.exe",
 	"zig.zls.checkForUpdate": false,
 }

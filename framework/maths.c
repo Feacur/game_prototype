@@ -235,7 +235,7 @@ int32_t map01_to_s32(float value) {
   +------------+
   v = i*a1 + j*a2 + k*a3 + ...
   v1 * v2 = (i*a1 + j*a2 + k*a3 + ...) * (i*b1 + j*b2 + k*b3 + ...)
-          = -dot(v1, v2) + cross(v1, v2)
+          = cross(v1, v2) - dot(v1, v2)
 
 > bivector basis
   +---------------+
@@ -246,7 +246,7 @@ int32_t map01_to_s32(float value) {
   +---------------+
   v = x*S1 + y*S2 + z*S3 + ...
   v1 * v2 = (x*a1 + y*a2 + z*a3 + ...) * (x*b1 + y*b2 + z*b3 + ...)
-          = dot(v1, v2) + wedge(v1, v2)
+          = wedge(v1, v2) + dot(v1, v2)
 
 > correspondence in 3d
   i ~ yz
@@ -459,42 +459,52 @@ struct vec4 quat_mul(struct vec4 q1, struct vec4 q2) {
 	};
 
 /*
-result = (q1.x*i + q1.y*j + q1.z*k + q1.w)
-       * (q2.x*i + q2.y*j + q2.z*k + q2.w)
+result = (q1.v + q1.w)
+       * (q2.v + q2.w)
 
-vector part: w1 * v2 + w2 * v1 + cross(v1, v2)
-scalar part: w1      * w2      - dot(v1, v2)
+result = cross(q1.v, q2.v) + q2.v * q1.w + q1.v * q2.w
+       -   dot(q1.v, q2.v)               + q1.w * q2.w
 */
 }
 
-struct vec4 quat_conjugate(struct vec4 q) { return (struct vec4){-q.x, -q.y, -q.z, q.w}; }
-struct vec4 quat_reciprocal(struct vec4 q) {
-	float const rms = 1 / vec4_dot(q, q);
-	return (struct vec4){-q.x * rms, -q.y * rms, -q.z * rms, q.w * rms};
-}
-
 struct vec3 quat_transform(struct vec4 q, struct vec3 v) {
-	float const xx = q.x*q.x; float const yy = q.y*q.y; float const zz = q.z*q.z; float const ww = q.w*q.w;
-	float const xy = q.x*q.y; float const yz = q.y*q.z; float const zw = q.z*q.w; float const wx = q.w*q.x;
-	float const xz = q.x*q.z; float const yw = q.y*q.w;
+	struct vec3 const cr = vec3_cross((struct vec3){q.x, q.y, q.z}, v);
 	return (struct vec3){
-		v.x * ( xx - yy - zz + ww) + (v.y * (xy - zw) + v.z * (yw + xz)) * 2,
-		v.y * (-xx + yy - zz + ww) + (v.z * (yz - wx) + v.x * (zw + xy)) * 2,
-		v.z * (-xx - yy + ww + zz) + (v.x * (xz - yw) + v.y * (yz + wx)) * 2,
+	//	v   + (cross(q.v, cr)          + q.w * cr)   * 2
+		v.x + (q.y * cr.z - q.z * cr.y + q.w * cr.x) * 2,
+		v.y + (q.z * cr.x - q.x * cr.z + q.w * cr.y) * 2,
+		v.z + (q.x * cr.y - q.y * cr.x + q.w * cr.z) * 2,
 	};
 
 /*
-result = q * {vector, 0} * q_reciprocal
+(*) dot(q, q) == 1 for nomalized quaternions, so it's ok to ignore it
+    dot(q.v, q.v) + q.w * q.w == 1
+    cr == cross(q.v, v)
+    cross(cross(a, b), c) == dot(a, c) * b - dot(a, b) * c
+
+result = ( q.v + q.w)
+       * (   v +   0)
+       * (-q.v + q.w) / dot(q, q)
+
+r1 = cross(q.v, v) + v * q.w
+   -   dot(q.v, v)
+
+r2 = cross(r1.v, -q.v) - q.v * r1.w + r1.v * q.w
+   +   dot(r1.v,  q.v)              + r1.w * q.w
+
+result = v
+       + cross(q.v,  cr * 2)
+       +       q.w * cr * 2
 */
 }
 
 void quat_get_axes(struct vec4 q, struct vec3 * x, struct vec3 * y, struct vec3 * z) {
-	float const xx = q.x*q.x; float const yy = q.y*q.y; float const zz = q.z*q.z; float const ww = q.w*q.w;
-	float const xy = q.x*q.y; float const yz = q.y*q.z; float const zw = q.z*q.w; float const wx = q.w*q.x;
-	float const xz = q.x*q.z; float const yw = q.y*q.w;
-	*x = (struct vec3){(xx - yy - zz + ww), (zw + xy) * 2,        (xz - yw) * 2};
-	*y = (struct vec3){(xy - zw) * 2,       (-xx + yy - zz + ww), (yz + wx) * 2};
-	*z = (struct vec3){(yw + xz) * 2,       (yz - wx) * 2,        (-xx - yy + ww + zz)};
+	float const xx = q.x*q.x; float const xy = q.x*q.y; float const xz = q.x*q.z;
+	float const zw = q.z*q.w; float const yy = q.y*q.y; float const yz = q.y*q.z;
+	float const yw = q.y*q.w; float const wx = q.w*q.x; float const zz = q.z*q.z;
+	*x = (struct vec3){1 - (yy + zz) * 2,     (xy + zw) * 2,     (xz - yw) * 2};
+	*y = (struct vec3){    (xy - zw) * 2, 1 - (zz + xx) * 2,     (yz + wx) * 2};
+	*z = (struct vec3){    (xz + yw) * 2,     (yz - wx) * 2, 1 - (xx + yy) * 2};
 
 /*
 x = quat_transform(q, {1,0,0})

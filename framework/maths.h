@@ -222,8 +222,6 @@ struct vec4 quat_axis(struct vec3 axis, float radians);
 struct vec4 quat_radians(struct vec3 radians);
 struct vec4 quat_mul(struct vec4 q1, struct vec4 q2);
 
-struct vec4 quat_conjugate(struct vec4 q);
-struct vec4 quat_reciprocal(struct vec4 q);
 struct vec3 quat_transform(struct vec4 q, struct vec3 v);
 void        quat_get_axes(struct vec4 q, struct vec3 * x, struct vec3 * y, struct vec3 * z);
 
