@@ -1,12 +1,15 @@
 @echo off
 chcp 65001 > nul
-setlocal enabledelayedexpansion
 echo.building with MSVC...
+
+setlocal enabledelayedexpansion
+rem |> execute relative to this script
+cd /D "%~dp0"
 
 rem https://learn.microsoft.com/cpp/build/reference/compiler-options
 
 rem |> OPTIONS
-call build_options.bat %* || ( goto :eof )
+call build_options.bat %* || ( goto :end )
 set compiler=%compiler% -nologo -diagnostics:caret
 set compiler=%compiler% -std:c11 -options:strict
 set compiler=%compiler% -EHa- -GR-
@@ -44,4 +47,5 @@ call %build% link
 call %build% post
 call %build% stat
 
+:end
 endlocal

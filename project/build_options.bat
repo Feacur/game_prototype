@@ -5,6 +5,9 @@ set func=%cd%/functions.bat
 set build=%cd%/build_actions.bat
 call %func% get_millis time_zero
 
+rem |> declare arguments as variables
+rem for %%a in (%*) do set "%%a=1"
+
 rem [any]
 set project=%~1
 if [%project%] == [] ( set "project=game" )

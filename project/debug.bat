@@ -1,7 +1,8 @@
 @echo off
 chcp 65001 > nul
-setlocal enabledelayedexpansion
 echo.debugging with RemedyBG...
+
+setlocal enabledelayedexpansion
 
 set func=%cd%/functions.bat
 

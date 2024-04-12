@@ -3,9 +3,10 @@
 
 # generate your SSH key with something like
 # ssh-keygen -t rsa -b 4096 -C "email@domain.tld"
+# ssh-keygen -t ed25519 -C "email@domain.tld"
 
 # GitHub
 Host github.com
     HostName github.com
     PreferredAuthentications publickey
-    IdentityFile ~/.ssh/ssh_key_file
+    IdentityFile ~/.ssh/private_key_file_name

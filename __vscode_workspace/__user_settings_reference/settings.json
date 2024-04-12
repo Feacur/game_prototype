@@ -11,6 +11,7 @@
 	"security.workspace.trust.untrustedFiles": "open",
 	"files.refactoring.autoSave": false,
 	"scm.autoReveal": false,
+	"explorer.confirmDelete": false,
 	"telemetry.telemetryLevel": "off",
 	"window.restoreWindows": "none",
 	"debug.toolBarLocation": "commandCenter",
@@ -20,13 +21,6 @@
 	// -- files
 	"files.trimFinalNewlines": false,
 	"files.trimTrailingWhitespace": false,
-	// -- git
-	"git.enabled": false,
-	"git.mergeEditor": false,
-	"git.autorefresh": false,
-	"git.enableStatusBarSync": false,
-	"git.detectSubmodules": false,
-	"github.gitAuthentication": false,
 	// -- workbench
 	"workbench.startupEditor": "newUntitledFile",
 	"workbench.activityBar.location": "hidden",
@@ -60,6 +54,7 @@
 	"editor.autoClosingDelete": "never",
 	"editor.autoClosingOvertype": "never",
 	"editor.trimAutoWhitespace": true,
+	"editor.stickyScroll.maxLineCount": 5,
 	"editor.unicodeHighlight.invisibleCharacters": false,
 	"editor.unicodeHighlight.ambiguousCharacters": false,
 	"editor.inlayHints.enabled": "off",
@@ -67,11 +62,21 @@
 	"diffEditor.codeLens": true,
 	"diffEditor.maxComputationTime": 0,
 	"diffEditor.maxFileSize": 0,
+	// -- extensions: editorconfig.editorconfig
+	"editorconfig.generateAuto": false,
+	// -- extensions: vscode.git-base, vscode.git, vscode.github
+	"git.enabled": false,
+	"git.mergeEditor": false,
+	"git.autorefresh": false,
+	"git.enableStatusBarSync": false,
+	"git.detectSubmodules": false,
+	"github.gitAuthentication": false,
 	// -- extensions: ms-dotnettools.csharp
 	"csharp.suppressHiddenDiagnostics": false,
 	"omnisharp.loggingLevel": "information",
 	"omnisharp.enableDecompilationSupport": true,
 	"omnisharp.organizeImportsOnFormat": true,
+	"omnisharp.enableEditorConfigSupport": true,
 	"dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
 	// -- extensions: ms-dotnettools.vscode-dotnet-runtime
 	"dotnetAcquisitionExtension.enableTelemetry": false,
@@ -107,6 +112,10 @@
 	// -- extensions: geequlim.godot-tools
 	"godot_tools.editor_path": "godot",
 	"godot_tools.gdscript_lsp_server_port": 6005,
+	// -- extensions: neikeq.godot-csharp-vscode
+	"godotTools.editorPath.godot3": "godot",
+	"godotTools.editorPath.godot4": "godot",
+	"godotTools.lsp.serverPort": 6005,
 	// -- extensions: ziglang.vscode-zig
 	"zig.initialSetupDone": true,
 	"zig.checkForUpdate": false,
@@ -118,6 +127,7 @@
 // - jdinhlife.gruvbox
 // - ms-vscode.hexeditor
 // - slevesque.shader
+// - editorconfig.editorconfig
 //
 // - ziglang.vscode-zig
 // - ms-vscode.mono-debug

@@ -1,10 +1,13 @@
 @echo off
 chcp 65001 > nul
-setlocal enabledelayedexpansion
 echo.building with Zig...
 
+setlocal enabledelayedexpansion
+rem |> execute relative to this script
+cd /D "%~dp0"
+
 rem |> OPTIONS
-call build_options.bat %* || ( goto :eof )
+call build_options.bat %* || ( goto :end )
 set compiler=%compiler% -std=c99
 set compiler=%compiler% -fno-exceptions -fno-rtti
 set compiler=%compiler% -Werror -Weverything
@@ -44,4 +47,5 @@ call %build% link
 call %build% post
 call %build% stat
 
+:end
 endlocal
