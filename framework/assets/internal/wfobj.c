@@ -26,7 +26,7 @@ void wfobj_free(struct WFObj * obj) {
 	array_free(&obj->texcoords);
 	array_free(&obj->normals);
 	array_free(&obj->triangles);
-	// zero_out(CBMP_(obj));
+	// cbuffer_clear(CBMP_(obj));
 }
 
 // ----- ----- ----- ----- -----

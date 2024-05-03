@@ -35,8 +35,8 @@ struct Typeface_Key {
 static HASHER(hash_typeface_key) {
 	struct Typeface_Key const * k = value;
 	// kinda FNV-1
-	uint32_t const prime = 16777619u;
-	uint32_t hash = 2166136261u;
+	uint32_t const prime =   16777619u;
+	uint32_t       hash  = 2166136261u;
 	hash = (hash * prime) ^ k->codepoint;
 	hash = (hash * prime) ^ bits_r32_u32(k->size);
 	return hash;
@@ -83,7 +83,7 @@ void font_free(struct Font * font) {
 	array_free(&font->ranges);
 	hashmap_free(&font->table);
 
-	zero_out(CBMP_(font));
+	cbuffer_clear(CBMP_(font));
 	FREE(font);
 }
 
@@ -306,7 +306,7 @@ void font_render(struct Font * font) {
 
 	// render glyphs into the atlas, assuming they shall fit
 	uint32_t const buffer_data_size = gfx_type_get_size(font->buffer.format.type);
-	zero_out((struct CBuffer_Mut){
+	cbuffer_clear((struct CBuffer_Mut){
 		.size = font->buffer.size.x * font->buffer.size.y * buffer_data_size,
 		.data = font->buffer.data,
 	});

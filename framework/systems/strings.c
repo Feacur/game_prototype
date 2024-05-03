@@ -62,10 +62,9 @@ struct Handle system_strings_find(struct CString value) {
 }
 
 struct CString system_strings_get(struct Handle handle) {
-	if (handle_is_null(handle))                     { return (struct CString){0}; }
+	if (handle_is_null(handle))               { return (struct CString){0}; }
 	if (handle.id > gs_strings.lengths.count) { REPORT_CALLSTACK(); DEBUG_BREAK(); return (struct CString){0}; }
-
-	if (handle.gen != gs_strings.h_free.gen) { REPORT_CALLSTACK(); DEBUG_BREAK(); return (struct CString){0}; }
+	if (handle.gen != gs_strings.h_free.gen)  { REPORT_CALLSTACK(); DEBUG_BREAK(); return (struct CString){0}; }
 
 	uint32_t const id = handle.id - 1;
 	uint32_t const * offset_at = array_at_unsafe(&gs_strings.offsets, id);

@@ -33,8 +33,8 @@ static struct GPU_Library {
 	} arb;
 
 	struct {
-		PFNWGLGETSWAPINTERVALEXTPROC     GetSwapInterval;
-		PFNWGLSWAPINTERVALEXTPROC        SwapInterval;
+		PFNWGLGETSWAPINTERVALEXTPROC GetSwapInterval;
+		PFNWGLSWAPINTERVALEXTPROC    SwapInterval;
 		bool srgb;
 		bool swap;
 	} ext;
@@ -213,7 +213,7 @@ void gpu_context_free(struct GPU_Context * gpu_context) {
 	}
 	gs_gpu_library.dll.DeleteContext(gpu_context->handle);
 
-	zero_out(CBMP_(gpu_context));
+	cbuffer_clear(CBMP_(gpu_context));
 	FREE(gpu_context);
 }
 
@@ -277,7 +277,7 @@ static bool gpu_library_init(void) {
 
 	PFNWGLGETEXTENSIONSSTRINGARBPROC arbGetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   (void *)gpu_library_get_proc_address(S_("wglGetExtensionsStringARB"));
 	char const * arbString = arbGetExtensionsString(surface);
-	LOG("ARB extensions: %s\n", arbString);
+	LOG("> ARB extensions: %s\n", arbString);
 #define HAS_ARB(name) contains_full_word(arbString, S_("WGL_ARB_" #name))
 	gs_gpu_library.arb.samples = HAS_ARB(multisample);
 #undef HAS_ARB
@@ -289,7 +289,7 @@ static bool gpu_library_init(void) {
 
 	PFNWGLGETEXTENSIONSSTRINGEXTPROC extGetExtensionsString = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)(void *)gpu_library_get_proc_address(S_("wglGetExtensionsStringEXT"));
 	char const * extString = extGetExtensionsString();
-	LOG("EXT extensions: %s\n", extString);
+	LOG("> EXT extensions: %s\n", extString);
 #define HAS_EXT(name) contains_full_word(extString, S_("WGL_EXT_" #name))
 	gs_gpu_library.ext.srgb = HAS_EXT(framebuffer_sRGB);
 	gs_gpu_library.ext.swap = HAS_EXT(swap_control);
@@ -384,6 +384,6 @@ bool gpu_library_to_system_init(void) {
 void gpu_library_to_system_free(void) {
 	functions_to_gpu_library_free();
 	FreeLibrary(gs_gpu_library.handle);
-	zero_out(CBM_(gs_gpu_library));
+	cbuffer_clear(CBM_(gs_gpu_library));
 	TRC("unloaded WGL, ARB, EXT");
 }

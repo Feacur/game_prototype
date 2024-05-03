@@ -36,7 +36,7 @@ void renderer_free(void) {
 	gpu_buffer_free(gs_renderer.gh_camera);
 	gfx_uniforms_free(&gs_renderer.uniforms);
 	array_free(&gs_renderer.gpu_commands);
-	zero_out(CBM_(gs_renderer));
+	cbuffer_clear(CBM_(gs_renderer));
 }
 
 void renderer_start_frame(void) {

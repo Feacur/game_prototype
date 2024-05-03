@@ -67,7 +67,7 @@ struct File * platform_file_init(struct CString path, enum File_Mode mode) {
 void platform_file_free(struct File * file) {
 	CloseHandle(file->handle);
 	FREE(file->path);
-	zero_out(CBMP_(file));
+	cbuffer_clear(CBMP_(file));
 	FREE(file);
 }
 

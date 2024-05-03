@@ -52,7 +52,7 @@ ALLOCATOR(realloc_generic) {
 }
 
 // ----- ----- ----- ----- -----
-//     Debug party
+//     Debug part
 // ----- ----- ----- ----- -----
 
 static struct Memory_Header_Debug {
@@ -163,9 +163,9 @@ void system_memory_debug_clear(void) {
 //     Arena part
 // ----- ----- ----- ----- -----
 
-static struct system_memory_Arena {
-	struct Buffer buffer;
-	struct Array buffered;   // `struct Memory_Header *`
+static struct System_Memory_Arena {
+	struct Buffer  buffer;
+	struct Array   buffered; // `struct Memory_Header *`
 	struct Hashmap fallback; // `struct Memory_Header *` : NULL
 	size_t required, peak;
 } gs_system_memory_arena = {
@@ -173,7 +173,7 @@ static struct system_memory_Arena {
 		.allocate = platform_reallocate,
 	},
 	.buffered = {
-		.allocate = platform_reallocate,
+		.allocate   = platform_reallocate,
 		.value_size = sizeof(struct Memory_Header *),
 	},
 	.fallback = {

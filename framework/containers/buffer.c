@@ -15,7 +15,7 @@ struct Buffer buffer_init(void) {
 void buffer_free(struct Buffer * buffer) {
 	if (buffer->allocate == NULL) { return; }
 	buffer->allocate(buffer->data, 0);
-	zero_out(CBMP_(buffer));
+	cbuffer_clear(CBMP_(buffer));
 }
 
 void buffer_clear(struct Buffer * buffer, bool deallocate) {

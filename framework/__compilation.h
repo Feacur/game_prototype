@@ -14,9 +14,9 @@ Defines:
   - GAME_TARGET_DEVELOPMENT
   - GAME_TARGET_DEBUG
 - this game %arch_mode%
-  - DGAME_ARCH_SHARED
-  - DGAME_ARCH_CONSOLE
-  - DGAME_ARCH_WINDOWS
+  - GAME_ARCH_SHARED
+  - GAME_ARCH_CONSOLE
+  - GAME_ARCH_WINDOWS
 
 Features:
 - disable exceptions

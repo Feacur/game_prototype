@@ -244,7 +244,7 @@ static void prototype_draw_objects(void) {
 
 		struct Shader_Camera {
 			struct uvec2 viewport_size;
-			uint8_t      view_padding_alignment[SIZE_OF_MEMBER(struct mat4, x) - sizeof(struct uvec2)];
+			uint8_t      _padding0[sizeof(float) * 2]; // to align `.view.x` at 4 floats
 			struct mat4  view;
 			struct mat4  projection;
 			struct mat4  projection_view;

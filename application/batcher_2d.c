@@ -51,7 +51,7 @@ struct Batcher_Instance {
 	struct rect uv;
 	struct vec4 color;
 	uint32_t    flags;
-	uint8_t     quad_padding_alignment[sizeof(struct rect) - sizeof(uint32_t)];
+	uint8_t     _padding0[sizeof(float) * 3]; // to align `.quad` at 4 floats
 };
 
 struct Batcher_2D {
@@ -101,7 +101,7 @@ void batcher_2d_free(struct Batcher_2D * batcher) {
 	//
 	gfx_uniforms_free(&batcher->uniforms);
 	//
-	zero_out(CBMP_(batcher));
+	cbuffer_clear(CBMP_(batcher));
 	FREE(batcher);
 }
 
@@ -446,7 +446,7 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 }
 
 void batcher_2d_clear(struct Batcher_2D * batcher) {
-	zero_out(CBM_(batcher->batch));
+	cbuffer_clear(CBM_(batcher->batch));
 	array_clear(&batcher->codepoints, false);
 	array_clear(&batcher->batches, false);
 	array_clear(&batcher->words, false);

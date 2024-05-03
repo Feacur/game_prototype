@@ -43,7 +43,7 @@ static uint8_t const LUT_base16[256] = {
 		if (value.length > 2 && value.data[0] == '0' && value.data[1] == 'x') { \
 			value.data += 2; \
 		} \
-		while (is_digit(*value.data)) { \
+		while (is_hex(*value.data)) { \
 			uint8_t const digit = LUT_base16[*(uint8_t const *)value.data]; \
 			result = (result << 4) | digit; \
 			value.data++; \

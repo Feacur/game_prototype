@@ -90,7 +90,7 @@ void platform_window_free(struct Window * window) {
 	if (window->handle != NULL) {
 		DestroyWindow(window->handle);
 	}
-	zero_out(CBMP_(window));
+	cbuffer_clear(CBMP_(window));
 	FREE(window);
 }
 

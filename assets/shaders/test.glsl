@@ -4,10 +4,10 @@ INTERFACE_BLOCK_GLOBAL Global {
 
 INTERFACE_BLOCK_CAMERA Camera {
 	uvec2 viewport_size;
-	// padding
-	mat4 view;
-	mat4 projection;
-	mat4 projection_view;
+	// padding to align `.view.x` at 4 floats
+	mat4  view;
+	mat4  projection;
+	mat4  projection_view;
 } camera;
 
 

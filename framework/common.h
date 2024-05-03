@@ -139,6 +139,7 @@ struct CArray_Mut {
 struct CArray carray_const(struct CArray_Mut value);
 bool carray_equals(struct CArray v1, struct CArray v2);
 bool carray_empty(struct CArray value);
+void carray_clear(struct CArray_Mut value);
 
 #define CA_(value) (struct CArray){.value_size = sizeof(value), .count = 1, .data = &value}
 #define CAM_(value) (struct CArray_Mut){.value_size = sizeof(value), .count = 1, .data = &value}
@@ -161,6 +162,7 @@ struct CBuffer_Mut {
 struct CBuffer cbuffer_const(struct CBuffer_Mut value);
 bool cbuffer_equals(struct CBuffer v1, struct CBuffer v2);
 bool cbuffer_empty(struct CBuffer value);
+void cbuffer_clear(struct CBuffer_Mut value);
 
 #define CB_(value) (struct CBuffer){.size = sizeof(value), .data = &value}
 #define CBM_(value) (struct CBuffer_Mut){.size = sizeof(value), .data = &value}
@@ -183,6 +185,7 @@ struct CString_Mut {
 struct CString cstring_const(struct CString_Mut value);
 bool cstring_equals(struct CString v1, struct CString v2);
 bool cstring_empty(struct CString value);
+void cstring_clear(struct CString_Mut value);
 
 bool cstring_contains(struct CString v1, struct CString v2);
 bool cstring_starts(struct CString v1, struct CString v2);
@@ -210,8 +213,6 @@ char const * common_strstr(char const * buffer, char const * value);
 // ----- ----- ----- ----- -----
 //     utilities
 // ----- ----- ----- ----- -----
-
-void zero_out(struct CBuffer_Mut value);
 
 bool contains_full_word(char const * container, struct CString value);
 
@@ -242,8 +243,8 @@ inline static HASHER(hash32) {
 inline static HASHER(hash64) {
 	struct Data { uint32_t v1, v2; } const * data = value;
 	// kinda FNV-1
-	uint32_t const prime = 16777619u;
-	uint32_t hash = 2166136261u;
+	uint32_t const prime =   16777619u;
+	uint32_t       hash  = 2166136261u;
 	hash = (hash * prime) ^ data->v1;
 	hash = (hash * prime) ^ data->v2;
 	return hash;

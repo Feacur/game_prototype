@@ -4,7 +4,7 @@ INTERFACE_BLOCK_GLOBAL Global {
 
 INTERFACE_BLOCK_CAMERA Camera {
 	uvec2 viewport_size;
-	float view_padding_alignment[2];
+	// padding to align `.view.x` at 4 floats
 	mat4  view;
 	mat4  projection;
 	mat4  projection_view;
@@ -16,20 +16,20 @@ INTERFACE_BLOCK_CAMERA Camera {
 #if defined(VERTEX_SHADER)
 
 // quad layout
-// 4-----------3  2
-// |         /  / |
-// |       /  /   |
-// |     /  /     |
-// |   /  /       |
-// | /  /         |
-// 5  0-----------1
+// 4-----------3 2
+// |         / / |
+// |       / /   |
+// |     / /     |
+// |   / /       |
+// | / /         |
+// 5 0-----------1
 
 struct Instance {
 	vec4 quad;
 	vec4 uv;
 	vec4 color;
 	uint flags;
-	uint quad_padding_alignment[3];
+	// padding to align `.quad` at 4 floats
 };
 
 INTERFACE_BLOCK_DYNAMIC Dynamic {

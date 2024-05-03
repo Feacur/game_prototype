@@ -34,6 +34,13 @@ bool carray_empty(struct CArray value) {
 	return false;
 }
 
+void carray_clear(struct CArray_Mut value) {
+	if (value.value_size == 0) { return; }
+	if (value.count == 0) { return; }
+	if (value.data == NULL) { return; }
+	memset(value.data, 0, value.value_size * value.count);
+}
+
 // ----- ----- ----- ----- -----
 //     buffer
 // ----- ----- ----- ----- -----
@@ -56,6 +63,12 @@ bool cbuffer_empty(struct CBuffer value) {
 	return false;
 }
 
+void cbuffer_clear(struct CBuffer_Mut value) {
+	if (value.size == 0) { return; }
+	if (value.data == NULL) { return; }
+	memset(value.data, 0, value.size);
+}
+
 // ----- ----- ----- ----- -----
 //     string
 // ----- ----- ----- ----- -----
@@ -76,6 +89,12 @@ bool cstring_empty(struct CString value) {
 	if (value.length == 0) { return true; }
 	if (value.data == NULL) { return true; }
 	return false;
+}
+
+void cstring_clear(struct CString_Mut value) {
+	if (value.length == 0) { return; }
+	if (value.data == NULL) { return; }
+	memset(value.data, 0, value.length);
 }
 
 bool cstring_contains(struct CString v1, struct CString v2) {
@@ -125,12 +144,6 @@ char const * common_strstr(char const * buffer, char const * value) {
 // ----- ----- ----- ----- -----
 //     utilities
 // ----- ----- ----- ----- -----
-
-void zero_out(struct CBuffer_Mut value) {
-	if (value.size == 0) { return; }
-	if (value.data == NULL) { return; }
-	memset(value.data, 0, value.size);
-}
 
 bool contains_full_word(char const * container, struct CString value) {
 	if (container == NULL)  { return false; }

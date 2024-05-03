@@ -14,7 +14,7 @@ struct WFObj_Lexer wfobj_lexer_init(struct CString text) {
 }
 
 void wfobj_lexer_free(struct WFObj_Lexer * lexer) {
-	zero_out(CBMP_(lexer));
+	cbuffer_clear(CBMP_(lexer));
 }
 
 inline static struct WFObj_Token wfobj_lexer_next_internal(struct WFObj_Lexer * lexer);

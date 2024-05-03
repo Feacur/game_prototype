@@ -7,10 +7,10 @@
 #include "maths.h"
 
 uint32_t hash_u32_fnv1(uint8_t const * value, size_t size) {
-	uint32_t hash = 2166136261u;
+	uint32_t const prime =   16777619u;
+	uint32_t       hash  = 2166136261u;
 	for (size_t i = 0; i < size; i++) {
-		hash *= 16777619u;
-		hash ^= value[i];
+		hash = (hash * prime) ^ value[i];
 	}
 	return hash;
 }
@@ -23,10 +23,10 @@ uint32_t hash_u32_xorshift(uint32_t value) {
 }
 
 uint64_t hash_u64_fnv1(uint8_t const * value, size_t size) {
-	uint64_t hash = 14695981039346656037ull;
+	uint64_t const prime =        1099511628211ull;
+	uint64_t       hash  = 14695981039346656037ull;
 	for (size_t i = 0; i < size; i++) {
-		hash *= 1099511628211ull;
-		hash ^= value[i];
+		hash = (hash * prime) ^ value[i];
 	}
 	return hash;
 }

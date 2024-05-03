@@ -21,7 +21,7 @@ struct Gfx_Uniforms gfx_uniforms_init(void) {
 void gfx_uniforms_free(struct Gfx_Uniforms * uniforms) {
 	array_free(&uniforms->headers);
 	buffer_free(&uniforms->payload);
-	// zero_out(CBMP_(uniforms));
+	// cbuffer_clear(CBMP_(uniforms));
 }
 
 void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {
@@ -88,7 +88,7 @@ struct Gfx_Material gfx_material_init(void) {
 
 void gfx_material_free(struct Gfx_Material * material) {
 	gfx_uniforms_free(&material->uniforms);
-	zero_out(CBMP_(material));
+	cbuffer_clear(CBMP_(material));
 }
 
 void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_program) {
@@ -123,7 +123,7 @@ void gfx_material_set_shader(struct Gfx_Material * material, struct Handle gh_pr
 			.size = gfx_type_get_size(uniform->type) * uniform->array_size,
 		});
 	}
-	zero_out((struct CBuffer_Mut){
+	cbuffer_clear((struct CBuffer_Mut){
 		.size = payload_bytes,
 		.data = material->uniforms.payload.data,
 	});

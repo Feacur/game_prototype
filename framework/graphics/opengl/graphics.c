@@ -687,7 +687,7 @@ HANDLE_ACTION(gpu_texture_free) {
 	FOR_ARRAY(&gs_graphics_state.active.units, it) {
 		struct Gfx_Unit * unit = it.value;
 		if (handle_equals(unit->gh_texture, handle)) {
-			zero_out(CBMP_(unit));
+			cbuffer_clear(CBMP_(unit));
 			uint32_t const id = it.curr + 1;
 			gl.BindTextureUnit((GLuint)id, 0);
 			gl.BindSampler((GLuint)id, 0);
@@ -1554,7 +1554,7 @@ void graphics_to_gpu_library_free(void) {
 
 	//
 	array_free(&gs_graphics_state.active.units);
-	zero_out(CBM_(gs_graphics_state));
+	cbuffer_clear(CBM_(gs_graphics_state));
 
 	if (inst_count > 0) { DEBUG_BREAK(); }
 
@@ -1686,7 +1686,7 @@ static struct Graphics_Limits get_limits(void) {
 }
 
 static struct Graphics_Extensions get_extensions(void) {
-	LOG("> OpenGL extensions:\n");
+	LOG("> OpenGL extensions:");
 	struct Graphics_Extensions result = {0};
 
 	GLint count = 0; gl.GetIntegerv(GL_NUM_EXTENSIONS, &count);
@@ -1697,9 +1697,10 @@ static struct Graphics_Extensions get_extensions(void) {
 			.data = data,
 		};
 
-		LOG("  %.*s\n", extension.length, extension.data);
+		LOG(" %.*s", extension.length, extension.data);
 		if (cstring_equals(extension, S_("GL_ARB_clip_control"))) { result.clip_control = true; }
 	}
+	LOG("\n");
 
 	return result;
 }

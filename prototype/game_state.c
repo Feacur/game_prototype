@@ -209,7 +209,7 @@ void game_free(void) {
 	array_free(&gs_game.cameras);
 	array_free(&gs_game.entities);
 
-	zero_out(CBM_(gs_game));
+	cbuffer_clear(CBM_(gs_game));
 }
 
 JSON_PROCESSOR(game_fill_scene) {

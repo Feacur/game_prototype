@@ -21,7 +21,7 @@ void sparseset_free(struct Sparseset * sparseset) {
 	array_free(&sparseset->payload);
 	array_free(&sparseset->sparse);
 	array_free(&sparseset->packed);
-	zero_out(CBMP_(sparseset));
+	cbuffer_clear(CBMP_(sparseset));
 }
 
 void sparseset_clear(struct Sparseset * sparseset, bool deallocate) {
