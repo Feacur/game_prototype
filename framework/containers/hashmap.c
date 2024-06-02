@@ -36,15 +36,7 @@ void hashmap_free(struct Hashmap * hashmap) {
 	cbuffer_clear(CBMP_(hashmap));
 }
 
-void hashmap_clear(struct Hashmap * hashmap, bool deallocate) {
-	if (hashmap->allocate == NULL) { return; }
-	if (deallocate) {
-		hashmap->allocate(hashmap->hashes, 0); hashmap->hashes = NULL;
-		hashmap->allocate(hashmap->keys,   0); hashmap->keys   = NULL;
-		hashmap->allocate(hashmap->values, 0); hashmap->values = NULL;
-		hashmap->allocate(hashmap->marks,  0); hashmap->marks  = NULL;
-		hashmap->capacity = 0;
-	}
+void hashmap_clear(struct Hashmap * hashmap) {
 	hashmap->count = 0;
 	cbuffer_clear((struct CBuffer_Mut){
 		.size = sizeof(*hashmap->marks) * hashmap->capacity,

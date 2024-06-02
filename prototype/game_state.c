@@ -213,8 +213,8 @@ void game_free(void) {
 }
 
 JSON_PROCESSOR(game_fill_scene) {
-	array_clear(&gs_game.cameras,  false);
-	array_clear(&gs_game.entities, false);
+	array_clear(&gs_game.cameras);
+	array_clear(&gs_game.entities);
 
 	if (json->type == JSON_ERROR) { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }
 	if (data != &gs_game)         { REPORT_CALLSTACK(); DEBUG_BREAK(); return; }

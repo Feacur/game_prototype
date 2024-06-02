@@ -7,27 +7,29 @@
 
 static struct Materials {
 	struct Sparseset instances; // `struct Gfx_Material`
-} gs_materials = {
-	.instances = {
-		.payload = {
-			.value_size = sizeof(struct Gfx_Material),
-		},
-		.sparse = {
-			.value_size = sizeof(struct Handle),
-		},
-		.packed = {
-			.value_size = sizeof(uint32_t),
-		},
-	},
-};
+} gs_materials;
 
-void system_materials_clear(bool deallocate) {
-	// dependecies
+void system_materials_init(void) {
+	gs_materials = (struct Materials){
+		.instances = {
+			.payload = {
+				.value_size = sizeof(struct Gfx_Material),
+			},
+			.sparse = {
+				.value_size = sizeof(struct Handle),
+			},
+			.packed = {
+				.value_size = sizeof(uint32_t),
+			},
+		},
+	};
+}
+
+void system_materials_free(void) {
 	FOR_SPARSESET(&gs_materials.instances, it) {
 		gfx_material_free(it.value);
 	}
-	// personal
-	sparseset_clear(&gs_materials.instances, deallocate);
+	sparseset_free(&gs_materials.instances);
 }
 
 struct Handle system_materials_aquire(void) {

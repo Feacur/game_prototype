@@ -9,7 +9,8 @@ struct Action {
 	Handle_Action * invoke;
 };
 
-void system_defer_clear(bool deallocate);
+void system_defer_init(void);
+void system_defer_free(void);
 
 void system_defer_push(struct Action action);
 void system_defer_invoke(void);

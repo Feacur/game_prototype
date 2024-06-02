@@ -19,7 +19,7 @@ struct Sparseset {
 struct Sparseset sparseset_init(uint32_t value_size);
 void sparseset_free(struct Sparseset * sparseset);
 
-void sparseset_clear(struct Sparseset * sparseset, bool deallocate);
+void sparseset_clear(struct Sparseset * sparseset);
 void sparseset_ensure(struct Sparseset * sparseset, uint32_t capacity);
 
 struct Handle sparseset_aquire(struct Sparseset * sparseset, void const * value);

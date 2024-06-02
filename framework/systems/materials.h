@@ -5,7 +5,8 @@
 
 struct Gfx_Material;
 
-void system_materials_clear(bool deallocate);
+void system_materials_init(void);
+void system_materials_free(void);
 
 struct Handle system_materials_aquire(void);
 HANDLE_ACTION(system_materials_discard);

@@ -9,19 +9,23 @@ static struct Strings {
 	struct Array lengths; // `uint32_t`
 	struct Buffer buffer; // null-terminated chunks
 	struct Handle h_free; // tracks generations
-} gs_strings = {
-	.offsets = {
-		.value_size = sizeof(uint32_t),
-	},
-	.lengths = {
-		.value_size = sizeof(uint32_t),
-	},
-};
+} gs_strings;
 
-void system_strings_clear(bool deallocate) {
-	array_clear(&gs_strings.offsets, deallocate);
-	array_clear(&gs_strings.lengths, deallocate);
-	buffer_clear(&gs_strings.buffer, deallocate);
+void system_strings_init(void) {
+	gs_strings = (struct Strings){
+		.offsets = {
+			.value_size = sizeof(uint32_t),
+		},
+		.lengths = {
+			.value_size = sizeof(uint32_t),
+		},
+	};
+}
+
+void system_strings_free(void) {
+	array_free(&gs_strings.offsets);
+	array_free(&gs_strings.lengths);
+	buffer_free(&gs_strings.buffer);
 	gs_strings.h_free.gen++;
 }
 

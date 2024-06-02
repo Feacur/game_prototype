@@ -447,10 +447,10 @@ static void batcher_2d_bake_words(struct Batcher_2D * batcher) {
 
 void batcher_2d_clear(struct Batcher_2D * batcher) {
 	cbuffer_clear(CBM_(batcher->batch));
-	array_clear(&batcher->codepoints, false);
-	array_clear(&batcher->batches, false);
-	array_clear(&batcher->words, false);
-	buffer_clear(&batcher->buffer, false);
+	array_clear(&batcher->codepoints);
+	array_clear(&batcher->batches);
+	array_clear(&batcher->words);
+	buffer_clear(&batcher->buffer);
 	gfx_uniforms_clear(&batcher->uniforms);
 }
 
@@ -520,7 +520,7 @@ void batcher_2d_issue_commands(struct Batcher_2D * batcher, struct Array * gpu_c
 			});
 		}
 	}
-	array_clear(&batcher->batches, false);
+	array_clear(&batcher->batches);
 }
 
 void batcher_2d_bake(struct Batcher_2D * batcher) {

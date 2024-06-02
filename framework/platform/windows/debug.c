@@ -4,6 +4,7 @@
 // ----- ----- ----- ----- -----
 
 #include "framework/formatter.h"
+#include "framework/maths.h"
 #include "framework/platform/allocator.h"
 #include "framework/containers/buffer.h"
 
@@ -93,8 +94,8 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 
 		// reserve output buffer
 		buffer_ensure(&gs_platform_debug.buffer, gs_platform_debug.buffer.size
-			+ 34 // chars
-			+ module_length + symbol_length + source_length
+			+ 31 // chars
+			+ max_u32(module_length, 16) + max_u32(symbol_length, 32) + source_length
 			+ 11 // UINT32_MAX
 			+ 11 // UINT32_MAX
 		);
@@ -103,7 +104,7 @@ struct CString platform_debug_get_stacktrace(struct Callstack callstack) {
 		gs_platform_debug.buffer.size += formatter_fmt(
 			(uint32_t)(gs_platform_debug.buffer.capacity - gs_platform_debug.buffer.size),
 			buffer_at_unsafe(&gs_platform_debug.buffer, gs_platform_debug.buffer.size),
-			"[%.*s] %.*s at '%.*s:%u:%u'\n"
+			"[%-16.*s] %-32.*s @ %.*s:%u:%u\n"
 			""
 			, module_length, module_data
 			, symbol_length, symbol_data

@@ -24,10 +24,10 @@ void sparseset_free(struct Sparseset * sparseset) {
 	cbuffer_clear(CBMP_(sparseset));
 }
 
-void sparseset_clear(struct Sparseset * sparseset, bool deallocate) {
-	array_clear(&sparseset->payload, deallocate);
-	array_clear(&sparseset->sparse, deallocate);
-	array_clear(&sparseset->packed, deallocate); sparseset->packed.count = sparseset->packed.capacity;
+void sparseset_clear(struct Sparseset * sparseset) {
+	array_clear(&sparseset->payload);
+	array_clear(&sparseset->sparse);
+	array_clear(&sparseset->packed); sparseset->packed.count = sparseset->packed.capacity;
 	sparseset->h_free.id = 0;
 	sparseset->h_free.gen++;
 }

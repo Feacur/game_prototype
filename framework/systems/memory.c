@@ -66,6 +66,48 @@ inline static size_t system_memory_debug_checksum(void const * pointer) {
 	return ~(size_t)pointer;
 }
 
+static void system_memory_debug_report(void) {
+	if (gs_memory == NULL) { return; }
+
+	uint32_t const pointer_digits_count = sizeof(size_t) * 2;
+
+	uint32_t total_count = 0;
+	uint64_t total_bytes = 0;
+	for (struct Memory_Header_Debug * it = gs_memory; it; it = it->next) {
+		total_count++;
+		total_bytes += it->base.size;
+	}
+
+	uint32_t bytes_digits_count = 0;
+	for (size_t v = total_bytes; v > 0; v = v / 10) {
+		bytes_digits_count++;
+	}
+
+	{
+		struct CString const header = S_("memory report");
+		WRN(
+			"> %-*.*s (bytes: %*zu | count: %u):"
+			""
+			, pointer_digits_count + 4 // compensate for [0x]
+			, header.length, header.data
+			, bytes_digits_count,  total_bytes
+			, total_count
+		);
+	}
+
+	for (struct Memory_Header_Debug const * it = gs_memory; it != NULL; it = it->next) {
+		WRN(
+			"  [%#.*zx] (bytes: %*zu) stacktrace:"
+			""
+			, pointer_digits_count, (size_t)(it + 1)
+			, bytes_digits_count,   it->base.size
+		);
+		PRINT_CALLSTACK(2, it->callstack);
+	}
+
+	DEBUG_BREAK();
+}
+
 ALLOCATOR(realloc_debug) {
 	struct Memory_Header_Debug * header = (pointer != NULL)
 		? (struct Memory_Header_Debug *)pointer - 1
@@ -109,49 +151,12 @@ ALLOCATOR(realloc_debug) {
 	return NULL;
 }
 
-void system_memory_debug_report(void) {
-	if (gs_memory == NULL) { return; }
-
-	uint32_t const pointer_digits_count = sizeof(size_t) * 2;
-
-	uint32_t total_count = 0;
-	uint64_t total_bytes = 0;
-	for (struct Memory_Header_Debug * it = gs_memory; it; it = it->next) {
-		total_count++;
-		total_bytes += it->base.size;
-	}
-
-	uint32_t bytes_digits_count = 0;
-	for (size_t v = total_bytes; v > 0; v = v / 10) {
-		bytes_digits_count++;
-	}
-
-	{
-		struct CString const header = S_("memory report");
-		WRN(
-			"> %-*.*s (bytes: %*zu | count: %u):"
-			""
-			, pointer_digits_count + 4 // compensate for [0x]
-			, header.length, header.data
-			, bytes_digits_count,  total_bytes
-			, total_count
-		);
-	}
-
-	for (struct Memory_Header_Debug const * it = gs_memory; it != NULL; it = it->next) {
-		WRN(
-			"  [%#.*zx] (bytes: %*zu) stacktrace:"
-			""
-			, pointer_digits_count, (size_t)(it + 1)
-			, bytes_digits_count,   it->base.size
-		);
-		PRINT_CALLSTACK(2, it->callstack);
-	}
-
-	DEBUG_BREAK();
+void system_memory_debug_init(void) {
+	gs_memory = NULL;
 }
 
-void system_memory_debug_clear(void) {
+void system_memory_debug_free(void) {
+	system_memory_debug_report();
 	while (gs_memory != NULL) {
 		void * const header = gs_memory;
 		gs_memory = gs_memory->next;
@@ -168,29 +173,40 @@ static struct System_Memory_Arena {
 	struct Array   buffered; // `struct Memory_Header *`
 	struct Hashmap fallback; // `struct Memory_Header *` : NULL
 	size_t required, peak;
-} gs_system_memory_arena = {
-	.buffer = {
-		.allocate = platform_reallocate,
-	},
-	.buffered = {
-		.allocate   = platform_reallocate,
-		.value_size = sizeof(struct Memory_Header *),
-	},
-	.fallback = {
-		.allocate = realloc_generic,
-		.get_hash = hash64,
-		.key_size = sizeof(struct Memory_Header *),
-	},
-};
+} gs_system_memory_arena;
 
 inline static size_t system_memory_arena_checksum(void const * pointer) {
 	return (size_t)pointer ^ 0x0123456789abcdef;
 }
 
-void system_memory_arena_clear(bool deallocate) {
-	if (deallocate) {
-		gs_system_memory_arena.peak = 0;
+void system_memory_arena_init(void) {
+	gs_system_memory_arena = (struct System_Memory_Arena){
+		.buffer = {
+			.allocate = platform_reallocate,
+		},
+		.buffered = {
+			.allocate   = platform_reallocate,
+			.value_size = sizeof(struct Memory_Header *),
+		},
+		.fallback = {
+			.allocate = realloc_generic,
+			.get_hash = hash64,
+			.key_size = sizeof(struct Memory_Header *),
+		},
+	};
+}
+
+void system_memory_arena_free(void) {
+	FOR_HASHMAP(&gs_system_memory_arena.fallback, it) {
+		void * const * pointer = it.key;
+		gs_system_memory_arena.fallback.allocate(*pointer, 0);
 	}
+	buffer_free(&gs_system_memory_arena.buffer);
+	array_free(&gs_system_memory_arena.buffered);
+	hashmap_free(&gs_system_memory_arena.fallback);
+}
+
+void system_memory_arena_clear(void) {
 	// growth
 	if (gs_system_memory_arena.buffer.capacity < gs_system_memory_arena.peak) {
 		WRN(
@@ -209,15 +225,15 @@ void system_memory_arena_clear(bool deallocate) {
 		gs_system_memory_arena.fallback.allocate(*pointer, 0);
 	}
 	// personal
-	buffer_clear(&gs_system_memory_arena.buffer, deallocate);
-	array_clear(&gs_system_memory_arena.buffered, deallocate);
-	hashmap_clear(&gs_system_memory_arena.fallback, deallocate);
+	buffer_clear(&gs_system_memory_arena.buffer);
+	array_clear(&gs_system_memory_arena.buffered);
+	hashmap_clear(&gs_system_memory_arena.fallback);
 	gs_system_memory_arena.required = 0;
 }
 
 void system_memory_arena_ensure(size_t size) {
-	buffer_resize(&gs_system_memory_arena.buffer, size);
-	array_resize(&gs_system_memory_arena.buffered, (uint32_t)(size / (1 << 10)));
+	buffer_ensure(&gs_system_memory_arena.buffer, size);
+	array_ensure(&gs_system_memory_arena.buffered, (uint32_t)(size / (1 << 10)));
 }
 
 static void * system_memory_arena_push(size_t size) {

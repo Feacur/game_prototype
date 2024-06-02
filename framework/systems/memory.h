@@ -27,8 +27,8 @@ ALLOCATOR(realloc_debug);
 #define DEBUG_ALLOCATE(type) debug_arena((type *)NULL, sizeof(type))
 #define DEBUG_ALLOCATE_ARRAY(type, count) debug_arena((type *)NULL, sizeof(type) * (size_t)(count))
 
-void system_memory_debug_report(void);
-void system_memory_debug_clear(void);
+void system_memory_debug_init(void);
+void system_memory_debug_free(void);
 
 // ----- ----- ----- ----- -----
 //     Arena part
@@ -40,7 +40,10 @@ ALLOCATOR(realloc_arena);
 #define ARENA_ALLOCATE(type) realloc_arena((type *)NULL, sizeof(type))
 #define ARENA_ALLOCATE_ARRAY(type, count) realloc_arena((type *)NULL, sizeof(type) * (size_t)(count))
 
-void system_memory_arena_clear(bool deallocate);
+void system_memory_arena_init(void);
+void system_memory_arena_free(void);
+
+void system_memory_arena_clear(void);
 void system_memory_arena_ensure(size_t size);
 
 // ----- ----- ----- ----- -----

@@ -9,7 +9,8 @@ struct Asset_Info {
 	Handle_Action * drop;
 };
 
-void system_assets_clear(bool deallocate);
+void system_assets_init(void);
+void system_assets_free(void);
 
 void system_assets_type_map(struct CString type_name, struct CString extension);
 void system_assets_type_set(struct CString type_name, struct Asset_Info info);

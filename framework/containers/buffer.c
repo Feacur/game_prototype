@@ -18,12 +18,7 @@ void buffer_free(struct Buffer * buffer) {
 	cbuffer_clear(CBMP_(buffer));
 }
 
-void buffer_clear(struct Buffer * buffer, bool deallocate) {
-	if (buffer->allocate == NULL) { return; }
-	if (deallocate) {
-		buffer->allocate(buffer->data, 0); buffer->data = NULL;
-		buffer->capacity = 0;
-	}
+void buffer_clear(struct Buffer * buffer) {
 	buffer->size = 0;
 }
 

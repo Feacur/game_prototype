@@ -41,10 +41,10 @@ void renderer_free(void) {
 
 void renderer_start_frame(void) {
 	batcher_2d_clear(gs_renderer.batcher_2d);
-	buffer_clear(&gs_renderer.global, false);
-	buffer_clear(&gs_renderer.camera, false);
+	buffer_clear(&gs_renderer.global);
+	buffer_clear(&gs_renderer.camera);
 	gfx_uniforms_clear(&gs_renderer.uniforms);
-	array_clear(&gs_renderer.gpu_commands, false);
+	array_clear(&gs_renderer.gpu_commands);
 }
 
 void renderer_end_frame(void) {

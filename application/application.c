@@ -96,7 +96,7 @@ void application_update(void) {
 	uint64_t const ticks_before = platform_timer_get_ticks();
 
 	// reset per-frame data / poll platform events
-	system_memory_arena_clear(false);
+	system_memory_arena_clear();
 	platform_system_update();
 
 	// window might be closed by platform

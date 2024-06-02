@@ -12,7 +12,7 @@ struct Buffer {
 struct Buffer buffer_init(void);
 void buffer_free(struct Buffer * buffer);
 
-void buffer_clear(struct Buffer * buffer, bool deallocate);
+void buffer_clear(struct Buffer * buffer);
 void buffer_resize(struct Buffer * buffer, size_t capacity);
 void buffer_ensure(struct Buffer * buffer, size_t capacity);
 

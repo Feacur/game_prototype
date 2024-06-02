@@ -6,11 +6,7 @@
 
 static struct Defers {
 	struct Array actions; // `struct Action`
-} gs_defer = {
-	.actions = {
-		.value_size = sizeof(struct Action),
-	},
-};
+} gs_defer;
 
 static PREDICATE(action_is_empty) {
 	struct Action const * action = value;
@@ -18,15 +14,21 @@ static PREDICATE(action_is_empty) {
 	    || action->invoke == NULL;
 }
 
-void system_defer_clear(bool deallocate) {
-	// dependencies
+void system_defer_init(void) {
+	gs_defer = (struct Defers){
+		.actions = {
+			.value_size = sizeof(struct Action),
+		},
+	};
+}
+
+void system_defer_free(void) {
 	FOR_ARRAY(&gs_defer.actions, it) {
 		if (action_is_empty(it.value)) { continue; }
 		struct Action * action = it.value;
 		action->invoke(action->handle);
 	}
-	// personal
-	array_clear(&gs_defer.actions, deallocate);
+	array_free(&gs_defer.actions);
 }
 
 void system_defer_push(struct Action action) {

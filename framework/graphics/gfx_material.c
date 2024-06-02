@@ -25,8 +25,8 @@ void gfx_uniforms_free(struct Gfx_Uniforms * uniforms) {
 }
 
 void gfx_uniforms_clear(struct Gfx_Uniforms * uniforms) {
-	array_clear(&uniforms->headers, false);
-	buffer_clear(&uniforms->payload, false);
+	array_clear(&uniforms->headers);
+	buffer_clear(&uniforms->payload);
 }
 
 struct CBuffer_Mut gfx_uniforms_get(struct Gfx_Uniforms const * uniforms, struct CString name, uint32_t offset) {

@@ -433,8 +433,6 @@ static void prototype_draw_ui(void) {
 //     app callbacks part
 // ----- ----- ----- ----- -----
 
-static bool gs_main_exit;
-
 static void app_init(void) {
 	renderer_init();
 	game_init();
@@ -459,7 +457,6 @@ static void app_fixed_tick(void) {
 
 static void app_frame_tick(void) {
 	if (input_scan(SC_LALT, IT_DOWN) && input_scan(SC_F4, IT_DOWN)) {
-		gs_main_exit = !input_key(KC_LSHIFT, IT_DOWN);
 		application_exit();
 	}
 
@@ -474,12 +471,10 @@ static void app_frame_tick(void) {
 }
 
 static void app_platform_quit(void) {
-	gs_main_exit = true;
 	application_exit();
 }
 
 static bool app_window_close(void) {
-	gs_main_exit = !input_scan(SC_LSHIFT, IT_DOWN);
 	return true;
 }
 
@@ -511,23 +506,37 @@ static JSON_PROCESSOR(main_fill_config) {
 	result->fixed_refresh_rate  = (uint32_t)json_get_number(json, S_("fixed_refresh_rate"));
 }
 
-static void main_system_clear(bool deallocate) {
-	system_assets_clear(deallocate);
-	system_materials_clear(deallocate);
-	system_defer_clear(deallocate);
-	system_strings_clear(deallocate);
-	system_memory_arena_clear(deallocate);
+static void main_system_init(void) {
+	system_assets_init();
+	system_materials_init();
+	system_defer_init();
+	system_strings_init();
+	system_memory_arena_init();
+	system_memory_debug_init();
+
+	system_memory_arena_ensure((64 + 32) * (1 << 10));
+	platform_system_init((struct Platform_Callbacks){
+		.quit = app_platform_quit,
+	});
+}
+
+static void main_system_free(void) {
+	system_assets_free();
+	system_materials_free();
+	system_defer_free();
+	system_strings_free();
+	system_memory_arena_free();
+	system_memory_debug_free();
+
+	platform_system_free();
 }
 
 static void main_run_application(void) {
-	main_system_clear(false);
-
-	// @note: all types were invalidated with the string system
 	asset_types_map();
 	asset_types_set();
 
 	process_json(S_("assets/main.json"), &gs_main_settings, main_fill_settings);
-	if (handle_is_null(gs_main_settings.sh_config)) { goto fail; }
+	if (handle_is_null(gs_main_settings.sh_config)) { return; }
 
 	struct Application_Config config;
 	struct CString const config_path = system_strings_get(gs_main_settings.sh_config);
@@ -544,12 +553,6 @@ static void main_run_application(void) {
 		},
 	});
 	TRC("application has ended");
-
-	return;
-
-	// process errors
-	fail: ERR("failed to launch application");
-	platform_system_sleep(1000);
 }
 
 int main (int argc, char * argv[]) {
@@ -558,25 +561,9 @@ int main (int argc, char * argv[]) {
 		LOG("  %s\n", argv[i]);
 	}
 
-	system_memory_arena_ensure((64 + 32) * (1 << 10));
-	platform_system_init((struct Platform_Callbacks){
-		.quit = app_platform_quit,
-	});
-
-	while (!gs_main_exit && !platform_system_is_error()) {
-		main_run_application();
-	}
-
-	// @note: drop everythin on the floor and quit
-#if defined (GAME_TARGET_DEBUG)
-	{
-		main_system_clear(true);
-
-		system_memory_debug_report();
-		platform_system_free();
-		system_memory_debug_clear();
-	}
-#endif
+	main_system_init();
+	main_run_application();
+	main_system_free();
 
 	return 0;
 }

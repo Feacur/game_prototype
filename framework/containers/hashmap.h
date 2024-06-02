@@ -26,7 +26,7 @@ struct Hashmap {
 struct Hashmap hashmap_init(Hasher * get_hash, uint32_t key_size, uint32_t value_size);
 void hashmap_free(struct Hashmap * hashmap);
 
-void hashmap_clear(struct Hashmap * hashmap, bool deallocate);
+void hashmap_clear(struct Hashmap * hashmap);
 void hashmap_ensure(struct Hashmap * hashmap, uint32_t capacity);
 
 void * hashmap_get(struct Hashmap const * hashmap, void const * key);

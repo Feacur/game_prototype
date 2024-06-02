@@ -20,12 +20,7 @@ void array_free(struct Array * array) {
 	cbuffer_clear(CBMP_(array));
 }
 
-void array_clear(struct Array * array, bool deallocate) {
-	if (array->allocate == NULL) { return; }
-	if (deallocate) {
-		array->allocate(array->data, 0); array->data = NULL;
-		array->capacity = 0;
-	}
+void array_clear(struct Array * array) {
 	array->count = 0;
 }
 

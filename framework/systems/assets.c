@@ -33,44 +33,47 @@ static struct Assets {
 	struct Hashmap types;   // type `struct Handle` : `struct Asset_Type`
 	struct Hashmap map;     // extension `struct Handle` : type `struct Handle`
 	struct Array stack;     // meta `struct Handle`
-} gs_assets = {
-	.meta = {
-		.payload = {
-			.value_size = sizeof(struct Asset_Meta),
-		},
-		.sparse = {
-			.value_size = sizeof(struct Handle),
-		},
-		.packed = {
-			.value_size = sizeof(uint32_t),
-		},
-	},
-	.handles = {
-		.get_hash = hash32,
-		.key_size = sizeof(uint32_t),
-		.value_size = sizeof(struct Handle),
-	},
-	.types = {
-		.get_hash = hash32,
-		.key_size = sizeof(uint32_t),
-		.value_size = sizeof(struct Asset_Type),
-	},
-	.map = {
-		.get_hash = hash32,
-		.key_size = sizeof(uint32_t),
-		.value_size = sizeof(uint32_t),
-	},
-	.stack = {
-		.value_size = sizeof(struct Handle),
-	},
-};
+} gs_assets;
 
 static HANDLE_ACTION(system_assets_add_dependency);
 static void system_assets_report(struct CString tag, struct Handle handle);
 static struct CString system_assets_name_to_extension(struct CString name);
 
-void system_assets_clear(bool deallocate) {
-	// dependecies
+void system_assets_init(void) {
+	gs_assets = (struct Assets){
+		.meta = {
+			.payload = {
+				.value_size = sizeof(struct Asset_Meta),
+			},
+			.sparse = {
+				.value_size = sizeof(struct Handle),
+			},
+			.packed = {
+				.value_size = sizeof(uint32_t),
+			},
+		},
+		.handles = {
+			.get_hash = hash32,
+			.key_size = sizeof(uint32_t),
+			.value_size = sizeof(struct Handle),
+		},
+		.types = {
+			.get_hash = hash32,
+			.key_size = sizeof(uint32_t),
+			.value_size = sizeof(struct Asset_Type),
+		},
+		.map = {
+			.get_hash = hash32,
+			.key_size = sizeof(uint32_t),
+			.value_size = sizeof(uint32_t),
+		},
+		.stack = {
+			.value_size = sizeof(struct Handle),
+		},
+	};
+}
+
+void system_assets_free(void) {
 	uint32_t dropped_count = 0;
 	FOR_HASHMAP(&gs_assets.types, it_type) {
 		struct Asset_Type * type = it_type.value;
@@ -89,12 +92,11 @@ void system_assets_clear(bool deallocate) {
 		struct Asset_Meta * meta = it.value;
 		array_free(&meta->dependencies);
 	}
-	// personal
-	sparseset_clear(&gs_assets.meta, deallocate);
-	hashmap_clear(&gs_assets.handles, deallocate);
-	hashmap_clear(&gs_assets.types, deallocate);
-	hashmap_clear(&gs_assets.map, deallocate);
-	array_clear(&gs_assets.stack, deallocate);
+	sparseset_free(&gs_assets.meta);
+	hashmap_free(&gs_assets.handles);
+	hashmap_free(&gs_assets.types);
+	hashmap_free(&gs_assets.map);
+	array_free(&gs_assets.stack);
 }
 
 void system_assets_type_map(struct CString type, struct CString extension) {
