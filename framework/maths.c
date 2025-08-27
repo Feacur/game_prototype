@@ -618,7 +618,7 @@ map [-pos_xy   .. pos_xy]   -> [-1       .. 1]
 map [view_near .. view_far] -> [ndc_near .. ndc_far]
 
 > known params (aspect correction)
-scale_XY = {1, width / height} * tan(FoV / 2) or {height / width, 1} * tan(FoV / 2)
+scale_XY = {1, width / height} / tan(FoV / 2) or {height / width, 1} / tan(FoV / 2)
 offset_XY = {0, 0}, i.e. the screen center
 
 > known params (direct mapping from bottom-left to top-right)
