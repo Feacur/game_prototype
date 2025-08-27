@@ -613,26 +613,37 @@ struct mat4 mat4_projection(
 	};
 
 /*
-> this function inputs
-* for bottom-left to top-right direct map: scale_xy {2 / width, 2 / height}, offset_xy {-1, -1}
-* for X-based aspect: scale_xy {1, width / height}, offset_xy {0, 0}
-* for Y-based aspect: scale_xy {height / width, 1}, offset_xy {0, 0}
-* ortho: [0 .. 1], where 0 is full perspective mode, 1 is full orthographic mode
-* NDC: stands for normalized device space, which is the output of a projection
-  - might be [0 .. 1], [1 .. 0], [-1 .. 1], [1 .. -1], or whatever you want
+> aim:
+map [-pos_xy   .. pos_xy]   -> [-1       .. 1]
+map [view_near .. view_far] -> [ndc_near .. ndc_far]
 
-> resulting matrix role
-* XYZ:  world-space vector input
-* XYZ': normalized-space vector output
-* orthograhic: XYZ' = (XYZ * scale + offset) / 1
-* perspective: XYZ' = (XYZ * scale + offset) / Z
+> known params (aspect correction)
+scale_XY = {1, width / height} or {height / width, 1}
+offset_XY = {0, 0}, i.e. the screen center
 
-> algorithm
-* map XY: [-pos_xy .. pos_xy] -> [-1  .. 1]
-  - no need to calculate, just plug the values `scale_xy` and `offset_xy` into the matrix
-* map Z: [view_near .. view_far] -> [ndc_near .. ndc_far]
-  - calculate `scale_z` and `offset_z` values based on inputs and outputs
-* account for `view_far` == infinity
+> known params (direct mapping from bottom-left to top-right)
+scale_XY = {2 / width, 2 / height}
+offset = {-1, -1}
+
+> orthograhic: NDC = XYZ * scale + offset
+Sz = (ndc_far - ndc_near) / (view_far - view_near)
+   ~ 0 ; !IF! view_far == infinity
+Oz = (ndc_near * view_far - ndc_far * view_near) / (view_far - view_near)
+   ~ ndc_near ; !IF! view_far == infinity
+| Sx  0   0  Ox |    | x |    | x * Sx + Tx |
+| 0   Sy  0  Oy | \/ | y | == | y * Sy + Ty |
+| 0   0   Sz Oz | /\ | z | == | z * Sz + Tz |
+| 0   0   0  1  |    | 1 |    | 1           |
+
+> perspective: NDC = (XYZ * scale + offset) / z
+Sz = (ndc_far * view_far - ndc_near * view_near) / (view_far - view_near)
+   ~ ndc_far ; !IF! view_far == infinity
+Oz = (ndc_near - ndc_far) * view_near * view_far / (view_far - view_near)
+   ~ (ndc_near - ndc_far) * view_near ; !IF! view_far == infinity
+| Sx  0   0  Ox |    | x |    | x * Sx + Ox |
+| 0   Sy  0  Oy | \/ | y | == | y * Sy + Oy |
+| 0   0   Sz Oz | /\ | z | == | z * Sz + Oz |
+| 0   0   1  0  |    | 1 |    | z           |
 */
 }
 
