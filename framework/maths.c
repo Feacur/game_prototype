@@ -614,6 +614,9 @@ struct mat4 mat4_projection(
 
 /*
 > this function inputs
+* for bottom-left to top-right direct map: scale_xy {2 / width, 2 / height}, offset_xy {-1, -1}
+* for X-based aspect: scale_xy {1, width / height}, offset_xy {0, 0}
+* for Y-based aspect: scale_xy {height / width, 1}, offset_xy {0, 0}
 * ortho: [0 .. 1], where 0 is full perspective mode, 1 is full orthographic mode
 * NDC: stands for normalized device space, which is the output of a projection
   - might be [0 .. 1], [1 .. 0], [-1 .. 1], [1 .. -1], or whatever you want
