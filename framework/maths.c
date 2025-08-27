@@ -630,9 +630,9 @@ Sz = (ndc_far - ndc_near) / (view_far - view_near)
    ~ 0 ; !IF! view_far == infinity
 Oz = (ndc_near * view_far - ndc_far * view_near) / (view_far - view_near)
    ~ ndc_near ; !IF! view_far == infinity
-| Sx  0   0  Ox |    | x |    | x * Sx + Tx |
-| 0   Sy  0  Oy | \/ | y | == | y * Sy + Ty |
-| 0   0   Sz Oz | /\ | z | == | z * Sz + Tz |
+| Sx  0   0  Ox |    | x |    | x * Sx + Ox |
+| 0   Sy  0  Oy | \/ | y | == | y * Sy + Oy |
+| 0   0   Sz Oz | /\ | z | == | z * Sz + Oz |
 | 0   0   0  1  |    | 1 |    | 1           |
 
 > perspective: NDC = (XYZ * scale + offset) / z
