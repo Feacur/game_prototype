@@ -613,21 +613,23 @@ struct mat4 mat4_projection(
 	};
 
 /*
-> inputs
+> this function inputs
 * ortho: [0 .. 1], where 0 is full perspective mode, 1 is full orthographic mode
 * NDC: stands for normalized device space, which is the output of a projection
+  - might be [0 .. 1], [1 .. 0], [-1 .. 1], [1 .. -1], or whatever you want
 
-> logic
-* XYZ: world-space vector
-* XYZ': normalized-space vector
---- orthograhic
-    XYZ' = (offset + scale * XYZ) / 1
-    XY scale: from [-scale_xy .. scale_xy] to [-1 .. 1]
-    Z  scale: from [view_near .. view_far] to [ndc_near .. ndc_far]
---- perspective
-    XYZ' = (offset + scale * XYZ) / Z
-    XY scale; from [-scale_xy .. scale_xy] to [-1 .. 1]
-    Z  scale; from [view_near .. view_far] to [ndc_near .. ndc_far]
+> resulting matrix role
+* XYZ:  world-space vector input
+* XYZ': normalized-space vector output
+* orthograhic: XYZ' = (XYZ * scale + offset) / 1
+* perspective: XYZ' = (XYZ * scale + offset) / Z
+
+> algorithm
+* map XY: [-pos_xy .. pos_xy] -> [-1  .. 1]
+  - no need to calculate, just plug the values `scale_xy` and `offset_xy` into the matrix
+* map Z: [view_near .. view_far] -> [ndc_near .. ndc_far]
+  - calculate `scale_z` and `offset_z` values based on inputs and outputs
+* account for `view_far` == infinity
 */
 }
 
