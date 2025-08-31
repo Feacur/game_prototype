@@ -25,20 +25,20 @@ struct Window {
 	WINDOWPLACEMENT pre_fullscreen_position;
 	LONG_PTR pre_fullscreen_style;
 	// command
-	enum Window_Command {
-		WINDOW_COMMAND_NONE,
-		WINDOW_COMMAND_SIZE_LEFT,
-		WINDOW_COMMAND_SIZE_RIGHT,
-		WINDOW_COMMAND_SIZE_TOP,
-		WINDOW_COMMAND_SIZE_TOPLEFT,
-		WINDOW_COMMAND_SIZE_TOPRIGHT,
-		WINDOW_COMMAND_SIZE_BOTTOM,
-		WINDOW_COMMAND_SIZE_BOTTOMLEFT,
-		WINDOW_COMMAND_SIZE_BOTTOMRIGHT,
-		WINDOW_COMMAND_MOVE,
-	} command;
-	LONG command_offset_x, command_offset_y;
-	LONG command_min_x, command_min_y;
+	enum OS_Move_Window {
+		OS_MOVE_WINDOW_NONE,
+		OS_MOVE_WINDOW_LEFT,
+		OS_MOVE_WINDOW_RIGHT,
+		OS_MOVE_WINDOW_TOP,
+		OS_MOVE_WINDOW_TOPLEFT,
+		OS_MOVE_WINDOW_TOPRIGHT,
+		OS_MOVE_WINDOW_BOTTOM,
+		OS_MOVE_WINDOW_BOTTOMLEFT,
+		OS_MOVE_WINDOW_BOTTOMRIGHT,
+		OS_MOVE_WINDOW_FULL,
+	} move_window;
+	POINT move_window_cursor;
+	RECT move_window_rect;
 };
 
 inline static size_t window_checksum(void const * pointer) {
@@ -98,11 +98,9 @@ bool platform_window_exists(struct Window const * window) {
 	return window->handle != NULL;
 }
 
-static void platform_window_internal_handle_moving(struct Window *window);
-static void platform_window_internal_handle_sizing(struct Window *window);
+static void platform_window_internal_handle_move(struct Window *window);
 void platform_window_update(struct Window * window) {
-	platform_window_internal_handle_moving(window);
-	platform_window_internal_handle_sizing(window);
+	platform_window_internal_handle_move(window);
 }
 
 void * platform_window_get_surface(struct Window * window) {
@@ -199,130 +197,74 @@ void window_to_system_free(void) {
 //
 
 static void platform_window_internal_syscommand_move(struct Window * window, uint8_t mode) {
-	if (window->command != WINDOW_COMMAND_NONE) { return; }
-	if (mode != HTCAPTION) { return; }
-	window->command = WINDOW_COMMAND_MOVE;
-
-	POINT pos; GetCursorPos(&pos);
-	RECT rect; GetWindowRect(window->handle, &rect);
-
-	window->command_offset_x = (rect.left - pos.x);
-	window->command_offset_y = (rect.top - pos.y);
+	if (window->move_window != OS_MOVE_WINDOW_NONE) return;
+	switch (mode) {
+		case HTCAPTION: window->move_window = OS_MOVE_WINDOW_FULL; break;
+		default: return;
+	}
+	GetCursorPos(&window->move_window_cursor);
+	GetWindowRect(window->handle, &window->move_window_rect);
 }
 
 static void platform_window_internal_syscommand_size(struct Window * window, uint8_t mode) {
-	if (window->command != WINDOW_COMMAND_NONE) { return; }
+	if (window->move_window != OS_MOVE_WINDOW_NONE) return;
 	switch (mode) {
-		case WMSZ_LEFT:        window->command = WINDOW_COMMAND_SIZE_LEFT;        break;
-		case WMSZ_RIGHT:       window->command = WINDOW_COMMAND_SIZE_RIGHT;       break;
-		case WMSZ_TOP:         window->command = WINDOW_COMMAND_SIZE_TOP;         break;
-		case WMSZ_TOPLEFT:     window->command = WINDOW_COMMAND_SIZE_TOPLEFT;     break;
-		case WMSZ_TOPRIGHT:    window->command = WINDOW_COMMAND_SIZE_TOPRIGHT;    break;
-		case WMSZ_BOTTOM:      window->command = WINDOW_COMMAND_SIZE_BOTTOM;      break;
-		case WMSZ_BOTTOMLEFT:  window->command = WINDOW_COMMAND_SIZE_BOTTOMLEFT;  break;
-		case WMSZ_BOTTOMRIGHT: window->command = WINDOW_COMMAND_SIZE_BOTTOMRIGHT; break;
+		case WMSZ_LEFT:        window->move_window = OS_MOVE_WINDOW_LEFT;        break;
+		case WMSZ_RIGHT:       window->move_window = OS_MOVE_WINDOW_RIGHT;       break;
+		case WMSZ_TOP:         window->move_window = OS_MOVE_WINDOW_TOP;         break;
+		case WMSZ_TOPLEFT:     window->move_window = OS_MOVE_WINDOW_TOPLEFT;     break;
+		case WMSZ_TOPRIGHT:    window->move_window = OS_MOVE_WINDOW_TOPRIGHT;    break;
+		case WMSZ_BOTTOM:      window->move_window = OS_MOVE_WINDOW_BOTTOM;      break;
+		case WMSZ_BOTTOMLEFT:  window->move_window = OS_MOVE_WINDOW_BOTTOMLEFT;  break;
+		case WMSZ_BOTTOMRIGHT: window->move_window = OS_MOVE_WINDOW_BOTTOMRIGHT; break;
 		default: return;
 	}
-
-	POINT pos; GetCursorPos(&pos);
-	RECT rect; GetWindowRect(window->handle, &rect);
-
-	switch (mode) {
-		case WMSZ_LEFT:
-		case WMSZ_TOPLEFT:
-		case WMSZ_BOTTOMLEFT:
-			window->command_offset_x = (rect.left - pos.x); break;
-		case WMSZ_RIGHT:
-		case WMSZ_TOPRIGHT:
-		case WMSZ_BOTTOMRIGHT:
-			window->command_offset_x = (rect.right - pos.x); break;
-	}
-
-	switch (mode) {
-		case WMSZ_TOP:
-		case WMSZ_TOPLEFT:
-		case WMSZ_TOPRIGHT:
-			window->command_offset_y = (rect.top - pos.y); break;
-		case WMSZ_BOTTOM:
-		case WMSZ_BOTTOMLEFT:
-		case WMSZ_BOTTOMRIGHT:
-			window->command_offset_y = (rect.bottom - pos.y); break;
-	}
+	GetCursorPos(&window->move_window_cursor);
+	GetWindowRect(window->handle, &window->move_window_rect);
 }
 
-static void platform_window_internal_handle_moving(struct Window * window) {
-	if (window->command != WINDOW_COMMAND_MOVE) { return; }
-	if (!(GetKeyState(VK_LBUTTON) & 0x80)) { // !input_mouse(MC_LEFT)
-		window->command = WINDOW_COMMAND_NONE;
+static void platform_window_internal_handle_move(struct Window * window) {
+
+	if (window->move_window != OS_MOVE_WINDOW_NONE) {
+		enum OS_Move_Window const command = window->move_window;
+		if (!(GetKeyState(VK_LBUTTON) & 0x80))
+			window->move_window = OS_MOVE_WINDOW_NONE;
+
+		RECT rect = window->move_window_rect;
+		POINT cursor; GetCursorPos(&cursor);
+		POINT const offset = {
+			cursor.x - window->move_window_cursor.x,
+			cursor.y - window->move_window_cursor.y,
+		};
+
+		switch (command) {
+			case OS_MOVE_WINDOW_FULL:
+				rect.left   += offset.x;
+				rect.right  += offset.x;
+				rect.bottom += offset.y;
+				rect.top    += offset.y;
+				break;
+
+			case OS_MOVE_WINDOW_LEFT:        rect.left  += offset.x;                          break;
+			case OS_MOVE_WINDOW_RIGHT:       rect.right += offset.x;                          break;
+			case OS_MOVE_WINDOW_TOP:                                 rect.top    += offset.y; break;
+			case OS_MOVE_WINDOW_TOPLEFT:     rect.left  += offset.x; rect.top    += offset.y; break;
+			case OS_MOVE_WINDOW_TOPRIGHT:    rect.right += offset.x; rect.top    += offset.y; break;
+			case OS_MOVE_WINDOW_BOTTOM:                              rect.bottom += offset.y; break;
+			case OS_MOVE_WINDOW_BOTTOMLEFT:  rect.left  += offset.x; rect.bottom += offset.y; break;
+			case OS_MOVE_WINDOW_BOTTOMRIGHT: rect.right += offset.x; rect.bottom += offset.y; break;
+
+			default: break;
+		}
+
+		MoveWindow(
+			window->handle,
+			rect.left, rect.top,
+			rect.right  - rect.left,
+			rect.bottom - rect.top,
+			FALSE
+		);
 	}
-
-	POINT pos; GetCursorPos(&pos);
-	RECT rect; GetWindowRect(window->handle, &rect);
-
-	pos.x += window->command_offset_x;
-	pos.y += window->command_offset_y;
-
-	MoveWindow(
-		window->handle,
-		pos.x, pos.y,
-		rect.right - rect.left,
-		rect.bottom - rect.top,
-		FALSE
-	);
-}
-
-static void platform_window_internal_handle_sizing(struct Window * window) {
-	if (window->command <= WINDOW_COMMAND_NONE) { return; }
-	if (window->command >= WINDOW_COMMAND_MOVE) { return; }
-	if (!(GetKeyState(VK_LBUTTON) & 0x80)) { // !input_mouse(MC_LEFT)
-		window->command = WINDOW_COMMAND_NONE;
-	}
-
-	POINT pos; GetCursorPos(&pos);
-	RECT rect; GetWindowRect(window->handle, &rect);
-
-	pos.x += window->command_offset_x;
-	pos.y += window->command_offset_y;
-
-	switch (window->command) {
-		default: break;
-		case WINDOW_COMMAND_SIZE_LEFT:
-		case WINDOW_COMMAND_SIZE_TOPLEFT:
-		case WINDOW_COMMAND_SIZE_BOTTOMLEFT:
-			rect.left = (pos.x + window->command_min_x <= rect.right)
-				? pos.x : rect.right - window->command_min_x;
-			break;
-		case WINDOW_COMMAND_SIZE_RIGHT:
-		case WINDOW_COMMAND_SIZE_TOPRIGHT:
-		case WINDOW_COMMAND_SIZE_BOTTOMRIGHT:
-			rect.right = (pos.x - window->command_min_x >= rect.left)
-				? pos.x : rect.left + window->command_min_x;
-			break;
-	}
-
-	switch (window->command) {
-		default: break;
-		case WINDOW_COMMAND_SIZE_TOP:
-		case WINDOW_COMMAND_SIZE_TOPLEFT:
-		case WINDOW_COMMAND_SIZE_TOPRIGHT:
-			rect.top = (pos.y + window->command_min_y <= rect.bottom)
-				? pos.y : rect.bottom - window->command_min_y;
-			break;
-		case WINDOW_COMMAND_SIZE_BOTTOM:
-		case WINDOW_COMMAND_SIZE_BOTTOMLEFT:
-		case WINDOW_COMMAND_SIZE_BOTTOMRIGHT:
-			rect.bottom = (pos.y - window->command_min_y >= rect.top)
-				? pos.y : rect.top + window->command_min_y;
-			break;
-	}
-
-	MoveWindow(
-		window->handle,
-		rect.left, rect.top,
-		rect.right - rect.left,
-		rect.bottom - rect.top,
-		FALSE
-	);
 }
 
 static uint8_t fix_virtual_key(uint8_t key, enum Scan_Code scan) {
@@ -731,13 +673,6 @@ static LRESULT CALLBACK window_procedure(HWND hwnd, UINT message, WPARAM wParam,
 				input_to_platform_reset();
 			}
 			return 0;
-
-		case WM_GETMINMAXINFO: {
-			MINMAXINFO const info = *(MINMAXINFO *)lParam;
-			window->command_min_x = info.ptMinTrackSize.x;
-			window->command_min_y = info.ptMinTrackSize.y;
-			return 0;
-		}
 
 		case WM_SYSCOMMAND: switch (wParam & 0xfff0) {
 			case SC_MOVE: platform_window_internal_syscommand_move(window, wParam & 0x000f); return 0;
