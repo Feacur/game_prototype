@@ -293,7 +293,7 @@ static void system_assets_report(struct CString tag, struct Handle handle) {
 	LOG("%*s" "%.*s {%u:%u} (%u) %.*s\n"
 		, indent, ""
 		, tag.length, tag.data
-		, handle.id, handle.gen
+		, (uint32_t)handle.id, (uint32_t)handle.gen
 		, meta->ref_count + 1
 		, name.length, name.data
 	);

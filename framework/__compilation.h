@@ -38,6 +38,7 @@ Features:
 	#pragma clang diagnostic ignored "-Wswitch-enum"                       // enumeration value ... not explicitly handled in switch
 	#pragma clang diagnostic ignored "-Wassign-enum"                       // integer constant not in range of enumerated type A
 	#pragma clang diagnostic ignored "-Wfloat-equal"                       // comparing floating point with == or != is unsafe
+	#pragma clang diagnostic ignored "-Wswitch-default"
 
 	// zig cc
 	#pragma clang diagnostic ignored "-Wpadded"

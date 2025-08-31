@@ -192,18 +192,18 @@ struct CString gpu_types_block(void) {
 	static char data[1024];
 	uint32_t length = formatter_fmt(
 		SIZE_OF_ARRAY(data), data,
-		"#define ATTRIBUTE_POSITION layout(location = %u) in\n"
-		"#define ATTRIBUTE_TEXCOORD layout(location = %u) in\n"
-		"#define ATTRIBUTE_NORMAL   layout(location = %u) in\n"
-		"#define ATTRIBUTE_COLOR    layout(location = %u) in\n"
+		"#define ATTRIBUTE_POSITION layout(location = %d) in\n"
+		"#define ATTRIBUTE_TEXCOORD layout(location = %d) in\n"
+		"#define ATTRIBUTE_NORMAL   layout(location = %d) in\n"
+		"#define ATTRIBUTE_COLOR    layout(location = %d) in\n"
 		"\n"
-		"#define INTERFACE_BLOCK_GLOBAL  layout(std140, binding = %u) uniform\n"
-		"#define INTERFACE_BLOCK_CAMERA  layout(std140, binding = %u) uniform\n"
-		"#define INTERFACE_BLOCK_MODEL   layout(std140, binding = %u) uniform\n"
-		"#define INTERFACE_BLOCK_DYNAMIC layout(std430, binding = %u) readonly buffer\n"
+		"#define INTERFACE_BLOCK_GLOBAL  layout(std140, binding = %d) uniform\n"
+		"#define INTERFACE_BLOCK_CAMERA  layout(std140, binding = %d) uniform\n"
+		"#define INTERFACE_BLOCK_MODEL   layout(std140, binding = %d) uniform\n"
+		"#define INTERFACE_BLOCK_DYNAMIC layout(std430, binding = %d) readonly buffer\n"
 		"\n"
-		"#define BATCHER_FLAG_NONE %u\n"
-		"#define BATCHER_FLAG_FONT %u\n"
+		"#define BATCHER_FLAG_NONE %d\n"
+		"#define BATCHER_FLAG_FONT %d\n"
 		"\n"
 		//
 		, SHADER_ATTRIBUTE_POSITION - 1

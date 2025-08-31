@@ -406,7 +406,7 @@ static struct CString prototype_get_fps_cstring(void) {
 	double const dt = application_get_delta_time();
 	uint32_t const fps = (uint32_t)r64_floor(1.0 / dt);
 
-	uint32_t const length = formatter_fmt(sizeof(buffer), buffer, "FPS: %5d (%.5f ms)", fps, dt);
+	uint32_t const length = formatter_fmt(sizeof(buffer), buffer, "FPS: %5u (%.5f ms)", fps, dt);
 	return (struct CString){.length = length, .data = buffer};
 }
 

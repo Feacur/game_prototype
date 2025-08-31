@@ -187,7 +187,7 @@ static void system_signal_handler(int value) {
 	if (gs_platform_system.has_error) { return; }
 
 	LOG(
-		"> system signal '%#x'\n"
+		"> system signal '%d'\n"
 		"  type: %.*s\n"
 		""
 		, value

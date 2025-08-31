@@ -464,7 +464,7 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 	(void)gpu_program_introspect_input;  // (&gpu_program);
 	(void)gpu_program_introspect_output; // (&gpu_program);
 
-	GFX_TRACE("aquire program %d", gpu_program.id);
+	GFX_TRACE("aquire program %u", gpu_program.id);
 	return gpu_program;
 	// https://www.khronos.org/opengl/wiki/Program_Introspection
 
@@ -473,7 +473,7 @@ static struct GPU_Program_Internal gpu_program_on_aquire(struct Buffer const * a
 
 static void gpu_program_on_discard(struct GPU_Program_Internal * gpu_program) {
 	if (gpu_program->id == 0) { return; }
-	GFX_TRACE("discard program %d", gpu_program->id);
+	GFX_TRACE("discard program %u", gpu_program->id);
 	hashmap_free(&gpu_program->base.uniforms);
 	gl.DeleteProgram(gpu_program->id);
 }
@@ -529,13 +529,13 @@ static struct GPU_Sampler_Internal gpu_sampler_on_aquire(struct Gfx_Sampler cons
 	gl.CreateSamplers(1, &gpu_sampler.id);
 	gpu_sampler_upload(&gpu_sampler, asset);
 
-	GFX_TRACE("aquire sampler %d", gpu_sampler.id);
+	GFX_TRACE("aquire sampler %u", gpu_sampler.id);
 	return gpu_sampler;
 }
 
 static void gpu_sampler_on_discard(struct GPU_Sampler_Internal * gpu_sampler) {
 	if (gpu_sampler->id == 0) { return; }
-	GFX_TRACE("discard sampler %d", gpu_sampler->id);
+	GFX_TRACE("discard sampler %u", gpu_sampler->id);
 	gl.DeleteSamplers(1, &gpu_sampler->id);
 }
 
@@ -662,13 +662,13 @@ static struct GPU_Texture_Internal gpu_texture_on_aquire(struct Image const * as
 	gl.TextureParameteri(gpu_texture.id, GL_TEXTURE_WRAP_R, gpu_addr_mode(sampler.addr_z));
 	gl.TextureParameterfv(gpu_texture.id, GL_TEXTURE_BORDER_COLOR, &sampler.border.x);
 
-	GFX_TRACE("aquire texture %d", gpu_texture.id);
+	GFX_TRACE("aquire texture %u", gpu_texture.id);
 	return gpu_texture;
 }
 
 static void gpu_texture_on_discard(struct GPU_Texture_Internal * gpu_texture) {
 	if (gpu_texture->id == 0) { return; }
-	GFX_TRACE("discard texture %d", gpu_texture->id);
+	GFX_TRACE("discard texture %u", gpu_texture->id);
 	gl.DeleteTextures(1, &gpu_texture->id);
 }
 
@@ -861,13 +861,13 @@ static struct GPU_Target_Internal gpu_target_on_aquire(struct GPU_Target_Asset c
 		);
 	}
 
-	GFX_TRACE("aquire target %d", gpu_target.id);
+	GFX_TRACE("aquire target %u", gpu_target.id);
 	return gpu_target;
 }
 
 static void gpu_target_on_discard(struct GPU_Target_Internal * gpu_target) {
 	if (gpu_target->id == 0) { return; }
-	GFX_TRACE("discard target %d", gpu_target->id);
+	GFX_TRACE("discard target %u", gpu_target->id);
 	FOR_ARRAY(&gpu_target->base.textures, it) {
 		struct Handle const * gh_texture = it.value;
 		gpu_texture_free(*gh_texture);
@@ -947,13 +947,13 @@ static struct GPU_Buffer_Internal gpu_buffer_on_aquire(struct Buffer const * ass
 		GL_DYNAMIC_STORAGE_BIT
 	);
 
-	GFX_TRACE("aquire buffer %d", gpu_buffer.id);
+	GFX_TRACE("aquire buffer %u", gpu_buffer.id);
 	return gpu_buffer;
 }
 
 static void gpu_buffer_on_discard(struct GPU_Buffer_Internal * gpu_buffer) {
 	if (gpu_buffer->id == 0) { return; }
-	GFX_TRACE("discard buffer %d", gpu_buffer->id);
+	GFX_TRACE("discard buffer %u", gpu_buffer->id);
 	gl.DeleteBuffers(1, &gpu_buffer->id);
 }
 
@@ -1089,13 +1089,13 @@ static struct GPU_Mesh_Internal gpu_mesh_on_aquire(struct Mesh const * asset) {
 		binding++;
 	}
 
-	GFX_TRACE("aquire mesh %d", gpu_mesh.id);
+	GFX_TRACE("aquire mesh %u", gpu_mesh.id);
 	return gpu_mesh;
 }
 
 static void gpu_mesh_on_discard(struct GPU_Mesh_Internal * gpu_mesh) {
 	if (gpu_mesh->id == 0) { return; }
-	GFX_TRACE("discard mesh %d", gpu_mesh->id);
+	GFX_TRACE("discard mesh %u", gpu_mesh->id);
 	FOR_ARRAY(&gpu_mesh->base.buffers, it) {
 		struct GPU_Mesh_Buffer const * gpu_mesh_buffer = it.value;
 		gpu_buffer_free(gpu_mesh_buffer->gh_buffer);
@@ -1191,7 +1191,7 @@ void graphics_buffer_align(struct Buffer * buffer, enum Buffer_Target target) {
 static void gpu_upload_single_uniform(struct GPU_Program_Internal const * gpu_program, struct GPU_Uniform_Internal const * field, void const * data) {
 	switch (field->base.type) {
 		default: {
-			WRN("unsupported field type '%#x'", field->base.type);
+			WRN("unsupported field type '%d'", field->base.type);
 			DEBUG_BREAK();
 		} break;
 
