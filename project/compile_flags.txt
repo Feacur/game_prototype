@@ -1,14 +1,12 @@
--std=c99
--Werror
--Weverything
+-ferror-limit=0
+-m64
 
--Wno-nonportable-system-include-path
--Wno-documentation-unknown-command
--Wno-reserved-macro-identifier
--Wno-unused-macros
-
--I..
--I../third_party
+-ansi
+-c
+-pedantic-errors
 
 -DGAME_TARGET_DEBUG
 -DGAME_ARCH_CONSOLE
+
+-I..
+-I../third_party

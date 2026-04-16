@@ -30,19 +30,7 @@ if not exist "../%binary_folder%/%project%.exe" (
 
 rem |> DO
 pushd ..
-if exist "%project_folder%/debug_%project%.rdbg" (
-	call %func% check_exe_online remedybg || (
-		start remedybg -q "%project_folder%/debug_%project%.rdbg"
-		:wait_for_debugger
-		call %func% check_exe_online remedybg || goto wait_for_debugger
-	)
-	rem instead of the `-g` flag, command it to start: existing instances should be drived too
-	start remedybg.exe start-debugging
-) else (
-	start remedybg "%binary_folder%/%project%.exe"
-	rem current working directory should be the root
-	rem that's why I do not launch debugging right away
-)
+start remedybg -g -q "%binary_folder%/%project%.exe"
 popd
 
 rem |> FUNCTIONS

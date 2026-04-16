@@ -1,0 +1,9 @@
+# https://clangd.llvm.org/config
+# do NOT use tabs
+
+If:
+  PathMatch: [.*\.h, .*\.c]
+
+CompileFlags:
+  Compiler: clang
+  Add: [-xc, -std=c99]

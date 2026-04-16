@@ -11,8 +11,8 @@ struct Sparseset_Iterator {
 
 struct Sparseset {
 	struct Array payload; // of value_size
-	struct Array sparse;  // `struct Handle`; either aquired `packed` index or next free `sparse` index
 	struct Array packed;  // `uint32_t`; `sparse` index
+	struct Array sparse;  // `struct Handle`; either aquired `packed` index or next free `sparse` index
 	struct Handle h_free; // into `sparse`
 };
 

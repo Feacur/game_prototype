@@ -1,6 +1,3 @@
-#include "framework/formatter.h"
-#include "framework/systems/memory.h"
-
 #include "internal/helpers.h"
 
 
@@ -12,22 +9,22 @@
 struct Sparseset sparseset_init(uint32_t value_size) {
 	return (struct Sparseset){
 		.payload = array_init(value_size),
-		.sparse  = array_init(sizeof(struct Handle)),
 		.packed  = array_init(sizeof(uint32_t)),
+		.sparse  = array_init(sizeof(struct Handle)),
 	};
 }
 
 void sparseset_free(struct Sparseset * sparseset) {
 	array_free(&sparseset->payload);
-	array_free(&sparseset->sparse);
 	array_free(&sparseset->packed);
+	array_free(&sparseset->sparse);
 	cbuffer_clear(CBMP_(sparseset));
 }
 
 void sparseset_clear(struct Sparseset * sparseset) {
 	array_clear(&sparseset->payload);
-	array_clear(&sparseset->sparse);
 	array_clear(&sparseset->packed); sparseset->packed.count = sparseset->packed.capacity;
+	array_clear(&sparseset->sparse);
 	sparseset->h_free.id = 0;
 	sparseset->h_free.gen++;
 }
@@ -37,8 +34,8 @@ void sparseset_ensure(struct Sparseset * sparseset, uint32_t capacity) {
 	capacity = growth_adjust_array(sparseset->payload.capacity, capacity);
 
 	array_resize(&sparseset->payload, capacity);
-	array_resize(&sparseset->sparse,  capacity);
 	array_resize(&sparseset->packed,  capacity); sparseset->packed.count = capacity;
+	array_resize(&sparseset->sparse,  capacity);
 }
 
 struct Handle sparseset_aquire(struct Sparseset * sparseset, void const * value) {
